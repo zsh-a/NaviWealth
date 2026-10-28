@@ -5697,15 +5697,15 @@
   "healthMealLunch": "午餐",
   "healthMealDinner": "晚餐",
   "healthMealSnack": "加餐",
-  "healthMealPhoto": "餐食照片",
+  "healthMealPhoto": "照片与视频",
   "healthMealCamera": "拍照",
   "healthMealGallery": "选择照片",
   "healthMealRemovePhoto": "移除照片",
-  "healthMealPhotoLocal": "照片只保存在本机，不参与同步或备份。",
+  "healthMealPhotoLocal": "图片仅保存在本机，不参与同步和备份。视频会转为图片供你检查。",
   "healthMealRecognize": "识别食物",
   "healthMealRecognizing": "正在识别食物…",
-  "healthMealUploadTitle": "发送这张餐食照片？",
-  "healthMealUploadBody": "压缩后的照片将使用你的 API Key 直接发送给 {provider}，其中可能包含敏感信息。已有食物将替换为可编辑的估算结果，确认保存前不会写入餐食记录。",
+  "healthMealUploadTitle": "发送这些餐食图片？",
+  "healthMealUploadBody": "所选图片与补充说明将使用你的 API 密钥直接发送给 {provider}，其中可能含有敏感信息。当前食物清单会替换为这一餐的可编辑估算结果，确认保存前不会写入记录。",
   "@healthMealUploadBody": {
     "placeholders": {
       "provider": {
@@ -5738,7 +5738,7 @@
   "healthMealNeedFood": "请至少添加一种食物后保存。",
   "healthMealNotFound": "这条餐食记录不可用，或属于其他用户。",
   "healthMealSessionChanged": "用户或 HealthOS 启用状态已变化，请重新打开餐食记录后继续。",
-  "healthMealDeleteConfirm": "删除这顿餐食及本机照片？餐食删除也会同步到其他设备。",
+  "healthMealDeleteConfirm": "删除这顿饭及本机图片？饮食记录的删除也会同步到其他设备。",
   "healthMealHistory": "查看餐食",
   "healthMealKcal": "约 {kcal} 千卡",
   "@healthMealKcal": {
@@ -5758,6 +5758,32 @@
         "type": "String"
       },
       "fat": {
+        "type": "String"
+      }
+    }
+  },
+  "healthMealViewsHint": "最多 4 张。建议俯视和侧面各一张，可补充细节或营养标签。",
+  "healthMealPhotoRole": "图片用途",
+  "healthMealViewOverview": "餐前全景",
+  "healthMealViewSide": "餐前侧面",
+  "healthMealViewDetail": "餐前细节",
+  "healthMealViewLabel": "营养标签",
+  "healthMealViewAfter": "餐后剩余",
+  "healthMealPreview": "查看图片",
+  "healthMealVideo": "短视频",
+  "healthMealVideoRecord": "拍摄短视频",
+  "healthMealVideoChoose": "选择短视频",
+  "healthMealVideoHint": "缓慢绕餐盘拍摄约 5–8 秒。视频不超过 10 秒、50 MB；检查选出的图片后再识别。",
+  "healthMealVideoTooLong": "请选择不超过 10 秒的短视频。",
+  "healthMealVideoTooLarge": "请选择不超过 50 MB 的视频。",
+  "healthMealVideoFailed": "无法提取清晰图片，请重试或改用照片。",
+  "healthMealNeedMealView": "请至少添加一张餐前食物照片，标签和餐后图片用于补充判断。",
+  "healthMealContext": "补充说明（份量、做法或分食）",
+  "healthMealPreparingImages": "正在准备图片…",
+  "healthMealVideoFrame": "视频关键帧 · {seconds} 秒",
+  "@healthMealVideoFrame": {
+    "placeholders": {
+      "seconds": {
         "type": "String"
       }
     }

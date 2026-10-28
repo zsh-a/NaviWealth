@@ -32,6 +32,7 @@ readonly required_markers=(
   'database-encryption: restored keystore key reopened'
   'backup: encrypted restore completed on file database'
   'backup: failed restore rollback persisted after reopen'
+  'meal-video: native frames verified'
 )
 
 for marker in "${required_markers[@]}"; do

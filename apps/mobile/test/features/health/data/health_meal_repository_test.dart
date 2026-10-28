@@ -17,6 +17,7 @@ import 'package:naviwealth/core/sync/sync_table_registry.dart';
 import 'package:naviwealth/features/health/data/health_meal_repository.dart';
 import 'package:naviwealth/features/health/data/meal_food_catalog.dart';
 import 'package:naviwealth/features/health/domain/health_meal.dart';
+import 'package:naviwealth/features/health/domain/meal_photo.dart';
 
 import '../../../core/persistence/test_database.dart';
 import '../../finance/data/repositories/_stub_stamper.dart';
@@ -49,13 +50,99 @@ void main() {
   });
   tearDown(() => db.close());
 
-  Future<HealthMeal> save({Uint8List? photo, DateTime? day}) => repo.save(
+  Future<HealthMeal> save({
+    Uint8List? photo,
+    DateTime? day,
+    List<MealPhoto>? photos,
+  }) => repo.save(
     expectedOwnerUserId: 'user',
     capturedAt: now,
     day: day ?? now,
     type: HealthMealType.lunch,
     foods: foods,
     photoBytes: photo,
+    photos: photos,
+  );
+
+  test(
+    'meal views retain order, roles and times and replace atomically',
+    () async {
+      final entry = await save(
+        photos: [
+          MealPhoto(
+            bytes: Uint8List.fromList([1]),
+            role: MealPhotoRole.side,
+            timestampMs: 500,
+          ),
+          MealPhoto(bytes: Uint8List.fromList([2]), role: MealPhotoRole.label),
+          MealPhoto(
+            bytes: Uint8List.fromList([3]),
+            role: MealPhotoRole.afterMeal,
+          ),
+        ],
+      );
+      final views = await repo.photos(id: entry.id, ownerUserId: 'user');
+      expect(views.map((view) => view.role), [
+        MealPhotoRole.side,
+        MealPhotoRole.label,
+        MealPhotoRole.afterMeal,
+      ]);
+      expect(views.first.timestampMs, 500);
+      expect(await repo.photos(id: entry.id, ownerUserId: 'other'), isEmpty);
+      await repo.save(
+        id: entry.id,
+        expectedRevision: entry.sync.hlc,
+        expectedOwnerUserId: 'user',
+        capturedAt: now,
+        day: now,
+        type: entry.type,
+        foods: foods,
+        photos: [views.last, views.first.withRole(MealPhotoRole.overview)],
+      );
+      final revised = await repo.photos(id: entry.id, ownerUserId: 'user');
+      expect(revised.map((view) => view.id), [views.last.id, views.first.id]);
+      expect(revised.last.role, MealPhotoRole.overview);
+      final current = (await repo.find(id: entry.id, ownerUserId: 'user'))!;
+      await repo.delete(current);
+      expect(await db.select(db.healthMealPhotos).get(), isEmpty);
+    },
+  );
+
+  test(
+    'photos from another meal cannot be reassigned; invalid sets do not write',
+    () async {
+      final first = await save(photo: Uint8List.fromList([1]));
+      final foreign = (await repo.photos(
+        id: first.id,
+        ownerUserId: 'user',
+      )).single;
+      final second = await save(photo: Uint8List.fromList([2]));
+      await expectLater(
+        repo.save(
+          id: second.id,
+          expectedRevision: second.sync.hlc,
+          expectedOwnerUserId: 'user',
+          capturedAt: now,
+          day: now,
+          type: second.type,
+          foods: foods,
+          photos: [foreign],
+        ),
+        throwsStateError,
+      );
+      expect(await repo.photo(id: second.id, ownerUserId: 'user'), [2]);
+      expect(await repo.photo(id: first.id, ownerUserId: 'user'), [1]);
+      for (final views in [
+        List.generate(5, (_) => MealPhoto(bytes: Uint8List.fromList([1]))),
+        [foreign, foreign],
+        [
+          MealPhoto(bytes: Uint8List.fromList([1]), timestampMs: 10001),
+        ],
+      ]) {
+        await expectLater(save(photos: views), throwsArgumentError);
+      }
+      expect((await db.select(db.healthMeals).get()).length, 2);
+    },
   );
 
   test('separate meals share a day, edit snapshots atomically and retain local photo', () async {

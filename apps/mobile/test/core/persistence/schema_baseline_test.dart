@@ -7,7 +7,64 @@ import 'package:sqlite3/sqlite3.dart' as sqlite;
 
 void main() {
   for (final background in [false, true]) {
-    for (final version in [1, 77, 98, 101]) {
+    test(
+      'schema 100 preserves the legacy meal photo (background=$background)',
+      () async {
+        final directory = await Directory.systemTemp.createTemp(
+          'schema-meal-views-',
+        );
+        addTearDown(() => directory.delete(recursive: true));
+        final file = File('${directory.path}/lifeos.db');
+        final initial = AppDatabase(NativeDatabase(file));
+        await initial.customStatement('''
+        INSERT INTO health_meals (id, captured_at, day, meal_type, foods_json,
+          owner_user_id, updated_at, updated_by_device, hlc)
+        VALUES ('meal', 1700000000, 1700000000, 'lunch', '{"version":1,"foods":[]}',
+          'owner', 1700000000, 'device', '1700000000000.0000-device')
+      ''');
+        await initial.close();
+        final raw = sqlite.sqlite3.open(file.path);
+        raw.execute('DROP TRIGGER trg_health_meal_deleted_photo');
+        raw.execute('DROP TABLE health_meal_photos');
+        raw.execute('''CREATE TABLE health_meal_photos (
+        id TEXT NOT NULL PRIMARY KEY REFERENCES health_meals(id) ON DELETE CASCADE,
+        owner_user_id TEXT NOT NULL, bytes BLOB NOT NULL)''');
+        raw.execute(
+          "INSERT INTO health_meal_photos VALUES ('meal', 'owner', X'010203')",
+        );
+        raw.execute('PRAGMA user_version = 100');
+        raw.close();
+        final upgraded = AppDatabase(
+          background
+              ? NativeDatabase.createInBackground(file)
+              : NativeDatabase(file),
+        );
+        await upgraded.ensureReady();
+        final photo =
+            (await upgraded.select(upgraded.healthMealPhotos).get()).single;
+        expect(photo.mealId, 'meal');
+        expect(photo.id, 'meal');
+        expect(photo.bytes, [1, 2, 3]);
+        expect(photo.viewRole, 'overview');
+        expect(photo.position, 0);
+        await upgraded.customStatement(
+          "UPDATE health_meals SET deleted_at = 1700000001 WHERE id = 'meal'",
+        );
+        expect(await upgraded.select(upgraded.healthMealPhotos).get(), isEmpty);
+        await upgraded.close();
+        final reopened = AppDatabase(NativeDatabase(file));
+        await reopened.ensureReady();
+        expect(
+          (await reopened.select(reopened.healthMeals).get()).single.deletedAt,
+          isNotNull,
+        );
+        await reopened.close();
+      },
+    );
+  }
+
+  for (final background in [false, true]) {
+    for (final version in [1, 77, 98, 102]) {
       test(
         'rejects schema $version without modifying data (background=$background)',
         () async {
@@ -143,7 +200,7 @@ void main() {
         expect(
           (await upgraded.customSelect('PRAGMA user_version').getSingle())
               .read<int>('user_version'),
-          100,
+          101,
         );
         await upgraded.close();
         final reopened = AppDatabase(NativeDatabase(file));

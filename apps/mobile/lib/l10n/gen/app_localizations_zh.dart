@@ -17417,7 +17417,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthMealSnack => '加餐';
 
   @override
-  String get healthMealPhoto => '餐食照片';
+  String get healthMealPhoto => '照片与视频';
 
   @override
   String get healthMealCamera => '拍照';
@@ -17429,7 +17429,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthMealRemovePhoto => '移除照片';
 
   @override
-  String get healthMealPhotoLocal => '照片只保存在本机，不参与同步或备份。';
+  String get healthMealPhotoLocal => '图片仅保存在本机，不参与同步和备份。视频会转为图片供你检查。';
 
   @override
   String get healthMealRecognize => '识别食物';
@@ -17438,11 +17438,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthMealRecognizing => '正在识别食物…';
 
   @override
-  String get healthMealUploadTitle => '发送这张餐食照片？';
+  String get healthMealUploadTitle => '发送这些餐食图片？';
 
   @override
   String healthMealUploadBody(String provider) {
-    return '压缩后的照片将使用你的 API Key 直接发送给 $provider，其中可能包含敏感信息。已有食物将替换为可编辑的估算结果，确认保存前不会写入餐食记录。';
+    return '所选图片与补充说明将使用你的 API 密钥直接发送给 $provider，其中可能含有敏感信息。当前食物清单会替换为这一餐的可编辑估算结果，确认保存前不会写入记录。';
   }
 
   @override
@@ -17523,7 +17523,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthMealSessionChanged => '用户或 HealthOS 启用状态已变化，请重新打开餐食记录后继续。';
 
   @override
-  String get healthMealDeleteConfirm => '删除这顿餐食及本机照片？餐食删除也会同步到其他设备。';
+  String get healthMealDeleteConfirm => '删除这顿饭及本机图片？饮食记录的删除也会同步到其他设备。';
 
   @override
   String get healthMealHistory => '查看餐食';
@@ -17536,5 +17536,65 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String healthMealMacros(String protein, String carbs, String fat) {
     return '蛋白质 $protein 克 · 碳水 $carbs 克 · 脂肪 $fat 克';
+  }
+
+  @override
+  String get healthMealViewsHint => '最多 4 张。建议俯视和侧面各一张，可补充细节或营养标签。';
+
+  @override
+  String get healthMealPhotoRole => '图片用途';
+
+  @override
+  String get healthMealViewOverview => '餐前全景';
+
+  @override
+  String get healthMealViewSide => '餐前侧面';
+
+  @override
+  String get healthMealViewDetail => '餐前细节';
+
+  @override
+  String get healthMealViewLabel => '营养标签';
+
+  @override
+  String get healthMealViewAfter => '餐后剩余';
+
+  @override
+  String get healthMealPreview => '查看图片';
+
+  @override
+  String get healthMealVideo => '短视频';
+
+  @override
+  String get healthMealVideoRecord => '拍摄短视频';
+
+  @override
+  String get healthMealVideoChoose => '选择短视频';
+
+  @override
+  String get healthMealVideoHint =>
+      '缓慢绕餐盘拍摄约 5–8 秒。视频不超过 10 秒、50 MB；检查选出的图片后再识别。';
+
+  @override
+  String get healthMealVideoTooLong => '请选择不超过 10 秒的短视频。';
+
+  @override
+  String get healthMealVideoTooLarge => '请选择不超过 50 MB 的视频。';
+
+  @override
+  String get healthMealVideoFailed => '无法提取清晰图片，请重试或改用照片。';
+
+  @override
+  String get healthMealNeedMealView => '请至少添加一张餐前食物照片，标签和餐后图片用于补充判断。';
+
+  @override
+  String get healthMealContext => '补充说明（份量、做法或分食）';
+
+  @override
+  String get healthMealPreparingImages => '正在准备图片…';
+
+  @override
+  String healthMealVideoFrame(String seconds) {
+    return '视频关键帧 · $seconds 秒';
   }
 }

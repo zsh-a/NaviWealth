@@ -5,10 +5,54 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 
+import '../domain/meal_photo.dart';
 import 'health_meal_repository.dart';
+import 'meal_video_capture_stub.dart'
+    if (dart.library.io) 'meal_video_capture_io.dart';
 
 class MealPhotoCapture {
   const MealPhotoCapture();
+
+  bool get supportsVideo =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS);
+
+  Future<List<Uint8List>> pickMany({required int limit}) async {
+    if (limit < 1 || limit > MealPhoto.maxCount) {
+      throw ArgumentError.value(limit);
+    }
+    if (limit == 1) {
+      final photo = await pick(camera: false);
+      return photo == null ? [] : [photo];
+    }
+    if (kIsWeb) throw UnsupportedError('Health meal capture is native-only');
+    final files = await ImagePicker().pickMultiImage(
+      maxWidth: 1600,
+      maxHeight: 1600,
+      imageQuality: 85,
+      limit: limit,
+    );
+    if (files.length > limit) {
+      throw const FormatException('Too many meal views');
+    }
+    final photos = <Uint8List>[];
+    for (final file in files) {
+      if (await file.length() > 20 * 1024 * 1024) {
+        throw const FormatException('Meal photo exceeds capture limit');
+      }
+      photos.add(await compute(normalizeMealPhoto, await file.readAsBytes()));
+    }
+    return photos;
+  }
+
+  Future<List<MealPhoto>?> pickVideo({
+    required bool camera,
+    required int limit,
+  }) {
+    if (!supportsVideo) throw UnsupportedError('Meal video is unavailable');
+    return captureMealVideo(camera: camera, limit: limit);
+  }
 
   Future<Uint8List?> pick({required bool camera}) async {
     if (kIsWeb) throw UnsupportedError('Health meal capture is native-only');

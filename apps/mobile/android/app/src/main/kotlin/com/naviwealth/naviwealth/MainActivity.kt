@@ -7,6 +7,7 @@ class MainActivity : FlutterFragmentActivity() {
     private var speechBridge: AndroidSpeechBridge? = null
     private var audioCaptureBridge: AndroidAudioCaptureBridge? = null
     private var nativeUpdateBridge: AndroidNativeUpdateBridge? = null
+    private var videoFrameBridge: AndroidVideoFrameBridge? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -15,6 +16,7 @@ class MainActivity : FlutterFragmentActivity() {
         nativeUpdateBridge = AndroidNativeUpdateBridge(this).also {
             it.attach(flutterEngine)
         }
+        videoFrameBridge = AndroidVideoFrameBridge().also { it.attach(flutterEngine) }
     }
 
     override fun onRequestPermissionsResult(
@@ -42,6 +44,8 @@ class MainActivity : FlutterFragmentActivity() {
         audioCaptureBridge = null
         nativeUpdateBridge?.dispose()
         nativeUpdateBridge = null
+        videoFrameBridge?.dispose()
+        videoFrameBridge = null
         super.onDestroy()
     }
 }

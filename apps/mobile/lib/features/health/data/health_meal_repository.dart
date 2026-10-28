@@ -7,6 +7,7 @@ import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/op_outbox.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../domain/health_meal.dart';
+import '../domain/meal_photo.dart';
 import 'health_series.dart';
 
 class HealthMealRepository {
@@ -28,7 +29,7 @@ class HealthMealRepository {
   final DateTime Function() _clock;
   final bool Function(String owner) _writesAllowed;
   static const table = 'health_meals';
-  static const maxPhotoBytes = 2 * 1024 * 1024;
+  static const maxPhotoBytes = MealPhoto.maxBytes;
 
   Stream<List<HealthMeal>> watchInRange({
     required String ownerUserId,
@@ -70,16 +71,36 @@ class HealthMealRepository {
   Future<Uint8List?> photo({
     required String id,
     required String ownerUserId,
+  }) async =>
+      (await photos(id: id, ownerUserId: ownerUserId)).firstOrNull?.bytes;
+
+  Future<List<MealPhoto>> photos({
+    required String id,
+    required String ownerUserId,
   }) async {
     // Require a live parent, so a tombstone received from Sync also hides its
     // device-local image without having to add domain callbacks to RowApplier.
-    if (await find(id: id, ownerUserId: ownerUserId) == null) return null;
-    final row =
-        await (_db.select(_db.healthMealPhotos)..where(
-              (t) => t.id.equals(id) & t.ownerUserId.equals(ownerUserId),
-            ))
-            .getSingleOrNull();
-    return row?.bytes;
+    if (await find(id: id, ownerUserId: ownerUserId) == null) return const [];
+    final rows =
+        await (_db.select(_db.healthMealPhotos)
+              ..where(
+                (t) => t.mealId.equals(id) & t.ownerUserId.equals(ownerUserId),
+              )
+              ..orderBy([
+                (t) => OrderingTerm.asc(t.position),
+                (t) => OrderingTerm.asc(t.id),
+              ]))
+            .get();
+    return rows
+        .map(
+          (row) => MealPhoto(
+            id: row.id,
+            bytes: row.bytes,
+            role: MealPhotoRoleWire.parse(row.viewRole),
+            timestampMs: row.timestampMs,
+          ),
+        )
+        .toList(growable: false);
   }
 
   Future<HealthMeal> save({
@@ -94,8 +115,22 @@ class HealthMealRepository {
     String? recognitionModel,
     Uint8List? photoBytes,
     bool removePhoto = false,
+    List<MealPhoto>? photos,
   }) async {
     _requireEnabled(expectedOwnerUserId);
+    if (photos != null && (photoBytes != null || removePhoto)) {
+      throw ArgumentError('Specify either meal views or the legacy photo');
+    }
+    final candidatePhotos =
+        photos ??
+        (removePhoto
+            ? <MealPhoto>[]
+            : photoBytes == null
+            ? null
+            : [MealPhoto(bytes: photoBytes)]);
+    final replacementPhotos = candidatePhotos == null
+        ? null
+        : List<MealPhoto>.unmodifiable(candidatePhotos);
     final date = healthDay(day);
     if (date.year < 1970 ||
         date.isAfter(healthDay(_clock())) ||
@@ -106,8 +141,17 @@ class HealthMealRepository {
         foods.any((food) => !food.isValid) ||
         (note?.length ?? 0) > 1000 ||
         (recognitionModel?.length ?? 0) > 200 ||
-        (photoBytes != null &&
-            (photoBytes.isEmpty || photoBytes.length > maxPhotoBytes))) {
+        (replacementPhotos != null &&
+            (replacementPhotos.length > MealPhoto.maxCount ||
+                replacementPhotos.any((photo) => !photo.isValid) ||
+                replacementPhotos
+                        .map((photo) => photo.id)
+                        .whereType<String>()
+                        .toSet()
+                        .length !=
+                    replacementPhotos
+                        .where((photo) => photo.id != null)
+                        .length))) {
       throw ArgumentError('Invalid meal, date, nutrient values, or photo size');
     }
     final stamp = await _stamper.stamp();
@@ -162,22 +206,40 @@ class HealthMealRepository {
               hlc: stamp.hlc,
             ),
           );
-      if (removePhoto) {
+      if (replacementPhotos != null) {
+        final ids = replacementPhotos
+            .map((photo) => photo.id)
+            .whereType<String>();
+        final existing = await (_db.select(
+          _db.healthMealPhotos,
+        )..where((t) => t.id.isIn(ids))).get();
+        if (existing.any(
+          (photo) =>
+              photo.mealId != mealId || photo.ownerUserId != stamp.ownerUserId,
+        )) {
+          throw StateError('A photo belongs to another meal or owner.');
+        }
         await (_db.delete(_db.healthMealPhotos)..where(
               (t) =>
-                  t.id.equals(mealId) & t.ownerUserId.equals(stamp.ownerUserId),
+                  t.mealId.equals(mealId) &
+                  t.ownerUserId.equals(stamp.ownerUserId),
             ))
             .go();
-      } else if (photoBytes != null) {
-        await _db
-            .into(_db.healthMealPhotos)
-            .insertOnConflictUpdate(
-              HealthMealPhotosCompanion.insert(
-                id: mealId,
-                ownerUserId: stamp.ownerUserId,
-                bytes: photoBytes,
-              ),
-            );
+        for (final (index, photo) in replacementPhotos.indexed) {
+          await _db
+              .into(_db.healthMealPhotos)
+              .insert(
+                HealthMealPhotosCompanion.insert(
+                  id: photo.id ?? const Uuid().v4(),
+                  mealId: mealId,
+                  ownerUserId: stamp.ownerUserId,
+                  bytes: photo.bytes,
+                  viewRole: Value(photo.role.wire),
+                  position: Value(index),
+                  timestampMs: Value(photo.timestampMs),
+                ),
+              );
+        }
       }
       await _outbox.enqueue(table: table, rowId: mealId);
       return meal;
@@ -213,7 +275,8 @@ class HealthMealRepository {
       }
       await (_db.delete(_db.healthMealPhotos)..where(
             (t) =>
-                t.id.equals(meal.id) & t.ownerUserId.equals(stamp.ownerUserId),
+                t.mealId.equals(meal.id) &
+                t.ownerUserId.equals(stamp.ownerUserId),
           ))
           .go();
       await _outbox.enqueue(table: table, rowId: meal.id);

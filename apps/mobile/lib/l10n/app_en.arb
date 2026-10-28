@@ -9007,15 +9007,15 @@
   "healthMealLunch": "Lunch",
   "healthMealDinner": "Dinner",
   "healthMealSnack": "Snack",
-  "healthMealPhoto": "Meal photo",
+  "healthMealPhoto": "Photos & video",
   "healthMealCamera": "Take photo",
   "healthMealGallery": "Choose photo",
   "healthMealRemovePhoto": "Remove photo",
-  "healthMealPhotoLocal": "Photos stay on this device and are excluded from sync and backups.",
+  "healthMealPhotoLocal": "Images stay on this device, outside sync and backups. Videos are converted to images for review.",
   "healthMealRecognize": "Identify foods",
   "healthMealRecognizing": "Identifying foods…",
-  "healthMealUploadTitle": "Send this meal photo?",
-  "healthMealUploadBody": "The resized photo will be sent directly to {provider} using your API key. It may contain sensitive information. Existing food items will be replaced by editable estimates. Nothing is saved until you confirm the meal.",
+  "healthMealUploadTitle": "Send these meal images?",
+  "healthMealUploadBody": "The selected images and meal details will be sent directly to {provider} using your API key. They may contain sensitive information. Existing foods will be replaced by editable estimates for this one meal. Nothing is saved until you confirm the meal.",
   "@healthMealUploadBody": {
     "placeholders": {
       "provider": {
@@ -9048,7 +9048,7 @@
   "healthMealNeedFood": "Add at least one food before saving.",
   "healthMealNotFound": "This meal is unavailable or belongs to another user.",
   "healthMealSessionChanged": "The user or HealthOS setting changed. Reopen this meal to continue.",
-  "healthMealDeleteConfirm": "Delete this meal and its photo from this device? The meal deletion will also sync to your other devices.",
+  "healthMealDeleteConfirm": "Delete this meal and its images from this device? The meal deletion will also sync to your other devices.",
   "healthMealHistory": "View meals",
   "healthMealKcal": "About {kcal} kcal",
   "@healthMealKcal": {
@@ -9068,6 +9068,32 @@
         "type": "String"
       },
       "fat": {
+        "type": "String"
+      }
+    }
+  },
+  "healthMealViewsHint": "Up to 4 images. Add an overhead and side view, with optional details or nutrition labels.",
+  "healthMealPhotoRole": "Image purpose",
+  "healthMealViewOverview": "Before meal · overview",
+  "healthMealViewSide": "Before meal · side",
+  "healthMealViewDetail": "Before meal · detail",
+  "healthMealViewLabel": "Nutrition label",
+  "healthMealViewAfter": "After meal · leftovers",
+  "healthMealPreview": "Preview image",
+  "healthMealVideo": "Short video",
+  "healthMealVideoRecord": "Record short video",
+  "healthMealVideoChoose": "Choose short video",
+  "healthMealVideoHint": "Move slowly around the meal for 5–8 seconds. Choose a video up to 10 seconds and 50 MB. Review the selected frames before identifying foods.",
+  "healthMealVideoTooLong": "Choose a video no longer than 10 seconds.",
+  "healthMealVideoTooLarge": "Choose a video no larger than 50 MB.",
+  "healthMealVideoFailed": "Could not extract clear images. Try another video or use photos.",
+  "healthMealNeedMealView": "Add at least one before-meal food photo. Labels and leftovers support that view.",
+  "healthMealContext": "Details: amount, cooking method or sharing",
+  "healthMealPreparingImages": "Preparing images…",
+  "healthMealVideoFrame": "Video frame · {seconds}s",
+  "@healthMealVideoFrame": {
+    "placeholders": {
+      "seconds": {
         "type": "String"
       }
     }

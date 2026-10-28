@@ -1,13 +1,12 @@
 /// FRB-backed profile-completion adapters used by app-level provider wiring.
 library;
 
-import 'dart:typed_data';
-
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_llm_bridge.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/features/finance/activity/data/activity_entry_insight_client.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_llm_client.dart';
 import 'package:naviwealth/features/health/data/meal_recognition_client.dart';
+import 'package:naviwealth/features/health/domain/meal_photo.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_rewrite_client.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
@@ -328,17 +327,19 @@ class FrbMealRecognitionClient implements MealRecognitionClient {
 
   @override
   Future<MealRecognitionDraft> recognize({
-    required Uint8List photoBytes,
+    required List<MealPhoto> photos,
     required String languageCode,
     required bool allowUpload,
+    String context = '',
   }) {
     if (!allowUpload) {
       throw StateError('Meal photo upload has not been authorized');
     }
     return _completer.completeProfileAndTransform(
       messages: mealRecognitionMessages(
-        photoBytes: photoBytes,
+        photos: photos,
         languageCode: languageCode,
+        context: context,
       ),
       responseFormat: const {'type': 'json_object'},
       maxOutputTokens: 3000,

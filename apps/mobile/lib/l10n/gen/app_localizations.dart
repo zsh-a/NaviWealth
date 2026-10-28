@@ -30886,7 +30886,7 @@ abstract class AppLocalizations {
   /// No description provided for @healthMealPhoto.
   ///
   /// In en, this message translates to:
-  /// **'Meal photo'**
+  /// **'Photos & video'**
   String get healthMealPhoto;
 
   /// No description provided for @healthMealCamera.
@@ -30910,7 +30910,7 @@ abstract class AppLocalizations {
   /// No description provided for @healthMealPhotoLocal.
   ///
   /// In en, this message translates to:
-  /// **'Photos stay on this device and are excluded from sync and backups.'**
+  /// **'Images stay on this device, outside sync and backups. Videos are converted to images for review.'**
   String get healthMealPhotoLocal;
 
   /// No description provided for @healthMealRecognize.
@@ -30928,13 +30928,13 @@ abstract class AppLocalizations {
   /// No description provided for @healthMealUploadTitle.
   ///
   /// In en, this message translates to:
-  /// **'Send this meal photo?'**
+  /// **'Send these meal images?'**
   String get healthMealUploadTitle;
 
   /// No description provided for @healthMealUploadBody.
   ///
   /// In en, this message translates to:
-  /// **'The resized photo will be sent directly to {provider} using your API key. It may contain sensitive information. Existing food items will be replaced by editable estimates. Nothing is saved until you confirm the meal.'**
+  /// **'The selected images and meal details will be sent directly to {provider} using your API key. They may contain sensitive information. Existing foods will be replaced by editable estimates for this one meal. Nothing is saved until you confirm the meal.'**
   String healthMealUploadBody(String provider);
 
   /// No description provided for @healthMealUploadAllow.
@@ -31090,7 +31090,7 @@ abstract class AppLocalizations {
   /// No description provided for @healthMealDeleteConfirm.
   ///
   /// In en, this message translates to:
-  /// **'Delete this meal and its photo from this device? The meal deletion will also sync to your other devices.'**
+  /// **'Delete this meal and its images from this device? The meal deletion will also sync to your other devices.'**
   String get healthMealDeleteConfirm;
 
   /// No description provided for @healthMealHistory.
@@ -31110,6 +31110,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Protein {protein} g · Carbs {carbs} g · Fat {fat} g'**
   String healthMealMacros(String protein, String carbs, String fat);
+
+  /// No description provided for @healthMealViewsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Up to 4 images. Add an overhead and side view, with optional details or nutrition labels.'**
+  String get healthMealViewsHint;
+
+  /// No description provided for @healthMealPhotoRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Image purpose'**
+  String get healthMealPhotoRole;
+
+  /// No description provided for @healthMealViewOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Before meal · overview'**
+  String get healthMealViewOverview;
+
+  /// No description provided for @healthMealViewSide.
+  ///
+  /// In en, this message translates to:
+  /// **'Before meal · side'**
+  String get healthMealViewSide;
+
+  /// No description provided for @healthMealViewDetail.
+  ///
+  /// In en, this message translates to:
+  /// **'Before meal · detail'**
+  String get healthMealViewDetail;
+
+  /// No description provided for @healthMealViewLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Nutrition label'**
+  String get healthMealViewLabel;
+
+  /// No description provided for @healthMealViewAfter.
+  ///
+  /// In en, this message translates to:
+  /// **'After meal · leftovers'**
+  String get healthMealViewAfter;
+
+  /// No description provided for @healthMealPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview image'**
+  String get healthMealPreview;
+
+  /// No description provided for @healthMealVideo.
+  ///
+  /// In en, this message translates to:
+  /// **'Short video'**
+  String get healthMealVideo;
+
+  /// No description provided for @healthMealVideoRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Record short video'**
+  String get healthMealVideoRecord;
+
+  /// No description provided for @healthMealVideoChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose short video'**
+  String get healthMealVideoChoose;
+
+  /// No description provided for @healthMealVideoHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Move slowly around the meal for 5–8 seconds. Choose a video up to 10 seconds and 50 MB. Review the selected frames before identifying foods.'**
+  String get healthMealVideoHint;
+
+  /// No description provided for @healthMealVideoTooLong.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a video no longer than 10 seconds.'**
+  String get healthMealVideoTooLong;
+
+  /// No description provided for @healthMealVideoTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a video no larger than 50 MB.'**
+  String get healthMealVideoTooLarge;
+
+  /// No description provided for @healthMealVideoFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not extract clear images. Try another video or use photos.'**
+  String get healthMealVideoFailed;
+
+  /// No description provided for @healthMealNeedMealView.
+  ///
+  /// In en, this message translates to:
+  /// **'Add at least one before-meal food photo. Labels and leftovers support that view.'**
+  String get healthMealNeedMealView;
+
+  /// No description provided for @healthMealContext.
+  ///
+  /// In en, this message translates to:
+  /// **'Details: amount, cooking method or sharing'**
+  String get healthMealContext;
+
+  /// No description provided for @healthMealPreparingImages.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing images…'**
+  String get healthMealPreparingImages;
+
+  /// No description provided for @healthMealVideoFrame.
+  ///
+  /// In en, this message translates to:
+  /// **'Video frame · {seconds}s'**
+  String healthMealVideoFrame(String seconds);
 }
 
 class _AppLocalizationsDelegate

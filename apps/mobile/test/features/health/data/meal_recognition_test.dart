@@ -9,6 +9,7 @@ import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
 import 'package:naviwealth/features/health/data/meal_photo_capture.dart';
 import 'package:naviwealth/features/health/data/meal_recognition_client.dart';
+import 'package:naviwealth/features/health/domain/meal_photo.dart';
 
 class _NativeBridge implements AgentRuntimeNativeBridge {
   _NativeBridge(this.complete);
@@ -22,6 +23,69 @@ class _NativeBridge implements AgentRuntimeNativeBridge {
 }
 
 void main() {
+  test('multiple views carry roles and context for one deduplicated meal', () {
+    final messages = mealRecognitionMessages(
+      photos: [
+        MealPhoto(bytes: Uint8List.fromList([1])),
+        MealPhoto(
+          bytes: Uint8List.fromList([2]),
+          role: MealPhotoRole.side,
+          timestampMs: 1200,
+        ),
+        MealPhoto(
+          bytes: Uint8List.fromList([3]),
+          role: MealPhotoRole.afterMeal,
+        ),
+        MealPhoto(bytes: Uint8List.fromList([4]), role: MealPhotoRole.label),
+      ],
+      languageCode: 'zh',
+      context: '两人分食，熟米饭 150g',
+    );
+    final system = messages.first['content']! as String;
+    expect(system, contains('count each serving ONCE'));
+    expect(system, contains('leftovers, never additional food'));
+    expect(system, contains('1 kcal = 4.184 kJ'));
+    final content = messages.last['content']! as List<Map<String, Object?>>;
+    expect(content.where((part) => part['type'] == 'image'), hasLength(4));
+    expect(content.map((part) => part['text']).join(), contains('after_meal'));
+    expect(content.map((part) => part['text']).join(), contains('两人分食'));
+    expect(content.map((part) => part['text']).join(), contains('1200'));
+  });
+
+  test(
+    'recognition rejects excess views, missing meal view and oversized context',
+    () {
+      for (final photos in [
+        <MealPhoto>[],
+        List.generate(5, (_) => MealPhoto(bytes: Uint8List.fromList([1]))),
+        [
+          MealPhoto(
+            bytes: Uint8List.fromList([1]),
+            role: MealPhotoRole.afterMeal,
+          ),
+        ],
+        [
+          MealPhoto(bytes: Uint8List.fromList([1]), role: MealPhotoRole.label),
+        ],
+      ]) {
+        expect(
+          () => mealRecognitionMessages(photos: photos, languageCode: 'en'),
+          throwsFormatException,
+        );
+      }
+      expect(
+        () => mealRecognitionMessages(
+          photos: [
+            MealPhoto(bytes: Uint8List.fromList([1])),
+          ],
+          languageCode: 'en',
+          context: 'a' * 1001,
+        ),
+        throwsFormatException,
+      );
+    },
+  );
+
   Map<String, Object?> response(List<Object?> foods) => {
     'model': 'test-vision',
     'object': {'foods': foods},
@@ -122,7 +186,9 @@ void main() {
     );
     expect(
       () => client.recognize(
-        photoBytes: Uint8List.fromList([1]),
+        photos: [
+          MealPhoto(bytes: Uint8List.fromList([1])),
+        ],
         languageCode: 'zh',
         allowUpload: false,
       ),
@@ -130,7 +196,9 @@ void main() {
     );
     expect(calls, isEmpty);
     final draft = await client.recognize(
-      photoBytes: Uint8List.fromList([1]),
+      photos: [
+        MealPhoto(bytes: Uint8List.fromList([1])),
+      ],
       languageCode: 'zh',
       allowUpload: true,
     );
@@ -138,7 +206,7 @@ void main() {
     expect(calls.single['response_format'], {'type': 'json_object'});
     final messages = calls.single['messages']! as List<Map<String, Object?>>;
     final content = messages.last['content']! as List<Map<String, Object?>>;
-    expect(content.first['type'], 'image');
+    expect(content.where((block) => block['type'] == 'image'), hasLength(1));
     expect(traces.single['domain'], 'health');
   });
 }

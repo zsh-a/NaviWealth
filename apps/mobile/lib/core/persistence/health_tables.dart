@@ -109,10 +109,14 @@ class HealthMeals extends Table with SyncableTable {
 /// photo (including a domain reset or replacement during backup restore).
 @DataClassName('HealthMealPhotoRow')
 class HealthMealPhotos extends Table {
-  TextColumn get id =>
+  TextColumn get id => text()();
+  TextColumn get mealId =>
       text().references(HealthMeals, #id, onDelete: KeyAction.cascade)();
   TextColumn get ownerUserId => text()();
   BlobColumn get bytes => blob()();
+  TextColumn get viewRole => text().withDefault(const Constant('overview'))();
+  IntColumn get position => integer().withDefault(const Constant(0))();
+  IntColumn get timestampMs => integer().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};

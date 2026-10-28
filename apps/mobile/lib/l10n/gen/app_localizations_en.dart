@@ -18419,7 +18419,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthMealSnack => 'Snack';
 
   @override
-  String get healthMealPhoto => 'Meal photo';
+  String get healthMealPhoto => 'Photos & video';
 
   @override
   String get healthMealCamera => 'Take photo';
@@ -18432,7 +18432,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get healthMealPhotoLocal =>
-      'Photos stay on this device and are excluded from sync and backups.';
+      'Images stay on this device, outside sync and backups. Videos are converted to images for review.';
 
   @override
   String get healthMealRecognize => 'Identify foods';
@@ -18441,11 +18441,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthMealRecognizing => 'Identifying foods…';
 
   @override
-  String get healthMealUploadTitle => 'Send this meal photo?';
+  String get healthMealUploadTitle => 'Send these meal images?';
 
   @override
   String healthMealUploadBody(String provider) {
-    return 'The resized photo will be sent directly to $provider using your API key. It may contain sensitive information. Existing food items will be replaced by editable estimates. Nothing is saved until you confirm the meal.';
+    return 'The selected images and meal details will be sent directly to $provider using your API key. They may contain sensitive information. Existing foods will be replaced by editable estimates for this one meal. Nothing is saved until you confirm the meal.';
   }
 
   @override
@@ -18532,7 +18532,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get healthMealDeleteConfirm =>
-      'Delete this meal and its photo from this device? The meal deletion will also sync to your other devices.';
+      'Delete this meal and its images from this device? The meal deletion will also sync to your other devices.';
 
   @override
   String get healthMealHistory => 'View meals';
@@ -18545,5 +18545,69 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String healthMealMacros(String protein, String carbs, String fat) {
     return 'Protein $protein g · Carbs $carbs g · Fat $fat g';
+  }
+
+  @override
+  String get healthMealViewsHint =>
+      'Up to 4 images. Add an overhead and side view, with optional details or nutrition labels.';
+
+  @override
+  String get healthMealPhotoRole => 'Image purpose';
+
+  @override
+  String get healthMealViewOverview => 'Before meal · overview';
+
+  @override
+  String get healthMealViewSide => 'Before meal · side';
+
+  @override
+  String get healthMealViewDetail => 'Before meal · detail';
+
+  @override
+  String get healthMealViewLabel => 'Nutrition label';
+
+  @override
+  String get healthMealViewAfter => 'After meal · leftovers';
+
+  @override
+  String get healthMealPreview => 'Preview image';
+
+  @override
+  String get healthMealVideo => 'Short video';
+
+  @override
+  String get healthMealVideoRecord => 'Record short video';
+
+  @override
+  String get healthMealVideoChoose => 'Choose short video';
+
+  @override
+  String get healthMealVideoHint =>
+      'Move slowly around the meal for 5–8 seconds. Choose a video up to 10 seconds and 50 MB. Review the selected frames before identifying foods.';
+
+  @override
+  String get healthMealVideoTooLong =>
+      'Choose a video no longer than 10 seconds.';
+
+  @override
+  String get healthMealVideoTooLarge => 'Choose a video no larger than 50 MB.';
+
+  @override
+  String get healthMealVideoFailed =>
+      'Could not extract clear images. Try another video or use photos.';
+
+  @override
+  String get healthMealNeedMealView =>
+      'Add at least one before-meal food photo. Labels and leftovers support that view.';
+
+  @override
+  String get healthMealContext => 'Details: amount, cooking method or sharing';
+
+  @override
+  String get healthMealPreparingImages => 'Preparing images…';
+
+  @override
+  String healthMealVideoFrame(String seconds) {
+    return 'Video frame · ${seconds}s';
   }
 }

@@ -140,7 +140,7 @@ Tables:
 - Drift table: `health_metrics`
 - Drift table: `health_check_ins` (included in the schema-99 baseline)
 - Drift table: `health_meals` (one confirmed meal and its food snapshots per row)
-- Drift table: `health_meal_photos` (device-local photo bytes; never synced)
+- Drift table: `health_meal_photos` (ordered local views with role and optional video timestamp; never synced)
 - Entity: `features/health/domain/health_metric.dart`
 - Kind enum: `features/health/domain/health_metric_kind.dart`
 
@@ -191,9 +191,11 @@ Unknown event tags remain intact when an older client edits a record.
 participates in Health reset and encrypted backups. Older clients skip the
 unknown row family; upgrading changes the registry compatibility signature
 and replays the remote rows. Restoring an older archive that has no check-in
-table preserves existing check-ins. Schema 100 adds meals and local photos;
-the additive 99 → 100 upgrade creates only these tables and their index in one
-transaction, preserving existing data. Other local schema upgrades/downgrades
+table preserves existing check-ins. Schema 101 supports multiple photos per
+meal. Upgrades from 99 create the meal tables; upgrades from 100 retain the
+existing photo as the first overview and add a meal foreign key, role, order,
+and optional frame timestamp. Both paths are transactional and preserve
+existing data. Other local schema upgrades/downgrades
 remain unsupported and require an explicitly confirmed reset; they never
 rewrite existing rows automatically.
 
@@ -211,7 +213,11 @@ missing meal records never mean zero intake or an established calorie deficit.
 
 Camera/library capture is resized to at most 1280 pixels on the longest side,
 re-encoded as JPEG without original EXIF/GPS metadata, and capped at 2 MiB.
-The selected photo remains an in-memory draft until explicit Save. Confirmed
+Each meal accepts up to four images, appended from camera or multi-select.
+Users can preview/remove each view and label it as before-meal overview, side,
+detail, nutrition label, or after-meal leftovers. At least one before-meal food
+view is required for recognition; manual capture remains available without one.
+The selected images remain in-memory drafts until explicit Save. Confirmed
 photos live in the owner-scoped native encrypted database, not an unencrypted
 file cache. They are excluded from sync and backups; another device or a
 restored archive may have the meal without its photo. Removing/deleting a local
@@ -219,6 +225,17 @@ meal photo clears its bytes; physical parent deletion cascades to the photo.
 Domain reset clears both resources, while ordinary cache cleanup preserves
 them. A storage trigger also removes photo bytes when a meal tombstone arrives
 through Sync.
+
+Android and iOS support short-video capture/import (up to 10 seconds and
+50 MiB; recording requests 8 seconds). Native codecs extract eight bounded
+candidate frames off the main thread. Local image processing selects up to
+the remaining photo capacity across the clip, preferring sharper images and
+removing near-duplicates. Timestamps remain attached to the selected frames.
+The user reviews these stills before recognition. Only selected still images
+are uploaded; video/audio are not sent or persisted, and picker copies inside
+the app temporary directory are removed after extraction. Unsupported native
+platforms retain photo/manual capture. Frame diversity is a heuristic, not a
+calibrated depth/volume measurement or a guaranteed accuracy improvement.
 
 Photo identification requires per-request consent naming the captured model
 profile. The existing document-recognition permission does not authorize meal
@@ -230,6 +247,13 @@ trace, not an automatic repository write. Provider errors preserve previous
 food edits and offer manual entry. The selected model must support image input
 and JSON output; compatibility is verified through adapter tests, not a claim
 that every user-configured model supports vision.
+All selected images are submitted in one multimodal request with their role,
+optional frame time, and the user's meal details (up to 1,000 characters).
+The prompt treats views as one meal, reconciles repeated foods once, treats
+labels as supporting evidence, and uses after-meal views only for leftovers.
+It requests edible weight actually consumed, never summed per-image totals.
+Recognition remains an editable estimate; users confirm the consumed grams
+and nutrient snapshots before saving.
 
 The offline catalog is a small CC0 USDA FoodData Central SR Legacy subset,
 with explicit cooked/raw names, FDC IDs, and source attribution in

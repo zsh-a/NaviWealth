@@ -77,9 +77,9 @@ final class AppDatabaseTransactionScope {
 
 /// Local NaviWealth database.
 ///
-/// Schema 100 adds meal records and device-local photos to baseline 99.
-/// Only that additive upgrade is supported; older baselines and downgrades
-/// are rejected without modifying data.
+/// Schema 101 supports multiple device-local views per meal. Upgrades from
+/// 99 and 100 preserve existing records and photos; other baselines and
+/// downgrades are rejected without modifying data.
 @DriftDatabase(
   tables: [
     Users,
@@ -176,7 +176,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 100;
+  int get schemaVersion => 101;
 
   UnsupportedDatabaseSchema? _schemaMismatch;
 
@@ -234,10 +234,30 @@ class AppDatabase extends _$AppDatabase {
       await _createHealthMealIndexes(this);
     },
     onUpgrade: (m, from, to) async {
-      if (from == 99 && to == 100) {
+      if ((from == 99 || from == 100) && to == 101) {
         await transaction(() async {
-          await m.createTable(healthMeals);
-          await m.createTable(healthMealPhotos);
+          if (from == 99) {
+            await m.createTable(healthMeals);
+            await m.createTable(healthMealPhotos);
+          } else {
+            await customStatement(
+              'DROP TRIGGER IF EXISTS trg_health_meal_deleted_photo',
+            );
+            await m.alterTable(
+              TableMigration(
+                healthMealPhotos,
+                newColumns: [
+                  healthMealPhotos.mealId,
+                  healthMealPhotos.viewRole,
+                  healthMealPhotos.position,
+                  healthMealPhotos.timestampMs,
+                ],
+                columnTransformer: {
+                  healthMealPhotos.mealId: healthMealPhotos.id,
+                },
+              ),
+            );
+          }
           await _createHealthMealIndexes(this);
         });
         return;
@@ -265,6 +285,10 @@ Future<void> _createHealthMealIndexes(AppDatabase db) async {
     'CREATE INDEX IF NOT EXISTS idx_health_meals_owner_day '
     'ON health_meals(owner_user_id, day)',
   );
+  await db.customStatement(
+    'CREATE INDEX IF NOT EXISTS idx_health_meal_photos_meal '
+    'ON health_meal_photos(owner_user_id, meal_id, position)',
+  );
   // A Sync-applied tombstone must remove device-local bytes too. Keep this
   // invariant at the storage boundary without adding a Health callback to the
   // domain-neutral row applier.
@@ -273,7 +297,7 @@ Future<void> _createHealthMealIndexes(AppDatabase db) async {
     AFTER UPDATE OF deleted_at ON health_meals
     WHEN NEW.deleted_at IS NOT NULL
     BEGIN
-      DELETE FROM health_meal_photos WHERE id = NEW.id;
+      DELETE FROM health_meal_photos WHERE meal_id = NEW.id;
     END
   ''');
 }

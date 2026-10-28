@@ -15,9 +15,12 @@ import '../data/health_meal_providers.dart';
 import '../data/health_series_providers.dart';
 import '../data/meal_photo_capture.dart';
 import '../data/meal_recognition_client.dart';
+import '../data/meal_video_frames.dart';
 import '../domain/health_meal.dart';
+import '../domain/meal_photo.dart';
 import 'health_meal_summary.dart';
 import 'meal_food_sheet.dart';
+import 'meal_photo_list.dart';
 
 class HealthMealEntryPage extends ConsumerStatefulWidget {
   const HealthMealEntryPage({super.key, this.mealId, this.initialDay});
@@ -39,9 +42,9 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
   late DateTime _capturedAt;
   late DateTime _day;
   HealthMealType _type = HealthMealType.lunch;
-  Uint8List? _photo;
-  bool _photoChanged = false;
-  bool _removePhoto = false;
+  final _photos = <MealPhoto>[];
+  bool _photosChanged = false;
+  bool _recognizing = false;
   String? _recognitionModel;
   bool _loading = false;
   bool _working = false;
@@ -88,9 +91,9 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
       final meal = owner == null
           ? null
           : await repo.find(id: widget.mealId!, ownerUserId: owner);
-      final photo = meal == null
-          ? null
-          : await repo.photo(id: meal.id, ownerUserId: owner!);
+      final photos = meal == null
+          ? const <MealPhoto>[]
+          : await repo.photos(id: meal.id, ownerUserId: owner!);
       if (!mounted || !_sessionValid) return;
       setState(() {
         _initial = meal;
@@ -103,7 +106,7 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
           _foods.addAll(meal.foods);
           _note.text = meal.note ?? '';
           _recognitionModel = meal.recognitionModel;
-          _photo = photo;
+          _photos.addAll(photos);
         }
         _loading = false;
       });
@@ -184,15 +187,29 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
             ] else ...[
               Text(l.healthMealPhoto, style: context.labelStyle),
               const SizedBox(height: AppSpacing.s8),
-              if (_photo != null) ...[
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  child: Image.memory(
-                    _photo!,
-                    height: 200,
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, _, _) => Text(l.healthMealPhotoFailed),
-                  ),
+              Text(l.healthMealViewsHint, style: context.captionStyle),
+              const SizedBox(height: AppSpacing.s8),
+              if (_photos.isNotEmpty) ...[
+                MealPhotoList(
+                  photos: _photos,
+                  onRoleChanged: _busy
+                      ? null
+                      : (index, role) {
+                          setState(() {
+                            _photos[index] = _photos[index].withRole(role);
+                            _photosChanged = true;
+                          });
+                          dirty.markDirty();
+                        },
+                  onRemove: _busy
+                      ? null
+                      : (index) {
+                          setState(() {
+                            _photos.removeAt(index);
+                            _photosChanged = true;
+                          });
+                          dirty.markDirty();
+                        },
                 ),
                 const SizedBox(height: AppSpacing.s8),
               ],
@@ -203,43 +220,62 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
                   FButton(
                     variant: FButtonVariant.outline,
                     mainAxisSize: MainAxisSize.min,
-                    onPress: _busy ? null : () => _capture(camera: true),
+                    onPress: _busy || _photos.length >= MealPhoto.maxCount
+                        ? null
+                        : () => _capture(camera: true),
                     child: Text(l.healthMealCamera),
                   ),
                   FButton(
                     variant: FButtonVariant.outline,
                     mainAxisSize: MainAxisSize.min,
-                    onPress: _busy ? null : () => _capture(camera: false),
+                    onPress: _busy || _photos.length >= MealPhoto.maxCount
+                        ? null
+                        : () => _capture(camera: false),
                     child: Text(l.healthMealGallery),
                   ),
-                  if (_photo != null)
+                  if (ref.watch(mealPhotoCaptureProvider).supportsVideo)
                     FButton(
-                      variant: FButtonVariant.ghost,
+                      key: const Key('meal-video'),
+                      variant: FButtonVariant.outline,
                       mainAxisSize: MainAxisSize.min,
-                      onPress: _busy
+                      onPress: _busy || _photos.length >= MealPhoto.maxCount
                           ? null
-                          : () {
-                              setState(() {
-                                _photo = null;
-                                _photoChanged = true;
-                                _removePhoto = true;
-                              });
-                              dirty.markDirty();
-                            },
-                      child: Text(l.healthMealRemovePhoto),
+                          : _captureVideo,
+                      child: Text(l.healthMealVideo),
                     ),
                 ],
               ),
               const SizedBox(height: AppSpacing.s8),
               Text(l.healthMealPhotoLocal, style: context.microCaptionStyle),
               const SizedBox(height: AppSpacing.s12),
+              FTextFormField(
+                key: const Key('meal-context'),
+                label: Text(l.healthMealContext),
+                enabled: !_busy,
+                maxLength: 1000,
+                maxLines: 3,
+                control: FTextFieldControl.managed(controller: _note),
+              ),
+              const SizedBox(height: AppSpacing.s12),
+              if (_photos.isNotEmpty &&
+                  !_photos.any((photo) => photo.isMealView)) ...[
+                Text(l.healthMealNeedMealView, style: context.captionStyle),
+                const SizedBox(height: AppSpacing.s8),
+              ],
+              if (_working && !_recognizing) ...[
+                Text(l.healthMealPreparingImages, style: context.captionStyle),
+                const SizedBox(height: AppSpacing.s8),
+              ],
               AppBusyButton(
                 buttonKey: const Key('meal-recognize'),
                 label: l.healthMealRecognize,
                 busyLabel: l.healthMealRecognizing,
-                busy: _working,
+                busy: _recognizing,
                 variant: FButtonVariant.outline,
-                onPress: _photo == null || _saving || client == null
+                onPress:
+                    !_photos.any((photo) => photo.isMealView) ||
+                        _busy ||
+                        client == null
                     ? null
                     : _recognize,
               ),
@@ -354,14 +390,6 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
               ],
               const SizedBox(height: AppSpacing.s12),
               Text(l.healthMealEstimateHint, style: context.captionStyle),
-              const SizedBox(height: AppSpacing.s16),
-              FTextFormField(
-                label: Text(l.commonNote),
-                enabled: !_busy,
-                maxLength: 1000,
-                maxLines: 3,
-                control: FTextFieldControl.managed(controller: _note),
-              ),
               if (_initial != null) ...[
                 const SizedBox(height: AppSpacing.s20),
                 AppBusyButton(
@@ -385,21 +413,28 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
   }
 
   Future<void> _capture({required bool camera}) async {
-    if (_busy || !_sessionValid) return;
+    if (_busy || !_sessionValid || _photos.length >= MealPhoto.maxCount) return;
     setState(() {
       _working = true;
       _error = null;
     });
     dirty.busy = true;
     try {
-      final bytes = await ref
-          .read(mealPhotoCaptureProvider)
-          .pick(camera: camera);
-      if (!mounted || !_sessionValid || bytes == null) return;
+      final capture = ref.read(mealPhotoCaptureProvider);
+      final remaining = MealPhoto.maxCount - _photos.length;
+      final images = camera
+          ? [
+              if (await capture.pick(camera: true) case final Uint8List bytes)
+                bytes,
+            ]
+          : await capture.pickMany(limit: remaining);
+      if (!mounted || !_sessionValid || images.isEmpty) return;
+      if (images.length > remaining) {
+        throw const FormatException('Too many views');
+      }
       setState(() {
-        _photo = bytes;
-        _photoChanged = true;
-        _removePhoto = false;
+        _photos.addAll(images.map((bytes) => MealPhoto(bytes: bytes)));
+        _photosChanged = true;
       });
       dirty.markDirty();
     } catch (_) {
@@ -414,10 +449,83 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
     }
   }
 
+  Future<void> _captureVideo() async {
+    if (_busy || !_sessionValid || _photos.length >= MealPhoto.maxCount) return;
+    final l = AppLocalizations.of(context);
+    final camera = await showAppSheet<bool>(
+      context: context,
+      title: l.healthMealVideo,
+      builder: (sheetContext) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(l.healthMealVideoHint, style: sheetContext.captionStyle),
+          const SizedBox(height: AppSpacing.s12),
+          AppActionSheetList(
+            children: [
+              AppActionSheetTile(
+                icon: FLucideIcons.video,
+                title: l.healthMealVideoRecord,
+                onPress: () => Navigator.of(sheetContext).pop(true),
+              ),
+              AppActionSheetTile(
+                icon: FLucideIcons.folderOpen,
+                title: l.healthMealVideoChoose,
+                onPress: () => Navigator.of(sheetContext).pop(false),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+    if (!mounted || camera == null || !_sessionValid || _busy) return;
+    setState(() {
+      _working = true;
+      _error = null;
+    });
+    dirty.busy = true;
+    try {
+      final remaining = MealPhoto.maxCount - _photos.length;
+      final frames = await ref
+          .read(mealPhotoCaptureProvider)
+          .pickVideo(camera: camera, limit: remaining);
+      if (!mounted || !_sessionValid || frames == null || frames.isEmpty) {
+        return;
+      }
+      if (frames.length > remaining || frames.any((frame) => !frame.isValid)) {
+        throw const MealVideoException('unreadable');
+      }
+      setState(() {
+        _photos.addAll(frames);
+        _photosChanged = true;
+      });
+      dirty.markDirty();
+    } on Object catch (error) {
+      if (mounted) {
+        setState(
+          () => _error = switch (error) {
+            MealVideoException(code: 'video_duration') =>
+              l.healthMealVideoTooLong,
+            MealVideoException(code: 'video_size') => l.healthMealVideoTooLarge,
+            _ => l.healthMealVideoFailed,
+          },
+        );
+      }
+    } finally {
+      dirty.busy = false;
+      if (mounted) setState(() => _working = false);
+    }
+  }
+
   Future<void> _recognize() async {
-    final photo = _photo;
+    final photos = List<MealPhoto>.unmodifiable(_photos);
+    final description = _note.text;
     final client = ref.read(mealRecognitionClientProvider);
-    if (_busy || !_sessionValid || photo == null || client == null) return;
+    if (_busy ||
+        !_sessionValid ||
+        !photos.any((photo) => photo.isMealView) ||
+        client == null) {
+      return;
+    }
     final l = AppLocalizations.of(context);
     final language = Localizations.localeOf(context).languageCode;
     setState(() {
@@ -442,11 +550,13 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
       setState(() {
         _confirming = false;
         _working = true;
+        _recognizing = true;
       });
       final result = await client.recognize(
-        photoBytes: photo,
+        photos: photos,
         languageCode: language,
         allowUpload: true,
+        context: description,
       );
       if (!mounted ||
           !_sessionValid ||
@@ -467,6 +577,7 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
       if (mounted) {
         setState(() {
           _working = false;
+          _recognizing = false;
           _confirming = false;
         });
       }
@@ -515,8 +626,7 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
           foods: foods,
           note: _note.text,
           recognitionModel: _recognitionModel,
-          photoBytes: _photoChanged ? _photo : null,
-          removePhoto: _removePhoto,
+          photos: _photosChanged ? List<MealPhoto>.of(_photos) : null,
         );
       },
       failureMessage: (_) => l.commonSaveFailed,

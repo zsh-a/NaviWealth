@@ -40459,6 +40459,15 @@ class $HealthMealPhotosTable extends HealthMealPhotos
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+  );
+  static const VerificationMeta _mealIdMeta = const VerificationMeta('mealId');
+  @override
+  late final GeneratedColumn<String> mealId = GeneratedColumn<String>(
+    'meal_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
       'REFERENCES health_meals (id) ON DELETE CASCADE',
     ),
@@ -40483,8 +40492,51 @@ class $HealthMealPhotosTable extends HealthMealPhotos
     type: DriftSqlType.blob,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _viewRoleMeta = const VerificationMeta(
+    'viewRole',
+  );
   @override
-  List<GeneratedColumn> get $columns => [id, ownerUserId, bytes];
+  late final GeneratedColumn<String> viewRole = GeneratedColumn<String>(
+    'view_role',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('overview'),
+  );
+  static const VerificationMeta _positionMeta = const VerificationMeta(
+    'position',
+  );
+  @override
+  late final GeneratedColumn<int> position = GeneratedColumn<int>(
+    'position',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _timestampMsMeta = const VerificationMeta(
+    'timestampMs',
+  );
+  @override
+  late final GeneratedColumn<int> timestampMs = GeneratedColumn<int>(
+    'timestamp_ms',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    mealId,
+    ownerUserId,
+    bytes,
+    viewRole,
+    position,
+    timestampMs,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -40501,6 +40553,14 @@ class $HealthMealPhotosTable extends HealthMealPhotos
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     } else if (isInserting) {
       context.missing(_idMeta);
+    }
+    if (data.containsKey('meal_id')) {
+      context.handle(
+        _mealIdMeta,
+        mealId.isAcceptableOrUnknown(data['meal_id']!, _mealIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_mealIdMeta);
     }
     if (data.containsKey('owner_user_id')) {
       context.handle(
@@ -40521,6 +40581,27 @@ class $HealthMealPhotosTable extends HealthMealPhotos
     } else if (isInserting) {
       context.missing(_bytesMeta);
     }
+    if (data.containsKey('view_role')) {
+      context.handle(
+        _viewRoleMeta,
+        viewRole.isAcceptableOrUnknown(data['view_role']!, _viewRoleMeta),
+      );
+    }
+    if (data.containsKey('position')) {
+      context.handle(
+        _positionMeta,
+        position.isAcceptableOrUnknown(data['position']!, _positionMeta),
+      );
+    }
+    if (data.containsKey('timestamp_ms')) {
+      context.handle(
+        _timestampMsMeta,
+        timestampMs.isAcceptableOrUnknown(
+          data['timestamp_ms']!,
+          _timestampMsMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -40534,6 +40615,10 @@ class $HealthMealPhotosTable extends HealthMealPhotos
         DriftSqlType.string,
         data['${effectivePrefix}id'],
       )!,
+      mealId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}meal_id'],
+      )!,
       ownerUserId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}owner_user_id'],
@@ -40542,6 +40627,18 @@ class $HealthMealPhotosTable extends HealthMealPhotos
         DriftSqlType.blob,
         data['${effectivePrefix}bytes'],
       )!,
+      viewRole: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}view_role'],
+      )!,
+      position: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}position'],
+      )!,
+      timestampMs: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}timestamp_ms'],
+      ),
     );
   }
 
@@ -40554,27 +40651,47 @@ class $HealthMealPhotosTable extends HealthMealPhotos
 class HealthMealPhotoRow extends DataClass
     implements Insertable<HealthMealPhotoRow> {
   final String id;
+  final String mealId;
   final String ownerUserId;
   final Uint8List bytes;
+  final String viewRole;
+  final int position;
+  final int? timestampMs;
   const HealthMealPhotoRow({
     required this.id,
+    required this.mealId,
     required this.ownerUserId,
     required this.bytes,
+    required this.viewRole,
+    required this.position,
+    this.timestampMs,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
+    map['meal_id'] = Variable<String>(mealId);
     map['owner_user_id'] = Variable<String>(ownerUserId);
     map['bytes'] = Variable<Uint8List>(bytes);
+    map['view_role'] = Variable<String>(viewRole);
+    map['position'] = Variable<int>(position);
+    if (!nullToAbsent || timestampMs != null) {
+      map['timestamp_ms'] = Variable<int>(timestampMs);
+    }
     return map;
   }
 
   HealthMealPhotosCompanion toCompanion(bool nullToAbsent) {
     return HealthMealPhotosCompanion(
       id: Value(id),
+      mealId: Value(mealId),
       ownerUserId: Value(ownerUserId),
       bytes: Value(bytes),
+      viewRole: Value(viewRole),
+      position: Value(position),
+      timestampMs: timestampMs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(timestampMs),
     );
   }
 
@@ -40585,8 +40702,12 @@ class HealthMealPhotoRow extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return HealthMealPhotoRow(
       id: serializer.fromJson<String>(json['id']),
+      mealId: serializer.fromJson<String>(json['mealId']),
       ownerUserId: serializer.fromJson<String>(json['ownerUserId']),
       bytes: serializer.fromJson<Uint8List>(json['bytes']),
+      viewRole: serializer.fromJson<String>(json['viewRole']),
+      position: serializer.fromJson<int>(json['position']),
+      timestampMs: serializer.fromJson<int?>(json['timestampMs']),
     );
   }
   @override
@@ -40594,27 +40715,45 @@ class HealthMealPhotoRow extends DataClass
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
+      'mealId': serializer.toJson<String>(mealId),
       'ownerUserId': serializer.toJson<String>(ownerUserId),
       'bytes': serializer.toJson<Uint8List>(bytes),
+      'viewRole': serializer.toJson<String>(viewRole),
+      'position': serializer.toJson<int>(position),
+      'timestampMs': serializer.toJson<int?>(timestampMs),
     };
   }
 
   HealthMealPhotoRow copyWith({
     String? id,
+    String? mealId,
     String? ownerUserId,
     Uint8List? bytes,
+    String? viewRole,
+    int? position,
+    Value<int?> timestampMs = const Value.absent(),
   }) => HealthMealPhotoRow(
     id: id ?? this.id,
+    mealId: mealId ?? this.mealId,
     ownerUserId: ownerUserId ?? this.ownerUserId,
     bytes: bytes ?? this.bytes,
+    viewRole: viewRole ?? this.viewRole,
+    position: position ?? this.position,
+    timestampMs: timestampMs.present ? timestampMs.value : this.timestampMs,
   );
   HealthMealPhotoRow copyWithCompanion(HealthMealPhotosCompanion data) {
     return HealthMealPhotoRow(
       id: data.id.present ? data.id.value : this.id,
+      mealId: data.mealId.present ? data.mealId.value : this.mealId,
       ownerUserId: data.ownerUserId.present
           ? data.ownerUserId.value
           : this.ownerUserId,
       bytes: data.bytes.present ? data.bytes.value : this.bytes,
+      viewRole: data.viewRole.present ? data.viewRole.value : this.viewRole,
+      position: data.position.present ? data.position.value : this.position,
+      timestampMs: data.timestampMs.present
+          ? data.timestampMs.value
+          : this.timestampMs,
     );
   }
 
@@ -40622,67 +40761,111 @@ class HealthMealPhotoRow extends DataClass
   String toString() {
     return (StringBuffer('HealthMealPhotoRow(')
           ..write('id: $id, ')
+          ..write('mealId: $mealId, ')
           ..write('ownerUserId: $ownerUserId, ')
-          ..write('bytes: $bytes')
+          ..write('bytes: $bytes, ')
+          ..write('viewRole: $viewRole, ')
+          ..write('position: $position, ')
+          ..write('timestampMs: $timestampMs')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, ownerUserId, $driftBlobEquality.hash(bytes));
+  int get hashCode => Object.hash(
+    id,
+    mealId,
+    ownerUserId,
+    $driftBlobEquality.hash(bytes),
+    viewRole,
+    position,
+    timestampMs,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is HealthMealPhotoRow &&
           other.id == this.id &&
+          other.mealId == this.mealId &&
           other.ownerUserId == this.ownerUserId &&
-          $driftBlobEquality.equals(other.bytes, this.bytes));
+          $driftBlobEquality.equals(other.bytes, this.bytes) &&
+          other.viewRole == this.viewRole &&
+          other.position == this.position &&
+          other.timestampMs == this.timestampMs);
 }
 
 class HealthMealPhotosCompanion extends UpdateCompanion<HealthMealPhotoRow> {
   final Value<String> id;
+  final Value<String> mealId;
   final Value<String> ownerUserId;
   final Value<Uint8List> bytes;
+  final Value<String> viewRole;
+  final Value<int> position;
+  final Value<int?> timestampMs;
   final Value<int> rowid;
   const HealthMealPhotosCompanion({
     this.id = const Value.absent(),
+    this.mealId = const Value.absent(),
     this.ownerUserId = const Value.absent(),
     this.bytes = const Value.absent(),
+    this.viewRole = const Value.absent(),
+    this.position = const Value.absent(),
+    this.timestampMs = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   HealthMealPhotosCompanion.insert({
     required String id,
+    required String mealId,
     required String ownerUserId,
     required Uint8List bytes,
+    this.viewRole = const Value.absent(),
+    this.position = const Value.absent(),
+    this.timestampMs = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
+       mealId = Value(mealId),
        ownerUserId = Value(ownerUserId),
        bytes = Value(bytes);
   static Insertable<HealthMealPhotoRow> custom({
     Expression<String>? id,
+    Expression<String>? mealId,
     Expression<String>? ownerUserId,
     Expression<Uint8List>? bytes,
+    Expression<String>? viewRole,
+    Expression<int>? position,
+    Expression<int>? timestampMs,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (mealId != null) 'meal_id': mealId,
       if (ownerUserId != null) 'owner_user_id': ownerUserId,
       if (bytes != null) 'bytes': bytes,
+      if (viewRole != null) 'view_role': viewRole,
+      if (position != null) 'position': position,
+      if (timestampMs != null) 'timestamp_ms': timestampMs,
       if (rowid != null) 'rowid': rowid,
     });
   }
 
   HealthMealPhotosCompanion copyWith({
     Value<String>? id,
+    Value<String>? mealId,
     Value<String>? ownerUserId,
     Value<Uint8List>? bytes,
+    Value<String>? viewRole,
+    Value<int>? position,
+    Value<int?>? timestampMs,
     Value<int>? rowid,
   }) {
     return HealthMealPhotosCompanion(
       id: id ?? this.id,
+      mealId: mealId ?? this.mealId,
       ownerUserId: ownerUserId ?? this.ownerUserId,
       bytes: bytes ?? this.bytes,
+      viewRole: viewRole ?? this.viewRole,
+      position: position ?? this.position,
+      timestampMs: timestampMs ?? this.timestampMs,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -40693,11 +40876,23 @@ class HealthMealPhotosCompanion extends UpdateCompanion<HealthMealPhotoRow> {
     if (id.present) {
       map['id'] = Variable<String>(id.value);
     }
+    if (mealId.present) {
+      map['meal_id'] = Variable<String>(mealId.value);
+    }
     if (ownerUserId.present) {
       map['owner_user_id'] = Variable<String>(ownerUserId.value);
     }
     if (bytes.present) {
       map['bytes'] = Variable<Uint8List>(bytes.value);
+    }
+    if (viewRole.present) {
+      map['view_role'] = Variable<String>(viewRole.value);
+    }
+    if (position.present) {
+      map['position'] = Variable<int>(position.value);
+    }
+    if (timestampMs.present) {
+      map['timestamp_ms'] = Variable<int>(timestampMs.value);
     }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
@@ -40709,8 +40904,12 @@ class HealthMealPhotosCompanion extends UpdateCompanion<HealthMealPhotoRow> {
   String toString() {
     return (StringBuffer('HealthMealPhotosCompanion(')
           ..write('id: $id, ')
+          ..write('mealId: $mealId, ')
           ..write('ownerUserId: $ownerUserId, ')
           ..write('bytes: $bytes, ')
+          ..write('viewRole: $viewRole, ')
+          ..write('position: $position, ')
+          ..write('timestampMs: $timestampMs, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -72396,14 +72595,14 @@ final class $$HealthMealsTableReferences
   static MultiTypedResultKey<$HealthMealPhotosTable, List<HealthMealPhotoRow>>
   _healthMealPhotosRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.healthMealPhotos,
-    aliasName: 'health_meals__id__health_meal_photos__id',
+    aliasName: 'health_meals__id__health_meal_photos__meal_id',
   );
 
   $$HealthMealPhotosTableProcessedTableManager get healthMealPhotosRefs {
     final manager = $$HealthMealPhotosTableTableManager(
       $_db,
       $_db.healthMealPhotos,
-    ).filter((f) => f.id.id.sqlEquals($_itemColumn<String>('id')!));
+    ).filter((f) => f.mealId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(
       _healthMealPhotosRefsTable($_db),
@@ -72491,7 +72690,7 @@ class $$HealthMealsTableFilterComposer
       composer: this,
       getCurrentColumn: (t) => t.id,
       referencedTable: $db.healthMealPhotos,
-      getReferencedColumn: (t) => t.id,
+      getReferencedColumn: (t) => t.mealId,
       builder:
           (
             joinBuilder, {
@@ -72640,7 +72839,7 @@ class $$HealthMealsTableAnnotationComposer
       composer: this,
       getCurrentColumn: (t) => t.id,
       referencedTable: $db.healthMealPhotos,
-      getReferencedColumn: (t) => t.id,
+      getReferencedColumn: (t) => t.mealId,
       builder:
           (
             joinBuilder, {
@@ -72778,7 +72977,7 @@ class $$HealthMealsTableTableManager
                             p0,
                           ).healthMealPhotosRefs,
                       referencedItemsForCurrentItem: (item, referencedItems) =>
-                          referencedItems.where((e) => e.id == item.id),
+                          referencedItems.where((e) => e.mealId == item.id),
                       typedResults: items,
                     ),
                 ];
@@ -72806,15 +73005,23 @@ typedef $$HealthMealsTableProcessedTableManager =
 typedef $$HealthMealPhotosTableCreateCompanionBuilder =
     HealthMealPhotosCompanion Function({
       required String id,
+      required String mealId,
       required String ownerUserId,
       required Uint8List bytes,
+      Value<String> viewRole,
+      Value<int> position,
+      Value<int?> timestampMs,
       Value<int> rowid,
     });
 typedef $$HealthMealPhotosTableUpdateCompanionBuilder =
     HealthMealPhotosCompanion Function({
       Value<String> id,
+      Value<String> mealId,
       Value<String> ownerUserId,
       Value<Uint8List> bytes,
+      Value<String> viewRole,
+      Value<int> position,
+      Value<int?> timestampMs,
       Value<int> rowid,
     });
 
@@ -72831,17 +73038,17 @@ final class $$HealthMealPhotosTableReferences
     super.$_typedResult,
   );
 
-  static $HealthMealsTable _idTable(_$AppDatabase db) =>
-      db.healthMeals.createAlias('health_meal_photos__id__health_meals__id');
+  static $HealthMealsTable _mealIdTable(_$AppDatabase db) => db.healthMeals
+      .createAlias('health_meal_photos__meal_id__health_meals__id');
 
-  $$HealthMealsTableProcessedTableManager get id {
-    final $_column = $_itemColumn<String>('id')!;
+  $$HealthMealsTableProcessedTableManager get mealId {
+    final $_column = $_itemColumn<String>('meal_id')!;
 
     final manager = $$HealthMealsTableTableManager(
       $_db,
       $_db.healthMeals,
     ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_idTable($_db));
+    final item = $_typedResult.readTableOrNull(_mealIdTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
@@ -72858,6 +73065,11 @@ class $$HealthMealPhotosTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get ownerUserId => $composableBuilder(
     column: $table.ownerUserId,
     builder: (column) => ColumnFilters(column),
@@ -72868,10 +73080,25 @@ class $$HealthMealPhotosTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  $$HealthMealsTableFilterComposer get id {
+  ColumnFilters<String> get viewRole => $composableBuilder(
+    column: $table.viewRole,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get timestampMs => $composableBuilder(
+    column: $table.timestampMs,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$HealthMealsTableFilterComposer get mealId {
     final $$HealthMealsTableFilterComposer composer = $composerBuilder(
       composer: this,
-      getCurrentColumn: (t) => t.id,
+      getCurrentColumn: (t) => t.mealId,
       referencedTable: $db.healthMeals,
       getReferencedColumn: (t) => t.id,
       builder:
@@ -72901,6 +73128,11 @@ class $$HealthMealPhotosTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get ownerUserId => $composableBuilder(
     column: $table.ownerUserId,
     builder: (column) => ColumnOrderings(column),
@@ -72911,10 +73143,25 @@ class $$HealthMealPhotosTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  $$HealthMealsTableOrderingComposer get id {
+  ColumnOrderings<String> get viewRole => $composableBuilder(
+    column: $table.viewRole,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get position => $composableBuilder(
+    column: $table.position,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get timestampMs => $composableBuilder(
+    column: $table.timestampMs,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$HealthMealsTableOrderingComposer get mealId {
     final $$HealthMealsTableOrderingComposer composer = $composerBuilder(
       composer: this,
-      getCurrentColumn: (t) => t.id,
+      getCurrentColumn: (t) => t.mealId,
       referencedTable: $db.healthMeals,
       getReferencedColumn: (t) => t.id,
       builder:
@@ -72944,6 +73191,9 @@ class $$HealthMealPhotosTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
   GeneratedColumn<String> get ownerUserId => $composableBuilder(
     column: $table.ownerUserId,
     builder: (column) => column,
@@ -72952,10 +73202,21 @@ class $$HealthMealPhotosTableAnnotationComposer
   GeneratedColumn<Uint8List> get bytes =>
       $composableBuilder(column: $table.bytes, builder: (column) => column);
 
-  $$HealthMealsTableAnnotationComposer get id {
+  GeneratedColumn<String> get viewRole =>
+      $composableBuilder(column: $table.viewRole, builder: (column) => column);
+
+  GeneratedColumn<int> get position =>
+      $composableBuilder(column: $table.position, builder: (column) => column);
+
+  GeneratedColumn<int> get timestampMs => $composableBuilder(
+    column: $table.timestampMs,
+    builder: (column) => column,
+  );
+
+  $$HealthMealsTableAnnotationComposer get mealId {
     final $$HealthMealsTableAnnotationComposer composer = $composerBuilder(
       composer: this,
-      getCurrentColumn: (t) => t.id,
+      getCurrentColumn: (t) => t.mealId,
       referencedTable: $db.healthMeals,
       getReferencedColumn: (t) => t.id,
       builder:
@@ -72989,7 +73250,7 @@ class $$HealthMealPhotosTableTableManager
           $$HealthMealPhotosTableUpdateCompanionBuilder,
           (HealthMealPhotoRow, $$HealthMealPhotosTableReferences),
           HealthMealPhotoRow,
-          PrefetchHooks Function({bool id})
+          PrefetchHooks Function({bool mealId})
         > {
   $$HealthMealPhotosTableTableManager(
     _$AppDatabase db,
@@ -73007,25 +73268,41 @@ class $$HealthMealPhotosTableTableManager
           updateCompanionCallback:
               ({
                 Value<String> id = const Value.absent(),
+                Value<String> mealId = const Value.absent(),
                 Value<String> ownerUserId = const Value.absent(),
                 Value<Uint8List> bytes = const Value.absent(),
+                Value<String> viewRole = const Value.absent(),
+                Value<int> position = const Value.absent(),
+                Value<int?> timestampMs = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => HealthMealPhotosCompanion(
                 id: id,
+                mealId: mealId,
                 ownerUserId: ownerUserId,
                 bytes: bytes,
+                viewRole: viewRole,
+                position: position,
+                timestampMs: timestampMs,
                 rowid: rowid,
               ),
           createCompanionCallback:
               ({
                 required String id,
+                required String mealId,
                 required String ownerUserId,
                 required Uint8List bytes,
+                Value<String> viewRole = const Value.absent(),
+                Value<int> position = const Value.absent(),
+                Value<int?> timestampMs = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => HealthMealPhotosCompanion.insert(
                 id: id,
+                mealId: mealId,
                 ownerUserId: ownerUserId,
                 bytes: bytes,
+                viewRole: viewRole,
+                position: position,
+                timestampMs: timestampMs,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -73038,7 +73315,7 @@ class $$HealthMealPhotosTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({id = false}) {
+          prefetchHooksCallback: ({mealId = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [],
@@ -73058,14 +73335,14 @@ class $$HealthMealPhotosTableTableManager
                       dynamic
                     >
                   >(state) {
-                    if (id) {
+                    if (mealId) {
                       state = state.withJoin(
                         currentTable: table,
-                        currentColumn: table.id,
+                        currentColumn: table.mealId,
                         referencedTable: $$HealthMealPhotosTableReferences
-                            ._idTable(db),
+                            ._mealIdTable(db),
                         referencedColumn: $$HealthMealPhotosTableReferences
-                            ._idTable(db)
+                            ._mealIdTable(db)
                             .id,
                       ) as T;
                     }
@@ -73093,7 +73370,7 @@ typedef $$HealthMealPhotosTableProcessedTableManager =
       $$HealthMealPhotosTableUpdateCompanionBuilder,
       (HealthMealPhotoRow, $$HealthMealPhotosTableReferences),
       HealthMealPhotoRow,
-      PrefetchHooks Function({bool id})
+      PrefetchHooks Function({bool mealId})
     >;
 typedef $$KnowledgeNotesTableCreateCompanionBuilder =
     KnowledgeNotesCompanion Function({
