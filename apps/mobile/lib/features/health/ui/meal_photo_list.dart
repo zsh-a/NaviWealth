@@ -56,12 +56,12 @@ class MealPhotoList extends StatelessWidget {
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                       child: Image.memory(
                         photo.bytes,
-                        width: 64,
-                        height: 80,
+                        width: AppSpacing.s64,
+                        height: AppSpacing.s64 + AppSpacing.s16,
                         fit: BoxFit.cover,
                         errorBuilder: (_, _, _) => const SizedBox(
-                          width: 64,
-                          height: 80,
+                          width: AppSpacing.s64,
+                          height: AppSpacing.s64 + AppSpacing.s16,
                           child: Icon(FLucideIcons.imageOff),
                         ),
                       ),
