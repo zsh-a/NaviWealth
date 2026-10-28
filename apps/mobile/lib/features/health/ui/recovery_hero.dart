@@ -16,8 +16,8 @@ class _RecoveryHeroState extends ConsumerState<_RecoveryHero> {
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     return AppCollapsingStage(
-      child: SoftCard.hero(
-        padding: AppPageRhythm.heroPadding,
+      child: SoftCard.raised(
+        padding: const EdgeInsets.all(AppSpacing.s16),
         child: async.when(
           loading: () => const SizedBox(
             height: AppControlHeights.compactLoadingState,
@@ -76,6 +76,8 @@ class _RecoveryHeroState extends ConsumerState<_RecoveryHero> {
                 verdict: verdict,
                 color: color,
                 components: components,
+                expanded: _showEvidence,
+                onToggle: () => setState(() => _showEvidence = !_showEvidence),
               );
             }
             return Column(
@@ -86,45 +88,48 @@ class _RecoveryHeroState extends ConsumerState<_RecoveryHero> {
                     AppIconTile(
                       icon: RecoveryVerdict.icon(verdict),
                       color: color,
-                      size: 36,
-                      iconSize: AppIconSizes.md,
+                      size: 28,
+                      iconSize: AppIconSizes.sm,
                       backgroundOpacity: AppOpacity.medium,
                       foregroundOpacity: 1,
                     ),
                     const SizedBox(width: AppSpacing.s12),
                     Expanded(
-                      child: Text(
-                        l10n.healthRecoveryTitle,
-                        style: context.mutedLabelStyle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.healthRecoveryTitle,
+                            style: context.captionStyle,
+                          ),
+                          Text(
+                            RecoveryVerdict.label(verdict, l10n),
+                            style: context.titleLabelStyle.copyWith(
+                              color: color,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     AnimatedValueText(
                       value: scoreValue,
                       format: (v) => '${v.round()}',
-                      style: TypographyTokens.numericDisplay.copyWith(
+                      style: TypographyTokens.numericTitleStrong.copyWith(
                         color: scoreColor,
                       ),
                     ),
+                    const SizedBox(width: AppSpacing.s4),
+                    AppIconButton(
+                      icon: _showEvidence
+                          ? FLucideIcons.chevronUp
+                          : FLucideIcons.chevronDown,
+                      tooltip: _showEvidence
+                          ? l10n.healthRecoveryWhyLess
+                          : l10n.healthRecoveryWhyTitle,
+                      onPress: () =>
+                          setState(() => _showEvidence = !_showEvidence),
+                    ),
                   ],
-                ),
-                const SizedBox(height: AppSpacing.s16),
-                Text(
-                  RecoveryVerdict.label(verdict, l10n),
-                  style: TypographyTokens.displaySmall.copyWith(
-                    color: color,
-                    height: 1.1,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: AppSpacing.s8),
-                Text(
-                  RecoveryVerdict.suggestion(verdict, l10n),
-                  style: context.bodyCaptionStyle,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: AppSpacing.s8),
                 Wrap(
@@ -153,19 +158,16 @@ class _RecoveryHeroState extends ConsumerState<_RecoveryHero> {
                       ),
                   ],
                 ),
-                const SizedBox(height: AppSpacing.s8),
-                AppRevealControl(
-                  expanded: _showEvidence,
-                  collapsedLabel: l10n.healthRecoveryWhyTitle,
-                  expandedLabel: l10n.healthRecoveryWhyLess,
-                  onToggle: () =>
-                      setState(() => _showEvidence = !_showEvidence),
-                ),
                 AnimatedSizeFade(
                   visible: _showEvidence,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const SizedBox(height: AppSpacing.s12),
+                      Text(
+                        RecoveryVerdict.suggestion(verdict, l10n),
+                        style: context.bodyCaptionStyle,
+                      ),
                       for (final component in components) ...[
                         const SizedBox(height: AppSpacing.s8),
                         _RecoveryEvidenceRow(component: component),
@@ -203,11 +205,15 @@ class _RecoveryInsufficientState extends StatelessWidget {
     required this.verdict,
     required this.color,
     this.components = const [],
+    required this.expanded,
+    required this.onToggle,
   });
 
   final String verdict;
   final Color color;
   final List<Map<String, Object?>> components;
+  final bool expanded;
+  final VoidCallback onToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -227,28 +233,40 @@ class _RecoveryInsufficientState extends StatelessWidget {
             ),
             const SizedBox(width: AppSpacing.s12),
             Expanded(
-              child: Text(
-                l10n.healthRecoveryTitle,
-                style: context.mutedLabelStyle,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l10n.healthRecoveryTitle, style: context.captionStyle),
+                  Text(
+                    RecoveryVerdict.label(verdict, l10n),
+                    style: context.labelStyle.copyWith(color: color),
+                  ),
+                ],
               ),
+            ),
+            AppIconButton(
+              icon: expanded
+                  ? FLucideIcons.chevronUp
+                  : FLucideIcons.chevronDown,
+              tooltip: expanded
+                  ? l10n.healthRecoveryWhyLess
+                  : l10n.healthRecoveryWhyTitle,
+              onPress: onToggle,
             ),
           ],
         ),
-        const SizedBox(height: AppSpacing.s12),
-        Text(
-          RecoveryVerdict.label(verdict, l10n),
-          style: context.labelStyle.copyWith(color: color),
-        ),
-        const SizedBox(height: AppSpacing.s4),
-        Text(
-          RecoveryVerdict.suggestion(verdict, l10n),
-          style: context.bodyCaptionStyle,
-          maxLines: 3,
-          overflow: TextOverflow.ellipsis,
-        ),
-        for (final component in components) ...[
-          const SizedBox(height: AppSpacing.s8),
-          _RecoveryEvidenceRow(component: component),
+        if (expanded) ...[
+          const SizedBox(height: AppSpacing.s4),
+          Text(
+            RecoveryVerdict.suggestion(verdict, l10n),
+            style: context.bodyCaptionStyle,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+          ),
+          for (final component in components) ...[
+            const SizedBox(height: AppSpacing.s8),
+            _RecoveryEvidenceRow(component: component),
+          ],
         ],
       ],
     );

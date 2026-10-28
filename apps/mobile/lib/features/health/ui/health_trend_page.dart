@@ -80,6 +80,53 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
     final data = ref.watch(
       healthTrendSeriesProvider((group: group, windowDays: days)),
     );
+    final navigation = metric == null
+        ? SegmentedRow<TrendGroup>(
+            options: TrendGroup.values,
+            value: group,
+            minSegmentWidth: 72,
+            labelOf: (g) => healthGroupLabel(l, g),
+            onChanged: (g) => _go(group: g),
+          )
+        : Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: FButton(
+              variant: FButtonVariant.ghost,
+              mainAxisSize: MainAxisSize.min,
+              prefix: const Icon(FLucideIcons.arrowLeft, size: AppIconSizes.sm),
+              onPress: () => _go(group: group),
+              child: Flexible(child: Text(l.healthAllMetrics)),
+            ),
+          );
+    final range = Align(
+      alignment: AlignmentDirectional.centerEnd,
+      child: AppAdaptiveSelectionMenu<int>(
+        title: l.healthTimeWindow,
+        options: [
+          for (final window in const [7, 30, 90])
+            AppAdaptiveSelection(
+              value: window,
+              title: l.healthWindowDays(window),
+              icon: FLucideIcons.calendarDays,
+            ),
+        ],
+        value: days,
+        onChanged: (window) => _go(window: window, metric: metric),
+        triggerBuilder: (context, openMenu, focusNode) => Focus(
+          focusNode: focusNode,
+          child: FButton(
+            variant: FButtonVariant.ghost,
+            mainAxisSize: MainAxisSize.min,
+            prefix: const Icon(
+              FLucideIcons.calendarDays,
+              size: AppIconSizes.sm,
+            ),
+            onPress: openMenu,
+            child: Text(l.healthWindowShort(days)),
+          ),
+        ),
+      ),
+    );
     return ShellTabScaffold(
       title: metric?.title(l) ?? l.healthTrendTitle,
       actions: group == TrendGroup.body
@@ -108,36 +155,27 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
               padding: shellTabContentPadding(context),
               children: [
                 const HealthSourceAttention(),
-                if (metric == null)
-                  SegmentedRow<TrendGroup>(
-                    options: TrendGroup.values,
-                    value: group,
-                    minSegmentWidth: 72,
-                    labelOf: (g) => healthGroupLabel(l, g),
-                    onChanged: (g) => _go(group: g),
-                  )
-                else
-                  Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: FButton(
-                      variant: FButtonVariant.ghost,
-                      mainAxisSize: MainAxisSize.min,
-                      prefix: const Icon(
-                        FLucideIcons.arrowLeft,
-                        size: AppIconSizes.sm,
-                      ),
-                      onPress: () => _go(group: group),
-                      child: Flexible(child: Text(l.healthAllMetrics)),
-                    ),
-                  ),
-                const SizedBox(height: AppSpacing.s12),
-                SegmentedRow<int>(
-                  options: const [7, 30, 90],
-                  value: days,
-                  minSegmentWidth: 64,
-                  labelOf: (d) => l.healthWindowShort(d),
-                  semanticLabelOf: (d) => l.healthWindowDays(d),
-                  onChanged: (d) => _go(window: d, metric: metric),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    if (constraints.maxWidth >= 350 &&
+                        MediaQuery.textScalerOf(context).scale(14) <= 18) {
+                      return Row(
+                        children: [
+                          Expanded(child: navigation),
+                          const SizedBox(width: AppSpacing.s8),
+                          range,
+                        ],
+                      );
+                    }
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        navigation,
+                        const SizedBox(height: AppSpacing.s8),
+                        range,
+                      ],
+                    );
+                  },
                 ),
                 const SizedBox(height: AppSpacing.s16),
                 data.when(
@@ -201,10 +239,6 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
                             ),
                           )
                         else ...[
-                          _TrendPeriodSummary(
-                            series: [for (final k in recorded) series[k]!],
-                          ),
-                          const SizedBox(height: AppSpacing.s16),
                           AppGroupedSurface(
                             padding: EdgeInsets.zero,
                             child: Column(
@@ -222,6 +256,10 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
                                 ],
                               ],
                             ),
+                          ),
+                          const SizedBox(height: AppSpacing.s12),
+                          _TrendPeriodSummary(
+                            series: [for (final k in recorded) series[k]!],
                           ),
                         ],
                         if (missing.isNotEmpty) ...[

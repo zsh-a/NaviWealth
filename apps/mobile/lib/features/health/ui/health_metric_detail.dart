@@ -30,6 +30,7 @@ class HealthMetricDetail extends ConsumerStatefulWidget {
 
 class _HealthMetricDetailState extends ConsumerState<HealthMetricDetail> {
   HealthDaySample? _focused;
+  bool _showDetails = false;
   late Widget _recordsView;
   @override
   void initState() {
@@ -45,6 +46,7 @@ class _HealthMetricDetailState extends ConsumerState<HealthMetricDetail> {
   @override
   void didUpdateWidget(covariant HealthMetricDetail oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.series.kind != widget.series.kind) _showDetails = false;
     if (oldWidget.series != widget.series) _focused = null;
     if (oldWidget.series != widget.series) {
       _recordsView = _HealthMetricRecords(
@@ -94,45 +96,6 @@ class _HealthMetricDetailState extends ConsumerState<HealthMetricDetail> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(kind.description(l), style: context.captionStyle),
-              if (series.availableSources.isNotEmpty) ...[
-                const SizedBox(height: AppSpacing.s8),
-                AppAdaptiveChoice<HealthMetricSource?>(
-                  title: l.healthSourcePreference,
-                  subtitle: l.healthSourcePreferenceHelp,
-                  options: {
-                    null,
-                    ...series.availableSources,
-                    if (series.preferredSource != null) series.preferredSource,
-                  }.toList(),
-                  value: series.preferredSource,
-                  wideInlineBreakpoint: double.infinity,
-                  inlineMaxOptions: 1,
-                  labelOf: (source) => source == null
-                      ? l.healthSourceAutomatic
-                      : healthSourceLabel(l, source),
-                  onChanged: _sourceSaving ? null : _saveSource,
-                ),
-                Text(
-                  l.healthSourcePreferenceHelp,
-                  style: context.microCaptionStyle,
-                ),
-              ],
-              if (_sourceError != null) ...[
-                const SizedBox(height: AppSpacing.s8),
-                AppStatusBanner(
-                  message: _sourceError!,
-                  kind: AppStatusKind.error,
-                ),
-              ],
-              if (kind == HealthMetricKind.hrvDaily) ...[
-                const SizedBox(height: AppSpacing.s8),
-                Text(
-                  l.healthHrvComparableHint,
-                  style: context.microCaptionStyle,
-                ),
-              ],
-              const SizedBox(height: AppSpacing.s12),
               Text(
                 kind.formatValue(l, sample.value),
                 style: context.strongTitleStyle,
@@ -141,6 +104,16 @@ class _HealthMetricDetailState extends ConsumerState<HealthMetricDetail> {
               Text(
                 '${healthDateLabel(l, sample.day)}${kind.isCumulative && sample.day == series.window.today ? ' · ${l.healthTodaySoFar}' : ''}',
                 style: context.captionStyle,
+              ),
+              Text(
+                sample.records
+                    .map(
+                      (record) =>
+                          healthSourceLabel(l, sourceForHealthMetric(record)),
+                    )
+                    .toSet()
+                    .join(' · '),
+                style: context.microCaptionStyle,
               ),
               if (series.samples.length > 1) ...[
                 const SizedBox(height: AppSpacing.s16),
@@ -207,13 +180,6 @@ class _HealthMetricDetailState extends ConsumerState<HealthMetricDetail> {
                     ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.s8),
-              Text(
-                series.samples.length == 1
-                    ? l.healthSingleDayHint
-                    : l.healthMissingDataDefinition,
-                style: context.microCaptionStyle,
-              ),
               if (series.changePercent case final double delta) ...[
                 const SizedBox(height: AppSpacing.s8),
                 Text(
@@ -224,6 +190,63 @@ class _HealthMetricDetailState extends ConsumerState<HealthMetricDetail> {
                   style: context.captionStyle,
                 ),
               ],
+              if (_sourceError != null) ...[
+                const SizedBox(height: AppSpacing.s8),
+                AppStatusBanner(
+                  message: _sourceError!,
+                  kind: AppStatusKind.error,
+                ),
+              ],
+              const SizedBox(height: AppSpacing.s8),
+              AppRevealControl(
+                expanded: _showDetails,
+                collapsedLabel: l.healthDataDetails,
+                expandedLabel: l.commonRevealLess,
+                onToggle: () => setState(() => _showDetails = !_showDetails),
+              ),
+              AnimatedSizeFade(
+                visible: _showDetails,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(kind.description(l), style: context.captionStyle),
+                    const SizedBox(height: AppSpacing.s8),
+                    Text(
+                      series.samples.length == 1
+                          ? l.healthSingleDayHint
+                          : l.healthMissingDataDefinition,
+                      style: context.microCaptionStyle,
+                    ),
+                    if (kind == HealthMetricKind.hrvDaily) ...[
+                      const SizedBox(height: AppSpacing.s8),
+                      Text(
+                        l.healthHrvComparableHint,
+                        style: context.microCaptionStyle,
+                      ),
+                    ],
+                    if (series.availableSources.isNotEmpty) ...[
+                      const SizedBox(height: AppSpacing.s12),
+                      AppAdaptiveChoice<HealthMetricSource?>(
+                        title: l.healthSourcePreference,
+                        subtitle: l.healthSourcePreferenceHelp,
+                        options: {
+                          null,
+                          ...series.availableSources,
+                          if (series.preferredSource != null)
+                            series.preferredSource,
+                        }.toList(),
+                        value: series.preferredSource,
+                        wideInlineBreakpoint: double.infinity,
+                        inlineMaxOptions: 1,
+                        labelOf: (source) => source == null
+                            ? l.healthSourceAutomatic
+                            : healthSourceLabel(l, source),
+                        onChanged: _sourceSaving ? null : _saveSource,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ],
           ),
         ),

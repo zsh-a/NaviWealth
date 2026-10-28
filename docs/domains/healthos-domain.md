@@ -307,11 +307,24 @@ HealthOS is active only when the user enables it in Settings.
 
 | Tab | Purpose |
 |---|---|
-| Today | Daily check-in, compact recovery summary, latest metric readings with seven-day mini charts, last-seven-day digest, and collapsed source status |
+| Today | Compact recovery summary, latest metric readings, grouped meal/check-in capture, last-seven-day digest, and collapsed source status |
 | Trends | Recovery / Activity / Body overview; one focused metric chart with date, unit, coverage, source choice, daily context, and check-in history |
 
 Presentation contract:
 
+- Today puts recovery and the latest four available readings before daily
+  records. Readings share one grouped surface, keep their capture date, and
+  link to metric-specific Trends; historical charts belong in Trends. Narrow
+  screens and large text switch readings to a single column.
+- The Today header's add action offers meal, feelings, and body measurement
+  capture even without a connected source. Compact meal/check-in rows share a
+  surface; an empty meal day remains explicitly unrecorded. Editing today's
+  feelings loads any existing entry before showing the form.
+- Trends uses one 7/30/90-day range menu beside the group/back control when
+  space permits, stacking controls for narrow screens or large text. Readings
+  and charts precede comparison explanations. Metric detail keeps the actual
+  source and coverage visible; measurement definitions and source preferences
+  sit behind a data-details disclosure. Save failures remain visible.
 - Today, Trends, and the seven-day digest use `data/health_series.dart` for
   source-deduplicated calendar aggregation. Windows contain exactly 7, 30, or
   90 dates including today. Range queries are time-bounded, not truncated by

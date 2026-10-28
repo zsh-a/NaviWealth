@@ -98,6 +98,24 @@ abstract class AppLocalizations {
     Locale('zh'),
   ];
 
+  /// No description provided for @healthRecordAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add health record'**
+  String get healthRecordAction;
+
+  /// No description provided for @healthDataDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Data details & sources'**
+  String get healthDataDetails;
+
+  /// No description provided for @healthTimeWindow.
+  ///
+  /// In en, this message translates to:
+  /// **'Time range'**
+  String get healthTimeWindow;
+
   /// No description provided for @settingsDomainsUpdateFailed.
   ///
   /// In en, this message translates to:

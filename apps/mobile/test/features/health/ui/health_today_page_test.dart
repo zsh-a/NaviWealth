@@ -141,7 +141,12 @@ void main() {
     expect(find.text('Steps'), findsOneWidget);
     expect(find.textContaining('Agent'), findsNothing);
 
-    await tester.tap(find.text('Why this score'));
+    await tester.tap(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is AppIconButton && widget.tooltip == 'Why this score',
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.textContaining('Baseline 52.0'), findsOneWidget);
 

@@ -10,6 +10,15 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get healthRecordAction => 'Add health record';
+
+  @override
+  String get healthDataDetails => 'Data details & sources';
+
+  @override
+  String get healthTimeWindow => 'Time range';
+
+  @override
   String settingsDomainsUpdateFailed(String domain) {
     return 'Could not update $domain. Try again.';
   }

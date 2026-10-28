@@ -1,12 +1,13 @@
 import 'package:flutter_riverpod/misc.dart' show Override;
-import 'package:naviwealth/core/auth/current_user.dart';
 import 'package:naviwealth/core/auth/domain_opt_in_store.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
+import 'package:naviwealth/core/sync/mutation_context.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
+import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
 import 'package:naviwealth/features/health/data/health_check_in_providers.dart';
 import 'package:naviwealth/features/health/data/health_check_in_repository.dart';
 import 'package:naviwealth/features/health/data/health_metric_repository.dart';
@@ -22,10 +23,11 @@ import '../../../core/persistence/test_database.dart';
 import '../../finance/data/repositories/_stub_stamper.dart';
 
 class HealthTestFixture {
-  HealthTestFixture._(this.db, this.repo, this.preferences);
+  HealthTestFixture._(this.db, this.repo, this.preferences, this.prefs);
   final AppDatabase db;
   final HealthMetricRepository repo;
   final HealthPreferencesStore preferences;
+  final SharedPreferences prefs;
   static final now = DateTime(2026, 9, 12, 12);
   static const owner = 'health-test';
   static Future<HealthTestFixture> create({bool populated = true}) async {
@@ -38,6 +40,7 @@ class HealthTestFixture {
       db,
       repo,
       HealthPreferencesStore(prefs, owner),
+      prefs,
     );
     if (populated) {
       for (var i = 0; i < 60; i++) {
@@ -119,6 +122,10 @@ class HealthTestFixture {
     ),
   );
   List<Override> get overrides => [
+    sharedPreferencesProvider.overrideWithValue(prefs),
+    mutationStamperProvider.overrideWith(
+      (_) async => makeStubStamper(userId: owner),
+    ),
     healthPreferencesStoreProvider.overrideWith((_) async => preferences),
     healthCheckInRepositoryProvider.overrideWith((_) async => checkIns),
     appDatabaseProvider.overrideWith((_) async => db),

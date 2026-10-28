@@ -18,7 +18,8 @@ class HealthCheckInToday extends ConsumerWidget {
     final l = AppLocalizations.of(context);
     final date = ref.watch(healthCalendarDayProvider);
     final async = ref.watch(healthCheckInsProvider(1));
-    return async.when(
+    return async.whenOrLoading(
+      context: context,
       skipLoadingOnRefresh: true,
       skipLoadingOnReload: true,
       loading: () => const SkeletonBox(height: 60),
@@ -30,26 +31,63 @@ class HealthCheckInToday extends ConsumerWidget {
       ),
       data: (entries) {
         final entry = entries.firstOrNull;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _SectionHeader(
-              title: l.healthCheckInTitle,
-              action: l.healthCheckInRecord,
-              onPress: () => showHealthCheckInSheet(
-                context: context,
-                day: date,
-                entry: entry,
-              ),
+        final summary = entry == null
+            ? l.healthCheckInEmpty
+            : [
+                healthCheckInFeelings(l, entry),
+                entry.tags
+                    .map((tag) => healthEventTagLabel(l, tag))
+                    .join(' · '),
+                entry.note ?? '',
+              ].firstWhere(
+                (text) => text.isNotEmpty,
+                orElse: () => l.healthCheckInTitle,
+              );
+        return AppTappable(
+          semanticsLabel: entry == null
+              ? l.healthCheckInRecord
+              : l.healthCheckInEdit,
+          onPress: () =>
+              showHealthCheckInSheet(context: context, day: date, entry: entry),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.s16),
+            child: Row(
+              children: [
+                Icon(
+                  FLucideIcons.notebookPen,
+                  size: AppIconSizes.sm,
+                  color: context.theme.colors.primary,
+                ),
+                const SizedBox(width: AppSpacing.s12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        entry == null
+                            ? l.healthCheckInRecord
+                            : l.healthCheckInTitle,
+                        style: context.labelStyle,
+                      ),
+                      const SizedBox(height: AppSpacing.s4),
+                      Text(
+                        summary,
+                        style: context.captionStyle,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.s8),
+                Icon(
+                  FLucideIcons.chevronRight,
+                  size: AppIconSizes.sm,
+                  color: context.theme.colors.mutedForeground,
+                ),
+              ],
             ),
-            const SizedBox(height: AppSpacing.s8),
-            if (entry == null) ...[
-              Text(l.healthCheckInEmpty, style: context.labelStyle),
-              const SizedBox(height: AppSpacing.s4),
-              Text(l.healthCheckInEmptyHelp, style: context.captionStyle),
-            ] else
-              HealthCheckInContent(entry: entry),
-          ],
+          ),
         );
       },
     );

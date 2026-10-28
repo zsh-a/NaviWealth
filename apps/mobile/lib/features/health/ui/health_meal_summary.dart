@@ -52,46 +52,55 @@ class HealthMealToday extends ConsumerWidget {
     final l = AppLocalizations.of(context);
     final day = ref.watch(healthCalendarDayProvider);
     final data = ref.watch(healthMealsProvider(day));
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Wrap(
-          spacing: AppSpacing.s12,
-          runSpacing: AppSpacing.s4,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            Text(l.healthMealRecorded, style: context.labelStyle),
-            FButton(
-              variant: FButtonVariant.ghost,
-              mainAxisSize: MainAxisSize.min,
-              onPress: () => context.push(HealthRoutes.mealNew),
-              child: Flexible(child: Text(l.healthMealRecord)),
-            ),
-            FButton(
-              variant: FButtonVariant.ghost,
-              mainAxisSize: MainAxisSize.min,
-              onPress: () => context.push(HealthRoutes.meals),
-              child: Flexible(child: Text(l.healthMealHistory)),
-            ),
-          ],
+    return data.whenOrLoading(
+      context: context,
+      loading: () => const SkeletonBox(height: 54),
+      onRetry: () => ref.invalidate(healthMealsProvider(day)),
+      data: (meals) => AppTappable(
+        semanticsLabel: meals.isEmpty
+            ? l.healthMealRecord
+            : l.healthMealHistory,
+        onPress: () => context.push(
+          meals.isEmpty ? HealthRoutes.mealNew : HealthRoutes.meals,
         ),
-        const SizedBox(height: AppSpacing.s8),
-        data.whenOrLoading(
-          context: context,
-          loading: () => const SkeletonBox(height: 54),
-          onRetry: () => ref.invalidate(healthMealsProvider(day)),
-          data: (meals) => meals.isEmpty
-              ? Text(l.healthMealEmpty, style: context.captionStyle)
-              : HealthMealTotals(
-                  total: meals.fold(
-                    MealNutrients.zero,
-                    (sum, meal) => sum + meal.total,
-                  ),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.s16),
+          child: Row(
+            children: [
+              Icon(
+                FLucideIcons.utensils,
+                size: AppIconSizes.sm,
+                color: context.theme.colors.primary,
+              ),
+              const SizedBox(width: AppSpacing.s12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(l.healthMealRecorded, style: context.labelStyle),
+                    const SizedBox(height: AppSpacing.s4),
+                    if (meals.isEmpty)
+                      Text(l.healthMealEmpty, style: context.captionStyle)
+                    else
+                      HealthMealTotals(
+                        total: meals.fold(
+                          MealNutrients.zero,
+                          (sum, meal) => sum + meal.total,
+                        ),
+                      ),
+                  ],
                 ),
+              ),
+              const SizedBox(width: AppSpacing.s8),
+              Icon(
+                FLucideIcons.chevronRight,
+                size: AppIconSizes.sm,
+                color: context.theme.colors.mutedForeground,
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: AppSpacing.s8),
-        Text(l.healthMealEstimateHint, style: context.microCaptionStyle),
-      ],
+      ),
     );
   }
 }

@@ -10,6 +10,15 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
+  String get healthRecordAction => '记录健康';
+
+  @override
+  String get healthDataDetails => '数据说明与来源';
+
+  @override
+  String get healthTimeWindow => '时间范围';
+
+  @override
   String settingsDomainsUpdateFailed(String domain) {
     return '无法更新 $domain，请重试。';
   }

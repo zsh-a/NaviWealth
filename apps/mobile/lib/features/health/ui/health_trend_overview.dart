@@ -18,7 +18,7 @@ class _TrendOverviewRow extends StatelessWidget {
         key: ValueKey('health-trend-${kind.name}'),
         onPress: onPress,
         child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.s16),
+          padding: const EdgeInsets.all(AppSpacing.s12),
           child: LayoutBuilder(
             builder: (context, constraints) => Row(
               children: [
@@ -44,8 +44,8 @@ class _TrendOverviewRow extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: AppSpacing.s8),
-                      Text(value, style: context.strongTitleStyle),
+                      const SizedBox(height: AppSpacing.s4),
+                      Text(value, style: context.titleLabelStyle),
                       const SizedBox(height: AppSpacing.s4),
                       Text(
                         kind.isMeasurement ||

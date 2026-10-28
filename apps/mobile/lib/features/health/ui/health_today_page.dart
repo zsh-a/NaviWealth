@@ -1,9 +1,8 @@
 /// HealthOS Today surface (`docs/domains/healthos-domain.md` §8, D-2.5b
 /// follow-up).
 ///
-/// Renders HealthKit/Garmin sync status, recovery, key metrics, weekly
-/// summary. Trend and Plan now have MVP
-/// surfaces; Today stays the dense operational entry point.
+/// Compact recovery, latest readings, capture, and recorded daily context.
+/// Trends owns historical analysis; Today stays the operational entry point.
 ///
 /// Chrome matches the rest of LifeOS (`docs/architecture/lifeos-shell.md` §3): a
 /// headerless cockpit root (`ShellCanvasScaffold`) with the task
@@ -36,7 +35,6 @@ import 'health_greeting_header.dart';
 import 'health_meal_summary.dart';
 import 'health_metric_colors.dart';
 import 'health_metric_presentation.dart';
-import 'health_series_chart.dart';
 import 'health_source_attention.dart';
 import 'health_sources_summary.dart';
 import 'health_today_providers.dart';
@@ -106,23 +104,19 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
                 : null,
             summaryTiles: dataReady
                 ? staggeredSummaryTiles([
-                    const AdaptiveSummaryTile(
-                      role: AdaptiveSummaryTileRole.continuous,
-                      child: HealthMealToday(),
-                    ),
-                    const AdaptiveSummaryTile(
-                      role: AdaptiveSummaryTileRole.continuous,
-                      child: HealthCheckInToday(),
-                    ),
-                    const AdaptiveSummaryTile(
-                      role: AdaptiveSummaryTileRole.continuous,
-                      child: HealthSourceAttention(),
-                    ),
                     if (hasRecovery)
                       const AdaptiveSummaryTile(
                         role: AdaptiveSummaryTileRole.featured,
                         child: _MetricGrid(),
                       ),
+                    const AdaptiveSummaryTile(
+                      role: AdaptiveSummaryTileRole.continuous,
+                      child: _HealthTodayRecords(),
+                    ),
+                    const AdaptiveSummaryTile(
+                      role: AdaptiveSummaryTileRole.continuous,
+                      child: HealthSourceAttention(),
+                    ),
                     if (!hasRecovery)
                       AdaptiveSummaryTile(
                         role: AdaptiveSummaryTileRole.continuous,
@@ -159,11 +153,7 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
                 : const [
                     AdaptiveSummaryTile(
                       role: AdaptiveSummaryTileRole.continuous,
-                      child: HealthMealToday(),
-                    ),
-                    AdaptiveSummaryTile(
-                      role: AdaptiveSummaryTileRole.continuous,
-                      child: HealthCheckInToday(),
+                      child: _HealthTodayRecords(),
                     ),
                   ],
           ),
@@ -171,6 +161,22 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
       ),
     );
   }
+}
+
+class _HealthTodayRecords extends StatelessWidget {
+  const _HealthTodayRecords();
+
+  @override
+  Widget build(BuildContext context) => const AppGroupedSurface(
+    padding: EdgeInsets.zero,
+    child: Column(
+      children: [
+        HealthMealToday(),
+        AppGroupedDivider(indent: AppSpacing.s16, endIndent: AppSpacing.s16),
+        HealthCheckInToday(),
+      ],
+    ),
+  );
 }
 
 /// Mirrors the recovery hero while `healthHasAnyDataProvider` resolves, so
@@ -186,20 +192,23 @@ class _HealthTodayStageSkeleton extends StatelessWidget {
         children: [
           Row(
             children: [
-              SkeletonBox(width: 36, height: 36, radius: AppRadius.sm),
+              SkeletonBox(width: 28, height: 28, radius: AppRadius.sm),
               SizedBox(width: AppSpacing.s12),
-              Expanded(child: SkeletonBox(height: 14)),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonBox(width: 100, height: 12),
+                    SizedBox(height: AppSpacing.s4),
+                    SkeletonBox(width: 64, height: 20),
+                  ],
+                ),
+              ),
               SizedBox(width: AppSpacing.s12),
               SkeletonBox(width: 48, height: 28, radius: AppRadius.sm),
             ],
           ),
-          SizedBox(height: AppSpacing.s16),
-          SkeletonBox(width: 200, height: 30, radius: AppRadius.sm),
           SizedBox(height: AppSpacing.s8),
-          SkeletonBox(height: 14),
-          SizedBox(height: AppSpacing.s4),
-          SkeletonBox(width: 240, height: 14),
-          SizedBox(height: AppSpacing.s12),
           SkeletonBox(width: 160, height: 22, radius: AppRadius.full),
         ],
       ),

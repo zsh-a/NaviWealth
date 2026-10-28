@@ -6,9 +6,12 @@ import 'package:go_router/go_router.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/health/data/health_metric_source.dart';
 import 'package:naviwealth/features/health/data/health_series_providers.dart';
+import 'package:naviwealth/features/health/data/providers.dart' as health;
 import 'package:naviwealth/features/health/domain/health_metric_kind.dart';
 import 'package:naviwealth/features/health/ui/body_measurement_entry_sheet.dart';
 import 'package:naviwealth/features/health/ui/health_check_in_sections.dart';
+import 'package:naviwealth/features/health/ui/health_check_in_sheet.dart';
+import 'package:naviwealth/features/health/ui/health_meal_summary.dart';
 import 'package:naviwealth/features/health/ui/health_metric_detail.dart';
 import 'package:naviwealth/features/health/ui/health_series_chart.dart';
 import 'package:naviwealth/features/health/ui/health_today_page.dart';
@@ -23,14 +26,20 @@ Future<GoRouter> _pump(
   HealthTestFixture fixture, {
   String location = '/health/trend',
   double width = 390,
+  double height = 1000,
   double scale = 1,
+  bool connected = true,
 }) async {
-  tester.view.physicalSize = Size(width, 1000);
+  tester.view.physicalSize = Size(width, height);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   final router = GoRouter(
     initialLocation: location,
     routes: [
+      GoRoute(
+        path: '/health/meals/new',
+        builder: (_, _) => const Scaffold(body: Text('Meal capture')),
+      ),
       GoRoute(path: '/health', builder: (_, _) => const HealthTodayPage()),
       GoRoute(
         path: '/health/trend',
@@ -42,11 +51,20 @@ Future<GoRouter> _pump(
   addTearDown(router.dispose);
   await tester.pumpWidget(
     ProviderScope(
-      overrides: fixture.overrides,
+      overrides: [
+        ...fixture.overrides,
+        if (!connected)
+          health.garminSyncControllerProvider.overrideWithBuild(
+            (_, _) => const health.GarminInitial(),
+          ),
+      ],
       child: MaterialApp.router(
         theme: AppTheme.light(),
         locale: const Locale('en'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: const [
+          ...AppLocalizations.localizationsDelegates,
+          ...FLocalizations.localizationsDelegates,
+        ],
         supportedLocales: AppLocalizations.supportedLocales,
         routerConfig: router,
         builder: (context, child) => MediaQuery(
@@ -66,7 +84,124 @@ Future<GoRouter> _pump(
   return router;
 }
 
+Future<void> _selectWindow(
+  WidgetTester tester, {
+  required int current,
+  required int days,
+}) async {
+  await tester.scrollUntilVisible(
+    find.text('${current}d').hitTestable(),
+    -250,
+    scrollable: find.byType(Scrollable).first,
+  );
+  await tester.tap(find.text('${current}d'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('Last $days days'));
+  await tester.pumpAndSettle();
+}
+
 void main() {
+  testWidgets('Today puts key readings in the first phone viewport', (
+    tester,
+  ) async {
+    final f = await HealthTestFixture.create();
+    addTearDown(f.db.close);
+    await _pump(tester, f, location: '/health', height: 844);
+    final meals = find.byType(HealthMealToday);
+    expect(tester.getBottomLeft(find.text('Steps').first).dy, lessThan(844));
+    expect(
+      tester.getBottomLeft(find.text('Steps').first).dy,
+      lessThan(tester.getTopLeft(meals).dy),
+    );
+    expect(find.byType(NwLineChart), findsNothing);
+    final mealTarget = find.descendant(
+      of: meals,
+      matching: find.byType(AppTappable),
+    );
+    expect(tester.getSize(mealTarget).height, greaterThanOrEqualTo(44));
+    expect(find.text('0 kcal'), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+  });
+
+  for (final action in ['Record a meal', 'Record body metric']) {
+    testWidgets('header opens $action without a connected source', (
+      tester,
+    ) async {
+      final f = await HealthTestFixture.create(populated: false);
+      addTearDown(f.db.close);
+      final router = await _pump(
+        tester,
+        f,
+        location: '/health',
+        connected: false,
+      );
+      await tester.tap(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is AppHeaderAction &&
+              widget.semanticsLabel == 'Add health record',
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Record a meal'), findsWidgets);
+      expect(find.text('Record feelings'), findsWidgets);
+      expect(find.text('Record body metric'), findsWidgets);
+      await tester.tap(find.text(action).last);
+      await tester.pumpAndSettle();
+      if (action == 'Record a meal') {
+        expect(find.text('Meal capture'), findsOneWidget);
+        expect(router.canPop(), isTrue);
+      } else {
+        expect(find.byType(BodyMeasurementEntrySheet), findsOneWidget);
+      }
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+    });
+  }
+
+  testWidgets('header check-in preserves an existing note-only entry', (
+    tester,
+  ) async {
+    final f = await HealthTestFixture.create(populated: false);
+    addTearDown(f.db.close);
+    await f.checkIns.save(day: HealthTestFixture.now, note: 'A quiet day');
+    await _pump(tester, f, location: '/health', connected: false);
+    expect(find.text('A quiet day'), findsOneWidget);
+    await tester.tap(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is AppHeaderAction &&
+            widget.semanticsLabel == 'Add health record',
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Record feelings').last);
+    await tester.pumpAndSettle();
+    expect(find.byType(HealthCheckInSheet), findsOneWidget);
+    expect(
+      tester
+          .widget<EditableText>(find.byType(EditableText).first)
+          .controller
+          .text,
+      'A quiet day',
+    );
+    await tester.ensureVisible(find.text('Save'));
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+    expect(
+      (await f.checkIns.findDay(
+        ownerUserId: HealthTestFixture.owner,
+        day: HealthTestFixture.now,
+      ))!.note,
+      'A quiet day',
+    );
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+  });
+
   testWidgets(
     'metric evidence expands in batches and preserves rows across chart focus',
     (tester) async {
@@ -180,13 +315,7 @@ void main() {
         findsNothing,
       );
       expect(find.text('Journal without HRV'), findsOneWidget);
-      await tester.scrollUntilVisible(
-        find.text('30d'),
-        -250,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.tap(find.text('30d'));
-      await tester.pumpAndSettle();
+      await _selectWindow(tester, current: 7, days: 30);
       expect(
         tester
             .widget<HealthTrendPage>(find.byType(HealthTrendPage))
@@ -228,6 +357,10 @@ void main() {
         f,
         location: '/health/trend?metric=hrv_daily&window=7',
       );
+      await tester.ensureVisible(find.text('Data details & sources'));
+      await tester.tap(find.text('Data details & sources'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Automatic'));
       await tester.tap(find.text('Automatic'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('HealthKit').last);
@@ -279,8 +412,7 @@ void main() {
       expect(line.series.length, 2, reason: 'missing HRV dates split the line');
       expect(line.minX, isNotNull);
       expect(line.maxX, isNotNull);
-      await tester.tap(find.text('7d'));
-      await tester.pumpAndSettle();
+      await _selectWindow(tester, current: 30, days: 7);
       expect(router.routeInformationProvider.value.uri.queryParameters, {
         'metric': 'hrv_daily',
         'window': '7',
@@ -309,7 +441,8 @@ void main() {
       findsNothing,
       reason: 'one measurement is readable without an oversized empty chart',
     );
-    await tester.tap(find.text('Manual').first);
+    await tester.ensureVisible(find.text('Manual').last);
+    await tester.tap(find.text('Manual').last);
     await tester.pumpAndSettle();
     expect(find.text('Morning measurement'), findsOneWidget);
     await tester.ensureVisible(find.text('Edit measurement'));

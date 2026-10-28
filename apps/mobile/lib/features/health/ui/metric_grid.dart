@@ -37,23 +37,30 @@ class _MetricGridState extends ConsumerState<_MetricGrid> {
         final secondary = available.skip(4).toList();
         return LayoutBuilder(
           builder: (context, constraints) {
-            final columns = constraints.maxWidth < 320 ? 1 : 2;
+            final columns =
+                constraints.maxWidth < 320 ||
+                    MediaQuery.textScalerOf(context).scale(14) > 20
+                ? 1
+                : 2;
             final width =
                 (constraints.maxWidth - AppSpacing.s8 * (columns - 1)) /
                 columns;
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Wrap(
-                  spacing: AppSpacing.s8,
-                  runSpacing: AppSpacing.s8,
-                  children: [
-                    for (final kind in primary)
-                      SizedBox(
-                        width: width,
-                        child: _TodayMetricCard(kind: kind, model: model),
-                      ),
-                  ],
+                AppGroupedSurface(
+                  padding: EdgeInsets.zero,
+                  child: Wrap(
+                    spacing: AppSpacing.s8,
+                    runSpacing: AppSpacing.s8,
+                    children: [
+                      for (final kind in primary)
+                        SizedBox(
+                          width: width,
+                          child: _TodayMetricCard(kind: kind, model: model),
+                        ),
+                    ],
+                  ),
                 ),
                 if (secondary.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.s8),
@@ -109,10 +116,6 @@ class _TodayMetricCard extends StatelessWidget {
     final sample = series?.latest;
     final value = sample?.value ?? healthDisplayValue(row);
     final day = sample?.day ?? healthMetricDay(row);
-    final caption = [
-      healthDateLabel(l, day),
-      if (series != null && series.samples.length > 1) l.healthWindowShort(7),
-    ].join(' · ');
     void open() => context.go(healthTrendPath(metricKind: kind));
     if (compact) {
       return AppTappable(
@@ -156,31 +159,37 @@ class _TodayMetricCard extends StatelessWidget {
         ),
       );
     }
-    return SoftCard.raised(
+    return AppTappable(
       onPress: open,
-      padding: const EdgeInsets.all(AppSpacing.s12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          AppMetricHeader(
-            icon: kind.icon,
-            title: kind.title(l),
-            color: context.appTheme.categorical.adapt(kind.accent),
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          Text(kind.formatValue(l, value), style: context.strongTitleStyle),
-          const SizedBox(height: AppSpacing.s4),
-          Text(caption, style: context.microCaptionStyle),
-          if (series != null &&
-              series.samples.length > 1 &&
-              kind != HealthMetricKind.trainingEffectDaily) ...[
-            const SizedBox(height: AppSpacing.s8),
-            SizedBox(
-              height: AppSpacing.s32,
-              child: HealthSeriesChart(series: series, compact: true),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.s12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  kind.icon,
+                  size: AppIconSizes.sm,
+                  color: context.appTheme.categorical.adapt(kind.accent),
+                ),
+                const SizedBox(width: AppSpacing.s8),
+                Expanded(
+                  child: Text(kind.title(l), style: context.captionStyle),
+                ),
+                Icon(
+                  FLucideIcons.chevronRight,
+                  size: AppIconSizes.xs,
+                  color: context.theme.colors.mutedForeground,
+                ),
+              ],
             ),
+            const SizedBox(height: AppSpacing.s8),
+            Text(kind.formatValue(l, value), style: context.strongTitleStyle),
+            const SizedBox(height: AppSpacing.s4),
+            Text(healthDateLabel(l, day), style: context.microCaptionStyle),
           ],
-        ],
+        ),
       ),
     );
   }

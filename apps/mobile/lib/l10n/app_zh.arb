@@ -1,4 +1,7 @@
 {
+  "healthRecordAction": "记录健康",
+  "healthDataDetails": "数据说明与来源",
+  "healthTimeWindow": "时间范围",
   "settingsDomainsUpdateFailed": "无法更新 {domain}，请重试。",
   "aiPrivacyDocumentRecognitionDescription": "将你选择识别的图片、PDF 和邮件发送给已配置的模型服务商。文件会完整发送，金额和账户名称不会自动隐藏。CSV 和粘贴文本在本机解析。",
   "aiPrivacyDocumentRecognitionLabel": "AI 文档识别",

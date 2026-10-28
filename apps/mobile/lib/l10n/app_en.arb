@@ -1,4 +1,7 @@
 {
+  "healthRecordAction": "Add health record",
+  "healthDataDetails": "Data details & sources",
+  "healthTimeWindow": "Time range",
   "settingsDomainsUpdateFailed": "Could not update {domain}. Try again.",
   "@settingsDomainsUpdateFailed": {"placeholders": {"domain": {"type": "String"}}},
   "aiPrivacyDocumentRecognitionDescription": "Send selected images, PDFs and emails to your configured model provider. Files are sent in full; amounts and account names are not automatically removed. CSV and pasted text are parsed on this device.",
