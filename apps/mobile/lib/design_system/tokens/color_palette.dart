@@ -8,6 +8,29 @@ import 'package:flutter/material.dart';
 class ColorPalette {
   const ColorPalette._();
 
+  // Neutral surfaces and text for the refined visual preset.
+  static const Color refinedCanvasLight = Color(0xFFF3F4F6);
+  static const Color refinedRaisedLight = Color(0xFFF8F9FB);
+  static const Color refinedHeroLight = Color(0xFFECEEF2);
+  static const Color refinedBorderLight = Color(0xFFD9DDE3);
+  static const Color refinedContrastBorderLight = Color(0xFF626B78);
+  static const Color refinedStrongLight = Color(0xFF1C1D21);
+  static const Color refinedBodyLight = Color(0xFF25262B);
+  static const Color refinedMutedLight = Color(0xFF555B65);
+  static const Color refinedContrastMutedLight = Color(0xFF383D45);
+  static const Color refinedFaintLight = Color(0xFF727985);
+  static const Color refinedCanvasDark = Color(0xFF101114);
+  static const Color refinedCardDark = Color(0xFF1B1D22);
+  static const Color refinedRaisedDark = Color(0xFF25282E);
+  static const Color refinedHeroDark = Color(0xFF30343C);
+  static const Color refinedBorderDark = Color(0xFF383E48);
+  static const Color refinedContrastBorderDark = Color(0xFF8A94A3);
+  static const Color refinedStrongDark = Color(0xFFF4F5F7);
+  static const Color refinedBodyDark = Color(0xFFE8EBEF);
+  static const Color refinedMutedDark = Color(0xFFB0B7C3);
+  static const Color refinedContrastMutedDark = Color(0xFFCED4DF);
+  static const Color refinedFaintDark = Color(0xFF828B99);
+
   // ── Cyan brand (spec primary) — quiet, desaturated turquoise ──────────
   // The primary brand hue per the fintech UI spec, tuned down ~20% in
   // saturation (hue preserved ~183°) so interaction surfaces read calm and
@@ -49,14 +72,6 @@ class ColorPalette {
   static const Color navyRaised = Color(0xFF172731);
   static const Color navyHero = Color(0xFF1D303A);
   static const Color navySoftBorder = Color(0xFFCAD7DA);
-
-  // ── OLED surfaces (AppSurfaceStyle.oled, dark only) ────────────────────
-  // True-black canvas with the card ladder pulled down two steps so the
-  // elevation rhythm survives on pitch black. Hues stay in the navy family.
-  static const Color oledCanvas = Color(0xFF000000);
-  static const Color oledCard = Color(0xFF0A121A);
-  static const Color oledRaised = Color(0xFF0F1B26);
-  static const Color oledHero = Color(0xFF152532);
 
   // ── Neutral grayscale ───────────────────────────────────────────────────
   static const Color neutral0 = Color(0xFFFFFFFF);

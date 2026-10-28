@@ -21,6 +21,7 @@ import '../../../../core/sync/providers.dart';
 import '../../../../core/update/native_update.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
+import 'appearance_style_picker.dart';
 
 part 'settings_overview_account.dart';
 part 'settings_overview_preferences.dart';

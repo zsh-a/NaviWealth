@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../theme/accent_seed.dart';
-import '../theme/app_surface_style.dart';
+import '../theme/app_visual_style.dart';
 import '../theme/market_color_mode.dart';
 
 /// Riverpod-injected [SharedPreferences] handle.
@@ -37,11 +37,43 @@ final accentSeedProvider =
       return AccentSeedController(ref.watch(sharedPreferencesProvider));
     });
 
-/// User preference: surface style (standard / OLED black / high contrast).
-final surfaceStyleProvider =
-    StateNotifierProvider<SurfaceStyleController, AppSurfaceStyle>((ref) {
-      return SurfaceStyleController(ref.watch(sharedPreferencesProvider));
+final visualStyleProvider =
+    StateNotifierProvider<VisualStyleController, AppVisualStyle>((ref) {
+      return VisualStyleController(ref.watch(sharedPreferencesProvider));
     });
+
+final materialStyleProvider =
+    StateNotifierProvider<MaterialStyleController, AppMaterialStyle>((ref) {
+      return MaterialStyleController(ref.watch(sharedPreferencesProvider));
+    });
+
+class VisualStyleController extends StateNotifier<AppVisualStyle> {
+  VisualStyleController(this._prefs)
+    : super(AppVisualStyle.fromKey(_prefs.getString(_key)));
+
+  static const _key = 'naviwealth.theme.visual_style';
+  final SharedPreferences _prefs;
+
+  Future<void> set(AppVisualStyle style) async {
+    if (style == state) return;
+    state = style;
+    await _prefs.setString(_key, style.persistedKey);
+  }
+}
+
+class MaterialStyleController extends StateNotifier<AppMaterialStyle> {
+  MaterialStyleController(this._prefs)
+    : super(AppMaterialStyle.fromKey(_prefs.getString(_key)));
+
+  static const _key = 'naviwealth.theme.material_style';
+  final SharedPreferences _prefs;
+
+  Future<void> set(AppMaterialStyle style) async {
+    if (style == state) return;
+    state = style;
+    await _prefs.setString(_key, style.persistedKey);
+  }
+}
 
 class MarketColorModeController extends StateNotifier<MarketColorMode> {
   MarketColorModeController(this._prefs) : super(_load(_prefs));
@@ -72,22 +104,6 @@ class AccentSeedController extends StateNotifier<AppAccentSeed> {
     if (seed == state) return;
     state = seed;
     await _prefs.setString(_key, seed.persistedKey);
-  }
-}
-
-class SurfaceStyleController extends StateNotifier<AppSurfaceStyle> {
-  SurfaceStyleController(this._prefs) : super(_load(_prefs));
-
-  static const String _key = 'naviwealth.theme.surface_style';
-  final SharedPreferences _prefs;
-
-  static AppSurfaceStyle _load(SharedPreferences p) =>
-      AppSurfaceStyle.fromKey(p.getString(_key));
-
-  Future<void> set(AppSurfaceStyle style) async {
-    if (style == state) return;
-    state = style;
-    await _prefs.setString(_key, style.persistedKey);
   }
 }
 

@@ -9,7 +9,8 @@ import '../tokens/typography_tokens.dart';
 import 'accent_colors.dart';
 import 'accent_seed.dart';
 import 'app_page_transitions.dart';
-import 'app_surface_style.dart';
+import 'app_type_scale.dart';
+import 'app_visual_style.dart';
 import 'surface_ladder.dart';
 
 /// Resolves pointer-oriented density from both platform and window class.
@@ -45,20 +46,24 @@ class AppTheme {
   static ThemeData light({
     bool compact = false,
     AppAccentSeed accentSeed = AppAccentSeed.cyan,
-    AppSurfaceStyle surfaceStyle = AppSurfaceStyle.standard,
-  }) => _build(Brightness.light, compact, accentSeed, surfaceStyle);
+    bool highContrast = false,
+    AppVisualStyle visualStyle = AppVisualStyle.classic,
+  }) =>
+      _build(Brightness.light, compact, accentSeed, highContrast, visualStyle);
 
   static ThemeData dark({
     bool compact = false,
     AppAccentSeed accentSeed = AppAccentSeed.cyan,
-    AppSurfaceStyle surfaceStyle = AppSurfaceStyle.standard,
-  }) => _build(Brightness.dark, compact, accentSeed, surfaceStyle);
+    bool highContrast = false,
+    AppVisualStyle visualStyle = AppVisualStyle.classic,
+  }) => _build(Brightness.dark, compact, accentSeed, highContrast, visualStyle);
 
   static ThemeData _build(
     Brightness brightness,
     bool compact,
     AppAccentSeed accentSeed,
-    AppSurfaceStyle surfaceStyle,
+    bool highContrast,
+    AppVisualStyle visualStyle,
   ) {
     final isDark = brightness == Brightness.dark;
     // Surface/content ramp comes from the shared ladder (surface_ladder.dart)
@@ -66,7 +71,8 @@ class AppTheme {
     // overlays) sit on the same canvas as the design system.
     final ladder = resolveSurfaceLadder(
       brightness: brightness,
-      surfaceStyle: surfaceStyle,
+      highContrast: highContrast,
+      visualStyle: visualStyle,
     );
     final f = isDark ? FColors.neutralDark : FColors.neutralLight;
     final accent = AccentColors.primary(brightness, seed: accentSeed);
@@ -89,9 +95,17 @@ class AppTheme {
       onSurface: ladder.contentBody,
       surfaceContainerLowest: pageBackground,
       surfaceContainerLow: cardSurface,
-      surfaceContainer: isDark ? cardSurface : ColorPalette.surfaceOverlay,
-      surfaceContainerHigh: f.muted,
-      surfaceContainerHighest: f.secondary,
+      surfaceContainer: visualStyle == AppVisualStyle.refined
+          ? ladder.raised
+          : isDark
+          ? cardSurface
+          : ColorPalette.surfaceOverlay,
+      surfaceContainerHigh: visualStyle == AppVisualStyle.refined
+          ? ladder.hero
+          : f.muted,
+      surfaceContainerHighest: visualStyle == AppVisualStyle.refined
+          ? ladder.hero
+          : f.secondary,
       onSurfaceVariant: mutedForeground,
       outline: outline,
       outlineVariant: outline,
@@ -100,10 +114,31 @@ class AppTheme {
       shadow: ColorPalette.shadowMedium,
       scrim: ladder.scrim,
     );
-    final textTheme = TypographyTokens.textTheme().apply(
+    var textTheme = TypographyTokens.textTheme().apply(
       bodyColor: scheme.onSurface,
       displayColor: scheme.onSurface,
     );
+    if (visualStyle == AppVisualStyle.refined) {
+      TextStyle? refine(TextStyle? style) =>
+          style == null ? null : appVisualTextStyle(style, visualStyle);
+      textTheme = textTheme.copyWith(
+        displayLarge: refine(textTheme.displayLarge),
+        displayMedium: refine(textTheme.displayMedium),
+        displaySmall: refine(textTheme.displaySmall),
+        headlineLarge: refine(textTheme.headlineLarge),
+        headlineMedium: refine(textTheme.headlineMedium),
+        headlineSmall: refine(textTheme.headlineSmall),
+        titleLarge: refine(textTheme.titleLarge),
+        titleMedium: refine(textTheme.titleMedium),
+        titleSmall: refine(textTheme.titleSmall),
+        bodyLarge: refine(textTheme.bodyLarge),
+        bodyMedium: refine(textTheme.bodyMedium),
+        bodySmall: refine(textTheme.bodySmall),
+        labelLarge: refine(textTheme.labelLarge),
+        labelMedium: refine(textTheme.labelMedium),
+        labelSmall: refine(textTheme.labelSmall),
+      );
+    }
     return ThemeData(
       useMaterial3: true,
       brightness: brightness,

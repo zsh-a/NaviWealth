@@ -56,7 +56,8 @@ class NaviWealthApp extends ConsumerWidget {
       windowWidth: windowWidth,
     );
     final accentSeed = ref.watch(accentSeedProvider);
-    final surfaceStylePref = ref.watch(surfaceStyleProvider);
+    final visualStyle = ref.watch(visualStyleProvider);
+    final materialStyle = ref.watch(materialStyleProvider);
 
     return MaterialApp.router(
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
@@ -64,12 +65,24 @@ class NaviWealthApp extends ConsumerWidget {
       theme: AppTheme.light(
         compact: compact,
         accentSeed: accentSeed,
-        surfaceStyle: surfaceStylePref,
+        visualStyle: visualStyle,
       ),
       darkTheme: AppTheme.dark(
         compact: compact,
         accentSeed: accentSeed,
-        surfaceStyle: surfaceStylePref,
+        visualStyle: visualStyle,
+      ),
+      highContrastTheme: AppTheme.light(
+        compact: compact,
+        accentSeed: accentSeed,
+        visualStyle: visualStyle,
+        highContrast: true,
+      ),
+      highContrastDarkTheme: AppTheme.dark(
+        compact: compact,
+        accentSeed: accentSeed,
+        visualStyle: visualStyle,
+        highContrast: true,
       ),
       themeMode: themeMode,
       locale: locale,
@@ -90,23 +103,26 @@ class NaviWealthApp extends ConsumerWidget {
         };
         final isTouch = !compact;
         final brightness = isDark ? Brightness.dark : Brightness.light;
-        final surfaceStyle = surfaceStylePref;
+        final highContrast = MediaQuery.highContrastOf(ctx);
         final fTheme = buildAppForuiTheme(
           brightness: brightness,
           touch: isTouch,
-          surfaceStyle: surfaceStyle,
+          highContrast: highContrast,
           accentSeed: accentSeed,
+          visualStyle: visualStyle,
         );
         // Resolve the app theme once for the whole tree (blueprint doc 15,
         // §3.3) — the single source for every color role, including the
-        // market direction and surface style preferences.
+        // market direction and platform accessibility preferences.
         final appTheme = resolveAppTheme(
           ThemeInputs(
             brightness: brightness,
             marketMode: ref.watch(marketColorModeProvider),
-            surfaceStyle: surfaceStyle,
+            highContrast: highContrast,
             accentSeed: accentSeed,
             density: isTouch ? AppDensity.touch : AppDensity.desktop,
+            visualStyle: visualStyle,
+            materialStyle: materialStyle,
           ),
         );
         return _AndroidSystemBackOwner(

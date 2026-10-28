@@ -6621,6 +6621,48 @@ abstract class AppLocalizations {
   /// **'Appearance'**
   String get settingsAppearanceSection;
 
+  /// No description provided for @settingsVisualStyleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Interface style'**
+  String get settingsVisualStyleTitle;
+
+  /// No description provided for @visualStyleClassic.
+  ///
+  /// In en, this message translates to:
+  /// **'Classic'**
+  String get visualStyleClassic;
+
+  /// No description provided for @visualStyleRefined.
+  ///
+  /// In en, this message translates to:
+  /// **'Refined'**
+  String get visualStyleRefined;
+
+  /// No description provided for @settingsMaterialStyleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Materials'**
+  String get settingsMaterialStyleTitle;
+
+  /// No description provided for @settingsMaterialStyleSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Solid surfaces keep things clear. Translucency adds depth; system high contrast uses solid surfaces.'**
+  String get settingsMaterialStyleSubtitle;
+
+  /// No description provided for @materialStyleSolid.
+  ///
+  /// In en, this message translates to:
+  /// **'Solid'**
+  String get materialStyleSolid;
+
+  /// No description provided for @materialStyleTranslucent.
+  ///
+  /// In en, this message translates to:
+  /// **'Translucent'**
+  String get materialStyleTranslucent;
+
   /// No description provided for @settingsAccentSeedTitle.
   ///
   /// In en, this message translates to:
@@ -6644,30 +6686,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Indigo'**
   String get accentSeedIndigo;
-
-  /// No description provided for @settingsSurfaceStyleTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Surface style'**
-  String get settingsSurfaceStyleTitle;
-
-  /// No description provided for @surfaceStyleStandard.
-  ///
-  /// In en, this message translates to:
-  /// **'Standard'**
-  String get surfaceStyleStandard;
-
-  /// No description provided for @surfaceStyleOled.
-  ///
-  /// In en, this message translates to:
-  /// **'OLED black'**
-  String get surfaceStyleOled;
-
-  /// No description provided for @surfaceStyleHighContrast.
-  ///
-  /// In en, this message translates to:
-  /// **'High contrast'**
-  String get surfaceStyleHighContrast;
 
   /// No description provided for @settingsThemeModeTitle.
   ///

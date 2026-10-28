@@ -4,9 +4,9 @@ import '../tokens/dimens_tokens.dart';
 import 'accent_colors.dart';
 import 'accent_seed.dart';
 import 'app_categorical.dart';
-import 'app_surface_style.dart';
 import 'app_theme_data.dart';
 import 'app_type_scale.dart';
+import 'app_visual_style.dart';
 import 'component_specs.dart';
 import 'market_color_mode.dart';
 import 'market_colors.dart';
@@ -20,36 +20,51 @@ enum AppDensity { touch, desktop }
 
 /// Everything the theme depends on, gathered once at the app root.
 ///
-/// Adding a preference axis (OLED surfaces, accent seed, …) means extending
+/// Adding a preference axis (visual style, accent seed, …) means extending
 /// this class and `resolveAppTheme` — never a component.
 @immutable
 class ThemeInputs {
   const ThemeInputs({
     required this.brightness,
     required this.marketMode,
-    this.surfaceStyle = AppSurfaceStyle.standard,
+    this.highContrast = false,
     this.accentSeed = AppAccentSeed.cyan,
     this.density = AppDensity.touch,
+    this.visualStyle = AppVisualStyle.classic,
+    this.materialStyle = AppMaterialStyle.solid,
   });
 
   final Brightness brightness;
   final MarketColorMode marketMode;
-  final AppSurfaceStyle surfaceStyle;
+
+  /// Platform accessibility state, never persisted as an appearance preference.
+  final bool highContrast;
   final AppAccentSeed accentSeed;
   final AppDensity density;
+  final AppVisualStyle visualStyle;
+  final AppMaterialStyle materialStyle;
 
   @override
   bool operator ==(Object other) =>
       other is ThemeInputs &&
       other.brightness == brightness &&
       other.marketMode == marketMode &&
-      other.surfaceStyle == surfaceStyle &&
+      other.highContrast == highContrast &&
       other.accentSeed == accentSeed &&
-      other.density == density;
+      other.density == density &&
+      other.visualStyle == visualStyle &&
+      other.materialStyle == materialStyle;
 
   @override
-  int get hashCode =>
-      Object.hash(brightness, marketMode, surfaceStyle, accentSeed, density);
+  int get hashCode => Object.hash(
+    brightness,
+    marketMode,
+    highContrast,
+    accentSeed,
+    density,
+    visualStyle,
+    materialStyle,
+  );
 }
 
 /// Pure resolver: [ThemeInputs] → [AppThemeData].
@@ -60,7 +75,7 @@ class ThemeInputs {
 /// Phase P1 note: values are sourced from the legacy [SemanticColors] /
 /// [MarketColors] / [AccentColors] tables so adopting `context.appTheme`
 /// changes no pixels. Those tables fold into this file in phase P5.
-/// Hue-preserving contrast boost for [AppSurfaceStyle.highContrast]
+/// Hue-preserving contrast boost for the platform's high-contrast preference:
 /// foregrounds: darkens on light surfaces, lightens on dark ones. Values are
 /// verified by theme_contrast_test.dart's raised per-style thresholds.
 Color _boostFg(Color c, {required bool isDark}) {
@@ -86,10 +101,9 @@ AppThemeData resolveAppTheme(ThemeInputs inputs) {
     brightness: inputs.brightness,
   );
 
-  // OLED is a dark-only override; light mode falls back to standard.
-  final oled = inputs.surfaceStyle == AppSurfaceStyle.oled && isDark;
-  final highContrast = inputs.surfaceStyle == AppSurfaceStyle.highContrast;
+  final highContrast = inputs.highContrast;
 
+  final solid = inputs.materialStyle == AppMaterialStyle.solid;
   final glass = highContrast
       ? const GlassSpec(
           chrome: GlassMaterialSpec(
@@ -117,57 +131,30 @@ AppThemeData resolveAppTheme(ThemeInputs inputs) {
             liveBlur: false,
           ),
         )
-      : oled
-      ? const GlassSpec(
+      : GlassSpec(
           chrome: GlassMaterialSpec(
             blurSigma: AppBlur.chrome,
-            fillOpacity: AppOpacity.nearOpaqueDark,
-            borderOpacity: AppOpacity.light,
-            liveBlur: false,
-          ),
-          sticky: GlassMaterialSpec(
-            blurSigma: AppBlur.chrome,
-            fillOpacity: AppOpacity.nearOpaqueDark,
-            borderOpacity: AppOpacity.light,
-            liveBlur: false,
-          ),
-          sheet: GlassMaterialSpec(
-            blurSigma: AppBlur.sheet,
-            fillOpacity: AppOpacity.nearOpaqueDark,
-            borderOpacity: AppOpacity.light,
-            liveBlur: false,
-          ),
-          overlay: GlassMaterialSpec(
-            blurSigma: AppBlur.sheet,
-            fillOpacity: AppOpacity.nearOpaqueDark,
-            borderOpacity: AppOpacity.light,
-            liveBlur: false,
-          ),
-        )
-      : const GlassSpec(
-          chrome: GlassMaterialSpec(
-            blurSigma: AppBlur.chrome,
-            fillOpacity: AppOpacity.overlay,
+            fillOpacity: solid ? AppOpacity.opaque : AppOpacity.overlay,
             borderOpacity: AppOpacity.strong,
-            liveBlur: true,
+            liveBlur: !solid,
           ),
           sticky: GlassMaterialSpec(
             blurSigma: AppBlur.chrome,
-            fillOpacity: AppOpacity.solidSurface,
+            fillOpacity: solid ? AppOpacity.opaque : AppOpacity.solidSurface,
             borderOpacity: AppOpacity.medium,
-            liveBlur: true,
+            liveBlur: !solid,
           ),
           sheet: GlassMaterialSpec(
             blurSigma: AppBlur.sheet,
-            fillOpacity: AppOpacity.overlay,
+            fillOpacity: solid ? AppOpacity.opaque : AppOpacity.overlay,
             borderOpacity: AppOpacity.medium,
-            liveBlur: true,
+            liveBlur: !solid,
           ),
           overlay: GlassMaterialSpec(
             blurSigma: AppBlur.sheet,
-            fillOpacity: AppOpacity.solidSurface,
+            fillOpacity: solid ? AppOpacity.opaque : AppOpacity.solidSurface,
             borderOpacity: AppOpacity.medium,
-            liveBlur: true,
+            liveBlur: !solid,
           ),
         );
 
@@ -175,7 +162,8 @@ AppThemeData resolveAppTheme(ThemeInputs inputs) {
   // so Material and Forui themes resolve the identical ramp.
   final ladder = resolveSurfaceLadder(
     brightness: inputs.brightness,
-    surfaceStyle: inputs.surfaceStyle,
+    highContrast: highContrast,
+    visualStyle: inputs.visualStyle,
   );
   final surfaces = AppSurfaces(
     canvas: ladder.canvas,
@@ -278,11 +266,15 @@ AppThemeData resolveAppTheme(ThemeInputs inputs) {
     accent: accent,
     status: status,
     market: market,
-    type: AppTypeScale.resolve(inputs.density),
+    type: AppTypeScale.resolve(inputs.density, visualStyle: inputs.visualStyle),
     categorical: AppCategorical(
       brightness: inputs.brightness,
       cardSurface: surfaces.card,
     ),
     glass: glass,
+    visual: inputs.visualStyle.spec,
+    card: inputs.visualStyle == AppVisualStyle.refined
+        ? kRefinedCardSpec
+        : kAppCardSpec,
   );
 }

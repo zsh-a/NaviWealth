@@ -212,7 +212,7 @@ class _SoftCardState extends State<SoftCard> {
     );
   }
 
-  BoxDecoration _decoration(
+  Decoration _decoration(
     BuildContext context, {
     required bool hovered,
     required bool pressed,
@@ -221,6 +221,7 @@ class _SoftCardState extends State<SoftCard> {
     final colors = context.theme.colors;
     final isDark = colors.brightness == Brightness.dark;
     final card = context.appTheme.card;
+    final visual = context.appTheme.visual;
     final radius = BorderRadius.circular(
       widget.borderRadius ??
           (widget.level == SoftCardLevel.hero ? card.heroRadius : card.radius),
@@ -246,12 +247,14 @@ class _SoftCardState extends State<SoftCard> {
     // One border strategy for the whole app (blueprint §8.3):
     // raised = borderless + shadow (fill difference carries dark mode),
     // flat = whisper edge in dark only, hero = a quiet edge with depth carried by the surface.
-    final borderAlpha = switch (widget.level) {
-      SoftCardLevel.flat =>
-        isDark ? AppOpacity.whisper : AppOpacity.transparent,
-      SoftCardLevel.raised => AppOpacity.transparent,
-      SoftCardLevel.hero => isDark ? AppOpacity.subtle : AppOpacity.light,
-    };
+    final borderAlpha = !visual.cardBorders
+        ? 0.0
+        : switch (widget.level) {
+            SoftCardLevel.flat =>
+              isDark ? AppOpacity.whisper : AppOpacity.transparent,
+            SoftCardLevel.raised => AppOpacity.transparent,
+            SoftCardLevel.hero => isDark ? AppOpacity.subtle : AppOpacity.light,
+          };
 
     final borderColor = borderAlpha == AppOpacity.transparent
         ? Colors.transparent
@@ -262,23 +265,28 @@ class _SoftCardState extends State<SoftCard> {
               ? colors.foreground.withValues(alpha: borderAlpha)
               : ColorPalette.surfaceHairline.withValues(alpha: borderAlpha));
 
-    final gradient = widget.level == SoftCardLevel.hero && widget.tinted
+    final gradient =
+        visual.cardGradient &&
+            widget.level == SoftCardLevel.hero &&
+            widget.tinted
         ? _heroGradient(primary: colors.primary, base: fill)
         : null;
 
     // Keyboard focus ring wins over the level border (doc 11 §9).
     final border = focused
-        ? Border.all(color: colors.primary, width: AppStroke.branch)
+        ? BorderSide(color: colors.primary, width: AppStroke.branch)
         : borderAlpha == AppOpacity.transparent
-        ? null
-        : Border.all(color: borderColor, width: AppStroke.hairline);
+        ? BorderSide.none
+        : BorderSide(color: borderColor, width: AppStroke.hairline);
 
-    return BoxDecoration(
+    return visual.decoration(
       color: gradient == null ? fill : null,
       gradient: gradient,
-      borderRadius: radius,
-      border: border,
-      boxShadow: _shadows(isDark: isDark, hovered: hovered, pressed: pressed),
+      radius: radius,
+      side: border,
+      shadows: visual.cardShadows
+          ? _shadows(isDark: isDark, hovered: hovered, pressed: pressed)
+          : null,
     );
   }
 

@@ -309,7 +309,7 @@ class _MobileLayout extends ConsumerWidget {
 
 /// Animated show/hide for mobile dock chrome.
 ///
-/// The outgoing child slides down and fades while its slot collapses, so a
+/// The outgoing child slides down and fades without animating layout, so a
 /// sheet opening or a pushed page no longer hard-cuts the floating dock.
 /// Duration comes from [Motion.fast] and is halved under reduce-motion via
 /// [AppMotionPolicy]'s transition role, matching the branch fade-in above.
@@ -322,34 +322,29 @@ class _DockReveal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final duration = AppMotionPolicy.duration(context, Motion.fast);
-    return AnimatedSize(
+    return AnimatedSwitcher(
       duration: duration,
-      curve: Motion.standardDecelerate,
-      alignment: Alignment.bottomCenter,
-      child: AnimatedSwitcher(
-        duration: duration,
-        switchInCurve: Motion.standardDecelerate,
-        switchOutCurve: Motion.standardAccelerate,
-        transitionBuilder: (child, animation) => FadeTransition(
-          opacity: animation,
-          child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 1),
-              end: Offset.zero,
-            ).animate(animation),
-            child: child,
-          ),
+      switchInCurve: Motion.standardDecelerate,
+      switchOutCurve: Motion.standardAccelerate,
+      transitionBuilder: (child, animation) => FadeTransition(
+        opacity: animation,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 1),
+            end: Offset.zero,
+          ).animate(animation),
+          child: child,
         ),
-        child: visible
-            ? KeyedSubtree(
-                key: const ValueKey<String>('dock-reveal.visible'),
-                child: child,
-              )
-            : const SizedBox(
-                key: ValueKey<String>('dock-reveal.hidden'),
-                width: double.infinity,
-              ),
       ),
+      child: visible
+          ? KeyedSubtree(
+              key: const ValueKey<String>('dock-reveal.visible'),
+              child: child,
+            )
+          : const SizedBox(
+              key: ValueKey<String>('dock-reveal.hidden'),
+              width: double.infinity,
+            ),
     );
   }
 }

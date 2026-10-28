@@ -64,6 +64,7 @@ Future<void> showAiSheet(
     return showAppFormSheet<void>(
       context: context,
       maxHeightFactor: 0.95,
+      resizeToAvoidBottomInset: false,
       builder: (_) => _SheetFrame(
         child: AiSheetShell.invocation(
           invocation: invocation,
@@ -78,6 +79,7 @@ Future<void> showAiSheet(
     return showAppFormSheet<void>(
       context: context,
       maxHeightFactor: 0.95,
+      resizeToAvoidBottomInset: false,
       builder: (_) =>
           _SheetFrame(child: AiSheetShell.conversation(prefill: prefill)),
     );

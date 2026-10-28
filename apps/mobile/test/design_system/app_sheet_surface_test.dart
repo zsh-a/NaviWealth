@@ -17,7 +17,7 @@ Widget _wrap(Widget child, {MediaQueryData? mediaQueryData}) {
 }
 
 void main() {
-  testWidgets('ordinary sheet surfaces use the shared frosted material', (
+  testWidgets('ordinary sheet surfaces default to solid material', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -30,7 +30,7 @@ void main() {
     expect(surface.role, AppGlassRole.sheet);
     expect(surface.frosted, isTrue);
     expect(surface.softLight, isTrue);
-    expect(find.byType(BackdropFilter), findsOneWidget);
+    expect(find.byType(BackdropFilter), findsNothing);
   });
 
   testWidgets('rendering-heavy sheets can opt out of live blur', (

@@ -72,7 +72,7 @@ class FloatingGlassNavBar extends StatelessWidget {
             constraints.maxWidth < _kAssistantLabelBreakpoint;
         return AppGlassSurface(
           // The dock is the primary soft-glass surface. Keep the theme-owned
-          // liveBlur capability gate so high-contrast/OLED modes still fall
+          // liveBlur capability gate so system high contrast still fall
           // back to an opaque fill, while normal devices preserve the content
           // relationship that makes the material visibly glass-like.
           frosted: true,
