@@ -52,6 +52,7 @@ dependencies:
   # (Android) adapter. Web is unsupported; conditional import returns a
   # not-supported stub there.
   health: ^13.3.2
+  image: ^4.10.1
   image_picker: ^1.2.4
   intl: ^0.20.3
   lifeos_native:
@@ -109,7 +110,6 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   freezed: ^4.0.3
-  image: ^4.10.1
   integration_test:
     sdk: flutter
 

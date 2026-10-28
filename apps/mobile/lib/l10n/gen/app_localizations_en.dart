@@ -18364,4 +18364,167 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get databaseSchemaMismatchMessage =>
       'This version uses a new database format. Your existing data has been kept intact. Reset local data to start again.';
+
+  @override
+  String get healthMealsTitle => 'Meals';
+
+  @override
+  String get healthMealRecord => 'Record a meal';
+
+  @override
+  String get healthMealNew => 'New meal';
+
+  @override
+  String get healthMealEdit => 'Edit meal';
+
+  @override
+  String get healthMealRecorded => 'Recorded intake';
+
+  @override
+  String get healthMealEmpty => 'No meals recorded for this date.';
+
+  @override
+  String get healthMealEstimateHint =>
+      'Photo portions and recipes are estimates. Check the food, cooking method and amount you actually ate. Missing meals are not zero intake.';
+
+  @override
+  String get healthMealBreakfast => 'Breakfast';
+
+  @override
+  String get healthMealLunch => 'Lunch';
+
+  @override
+  String get healthMealDinner => 'Dinner';
+
+  @override
+  String get healthMealSnack => 'Snack';
+
+  @override
+  String get healthMealPhoto => 'Meal photo';
+
+  @override
+  String get healthMealCamera => 'Take photo';
+
+  @override
+  String get healthMealGallery => 'Choose photo';
+
+  @override
+  String get healthMealRemovePhoto => 'Remove photo';
+
+  @override
+  String get healthMealPhotoLocal =>
+      'Photos stay on this device and are excluded from sync and backups.';
+
+  @override
+  String get healthMealRecognize => 'Identify foods';
+
+  @override
+  String get healthMealRecognizing => 'Identifying foods…';
+
+  @override
+  String get healthMealUploadTitle => 'Send this meal photo?';
+
+  @override
+  String healthMealUploadBody(String provider) {
+    return 'The resized photo will be sent directly to $provider using your API key. It may contain sensitive information. Existing food items will be replaced by editable estimates. Nothing is saved until you confirm the meal.';
+  }
+
+  @override
+  String get healthMealUploadAllow => 'Send and identify';
+
+  @override
+  String get healthMealModelRequired =>
+      'Configure a model that supports images in AI settings to identify foods. You can still add foods manually.';
+
+  @override
+  String get healthMealRecognitionFailed =>
+      'Could not identify this meal. Check your model\'s image support and connection, try another photo, or add foods manually.';
+
+  @override
+  String get healthMealPhotoFailed =>
+      'Could not open this photo. Try a smaller JPEG or PNG, or take another photo.';
+
+  @override
+  String get healthMealFoods => 'Foods eaten';
+
+  @override
+  String get healthMealAddFood => 'Add food';
+
+  @override
+  String get healthMealEditFood => 'Edit food';
+
+  @override
+  String get healthMealRemoveFood => 'Remove food';
+
+  @override
+  String get healthMealFoodName => 'Food and cooking method';
+
+  @override
+  String get healthMealGrams => 'Amount actually eaten (g)';
+
+  @override
+  String get healthMealPer100g => 'Nutrition per 100 g';
+
+  @override
+  String get healthMealEnergy => 'Energy (kcal / 100 g)';
+
+  @override
+  String get healthMealProtein => 'Protein (g / 100 g)';
+
+  @override
+  String get healthMealCarbs => 'Carbohydrate (g / 100 g)';
+
+  @override
+  String get healthMealFat => 'Fat (g / 100 g)';
+
+  @override
+  String get healthMealCatalog => 'Food reference';
+
+  @override
+  String get healthMealCustom => 'Custom food or recipe';
+
+  @override
+  String get healthMealCatalogSource => 'USDA reference';
+
+  @override
+  String get healthMealModelEstimate => 'Model estimate';
+
+  @override
+  String get healthMealManualSource => 'User-entered nutrition';
+
+  @override
+  String get healthMealCatalogHint =>
+      'Match the cooked/raw preparation. For mixed dishes, edit the recipe nutrition instead of choosing an unrelated ingredient.';
+
+  @override
+  String get healthMealInvalidFood =>
+      'Enter a food name, 0–1,000 kcal per 100 g, nutrients from 0–100 g (combined at most 105 g), and an eaten weight above 0 and at most 10,000 g.';
+
+  @override
+  String get healthMealNeedFood => 'Add at least one food before saving.';
+
+  @override
+  String get healthMealNotFound =>
+      'This meal is unavailable or belongs to another user.';
+
+  @override
+  String get healthMealSessionChanged =>
+      'The user or HealthOS setting changed. Reopen this meal to continue.';
+
+  @override
+  String get healthMealDeleteConfirm =>
+      'Delete this meal and its photo from this device? The meal deletion will also sync to your other devices.';
+
+  @override
+  String get healthMealHistory => 'View meals';
+
+  @override
+  String healthMealKcal(String kcal) {
+    return 'About $kcal kcal';
+  }
+
+  @override
+  String healthMealMacros(String protein, String carbs, String fat) {
+    return 'Protein $protein g · Carbs $carbs g · Fat $fat g';
+  }
 }

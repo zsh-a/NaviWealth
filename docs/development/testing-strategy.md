@@ -364,10 +364,10 @@ The host suites pin recovery and baseline behavior before device execution:
   protection, rollback, and vector rebuilding without overwriting edited rows.
 - `sync_compatibility_test.dart` covers mixed-version opaque fields, upgrade
   hydration, skipped-table replay, interrupted pagination, LWW and scoped reset.
-- `schema_baseline_test.dart` checks the fresh schema-99 baseline. It rejects
-  older and newer schema versions without modifying their version, tables or
-  retained rows, and verifies that a current-schema file reopens with its data.
-  Historical schema upgrade chains and migration fixtures are not supported.
+- `schema_baseline_test.dart` checks schema 100, the additive 99 → 100 meal-table
+  upgrade on foreground/background connections, and current-schema reopen.
+  Other unsupported versions are rejected without changing their version,
+  tables or retained rows. There is no general historical migration chain.
 - `database_unlock_gate_test.dart` requires an explicit confirmation before a
   schema mismatch can reset local data. Retrying or cancelling preserves it;
   unknown failures do not offer destructive reset.

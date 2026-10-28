@@ -5679,5 +5679,81 @@
   "actionOutcomeRefresh": "重新评估来源",
   "actionOutcomeReview": "查看来源",
   "databaseSchemaMismatchTitle": "本地数据库版本不受支持",
-  "databaseSchemaMismatchMessage": "此版本使用新的数据库格式。现有数据未被修改，重置本地数据后可重新开始。"
+  "databaseSchemaMismatchMessage": "此版本使用新的数据库格式。现有数据未被修改，重置本地数据后可重新开始。",
+  "healthMealsTitle": "餐食记录",
+  "healthMealRecord": "记录饮食",
+  "healthMealNew": "新增餐食",
+  "healthMealEdit": "编辑餐食",
+  "healthMealRecorded": "已记录摄入",
+  "healthMealEmpty": "这一天还没有餐食记录。",
+  "healthMealEstimateHint": "照片中的份量和配方仅为估算，请核对食物、烹饪方式及实际吃下的量。未记录不代表没有摄入。",
+  "healthMealBreakfast": "早餐",
+  "healthMealLunch": "午餐",
+  "healthMealDinner": "晚餐",
+  "healthMealSnack": "加餐",
+  "healthMealPhoto": "餐食照片",
+  "healthMealCamera": "拍照",
+  "healthMealGallery": "选择照片",
+  "healthMealRemovePhoto": "移除照片",
+  "healthMealPhotoLocal": "照片只保存在本机，不参与同步或备份。",
+  "healthMealRecognize": "识别食物",
+  "healthMealRecognizing": "正在识别食物…",
+  "healthMealUploadTitle": "发送这张餐食照片？",
+  "healthMealUploadBody": "压缩后的照片将使用你的 API Key 直接发送给 {provider}，其中可能包含敏感信息。已有食物将替换为可编辑的估算结果，确认保存前不会写入餐食记录。",
+  "@healthMealUploadBody": {
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "healthMealUploadAllow": "发送并识别",
+  "healthMealModelRequired": "在 AI 设置中配置支持图片输入的模型后可识别食物，也可以手动添加食物。",
+  "healthMealRecognitionFailed": "未能识别这顿餐食，请检查模型是否支持图片及网络连接，或更换照片、手动添加食物。",
+  "healthMealPhotoFailed": "无法打开这张照片，请尝试较小的 JPEG、PNG 图片，或重新拍照。",
+  "healthMealFoods": "实际食用的食物",
+  "healthMealAddFood": "添加食物",
+  "healthMealEditFood": "编辑食物",
+  "healthMealRemoveFood": "移除食物",
+  "healthMealFoodName": "食物及烹饪方式",
+  "healthMealGrams": "实际食用量（克）",
+  "healthMealPer100g": "每 100 克营养值",
+  "healthMealEnergy": "热量（千卡 / 100 克）",
+  "healthMealProtein": "蛋白质（克 / 100 克）",
+  "healthMealCarbs": "碳水化合物（克 / 100 克）",
+  "healthMealFat": "脂肪（克 / 100 克）",
+  "healthMealCatalog": "食物参考",
+  "healthMealCustom": "自定义食物或菜品",
+  "healthMealCatalogSource": "USDA 参考数据",
+  "healthMealModelEstimate": "模型估算",
+  "healthMealManualSource": "用户填写的营养值",
+  "healthMealCatalogHint": "请匹配生熟状态。混合菜品应填写配方或修改营养值，避免选择不对应的单一食材。",
+  "healthMealInvalidFood": "请填写食物名称、每百克 0–1,000 千卡热量、0–100 克营养素（合计不超过 105 克），以及大于 0 且不超过 10,000 克的实际食用量。",
+  "healthMealNeedFood": "请至少添加一种食物后保存。",
+  "healthMealNotFound": "这条餐食记录不可用，或属于其他用户。",
+  "healthMealSessionChanged": "用户或 HealthOS 启用状态已变化，请重新打开餐食记录后继续。",
+  "healthMealDeleteConfirm": "删除这顿餐食及本机照片？餐食删除也会同步到其他设备。",
+  "healthMealHistory": "查看餐食",
+  "healthMealKcal": "约 {kcal} 千卡",
+  "@healthMealKcal": {
+    "placeholders": {
+      "kcal": {
+        "type": "String"
+      }
+    }
+  },
+  "healthMealMacros": "蛋白质 {protein} 克 · 碳水 {carbs} 克 · 脂肪 {fat} 克",
+  "@healthMealMacros": {
+    "placeholders": {
+      "protein": {
+        "type": "String"
+      },
+      "carbs": {
+        "type": "String"
+      },
+      "fat": {
+        "type": "String"
+      }
+    }
+  }
 }

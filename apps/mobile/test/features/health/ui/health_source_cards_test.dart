@@ -162,6 +162,8 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
+    await tester.ensureVisible(find.text('Data sources'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Data sources'));
     await tester.pumpAndSettle();
 

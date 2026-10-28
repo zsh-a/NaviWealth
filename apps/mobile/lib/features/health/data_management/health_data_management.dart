@@ -6,5 +6,8 @@ final DomainDataManagementSpec healthDataManagementSpec =
     DomainDataManagementSpec(
       scope: DomainScope.health,
       label: 'HealthOS',
-      sourceTables: syncDataTablesForPrefix(kHealthDomainPrefix),
+      sourceTables: [
+        ...syncDataTablesForPrefix(kHealthDomainPrefix),
+        const DataTableSpec(table: 'health_meal_photos', ownerScoped: true),
+      ],
     );

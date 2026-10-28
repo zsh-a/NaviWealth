@@ -18,6 +18,8 @@ Included:
 - Steps, active energy, workouts, workout duration, distance.
 - VO2 max pipeline where platform support exists.
 - Weight and body fat as explicit low-frequency manual or AI-confirmed entries.
+- Photo-assisted or manual meal logging, with editable consumed weights,
+  nutrient snapshots, and recorded daily energy/macronutrient intake.
 - Optional daily energy, sleep quality, and subjective stress check-ins, with
   life-event tags and notes. Recording does not require a wearable or AI.
 - Personal source preferences and an optional user-set sleep-duration goal.
@@ -137,6 +139,8 @@ Tables:
 - `core/persistence/health_tables.dart`
 - Drift table: `health_metrics`
 - Drift table: `health_check_ins` (included in the schema-99 baseline)
+- Drift table: `health_meals` (one confirmed meal and its food snapshots per row)
+- Drift table: `health_meal_photos` (device-local photo bytes; never synced)
 - Entity: `features/health/domain/health_metric.dart`
 - Kind enum: `features/health/domain/health_metric_kind.dart`
 
@@ -187,13 +191,66 @@ Unknown event tags remain intact when an older client edits a record.
 participates in Health reset and encrypted backups. Older clients skip the
 unknown row family; upgrading changes the registry compatibility signature
 and replays the remote rows. Restoring an older archive that has no check-in
-table preserves existing check-ins. New databases create both Health tables and
-their indexes directly in schema 99. Other local schema versions are rejected
-without rewriting data; the startup unlock gate requires explicit confirmation
-before resetting them. There is no historical local-schema migration chain.
+table preserves existing check-ins. Schema 100 adds meals and local photos;
+the additive 99 → 100 upgrade creates only these tables and their index in one
+transaction, preserving existing data. Other local schema upgrades/downgrades
+remain unsupported and require an explicitly confirmed reset; they never
+rewrite existing rows automatically.
 
 Source selection and sleep goals are device-local, owner-scoped preferences
 in `health_preferences.dart`; they are not synced or included in backups.
+
+## Meal Logging
+
+Today exposes recorded intake, meal capture, and date-based meal history at
+`/health/meals`. Multi-item capture/editing is a guarded full-page form;
+individual food editing uses the shared guarded sheet. This works without
+a wearable, Health platform permissions, or an AI profile. Energy intake is
+separate from `active_energy_daily` and `total_energy_daily` expenditure;
+missing meal records never mean zero intake or an established calorie deficit.
+
+Camera/library capture is resized to at most 1280 pixels on the longest side,
+re-encoded as JPEG without original EXIF/GPS metadata, and capped at 2 MiB.
+The selected photo remains an in-memory draft until explicit Save. Confirmed
+photos live in the owner-scoped native encrypted database, not an unencrypted
+file cache. They are excluded from sync and backups; another device or a
+restored archive may have the meal without its photo. Removing/deleting a local
+meal photo clears its bytes; physical parent deletion cascades to the photo.
+Domain reset clears both resources, while ordinary cache cleanup preserves
+them. A storage trigger also removes photo bytes when a meal tombstone arrives
+through Sync.
+
+Photo identification requires per-request consent naming the captured model
+profile. The existing document-recognition permission does not authorize meal
+photos. The native FRB profile completion path sends the normalized photo
+directly to that profile's provider; there is no backend AI relay or fallback.
+Consent cancellation sends nothing. Owner/domain/profile changes invalidate
+pending results. Recognition is a read-only draft operation with a Health
+trace, not an automatic repository write. Provider errors preserve previous
+food edits and offer manual entry. The selected model must support image input
+and JSON output; compatibility is verified through adapter tests, not a claim
+that every user-configured model supports vision.
+
+The offline catalog is a small CC0 USDA FoodData Central SR Legacy subset,
+with explicit cooked/raw names, FDC IDs, and source attribution in
+`meal_food_catalog.dart`. Exact catalog matches use the local nutrient values,
+never generated replacements. Other dishes retain a visible `model_estimate`
+source until the user edits their nutrient snapshot. No proprietary Chinese
+food database is bundled. Users can select a catalog reference or enter recipe
+nutrition manually. Application code calculates each amount as
+`consumed grams × nutrient per 100g / 100` and sums the results; models do not
+calculate the persisted totals. Stored snapshots keep history stable when a
+catalog or model changes.
+
+Meals preserve their authored local calendar date as UTC midnight and their
+capture instant separately, so another device's timezone does not shift a meal
+into a different day's intake. Foods and provenance travel atomically inside
+one `health:health_meals` row under Sync v3 LWW. Older clients skip this family;
+an upgraded registry replays it. Saves/deletes and their outbox pointers share
+a database transaction. Editing requires the previously read revision, and
+live owner/opt-in checks prevent a stale form from writing to another session.
+Meals participate in Health encrypted backups and owner transfer; older
+archives without the meal family preserve existing meals.
 
 ## Sources and Recovery Comparability
 

@@ -1,10 +1,13 @@
 /// FRB-backed profile-completion adapters used by app-level provider wiring.
 library;
 
+import 'dart:typed_data';
+
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_llm_bridge.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
 import 'package:naviwealth/features/finance/activity/data/activity_entry_insight_client.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_llm_client.dart';
+import 'package:naviwealth/features/health/data/meal_recognition_client.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_rewrite_client.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
@@ -303,6 +306,47 @@ class FrbIngestLlmProfileClient implements IngestLlmProfileClient {
       temperature: temperature,
       maxOutputTokens: maxOutputTokens,
       metadata: metadata,
+    );
+  }
+}
+
+class FrbMealRecognitionClient implements MealRecognitionClient {
+  FrbMealRecognitionClient({
+    required AgentRuntimeLlmBridge llmBridge,
+    required this.providerLabel,
+    FrbProfileCompletionTraceRecorder? recordTrace,
+  }) : _completer = _TracedProfileCompleter(
+         llmBridge: llmBridge,
+         recordTrace: recordTrace,
+         domain: const AiDomain.domain(DomainScope.health),
+         defaultAgentId: 'health_meal_recognition',
+       );
+
+  final _TracedProfileCompleter _completer;
+  @override
+  final String providerLabel;
+
+  @override
+  Future<MealRecognitionDraft> recognize({
+    required Uint8List photoBytes,
+    required String languageCode,
+    required bool allowUpload,
+  }) {
+    if (!allowUpload) {
+      throw StateError('Meal photo upload has not been authorized');
+    }
+    return _completer.completeProfileAndTransform(
+      messages: mealRecognitionMessages(
+        photoBytes: photoBytes,
+        languageCode: languageCode,
+      ),
+      responseFormat: const {'type': 'json_object'},
+      maxOutputTokens: 3000,
+      metadata: const {
+        'surface': 'health_meal_recognition',
+        'agent_id': 'health_meal_recognition',
+      },
+      transform: parseMealRecognition,
     );
   }
 }

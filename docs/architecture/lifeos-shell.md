@@ -753,13 +753,15 @@ confirmed rows intact. Primary-key collisions with preserved rows abort and
 roll back the restore. Older archives without an owner header are validated by
 their row owners; account identity remapping is not part of restore.
 
-Schema 99 is a fresh baseline. Historical schema upgrades and downgrades are
-unsupported. Opening another version raises `UnsupportedDatabaseSchema` without
+Schema 100 adds meal records and device-local photos. The 99 → 100 upgrade is
+additive and transactional; it preserves the previous baseline's data.
+Other historical schema upgrades and downgrades are unsupported. Opening an
+unsupported version raises `UnsupportedDatabaseSchema` without
 rewriting or deleting its rows. The startup gate explains the format mismatch
 and offers a confirmed local reset on native and Web; reset is never automatic.
 Current-baseline databases reopen normally. `schema_baseline_test.dart` verifies
 repeated rejection leaves the old schema and data intact, and verifies current
-schema reopen. Backup validation and Sync's generic opaque-field handling are
+schema reopen plus the data-preserving 99 → 100 upgrade. Backup validation and Sync's generic opaque-field handling are
 separate contracts; they do not provide a database-format migration path.
 
 ## Background And Notifications

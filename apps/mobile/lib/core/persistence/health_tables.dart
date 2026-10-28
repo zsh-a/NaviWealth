@@ -84,3 +84,36 @@ class HealthCheckIns extends Table with SyncableTable {
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
+
+/// A confirmed meal is one sync aggregate: foods and their nutrient snapshots
+/// travel together, independently of energy-expenditure measurements.
+@DataClassName('HealthMealRow')
+class HealthMeals extends Table with SyncableTable {
+  TextColumn get id => text()();
+  DateTimeColumn get capturedAt => dateTime()();
+
+  /// The meal's local calendar date encoded as UTC midnight. Retaining it
+  /// prevents travel or another device's timezone from moving a meal's day.
+  DateTimeColumn get day => dateTime()();
+  TextColumn get mealType => text()();
+  TextColumn get foodsJson => text()();
+  TextColumn get note => text().nullable()();
+  TextColumn get recognitionModel => text().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// Device-local photos, protected by the native database's SQLCipher key.
+/// Never registered for sync. Deleting the parent physically also removes the
+/// photo (including a domain reset or replacement during backup restore).
+@DataClassName('HealthMealPhotoRow')
+class HealthMealPhotos extends Table {
+  TextColumn get id =>
+      text().references(HealthMeals, #id, onDelete: KeyAction.cascade)();
+  TextColumn get ownerUserId => text()();
+  BlobColumn get bytes => blob()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}

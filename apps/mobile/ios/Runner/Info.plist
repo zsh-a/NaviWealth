@@ -34,9 +34,9 @@
 	<!-- §5.10.10 / S5c-native — image_picker camera/library usage
 	     strings. iOS terminates the app on first access without these. -->
 	<key>NSCameraUsageDescription</key>
-	<string>用于拍摄收据/账单照片，自动解析为待确认的交易草稿。</string>
+	<string>用于拍摄收据、账单或餐食照片，生成待确认的交易或饮食记录。</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>用于选择收据/账单图片，自动解析为待确认的交易草稿。</string>
+	<string>用于选择收据、账单或餐食图片，生成待确认的交易或饮食记录。</string>
 	<key>NSFaceIDUsageDescription</key>
 	<string>用于在你开启应用锁后，通过 Face ID 解锁 NaviWealth 本地数据。</string>
 	<!-- D-2.2 (`docs/healthos-domain.md` §2) — HealthKit read-only access

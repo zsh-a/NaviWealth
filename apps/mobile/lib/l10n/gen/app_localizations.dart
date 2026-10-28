@@ -30780,6 +30780,300 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This version uses a new database format. Your existing data has been kept intact. Reset local data to start again.'**
   String get databaseSchemaMismatchMessage;
+
+  /// No description provided for @healthMealsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Meals'**
+  String get healthMealsTitle;
+
+  /// No description provided for @healthMealRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Record a meal'**
+  String get healthMealRecord;
+
+  /// No description provided for @healthMealNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New meal'**
+  String get healthMealNew;
+
+  /// No description provided for @healthMealEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit meal'**
+  String get healthMealEdit;
+
+  /// No description provided for @healthMealRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded intake'**
+  String get healthMealRecorded;
+
+  /// No description provided for @healthMealEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No meals recorded for this date.'**
+  String get healthMealEmpty;
+
+  /// No description provided for @healthMealEstimateHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo portions and recipes are estimates. Check the food, cooking method and amount you actually ate. Missing meals are not zero intake.'**
+  String get healthMealEstimateHint;
+
+  /// No description provided for @healthMealBreakfast.
+  ///
+  /// In en, this message translates to:
+  /// **'Breakfast'**
+  String get healthMealBreakfast;
+
+  /// No description provided for @healthMealLunch.
+  ///
+  /// In en, this message translates to:
+  /// **'Lunch'**
+  String get healthMealLunch;
+
+  /// No description provided for @healthMealDinner.
+  ///
+  /// In en, this message translates to:
+  /// **'Dinner'**
+  String get healthMealDinner;
+
+  /// No description provided for @healthMealSnack.
+  ///
+  /// In en, this message translates to:
+  /// **'Snack'**
+  String get healthMealSnack;
+
+  /// No description provided for @healthMealPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Meal photo'**
+  String get healthMealPhoto;
+
+  /// No description provided for @healthMealCamera.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photo'**
+  String get healthMealCamera;
+
+  /// No description provided for @healthMealGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose photo'**
+  String get healthMealGallery;
+
+  /// No description provided for @healthMealRemovePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove photo'**
+  String get healthMealRemovePhoto;
+
+  /// No description provided for @healthMealPhotoLocal.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos stay on this device and are excluded from sync and backups.'**
+  String get healthMealPhotoLocal;
+
+  /// No description provided for @healthMealRecognize.
+  ///
+  /// In en, this message translates to:
+  /// **'Identify foods'**
+  String get healthMealRecognize;
+
+  /// No description provided for @healthMealRecognizing.
+  ///
+  /// In en, this message translates to:
+  /// **'Identifying foods…'**
+  String get healthMealRecognizing;
+
+  /// No description provided for @healthMealUploadTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Send this meal photo?'**
+  String get healthMealUploadTitle;
+
+  /// No description provided for @healthMealUploadBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The resized photo will be sent directly to {provider} using your API key. It may contain sensitive information. Existing food items will be replaced by editable estimates. Nothing is saved until you confirm the meal.'**
+  String healthMealUploadBody(String provider);
+
+  /// No description provided for @healthMealUploadAllow.
+  ///
+  /// In en, this message translates to:
+  /// **'Send and identify'**
+  String get healthMealUploadAllow;
+
+  /// No description provided for @healthMealModelRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Configure a model that supports images in AI settings to identify foods. You can still add foods manually.'**
+  String get healthMealModelRequired;
+
+  /// No description provided for @healthMealRecognitionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not identify this meal. Check your model\'s image support and connection, try another photo, or add foods manually.'**
+  String get healthMealRecognitionFailed;
+
+  /// No description provided for @healthMealPhotoFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open this photo. Try a smaller JPEG or PNG, or take another photo.'**
+  String get healthMealPhotoFailed;
+
+  /// No description provided for @healthMealFoods.
+  ///
+  /// In en, this message translates to:
+  /// **'Foods eaten'**
+  String get healthMealFoods;
+
+  /// No description provided for @healthMealAddFood.
+  ///
+  /// In en, this message translates to:
+  /// **'Add food'**
+  String get healthMealAddFood;
+
+  /// No description provided for @healthMealEditFood.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit food'**
+  String get healthMealEditFood;
+
+  /// No description provided for @healthMealRemoveFood.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove food'**
+  String get healthMealRemoveFood;
+
+  /// No description provided for @healthMealFoodName.
+  ///
+  /// In en, this message translates to:
+  /// **'Food and cooking method'**
+  String get healthMealFoodName;
+
+  /// No description provided for @healthMealGrams.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount actually eaten (g)'**
+  String get healthMealGrams;
+
+  /// No description provided for @healthMealPer100g.
+  ///
+  /// In en, this message translates to:
+  /// **'Nutrition per 100 g'**
+  String get healthMealPer100g;
+
+  /// No description provided for @healthMealEnergy.
+  ///
+  /// In en, this message translates to:
+  /// **'Energy (kcal / 100 g)'**
+  String get healthMealEnergy;
+
+  /// No description provided for @healthMealProtein.
+  ///
+  /// In en, this message translates to:
+  /// **'Protein (g / 100 g)'**
+  String get healthMealProtein;
+
+  /// No description provided for @healthMealCarbs.
+  ///
+  /// In en, this message translates to:
+  /// **'Carbohydrate (g / 100 g)'**
+  String get healthMealCarbs;
+
+  /// No description provided for @healthMealFat.
+  ///
+  /// In en, this message translates to:
+  /// **'Fat (g / 100 g)'**
+  String get healthMealFat;
+
+  /// No description provided for @healthMealCatalog.
+  ///
+  /// In en, this message translates to:
+  /// **'Food reference'**
+  String get healthMealCatalog;
+
+  /// No description provided for @healthMealCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom food or recipe'**
+  String get healthMealCustom;
+
+  /// No description provided for @healthMealCatalogSource.
+  ///
+  /// In en, this message translates to:
+  /// **'USDA reference'**
+  String get healthMealCatalogSource;
+
+  /// No description provided for @healthMealModelEstimate.
+  ///
+  /// In en, this message translates to:
+  /// **'Model estimate'**
+  String get healthMealModelEstimate;
+
+  /// No description provided for @healthMealManualSource.
+  ///
+  /// In en, this message translates to:
+  /// **'User-entered nutrition'**
+  String get healthMealManualSource;
+
+  /// No description provided for @healthMealCatalogHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Match the cooked/raw preparation. For mixed dishes, edit the recipe nutrition instead of choosing an unrelated ingredient.'**
+  String get healthMealCatalogHint;
+
+  /// No description provided for @healthMealInvalidFood.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a food name, 0–1,000 kcal per 100 g, nutrients from 0–100 g (combined at most 105 g), and an eaten weight above 0 and at most 10,000 g.'**
+  String get healthMealInvalidFood;
+
+  /// No description provided for @healthMealNeedFood.
+  ///
+  /// In en, this message translates to:
+  /// **'Add at least one food before saving.'**
+  String get healthMealNeedFood;
+
+  /// No description provided for @healthMealNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'This meal is unavailable or belongs to another user.'**
+  String get healthMealNotFound;
+
+  /// No description provided for @healthMealSessionChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'The user or HealthOS setting changed. Reopen this meal to continue.'**
+  String get healthMealSessionChanged;
+
+  /// No description provided for @healthMealDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this meal and its photo from this device? The meal deletion will also sync to your other devices.'**
+  String get healthMealDeleteConfirm;
+
+  /// No description provided for @healthMealHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'View meals'**
+  String get healthMealHistory;
+
+  /// No description provided for @healthMealKcal.
+  ///
+  /// In en, this message translates to:
+  /// **'About {kcal} kcal'**
+  String healthMealKcal(String kcal);
+
+  /// No description provided for @healthMealMacros.
+  ///
+  /// In en, this message translates to:
+  /// **'Protein {protein} g · Carbs {carbs} g · Fat {fat} g'**
+  String healthMealMacros(String protein, String carbs, String fat);
 }
 
 class _AppLocalizationsDelegate

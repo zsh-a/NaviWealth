@@ -33,6 +33,7 @@ import 'garmin_account_bind_sheet.dart';
 import 'garmin_foreground_refresh_scope.dart';
 import 'health_check_in_sections.dart';
 import 'health_greeting_header.dart';
+import 'health_meal_summary.dart';
 import 'health_metric_colors.dart';
 import 'health_metric_presentation.dart';
 import 'health_series_chart.dart';
@@ -107,6 +108,10 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
                 ? staggeredSummaryTiles([
                     const AdaptiveSummaryTile(
                       role: AdaptiveSummaryTileRole.continuous,
+                      child: HealthMealToday(),
+                    ),
+                    const AdaptiveSummaryTile(
+                      role: AdaptiveSummaryTileRole.continuous,
                       child: HealthCheckInToday(),
                     ),
                     const AdaptiveSummaryTile(
@@ -152,6 +157,10 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
                 // below it makes the empty state feel like two onboarding
                 // surfaces instead of one clear next step.
                 : const [
+                    AdaptiveSummaryTile(
+                      role: AdaptiveSummaryTileRole.continuous,
+                      child: HealthMealToday(),
+                    ),
                     AdaptiveSummaryTile(
                       role: AdaptiveSummaryTileRole.continuous,
                       child: HealthCheckInToday(),

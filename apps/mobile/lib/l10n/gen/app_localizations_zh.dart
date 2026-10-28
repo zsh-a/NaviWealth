@@ -17363,4 +17363,160 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get databaseSchemaMismatchMessage =>
       '此版本使用新的数据库格式。现有数据未被修改，重置本地数据后可重新开始。';
+
+  @override
+  String get healthMealsTitle => '餐食记录';
+
+  @override
+  String get healthMealRecord => '记录饮食';
+
+  @override
+  String get healthMealNew => '新增餐食';
+
+  @override
+  String get healthMealEdit => '编辑餐食';
+
+  @override
+  String get healthMealRecorded => '已记录摄入';
+
+  @override
+  String get healthMealEmpty => '这一天还没有餐食记录。';
+
+  @override
+  String get healthMealEstimateHint =>
+      '照片中的份量和配方仅为估算，请核对食物、烹饪方式及实际吃下的量。未记录不代表没有摄入。';
+
+  @override
+  String get healthMealBreakfast => '早餐';
+
+  @override
+  String get healthMealLunch => '午餐';
+
+  @override
+  String get healthMealDinner => '晚餐';
+
+  @override
+  String get healthMealSnack => '加餐';
+
+  @override
+  String get healthMealPhoto => '餐食照片';
+
+  @override
+  String get healthMealCamera => '拍照';
+
+  @override
+  String get healthMealGallery => '选择照片';
+
+  @override
+  String get healthMealRemovePhoto => '移除照片';
+
+  @override
+  String get healthMealPhotoLocal => '照片只保存在本机，不参与同步或备份。';
+
+  @override
+  String get healthMealRecognize => '识别食物';
+
+  @override
+  String get healthMealRecognizing => '正在识别食物…';
+
+  @override
+  String get healthMealUploadTitle => '发送这张餐食照片？';
+
+  @override
+  String healthMealUploadBody(String provider) {
+    return '压缩后的照片将使用你的 API Key 直接发送给 $provider，其中可能包含敏感信息。已有食物将替换为可编辑的估算结果，确认保存前不会写入餐食记录。';
+  }
+
+  @override
+  String get healthMealUploadAllow => '发送并识别';
+
+  @override
+  String get healthMealModelRequired => '在 AI 设置中配置支持图片输入的模型后可识别食物，也可以手动添加食物。';
+
+  @override
+  String get healthMealRecognitionFailed =>
+      '未能识别这顿餐食，请检查模型是否支持图片及网络连接，或更换照片、手动添加食物。';
+
+  @override
+  String get healthMealPhotoFailed => '无法打开这张照片，请尝试较小的 JPEG、PNG 图片，或重新拍照。';
+
+  @override
+  String get healthMealFoods => '实际食用的食物';
+
+  @override
+  String get healthMealAddFood => '添加食物';
+
+  @override
+  String get healthMealEditFood => '编辑食物';
+
+  @override
+  String get healthMealRemoveFood => '移除食物';
+
+  @override
+  String get healthMealFoodName => '食物及烹饪方式';
+
+  @override
+  String get healthMealGrams => '实际食用量（克）';
+
+  @override
+  String get healthMealPer100g => '每 100 克营养值';
+
+  @override
+  String get healthMealEnergy => '热量（千卡 / 100 克）';
+
+  @override
+  String get healthMealProtein => '蛋白质（克 / 100 克）';
+
+  @override
+  String get healthMealCarbs => '碳水化合物（克 / 100 克）';
+
+  @override
+  String get healthMealFat => '脂肪（克 / 100 克）';
+
+  @override
+  String get healthMealCatalog => '食物参考';
+
+  @override
+  String get healthMealCustom => '自定义食物或菜品';
+
+  @override
+  String get healthMealCatalogSource => 'USDA 参考数据';
+
+  @override
+  String get healthMealModelEstimate => '模型估算';
+
+  @override
+  String get healthMealManualSource => '用户填写的营养值';
+
+  @override
+  String get healthMealCatalogHint => '请匹配生熟状态。混合菜品应填写配方或修改营养值，避免选择不对应的单一食材。';
+
+  @override
+  String get healthMealInvalidFood =>
+      '请填写食物名称、每百克 0–1,000 千卡热量、0–100 克营养素（合计不超过 105 克），以及大于 0 且不超过 10,000 克的实际食用量。';
+
+  @override
+  String get healthMealNeedFood => '请至少添加一种食物后保存。';
+
+  @override
+  String get healthMealNotFound => '这条餐食记录不可用，或属于其他用户。';
+
+  @override
+  String get healthMealSessionChanged => '用户或 HealthOS 启用状态已变化，请重新打开餐食记录后继续。';
+
+  @override
+  String get healthMealDeleteConfirm => '删除这顿餐食及本机照片？餐食删除也会同步到其他设备。';
+
+  @override
+  String get healthMealHistory => '查看餐食';
+
+  @override
+  String healthMealKcal(String kcal) {
+    return '约 $kcal 千卡';
+  }
+
+  @override
+  String healthMealMacros(String protein, String carbs, String fat) {
+    return '蛋白质 $protein 克 · 碳水 $carbs 克 · 脂肪 $fat 克';
+  }
 }

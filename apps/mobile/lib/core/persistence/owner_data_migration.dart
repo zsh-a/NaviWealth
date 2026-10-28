@@ -46,6 +46,8 @@ const kOwnerDataTables = <OwnerDataTable>[
   OwnerDataTable('fire_plans', identityColumn: 'user_id'),
   OwnerDataTable('goals'),
   OwnerDataTable('health_check_ins'),
+  OwnerDataTable('health_meals'),
+  OwnerDataTable('health_meal_photos'),
   OwnerDataTable('health_metrics'),
   OwnerDataTable('income_strategy_plans'),
   OwnerDataTable('investment_portfolios'),

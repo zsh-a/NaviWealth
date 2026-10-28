@@ -16,6 +16,11 @@ AI runtime。
 不会自动对金额或账户名称做掩码。CSV 和粘贴文本由本机确定性解析器处理。
 这项权限不改变聊天消息和工具上下文的传输规则，Web 不提供文档识别开关。
 
+HealthOS 餐食照片使用独立的逐次上传确认，明确显示本次选定的模型服务商；
+文档识别开关不会代替该确认。照片压缩和移除 EXIF 后经同一 native profile 路径
+直连服务商，识别结果仅更新可编辑草稿，确认保存才写入餐食记录。具体营养计算、
+照片保留及同步边界见 [HealthOS](../domains/healthos-domain.md#meal-logging)。
+
 ## Document Contract
 
 本文拥有设备端 AI 的产品边界、入口与 InteractionSession 行为、Host/Runtime 分工、

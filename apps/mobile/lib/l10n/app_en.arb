@@ -8989,5 +8989,81 @@
   "actionOutcomeRefresh": "Recheck source",
   "actionOutcomeReview": "Review source",
   "databaseSchemaMismatchTitle": "Local database version is unsupported",
-  "databaseSchemaMismatchMessage": "This version uses a new database format. Your existing data has been kept intact. Reset local data to start again."
+  "databaseSchemaMismatchMessage": "This version uses a new database format. Your existing data has been kept intact. Reset local data to start again.",
+  "healthMealsTitle": "Meals",
+  "healthMealRecord": "Record a meal",
+  "healthMealNew": "New meal",
+  "healthMealEdit": "Edit meal",
+  "healthMealRecorded": "Recorded intake",
+  "healthMealEmpty": "No meals recorded for this date.",
+  "healthMealEstimateHint": "Photo portions and recipes are estimates. Check the food, cooking method and amount you actually ate. Missing meals are not zero intake.",
+  "healthMealBreakfast": "Breakfast",
+  "healthMealLunch": "Lunch",
+  "healthMealDinner": "Dinner",
+  "healthMealSnack": "Snack",
+  "healthMealPhoto": "Meal photo",
+  "healthMealCamera": "Take photo",
+  "healthMealGallery": "Choose photo",
+  "healthMealRemovePhoto": "Remove photo",
+  "healthMealPhotoLocal": "Photos stay on this device and are excluded from sync and backups.",
+  "healthMealRecognize": "Identify foods",
+  "healthMealRecognizing": "Identifying foods…",
+  "healthMealUploadTitle": "Send this meal photo?",
+  "healthMealUploadBody": "The resized photo will be sent directly to {provider} using your API key. It may contain sensitive information. Existing food items will be replaced by editable estimates. Nothing is saved until you confirm the meal.",
+  "@healthMealUploadBody": {
+    "placeholders": {
+      "provider": {
+        "type": "String"
+      }
+    }
+  },
+  "healthMealUploadAllow": "Send and identify",
+  "healthMealModelRequired": "Configure a model that supports images in AI settings to identify foods. You can still add foods manually.",
+  "healthMealRecognitionFailed": "Could not identify this meal. Check your model's image support and connection, try another photo, or add foods manually.",
+  "healthMealPhotoFailed": "Could not open this photo. Try a smaller JPEG or PNG, or take another photo.",
+  "healthMealFoods": "Foods eaten",
+  "healthMealAddFood": "Add food",
+  "healthMealEditFood": "Edit food",
+  "healthMealRemoveFood": "Remove food",
+  "healthMealFoodName": "Food and cooking method",
+  "healthMealGrams": "Amount actually eaten (g)",
+  "healthMealPer100g": "Nutrition per 100 g",
+  "healthMealEnergy": "Energy (kcal / 100 g)",
+  "healthMealProtein": "Protein (g / 100 g)",
+  "healthMealCarbs": "Carbohydrate (g / 100 g)",
+  "healthMealFat": "Fat (g / 100 g)",
+  "healthMealCatalog": "Food reference",
+  "healthMealCustom": "Custom food or recipe",
+  "healthMealCatalogSource": "USDA reference",
+  "healthMealModelEstimate": "Model estimate",
+  "healthMealManualSource": "User-entered nutrition",
+  "healthMealCatalogHint": "Match the cooked/raw preparation. For mixed dishes, edit the recipe nutrition instead of choosing an unrelated ingredient.",
+  "healthMealInvalidFood": "Enter a food name, 0–1,000 kcal per 100 g, nutrients from 0–100 g (combined at most 105 g), and an eaten weight above 0 and at most 10,000 g.",
+  "healthMealNeedFood": "Add at least one food before saving.",
+  "healthMealNotFound": "This meal is unavailable or belongs to another user.",
+  "healthMealSessionChanged": "The user or HealthOS setting changed. Reopen this meal to continue.",
+  "healthMealDeleteConfirm": "Delete this meal and its photo from this device? The meal deletion will also sync to your other devices.",
+  "healthMealHistory": "View meals",
+  "healthMealKcal": "About {kcal} kcal",
+  "@healthMealKcal": {
+    "placeholders": {
+      "kcal": {
+        "type": "String"
+      }
+    }
+  },
+  "healthMealMacros": "Protein {protein} g · Carbs {carbs} g · Fat {fat} g",
+  "@healthMealMacros": {
+    "placeholders": {
+      "protein": {
+        "type": "String"
+      },
+      "carbs": {
+        "type": "String"
+      },
+      "fat": {
+        "type": "String"
+      }
+    }
+  }
 }

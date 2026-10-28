@@ -77,9 +77,9 @@ final class AppDatabaseTransactionScope {
 
 /// Local NaviWealth database.
 ///
-/// Schema 99 is a fresh baseline. Other versions are rejected without modifying
-/// data; the startup gate offers an explicit local reset. Current-schema files
-/// reopen normally. There is no historical upgrade or downgrade path.
+/// Schema 100 adds meal records and device-local photos to baseline 99.
+/// Only that additive upgrade is supported; older baselines and downgrades
+/// are rejected without modifying data.
 @DriftDatabase(
   tables: [
     Users,
@@ -131,6 +131,8 @@ final class AppDatabaseTransactionScope {
     // HealthOS (D-2.1): single wide-flat table keyed by `kind`.
     HealthMetrics,
     HealthCheckIns,
+    HealthMeals,
+    HealthMealPhotos,
     // KnowledgeOS: notes, decisions, and explicit relations.
     KnowledgeNotes,
     KnowledgeDecisions,
@@ -174,7 +176,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 99;
+  int get schemaVersion => 100;
 
   UnsupportedDatabaseSchema? _schemaMismatch;
 
@@ -229,8 +231,17 @@ class AppDatabase extends _$AppDatabase {
       await _createFinancePlanningIndexes(this);
       await _createForecastSnapshots(this);
       await _createHealthCheckInIndexes(this);
+      await _createHealthMealIndexes(this);
     },
-    onUpgrade: (_, from, to) async {
+    onUpgrade: (m, from, to) async {
+      if (from == 99 && to == 100) {
+        await transaction(() async {
+          await m.createTable(healthMeals);
+          await m.createTable(healthMealPhotos);
+          await _createHealthMealIndexes(this);
+        });
+        return;
+      }
       final mismatch = UnsupportedDatabaseSchema(
         foundVersion: from,
         requiredVersion: to,
@@ -248,6 +259,24 @@ Future<void> _createHealthCheckInIndexes(AppDatabase db) => db.customStatement(
   'CREATE INDEX IF NOT EXISTS idx_health_check_ins_owner_day '
   'ON health_check_ins(owner_user_id, day)',
 );
+
+Future<void> _createHealthMealIndexes(AppDatabase db) async {
+  await db.customStatement(
+    'CREATE INDEX IF NOT EXISTS idx_health_meals_owner_day '
+    'ON health_meals(owner_user_id, day)',
+  );
+  // A Sync-applied tombstone must remove device-local bytes too. Keep this
+  // invariant at the storage boundary without adding a Health callback to the
+  // domain-neutral row applier.
+  await db.customStatement('''
+    CREATE TRIGGER IF NOT EXISTS trg_health_meal_deleted_photo
+    AFTER UPDATE OF deleted_at ON health_meals
+    WHEN NEW.deleted_at IS NOT NULL
+    BEGIN
+      DELETE FROM health_meal_photos WHERE id = NEW.id;
+    END
+  ''');
+}
 
 Future<void> _createWatchlistSimulationLocalInvariants(AppDatabase db) async {
   await db.customStatement('''
