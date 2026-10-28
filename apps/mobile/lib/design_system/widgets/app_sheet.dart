@@ -77,28 +77,23 @@ Future<T?> showAppSheet<T>({
   Future<bool> Function()? confirmDismiss,
   bool resizeToAvoidBottomInset = true,
 }) async {
-  _beginAppSheetOverlay();
-  try {
-    return await _showAppModalSheet<T>(
-      context: context,
-      mainAxisMaxRatio: maxHeightFactor,
-      dirtyGuard: dirtyGuard,
-      confirmDismiss: confirmDismiss,
-      resizeToAvoidBottomInset: resizeToAvoidBottomInset,
-      builder: (sheetContext) {
-        return AppSheet(
-          title: title,
-          subtitle: subtitle,
-          actions: actions,
-          footer: footer,
-          scrollable: scrollable,
-          child: Builder(builder: builder),
-        );
-      },
-    );
-  } finally {
-    _endAppSheetOverlay();
-  }
+  return await _showAppModalSheet<T>(
+    context: context,
+    mainAxisMaxRatio: maxHeightFactor,
+    dirtyGuard: dirtyGuard,
+    confirmDismiss: confirmDismiss,
+    resizeToAvoidBottomInset: resizeToAvoidBottomInset,
+    builder: (sheetContext) {
+      return AppSheet(
+        title: title,
+        subtitle: subtitle,
+        actions: actions,
+        footer: footer,
+        scrollable: scrollable,
+        child: Builder(builder: builder),
+      );
+    },
+  );
 }
 
 /// Preset for form sheets ("add asset", "edit goal", …).
@@ -118,22 +113,17 @@ Future<T?> showAppFormSheet<T>({
   Future<bool> Function()? confirmDismiss,
   bool resizeToAvoidBottomInset = true,
 }) async {
-  _beginAppSheetOverlay();
-  try {
-    return await _showAppModalSheet<T>(
-      context: context,
-      mainAxisMaxRatio: maxHeightFactor,
-      dirtyGuard: dirtyGuard,
-      confirmDismiss: confirmDismiss,
-      resizeToAvoidBottomInset: resizeToAvoidBottomInset,
-      builder: (sheetContext) => _AppSheetFormScope(
-        child: AppSheetSurface(child: Builder(builder: builder)),
-      ),
-      centerOnWide: true,
-    );
-  } finally {
-    _endAppSheetOverlay();
-  }
+  return await _showAppModalSheet<T>(
+    context: context,
+    mainAxisMaxRatio: maxHeightFactor,
+    dirtyGuard: dirtyGuard,
+    confirmDismiss: confirmDismiss,
+    resizeToAvoidBottomInset: resizeToAvoidBottomInset,
+    builder: (sheetContext) => _AppSheetFormScope(
+      child: AppSheetSurface(child: Builder(builder: builder)),
+    ),
+    centerOnWide: true,
+  );
 }
 
 /// Presents the canonical bottom sheet with route-level dismissal protection.
@@ -197,9 +187,7 @@ Future<T?> _showAppModalSheet<T>({
         ),
       ),
     );
-    final result = await navigator.push(route);
-    await route.completed;
-    return result;
+    return _pushAppSheetRoute(navigator, route);
   }
 
   final navigator = Navigator.of(context);
@@ -231,9 +219,24 @@ Future<T?> _showAppModalSheet<T>({
         : confirmDismiss ?? () => confirmDiscardIfDirty(context, dirtyGuard),
     resizeToAvoidBottomInset: resizeToAvoidBottomInset,
   );
-  final result = await navigator.push(route);
-  await route.completed;
-  return result;
+  return _pushAppSheetRoute(navigator, route);
+}
+
+/// Return results at pop time, matching Navigator's contract, while keeping
+/// dock chrome hidden until the last exit frame has left the overlay.
+Future<T?> _pushAppSheetRoute<T>(
+  NavigatorState navigator,
+  TransitionRoute<T> route,
+) {
+  _beginAppSheetOverlay();
+  try {
+    final result = navigator.push(route);
+    unawaited(route.completed.then((_) => _endAppSheetOverlay()));
+    return result;
+  } catch (_) {
+    _endAppSheetOverlay();
+    rethrow;
+  }
 }
 
 class _AppModalSheetRoute<T> extends FModalSheetRoute<T>

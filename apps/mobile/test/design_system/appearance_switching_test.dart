@@ -138,6 +138,7 @@ void main() {
     testWidgets(
       'activity panel has no backdrop filters while moving (${visual.name})',
       (tester) async {
+        var closed = false;
         tester.view
           ..physicalSize = const Size(390, 844)
           ..devicePixelRatio = 1;
@@ -147,7 +148,10 @@ void main() {
           Scaffold(
             body: Builder(
               builder: (context) => FButton(
-                onPress: () => showActivityActionPanel(context),
+                onPress: () async {
+                  await showActivityActionPanel(context);
+                  closed = true;
+                },
                 child: const Text('Open'),
               ),
             ),
@@ -167,6 +171,11 @@ void main() {
         Navigator.of(tester.element(find.byType(AppSheet))).pop();
         await tester.pump();
         expect(appSheetOverlayDepthListenable.value, 1);
+        expect(
+          closed,
+          isTrue,
+          reason: 'sheet results retain pop-time semantics',
+        );
         expect(route.isActive, isFalse);
         await tester.pumpAndSettle();
         expect(appSheetOverlayDepthListenable.value, 0);

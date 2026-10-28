@@ -469,7 +469,16 @@ void main() {
       await tester.pump(const Duration(milliseconds: 219));
       expect(_currentPath(container), AppRoutes.activity);
 
-      await tester.pump(const Duration(milliseconds: 1));
+      for (
+        var frame = 0;
+        frame < 60 && appSheetOverlayDepthListenable.value > 0;
+        frame++
+      ) {
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      expect(appSheetOverlayDepthListenable.value, 0);
+      // Route removal and the subsequent navigation each need their own frame.
+      await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
       expect(_currentPath(container), AppRoutes.healthToday);
       expect(_currentAiContextPath(container), AppRoutes.healthToday);

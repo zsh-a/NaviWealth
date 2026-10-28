@@ -39,8 +39,8 @@ Navigator、ProviderScope 或表单。外观预览复用正式 theme 和 SoftCar
 
 材质默认实色，通透需用户选择；系统高对比度优先取消通透。
 表单始终不透明。手机 sheet 遮罩只使用 AnimatedModalBarrier 颜色动画，
-不得对整页做背景过滤；sheet Future 和 dock 隐藏持续到退场动画真正结束，
-链式导航等待 route.completed。AI sheet 的键盘由内容处理，路由不重复避让。
+不得对整页做背景过滤；sheet Future 保持 pop 时返回的既有契约，dock 隐藏持续到退场
+动画真正结束，链式导航等待 route.completed。AI sheet 的键盘由内容处理，路由不重复避让。
 
 ## Token 与生成物
 
