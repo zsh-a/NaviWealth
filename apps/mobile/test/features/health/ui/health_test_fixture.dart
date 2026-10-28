@@ -121,7 +121,9 @@ class HealthTestFixture {
       deletedAt: null,
     ),
   );
-  List<Override> get overrides => [
+  List<Override> get overrides => overridesFor();
+
+  List<Override> overridesFor({bool connected = true}) => [
     sharedPreferencesProvider.overrideWithValue(prefs),
     mutationStamperProvider.overrideWith(
       (_) async => makeStubStamper(userId: owner),
@@ -134,8 +136,9 @@ class HealthTestFixture {
     health.healthMetricRepositoryProvider.overrideWith((_) async => repo),
     health.healthMetricWriteServiceProvider.overrideWith((_) async => writer),
     health.garminSyncControllerProvider.overrideWithBuild(
-      (_, _) =>
-          health.GarminConnected(lastSyncAt: now.toUtc(), totalMetrics: 240),
+      (_, _) => connected
+          ? health.GarminConnected(lastSyncAt: now.toUtc(), totalMetrics: 240)
+          : const health.GarminInitial(),
     ),
     health.healthSyncStatusProvider.overrideWithValue(null),
     health.healthPlatformStatusProvider.overrideWith(

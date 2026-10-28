@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/health/data/health_metric_source.dart';
 import 'package:naviwealth/features/health/data/health_series_providers.dart';
-import 'package:naviwealth/features/health/data/providers.dart' as health;
 import 'package:naviwealth/features/health/domain/health_metric_kind.dart';
 import 'package:naviwealth/features/health/ui/body_measurement_entry_sheet.dart';
 import 'package:naviwealth/features/health/ui/health_check_in_sections.dart';
@@ -51,13 +50,7 @@ Future<GoRouter> _pump(
   addTearDown(router.dispose);
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [
-        ...fixture.overrides,
-        if (!connected)
-          health.garminSyncControllerProvider.overrideWithBuild(
-            (_, _) => const health.GarminInitial(),
-          ),
-      ],
+      overrides: fixture.overridesFor(connected: connected),
       child: MaterialApp.router(
         theme: AppTheme.light(),
         locale: const Locale('en'),
