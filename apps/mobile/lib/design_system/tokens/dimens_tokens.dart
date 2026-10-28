@@ -78,6 +78,9 @@ class AppRadius {
   /// Hero cards, large glass docks, and marquee surfaces.
   static const double xl = 20;
 
+  /// Continuous corners for refined sheets and dialogs.
+  static const double xxl = 24;
+
   static const double full = 9999;
 }
 

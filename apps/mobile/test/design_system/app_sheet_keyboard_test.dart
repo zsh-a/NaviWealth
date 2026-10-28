@@ -69,7 +69,7 @@ void main() {
     },
   );
 
-  testWidgets('AppSheetSurface defaults to one deduplicated glass layer', (
+  testWidgets('AppSheetSurface defaults to one deduplicated solid surface', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -84,7 +84,7 @@ void main() {
     );
 
     expect(find.byKey(const Key('content')), findsOneWidget);
-    expect(find.byType(BackdropFilter), findsOneWidget);
+    expect(find.byType(BackdropFilter), findsNothing);
 
     await tester.pumpWidget(
       _wrap(

@@ -6,8 +6,8 @@ import '../tokens/dimens_tokens.dart';
 import '../tokens/typography_tokens.dart';
 import 'accent_colors.dart';
 import 'accent_seed.dart';
-import 'app_surface_style.dart';
 import 'app_type_scale.dart';
+import 'app_visual_style.dart';
 import 'surface_ladder.dart';
 
 /// Builds the production Forui theme for NaviWealth.
@@ -18,15 +18,17 @@ import 'surface_ladder.dart';
 FThemeData buildAppForuiTheme({
   required Brightness brightness,
   required bool touch,
-  AppSurfaceStyle surfaceStyle = AppSurfaceStyle.standard,
+  bool highContrast = false,
   AppAccentSeed accentSeed = AppAccentSeed.cyan,
+  AppVisualStyle visualStyle = AppVisualStyle.classic,
 }) {
   final isDark = brightness == Brightness.dark;
   // Surface/content ramp comes from the shared ladder (surface_ladder.dart)
   // so forui widgets sit on the same canvas as design-system components.
   final ladder = resolveSurfaceLadder(
     brightness: brightness,
-    surfaceStyle: surfaceStyle,
+    highContrast: highContrast,
+    visualStyle: visualStyle,
   );
   final platform = isDark ? FTheme.neutral.dark : FTheme.neutral.light;
   final base = touch ? platform.touch : platform.desktop;
@@ -39,7 +41,9 @@ FThemeData buildAppForuiTheme({
     card: ladder.card,
     border: ladder.border,
     // Muted fills stay cooler than pure slate so SoftCard modules lift cleanly.
-    muted: isDark
+    muted: visualStyle == AppVisualStyle.refined
+        ? ladder.hero
+        : isDark
         ? Color.alphaBlend(
             ColorPalette.navy50.withValues(alpha: AppOpacity.whisper),
             ColorPalette.navyGlass,
@@ -52,23 +56,44 @@ FThemeData buildAppForuiTheme({
   // One authored slot table for every density (see kAppTypefaceSlots) —
   // the legacy touch/desktop ±2px fork is deliberately gone. Density still
   // selects Forui's touch vs desktop *component* styles (padding, targets).
-  final typeface = _buildAppTypeface(colors.foreground);
+  final typeface = _buildAppTypeface(colors.foreground, visualStyle);
   final typography = FTypography(display: typeface, body: typeface);
 
-  return FThemeData(touch: touch, typography: typography, colors: colors);
+  final style = FStyle.inherit(
+    colors: colors,
+    typography: typography,
+    touch: touch,
+  );
+  final radius = BorderRadius.circular(visualStyle.spec.controlRadius);
+  return FThemeData(
+    touch: touch,
+    typography: typography,
+    colors: colors,
+    style: visualStyle == AppVisualStyle.classic
+        ? style
+        : style.copyWith(
+            borderRadius: style.borderRadius.copyWith(md: radius),
+            focusedOutlineStyle: style.focusedOutlineStyle.copyWith(
+              borderRadius: radius,
+            ),
+          ),
+  );
 }
 
-FTypeface _buildAppTypeface(Color foreground) {
+FTypeface _buildAppTypeface(Color foreground, AppVisualStyle visualStyle) {
   TextStyle slot(int index) {
     final spec = kAppTypefaceSlots[index];
-    return TextStyle(
-      color: foreground,
-      fontFamily: TypographyTokens.fontFamilySans,
-      fontFamilyFallback: TypographyTokens.fontFamilyFallback,
-      fontFeatures: TypographyTokens.tabularFigures,
-      fontSize: spec.size,
-      height: spec.height,
-      leadingDistribution: TextLeadingDistribution.even,
+    return appVisualTextStyle(
+      TextStyle(
+        color: foreground,
+        fontFamily: TypographyTokens.fontFamilySans,
+        fontFamilyFallback: TypographyTokens.fontFamilyFallback,
+        fontFeatures: TypographyTokens.tabularFigures,
+        fontSize: spec.size,
+        height: spec.height,
+        leadingDistribution: TextLeadingDistribution.even,
+      ),
+      visualStyle,
     );
   }
 

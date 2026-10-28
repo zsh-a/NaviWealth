@@ -928,8 +928,7 @@ void main() {
         final searchAction = find.text(l10n.navSearch);
         expect(searchAction, findsOneWidget);
         await tester.tap(searchAction);
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 300));
+        await tester.pumpAndSettle();
         // The palette opens as a dialog with its own search field.
         expect(find.text(l10n.commandPaletteSearchHint), findsOneWidget);
         expect(

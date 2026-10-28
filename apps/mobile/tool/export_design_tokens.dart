@@ -26,9 +26,14 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:naviwealth/design_system/theme/accent_colors.dart';
+import 'package:naviwealth/design_system/theme/app_type_scale.dart';
+import 'package:naviwealth/design_system/theme/app_visual_style.dart';
+import 'package:naviwealth/design_system/theme/component_specs.dart';
 import 'package:naviwealth/design_system/theme/market_color_mode.dart';
 import 'package:naviwealth/design_system/theme/market_colors.dart';
 import 'package:naviwealth/design_system/theme/semantic_colors.dart';
+import 'package:naviwealth/design_system/theme/surface_ladder.dart';
+import 'package:naviwealth/design_system/theme/theme_resolver.dart';
 import 'package:naviwealth/design_system/tokens/breakpoints.dart';
 import 'package:naviwealth/design_system/tokens/color_palette.dart';
 import 'package:naviwealth/design_system/tokens/dimens_tokens.dart';
@@ -173,6 +178,62 @@ Map<String, Object> buildTokens() => {
   'typography': _typographyGroup(),
   'motion': _motionGroup(),
   'breakpoint': _breakpointGroup(),
+  'appearance': _appearanceGroup(),
+};
+
+Map<String, Object> _appearanceGroup() => {
+  for (final style in AppVisualStyle.values)
+    style.name: {
+      r'$description': style.spec.continuousCorners
+          ? 'Neutral surfaces with continuous corners and a damped sheet spring.'
+          : 'Classic NaviWealth palette and rounded corners.',
+      'controlRadius': _dimension(style.spec.controlRadius),
+      'surfaceRadius': _dimension(style.spec.surfaceRadius),
+      'sheetRadius': _dimension(style.spec.sheetRadius),
+      'overlayRadius': _dimension(style.spec.overlayRadius),
+      'cardRadius': _dimension(
+        style == AppVisualStyle.refined
+            ? kRefinedCardSpec.radius
+            : kAppCardSpec.radius,
+      ),
+      'sheetDuration': _duration(style.spec.sheetDuration),
+      'typography': {
+        'display': _typography(
+          AppTypeScale.resolve(AppDensity.touch, visualStyle: style).display,
+        ),
+        'heading': _typography(
+          AppTypeScale.resolve(AppDensity.touch, visualStyle: style).heading,
+        ),
+        'body': _typography(
+          AppTypeScale.resolve(AppDensity.touch, visualStyle: style).body,
+        ),
+      },
+      'surfaces': {
+        for (final brightness in Brightness.values)
+          brightness.name: {
+            for (final highContrast in [false, true])
+              (highContrast ? 'highContrast' : 'standard'): _appearanceSurfaces(
+                resolveSurfaceLadder(
+                  brightness: brightness,
+                  highContrast: highContrast,
+                  visualStyle: style,
+                ),
+              ),
+          },
+      },
+    },
+};
+
+Map<String, Object> _appearanceSurfaces(AppSurfaceLadder ladder) => {
+  'canvas': _color(ladder.canvas),
+  'card': _color(ladder.card),
+  'raised': _color(ladder.raised),
+  'hero': _color(ladder.hero),
+  'border': _color(ladder.border),
+  'contentStrong': _color(ladder.contentStrong),
+  'contentBody': _color(ladder.contentBody),
+  'contentMuted': _color(ladder.contentMuted),
+  'contentFaint': _color(ladder.contentFaint),
 };
 
 Map<String, Object> _colorGroup() => {
@@ -222,14 +283,6 @@ Map<String, Object> _colorGroup() => {
     '900': _color(ColorPalette.neutral900),
     '950': _color(ColorPalette.neutral950),
     '1000': _color(ColorPalette.neutral1000),
-  },
-  'oled': {
-    r'$description':
-        'True-black surfaces — ColorPalette.oled* (AppSurfaceStyle.oled).',
-    'canvas': _color(ColorPalette.oledCanvas),
-    'card': _color(ColorPalette.oledCard),
-    'raised': _color(ColorPalette.oledRaised),
-    'hero': _color(ColorPalette.oledHero),
   },
   'surface': {
     r'$description': 'Light-mode surfaces — ColorPalette.surface*.',
@@ -526,6 +579,7 @@ Map<String, Object> _radiusGroup() => {
   'md': _dimension(AppRadius.md),
   'lg': _dimension(AppRadius.lg),
   'xl': _dimension(AppRadius.xl, 'Hero cards'),
+  'xxl': _dimension(AppRadius.xxl, 'Refined sheets and dialogs'),
   'full': _dimension(AppRadius.full),
 };
 

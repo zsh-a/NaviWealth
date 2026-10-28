@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 
 import '../tokens/typography_tokens.dart';
+import 'app_visual_style.dart';
 import 'theme_resolver.dart';
 
 /// The single semantic type scale (blueprint doc 15, §4).
@@ -19,69 +20,91 @@ import 'theme_resolver.dart';
 /// (padding, hit targets) through Forui's touch/desktop styles.
 @immutable
 class AppTypeScale {
-  const AppTypeScale._();
+  const AppTypeScale._(this._visualStyle);
 
-  static const AppTypeScale _instance = AppTypeScale._();
+  final AppVisualStyle _visualStyle;
+
+  static const AppTypeScale _classic = AppTypeScale._(AppVisualStyle.classic);
+  static const AppTypeScale _refined = AppTypeScale._(AppVisualStyle.refined);
 
   /// Pure resolver hook. Sizes are density-invariant by decision (see class
   /// doc); the input keeps the resolver signature stable if that decision
   /// is ever revisited.
-  static AppTypeScale resolve(AppDensity density) => _instance;
+  static AppTypeScale resolve(
+    AppDensity density, {
+    AppVisualStyle visualStyle = AppVisualStyle.classic,
+  }) => visualStyle == AppVisualStyle.refined ? _refined : _classic;
+
+  TextStyle _style(TextStyle style) => appVisualTextStyle(style, _visualStyle);
 
   // ── Display ────────────────────────────────────────────────────────────
   /// 40px Outfit — reserved for the page-level hero number.
-  TextStyle get display => TypographyTokens.displayLarge;
+  TextStyle get display => _style(TypographyTokens.displayLarge);
 
   /// 32px — secondary marquee numbers and page heroes.
-  TextStyle get displaySmall => TypographyTokens.displayMedium;
+  TextStyle get displaySmall => _style(TypographyTokens.displayMedium);
 
   // ── Headings ───────────────────────────────────────────────────────────
   /// 24px w600 — page titles, empty-state titles.
-  TextStyle get heading => TypographyTokens.headlineLarge;
+  TextStyle get heading => _style(TypographyTokens.headlineLarge);
 
   /// 20px w600 — prominent section titles, sheet titles.
-  TextStyle get headingSmall => TypographyTokens.headlineMedium;
+  TextStyle get headingSmall => _style(TypographyTokens.headlineMedium);
 
   // ── Titles / body ──────────────────────────────────────────────────────
   /// 16px w600 — card titles, row heroes.
-  TextStyle get title => TypographyTokens.titleLarge;
+  TextStyle get title => _style(TypographyTokens.titleLarge);
 
   /// 14px w600 — compact row titles, list labels.
-  TextStyle get titleSmall => TypographyTokens.titleMedium;
+  TextStyle get titleSmall => _style(TypographyTokens.titleMedium);
 
   /// 16px w400 — long-form body copy.
-  TextStyle get body => TypographyTokens.bodyLarge;
+  TextStyle get body => _style(TypographyTokens.bodyLarge);
 
   /// 14px w400 — default body copy.
-  TextStyle get bodySmall => TypographyTokens.bodyMedium;
+  TextStyle get bodySmall => _style(TypographyTokens.bodyMedium);
 
   // ── Labels / captions ──────────────────────────────────────────────────
   /// 14px w600 +0.1 — buttons and emphasized labels.
-  TextStyle get label => TypographyTokens.labelLarge;
+  TextStyle get label => _style(TypographyTokens.labelLarge);
 
   /// 12px w600 +0.4 — chips, overlines, dense labels.
-  TextStyle get labelSmall => TypographyTokens.labelMedium;
+  TextStyle get labelSmall => _style(TypographyTokens.labelMedium);
 
   /// 12px w500 — metadata, timestamps, secondary captions. Pair with
   /// `content.muted` for the canonical caption read.
-  TextStyle get caption => TypographyTokens.numericCaption;
+  TextStyle get caption => _style(TypographyTokens.numericCaption);
 
   /// 11px w600 +0.5 — micro status tags.
-  TextStyle get micro => TypographyTokens.labelSmall;
+  TextStyle get micro => _style(TypographyTokens.labelSmall);
 
   /// 11px w500 — chart-internal annotations only.
-  TextStyle get chartCaption => TypographyTokens.chartCaption;
+  TextStyle get chartCaption => _style(TypographyTokens.chartCaption);
 
   // ── Numerics (tabular by construction) ─────────────────────────────────
-  TextStyle get numericDisplay => TypographyTokens.numericDisplay;
-  TextStyle get numericTitle => TypographyTokens.numericTitle;
-  TextStyle get numericTitleStrong => TypographyTokens.numericTitleStrong;
-  TextStyle get numericBody => TypographyTokens.numericBody;
-  TextStyle get numericBodyStrong => TypographyTokens.numericBodyStrong;
-  TextStyle get numericCaption => TypographyTokens.numericCaption;
-  TextStyle get numericCaptionStrong => TypographyTokens.numericCaptionStrong;
-  TextStyle get numericMono => TypographyTokens.numericMono;
+  TextStyle get numericDisplay => _style(TypographyTokens.numericDisplay);
+  TextStyle get numericTitle => _style(TypographyTokens.numericTitle);
+  TextStyle get numericTitleStrong =>
+      _style(TypographyTokens.numericTitleStrong);
+  TextStyle get numericBody => _style(TypographyTokens.numericBody);
+  TextStyle get numericBodyStrong => _style(TypographyTokens.numericBodyStrong);
+  TextStyle get numericCaption => _style(TypographyTokens.numericCaption);
+  TextStyle get numericCaptionStrong =>
+      _style(TypographyTokens.numericCaptionStrong);
+  TextStyle get numericMono => _style(TypographyTokens.numericMono);
 }
+
+/// Keep type sizes and tabular figures stable when switching presets.
+TextStyle appVisualTextStyle(TextStyle style, AppVisualStyle visualStyle) =>
+    visualStyle == AppVisualStyle.classic
+    ? style
+    : style.copyWith(
+        fontFamily: style.fontFamily == TypographyTokens.fontFamilyDisplay
+            ? TypographyTokens.fontFamilySans
+            : style.fontFamily,
+        letterSpacing: 0,
+        height: style.height == null ? null : style.height! * 0.96,
+      );
 
 /// The Forui slot table, authored from the same scale.
 ///

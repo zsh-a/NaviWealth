@@ -8,8 +8,9 @@ AI 交互由 [AI 架构](../../../../docs/ai/ai-architecture.md) 拥有。
 ## 主题解析与读取
 
 `apps/mobile/lib/design_system/theme/theme_resolver.dart` 的纯函数
-`resolveAppTheme(ThemeInputs)` 统一解析亮度、涨跌色模式、surface style、accent seed
-和 density，输出 `AppThemeData`。页面通过 `context.appTheme` 读取结果，不独立
+`resolveAppTheme(ThemeInputs)` 统一解析亮度、涨跌色模式、系统高对比度、accent seed
+和 density，以及独立的 visual style、material style，输出 `AppThemeData`。
+页面通过 `context.appTheme` 读取结果，不独立
 推导主题，也不直接混用多份颜色表。
 
 | 主题语义 | 用途 |
@@ -20,12 +21,26 @@ AI 交互由 [AI 架构](../../../../docs/ai/ai-architecture.md) 拥有。
 | `categorical` | 分类色的亮度适配 |
 | `type` | 语义字体层级 |
 | `glass` | chrome 材质预算 |
+| `visual` | 连续圆角、共享表面形状与弹层动效 |
 | `press` / `card` / `badge` / `divider` / `metricTile` | 共享组件规格 |
 
 `ColorRole` 统一提供 `fg`、`container`、`onContainer`、`onFg`。SemanticColors、
 MarketColors、AccentColors 是 resolver 的数据来源，业务页面消费解析后的语义。
-OLED 只作用于暗色，亮色回退 standard；高对比度模式保留可读性并取消装饰性材质。
+高对比度直接跟随系统，增强文字和边界并取消装饰性材质，不提供独立设置。
+不再提供 OLED 纯黑模式；旧的 surface_style 偏好不再读取，回退所选视觉预设的普通明暗配色。
 涨跌不能硬编码红绿，状态色和分类色也不能被领域 accent 替换。
+
+外观设置支持经典 / 精致两个视觉预设，使用同一套导航、组件和表单状态。
+经典保留既有配色；精致使用中性色阶、连续圆角、减少装饰性描边与阴影、
+统一字体及阻尼弹层曲线。`AppVisualStyle` 与明暗模式、系统高对比度、
+强调色、涨跌色和材质效果独立；偏好保存在 SharedPreferences，旧安装默认经典。
+Material、Forui 和语义主题必须同时消费同一 visual style；不要按预设重建
+Navigator、ProviderScope 或表单。外观预览复用正式 theme 和 SoftCard。
+
+材质默认实色，通透需用户选择；系统高对比度优先取消通透。
+表单始终不透明。手机 sheet 遮罩只使用 AnimatedModalBarrier 颜色动画，
+不得对整页做背景过滤；sheet Future 保持 pop 时返回的既有契约，dock 隐藏持续到退场
+动画真正结束，链式导航等待 route.completed。AI sheet 的键盘由内容处理，路由不重复避让。
 
 ## Token 与生成物
 
@@ -76,7 +91,7 @@ OLED 只作用于暗色，亮色回退 standard；高对比度模式保留可读
 
 Live backdrop 只用于主题允许的浮动 dock 和 modal sheet；内容模块保持不透明，
 sticky chrome 使用共享静态光场。Glass 光效不能替代 focus、selection、busy 或错误
-语义，也不能增加第二套手势识别。High contrast 和 OLED 不使用装饰性光场。
+语义，也不能增加第二套手势识别。系统高对比度不使用装饰性光场。
 
 ## 验证
 

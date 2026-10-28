@@ -3898,6 +3898,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAppearanceSection => 'Appearance';
 
   @override
+  String get settingsVisualStyleTitle => 'Interface style';
+
+  @override
+  String get visualStyleClassic => 'Classic';
+
+  @override
+  String get visualStyleRefined => 'Refined';
+
+  @override
+  String get settingsMaterialStyleTitle => 'Materials';
+
+  @override
+  String get settingsMaterialStyleSubtitle =>
+      'Solid surfaces keep things clear. Translucency adds depth; system high contrast uses solid surfaces.';
+
+  @override
+  String get materialStyleSolid => 'Solid';
+
+  @override
+  String get materialStyleTranslucent => 'Translucent';
+
+  @override
   String get settingsAccentSeedTitle => 'Accent color';
 
   @override
@@ -3908,18 +3930,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get accentSeedIndigo => 'Indigo';
-
-  @override
-  String get settingsSurfaceStyleTitle => 'Surface style';
-
-  @override
-  String get surfaceStyleStandard => 'Standard';
-
-  @override
-  String get surfaceStyleOled => 'OLED black';
-
-  @override
-  String get surfaceStyleHighContrast => 'High contrast';
 
   @override
   String get settingsThemeModeTitle => 'Theme';

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
-import '../tokens/color_palette.dart';
+import '../theme/app_theme_scope.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
 
@@ -9,10 +9,10 @@ import '../tokens/text_style_presets.dart';
 /// [AppGroupedSurface] chrome via `DecoratedSliver` (virtualized rows can't
 /// nest inside a box widget). Single source for the color expression.
 Color appGroupedSurfaceFill(BuildContext context) {
-  final colors = context.theme.colors;
-  return colors.brightness == Brightness.dark
-      ? colors.card.withValues(alpha: AppOpacity.muted)
-      : ColorPalette.surfaceRaised;
+  final theme = context.appTheme;
+  return theme.visual.continuousCorners || theme.brightness == Brightness.light
+      ? theme.surfaces.raised
+      : theme.surfaces.card.withValues(alpha: AppOpacity.muted);
 }
 
 /// Shared inset-grouped surface used by settings, action menus and dense
@@ -31,9 +31,9 @@ class AppGroupedSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: BoxDecoration(
+      decoration: context.appTheme.visual.decoration(
         color: appGroupedSurfaceFill(context),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        radius: BorderRadius.circular(context.appTheme.visual.surfaceRadius),
       ),
       child: Padding(padding: padding, child: child),
     );

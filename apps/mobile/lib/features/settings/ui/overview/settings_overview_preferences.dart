@@ -12,6 +12,23 @@ class _AppearanceSection extends ConsumerWidget {
 
     return Column(
       children: [
+        const AppearanceStylePicker(),
+        const AppGroupedDivider(),
+        InlineSettingRow<AppMaterialStyle>(
+          icon: FLucideIcons.layers,
+          label: l10n.settingsMaterialStyleTitle,
+          subtitle: l10n.settingsMaterialStyleSubtitle,
+          value: ref.watch(materialStyleProvider),
+          options: {
+            l10n.materialStyleSolid: AppMaterialStyle.solid,
+            l10n.materialStyleTranslucent: AppMaterialStyle.translucent,
+          },
+          onChanged: (style) {
+            AppInteraction.signal(AppInteractionIntent.select);
+            ref.read(materialStyleProvider.notifier).set(style);
+          },
+        ),
+        const AppGroupedDivider(),
         InlineSettingRow<ThemeMode>(
           icon: FLucideIcons.sunMoon,
           label: l10n.settingsThemeModeTitle,
@@ -22,20 +39,6 @@ class _AppearanceSection extends ConsumerWidget {
           onChanged: (m) {
             AppInteraction.signal(AppInteractionIntent.select);
             ref.read(themeModeProvider.notifier).set(m);
-          },
-        ),
-        const AppGroupedDivider(),
-        InlineSettingRow<AppSurfaceStyle>(
-          icon: FLucideIcons.palette,
-          label: l10n.settingsSurfaceStyleTitle,
-          value: ref.watch(surfaceStyleProvider),
-          options: {
-            for (final s in AppSurfaceStyle.values)
-              _surfaceStyleLabel(l10n, s): s,
-          },
-          onChanged: (s) {
-            AppInteraction.signal(AppInteractionIntent.select);
-            ref.read(surfaceStyleProvider.notifier).set(s);
           },
         ),
         const AppGroupedDivider(),
@@ -112,13 +115,6 @@ class _AppearanceSection extends ConsumerWidget {
         AppAccentSeed.cyan => l10n.accentSeedCyan,
         AppAccentSeed.violet => l10n.accentSeedViolet,
         AppAccentSeed.indigo => l10n.accentSeedIndigo,
-      };
-
-  String _surfaceStyleLabel(AppLocalizations l10n, AppSurfaceStyle style) =>
-      switch (style) {
-        AppSurfaceStyle.standard => l10n.surfaceStyleStandard,
-        AppSurfaceStyle.oled => l10n.surfaceStyleOled,
-        AppSurfaceStyle.highContrast => l10n.surfaceStyleHighContrast,
       };
 }
 

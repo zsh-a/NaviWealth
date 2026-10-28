@@ -121,7 +121,7 @@
 - 点按渐亮用 `Motion.tapFeedback`，抬起/取消后渐隐用 `Motion.componentChange`；
   越界渐隐，多指操作不抢走首个触点。无待机呼吸、形变或循环闪烁。
 - `AppMotionPolicy` 的 decorative 角色关闭动态光效，保留静态材质；
-  系统高对比度、应用高对比度和暗色 OLED 关闭柔光与实时模糊。
+  系统高对比度关闭柔光与实时模糊；不提供应用内高对比度或 OLED 独立模式。
 - 通透度按 `AppGlassRole` 分层，不宣称实时背景识别或系统减少透明度开关适配。
   新增材质仍须做目标设备 profile 性能验证。
 

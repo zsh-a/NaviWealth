@@ -3724,6 +3724,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsAppearanceSection => '外观';
 
   @override
+  String get settingsVisualStyleTitle => '界面风格';
+
+  @override
+  String get visualStyleClassic => '经典';
+
+  @override
+  String get visualStyleRefined => '精致';
+
+  @override
+  String get settingsMaterialStyleTitle => '材质效果';
+
+  @override
+  String get settingsMaterialStyleSubtitle => '实色清晰，通透更有层次；系统高对比度开启时使用实色。';
+
+  @override
+  String get materialStyleSolid => '实色';
+
+  @override
+  String get materialStyleTranslucent => '通透';
+
+  @override
   String get settingsAccentSeedTitle => '强调色';
 
   @override
@@ -3734,18 +3755,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get accentSeedIndigo => '靛蓝';
-
-  @override
-  String get settingsSurfaceStyleTitle => '界面风格';
-
-  @override
-  String get surfaceStyleStandard => '标准';
-
-  @override
-  String get surfaceStyleOled => 'OLED 纯黑';
-
-  @override
-  String get surfaceStyleHighContrast => '高对比';
 
   @override
   String get settingsThemeModeTitle => '主题模式';

@@ -48,6 +48,7 @@ changed.
 | `typography` | `lib/design_system/tokens/typography_tokens.dart` (`TypographyTokens`) |
 | `motion.{duration,easing}` | `lib/design_system/tokens/motion_tokens.dart` (`Motion`) |
 | `breakpoint` | `lib/design_system/tokens/breakpoints.dart` (`Breakpoints`) |
+| `appearance.{classic,refined}` | `app_visual_style.dart`、`surface_ladder.dart`、`app_type_scale.dart`，导出预设圆角、表面色阶与字体 |
 
 The exporter reads token **values** at run time, so value changes flow into
 the JSON automatically on regeneration. Adding a **new** token constant
@@ -137,10 +138,13 @@ signal of direction, even in colorblind mode.
 - Segmented controls use a sliding selection surface when options fit one
   row, and retain local selection marks in wrapped layouts. Selection motion
   and chart interpolation stop under reduced motion.
+- Material effects default to solid and can be enabled independently of the
+  classic/refined visual preset in Appearance. System high contrast takes
+  precedence; forms always remain opaque. Modal scrims use color barriers.
 - Glass highlights are reserved for application chrome: the floating dock and
   modal sheets use one live backdrop layer, while sticky summaries keep the
   shared static light field without a per-scroll blur pass. Content modules
-  remain opaque and high-contrast/OLED surfaces omit live blur.
+  remain opaque and high-contrast surfaces omit live blur.
 - `AppGlassEnvironment` owns one light field for the shell. The active domain
   accent is mixed into that field at low energy, so switching FinanceOS,
   HealthOS, KnowledgeOS or ExecutionOS changes the chrome atmosphere without
@@ -156,8 +160,8 @@ signal of direction, even in colorblind mode.
   finish or semantic error rim. Busy/disabled stops pointer tracking immediately.
   Loading indicators and inline errors remain authoritative; light is never
   the only status cue. Transitions do not change geometry or run continuously.
-  Reduced motion keeps static state differences, while high contrast and OLED
-  omit decorative light entirely. `SoftGlassSpec` owns both light/dark budgets.
+  Reduced motion keeps static state differences, while system high contrast
+  omits decorative light entirely. `SoftGlassSpec` owns both light/dark budgets.
 - Advanced material depth is role-aware: chrome, sticky, sheet and overlay use
   progressively stronger specular, occlusion and inset-rim budgets. The light
   field is a paint-only approximation of thin translucent glass; only the

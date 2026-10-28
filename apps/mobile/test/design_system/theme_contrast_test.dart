@@ -36,46 +36,51 @@ void main() {
   final inputs = [
     for (final brightness in [Brightness.light, Brightness.dark])
       for (final mode in MarketColorMode.values)
-        for (final style in AppSurfaceStyle.values)
-          ThemeInputs(
-            brightness: brightness,
-            marketMode: mode,
-            surfaceStyle: style,
-          ),
+        for (final highContrast in [false, true])
+          for (final visual in AppVisualStyle.values)
+            ThemeInputs(
+              brightness: brightness,
+              marketMode: mode,
+              highContrast: highContrast,
+              visualStyle: visual,
+            ),
   ];
 
   group('accent seed invariants', () {
     for (final seed in AppAccentSeed.values) {
       for (final brightness in [Brightness.light, Brightness.dark]) {
-        for (final style in AppSurfaceStyle.values) {
-          final theme = resolveAppTheme(
-            ThemeInputs(
-              brightness: brightness,
-              marketMode: MarketColorMode.redUpGreenDown,
-              surfaceStyle: style,
-              accentSeed: seed,
-            ),
-          );
-          final highContrast = style == AppSurfaceStyle.highContrast;
-          final label = '${seed.name}/${brightness.name}/${style.name}';
-          test('accent role holds contrast [$label]', () {
-            final role = theme.accent;
-            expect(
-              _contrast(role.onContainer, role.container),
-              greaterThanOrEqualTo(4.5),
-              reason: '$label accent onContainer/container',
+        for (final highContrast in [false, true]) {
+          for (final visual in AppVisualStyle.values) {
+            final theme = resolveAppTheme(
+              ThemeInputs(
+                brightness: brightness,
+                marketMode: MarketColorMode.redUpGreenDown,
+                highContrast: highContrast,
+                accentSeed: seed,
+                visualStyle: visual,
+              ),
             );
-            expect(
-              _contrast(role.fg, theme.surfaces.card),
-              greaterThanOrEqualTo(highContrast ? 4.5 : 3.0),
-              reason: '$label accent fg on card',
-            );
-            expect(
-              _contrast(role.onFg, role.fg),
-              greaterThanOrEqualTo(3.0),
-              reason: '$label accent onFg on solid fg fill',
-            );
-          });
+            final label =
+                '${seed.name}/${brightness.name}/highContrast=$highContrast/${visual.name}';
+            test('accent role holds contrast [$label]', () {
+              final role = theme.accent;
+              expect(
+                _contrast(role.onContainer, role.container),
+                greaterThanOrEqualTo(4.5),
+                reason: '$label accent onContainer/container',
+              );
+              expect(
+                _contrast(role.fg, theme.surfaces.card),
+                greaterThanOrEqualTo(highContrast ? 4.5 : 3.0),
+                reason: '$label accent fg on card',
+              );
+              expect(
+                _contrast(role.onFg, role.fg),
+                greaterThanOrEqualTo(3.0),
+                reason: '$label accent onFg on solid fg fill',
+              );
+            });
+          }
         }
       }
     }
@@ -84,11 +89,11 @@ void main() {
   for (final input in inputs) {
     final label =
         '${input.brightness.name}/${input.marketMode.name}'
-        '/${input.surfaceStyle.name}';
+        '/highContrast=${input.highContrast}/${input.visualStyle.name}';
     final theme = resolveAppTheme(input);
     // High contrast raises the floors: AAA (7:1) body text, AA (4.5:1)
-    // status/market foregrounds. Other styles keep the standard tiers.
-    final highContrast = input.surfaceStyle == AppSurfaceStyle.highContrast;
+    // status/market foregrounds. Standard contrast keeps the default tiers.
+    final highContrast = input.highContrast;
     final fgFloor = highContrast ? 4.5 : 3.0;
     final contentFloor = highContrast ? 7.0 : 4.5;
 
@@ -130,7 +135,7 @@ void main() {
             greaterThanOrEqualTo(fgFloor),
             reason:
                 '$name.fg on surfaces.card is ${ratio.toStringAsFixed(2)}:1 '
-                '— needs at least $fgFloor:1 for ${input.surfaceStyle.name}.',
+                '— needs at least $fgFloor:1 for highContrast=${input.highContrast}.',
           );
         });
       }
@@ -147,7 +152,7 @@ void main() {
             greaterThanOrEqualTo(contentFloor),
             reason:
                 'content.$name on card is ${ratio.toStringAsFixed(2)}:1 '
-                '(floor $contentFloor for ${input.surfaceStyle.name}).',
+                '(floor $contentFloor for highContrast=${input.highContrast}).',
           );
         }
       });

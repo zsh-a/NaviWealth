@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 
 import 'app_categorical.dart';
 import 'app_type_scale.dart';
+import 'app_visual_style.dart';
 import 'component_specs.dart';
 import 'market_color_mode.dart';
 
@@ -144,7 +145,8 @@ class AppMarket {
 }
 
 /// The resolved theme: one immutable value computed once per
-/// (brightness × market mode × density) by `resolveAppTheme` and carried by
+/// (brightness, market mode, system contrast, visual/material style and density) by
+/// `resolveAppTheme` and carried by
 /// `AppThemeScope`. Read it via `context.appTheme`.
 ///
 /// This is the single entry point that replaces the legacy quartet of
@@ -163,6 +165,7 @@ class AppThemeData {
     required this.type,
     required this.categorical,
     required this.glass,
+    this.visual = kClassicVisualSpec,
     this.press = kAppPressSpec,
     this.card = kAppCardSpec,
     this.badge = kAppBadgeSpec,
@@ -189,6 +192,8 @@ class AppThemeData {
 
   /// Material policy for the few floating surfaces allowed to use blur.
   final GlassSpec glass;
+
+  final AppVisualSpec visual;
 
   // ── L2 component specs (blueprint §6.3) ────────────────────────────────
   final PressSpec press;

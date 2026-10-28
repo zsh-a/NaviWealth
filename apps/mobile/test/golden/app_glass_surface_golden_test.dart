@@ -5,13 +5,24 @@ import 'package:naviwealth/design_system/design_system.dart';
 
 import '_golden_setup.dart';
 
+Widget _translucent(GoldenTheme variant, Widget child) => AppThemeScope(
+  data: resolveAppTheme(
+    ThemeInputs(
+      brightness: variant.brightness,
+      marketMode: variant.marketMode,
+      materialStyle: AppMaterialStyle.translucent,
+    ),
+  ),
+  child: child,
+);
+
 void main() {
   runAllVariants('app_soft_glass_states', (tester, variant) async {
     await pumpAndSnapshotMobile(
       tester,
       name: 'app_soft_glass_states',
       variant: variant,
-      child: const Scaffold(body: _GlassStateShowcase()),
+      child: _translucent(variant, const Scaffold(body: _GlassStateShowcase())),
     );
     expect(tester.takeException(), isNull);
   });
@@ -20,7 +31,7 @@ void main() {
       tester,
       name: 'app_glass_surface',
       variant: variant,
-      child: const Scaffold(body: _GlassShowcase()),
+      child: _translucent(variant, const Scaffold(body: _GlassShowcase())),
     );
   });
   runAllVariants('app_soft_glass_surface', (tester, variant) async {
@@ -28,10 +39,13 @@ void main() {
       tester,
       name: 'app_soft_glass_surface',
       variant: variant,
-      child: Builder(
-        builder: (context) => MediaQuery(
-          data: MediaQuery.of(context).copyWith(disableAnimations: false),
-          child: const Scaffold(body: _GlassShowcase(softLight: true)),
+      child: _translucent(
+        variant,
+        Builder(
+          builder: (context) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(disableAnimations: false),
+            child: const Scaffold(body: _GlassShowcase(softLight: true)),
+          ),
         ),
       ),
     );

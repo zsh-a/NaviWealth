@@ -2,27 +2,27 @@ import 'package:flutter/material.dart' show Colors;
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../theme/app_theme_scope.dart';
 import '../tokens/app_motion_policy.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
+import 'app_surface_clip.dart';
 
 /// Canonical surface for floating overlay cards — centered dialogs, the
 /// command palette, and desktop floating panels.
 ///
-/// One recipe for every overlay card in the app: opaque background,
-/// `AppRadius.lg` corners, a hairline border, and the shared elevation
-/// shadow. Information bottom sheets keep the frosted [AppSheetSurface] glass
-/// recipe; form sheets use this opaque surface to keep transitions inexpensive.
+/// Opaque floating surfaces resolve their shape from the active visual preset.
+/// Forms stay opaque independently of the user's chrome material preference.
 class AppOverlaySurface extends StatelessWidget {
   const AppOverlaySurface({
     super.key,
     required this.child,
-    this.borderRadius = const BorderRadius.all(Radius.circular(AppRadius.lg)),
+    this.borderRadius,
     this.clip = false,
   });
 
   final Widget child;
-  final BorderRadius borderRadius;
+  final BorderRadius? borderRadius;
 
   /// Clips the child to [borderRadius] — for palette-style surfaces whose
   /// content (headers, list rows) paints to the card edge.
@@ -31,18 +31,28 @@ class AppOverlaySurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
+    final visual = context.appTheme.visual;
+    final radius = borderRadius ?? BorderRadius.circular(visual.overlayRadius);
     final decorated = DecoratedBox(
-      decoration: BoxDecoration(
-        color: colors.background,
-        borderRadius: borderRadius,
-        border: Border.all(color: colors.border, width: AppStroke.hairline),
-        boxShadow: AppShadow.desktopSheet,
+      decoration: visual.decoration(
+        color: visual.continuousCorners
+            ? context.appTheme.surfaces.raised
+            : colors.background,
+        radius: radius,
+        side: visual.cardBorders
+            ? BorderSide(color: colors.border, width: AppStroke.hairline)
+            : BorderSide.none,
+        shadows: AppShadow.desktopSheet,
       ),
       child: child,
     );
     return RepaintBoundary(
       child: clip
-          ? ClipRRect(borderRadius: borderRadius, child: decorated)
+          ? AppSurfaceClip(
+              continuous: visual.continuousCorners,
+              borderRadius: radius,
+              child: decorated,
+            )
           : decorated,
     );
   }

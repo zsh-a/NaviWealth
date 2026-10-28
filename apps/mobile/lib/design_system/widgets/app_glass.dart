@@ -9,11 +9,12 @@ import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
 import 'app_glass_environment.dart';
 import 'app_soft_glass_light.dart';
+import 'app_surface_clip.dart';
 
 /// The single source for the app's "glass" chrome tone (blueprint §6.3).
 ///
-/// The fill derives from the resolved card surface, so OLED and high-contrast
-/// surface styles carry through automatically. Use [AppGlassSurface] for
+/// The fill derives from the resolved card surface, so system high contrast
+/// carries through automatically. Use [AppGlassSurface] for
 /// actual frosted chrome; this helper remains useful when callers only need
 /// the shared material decoration without owning the blur layer.
 BoxDecoration appGlassDecoration(
@@ -87,7 +88,7 @@ BoxDecoration appGlassDecoration(
 /// should continue to use [SoftCard]-style opaque surfaces; glass is reserved
 /// for layers that sit above moving content. Soft-light surfaces consume the
 /// nearest [AppGlassEnvironment] so adjacent chrome shares one light field.
-class AppGlassSurface extends StatelessWidget {
+class AppGlassSurface extends StatefulWidget {
   const AppGlassSurface({
     super.key,
     required this.child,
@@ -110,7 +111,7 @@ class AppGlassSurface extends StatelessWidget {
   final bool frosted;
 
   /// Adds a directional wash and pointer-following light beneath the content.
-  /// Opt-in independently of live blur. High contrast and OLED disable both.
+  /// Opt-in independently of live blur. System high contrast disables both.
   final bool softLight;
   final AppGlassStatus status;
 
@@ -120,41 +121,67 @@ class AppGlassSurface extends StatelessWidget {
   final EdgeInsetsGeometry padding;
 
   @override
+  State<AppGlassSurface> createState() => _AppGlassSurfaceState();
+}
+
+class _AppGlassSurfaceState extends State<AppGlassSurface> {
+  // Material and lighting wrappers can change without replacing their content.
+  final _contentKey = GlobalKey();
+
+  @override
   Widget build(BuildContext context) {
-    final material = context.appTheme.glass.resolve(role);
+    final material = context.appTheme.glass.resolve(widget.role);
     final platformHighContrast =
         MediaQuery.maybeOf(context)?.highContrast ?? false;
-    final liveBlur = frosted && material.liveBlur && !platformHighContrast;
+    final liveBlur =
+        widget.frosted && material.liveBlur && !platformHighContrast;
     final useSoftLight =
-        softLight && material.liveBlur && !platformHighContrast;
+        widget.softLight && material.liveBlur && !platformHighContrast;
     final decoration = appGlassDecoration(
       context,
-      role: role,
-      borderRadius: borderRadius,
+      role: widget.role,
+      borderRadius: widget.borderRadius,
       frosted: liveBlur,
       softLight: useSoftLight,
     );
-    final content = Padding(padding: padding, child: child);
+    final content = KeyedSubtree(
+      key: _contentKey,
+      child: Padding(padding: widget.padding, child: widget.child),
+    );
+    final visual = context.appTheme.visual;
     final contents = DecoratedBox(
-      decoration: decoration,
-      child: useSoftLight
-          ? AppSoftGlassLight(
-              borderRadius: borderRadius,
-              role: role,
-              status: status,
-              trackPointer: trackPointer,
-              child: content,
-            )
-          : content,
+      // ShapeDecoration paints one fill. Keep the base below the gradient,
+      // matching BoxDecoration's compositing for both corner families.
+      decoration: visual.decoration(
+        radius: widget.borderRadius,
+        color: decoration.color,
+      ),
+      child: DecoratedBox(
+        decoration: visual.decoration(
+          radius: widget.borderRadius,
+          gradient: decoration.gradient,
+          side: decoration.border?.top ?? BorderSide.none,
+        ),
+        child: useSoftLight
+            ? AppSoftGlassLight(
+                borderRadius: widget.borderRadius,
+                role: widget.role,
+                status: widget.status,
+                trackPointer: widget.trackPointer,
+                child: content,
+              )
+            : content,
+      ),
     );
     return RepaintBoundary(
       child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: borderRadius,
-          boxShadow: boxShadow,
+        decoration: visual.decoration(
+          radius: widget.borderRadius,
+          shadows: widget.boxShadow,
         ),
-        child: ClipRRect(
-          borderRadius: borderRadius,
+        child: AppSurfaceClip(
+          continuous: visual.continuousCorners,
+          borderRadius: widget.borderRadius,
           child: liveBlur
               ? BackdropFilter(
                   filter: ui.ImageFilter.blur(

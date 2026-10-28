@@ -1,9 +1,9 @@
 import 'package:flutter/widgets.dart';
 
 import '../tokens/color_palette.dart';
-import 'app_surface_style.dart';
+import 'app_visual_style.dart';
 
-/// Resolved surface/content color ladder for one brightness + surface style.
+/// Resolved surface/content color ladder for a visual preset and brightness.
 ///
 /// Single source of truth for the elevation ramp (canvas → card → raised →
 /// hero), borders, scrims, and the text emphasis ladder. Consumed by
@@ -37,25 +37,59 @@ class AppSurfaceLadder {
   final Color contentFaint;
 }
 
-/// Pure resolver: brightness + [AppSurfaceStyle] → [AppSurfaceLadder].
+/// Pure resolver for surfaces, text and the platform's contrast preference.
 ///
-/// OLED is a dark-only override; light mode falls back to standard.
 /// High contrast tightens the text ladder toward WCAG AAA (7:1) on card;
-/// the contrast test enforces the raised threshold per style.
+/// the contrast test enforces the raised threshold for both visual presets.
 AppSurfaceLadder resolveSurfaceLadder({
   required Brightness brightness,
-  required AppSurfaceStyle surfaceStyle,
+  bool highContrast = false,
+  AppVisualStyle visualStyle = AppVisualStyle.classic,
 }) {
   final isDark = brightness == Brightness.dark;
-  final oled = surfaceStyle == AppSurfaceStyle.oled && isDark;
-  final highContrast = surfaceStyle == AppSurfaceStyle.highContrast;
+
+  if (visualStyle == AppVisualStyle.refined) {
+    return isDark
+        ? AppSurfaceLadder(
+            canvas: ColorPalette.refinedCanvasDark,
+            card: ColorPalette.refinedCardDark,
+            raised: ColorPalette.refinedRaisedDark,
+            hero: ColorPalette.refinedHeroDark,
+            border: highContrast
+                ? ColorPalette.refinedContrastBorderDark
+                : ColorPalette.refinedBorderDark,
+            scrim: ColorPalette.scrimDark,
+            contentStrong: ColorPalette.refinedStrongDark,
+            contentBody: ColorPalette.refinedBodyDark,
+            contentMuted: highContrast
+                ? ColorPalette.refinedContrastMutedDark
+                : ColorPalette.refinedMutedDark,
+            contentFaint: ColorPalette.refinedFaintDark,
+          )
+        : AppSurfaceLadder(
+            canvas: ColorPalette.refinedCanvasLight,
+            card: ColorPalette.neutral0,
+            raised: ColorPalette.refinedRaisedLight,
+            hero: ColorPalette.refinedHeroLight,
+            border: highContrast
+                ? ColorPalette.refinedContrastBorderLight
+                : ColorPalette.refinedBorderLight,
+            scrim: ColorPalette.scrimLight,
+            contentStrong: ColorPalette.refinedStrongLight,
+            contentBody: ColorPalette.refinedBodyLight,
+            contentMuted: highContrast
+                ? ColorPalette.refinedContrastMutedLight
+                : ColorPalette.refinedMutedLight,
+            contentFaint: ColorPalette.refinedFaintLight,
+          );
+  }
 
   return isDark
       ? AppSurfaceLadder(
-          canvas: oled ? ColorPalette.oledCanvas : ColorPalette.navy950,
-          card: oled ? ColorPalette.oledCard : ColorPalette.navyGlass,
-          raised: oled ? ColorPalette.oledRaised : ColorPalette.navyRaised,
-          hero: oled ? ColorPalette.oledHero : ColorPalette.navyHero,
+          canvas: ColorPalette.navy950,
+          card: ColorPalette.navyGlass,
+          raised: ColorPalette.navyRaised,
+          hero: ColorPalette.navyHero,
           border: highContrast ? ColorPalette.navy500 : ColorPalette.navy800,
           scrim: ColorPalette.scrimDark,
           contentStrong: ColorPalette.neutral0,

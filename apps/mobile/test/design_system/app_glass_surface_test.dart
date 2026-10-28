@@ -7,7 +7,7 @@ import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/design_system/widgets/app_soft_glass_light.dart';
 
 Widget _wrap({
-  AppSurfaceStyle style = AppSurfaceStyle.standard,
+  bool highContrast = false,
   Brightness brightness = Brightness.light,
   bool platformHighContrast = false,
   bool reduceMotion = false,
@@ -20,13 +20,14 @@ Widget _wrap({
   Widget? child,
 }) {
   final appTheme = brightness == Brightness.dark
-      ? AppTheme.dark(surfaceStyle: style)
-      : AppTheme.light(surfaceStyle: style);
+      ? AppTheme.dark(highContrast: highContrast)
+      : AppTheme.light(highContrast: highContrast);
   final resolved = resolveAppTheme(
     ThemeInputs(
+      materialStyle: AppMaterialStyle.translucent,
       brightness: brightness,
       marketMode: MarketColorMode.redUpGreenDown,
-      surfaceStyle: style,
+      highContrast: highContrast,
     ),
   );
   return MaterialApp(
@@ -35,7 +36,7 @@ Widget _wrap({
       data: buildAppForuiTheme(
         brightness: brightness,
         touch: true,
-        surfaceStyle: style,
+        highContrast: highContrast,
       ),
       child: AppThemeScope(
         data: resolved,
@@ -306,31 +307,27 @@ void main() {
     },
   );
 
-  testWidgets(
-    'high contrast and OLED omit local light but keep selected semantics',
-    (tester) async {
-      for (final style in [
-        AppSurfaceStyle.highContrast,
-        AppSurfaceStyle.oled,
-      ]) {
-        await tester.pumpWidget(
-          _wrap(
-            style: style,
-            brightness: Brightness.dark,
-            child: Semantics(
-              selected: true,
-              child: AppGlassFeedback(
-                variants: {FTappableVariant.selected},
-                child: const Text('Selected'),
-              ),
+  testWidgets('high contrast omits local light but keeps selected semantics', (
+    tester,
+  ) async {
+    for (final brightness in Brightness.values) {
+      await tester.pumpWidget(
+        _wrap(
+          highContrast: true,
+          brightness: brightness,
+          child: Semantics(
+            selected: true,
+            child: AppGlassFeedback(
+              variants: {FTappableVariant.selected},
+              child: const Text('Selected'),
             ),
           ),
-        );
-        expect(find.byType(AppSoftGlassLight), findsNothing);
-        expect(find.text('Selected'), findsOneWidget);
-      }
-    },
-  );
+        ),
+      );
+      expect(find.byType(AppSoftGlassLight), findsNothing);
+      expect(find.text('Selected'), findsOneWidget);
+    }
+  });
 
   testWidgets('standard surface uses one live backdrop layer', (tester) async {
     await tester.pumpWidget(_wrap());
@@ -341,17 +338,7 @@ void main() {
   testWidgets('high-contrast theme replaces blur with opaque material', (
     tester,
   ) async {
-    await tester.pumpWidget(_wrap(style: AppSurfaceStyle.highContrast));
-
-    expect(find.byType(BackdropFilter), findsNothing);
-  });
-
-  testWidgets('OLED theme preserves the black canvas without live blur', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      _wrap(style: AppSurfaceStyle.oled, brightness: Brightness.dark),
-    );
+    await tester.pumpWidget(_wrap(highContrast: true));
 
     expect(find.byType(BackdropFilter), findsNothing);
   });
@@ -389,23 +376,13 @@ void main() {
     );
   });
 
-  testWidgets('accessibility and OLED overrides remove soft light', (
+  testWidgets('system accessibility overrides remove soft light', (
     tester,
   ) async {
     await tester.pumpWidget(_wrap(softLight: true, platformHighContrast: true));
     expect(find.byType(AppSoftGlassLight), findsNothing);
     expect(find.byType(BackdropFilter), findsNothing);
-    await tester.pumpWidget(
-      _wrap(softLight: true, style: AppSurfaceStyle.highContrast),
-    );
-    expect(find.byType(AppSoftGlassLight), findsNothing);
-    await tester.pumpWidget(
-      _wrap(
-        softLight: true,
-        style: AppSurfaceStyle.oled,
-        brightness: Brightness.dark,
-      ),
-    );
+    await tester.pumpWidget(_wrap(softLight: true, highContrast: true));
     expect(find.byType(AppSoftGlassLight), findsNothing);
   });
 
