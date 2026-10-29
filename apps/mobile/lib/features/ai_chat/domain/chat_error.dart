@@ -12,6 +12,12 @@ const String kChatErrorEndpoint = 'chat_error_endpoint';
 const String kChatErrorRateLimited = 'chat_error_rate_limited';
 const String kChatErrorRequest = 'chat_error_request';
 const String kChatErrorNetwork = 'chat_error_network';
+const String kChatErrorFirstResponseTimeout =
+    'chat_error_first_response_timeout';
+const String kChatErrorReadIdleTimeout = 'chat_error_read_idle_timeout';
+const String kChatErrorModelProgressTimeout =
+    'chat_error_model_progress_timeout';
+const String kChatErrorTotalTimeout = 'chat_error_total_timeout';
 const String kChatErrorRuntime = 'chat_error_runtime';
 
 /// Converts known runtime/provider codes to a stable, localizable key.
@@ -50,18 +56,37 @@ String chatErrorPresentationKey({String? code, required String message}) {
       _containsHttp(signal, 400)) {
     return kChatErrorRequest;
   }
+  if (signal.contains('provider_first_response_timeout') ||
+      signal.contains('provider_first_byte_timeout')) {
+    return kChatErrorFirstResponseTimeout;
+  }
+  if (signal.contains('provider_read_idle_timeout')) {
+    return kChatErrorReadIdleTimeout;
+  }
+  if (signal.contains('provider_model_progress_timeout')) {
+    return kChatErrorModelProgressTimeout;
+  }
+  if (signal.contains('provider_total_timeout')) {
+    return kChatErrorTotalTimeout;
+  }
   if (signal.contains('timeout') ||
+      signal.contains('timed out') ||
       signal.contains('timed_out') ||
+      signal.contains('provider_request_failed') ||
+      signal.contains('provider_body_read_failed') ||
+      signal.contains('provider_stream_read_failed') ||
+      signal.contains('error sending request') ||
+      signal.contains('bad gateway') ||
       signal.contains('network') ||
       signal.contains('transport') ||
       signal.contains('connection') ||
       signal.contains('dns') ||
       signal.contains('tls') ||
-      signal.contains('provider_http_5')) {
+      signal.contains('provider_http_5') ||
+      [500, 502, 503, 504].any((status) => _containsHttp(signal, status))) {
     return kChatErrorNetwork;
   }
-  if (signal.contains('provider_http_5') ||
-      signal.contains('internal_error') ||
+  if (signal.contains('internal_error') ||
       signal.contains('provider_decode_failed') ||
       signal.contains('frb_')) {
     return kChatErrorRuntime;
@@ -74,6 +99,14 @@ bool isChatConfigurationError(String? key) => switch (key) {
   kChatErrorAuthentication ||
   kChatErrorEndpoint ||
   kChatErrorRequest => true,
+  _ => false,
+};
+
+bool isChatTimeoutError(String? key) => switch (key) {
+  kChatErrorFirstResponseTimeout ||
+  kChatErrorReadIdleTimeout ||
+  kChatErrorModelProgressTimeout ||
+  kChatErrorTotalTimeout => true,
   _ => false,
 };
 

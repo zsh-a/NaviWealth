@@ -10880,6 +10880,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get aiChatErrorNetwork => '无法连接模型服务商，请检查网络后重试。';
 
   @override
+  String get aiChatErrorFirstResponseTimeout => '模型服务商长时间未返回数据，请稍后重试。';
+
+  @override
+  String get aiChatErrorReadIdleTimeout => '响应已经开始，但随后长时间未收到新数据，请重试。';
+
+  @override
+  String get aiChatErrorModelProgressTimeout => '连接仍有数据，但模型长时间没有新的有效输出，请重试。';
+
+  @override
+  String get aiChatErrorTotalTimeout => '本次生成已达到时长上限，可以继续对话或重试。';
+
+  @override
   String get aiChatErrorRuntime => '端侧 AI 运行时暂时出现问题，请重试。';
 
   @override

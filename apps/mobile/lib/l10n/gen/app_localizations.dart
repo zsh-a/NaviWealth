@@ -19382,6 +19382,30 @@ abstract class AppLocalizations {
   /// **'The model provider could not be reached. Check your network and try again.'**
   String get aiChatErrorNetwork;
 
+  /// Timeout before the first response headers or body data
+  ///
+  /// In en, this message translates to:
+  /// **'The model provider took too long to return data. Try again shortly.'**
+  String get aiChatErrorFirstResponseTimeout;
+
+  /// Timeout after response data stopped arriving
+  ///
+  /// In en, this message translates to:
+  /// **'The response started, but no new data arrived for too long. Try again.'**
+  String get aiChatErrorReadIdleTimeout;
+
+  /// Timeout when heartbeats continue without meaningful model output
+  ///
+  /// In en, this message translates to:
+  /// **'The connection is active, but the model has not made progress for too long. Try again.'**
+  String get aiChatErrorModelProgressTimeout;
+
+  /// Hard duration limit reached even if response activity continues
+  ///
+  /// In en, this message translates to:
+  /// **'This response reached the generation time limit. You can continue the conversation or retry.'**
+  String get aiChatErrorTotalTimeout;
+
   /// Chat error shown for recoverable runtime or provider failures
   ///
   /// In en, this message translates to:

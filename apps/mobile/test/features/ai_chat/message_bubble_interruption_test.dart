@@ -90,6 +90,34 @@ void main() {
     expect(find.text('模型服务商拒绝了访问，请检查 API Key 或权限。'), findsOneWidget);
     expect(find.text('添加模型服务商'), findsOneWidget);
   });
+
+  testWidgets(
+    'timeout phases retain content and explain the actual stop cause',
+    (tester) async {
+      for (final entry in {
+        kChatErrorFirstResponseTimeout: '模型服务商长时间未返回数据，请稍后重试。',
+        kChatErrorReadIdleTimeout: '响应已经开始，但随后长时间未收到新数据，请重试。',
+        kChatErrorModelProgressTimeout: '连接仍有数据，但模型长时间没有新的有效输出，请重试。',
+        kChatErrorTotalTimeout: '本次生成已达到时长上限，可以继续对话或重试。',
+      }.entries) {
+        await _pumpMessage(
+          tester,
+          _message(
+            content: '已经接收的部分回复',
+            status: ChatMessageStatus.errored,
+            stopReason: ChatStopReason.error,
+            errorMessage: entry.key,
+          ),
+          withAccessibilityScope: true,
+        );
+        expect(find.text(entry.value), findsOneWidget);
+        expect(find.text('已经接收的部分回复'), findsOneWidget);
+        expect(find.text('继续'), findsOneWidget);
+        expect(find.text('连接中断，回复未完整接收'), findsNothing);
+        expect(find.text('添加模型服务商'), findsNothing);
+      }
+    },
+  );
 }
 
 ChatMessage _message({

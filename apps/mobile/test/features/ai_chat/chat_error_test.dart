@@ -54,4 +54,39 @@ void main() {
       message,
     );
   });
+
+  test('wrapped native transport failures keep a network repair path', () {
+    for (final message in [
+      'error sending request for url (https://provider.example/v1/chat/completions)',
+      'HTTP 502: Bad Gateway',
+      'HTTP 503: service unavailable',
+      'request timed out',
+      'provider_request_failed: client error',
+      'provider_body_read_failed: error decoding response body',
+      'provider_stream_read_failed: stream reset',
+    ]) {
+      expect(
+        chatErrorPresentationKey(code: 'frb_chat_error', message: message),
+        kChatErrorNetwork,
+        reason: message,
+      );
+    }
+  });
+
+  test('distinguishes silent connections from active but stalled or long responses', () {
+    for (final entry in {
+      'provider_first_response_timeout': kChatErrorFirstResponseTimeout,
+      'provider_first_byte_timeout': kChatErrorFirstResponseTimeout,
+      'provider_read_idle_timeout': kChatErrorReadIdleTimeout,
+      'provider_model_progress_timeout': kChatErrorModelProgressTimeout,
+      'provider_total_timeout': kChatErrorTotalTimeout,
+    }.entries) {
+      final key = chatErrorPresentationKey(
+        code: 'frb_chat_error',
+        message: '${entry.key}: timed out',
+      );
+      expect(key, entry.value);
+      expect(isChatConfigurationError(key), isFalse);
+    }
+  });
 }

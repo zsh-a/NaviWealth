@@ -4,10 +4,15 @@ part of 'message_bubble.dart';
 /// bottom of an assistant bubble when [ChatMessage.stopReason] indicates
 /// the reply is incomplete.
 class _TruncationFooter extends ConsumerWidget {
-  const _TruncationFooter({required this.sessionId, required this.reason});
+  const _TruncationFooter({
+    required this.sessionId,
+    required this.reason,
+    this.connectionInterrupted = true,
+  });
 
   final String sessionId;
   final ChatStopReason reason;
+  final bool connectionInterrupted;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -20,7 +25,10 @@ class _TruncationFooter extends ConsumerWidget {
       ChatStopReason.toolUse => l10n.aiChatTruncatedToolBudget,
       ChatStopReason.requiresInteraction => '',
       ChatStopReason.refusal => l10n.aiChatTruncatedRefusal,
-      ChatStopReason.error => l10n.aiChatTruncatedNetwork,
+      ChatStopReason.error =>
+        connectionInterrupted
+            ? l10n.aiChatTruncatedNetwork
+            : l10n.aiChatTruncatedUnknown,
       ChatStopReason.unknown => l10n.aiChatTruncatedUnknown,
       ChatStopReason.endTurn => '',
     };

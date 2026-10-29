@@ -152,6 +152,14 @@ typed confirmation 均持久化同一 response contract。
 - `LlmCredentials` 管理多个 `LlmProfile` 与 `activeId`。
 - API key 存入 `SecureKeyStore`，不进入同步、日志或明文备份。
 - 连通性测试由 `FrbLlmConnectivityProbe` 走同一 native provider path。
+- OpenAI-compatible / Anthropic 请求分别限制连接建立（每次 15 秒）、等待响应／
+  首个响应体数据（5 分钟）及后续读取空闲（2 分钟，每次收到数据后重新计时）。
+  流式正文、思考及工具增量算模型进展，单纯心跳不延长 5 分钟的模型进展等待。
+  持续有效输出允许超过 5 分钟，仍受每次请求 15 分钟的总上限约束；非流式 JSON
+  在返回数据之前只能视为等待首包。聊天中的超时提示区分这些阶段，保留已有内容及继续入口。
+- 瞬时网络、网关或限流错误只在成功响应开始前进行有界退避，最多请求 3 次；
+  较长的 `Retry-After` 直接返回调用方。响应体、流式内容和工具调用不会自动重放，
+  取消请求也会终止退避。底层错误保留不含 URL 的 DNS / TLS / socket 原因供本机诊断。
 - `!kIsWeb` 是运行时边界；Web、无可用 profile 或 provider 错误均 fail closed，
   返回 `device_unavailable` 或对应 provider error，不回落到 backend。
 

@@ -11505,6 +11505,22 @@ class AppLocalizationsEn extends AppLocalizations {
       'The model provider could not be reached. Check your network and try again.';
 
   @override
+  String get aiChatErrorFirstResponseTimeout =>
+      'The model provider took too long to return data. Try again shortly.';
+
+  @override
+  String get aiChatErrorReadIdleTimeout =>
+      'The response started, but no new data arrived for too long. Try again.';
+
+  @override
+  String get aiChatErrorModelProgressTimeout =>
+      'The connection is active, but the model has not made progress for too long. Try again.';
+
+  @override
+  String get aiChatErrorTotalTimeout =>
+      'This response reached the generation time limit. You can continue the conversation or retry.';
+
+  @override
   String get aiChatErrorRuntime =>
       'The on-device AI runtime encountered a temporary problem. Try again.';
 

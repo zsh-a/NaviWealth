@@ -124,7 +124,11 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
             },
           ),
         if (showTruncation)
-          _TruncationFooter(sessionId: sessionId, reason: message.stopReason!),
+          _TruncationFooter(
+            sessionId: sessionId,
+            reason: message.stopReason!,
+            connectionInterrupted: !isChatTimeoutError(message.errorMessage),
+          ),
         if (!isStreaming &&
             message.role == ChatRole.assistant &&
             isLastAssistant) ...[
@@ -252,6 +256,10 @@ class _AssistantBubbleState extends ConsumerState<_AssistantBubble> {
       kChatErrorRateLimited => l10n.aiChatErrorRateLimited,
       kChatErrorRequest => l10n.aiChatErrorRequest,
       kChatErrorNetwork => l10n.aiChatErrorNetwork,
+      kChatErrorFirstResponseTimeout => l10n.aiChatErrorFirstResponseTimeout,
+      kChatErrorReadIdleTimeout => l10n.aiChatErrorReadIdleTimeout,
+      kChatErrorModelProgressTimeout => l10n.aiChatErrorModelProgressTimeout,
+      kChatErrorTotalTimeout => l10n.aiChatErrorTotalTimeout,
       kChatErrorRuntime => l10n.aiChatErrorRuntime,
       _ => raw,
     };
