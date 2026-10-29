@@ -170,9 +170,6 @@ class _NwLineChartState extends State<NwLineChart> {
   bool? _preparedDownsample;
   int? _preparedDownsampleTarget;
 
-  // First-paint entrance reveal has completed (or was skipped).
-  bool _revealDone = false;
-
   // Cached chart data — avoids rebuilding LineChartData on every touch event.
   _CachedChartData? _cachedChartData;
   _PreparedLineData? _cachedChartDataSource;
@@ -398,31 +395,31 @@ class _NwLineChartState extends State<NwLineChart> {
     // Data *updates* morph through fl_chart's own tween; only the first
     // paint draws in. A ShaderMask (not a clip) keeps layout AND hit
     // testing intact, so the chart is scrubbables mid-reveal.
-    if (!_revealDone) {
-      chartWidget = TweenAnimationBuilder<double>(
-        tween: Tween<double>(begin: 0, end: 1),
-        duration: AppMotionPolicy.duration(
-          context,
-          Motion.chartEnter,
-          role: AppMotionRole.decorative,
-        ),
-        curve: Motion.emphasizedDecelerate,
-        onEnd: () => _revealDone = true,
-        builder: (context, t, child) => ShaderMask(
-          blendMode: BlendMode.dstIn,
-          shaderCallback: (bounds) => LinearGradient(
-            colors: [
-              ColorPalette.neutral0,
-              ColorPalette.neutral0,
-              ColorPalette.neutral0.withValues(alpha: AppOpacity.transparent),
-            ],
-            stops: [0, t, (t + 0.08).clamp(0.0, 1.0)],
-          ).createShader(bounds),
-          child: child,
-        ),
-        child: chartWidget,
-      );
-    }
+    // Keep this wrapper mounted after the reveal. Removing it on a header
+    // rebuild disposes the chart's recognizers during the active scrub, so
+    // its release event can no longer restore the latest-value readout.
+    chartWidget = TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: AppMotionPolicy.duration(
+        context,
+        Motion.chartEnter,
+        role: AppMotionRole.decorative,
+      ),
+      curve: Motion.emphasizedDecelerate,
+      builder: (context, t, child) => ShaderMask(
+        blendMode: BlendMode.dstIn,
+        shaderCallback: (bounds) => LinearGradient(
+          colors: [
+            ColorPalette.neutral0,
+            ColorPalette.neutral0,
+            ColorPalette.neutral0.withValues(alpha: AppOpacity.transparent),
+          ],
+          stops: [0, t, (t + 0.08).clamp(0.0, 1.0)],
+        ).createShader(bounds),
+        child: child,
+      ),
+      child: chartWidget,
+    );
 
     // Touch overlay — rebuilt via ValueListenableBuilder only when
     // touch state changes. This is lightweight (crosshair + tooltip).
