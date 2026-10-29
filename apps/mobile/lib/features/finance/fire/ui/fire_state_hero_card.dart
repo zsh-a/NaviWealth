@@ -101,7 +101,7 @@ class _HeroBody extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.s12),
-          Text(etaHeadline, style: TypographyTokens.displaySmall),
+          Text(etaHeadline, style: context.appTheme.type.displayCompact),
           const SizedBox(height: AppSpacing.s8),
           // Slim progress rail — replaces the large gauge card.
           ClipRRect(

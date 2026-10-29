@@ -1,6 +1,10 @@
+import 'dart:math' as math;
+
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../theme/app_theme_scope.dart';
 import '../tokens/app_motion_policy.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
@@ -9,6 +13,8 @@ import 'app_glass.dart';
 import 'app_interaction.dart';
 import 'app_selection_indicator.dart';
 import 'app_tappable.dart';
+
+part 'segmented_row_inline.dart';
 
 /// Shared Forui-based segmented control with a quiet single-surface chrome.
 ///
@@ -35,7 +41,23 @@ class SegmentedRow<T> extends StatelessWidget {
     this.iconOf,
     this.minSegmentWidth = _defaultMinSegmentWidth,
     this.glass = false,
-  });
+  }) : _inline = false;
+
+  /// Content-sized ranges, view dimensions, or short page filters with quiet
+  /// labels and a small selection mark.
+  /// Keeps a full touch target and wraps at large text sizes. Arrow keys and
+  /// Home/End select an option; Tab enters the group at the selected option.
+  const SegmentedRow.inline({
+    super.key,
+    required this.options,
+    required this.value,
+    required this.labelOf,
+    required this.onChanged,
+    this.semanticLabelOf,
+    this.minSegmentWidth = AppControlHeights.touchTarget,
+  }) : _inline = true,
+       iconOf = null,
+       glass = false;
 
   final List<T> options;
   final T value;
@@ -47,6 +69,7 @@ class SegmentedRow<T> extends StatelessWidget {
   final ValueChanged<T>? onChanged;
   final IconData? Function(T)? iconOf;
   final double minSegmentWidth;
+  final bool _inline;
 
   /// Uses the shared floating-glass material for navigation-like controls.
   /// Keep the default opaque/translucent surface for dense in-content filters.
@@ -58,6 +81,7 @@ class SegmentedRow<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     if (options.isEmpty) return const SizedBox.shrink();
+    if (_inline) return _InlineSegments<T>(control: this);
 
     return LayoutBuilder(
       builder: (context, constraints) {

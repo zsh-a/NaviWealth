@@ -18,6 +18,8 @@ import '../../tokens/app_motion_policy.dart';
 import '../../tokens/breakpoints.dart';
 import '../../tokens/dimens_tokens.dart';
 import '../../tokens/motion_tokens.dart';
+import '../adaptive_content_frame.dart';
+import '../adaptive_supporting_pane.dart';
 import '../responsive_two_column.dart';
 import '../skeleton.dart';
 

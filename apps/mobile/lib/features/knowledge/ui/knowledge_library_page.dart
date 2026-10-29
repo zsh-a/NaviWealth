@@ -53,6 +53,7 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
 
   final _searchController = TextEditingController();
   final _searchFocus = FocusNode();
+  final _bodyKey = GlobalKey();
   Timer? _debounce;
   var _scope = _LibraryScope.all;
   var _query = '';
@@ -238,6 +239,8 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
             )),
           );
     return Column(
+      // Retain filter focus when the list moves into or out of a detail pane.
+      key: _bodyKey,
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(
@@ -260,19 +263,13 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
               const SizedBox(height: AppSpacing.s10),
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final scopeFilter = AppAdaptiveChoice<_LibraryScope>(
-                    title: l10n.knowledgeLibraryFilterTitle,
+                  final scopeFilter = SegmentedRow<_LibraryScope>.inline(
                     options: _LibraryScope.values,
                     value: _scope,
                     labelOf: (scope) => switch (scope) {
                       _LibraryScope.all => l10n.knowledgeSegmentAll,
                       _LibraryScope.notes => l10n.knowledgeSegmentNotes,
                       _LibraryScope.decisions => l10n.knowledgeSegmentDecisions,
-                    },
-                    iconOf: (scope) => switch (scope) {
-                      _LibraryScope.all => FLucideIcons.library,
-                      _LibraryScope.notes => FLucideIcons.fileText,
-                      _LibraryScope.decisions => FLucideIcons.circleCheck,
                     },
                     onChanged: (scope) {
                       setState(() {
@@ -303,33 +300,31 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
                         )
                       : null;
                   final textScale = MediaQuery.textScalerOf(context).scale(1);
-                  if (constraints.maxWidth < Breakpoints.mobile * textScale) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        scopeFilter,
-                        if (tagFilter != null) ...[
-                          const SizedBox(height: AppSpacing.s8),
-                          Align(
-                            alignment: Alignment.centerLeft,
+                  final stacked =
+                      constraints.maxWidth < Breakpoints.mobile * textScale;
+                  final tagWidth = stacked
+                      ? constraints.maxWidth
+                      : constraints.maxWidth / 3;
+                  // Keep the scope control in the same slot across widths.
+                  return Wrap(
+                    spacing: AppSpacing.s8,
+                    runSpacing: AppSpacing.s8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: stacked || tagFilter == null
+                            ? constraints.maxWidth
+                            : constraints.maxWidth - tagWidth - AppSpacing.s8,
+                        child: scopeFilter,
+                      ),
+                      if (tagFilter != null)
+                        SizedBox(
+                          width: tagWidth,
+                          child: Align(
+                            alignment: AlignmentDirectional.centerStart,
                             child: tagFilter,
                           ),
-                        ],
-                      ],
-                    );
-                  }
-                  return Row(
-                    children: [
-                      Expanded(child: scopeFilter),
-                      if (tagFilter != null) ...[
-                        const SizedBox(width: AppSpacing.s8),
-                        ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxWidth: constraints.maxWidth / 2,
-                          ),
-                          child: tagFilter,
                         ),
-                      ],
                     ],
                   );
                 },
@@ -376,37 +371,41 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
           ),
         ),
         Expanded(
-          child: searchResults == null
-              ? _LibraryBrowse(
-                  limit: loadingMore ? _previousLimit : _limit,
-                  onLoadMore: loadingMore
-                      ? null
-                      : () => setState(() {
-                          _previousNotes = notes.value;
-                          _previousDecisions = decisions.value;
-                          _previousLimit = _limit;
-                          _limit += _pageSize;
-                        }),
-                  onRetry: retryBrowse,
-                  scope: _scope,
-                  selectedTag: _selectedTag,
-                  notes: notes,
-                  decisions: decisions,
-                  inMasterDetail: inMasterDetail,
-                )
-              : _LibrarySearchResults(
-                  value: searchResults,
-                  query: _query,
-                  showKind: _scope == _LibraryScope.all && _selectedTag == null,
-                  inMasterDetail: inMasterDetail,
-                  onRetry: () => ref.invalidate(
-                    knowledgeLibrarySearchProvider((
-                      query: _query,
-                      kind: _scope.kind,
-                      tag: _selectedTag,
-                    )),
+          child: Semantics(
+            container: true,
+            child: searchResults == null
+                ? _LibraryBrowse(
+                    limit: loadingMore ? _previousLimit : _limit,
+                    onLoadMore: loadingMore
+                        ? null
+                        : () => setState(() {
+                            _previousNotes = notes.value;
+                            _previousDecisions = decisions.value;
+                            _previousLimit = _limit;
+                            _limit += _pageSize;
+                          }),
+                    onRetry: retryBrowse,
+                    scope: _scope,
+                    selectedTag: _selectedTag,
+                    notes: notes,
+                    decisions: decisions,
+                    inMasterDetail: inMasterDetail,
+                  )
+                : _LibrarySearchResults(
+                    value: searchResults,
+                    query: _query,
+                    showKind:
+                        _scope == _LibraryScope.all && _selectedTag == null,
+                    inMasterDetail: inMasterDetail,
+                    onRetry: () => ref.invalidate(
+                      knowledgeLibrarySearchProvider((
+                        query: _query,
+                        kind: _scope.kind,
+                        tag: _selectedTag,
+                      )),
+                    ),
                   ),
-                ),
+          ),
         ),
       ],
     );

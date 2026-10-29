@@ -784,7 +784,7 @@ class _MoneyMetric extends StatelessWidget {
       child: AnimatedMoneyText(
         amount: amount.toDouble(),
         currencyCode: currency,
-        style: TypographyTokens.numericBodyStrong,
+        style: context.appTheme.type.numericBodyStrong,
       ),
     );
   }
@@ -800,7 +800,7 @@ class _TextMetric extends StatelessWidget {
   Widget build(BuildContext context) {
     return _MetricShell(
       label: label,
-      child: Text(value, style: TypographyTokens.numericBodyStrong),
+      child: Text(value, style: context.appTheme.type.numericBodyStrong),
     );
   }
 }

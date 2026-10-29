@@ -152,7 +152,14 @@ void main() {
       await tester.drag(find.byType(Scrollable).last, const Offset(0, -600));
       await tester.pumpAndSettle();
       final sticky = find.byKey(const ValueKey('execution-sticky-filter'));
-      expect(sticky.hitTestable(), findsOneWidget);
+      for (final label in ['Today', 'Blocked']) {
+        expect(
+          find
+              .descendant(of: sticky, matching: find.bySemanticsLabel(label))
+              .hitTestable(),
+          findsOneWidget,
+        );
+      }
       expect(
         tester.widget<ExecutionOverviewStrip>(sticky).selectedFilter,
         ExecutionTodayFilter.blocked,
@@ -893,6 +900,8 @@ void main() {
     final progress = await repository.listRecentProgress(ownerUserId: 'u-test');
     expect(archived?.status, ExecutionPlanStatus.archived);
     expect(progress.single.note, 'Plan archived.');
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 7));
   });
 }
 

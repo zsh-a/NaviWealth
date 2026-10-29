@@ -19,7 +19,12 @@
 曲线:`Motion.standard` = `Cubic(0.2,0,0,1)`(导出的 `emphasized` token 是它的别名),
 `Motion.emphasizedDecelerate` = `Cubic(0.05,0.7,0.1,1)`,
 `Motion.standardDecelerate` = `Cubic(0,0,0,1)`,
-`Motion.standardAccelerate` = `Cubic(0.3,0,1,1)`。无 spring 体系(有意省略)。
+`Motion.standardAccelerate` = `Cubic(0.3,0,1,1)`。
+
+手势回弹使用 `Motion.springSnappy`（mass 1 / stiffness 400 / damping 28），
+轻量成功反馈使用 `Motion.springGentle`（1 / 180 / 22）；统一经
+`MotionSpringX.animateWithSpring` 驱动。两者属于 decorative，遵守 reduced motion，
+不在业务调用点另写弹簧参数。
 
 语义别名:`tapFeedback=fast`、`componentChange=medium`、`contentTransition=medium`、`pageTransition=slow`。
 
@@ -74,6 +79,8 @@
   clip 揭示(`decorative` 角色,reduce-motion 直接呈现)。
 - 数据更新走 fl_chart 内建 tween morph。
 - 十字线/tooltip 跟手 0 延迟(独立于图表重建的触摸层)。
+- Wealth 总额、资产与负债随选中历史点联动，松手或切换范围恢复当前余额。
+  跟手读数使用 `MoneyText`，避免数字滚动追赶手指；金额隐私继续覆盖读数及图表。
 
 ## 8. 反馈
 
@@ -97,6 +104,9 @@
 - **键盘焦点**:交互卡片可聚焦,焦点环 = 2dp `primary` 描边,
   Enter/Space 激活并触发与点按相同的触觉意图。
 - `Cmd/Ctrl+1..N` 作用于当前域 tab;`Cmd/Ctrl+K` 命令面板。
+- 图表行内时间范围通过 `SegmentedRow.inline` 统一处理：Tab 进入当前选项，左右键
+  按文字方向切换，Home / End 到首尾；下一次 Tab 离开组。换行或窗口缩放保持焦点，
+  选中状态同时使用文字权重、短线与无障碍语义。短线过渡走 decorative motion policy。
 
 ## 10. AI 流式
 

@@ -369,7 +369,7 @@ class _CloseProgress extends StatelessWidget {
               ),
               Text(
                 l10n.monthlyCloseCoverageValue(accepted, total),
-                style: TypographyTokens.numericBodyStrong,
+                style: context.appTheme.type.numericBodyStrong,
               ),
             ],
           ),
@@ -524,7 +524,7 @@ class _CloseHistoryRow extends StatelessWidget {
           ),
           Text(
             _historyDuration(l10n, close),
-            style: TypographyTokens.numericBodyStrong,
+            style: context.appTheme.type.numericBodyStrong,
           ),
           const SizedBox(width: AppSpacing.s8),
           const Icon(FLucideIcons.chevronRight, size: AppIconSizes.sm),
@@ -579,7 +579,7 @@ class _HistoryEvidenceRow extends StatelessWidget {
   Widget build(BuildContext context) => Row(
     children: [
       Expanded(child: Text(label, style: context.captionStyle)),
-      Text(value, style: TypographyTokens.numericBodyStrong),
+      Text(value, style: context.appTheme.type.numericBodyStrong),
     ],
   );
 }
@@ -681,7 +681,7 @@ class _ReconciliationRow extends ConsumerWidget {
               ),
               Text(
                 '${target.ledgerBalance} ${target.unit}',
-                style: TypographyTokens.numericBodyStrong,
+                style: context.appTheme.type.numericBodyStrong,
               ),
             ],
           ),
@@ -800,7 +800,7 @@ class _PeriodSwitcher extends StatelessWidget {
             child: Text(
               period,
               textAlign: TextAlign.center,
-              style: TypographyTokens.numericBodyStrong,
+              style: context.appTheme.type.numericBodyStrong,
             ),
           ),
           FButton.icon(

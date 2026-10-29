@@ -102,6 +102,7 @@ extension _IngestReviewWorkspace on _IngestReviewPageState {
       actions: [
         if (data.allItems.isNotEmpty)
           AppIconButton(
+            key: const ValueKey('ingest-open-search'),
             tooltip: l10n.navSearch,
             icon: FLucideIcons.search,
             onPress: _isBusy
@@ -335,6 +336,7 @@ extension _IngestReviewWorkspace on _IngestReviewPageState {
 
   Widget _accountPicker(IngestReviewViewData data) => AccountPicker(
     accounts: data.payableAccounts,
+    compact: true,
     value: data.selectedAccountId,
     label: AppLocalizations.of(context).ingestExpenseAccountLabel,
     enabled: !_isBusy,

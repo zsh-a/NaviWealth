@@ -52,6 +52,59 @@ Widget _wrap(
 }
 
 void main() {
+  testWidgets('large date labels fit the axis gutter without overlapping', (
+    tester,
+  ) async {
+    final first = DateTime.utc(2025, 7, 12).millisecondsSinceEpoch.toDouble();
+    final last = DateTime.utc(2026, 7, 12).millisecondsSinceEpoch.toDouble();
+    await tester.pumpWidget(
+      _wrap(
+        MediaQuery(
+          data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+          child: NwLineChart(
+            series: [
+              ChartSeries(
+                name: 'Balance',
+                points: [
+                  ChartPoint(x: first, y: 100),
+                  ChartPoint(x: last, y: 120),
+                ],
+              ),
+            ],
+            minX: first,
+            maxX: last,
+            showYAxis: false,
+            xAxis: const TimeAxis(
+              format: AxisDateFormat.monthYear,
+              maxLabels: 4,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final chart = tester.widget<LineChart>(find.byType(LineChart));
+    final labels = find.descendant(
+      of: find.byType(LineChart),
+      matching: find.byType(Text),
+    );
+    expect(labels, findsWidgets);
+    final rects = [
+      for (final label in labels.evaluate())
+        tester.getRect(find.byWidget(label.widget)),
+    ]..sort((a, b) => a.left.compareTo(b.left));
+    for (final rect in rects) {
+      expect(
+        chart.data.titlesData.bottomTitles.sideTitles.reservedSize,
+        greaterThanOrEqualTo(rect.height + AppSpacing.s4),
+      );
+    }
+    for (var i = 1; i < rects.length; i++) {
+      expect(rects[i].left, greaterThanOrEqualTo(rects[i - 1].right));
+    }
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'bar keyboard navigation skips missing data and supports drilldown',
     (tester) async {

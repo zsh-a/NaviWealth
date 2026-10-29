@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
 
+import '../theme/app_theme_scope.dart';
 import '../tokens/app_motion_policy.dart';
 import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
-import '../tokens/typography_tokens.dart';
 import '../widgets/amount_privacy_scope.dart';
 import 'axes.dart';
 import 'chart_palette.dart';
@@ -333,9 +333,8 @@ class _NwBarChartState extends State<NwBarChart> {
                             padding: const EdgeInsets.all(AppSpacing.s8),
                             child: Text(
                               _sampleLabel(selected),
-                              style: TypographyTokens.numericCaption.copyWith(
-                                color: palette.tooltipForeground,
-                              ),
+                              style: context.appTheme.type.numericCaption
+                                  .copyWith(color: palette.tooltipForeground),
                             ),
                           ),
                         ),
@@ -360,7 +359,7 @@ class _NwBarChartState extends State<NwBarChart> {
     final interval = yRange > 0
         ? yRange / (widget.yAxis.maxLabels - 1).clamp(1, 100)
         : 1.0;
-    final labelStyle = TypographyTokens.numericCaption.copyWith(
+    final labelStyle = context.appTheme.type.numericCaption.copyWith(
       color: palette.axisLabel,
     );
     final formatTick = widget.yAxis.tickFormatter(
@@ -473,7 +472,7 @@ class _NwBarChartState extends State<NwBarChart> {
           return BarTooltipItem(
             '${source.name}\n${datum.tooltipLabel ?? datum.label} · '
             '${AmountPrivacyScope.isHiddenOf(context) ? AmountPrivacyScope.hiddenSemanticsLabelOf(context) : widget.yAxis.formatValue(datum.value)}',
-            TypographyTokens.numericCaption.copyWith(
+            context.appTheme.type.numericCaption.copyWith(
               color: palette.tooltipForeground,
             ),
           );

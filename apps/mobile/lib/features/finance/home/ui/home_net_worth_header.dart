@@ -74,7 +74,7 @@ class _NetWorthHeader extends ConsumerWidget {
                     emphasizeInteger: true,
                     amount: value,
                     currencyCode: snapshot.baseCurrency,
-                    style: TypographyTokens.displayLarge,
+                    style: context.appTheme.type.display,
                     showSign: value != null && value < 0,
                   ),
                 ),

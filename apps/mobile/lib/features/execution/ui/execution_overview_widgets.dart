@@ -1,6 +1,6 @@
 part of 'execution_widgets.dart';
 
-/// Compact overview: SegmentedRow lens + quiet meta chips.
+/// Compact task views with shared inline selection and visible counts.
 class ExecutionOverviewStrip extends StatelessWidget {
   const ExecutionOverviewStrip({
     super.key,
@@ -22,8 +22,7 @@ class ExecutionOverviewStrip extends StatelessWidget {
     // due counts are already represented on the action rows; showing them as
     // non-interactive chips here made the overview look like another filter
     // bar without offering a corresponding destination.
-    return AppAdaptiveChoice<ExecutionTodayFilter>(
-      title: l10n.executionTodayTitle,
+    return SegmentedRow<ExecutionTodayFilter>.inline(
       options: const <ExecutionTodayFilter>[
         ExecutionTodayFilter.today,
         ExecutionTodayFilter.blocked,
@@ -38,7 +37,6 @@ class ExecutionOverviewStrip extends StatelessWidget {
               : l10n.executionOverviewBlocked,
       },
       semanticLabelOf: (filter) => executionTodayFilterLabel(l10n, filter),
-      iconOf: executionTodayFilterIcon,
       onChanged: onFilterChanged,
     );
   }

@@ -34,7 +34,7 @@ class _ChartsPanelState extends State<_ChartsPanel> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SegmentedRow<_CashFlowTrendMode>(
+          SegmentedRow<_CashFlowTrendMode>.inline(
             options: _CashFlowTrendMode.values,
             value: _mode,
             minSegmentWidth: 96,
@@ -56,75 +56,79 @@ class _ChartsPanelState extends State<_ChartsPanel> {
             onChanged: (mode) => setState(() => _mode = mode),
           ),
           const SizedBox(height: AppSpacing.s12),
-          AnimatedSwitcher(
-            duration: AppMotionPolicy.duration(context, Motion.fast),
-            child: switch (_mode) {
-              _CashFlowTrendMode.incomeExpense => NwBarChart(
-                key: const ValueKey('cash-flow-income-expense-chart'),
-                series: [
-                  CategorySeries(
-                    name: l10n.cashFlowKpiInflow,
-                    data: widget.model.periods
-                        .map(
-                          (period) => CategoryDatum(
-                            label: _cashFlowAxisLabel(
-                              period.label,
-                              compact: compactLabels,
-                            ),
-                            tooltipLabel: period.label,
-                            value: period.inflow.toDouble(),
-                            colorOverride: status.success.fg,
-                          ),
-                        )
-                        .toList(),
-                  ),
-                  CategorySeries(
-                    name: l10n.cashFlowKpiOutflow,
-                    data: widget.model.periods
-                        .map(
-                          (period) => CategoryDatum(
-                            label: _cashFlowAxisLabel(
-                              period.label,
-                              compact: compactLabels,
-                            ),
-                            tooltipLabel: period.label,
-                            value: period.outflow.toDouble(),
-                            colorOverride: status.danger.fg,
-                          ),
-                        )
-                        .toList(),
-                  ),
-                ],
-                yAxis: axis,
-                aspectRatio: 16 / 7,
-                barWidth: 10,
-                semanticLabel: l10n.cashFlowIncomeExpenseTitle,
-              ),
-              _CashFlowTrendMode.net => SizedBox(
-                key: const ValueKey('cash-flow-net-chart'),
-                height: AppChartHeights.full,
-                child: NwLineChart(
+          Semantics(
+            container: true,
+            child: AnimatedSwitcher(
+              duration: AppMotionPolicy.duration(context, Motion.fast),
+              child: switch (_mode) {
+                _CashFlowTrendMode.incomeExpense => NwBarChart(
+                  key: const ValueKey('cash-flow-income-expense-chart'),
                   series: [
-                    ChartSeries(
-                      name: l10n.cashFlowKpiNet,
-                      points: widget.model.periods
+                    CategorySeries(
+                      name: l10n.cashFlowKpiInflow,
+                      data: widget.model.periods
                           .map(
-                            (period) => ChartPoint(
-                              x: period.date.millisecondsSinceEpoch.toDouble(),
-                              y: period.net.toDouble(),
+                            (period) => CategoryDatum(
+                              label: _cashFlowAxisLabel(
+                                period.label,
+                                compact: compactLabels,
+                              ),
+                              tooltipLabel: period.label,
+                              value: period.inflow.toDouble(),
+                              colorOverride: status.success.fg,
                             ),
                           )
                           .toList(),
-                      colorOverride: context.theme.colors.primary,
+                    ),
+                    CategorySeries(
+                      name: l10n.cashFlowKpiOutflow,
+                      data: widget.model.periods
+                          .map(
+                            (period) => CategoryDatum(
+                              label: _cashFlowAxisLabel(
+                                period.label,
+                                compact: compactLabels,
+                              ),
+                              tooltipLabel: period.label,
+                              value: period.outflow.toDouble(),
+                              colorOverride: status.danger.fg,
+                            ),
+                          )
+                          .toList(),
                     ),
                   ],
-                  xAxis: TimeAxis(locale: locale, showGrid: false),
                   yAxis: axis,
-                  interpolation: ChartInterpolation.linear,
-                  semanticLabel: l10n.cashFlowNetTrendTitle,
+                  aspectRatio: 16 / 7,
+                  barWidth: 10,
+                  semanticLabel: l10n.cashFlowIncomeExpenseTitle,
                 ),
-              ),
-            },
+                _CashFlowTrendMode.net => SizedBox(
+                  key: const ValueKey('cash-flow-net-chart'),
+                  height: AppChartHeights.full,
+                  child: NwLineChart(
+                    series: [
+                      ChartSeries(
+                        name: l10n.cashFlowKpiNet,
+                        points: widget.model.periods
+                            .map(
+                              (period) => ChartPoint(
+                                x: period.date.millisecondsSinceEpoch
+                                    .toDouble(),
+                                y: period.net.toDouble(),
+                              ),
+                            )
+                            .toList(),
+                        colorOverride: context.theme.colors.primary,
+                      ),
+                    ],
+                    xAxis: TimeAxis(locale: locale, showGrid: false),
+                    yAxis: axis,
+                    interpolation: ChartInterpolation.linear,
+                    semanticLabel: l10n.cashFlowNetTrendTitle,
+                  ),
+                ),
+              },
+            ),
           ),
         ],
       ),
@@ -265,7 +269,7 @@ class _CategoryRow extends StatelessWidget {
             Flexible(
               child: Text(
                 formatter.currency(category.amount, code: category.currency),
-                style: TypographyTokens.numericBody.copyWith(
+                style: context.appTheme.type.numericBody.copyWith(
                   color: context.theme.colors.foreground,
                 ),
                 textAlign: TextAlign.end,

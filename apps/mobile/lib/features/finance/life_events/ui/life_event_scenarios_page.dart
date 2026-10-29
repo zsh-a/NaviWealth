@@ -254,7 +254,7 @@ class _ScenarioCardState extends ConsumerState<_ScenarioCard> {
                       .liquidAfter90Days,
                   code: widget.baseline.currency,
                 ),
-                style: TypographyTokens.numericCaptionStrong,
+                style: context.appTheme.type.numericCaptionStrong,
               ),
             ],
           ),
@@ -567,7 +567,7 @@ class _MetricRow extends StatelessWidget {
     child: Row(
       children: [
         Expanded(child: Text(label, style: context.captionStyle)),
-        Text(value, style: TypographyTokens.numericBodyStrong),
+        Text(value, style: context.appTheme.type.numericBodyStrong),
       ],
     ),
   );

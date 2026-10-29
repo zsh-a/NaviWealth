@@ -131,7 +131,7 @@ class _SummaryCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.s8),
           Text(
             stats.frameCount.toString(),
-            style: TypographyTokens.numericDisplay.copyWith(
+            style: context.appTheme.type.numericDisplay.copyWith(
               color: context.theme.colors.foreground,
             ),
           ),
@@ -213,7 +213,7 @@ class _MetricRow extends StatelessWidget {
           const SizedBox(width: AppSpacing.s12),
           Text(
             value,
-            style: TypographyTokens.numericCaption.copyWith(
+            style: context.appTheme.type.numericCaption.copyWith(
               color: context.theme.colors.mutedForeground,
             ),
           ),

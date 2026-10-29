@@ -600,7 +600,7 @@ class _CapitalTransferTile extends StatelessWidget {
           Text(
             amount,
             textAlign: TextAlign.center,
-            style: TypographyTokens.numericTitleStrong.copyWith(
+            style: context.appTheme.type.numericTitleStrong.copyWith(
               color: context.theme.colors.primary,
             ),
           ),

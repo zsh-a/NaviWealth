@@ -76,7 +76,7 @@ class _ForecastText extends StatelessWidget {
         Text(title, style: context.theme.typography.body.sm),
         if (value != null) ...[
           const SizedBox(height: AppSpacing.s4),
-          Text(value!, style: TypographyTokens.numericTitleStrong),
+          Text(value!, style: context.appTheme.type.numericTitleStrong),
         ],
         const SizedBox(height: AppSpacing.s4),
         Text(subtitle, style: context.captionStyle),

@@ -91,7 +91,7 @@ class DeltaText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hidden = value != null && AmountPrivacyScope.isHiddenOf(context);
-    final baseStyle = (style ?? TypographyTokens.numericBody).copyWith(
+    final baseStyle = (style ?? context.appTheme.type.numericBody).copyWith(
       fontFeatures: TypographyTokens.tabularFigures,
     );
     if (hidden) {

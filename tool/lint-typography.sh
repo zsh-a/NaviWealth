@@ -10,6 +10,18 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LIB="$ROOT/apps/mobile/lib"
 
+# Feature/app typography must resolve the active visual preset. Raw display
+# and numeric styles bypass refined fonts and line heights even when colors
+# and surfaces have switched correctly. Token definitions and measurements
+# remain design-system-owned.
+raw_styles="$(rg -n 'TypographyTokens\.(display[A-Z][A-Za-z]*|numeric[A-Z][A-Za-z]*|headline[A-Z][A-Za-z]*)\b' \
+  "$LIB/features" "$LIB/app" --glob '*.dart' || true)"
+if [[ -n "$raw_styles" ]]; then
+  echo "✖ UI typography bypasses context.appTheme.type:" >&2
+  echo "$raw_styles" >&2
+  exit 1
+fi
+
 BASELINE=31
 count="$({ grep -RhoE --include='*.dart' \
   'copyWith\([^)]*(fontSize:|fontWeight:|height:)' \

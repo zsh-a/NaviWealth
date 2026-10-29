@@ -132,6 +132,44 @@ void main() {
     expect(third.top, greaterThan(featured.bottom));
   });
 
+  testWidgets('lone featured tile fills the row before continuous content', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 1000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: AdaptiveSummaryGrid(
+            items: [
+              AdaptiveSummaryTile(
+                role: AdaptiveSummaryTileRole.featured,
+                child: TextField(key: ValueKey('capture')),
+              ),
+              AdaptiveSummaryTile(
+                role: AdaptiveSummaryTileRole.continuous,
+                child: SizedBox(key: ValueKey('timeline'), height: 200),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    final field = find.byKey(const ValueKey('capture'));
+    final timeline = find.byKey(const ValueKey('timeline'));
+    expect(tester.getSize(field).width, tester.getSize(timeline).width);
+    expect(
+      tester.getTopLeft(timeline).dy,
+      greaterThan(tester.getBottomLeft(field).dy),
+    );
+    await tester.enterText(field, 'Keep my input');
+    tester.view.physicalSize = const Size(390, 1000);
+    await tester.pump();
+    expect(find.text('Keep my input'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('adds no glass or backdrop rendering layer', (tester) async {
     await _pumpGrid(tester, width: 1200);
 

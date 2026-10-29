@@ -115,7 +115,7 @@ class _PortfolioTrendPanel extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SegmentedRow<PortfolioTrendMetric>(
+        SegmentedRow<PortfolioTrendMetric>.inline(
           options: PortfolioTrendMetric.values,
           value: metric,
           minSegmentWidth: 88,
@@ -126,20 +126,24 @@ class _PortfolioTrendPanel extends StatelessWidget {
           onChanged: onMetricChanged,
         ),
         const SizedBox(height: AppSpacing.s16),
-        ContentCrossFade(
-          child: KeyedSubtree(
-            key: ValueKey('${range.name}-${metric.name}'),
-            child: trend.when(
-              loading: () => const _PortfolioTrendSkeleton(),
-              error: (_, _) => _PortfolioTrendError(onRetry: onRetry),
-              data: (series) => series == null
-                  ? const _PortfolioTrendEmpty()
-                  : _PortfolioTrendChart(series: series, metric: metric),
+        // Keep changing chart nodes separate from the focused range control.
+        Semantics(
+          container: true,
+          child: ContentCrossFade(
+            child: KeyedSubtree(
+              key: ValueKey('${range.name}-${metric.name}'),
+              child: trend.when(
+                loading: () => const _PortfolioTrendSkeleton(),
+                error: (_, _) => _PortfolioTrendError(onRetry: onRetry),
+                data: (series) => series == null
+                    ? const _PortfolioTrendEmpty()
+                    : _PortfolioTrendChart(series: series, metric: metric),
+              ),
             ),
           ),
         ),
         const SizedBox(height: AppSpacing.s16),
-        SegmentedRow<PortfolioTrendRange>(
+        SegmentedRow<PortfolioTrendRange>.inline(
           options: PortfolioTrendRange.values,
           value: range,
           minSegmentWidth: 48,
@@ -198,7 +202,7 @@ class _PortfolioTrendChart extends StatelessWidget {
                   amount: series.currentValue.toDouble(),
                   currencyCode: series.baseCurrency,
                   compact: true,
-                  style: TypographyTokens.numericTitleStrong,
+                  style: context.appTheme.type.numericTitleStrong,
                 ),
               ),
             ),
@@ -207,12 +211,12 @@ class _PortfolioTrendChart extends StatelessWidget {
               child: _PortfolioTrendMetric(
                 label: l10n.portfolioTrendPeriodPerformance,
                 child: periodPerformance == null
-                    ? Text('—', style: TypographyTokens.numericBodyStrong)
+                    ? Text('—', style: context.appTheme.type.numericBodyStrong)
                     : DeltaText.percentFromRatio(
                         ratio: periodPerformance,
                         fractionDigits: 1,
                         showIcon: false,
-                        style: TypographyTokens.numericBodyStrong,
+                        style: context.appTheme.type.numericBodyStrong,
                       ),
               ),
             ),
@@ -226,7 +230,7 @@ class _PortfolioTrendChart extends StatelessWidget {
                   currencyCode: series.baseCurrency,
                   fractionDigits: 0,
                   showIcon: false,
-                  style: TypographyTokens.numericBodyStrong,
+                  style: context.appTheme.type.numericBodyStrong,
                 ),
               ),
             ),

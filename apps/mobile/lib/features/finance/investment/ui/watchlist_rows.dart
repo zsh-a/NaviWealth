@@ -50,7 +50,7 @@ class WatchlistRow extends StatelessWidget {
         ? MoneyText(
             amount: quote.price.toDouble(),
             currencyCode: quote.currency,
-            style: TypographyTokens.numericBodyStrong,
+            style: context.appTheme.type.numericBodyStrong,
           )
         : Text(loadingQuote ? '…' : '—', style: context.labelStyle);
     final change = quote?.changePercent;
@@ -65,7 +65,7 @@ class WatchlistRow extends StatelessWidget {
         : DeltaText.percentFromRatio(
             key: ValueKey('watchlist-row-change-${item.id}'),
             ratio: change.toDouble(),
-            style: TypographyTokens.numericCaptionStrong,
+            style: context.appTheme.type.numericCaptionStrong,
           );
     return Semantics(
       selected: selected,

@@ -46,44 +46,45 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('active home keeps the horizontal strip on regular widths', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(420, 420);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
+  testWidgets(
+    'active home keeps a horizontal strip when the action labels fit',
+    (tester) async {
+      tester.view.physicalSize = const Size(800, 420);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
 
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.light(),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: FTheme(
-          data: FTheme.neutral.light.desktop,
-          child: const Scaffold(
-            body: Padding(
-              padding: EdgeInsets.all(8),
-              child: HomeQuickActions(mode: HomeQuickActionMode.active),
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: FTheme(
+            data: FTheme.neutral.light.desktop,
+            child: const Scaffold(
+              body: Padding(
+                padding: EdgeInsets.all(8),
+                child: HomeQuickActions(mode: HomeQuickActionMode.active),
+              ),
             ),
           ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('Import statements'), findsOneWidget);
-    expect(
-      find.text(
-        AppLocalizations.of(tester.element(find.byType(HomeQuickActions)))
-            .homeQuickRecordEntry,
-      ),
-      findsOneWidget,
-    );
-    expect(find.text('Transfer'), findsOneWidget);
-    expect(find.text('Monthly close'), findsNothing);
-    expect(find.byIcon(FLucideIcons.chevronRight), findsNothing);
-    expect(tester.takeException(), isNull);
-  });
+      expect(find.text('Import statements'), findsOneWidget);
+      expect(
+        find.text(
+          AppLocalizations.of(tester.element(find.byType(HomeQuickActions)))
+              .homeQuickRecordEntry,
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Transfer'), findsOneWidget);
+      expect(find.text('Monthly close'), findsNothing);
+      expect(find.byIcon(FLucideIcons.chevronRight), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('empty home offers setup actions without record entry', (
     tester,

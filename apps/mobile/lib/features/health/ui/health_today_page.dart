@@ -402,7 +402,7 @@ class _HealthRecoveryStickyBar extends ConsumerWidget {
             ? null
             : Text(
                 scoreText,
-                style: TypographyTokens.numericTitleStrong.copyWith(
+                style: context.appTheme.type.numericTitleStrong.copyWith(
                   color: accent,
                 ),
               ),

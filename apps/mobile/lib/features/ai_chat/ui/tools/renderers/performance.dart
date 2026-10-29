@@ -41,7 +41,7 @@ class _XirrSummary extends StatelessWidget {
               value: rate * 100,
               format: DeltaFormat.percent,
               fractionDigits: 2,
-              style: TypographyTokens.numericTitle,
+              style: context.appTheme.type.numericTitle,
             ),
           const SizedBox(height: AppSpacing.s6),
           Text(
@@ -170,7 +170,7 @@ class _NetWorthSparklineState extends State<_NetWorthSparkline> {
                     AnimatedMoneyText(
                       amount: displayAmount,
                       currencyCode: currency,
-                      style: TypographyTokens.numericTitle,
+                      style: context.appTheme.type.numericTitle,
                       color: context.theme.colors.foreground,
                       showSign: displayAmount < 0,
                       duration: Motion.ambient,

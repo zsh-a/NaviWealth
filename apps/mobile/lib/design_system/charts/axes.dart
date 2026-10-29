@@ -29,13 +29,15 @@ bool shouldRenderAxisLabel({
   required double range,
   required int maxLabels,
   String Function(double)? formatLabel,
+  double minLabelSpacing = kMinAxisLabelSpacing,
+  bool fitInside = false,
 }) {
   if (range <= 0 || maxLabels <= 0) return true;
   final chartWidth = meta.parentAxisSize;
   if (chartWidth <= 0) return true;
 
   // How many labels the chart width can hold without overlap.
-  final maxByWidth = (chartWidth / kMinAxisLabelSpacing).floor();
+  final maxByWidth = (chartWidth / minLabelSpacing).floor();
   // Use the tighter of the two constraints.
   final effectiveMax = maxLabels < maxByWidth ? maxLabels : maxByWidth;
   if (effectiveMax <= 0) return false;
@@ -48,7 +50,14 @@ bool shouldRenderAxisLabel({
   final firstTick = (meta.min / interval).ceil() * interval;
   final index = (value - firstTick) / interval;
   if (index < -0.001 || (index - index.round()).abs() > 0.001) return false;
-  final stride = (range / interval / effectiveMax).ceil().clamp(1, 1000000);
+  // Inward-shifted edge labels need a gap as well as their own width.
+  // Without this reserve a large first label collides with the next tick.
+  if (fitInside && effectiveMax == 1) return index.round() == 0;
+  final labelGaps = math.max(1, effectiveMax - (fitInside ? 1 : 0));
+  final candidateGaps = fitInside
+      ? ((meta.max - firstTick) / interval + 0.001).floor()
+      : range / interval;
+  final stride = (candidateGaps / labelGaps).ceil().clamp(1, 1000000);
   if (index.round() % stride != 0) return false;
   // Sub-day ticks can map to the same date, just as monthly ticks can map
   // to the same year. Keep the first visible label for each time period.

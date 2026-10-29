@@ -38,14 +38,16 @@ Widget _wrap(Widget child, {Locale locale = const Locale('en', 'US')}) {
 }
 
 void main() {
-  testWidgets(
-    'searches by name and currency and keeps selection on no results',
-    (tester) async {
+  for (final compact in [false, true]) {
+    testWidgets('searches and preserves selection in compact mode: $compact', (
+      tester,
+    ) async {
       String? selected = 'checking';
       await tester.pumpWidget(
         _wrap(
           StatefulBuilder(
             builder: (context, setState) => AccountPicker(
+              compact: compact,
               accounts: [
                 _account('checking', 'Checking', 'CNY'),
                 _account('broker', 'Brokerage cash', 'USD'),
@@ -78,8 +80,8 @@ void main() {
       await tester.enterText(find.byType(EditableText).last, '');
       await tester.pumpAndSettle();
       expect(find.text('Savings · USD'), findsOneWidget);
-    },
-  );
+    });
+  }
 
   testWidgets(
     'search preserves distinct ids for accounts with the same label',

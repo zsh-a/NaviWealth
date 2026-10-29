@@ -63,30 +63,27 @@ class WealthPerspectiveSection extends ConsumerWidget {
                 onChanged: (next) =>
                     ref.read(wealthPerspectiveProvider.notifier).state = next,
               );
-              if (constraints.maxWidth < 340) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      l10n.wealthPerspectiveSectionTitle,
-                      style: context.labelStyle,
-                    ),
-                    const SizedBox(height: AppSpacing.s10),
-                    toggle,
-                  ],
-                );
-              }
-              return Row(
+              final stacked =
+                  constraints.maxWidth < 340 ||
+                  MediaQuery.textScalerOf(context).scale(1) > 1.3;
+              // Stable slots keep the selected control focused when the
+              // header moves between one line and a stacked arrangement.
+              return Wrap(
+                spacing: AppSpacing.s12,
+                runSpacing: AppSpacing.s10,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  Expanded(
+                  SizedBox(
+                    width: stacked
+                        ? constraints.maxWidth
+                        : constraints.maxWidth - 240 - AppSpacing.s12,
                     child: Text(
                       l10n.wealthPerspectiveSectionTitle,
                       style: context.labelStyle,
                     ),
                   ),
-                  const SizedBox(width: AppSpacing.s12),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 240),
+                  SizedBox(
+                    width: stacked ? constraints.maxWidth : 240,
                     child: toggle,
                   ),
                 ],
@@ -97,9 +94,12 @@ class WealthPerspectiveSection extends ConsumerWidget {
           if (snapshot == null)
             const _Skeleton()
           else
-            _PerspectiveBody(
-              snapshot: snapshot,
-              perspective: effectivePerspective,
+            Semantics(
+              container: true,
+              child: _PerspectiveBody(
+                snapshot: snapshot,
+                perspective: effectivePerspective,
+              ),
             ),
         ],
       ),
@@ -116,7 +116,7 @@ class _PerspectiveToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SegmentedRow<WealthPerspective>(
+    return SegmentedRow<WealthPerspective>.inline(
       options: const [
         WealthPerspective.byCategory,
         WealthPerspective.byCurrency,
@@ -307,6 +307,12 @@ class _BucketRow extends StatelessWidget {
       code: baseCurrency,
     );
     final formattedShare = formatters.percent(share, decimalDigits: 1);
+    final labelSpan = TextSpan(
+      children: [
+        TextSpan(text: bucket.label, style: context.labelStyle),
+        TextSpan(text: ' · $itemCountLabel', style: context.captionStyle),
+      ],
+    );
     return Semantics(
       button: true,
       container: true,
@@ -319,55 +325,85 @@ class _BucketRow extends StatelessWidget {
       child: ExcludeSemantics(
         child: AppTappable(
           onPress: onPressed,
-          child: Row(
+          child: LayoutBuilder(
             key: ValueKey('allocation-bucket-${bucket.key}'),
-            children: [
-              DecoratedBox(
+            builder: (context, constraints) {
+              double measure(InlineSpan text) {
+                final painter = TextPainter(
+                  text: text,
+                  textDirection: Directionality.of(context),
+                  textScaler: MediaQuery.textScalerOf(context),
+                )..layout();
+                final width = painter.width;
+                painter.dispose();
+                return width;
+              }
+
+              // Give the amount its own line when labels and values no
+              // longer fit together, without reducing accessibility text.
+              final stacked =
+                  measure(labelSpan) +
+                      measure(
+                        TextSpan(
+                          text: formattedAmount,
+                          style: context.strongLabelStyle,
+                        ),
+                      ) +
+                      AppSpacing.s10 * 2 +
+                      AppSpacing.s12 +
+                      AppSpacing.s6 +
+                      AppIconSizes.h18 >
+                  constraints.maxWidth;
+              final marker = DecoratedBox(
                 decoration: BoxDecoration(
                   color: accent.withValues(alpha: AppOpacity.emphasis),
                   shape: BoxShape.circle,
                 ),
                 child: const SizedBox.square(dimension: AppSpacing.s10),
-              ),
-              const SizedBox(width: AppSpacing.s10),
-              Expanded(
-                child: Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(text: bucket.label, style: context.labelStyle),
-                      TextSpan(
-                        text: ' · $itemCountLabel',
-                        style: context.captionStyle,
-                      ),
-                    ],
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.s12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+              );
+              final label = Text.rich(labelSpan);
+              final amount = Column(
+                crossAxisAlignment: stacked
+                    ? CrossAxisAlignment.start
+                    : CrossAxisAlignment.end,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    formattedAmount,
-                    style: context.strongLabelStyle,
-                    maxLines: 1,
-                  ),
+                  Text(formattedAmount, style: context.strongLabelStyle),
                   if (showShare) ...[
                     const SizedBox(height: AppSpacing.s2),
                     Text(formattedShare, style: context.captionStyle),
                   ],
                 ],
-              ),
-              const SizedBox(width: AppSpacing.s6),
-              Icon(
+              );
+              final chevron = Icon(
                 FLucideIcons.chevronRight,
                 size: AppIconSizes.h18,
                 color: context.theme.colors.mutedForeground,
-              ),
-            ],
+              );
+              final heading = Row(
+                children: [
+                  marker,
+                  const SizedBox(width: AppSpacing.s10),
+                  Expanded(child: label),
+                  if (!stacked) ...[
+                    const SizedBox(width: AppSpacing.s12),
+                    amount,
+                  ],
+                  const SizedBox(width: AppSpacing.s6),
+                  chevron,
+                ],
+              );
+              if (!stacked) return heading;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  heading,
+                  const SizedBox(height: AppSpacing.s6),
+                  amount,
+                ],
+              );
+            },
           ),
         ),
       ),

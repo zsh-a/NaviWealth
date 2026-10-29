@@ -139,7 +139,7 @@ class _TimelineRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppSpacing.s12),
-            Text(net, style: TypographyTokens.numericBodyStrong),
+            Text(net, style: context.appTheme.type.numericBodyStrong),
             const SizedBox(width: AppSpacing.s6),
             Icon(
               FLucideIcons.ellipsisVertical,

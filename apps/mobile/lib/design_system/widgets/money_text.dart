@@ -128,7 +128,7 @@ class MoneyText extends StatelessWidget {
   /// JPY = 0, etc.).
   final int? fractionDigits;
 
-  /// Text style override. Defaults to [TypographyTokens.numericBody].
+  /// Text style override. Defaults to the resolved numeric body style.
   final TextStyle? style;
 
   final Color? color;
@@ -156,10 +156,8 @@ class MoneyText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveStyle = (style ?? TypographyTokens.numericBody).copyWith(
-      color: color,
-      fontFeatures: TypographyTokens.tabularFigures,
-    );
+    final effectiveStyle = (style ?? context.appTheme.type.numericBody)
+        .copyWith(color: color, fontFeatures: TypographyTokens.tabularFigures);
     if (amount != null && AmountPrivacyScope.isHiddenOf(context)) {
       return AmountPrivacyPlaceholder(
         density: compact
@@ -306,10 +304,11 @@ class SignedMoneyText extends StatelessWidget {
             showPositiveSign: showPositiveSign,
           );
     final effectiveColor = color ?? (colorBySign ? _signColor(context) : null);
-    final effectiveStyle = (style ?? TypographyTokens.numericBody).copyWith(
-      color: effectiveColor,
-      fontFeatures: TypographyTokens.tabularFigures,
-    );
+    final effectiveStyle = (style ?? context.appTheme.type.numericBody)
+        .copyWith(
+          color: effectiveColor,
+          fontFeatures: TypographyTokens.tabularFigures,
+        );
     if (hidden) {
       return AmountPrivacyPlaceholder(
         style: effectiveStyle.copyWith(color: null),
@@ -439,8 +438,8 @@ class DualMoneyText extends StatelessWidget {
     );
     if (!_captionVisible) return primary;
 
-    final captionTextStyle = (captionStyle ?? TypographyTokens.numericCaption)
-        .copyWith(
+    final captionTextStyle =
+        (captionStyle ?? context.appTheme.type.numericCaption).copyWith(
           color: captionColor ?? context.theme.colors.mutedForeground,
           fontFeatures: TypographyTokens.tabularFigures,
         );

@@ -88,7 +88,7 @@ class AssetSummaryCard extends ConsumerWidget {
                     amount: displayedPrice?.toDouble(),
                     currencyCode: holding?.assetCurrency ?? asset.currency,
                     fractionDigits: assetDetailPriceFractionDigits(asset.type),
-                    style: TypographyTokens.numericTitleStrong,
+                    style: context.appTheme.type.numericTitleStrong,
                   ),
                 ),
                 DeltaChip(value: changePercent, fractionDigits: 2),

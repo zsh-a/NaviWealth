@@ -332,7 +332,9 @@ class _KpiTile extends StatelessWidget {
             money: money,
             formatter: formatter,
             signed: signed,
-            style: TypographyTokens.numericTitleStrong.copyWith(color: tint),
+            style: context.appTheme.type.numericTitleStrong.copyWith(
+              color: tint,
+            ),
           ),
         ],
       ),

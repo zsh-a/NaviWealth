@@ -12,6 +12,7 @@ import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../composition/finance_route_paths.dart';
 import '../../home/domain/dashboard_models.dart';
+import '../../home/domain/dashboard_trend_builder.dart';
 import '../../home/ui/currency_mismatch_banner.dart';
 import 'wealth_action_panel.dart';
 import 'wealth_perspective_section.dart';
@@ -92,14 +93,39 @@ class _WealthHubBody extends ConsumerWidget {
         totalAssets == Decimal.zero && totalLiabilities == Decimal.zero;
     final showValuationTrust =
         !snapshot.isEmpty || snapshot.currencyMismatches.isNotEmpty;
-    // The shared cross-domain brief shell (blueprint §8.1) — this page used
-    // to hand-assemble the identical refresh/atmosphere/collapse stack.
+    Widget balanceOverview(BuildContext context, NwScrubState? scrub) {
+      final sample = scrub?.point.meta;
+      final historical = sample is TrendPoint ? sample : null;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _BalanceOverview(
+            baseCurrency: baseCurrency,
+            netWorth: historical?.netWorth.amount ?? netWorth,
+            totalAssets: historical?.assets.amount ?? totalAssets,
+            totalLiabilities:
+                historical?.liabilities.amount ?? totalLiabilities,
+            asOf: historical?.asOf,
+          ),
+          if (showValuationTrust)
+            Visibility(
+              visible: historical == null,
+              maintainSize: true,
+              maintainState: true,
+              maintainAnimation: true,
+              child: ValuationTrustNotice(snapshot: snapshot),
+            ),
+        ],
+      );
+    }
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final hPad = Breakpoints.isMobile(constraints.maxWidth)
             ? AppSpacing.s16
             : AppSpacing.s24;
         return BriefScaffold(
+          maxContentWidth: AdaptiveMaxWidth.page,
           padding: shellTabContentPadding(
             context,
             left: hPad,
@@ -116,11 +142,11 @@ class _WealthHubBody extends ConsumerWidget {
             ]);
           },
           stage: AppCollapsingStage(
-            child: _BalanceOverview(
-              baseCurrency: baseCurrency,
-              netWorth: netWorth,
-              totalAssets: totalAssets,
-              totalLiabilities: totalLiabilities,
+            child: AdaptiveSupportingPane(
+              primary: isEmpty
+                  ? balanceOverview(context, null)
+                  : WealthTrendSection(overviewBuilder: balanceOverview),
+              supporting: const _WealthDestinations(),
             ),
           ),
           stickyBuilder: (context, progress) => AppCollapsedSummaryBar(
@@ -131,25 +157,11 @@ class _WealthHubBody extends ConsumerWidget {
                 amount: netWorth.toDouble(),
                 currencyCode: baseCurrency,
                 compact: true,
-                style: TypographyTokens.numericTitleStrong,
+                style: context.appTheme.type.numericTitleStrong,
               ),
             ),
           ),
           summaryTiles: staggeredSummaryTiles([
-            if (showValuationTrust)
-              AdaptiveSummaryTile(
-                role: AdaptiveSummaryTileRole.continuous,
-                child: ValuationTrustNotice(snapshot: snapshot),
-              ),
-            const AdaptiveSummaryTile(
-              role: AdaptiveSummaryTileRole.supporting,
-              child: _WealthDestinations(),
-            ),
-            if (!isEmpty)
-              const AdaptiveSummaryTile(
-                role: AdaptiveSummaryTileRole.featured,
-                child: WealthTrendSection(),
-              ),
             if (isEmpty)
               AdaptiveSummaryTile(
                 role: AdaptiveSummaryTileRole.continuous,
@@ -182,21 +194,28 @@ class _BalanceOverview extends ConsumerWidget {
     required this.netWorth,
     required this.totalAssets,
     required this.totalLiabilities,
+    this.asOf,
   });
 
   final String baseCurrency;
   final Decimal netWorth;
   final Decimal totalAssets;
   final Decimal totalLiabilities;
+  final DateTime? asOf;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final formatters = context.formatters(ref);
-    // Wealth is an analytical workspace, so its balance summary sits directly
-    // on the canvas and lets the trend card own visual emphasis. Today keeps
-    // the tappable net-worth hero for quick status and navigation.
+    final hidden = AmountPrivacyScope.isHiddenOf(context);
+    final label = asOf == null
+        ? l10n.homeNetWorthTitle
+        : formatters.date(asOf!);
+    final amountLabel = hidden
+        ? AmountPrivacyScope.hiddenSemanticsLabelOf(context)
+        : formatters.currency(netWorth, code: baseCurrency);
     return Padding(
+      key: const ValueKey('wealth-balance-overview'),
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.s4,
         vertical: AppSpacing.s8,
@@ -206,12 +225,7 @@ class _BalanceOverview extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Expanded(
-                child: Text(
-                  l10n.homeNetWorthTitle,
-                  style: context.mutedLabelStyle,
-                ),
-              ),
+              Expanded(child: Text(label, style: context.mutedLabelStyle)),
               Text(
                 baseCurrency,
                 style: context.captionLabelStyle.copyWith(
@@ -224,17 +238,17 @@ class _BalanceOverview extends ConsumerWidget {
           MediaQuery.withClampedTextScaling(
             maxScaleFactor: 1.25,
             child: Semantics(
-              label:
-                  '${l10n.homeNetWorthTitle} '
-                  '${formatters.currency(netWorth, code: baseCurrency)}',
+              label: '$label $amountLabel',
+              excludeSemantics: true,
               child: FittedBox(
                 fit: BoxFit.scaleDown,
                 alignment: AlignmentDirectional.centerStart,
-                child: AnimatedMoneyText(
+                child: MoneyText(
+                  key: const ValueKey('wealth-balance-value'),
                   emphasizeInteger: true,
                   amount: netWorth.toDouble(),
                   currencyCode: baseCurrency,
-                  style: TypographyTokens.displayLarge,
+                  style: context.appTheme.type.display,
                   showSign: netWorth.toDouble() < 0,
                 ),
               ),
@@ -243,6 +257,9 @@ class _BalanceOverview extends ConsumerWidget {
           const SizedBox(height: AppPageRhythm.module),
           AppMetricCluster(
             dense: true,
+            axis: MediaQuery.textScalerOf(context).scale(1) > 1.3
+                ? Axis.vertical
+                : Axis.horizontal,
             items: [
               AppMetricItem(
                 label: l10n.dashboardNetWorthAssetsLabel,
@@ -311,24 +328,19 @@ class _WealthDestinations extends StatelessWidget {
           ),
           child: Text(l10n.wealthObjectsTitle, style: context.mutedLabelStyle),
         ),
-        AppGroupedSurface(
-          padding: EdgeInsets.zero,
-          child: Column(
-            children: [
-              for (var index = 0; index < sections.length; index += 2)
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: _WealthDestinationRow(spec: sections[index]),
-                    ),
-                    Expanded(
-                      child: _WealthDestinationRow(spec: sections[index + 1]),
-                    ),
-                  ],
-                ),
-            ],
-          ),
+        Column(
+          children: [
+            for (var index = 0; index < sections.length; index += 2)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: _WealthDestinationRow(spec: sections[index])),
+                  Expanded(
+                    child: _WealthDestinationRow(spec: sections[index + 1]),
+                  ),
+                ],
+              ),
+          ],
         ),
       ],
     );

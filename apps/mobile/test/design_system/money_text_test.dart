@@ -19,6 +19,49 @@ DisplayMoney _money(String amount, String currency) =>
 void main() {
   setUpAll(AppFormatters.ensureInitialized);
 
+  testWidgets('default money styles respond to the active visual preset', (
+    tester,
+  ) async {
+    for (final visual in AppVisualStyle.values) {
+      final theme = resolveAppTheme(
+        ThemeInputs(
+          brightness: Brightness.light,
+          marketMode: MarketColorMode.redUpGreenDown,
+          visualStyle: visual,
+        ),
+      );
+      await tester.pumpWidget(
+        AppThemeScope(
+          data: theme,
+          child: _wrap(
+            Column(
+              children: [
+                const MoneyText(amount: 123.45, currencyCode: 'USD'),
+                SignedMoneyText(
+                  amount: Decimal.parse('-67.89'),
+                  unit: 'USD',
+                  formatters: AppFormatters(locale: const Locale('en', 'US')),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      final texts = tester.widgetList<Text>(find.byType(Text));
+      expect(texts, hasLength(2));
+      for (final text in texts) {
+        expect(text.style!.height, theme.type.numericBody.height);
+        expect(text.style!.letterSpacing, theme.type.numericBody.letterSpacing);
+        expect(
+          text.style!.fontFeatures,
+          contains(const FontFeature.tabularFigures()),
+        );
+      }
+      expect(find.textContaining('123.45'), findsOneWidget);
+      expect(find.textContaining('67.89'), findsOneWidget);
+    }
+  });
+
   testWidgets(
     'display amounts preserve localized output and spoken precision',
     (tester) async {

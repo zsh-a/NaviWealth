@@ -43,14 +43,14 @@ extension GoldenThemeData on GoldenTheme {
     }
   }
 
-  ThemeData buildTheme() {
+  ThemeData buildTheme({AppVisualStyle visualStyle = AppVisualStyle.classic}) {
     switch (this) {
       case GoldenTheme.light:
-        return AppTheme.light();
+        return AppTheme.light(visualStyle: visualStyle);
       case GoldenTheme.dark:
-        return AppTheme.dark();
+        return AppTheme.dark(visualStyle: visualStyle);
       case GoldenTheme.colorblind:
-        return AppTheme.dark();
+        return AppTheme.dark(visualStyle: visualStyle);
     }
   }
 
@@ -59,8 +59,16 @@ extension GoldenThemeData on GoldenTheme {
     _ => MarketColorMode.redUpGreenDown,
   };
 
-  AppThemeData get appThemeData => resolveAppTheme(
-    ThemeInputs(brightness: brightness, marketMode: marketMode),
+  AppThemeData get appThemeData => resolveTheme();
+
+  AppThemeData resolveTheme({
+    AppVisualStyle visualStyle = AppVisualStyle.classic,
+  }) => resolveAppTheme(
+    ThemeInputs(
+      brightness: brightness,
+      marketMode: marketMode,
+      visualStyle: visualStyle,
+    ),
   );
 
   Brightness get brightness => switch (this) {
@@ -198,6 +206,7 @@ Future<void> pumpAndSnapshotMobile(
   List<Override> overrides = const [],
   Locale locale = const Locale('en'),
   String routePath = '/',
+  AppVisualStyle visualStyle = AppVisualStyle.classic,
 }) async {
   await loadGoldenFonts();
   await tester.binding.setSurfaceSize(kGoldenLogicalSize);
@@ -241,10 +250,10 @@ Future<void> pumpAndSnapshotMobile(
       child: ProviderScope(
         overrides: overrides,
         child: AppThemeScope(
-          data: variant.appThemeData,
+          data: variant.resolveTheme(visualStyle: visualStyle),
           child: MaterialApp.router(
             debugShowCheckedModeBanner: false,
-            theme: variant.buildTheme(),
+            theme: variant.buildTheme(visualStyle: visualStyle),
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             locale: locale,
@@ -252,6 +261,7 @@ Future<void> pumpAndSnapshotMobile(
             builder: (context, routedChild) => FTheme(
               data: buildAppForuiTheme(
                 brightness: variant.brightness,
+                visualStyle: visualStyle,
                 touch: true,
               ),
               child: routedChild!,
@@ -357,6 +367,8 @@ Future<void> pumpAndSnapshotResponsive(
   TargetPlatform? targetPlatformOverride,
   bool? touchOverride,
   bool? compactOverride,
+  AppVisualStyle visualStyle = AppVisualStyle.classic,
+  String routePath = '/',
 }) async {
   final logicalSize = logicalSizeOverride ?? profile.logicalSize;
   final dpr = devicePixelRatioOverride ?? profile.devicePixelRatio;
@@ -371,7 +383,10 @@ Future<void> pumpAndSnapshotResponsive(
   });
 
   try {
-    final materialTheme = AppTheme.dark(compact: compact);
+    final materialTheme = AppTheme.dark(
+      compact: compact,
+      visualStyle: visualStyle,
+    );
     await loadGoldenFonts();
     await tester.binding.setSurfaceSize(logicalSize);
     tester.view
@@ -385,8 +400,9 @@ Future<void> pumpAndSnapshotResponsive(
     });
 
     final router = GoRouter(
+      initialLocation: routePath,
       routes: [
-        GoRoute(path: '/', builder: (_, _) => child),
+        GoRoute(path: routePath, builder: (_, _) => child),
         GoRoute(
           path: FinanceRoutes.wealthPortfolioPlan,
           builder: (_, _) => const PortfolioPlanPage(),
@@ -400,7 +416,7 @@ Future<void> pumpAndSnapshotResponsive(
       ProviderScope(
         overrides: overrides,
         child: AppThemeScope(
-          data: GoldenTheme.dark.appThemeData,
+          data: GoldenTheme.dark.resolveTheme(visualStyle: visualStyle),
           child: MaterialApp.router(
             debugShowCheckedModeBanner: false,
             theme: materialTheme,
@@ -418,6 +434,7 @@ Future<void> pumpAndSnapshotResponsive(
                 child: FTheme(
                   data: buildAppForuiTheme(
                     brightness: Brightness.dark,
+                    visualStyle: visualStyle,
                     touch: touch,
                   ),
                   child: Builder(

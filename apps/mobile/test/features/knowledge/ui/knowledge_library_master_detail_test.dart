@@ -253,6 +253,45 @@ void main() {
     await _disposeWidget(tester);
   });
 
+  testWidgets('type filter keeps keyboard focus across master-detail layouts', (
+    tester,
+  ) async {
+    await _setSurface(tester, 1280);
+    await tester.pumpWidget(_wrap(contentWidth: 1100));
+    await _settlePaint(tester);
+    final router = GoRouter.of(
+      tester.element(find.byType(KnowledgeLibraryPage)),
+    );
+    await tester.tap(find.text('Notes'));
+    await _settlePaint(tester);
+    expect(
+      router.routeInformationProvider.value.uri.queryParameters['scope'],
+      'notes',
+    );
+
+    tester.view.physicalSize = const Size(320, 900);
+    await _settlePaint(tester);
+    expect(find.byType(MasterDetailLayout), findsNothing);
+    await tester.sendKeyEvent(LogicalKeyboardKey.end);
+    await _settlePaint(tester);
+    expect(
+      router.routeInformationProvider.value.uri.queryParameters['scope'],
+      'decisions',
+    );
+
+    tester.view.physicalSize = const Size(1280, 900);
+    await _settlePaint(tester);
+    expect(find.byType(MasterDetailLayout), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.home);
+    await _settlePaint(tester);
+    expect(
+      router.routeInformationProvider.value.uri.queryParameters['scope'],
+      isNull,
+    );
+    expect(tester.takeException(), isNull);
+    await _disposeWidget(tester);
+  });
+
   testWidgets(
     'same-path query navigation confirms before replacing a dirty detail',
     (tester) async {

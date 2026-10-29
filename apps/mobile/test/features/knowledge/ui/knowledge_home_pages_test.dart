@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
@@ -288,6 +289,8 @@ void main() {
   testWidgets('Library searches across Notes and Decisions with a type scope', (
     tester,
   ) async {
+    await tester.binding.setSurfaceSize(const Size(900, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     final note = _note('note', 'Local note', 1);
     final decision = _decision(
       id: 'decision',
@@ -339,6 +342,18 @@ void main() {
 
     expect(lastRequest?.kind, 'decision');
     expect(lastRequest?.tag, isNull);
+
+    await tester.binding.setSurfaceSize(const Size(320, 900));
+    await _settlePaint(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.home);
+    await _settlePaint(tester);
+    expect(lastRequest?.kind, isNull);
+    await tester.binding.setSurfaceSize(const Size(900, 900));
+    await _settlePaint(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.end);
+    await _settlePaint(tester);
+    expect(lastRequest?.kind, 'decision');
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('Library tag facets filter browse and compose with search', (

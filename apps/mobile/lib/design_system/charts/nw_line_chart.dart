@@ -10,7 +10,6 @@ import '../tokens/app_motion_policy.dart';
 import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
-import '../tokens/typography_tokens.dart';
 import '../widgets/amount_privacy_placeholder.dart';
 import '../widgets/amount_privacy_scope.dart';
 import 'axes.dart';

@@ -223,7 +223,7 @@ class _StudioAssetTargetTile extends StatelessWidget {
       subtitle: Text(item.sleeve.name),
       suffix: Text(
         '${_studioPercentFromBps(item.target.targetWeightBps)}%',
-        style: TypographyTokens.numericBodyStrong,
+        style: context.appTheme.type.numericBodyStrong,
       ),
     );
   }
@@ -317,7 +317,7 @@ class _StudioAssetValue extends StatelessWidget {
       children: [
         Text(
           value,
-          style: TypographyTokens.numericBodyStrong,
+          style: context.appTheme.type.numericBodyStrong,
           textAlign: TextAlign.end,
         ),
         const SizedBox(height: AppSpacing.s2),

@@ -13,7 +13,13 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 /// This is deliberately separate from the Today brief: Today surfaces only
 /// the latest change, while Wealth owns the longer-running balance-sheet view.
 class WealthTrendSection extends ConsumerWidget {
-  const WealthTrendSection({super.key});
+  const WealthTrendSection({super.key, this.overviewBuilder});
+
+  /// Integrates the balance summary with its chart on the page canvas. The
+  /// chart owns scrub state so changing ranges, loading, or retrying restores
+  /// the current balance without leaving a stale historical readout behind.
+  final Widget Function(BuildContext context, NwScrubState? scrub)?
+  overviewBuilder;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -22,12 +28,11 @@ class WealthTrendSection extends ConsumerWidget {
     final trendAsync = ref.watch(dashboardTrendProvider(range));
     final baseCurrency = ref.watch(dashboardBaseCurrencyProvider);
 
-    return SoftCard.flat(
-      key: const ValueKey('wealth-trend-section'),
-      padding: AppPageRhythm.cardPadding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+    final overview = overviewBuilder;
+    final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (overview == null)
           Row(
             children: [
               Expanded(
@@ -40,31 +45,62 @@ class WealthTrendSection extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppSpacing.s12),
-          ContentCrossFade(
+        if (overview == null) const SizedBox(height: AppSpacing.s12),
+        // Keep changing chart nodes separate from the focused range control.
+        Semantics(
+          container: true,
+          child: ContentCrossFade(
             child: KeyedSubtree(
               key: ValueKey('wealth-trend-${range.preset.name}'),
               child: trendAsync.when(
-                loading: () => const _WealthTrendSkeleton(),
-                error: (_, _) => _WealthTrendError(
-                  onRetry: () => ref.invalidate(dashboardTrendProvider(range)),
+                loading: () => Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (overview != null) overview(context, null),
+                    if (overview != null)
+                      const SizedBox(height: AppSpacing.s16),
+                    _WealthTrendSkeleton(integrated: overview != null),
+                  ],
                 ),
-                data: (trend) => _WealthTrendBody(trend: trend),
+                error: (_, _) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (overview != null) overview(context, null),
+                    _WealthTrendError(
+                      onRetry: () =>
+                          ref.invalidate(dashboardTrendProvider(range)),
+                    ),
+                  ],
+                ),
+                data: (trend) =>
+                    _WealthTrendBody(trend: trend, overviewBuilder: overview),
               ),
             ),
           ),
-          const SizedBox(height: AppSpacing.s12),
-          const _WealthTrendRangeSelector(),
-        ],
-      ),
+        ),
+        const SizedBox(height: AppSpacing.s12),
+        const _WealthTrendRangeSelector(),
+      ],
     );
+    return overview != null
+        ? KeyedSubtree(
+            key: const ValueKey('wealth-trend-section'),
+            child: content,
+          )
+        : SoftCard.flat(
+            key: const ValueKey('wealth-trend-section'),
+            padding: AppPageRhythm.cardPadding,
+            child: content,
+          );
   }
 }
 
 class _WealthTrendBody extends StatefulWidget {
-  const _WealthTrendBody({required this.trend});
+  const _WealthTrendBody({required this.trend, this.overviewBuilder});
 
   final DashboardTrend trend;
+  final Widget Function(BuildContext context, NwScrubState? scrub)?
+  overviewBuilder;
 
   @override
   State<_WealthTrendBody> createState() => _WealthTrendBodyState();
@@ -77,6 +113,12 @@ class _WealthTrendBodyState extends State<_WealthTrendBody> {
   NwScrubState? _scrub;
 
   @override
+  void didUpdateWidget(covariant _WealthTrendBody oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.trend != widget.trend) _scrub = null;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final trend = widget.trend;
     final l10n = AppLocalizations.of(context);
@@ -85,6 +127,8 @@ class _WealthTrendBodyState extends State<_WealthTrendBody> {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (widget.overviewBuilder case final overview?)
+            overview(context, null),
           const SizedBox(
             height: AppChartHeights.standard,
             child: EmptyChartPlaceholder(),
@@ -155,17 +199,26 @@ class _WealthTrendBodyState extends State<_WealthTrendBody> {
                 .where((p) => p.quality != TrendPointQuality.incomplete)
                 .length;
 
-    final xAxis = TimeAxis(format: _dateFormatFor(trend.range), maxLabels: 4);
+    final xAxis = TimeAxis(
+      format: _dateFormatFor(trend.range),
+      locale: Localizations.localeOf(context).toLanguageTag(),
+      maxLabels: 4,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (widget.overviewBuilder case final overview?) ...[
+          overview(context, _scrub),
+          const SizedBox(height: AppSpacing.s16),
+        ],
         _WealthTrendSummary(
           currency: trend.baseCurrency,
           baseline: !estimatedOnly && values.length > 1 ? values.first : null,
           current: values.last,
           scrub: _scrub,
           formatScrubDate: xAxis.formatPrecise,
+          showCurrentValue: widget.overviewBuilder == null,
         ),
         const SizedBox(height: AppSpacing.s16),
         SizedBox(
@@ -226,6 +279,7 @@ class _WealthTrendSummary extends StatelessWidget {
     required this.current,
     required this.scrub,
     required this.formatScrubDate,
+    this.showCurrentValue = true,
   });
 
   final String currency;
@@ -238,6 +292,7 @@ class _WealthTrendSummary extends StatelessWidget {
 
   /// Formats a scrubbed point's X coordinate (ms since epoch) for display.
   final String Function(double x) formatScrubDate;
+  final bool showCurrentValue;
 
   @override
   Widget build(BuildContext context) {
@@ -249,6 +304,34 @@ class _WealthTrendSummary extends StatelessWidget {
         : delta!.toDouble() / baselineDouble.abs();
     final hidden = AmountPrivacyScope.isHiddenOf(context);
     final scrub = this.scrub;
+
+    if (!showCurrentValue) {
+      return Wrap(
+        spacing: AppSpacing.s8,
+        runSpacing: AppSpacing.s4,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text(l10n.dashboardTrendMetricChange, style: context.captionStyle),
+          if (delta == null)
+            Text('—', style: context.appTheme.type.numericBody)
+          else
+            DeltaText(
+              value: delta.toDouble(),
+              format: DeltaFormat.currency,
+              currencyCode: currency,
+              fractionDigits: 0,
+              style: context.appTheme.type.numericBodyStrong,
+            ),
+          if (ratio != null && !hidden)
+            DeltaText.percentFromRatio(
+              ratio: ratio,
+              fractionDigits: 1,
+              showIcon: false,
+              style: context.captionStyle,
+            ),
+        ],
+      );
+    }
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -272,7 +355,7 @@ class _WealthTrendSummary extends StatelessWidget {
                 amount: scrub?.point.y ?? current.toDouble(),
                 currencyCode: currency,
                 fractionDigits: 0,
-                style: TypographyTokens.numericTitleStrong,
+                style: context.appTheme.type.numericTitleStrong,
                 color: context.theme.colors.foreground,
               ),
             ],
@@ -281,7 +364,7 @@ class _WealthTrendSummary extends StatelessWidget {
         if (delta == null)
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.s16),
-            child: Text('—', style: TypographyTokens.numericBodyStrong),
+            child: Text('—', style: context.appTheme.type.numericBodyStrong),
           )
         else ...[
           const SizedBox(width: AppSpacing.s8),
@@ -296,7 +379,7 @@ class _WealthTrendSummary extends StatelessWidget {
                   currencyCode: currency,
                   fractionDigits: 0,
                   showIcon: false,
-                  style: TypographyTokens.numericBodyStrong,
+                  style: context.appTheme.type.numericBodyStrong,
                 ),
                 if (ratio != null && !hidden) ...[
                   const SizedBox(height: AppSpacing.s2),
@@ -340,7 +423,7 @@ class _WealthTrendRangeSelector extends ConsumerWidget {
       DashboardRangePreset.m6 => l10n.dashboardRange6M,
       DashboardRangePreset.custom => l10n.dashboardRangeCustom,
     };
-    return SegmentedRow<DashboardRangePreset>(
+    return SegmentedRow<DashboardRangePreset>.inline(
       options: _ranges,
       value: selected,
       labelOf: labelOf,
@@ -355,22 +438,30 @@ class _WealthTrendRangeSelector extends ConsumerWidget {
 }
 
 class _WealthTrendSkeleton extends StatelessWidget {
-  const _WealthTrendSkeleton();
+  const _WealthTrendSkeleton({this.integrated = false});
+
+  final bool integrated;
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            Expanded(child: SkeletonBox(height: AppSpacing.s48)),
-            SizedBox(width: AppSpacing.s16),
-            Expanded(child: SkeletonBox(height: AppSpacing.s48)),
-          ],
-        ),
-        SizedBox(height: AppSpacing.s16),
-        SkeletonBox(height: AppChartHeights.full),
+        if (integrated)
+          const Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: SkeletonBox(width: 160, height: 18),
+          )
+        else
+          const Row(
+            children: [
+              Expanded(child: SkeletonBox(height: AppSpacing.s48)),
+              SizedBox(width: AppSpacing.s16),
+              Expanded(child: SkeletonBox(height: AppSpacing.s48)),
+            ],
+          ),
+        const SizedBox(height: AppSpacing.s16),
+        const SkeletonBox(height: AppChartHeights.compact),
       ],
     );
   }

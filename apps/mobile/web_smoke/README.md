@@ -11,6 +11,8 @@ Automated companion to [`docs/development/web-compat-matrix.md`](../../../docs/d
 - Optional domains start disabled; enabling them permits Knowledge/Execution
   capture, concrete detail links, and reload with the saved content intact.
 - Workspace navigation and browser back/forward render the expected content.
+- Wealth time ranges support pointer and keyboard selection after recording a
+  real cash balance, retaining selection and focus across phone/desktop resizing.
 - `PathUrlStrategy` routes resolve as direct hits and after reload.
 - Core Finance routes stay free of document-level horizontal overflow at
   390, 840, 1200, and 1600px viewport widths.

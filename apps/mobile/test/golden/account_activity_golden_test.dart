@@ -6,6 +6,7 @@ import 'package:naviwealth/core/ai/write/providers.dart';
 import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
+import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/accounts/data/account_balances_provider.dart';
 import 'package:naviwealth/features/finance/accounts/domain/account_balances.dart';
 import 'package:naviwealth/features/finance/accounts/ui/accounts_master.dart';
@@ -176,9 +177,52 @@ Map<String, Account> _entryAccountsById() {
 
 DashboardSnapshot _snapshot() {
   return DashboardSnapshot(
-    asOf: DateTime.utc(2026, 5, 1),
+    asOf: DateTime.utc(2026, 7, 12),
     baseCurrency: 'CNY',
-    allocations: const [],
+    allocations: [
+      CategoryAllocation(
+        category: AssetCategory.cash,
+        totalInBase: Money(Decimal.parse('123456.78'), 'CNY'),
+        items: [
+          CategoryItem(
+            id: 'assets:wallet',
+            name: '日常账户',
+            subtitle: null,
+            valueInBase: Money(Decimal.parse('123456.78'), 'CNY'),
+            nativeAmount: Decimal.parse('123456.78'),
+            nativeCurrency: 'CNY',
+          ),
+        ],
+      ),
+      CategoryAllocation(
+        category: AssetCategory.stock,
+        totalInBase: Money(Decimal.parse('23043.22'), 'CNY'),
+        items: [
+          CategoryItem(
+            id: 'assets:broker',
+            name: 'Apple',
+            subtitle: null,
+            valueInBase: Money(Decimal.parse('23043.22'), 'CNY'),
+            nativeAmount: Decimal.parse('3280.40'),
+            nativeCurrency: 'USD',
+          ),
+        ],
+      ),
+      CategoryAllocation(
+        category: AssetCategory.liability,
+        totalInBase: Money(Decimal.parse('8600.20'), 'CNY'),
+        items: [
+          CategoryItem(
+            id: 'liabilities:card',
+            name: '信用卡',
+            subtitle: null,
+            valueInBase: Money(Decimal.parse('8600.20'), 'CNY'),
+            nativeAmount: Decimal.parse('8600.20'),
+            nativeCurrency: 'CNY',
+          ),
+        ],
+      ),
+    ],
     totalAssets: Money(Decimal.parse('146500.00'), 'CNY'),
     totalLiabilities: Money(Decimal.parse('8600.20'), 'CNY'),
     netWorth: Money(Decimal.parse('137899.80'), 'CNY'),
@@ -254,6 +298,56 @@ void main() {
       child: const WealthHubPage(),
     );
   });
+
+  for (final variant in [GoldenTheme.light, GoldenTheme.dark]) {
+    testVisualGolden('wealth hub refined — ${variant.name}', (tester) async {
+      await pumpAndSnapshotMobile(
+        tester,
+        name: 'wealth_hub_refined',
+        variant: variant,
+        visualStyle: AppVisualStyle.refined,
+        locale: _locale,
+        routePath: FinanceRoutes.wealth,
+        overrides: _accountOverrides(),
+        child: const WealthHubPage(),
+      );
+      expect(
+        find.byKey(const ValueKey('wealth-balance-value')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('wealth-trend-scrub-value')),
+        findsNothing,
+      );
+      final chart = tester.getRect(
+        find.byKey(const ValueKey('wealth-trend-chart')),
+      );
+      final destinations = tester.getRect(
+        find.byKey(const ValueKey('wealth-destinations')),
+      );
+      expect(destinations.top, greaterThan(chart.bottom));
+    });
+  }
+
+  for (final profile in [
+    ResponsiveGoldenProfile.wide,
+    ResponsiveGoldenProfile.textScale,
+  ]) {
+    runResponsiveGolden(
+      'wealth hub refined — ${profile.name}',
+      profile: profile,
+      body: (tester, profile) => pumpAndSnapshotResponsive(
+        tester,
+        name: 'wealth_hub_refined_${profile.name}',
+        profile: profile,
+        visualStyle: AppVisualStyle.refined,
+        routePath: FinanceRoutes.wealth,
+        locale: _locale,
+        overrides: _accountOverrides(),
+        child: const WealthHubPage(),
+      ),
+    );
+  }
 
   runAllVariants('accounts_list_page', (tester, variant) async {
     await pumpAndSnapshotMobile(

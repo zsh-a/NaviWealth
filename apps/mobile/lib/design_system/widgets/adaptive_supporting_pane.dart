@@ -34,22 +34,23 @@ class AdaptiveSupportingPane extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final textScale = MediaQuery.textScalerOf(context).scale(1);
-        if (constraints.maxWidth < breakpoint || textScale > 1.3) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              primary,
-              SizedBox(height: stackedGap),
-              supporting,
-            ],
-          );
-        }
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        final stacked = constraints.maxWidth < breakpoint || textScale > 1.3;
+        // Stable child slots preserve form state and keyboard focus when the
+        // supporting pane moves below the primary content (including zoom).
+        return Wrap(
+          spacing: gap,
+          runSpacing: stackedGap,
           children: [
-            Expanded(flex: primaryFlex, child: primary),
-            SizedBox(width: gap),
-            SizedBox(width: supportingWidth, child: supporting),
+            SizedBox(
+              width: stacked
+                  ? constraints.maxWidth
+                  : constraints.maxWidth - supportingWidth - gap,
+              child: primary,
+            ),
+            SizedBox(
+              width: stacked ? constraints.maxWidth : supportingWidth,
+              child: supporting,
+            ),
           ],
         );
       },

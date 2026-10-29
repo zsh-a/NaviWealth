@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
@@ -87,13 +88,59 @@ Future<void> _selectWindow(
     -250,
     scrollable: find.byType(Scrollable).first,
   );
-  await tester.tap(find.text('${current}d'));
-  await tester.pumpAndSettle();
-  await tester.tap(find.text('Last $days days'));
+  await tester.tap(find.text('${days}d'));
   await tester.pumpAndSettle();
 }
 
 void main() {
+  testWidgets('trend controls retain keyboard focus across routes and widths', (
+    tester,
+  ) async {
+    final fixture = await HealthTestFixture.create();
+    addTearDown(fixture.db.close);
+    final router = await _pump(tester, fixture, width: 900);
+
+    await tester.tap(find.text('7d'));
+    await tester.pumpAndSettle();
+    expect(
+      router.routeInformationProvider.value.uri.queryParameters['window'],
+      '7',
+    );
+    tester.view.physicalSize = const Size(320, 1000);
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.end);
+    await tester.pumpAndSettle();
+    expect(
+      router.routeInformationProvider.value.uri.queryParameters['window'],
+      '90',
+    );
+
+    final groups = find.byType(SegmentedRow<TrendGroup>);
+    await tester.tap(
+      find.descendant(of: groups, matching: find.text('Activity')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      router.routeInformationProvider.value.uri.queryParameters['group'],
+      'activity',
+    );
+    tester.view.physicalSize = const Size(900, 1000);
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.end);
+    await tester.pumpAndSettle();
+    expect(
+      router.routeInformationProvider.value.uri.queryParameters['group'],
+      'body',
+    );
+    expect(
+      router.routeInformationProvider.value.uri.queryParameters['window'],
+      '90',
+    );
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('Today puts key readings in the first phone viewport', (
     tester,
   ) async {

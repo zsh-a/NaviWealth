@@ -2,9 +2,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../theme/app_theme_scope.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
-import '../tokens/typography_tokens.dart';
 
 /// Shared numeric presentation; range, precision and conversion belong to callers.
 class AppNumberField extends StatelessWidget {
@@ -64,7 +64,9 @@ class AppNumberField extends StatelessWidget {
           variants: const {},
         ),
         contentTextStyle: FVariants.from(
-          TypographyTokens.numericBodyStrong.copyWith(color: colors.foreground),
+          context.appTheme.type.numericBodyStrong.copyWith(
+            color: colors.foreground,
+          ),
           variants: {
             [FTextFieldVariant.disabled]: TextStyleDelta.delta(
               color: colors.mutedForeground,

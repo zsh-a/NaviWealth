@@ -390,7 +390,7 @@ class _SummaryLine extends StatelessWidget {
           MoneyText(
             amount: amount,
             currencyCode: summary.currency,
-            style: TypographyTokens.numericMono.copyWith(
+            style: context.appTheme.type.numericMono.copyWith(
               color: colors.foreground,
             ),
           ),
@@ -435,7 +435,7 @@ class _ResultRow extends StatelessWidget {
           MoneyText(
             amount: amountMinor.abs() / 100.0,
             currencyCode: currency,
-            style: TypographyTokens.numericMono.copyWith(
+            style: context.appTheme.type.numericMono.copyWith(
               color: colors.foreground,
             ),
           ),

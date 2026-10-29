@@ -121,14 +121,14 @@ class _ManualAssetDetailPageState extends ConsumerState<ManualAssetDetailPage> {
                       ),
                       const SizedBox(height: AppSpacing.s8),
                       snapshot.data == null
-                          ? Text('—', style: TypographyTokens.displayMedium)
+                          ? Text('—', style: context.appTheme.type.displaySmall)
                           : FittedBox(
                               fit: BoxFit.scaleDown,
                               alignment: AlignmentDirectional.centerStart,
                               child: AnimatedMoneyText(
                                 amount: snapshot.data!.toDouble(),
                                 currencyCode: asset.currency,
-                                style: TypographyTokens.displayMedium,
+                                style: context.appTheme.type.displaySmall,
                               ),
                             ),
                       const SizedBox(height: AppSpacing.s8),

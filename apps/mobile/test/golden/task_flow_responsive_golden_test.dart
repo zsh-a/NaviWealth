@@ -8,7 +8,7 @@ import 'package:naviwealth/core/ai/write/providers.dart';
 import 'package:naviwealth/core/forms/forms.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
-import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
+import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/accounts/ui/account_form_page.dart';
 import 'package:naviwealth/features/finance/accounts/ui/transfer_form_page.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
@@ -213,6 +213,18 @@ void main() {
     profile: ResponsiveGoldenProfile.textScale,
     body: (tester, profile) =>
         pumpIngest(tester, profile, 'task_flow_ingest_t'),
+  );
+  runResponsiveGolden(
+    'task flow ingest refined — narrow',
+    profile: ResponsiveGoldenProfile.narrow,
+    body: (tester, profile) => pumpAndSnapshotResponsive(
+      tester,
+      name: 'task_flow_ingest_refined_n',
+      profile: profile,
+      visualStyle: AppVisualStyle.refined,
+      overrides: ingestOverrides(),
+      child: const IngestReviewPage(),
+    ),
   );
   runResponsiveGolden(
     'task flow account — narrow',

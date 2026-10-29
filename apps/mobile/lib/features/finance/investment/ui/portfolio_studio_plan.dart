@@ -448,7 +448,7 @@ class _PlanWeight extends StatelessWidget {
     children: [
       Text(label, style: context.captionStyle),
       const SizedBox(height: AppSpacing.s2),
-      Text(value, style: TypographyTokens.numericBodyStrong),
+      Text(value, style: context.appTheme.type.numericBodyStrong),
     ],
   );
 }

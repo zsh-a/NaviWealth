@@ -27,6 +27,46 @@ Future<void> _pump(
 }
 
 void main() {
+  testWidgets('keeps editing state and focus across responsive layouts', (
+    tester,
+  ) async {
+    final width = ValueNotifier(1200.0);
+    addTearDown(width.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: ValueListenableBuilder<double>(
+              valueListenable: width,
+              builder: (context, width, _) => SizedBox(
+                width: width,
+                child: const AdaptiveSupportingPane(
+                  primary: TextField(),
+                  supporting: Text('Supporting'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.enterText(find.byType(TextField), 'Keep my draft');
+    final field = tester.state<EditableTextState>(find.byType(EditableText));
+    final focus = field.widget.focusNode;
+    expect(focus.hasFocus, isTrue);
+    width.value = 320;
+    await tester.pumpAndSettle();
+    expect(tester.state(find.byType(EditableText)), same(field));
+    expect(find.text('Keep my draft'), findsOneWidget);
+    expect(focus.hasFocus, isTrue);
+    width.value = 1200;
+    await tester.pumpAndSettle();
+    expect(tester.state(find.byType(EditableText)), same(field));
+    expect(focus.hasFocus, isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('stacks in content order below the local breakpoint', (
     tester,
   ) async {

@@ -64,10 +64,20 @@ Navigator、ProviderScope 或表单。外观预览复用正式 theme 和 SoftCar
   状态必须有具体动作，错误不能被空态吞掉。
 - 用户操作反馈走共享 `AppMessenger`、busy/action button 和提交协议。成功仅在
   操作完成后呈现；已有 wrapper 提供 haptic 时，调用方不重复触发。
+- 图表短时间范围、展示维度与页面内的少量互斥分类使用 `SegmentedRow.inline`：居中的内容宽度、轻量文字与选中短线，
+  不铺满图表宽度或增加整条容器背景。保留 48dp 触控区域，按实际文字宽度与系统
+  字体缩放均衡换行；不隐藏选项，也不截断标签。普通表单选择继续使用默认分段样式。
+  财富范围、资产分布的类别 / 币种、投资趋势的指标 / 范围、现金流趋势与汇率历史
+  共用此变体；健康趋势的分组与时间范围、知识库内容类型、执行任务视图及搜索类型
+  也遵循相同契约。多选标签、数据录入与持久化偏好继续使用各自的表单和筛选组件。
 
 ## 字体与格式化
 
 读取 `context.appTheme.type`，遵守系统 text scaling，避免 feature 自建字号层级。
+Display 使用 `display` / `displaySmall` / `displayCompact`（40 / 32 / 26）；
+金额与图表使用对应 `numeric*` / `chartCaption`。`TypographyTokens` 是主题底表，
+业务 UI 不直接读取 display、headline 或 numeric 样式，避免绕过精致预设的字体、
+字距和行高；`lint-typography.sh` 守护此边界。
 金额、百分比、日期和数字复用 `AppFormatters`、`MoneyText` / `SignedMoneyText`、
 `DeltaText` 等组件。金额方向与隐私占位由组件处理；不能用字符串拼接绕过本地化、
 隐私和涨跌色偏好。数字使用 tabular figures，显示字号可强调整数部分，语义标签
@@ -79,6 +89,18 @@ Navigator、ProviderScope 或表单。外观预览复用正式 theme 和 SoftCar
 [响应式策略](01-responsive-layout.md)。Shell 的领域清单、页签、accent、settings
 和 Agent presentation 通过 `DomainPack` 贡献，由 `app/` 组合。
 领域内部只依赖自身路由；跨域 composition 不放入 `design_system/` 或 `core/`。
+
+Finance Today 与 Wealth 的已建立数据视图限宽 1200dp。Today 在可用内容宽度
+达到 `contentTwoColumn` 时把常用操作放到净值旁；窄屏与大字体按阅读顺序堆叠。
+Wealth 把余额、区间变化与历史曲线组合为一个主区域，对象入口作为辅助区域，
+不重复展示第二个净值。加载骨架使用同样的主辅布局。
+
+`AdaptiveSummaryGrid` 中没有辅助项的 featured 占满当前行；它与
+`AdaptiveSupportingPane` 都使用稳定的子组件层级，保持窗口缩放或字体放大时的
+局部状态、输入内容与键盘焦点。连续列表仍占满一行。
+导入审核默认显示账户上下文、队列数量、批量选择与固定筛选；搜索从页头展开并
+聚焦，已恢复的查询直接可见。排序、分类、分组按需展开；账户在大字体下回到
+完整表单布局，搜索、校验和禁用语义保持一致。
 
 `DomainPack.accent` 仅影响 chrome。页面内容、状态与金融涨跌继续使用语义主题。
 新增领域不应要求复制 Shell、另建侧栏或增加 feature 分支到主题 resolver。
@@ -98,4 +120,7 @@ sticky chrome 使用共享静态光场。Glass 光效不能替代 focus、select
 按改动运行主题分层、Material chrome、格式化、字体、AsyncValue、交互原语和
 motion policy lint；脚本清单由 CI 维护。主题变更运行对比度测试及 token export
 测试。组件或布局变更运行对应 widget/golden 测试，检查窄屏、宽屏、text scaling、
-深浅主题与 reduced motion。跨域 Shell 变更额外检查启用状态、路由和键盘导航。
+深浅主题与 reduced motion。代表性的 Wealth、Today、导入审核另覆盖精致预设；
+截图 harness 同时传递 Material / Forui / AppThemeScope 的 visual style。
+视觉基线使用 CI 指定的 Linux Flutter 版本生成。
+跨域 Shell 变更额外检查启用状态、路由和键盘导航。

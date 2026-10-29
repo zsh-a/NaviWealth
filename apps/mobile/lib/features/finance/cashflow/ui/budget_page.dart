@@ -405,7 +405,7 @@ class _MonthHeaderCard extends StatelessWidget {
               child: MoneyText(
                 amount: entry.value.toDouble(),
                 currencyCode: entry.key,
-                style: TypographyTokens.numericTitle,
+                style: context.appTheme.type.numericTitle,
               ),
             ),
           if (summary != null) ...[

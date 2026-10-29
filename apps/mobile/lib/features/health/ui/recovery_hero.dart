@@ -114,7 +114,7 @@ class _RecoveryHeroState extends ConsumerState<_RecoveryHero> {
                     AnimatedValueText(
                       value: scoreValue,
                       format: (v) => '${v.round()}',
-                      style: TypographyTokens.numericTitleStrong.copyWith(
+                      style: context.appTheme.type.numericTitleStrong.copyWith(
                         color: scoreColor,
                       ),
                     ),

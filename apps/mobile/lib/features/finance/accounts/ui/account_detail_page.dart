@@ -268,7 +268,7 @@ class _BalanceCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (value.legs.isEmpty)
-                    Text('—', style: TypographyTokens.displayMedium)
+                    Text('—', style: context.appTheme.type.displaySmall)
                   else
                     for (final leg in value.legs)
                       Padding(
@@ -283,7 +283,7 @@ class _BalanceCard extends ConsumerWidget {
                             showPositiveSign: false,
                             colorBySign: false,
                             style: leg.unit == account.currency
-                                ? TypographyTokens.displayMedium
+                                ? context.appTheme.type.displaySmall
                                 : context.strongTitleStyle,
                           ),
                         ),

@@ -216,7 +216,7 @@ class _RatesContent extends StatelessWidget {
             size: AppBadgeSize.compact,
           ),
           children: [
-            SegmentedRow<_FxRange>(
+            SegmentedRow<_FxRange>.inline(
               options: _FxRange.values,
               value: range,
               labelOf: (value) => _rangeLabel(l10n, value),
@@ -525,7 +525,7 @@ class _OverviewCard extends StatelessWidget {
             Text(
               '${l10n.fxRatesLatestObservation}: '
               '1 ${latest!.base} = ${latest!.rate} ${latest!.quote}',
-              style: TypographyTokens.numericBodyStrong,
+              style: context.appTheme.type.numericBodyStrong,
             ),
           ],
         ],
@@ -646,7 +646,7 @@ class _FxPairCard extends StatelessWidget {
                   '1 ${latest.base} = '
                   '${formatters.number(latest.rate.toDouble(), decimalDigits: precision)} '
                   '${latest.quote}',
-                  style: TypographyTokens.numericTitleStrong,
+                  style: context.appTheme.type.numericTitleStrong,
                 ),
               ),
               if (change != null && history.rates.length > 1)
@@ -764,7 +764,7 @@ class _RateHistoryRow extends StatelessWidget {
                 ),
                 Text(
                   rate.rate.toStringAsFixed(precision),
-                  style: TypographyTokens.numericBodyStrong,
+                  style: context.appTheme.type.numericBodyStrong,
                 ),
                 AppAdaptiveActionMenu(
                   title: formatters.date(rate.date),

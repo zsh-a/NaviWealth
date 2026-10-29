@@ -112,7 +112,7 @@ class _DetailBody extends ConsumerWidget {
                 AnimatedMoneyText(
                   amount: asset.currentValuation.toDouble(),
                   currencyCode: asset.currency,
-                  style: TypographyTokens.displayMedium,
+                  style: context.appTheme.type.displaySmall,
                 ),
                 if (asset.lastValuationAt != null) ...[
                   const SizedBox(height: AppSpacing.s4),

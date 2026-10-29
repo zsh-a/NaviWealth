@@ -201,6 +201,12 @@ Map<String, Object> _appearanceGroup() => {
         'display': _typography(
           AppTypeScale.resolve(AppDensity.touch, visualStyle: style).display,
         ),
+        'displayCompact': _typography(
+          AppTypeScale.resolve(
+            AppDensity.touch,
+            visualStyle: style,
+          ).displayCompact,
+        ),
         'heading': _typography(
           AppTypeScale.resolve(AppDensity.touch, visualStyle: style).heading,
         ),

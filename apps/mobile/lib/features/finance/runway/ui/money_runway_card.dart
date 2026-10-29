@@ -37,7 +37,7 @@ class MoneyRunwayCard extends ConsumerWidget {
             const SizedBox(height: AppSpacing.s12),
             Text(
               '—',
-              style: TypographyTokens.numericTitleStrong.copyWith(
+              style: context.appTheme.type.numericTitleStrong.copyWith(
                 color: context.theme.colors.mutedForeground,
               ),
             ),
@@ -73,7 +73,7 @@ class MoneyRunwayCard extends ConsumerWidget {
                   snapshot.balanceAt(90),
                   code: snapshot.currency,
                 ),
-                style: TypographyTokens.numericTitleStrong,
+                style: context.appTheme.type.numericTitleStrong,
               ),
               const SizedBox(height: AppSpacing.s4),
               Text(

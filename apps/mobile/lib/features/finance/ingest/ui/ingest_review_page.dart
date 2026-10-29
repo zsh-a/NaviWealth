@@ -88,6 +88,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage>
   final FocusNode _searchFocus = FocusNode(debugLabel: 'ingest review search');
   String _query = '';
   bool _reviewOptionsExpanded = false;
+  bool _searchExpanded = false;
   IngestReviewFilter _filter = IngestReviewFilter.all;
   IngestReviewSort _sort = IngestReviewSort.importOrder;
   IngestReviewCategory? _category;
@@ -221,6 +222,7 @@ class _IngestReviewPageState extends ConsumerState<IngestReviewPage>
                 actionsBuilder: (context, wide) => <Widget>[
                   if (viewData != null && viewData.allItems.isNotEmpty)
                     AppIconButton(
+                      key: const ValueKey('ingest-open-search'),
                       tooltip: l10n.navSearch,
                       icon: FLucideIcons.search,
                       onPress: _isBusy

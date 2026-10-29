@@ -1,8 +1,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../theme/app_theme_scope.dart';
 import '../tokens/dimens_tokens.dart';
-import '../tokens/typography_tokens.dart';
 import 'amount_privacy_scope.dart';
 
 enum AmountPrivacyPlaceholderDensity { display, title, body, caption, compact }
@@ -30,7 +30,7 @@ class AmountPrivacyPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveStyle = style ?? _defaultStyle;
+    final effectiveStyle = style ?? _defaultStyle(context);
     final fontSize = effectiveStyle.fontSize ?? 14;
     final height = _height(fontSize);
     final resolvedWidth = width ?? _width(fontSize);
@@ -66,13 +66,15 @@ class AmountPrivacyPlaceholder extends StatelessWidget {
     );
   }
 
-  TextStyle get _defaultStyle => switch (density) {
-    AmountPrivacyPlaceholderDensity.display => TypographyTokens.displayLarge,
+  TextStyle _defaultStyle(BuildContext context) => switch (density) {
+    AmountPrivacyPlaceholderDensity.display => context.appTheme.type.display,
     AmountPrivacyPlaceholderDensity.title =>
-      TypographyTokens.numericTitleStrong,
-    AmountPrivacyPlaceholderDensity.body => TypographyTokens.numericBody,
-    AmountPrivacyPlaceholderDensity.caption => TypographyTokens.numericCaption,
-    AmountPrivacyPlaceholderDensity.compact => TypographyTokens.numericCaption,
+      context.appTheme.type.numericTitleStrong,
+    AmountPrivacyPlaceholderDensity.body => context.appTheme.type.numericBody,
+    AmountPrivacyPlaceholderDensity.caption =>
+      context.appTheme.type.numericCaption,
+    AmountPrivacyPlaceholderDensity.compact =>
+      context.appTheme.type.numericCaption,
   };
 
   double _height(double fontSize) {

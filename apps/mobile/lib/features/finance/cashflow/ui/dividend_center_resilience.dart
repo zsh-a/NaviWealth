@@ -190,7 +190,7 @@ class _ResilienceMetric extends StatelessWidget {
         children: [
           Text(label, style: context.captionStyle),
           const SizedBox(height: AppSpacing.s2),
-          Text(value, style: TypographyTokens.numericBodyStrong),
+          Text(value, style: context.appTheme.type.numericBodyStrong),
           if (detail != null)
             Text(detail!, style: context.captionStyle, maxLines: 1),
         ],
@@ -266,7 +266,7 @@ class _AttributionRow extends ConsumerWidget {
               ),
             ),
             const SizedBox(width: AppSpacing.s8),
-            Text(signed, style: TypographyTokens.numericBodyStrong),
+            Text(signed, style: context.appTheme.type.numericBodyStrong),
             const SizedBox(width: AppSpacing.s4),
             const Icon(FLucideIcons.chevronRight, size: AppIconSizes.sm),
           ],

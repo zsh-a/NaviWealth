@@ -89,7 +89,7 @@ class LifePage extends ConsumerWidget {
               label: hero.localizedMetricLabel(l10n),
               value: Text(
                 hero.localizedSticky(l10n),
-                style: TypographyTokens.numericTitleStrong,
+                style: context.appTheme.type.numericTitleStrong,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),

@@ -355,7 +355,7 @@ class _ChartTooltip extends StatelessWidget {
                 children: [
                   Text(
                     xAxis.formatPrecise(point.x),
-                    style: TypographyTokens.numericCaption.copyWith(
+                    style: context.appTheme.type.numericCaption.copyWith(
                       color: onSurface.withValues(alpha: AppOpacity.prominent),
                     ),
                   ),
@@ -400,7 +400,7 @@ class _ChartTooltip extends StatelessWidget {
                 Flexible(
                   child: Text(
                     s.name,
-                    style: TypographyTokens.numericCaption.copyWith(
+                    style: context.appTheme.type.numericCaption.copyWith(
                       color: onSurface,
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -410,12 +410,12 @@ class _ChartTooltip extends StatelessWidget {
                 if (hideAmounts)
                   AmountPrivacyPlaceholder(
                     density: AmountPrivacyPlaceholderDensity.compact,
-                    style: TypographyTokens.numericCaption,
+                    style: context.appTheme.type.numericCaption,
                   )
                 else
                   Text(
                     yAxis.formatValue(p.y),
-                    style: TypographyTokens.numericCaption.copyWith(
+                    style: context.appTheme.type.numericCaption.copyWith(
                       color: onSurface,
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -483,7 +483,7 @@ class _TouchXAxisLabel extends StatelessWidget {
                     textAlign: TextAlign.center,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TypographyTokens.chartCaption.copyWith(
+                    style: context.appTheme.type.chartCaption.copyWith(
                       color: palette.tooltipForeground,
                     ),
                   ),
@@ -540,7 +540,7 @@ class _DeltaBadge extends StatelessWidget {
         ),
         child: AmountPrivacyPlaceholder(
           density: AmountPrivacyPlaceholderDensity.compact,
-          style: TypographyTokens.chartCaption,
+          style: context.appTheme.type.chartCaption,
         ),
       );
     }
@@ -561,7 +561,7 @@ class _DeltaBadge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TypographyTokens.chartCaption.copyWith(color: color),
+        style: context.appTheme.type.chartCaption.copyWith(color: color),
       ),
     );
   }

@@ -780,7 +780,7 @@ class _PortfolioSummaryCard extends StatelessWidget {
               final amount = AnimatedMoneyText(
                 amount: slice.marketValueInBase.toDouble(),
                 currencyCode: slice.baseCurrency,
-                style: TypographyTokens.displaySmall,
+                style: context.appTheme.type.displayCompact,
                 color: context.theme.colors.foreground,
               );
               final change = Column(

@@ -105,6 +105,26 @@ class _AdaptiveQuickActions extends StatelessWidget {
 
   final List<_HomeQuickActionData> actions;
 
+  double _horizontalWidth(BuildContext context) {
+    final painter = TextPainter(
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 1,
+    );
+    var widest = 0.0;
+    for (final action in actions) {
+      painter.text = TextSpan(
+        text: action.label,
+        style: context.captionLabelStyle,
+      );
+      painter.layout();
+      if (painter.width > widest) widest = painter.width;
+    }
+    painter.dispose();
+    return (widest + AppSpacing.s8) * actions.length +
+        AppStroke.hairline * (actions.length - 1);
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
@@ -115,7 +135,8 @@ class _AdaptiveQuickActions extends StatelessWidget {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          if (constraints.maxWidth < _stackedBreakpoint) {
+          if (constraints.maxWidth < _stackedBreakpoint ||
+              constraints.maxWidth < _horizontalWidth(context)) {
             return Column(
               children: [
                 for (var i = 0; i < actions.length; i++) ...[

@@ -93,7 +93,7 @@ class _IngestSummaryBody extends StatelessWidget {
               curve: Motion.emphasizedDecelerate,
               builder: (context, value, _) => Text(
                 l10n.ingestSummaryTitle(value.round()),
-                style: TypographyTokens.headlineMedium,
+                style: context.appTheme.type.headingSmall,
                 textAlign: TextAlign.center,
               ),
             ),

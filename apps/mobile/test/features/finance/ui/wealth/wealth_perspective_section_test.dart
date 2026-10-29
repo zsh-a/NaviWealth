@@ -1,8 +1,10 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/application/read_models/dashboard_providers.dart';
 import 'package:naviwealth/features/finance/domain/fx/money.dart';
 import 'package:naviwealth/features/finance/home/domain/dashboard_models.dart';
@@ -125,7 +127,11 @@ DashboardSnapshot _singleCategorySnapshot() {
   );
 }
 
-Widget _wrap({DashboardSnapshot? snapshot}) {
+Widget _wrap({
+  DashboardSnapshot? snapshot,
+  double textScale = 1,
+  Locale locale = const Locale('en', 'US'),
+}) {
   return ProviderScope(
     overrides: [
       dashboardSnapshotProvider.overrideWith(
@@ -135,7 +141,12 @@ Widget _wrap({DashboardSnapshot? snapshot}) {
     child: MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      locale: const Locale('en', 'US'),
+      locale: locale,
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context)
+            .copyWith(textScaler: TextScaler.linear(textScale)),
+        child: child!,
+      ),
       home: FTheme(
         data: FTheme.neutral.light.desktop,
         child: const Scaffold(body: WealthPerspectiveSection()),
@@ -186,6 +197,64 @@ void main() {
     // chip itself doesn't read "Stocks" / "Cash").
     expect(find.text('Stocks'), findsNothing);
   });
+
+  testWidgets('dimension controls keep keyboard focus across header layouts', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(900, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(_wrap());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('By currency'));
+    await tester.pumpAndSettle();
+    final focus = tester
+        .widget<AppTappable>(
+          find.ancestor(
+            of: find.text('By currency'),
+            matching: find.byType(AppTappable),
+          ),
+        )
+        .focusNode!;
+    expect(focus.hasFocus, isTrue);
+
+    await tester.binding.setSurfaceSize(const Size(320, 844));
+    await tester.pumpAndSettle();
+    expect(focus.hasFocus, isTrue);
+    await tester.sendKeyEvent(LogicalKeyboardKey.home);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('allocation-bucket-stock')), findsOne);
+    expect(find.byKey(const ValueKey('allocation-bucket-USD')), findsNothing);
+
+    await tester.binding.setSurfaceSize(const Size(900, 800));
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.end);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('allocation-bucket-USD')), findsOne);
+    expect(focus.hasFocus, isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final locale in [const Locale('en'), const Locale('zh')]) {
+    testWidgets('dimension labels fit at 320dp and 2x text in $locale', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(320, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await tester.pumpWidget(_wrap(textScale: 2, locale: locale));
+      await tester.pumpAndSettle();
+      final label = locale.languageCode == 'zh' ? '按币种' : 'By currency';
+      final control = find.ancestor(
+        of: find.text(label),
+        matching: find.byType(AppTappable),
+      );
+      expect(tester.getSize(control).height, greaterThanOrEqualTo(48));
+      await tester.tap(find.text(label));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('allocation-bucket-USD')), findsOne);
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   testWidgets('opens category details from an allocation row', (tester) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));

@@ -108,12 +108,67 @@ void main() {
     expect(find.text('\$1,200'), findsOneWidget);
     expect(find.text('\$1,000'), findsNothing);
   });
+  testWidgets('integrated overview follows the chart and restores on release', (
+    tester,
+  ) async {
+    await _setSurface(tester, width: 390);
+    await tester.pumpWidget(_wrap(trend: _trend(), integrated: true));
+    await tester.pumpAndSettle();
+    expect(find.text('Wealth trend'), findsNothing);
+    expect(find.text('\$1,200'), findsOneWidget);
+    final rect = tester.getRect(
+      find.byKey(const ValueKey('wealth-trend-chart')),
+    );
+    final gesture = await tester.startGesture(
+      Offset(rect.left + 4, rect.center.dy),
+    );
+    await tester.pump(kLongPressTimeout + const Duration(milliseconds: 1));
+    await tester.pump();
+    expect(find.text('\$1,000'), findsOneWidget);
+    expect(find.text('\$1,200'), findsNothing);
+    await gesture.up();
+    await tester.pump();
+    expect(find.text('\$1,200'), findsOneWidget);
+    await tester.tap(find.text('3M'));
+    await tester.pumpAndSettle();
+    expect(find.text('\$1,200'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('integrated overview remains private while scrubbing', (
+    tester,
+  ) async {
+    await _setSurface(tester, width: 390);
+    await tester.pumpWidget(
+      _wrap(trend: _trend(), integrated: true, hidden: true),
+    );
+    await tester.pumpAndSettle();
+    final rect = tester.getRect(
+      find.byKey(const ValueKey('wealth-trend-chart')),
+    );
+    final gesture = await tester.startGesture(
+      Offset(rect.left + 4, rect.center.dy),
+    );
+    await tester.pump(kLongPressTimeout + const Duration(milliseconds: 1));
+    await tester.pump();
+    expect(find.textContaining('1,000'), findsNothing);
+    expect(find.textContaining('1,200'), findsNothing);
+    expect(find.byType(AmountPrivacyPlaceholder), findsWidgets);
+    await gesture.up();
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+  });
 }
 
 NwLineChart _chart(WidgetTester tester) =>
     tester.widget<NwLineChart>(find.byType(NwLineChart));
 
-Widget _wrap({required DashboardTrend trend, double textScale = 1}) {
+Widget _wrap({
+  required DashboardTrend trend,
+  double textScale = 1,
+  bool integrated = false,
+  bool hidden = false,
+}) {
   return ProviderScope(
     overrides: [
       dashboardBaseCurrencyProvider.overrideWith((_) => trend.baseCurrency),
@@ -131,10 +186,21 @@ Widget _wrap({required DashboardTrend trend, double textScale = 1}) {
       ),
       home: FTheme(
         data: FTheme.neutral.light.desktop,
-        child: const Scaffold(
+        child: Scaffold(
           body: SingleChildScrollView(
-            padding: EdgeInsets.all(AppSpacing.s16),
-            child: WealthTrendSection(),
+            padding: const EdgeInsets.all(AppSpacing.s16),
+            child: AmountPrivacyScope(
+              hidden: hidden,
+              child: WealthTrendSection(
+                overviewBuilder: integrated
+                    ? (context, scrub) => MoneyText(
+                        amount: scrub?.point.y ?? 1200,
+                        currencyCode: 'USD',
+                        fractionDigits: 0,
+                      )
+                    : null,
+              ),
+            ),
           ),
         ),
       ),

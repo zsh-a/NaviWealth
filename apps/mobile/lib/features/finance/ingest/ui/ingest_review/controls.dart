@@ -24,6 +24,9 @@ extension _IngestReviewControls on _IngestReviewPageState {
   }
 
   void _resetReviewScroll({bool focusSearch = false}) {
+    if (focusSearch && !_searchExpanded) {
+      setState(() => _searchExpanded = true);
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && _reviewScroll.hasClients) _reviewScroll.jumpTo(0);
       if (mounted && focusSearch) _searchFocus.requestFocus();
@@ -35,42 +38,20 @@ extension _IngestReviewControls on _IngestReviewPageState {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: AppSearchField(
-                key: const ValueKey('ingest-review-search'),
-                focusNode: _searchFocus,
-                controller: _search,
-                enabled: !_isBusy,
-                clearLabel: l10n.ingestClearSearch,
-                onChanged: (value) {
-                  if (!_isBusy && value != _query) _changeScope(query: value);
-                },
-                hint: l10n.ingestReviewSearchHint,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.s8),
-            Semantics(
-              expanded: _reviewOptionsExpanded,
-              child: AppIconButton(
-                key: const ValueKey('ingest-review-options'),
-                icon: FLucideIcons.slidersHorizontal,
-                tooltip: l10n.ingestReviewOptions,
-                onPress: _isBusy
-                    ? null
-                    : () => setState(
-                        () => _reviewOptionsExpanded = !_reviewOptionsExpanded,
-                      ),
-              ),
-            ),
-          ],
-        ),
-        if (_reviewOptionsExpanded) ...[
-          const SizedBox(height: AppSpacing.s12),
-          _reviewOptions(data),
+        if (_searchExpanded || _query.isNotEmpty) ...[
+          AppSearchField(
+            key: const ValueKey('ingest-review-search'),
+            focusNode: _searchFocus,
+            controller: _search,
+            enabled: !_isBusy,
+            clearLabel: l10n.ingestClearSearch,
+            onChanged: (value) {
+              if (!_isBusy && value != _query) _changeScope(query: value);
+            },
+            hint: l10n.ingestReviewSearchHint,
+          ),
+          const SizedBox(height: AppSpacing.s4),
         ],
-        const SizedBox(height: AppSpacing.s4),
         Row(
           children: [
             Expanded(
@@ -100,8 +81,26 @@ extension _IngestReviewControls on _IngestReviewPageState {
                 child: Flexible(child: Text(l10n.ingestSelectFiltered)),
               ),
             ),
+            Semantics(
+              expanded: _reviewOptionsExpanded,
+              child: AppIconButton(
+                key: const ValueKey('ingest-review-options'),
+                icon: FLucideIcons.slidersHorizontal,
+                tooltip: l10n.ingestReviewOptions,
+                onPress: _isBusy
+                    ? null
+                    : () => setState(
+                        () => _reviewOptionsExpanded = !_reviewOptionsExpanded,
+                      ),
+              ),
+            ),
           ],
         ),
+        if (_reviewOptionsExpanded) ...[
+          const SizedBox(height: AppSpacing.s8),
+          _reviewOptions(data),
+          const SizedBox(height: AppSpacing.s8),
+        ],
         if (_hasReviewOptions ||
             _query.isNotEmpty ||
             _filter != IngestReviewFilter.all)

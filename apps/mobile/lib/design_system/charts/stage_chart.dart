@@ -1,9 +1,9 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../theme/app_theme_scope.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
-import '../tokens/typography_tokens.dart';
 import '../widgets/app_interaction.dart';
 import 'axes.dart';
 import 'chart_series.dart';
@@ -115,7 +115,7 @@ class StageDisplayValue extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         DefaultTextStyle.merge(
-          style: TypographyTokens.displayLarge,
+          style: context.appTheme.type.display,
           child: child,
         ),
         if (caption != null) ...[

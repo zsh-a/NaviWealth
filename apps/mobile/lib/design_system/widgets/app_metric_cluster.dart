@@ -1,9 +1,9 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../theme/app_theme_scope.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
-import '../tokens/typography_tokens.dart';
 import 'amount_privacy_placeholder.dart';
 import 'amount_privacy_scope.dart';
 import 'app_divider.dart';
@@ -120,7 +120,7 @@ class _MetricCell extends StatelessWidget {
                 ? AmountPrivacyPlaceholderDensity.body
                 : AmountPrivacyPlaceholderDensity.title,
             style: dense
-                ? TypographyTokens.numericBodyStrong
+                ? context.appTheme.type.numericBodyStrong
                 : context.labelStyle,
             semanticsLabel: AmountPrivacyScope.hiddenSemanticsLabelOf(context),
           )
@@ -128,7 +128,7 @@ class _MetricCell extends StatelessWidget {
           Text(
             item.value,
             style: dense
-                ? TypographyTokens.numericBodyStrong
+                ? context.appTheme.type.numericBodyStrong
                 : context.labelStyle,
             maxLines: item.maxLines,
             overflow: TextOverflow.ellipsis,

@@ -246,7 +246,7 @@ class _MetricTile extends StatelessWidget {
         children: [
           Text(
             '$value',
-            style: TypographyTokens.numericCaptionStrong.copyWith(
+            style: context.appTheme.type.numericCaptionStrong.copyWith(
               color: valueColor,
             ),
           ),
@@ -274,7 +274,7 @@ class _SourceStatRow extends StatelessWidget {
             child: Text(
               source.source,
               overflow: TextOverflow.ellipsis,
-              style: TypographyTokens.numericCaption.copyWith(
+              style: context.appTheme.type.numericCaption.copyWith(
                 color: colors.foreground,
               ),
             ),
@@ -282,7 +282,7 @@ class _SourceStatRow extends StatelessWidget {
           const SizedBox(width: AppSpacing.s8),
           Text(
             '${source.vectors}/${source.memories}',
-            style: TypographyTokens.numericCaption.copyWith(
+            style: context.appTheme.type.numericCaption.copyWith(
               color: colors.mutedForeground,
             ),
           ),
@@ -399,7 +399,7 @@ class _RuntimeRow extends StatelessWidget {
         Expanded(
           child: SelectableText(
             value,
-            style: TypographyTokens.numericCaption.copyWith(
+            style: context.appTheme.type.numericCaption.copyWith(
               color: colors.foreground,
             ),
           ),

@@ -37,37 +37,28 @@ class AdaptiveSummaryGrid extends StatelessWidget {
         final width = constraints.maxWidth;
         final textScale = MediaQuery.textScalerOf(context).scale(16) / 16;
         final columns = _columnCount(width, textScale);
-        if (columns == 1 || !width.isFinite) {
+        if (!width.isFinite) {
           return _singleColumn();
         }
 
         final columnWidth = (width - gap * (columns - 1)) / columns;
         final rows = _packRows(columns);
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (var rowIndex = 0; rowIndex < rows.length; rowIndex++) ...[
-              if (rowIndex > 0) SizedBox(height: gap),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  for (
-                    var itemIndex = 0;
-                    itemIndex < rows[rowIndex].length;
-                    itemIndex++
-                  ) ...[
-                    if (itemIndex > 0) SizedBox(width: gap),
-                    SizedBox(
-                      width:
-                          columnWidth * rows[rowIndex][itemIndex].span +
-                          gap * (rows[rowIndex][itemIndex].span - 1),
-                      child: rows[rowIndex][itemIndex].tile.child,
-                    ),
-                  ],
-                ],
-              ),
+        // Keep every tile at the same depth when the column count changes.
+        // Row/Column branches remounted stateful children on window resize.
+        return SizedBox(
+          width: width,
+          child: Wrap(
+            spacing: gap,
+            runSpacing: gap,
+            children: [
+              for (final row in rows)
+                for (final item in row)
+                  SizedBox(
+                    width: columnWidth * item.span + gap * (item.span - 1),
+                    child: item.tile.child,
+                  ),
             ],
-          ],
+          ),
         );
       },
     );
@@ -117,7 +108,17 @@ class AdaptiveSummaryGrid extends StatelessWidget {
       }
     }
     if (row.isNotEmpty) rows.add(row);
-    return rows;
+    // A lone featured module has no supporting rail to make room for. Let it
+    // use the row instead of retaining an empty column when optional content
+    // disappears. Standard tiles keep their readable one-column measure.
+    return [
+      for (final row in rows)
+        if (row.length == 1 &&
+            row.single.tile.role == AdaptiveSummaryTileRole.featured)
+          [_PackedSummaryTile(tile: row.single.tile, span: columns)]
+        else
+          row,
+    ];
   }
 }
 

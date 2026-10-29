@@ -201,7 +201,7 @@ class _FileRow extends StatelessWidget {
               Expanded(
                 child: Text(
                   file.file.localName,
-                  style: TypographyTokens.numericCaption.copyWith(
+                  style: context.appTheme.type.numericCaption.copyWith(
                     color: colors.foreground,
                   ),
                 ),

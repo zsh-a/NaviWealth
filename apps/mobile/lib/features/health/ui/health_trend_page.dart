@@ -81,7 +81,7 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
       healthTrendSeriesProvider((group: group, windowDays: days)),
     );
     final navigation = metric == null
-        ? SegmentedRow<TrendGroup>(
+        ? SegmentedRow<TrendGroup>.inline(
             options: TrendGroup.values,
             value: group,
             minSegmentWidth: 72,
@@ -98,34 +98,12 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
               child: Flexible(child: Text(l.healthAllMetrics)),
             ),
           );
-    final range = Align(
-      alignment: AlignmentDirectional.centerEnd,
-      child: AppAdaptiveSelectionMenu<int>(
-        title: l.healthTimeWindow,
-        options: [
-          for (final window in const [7, 30, 90])
-            AppAdaptiveSelection(
-              value: window,
-              title: l.healthWindowDays(window),
-              icon: FLucideIcons.calendarDays,
-            ),
-        ],
-        value: days,
-        onChanged: (window) => _go(window: window, metric: metric),
-        triggerBuilder: (context, openMenu, focusNode) => Focus(
-          focusNode: focusNode,
-          child: FButton(
-            variant: FButtonVariant.ghost,
-            mainAxisSize: MainAxisSize.min,
-            prefix: const Icon(
-              FLucideIcons.calendarDays,
-              size: AppIconSizes.sm,
-            ),
-            onPress: openMenu,
-            child: Text(l.healthWindowShort(days)),
-          ),
-        ),
-      ),
+    final range = SegmentedRow<int>.inline(
+      options: const [7, 30, 90],
+      value: days,
+      labelOf: l.healthWindowShort,
+      semanticLabelOf: l.healthWindowDays,
+      onChanged: (window) => _go(window: window, metric: metric),
     );
     return ShellTabScaffold(
       title: metric?.title(l) ?? l.healthTrendTitle,
@@ -149,140 +127,142 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
           child: AppRefreshIndicator(
             onRefresh: _refresh,
             child: ListView(
+              // Category changes keep the toolbar mounted and focused.
               key: PageStorageKey(
-                'health-trends-${group.name}-${metric?.wire ?? 'overview'}',
+                'health-trends-${metric?.wire ?? 'overview'}',
               ),
               padding: shellTabContentPadding(context),
               children: [
                 const HealthSourceAttention(),
                 LayoutBuilder(
                   builder: (context, constraints) {
-                    if (constraints.maxWidth >= 350 &&
-                        MediaQuery.textScalerOf(context).scale(14) <= 18) {
-                      return Row(
-                        children: [
-                          Expanded(child: navigation),
-                          const SizedBox(width: AppSpacing.s8),
-                          range,
-                        ],
-                      );
-                    }
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                    final scale = MediaQuery.textScalerOf(context).scale(1);
+                    final sideBySide =
+                        constraints.maxWidth >=
+                        Breakpoints.readingColumn * scale;
+                    final slotWidth = sideBySide
+                        ? (constraints.maxWidth - AppSpacing.s12) / 2
+                        : constraints.maxWidth;
+                    return Wrap(
+                      spacing: AppSpacing.s12,
+                      runSpacing: AppSpacing.s4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        navigation,
-                        const SizedBox(height: AppSpacing.s8),
-                        range,
+                        SizedBox(width: slotWidth, child: navigation),
+                        SizedBox(width: slotWidth, child: range),
                       ],
                     );
                   },
                 ),
                 const SizedBox(height: AppSpacing.s16),
-                data.when(
-                  skipLoadingOnRefresh: true,
-                  skipLoadingOnReload: true,
-                  loading: () => const SkeletonCard(
-                    child: Column(
-                      children: [
-                        SkeletonBox(height: 22),
-                        SizedBox(height: AppSpacing.s16),
-                        SkeletonBox(height: 120),
-                      ],
+                Semantics(
+                  container: true,
+                  child: data.when(
+                    skipLoadingOnRefresh: true,
+                    skipLoadingOnReload: true,
+                    loading: () => const SkeletonCard(
+                      child: Column(
+                        children: [
+                          SkeletonBox(height: 22),
+                          SizedBox(height: AppSpacing.s16),
+                          SkeletonBox(height: 120),
+                        ],
+                      ),
                     ),
-                  ),
-                  error: (error, stack) => kDefaultError(
-                    context,
-                    error,
-                    stack,
-                    onRetry: () => ref.invalidate(
-                      healthTrendSeriesProvider((
-                        group: group,
-                        windowDays: days,
-                      )),
+                    error: (error, stack) => kDefaultError(
+                      context,
+                      error,
+                      stack,
+                      onRetry: () => ref.invalidate(
+                        healthTrendSeriesProvider((
+                          group: group,
+                          windowDays: days,
+                        )),
+                      ),
                     ),
-                  ),
-                  data: (series) {
-                    if (metric != null && series[metric] != null) {
-                      return HealthMetricDetail(series: series[metric]!);
-                    }
-                    final kinds = healthGroupKinds(group);
-                    final recorded = kinds
-                        .where((k) => series[k]?.samples.isNotEmpty == true)
-                        .toList();
-                    final missing = kinds
-                        .where((k) => !recorded.contains(k))
-                        .toList();
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (recorded.isEmpty)
-                          AppEmptyState(
-                            icon: group == TrendGroup.body
-                                ? FLucideIcons.scale
-                                : FLucideIcons.activity,
-                            title: l.healthNoData,
-                            message: l.healthNoRecordsInWindow,
-                            compact: true,
-                            action: FButton(
-                              variant: FButtonVariant.outline,
-                              onPress: () => group == TrendGroup.body
-                                  ? showBodyMeasurementEntrySheet(
-                                      context: context,
-                                      initialKind: HealthMetricKind.weight,
-                                    )
-                                  : context.go(HealthRoutes.today),
-                              child: Text(
-                                group == TrendGroup.body
-                                    ? l.healthRecordBodyMetricAction
-                                    : l.healthTodayTitle,
+                    data: (series) {
+                      if (metric != null && series[metric] != null) {
+                        return HealthMetricDetail(series: series[metric]!);
+                      }
+                      final kinds = healthGroupKinds(group);
+                      final recorded = kinds
+                          .where((k) => series[k]?.samples.isNotEmpty == true)
+                          .toList();
+                      final missing = kinds
+                          .where((k) => !recorded.contains(k))
+                          .toList();
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (recorded.isEmpty)
+                            AppEmptyState(
+                              icon: group == TrendGroup.body
+                                  ? FLucideIcons.scale
+                                  : FLucideIcons.activity,
+                              title: l.healthNoData,
+                              message: l.healthNoRecordsInWindow,
+                              compact: true,
+                              action: FButton(
+                                variant: FButtonVariant.outline,
+                                onPress: () => group == TrendGroup.body
+                                    ? showBodyMeasurementEntrySheet(
+                                        context: context,
+                                        initialKind: HealthMetricKind.weight,
+                                      )
+                                    : context.go(HealthRoutes.today),
+                                child: Text(
+                                  group == TrendGroup.body
+                                      ? l.healthRecordBodyMetricAction
+                                      : l.healthTodayTitle,
+                                ),
                               ),
-                            ),
-                          )
-                        else ...[
-                          AppGroupedSurface(
-                            padding: EdgeInsets.zero,
-                            child: Column(
-                              children: [
-                                for (var i = 0; i < recorded.length; i++) ...[
-                                  if (i > 0)
-                                    const AppGroupedDivider(
-                                      indent: AppSpacing.s16,
-                                      endIndent: AppSpacing.s16,
+                            )
+                          else ...[
+                            AppGroupedSurface(
+                              padding: EdgeInsets.zero,
+                              child: Column(
+                                children: [
+                                  for (var i = 0; i < recorded.length; i++) ...[
+                                    if (i > 0)
+                                      const AppGroupedDivider(
+                                        indent: AppSpacing.s16,
+                                        endIndent: AppSpacing.s16,
+                                      ),
+                                    _TrendOverviewRow(
+                                      series: series[recorded[i]]!,
+                                      onPress: () => _go(metric: recorded[i]),
                                     ),
-                                  _TrendOverviewRow(
-                                    series: series[recorded[i]]!,
-                                    onPress: () => _go(metric: recorded[i]),
-                                  ),
+                                  ],
                                 ],
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.s12),
-                          _TrendPeriodSummary(
-                            series: [for (final k in recorded) series[k]!],
-                          ),
-                        ],
-                        if (missing.isNotEmpty) ...[
-                          const SizedBox(height: AppSpacing.s12),
-                          AppRevealControl(
-                            expanded: _showMissing,
-                            collapsedLabel: l.healthMissingMetrics(
-                              missing.length,
-                            ),
-                            expandedLabel: l.commonRevealLess,
-                            onToggle: () =>
-                                setState(() => _showMissing = !_showMissing),
-                          ),
-                          if (_showMissing)
-                            for (final k in missing)
-                              _MissingMetricRow(
-                                kind: k,
-                                onPress: () => _go(metric: k),
                               ),
+                            ),
+                            const SizedBox(height: AppSpacing.s12),
+                            _TrendPeriodSummary(
+                              series: [for (final k in recorded) series[k]!],
+                            ),
+                          ],
+                          if (missing.isNotEmpty) ...[
+                            const SizedBox(height: AppSpacing.s12),
+                            AppRevealControl(
+                              expanded: _showMissing,
+                              collapsedLabel: l.healthMissingMetrics(
+                                missing.length,
+                              ),
+                              expandedLabel: l.commonRevealLess,
+                              onToggle: () =>
+                                  setState(() => _showMissing = !_showMissing),
+                            ),
+                            if (_showMissing)
+                              for (final k in missing)
+                                _MissingMetricRow(
+                                  kind: k,
+                                  onPress: () => _go(metric: k),
+                                ),
+                          ],
                         ],
-                      ],
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.s24),
                 HealthCheckInHistory(days: days),

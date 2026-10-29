@@ -5,11 +5,11 @@ import 'package:forui/forui.dart';
 import 'package:intl/intl.dart';
 
 import '../../l10n/gen/app_localizations.dart';
+import '../theme/app_theme_scope.dart';
 import '../tokens/app_motion_policy.dart';
 import '../tokens/color_palette.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
-import '../tokens/typography_tokens.dart';
 import '../widgets/amount_privacy_placeholder.dart';
 import '../widgets/amount_privacy_scope.dart';
 import '../widgets/app_tappable.dart';
@@ -114,7 +114,7 @@ class _NwPieChartState extends State<NwPieChart> {
           title: pct >= widget.minLabelPercent
               ? '${pct.toStringAsFixed(0)}%'
               : '',
-          titleStyle: TypographyTokens.numericCaption.copyWith(
+          titleStyle: context.appTheme.type.numericCaption.copyWith(
             color: _onColor(color),
           ),
         ),
@@ -282,7 +282,9 @@ class _NwPieChartState extends State<NwPieChart> {
           else
             Text(
               _formatCompact(s.value),
-              style: TypographyTokens.numericTitle.copyWith(color: onSurface),
+              style: context.appTheme.type.numericTitle.copyWith(
+                color: onSurface,
+              ),
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -290,7 +292,7 @@ class _NwPieChartState extends State<NwPieChart> {
           const SizedBox(height: AppSpacing.s2),
           Text(
             s.label,
-            style: TypographyTokens.numericCaption.copyWith(
+            style: context.appTheme.type.numericCaption.copyWith(
               color: onSurface.withValues(alpha: AppOpacity.strong),
             ),
             textAlign: TextAlign.center,
@@ -299,7 +301,7 @@ class _NwPieChartState extends State<NwPieChart> {
           ),
           Text(
             '${pct.toStringAsFixed(1)}%',
-            style: TypographyTokens.chartCaption.copyWith(
+            style: context.appTheme.type.chartCaption.copyWith(
               color: onSurface.withValues(alpha: AppOpacity.scrim),
             ),
           ),
@@ -318,14 +320,16 @@ class _NwPieChartState extends State<NwPieChart> {
         else
           Text(
             _formatCompact(total),
-            style: TypographyTokens.displaySmall.copyWith(color: onSurface),
+            style: context.appTheme.type.displayCompact.copyWith(
+              color: onSurface,
+            ),
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
         Text(
           AppLocalizations.of(context).chartTotalLabel,
-          style: TypographyTokens.numericCaption.copyWith(
+          style: context.appTheme.type.numericCaption.copyWith(
             color: onSurface.withValues(alpha: AppOpacity.scrim),
           ),
         ),
@@ -412,7 +416,7 @@ class LegendRow extends StatelessWidget {
                 Flexible(
                   child: Text(
                     label,
-                    style: TypographyTokens.numericCaption.copyWith(
+                    style: context.appTheme.type.numericCaption.copyWith(
                       color: onSurface,
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -421,7 +425,7 @@ class LegendRow extends StatelessWidget {
                 const SizedBox(width: AppSpacing.s4),
                 Text(
                   '${percent.toStringAsFixed(1)}%',
-                  style: TypographyTokens.chartCaption.copyWith(
+                  style: context.appTheme.type.chartCaption.copyWith(
                     color: onSurface.withValues(alpha: AppOpacity.prominent),
                   ),
                 ),
@@ -438,7 +442,7 @@ class LegendRow extends StatelessWidget {
                   value!,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TypographyTokens.chartCaption.copyWith(
+                  style: context.appTheme.type.chartCaption.copyWith(
                     color: onSurface.withValues(alpha: AppOpacity.emphasis),
                   ),
                 ),

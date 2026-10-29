@@ -4,8 +4,7 @@ import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
-import 'package:naviwealth/design_system/preferences/theme_preferences.dart';
-import 'package:naviwealth/design_system/widgets/soft_card.dart';
+import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/activation/data/finance_activation_providers.dart';
 import 'package:naviwealth/features/finance/activation/domain/finance_activation.dart';
 import 'package:naviwealth/features/finance/activity/data/activity_feed_provider.dart';
@@ -449,4 +448,34 @@ void main() {
       },
     );
   }
+  runResponsiveGolden(
+    'home established refined — wide',
+    profile: ResponsiveGoldenProfile.wide,
+    body: (tester, profile) async {
+      final prefs = await SharedPreferences.getInstance();
+      await pumpAndSnapshotResponsive(
+        tester,
+        name: 'home_page_established_refined_wide',
+        profile: profile,
+        visualStyle: AppVisualStyle.refined,
+        overrides: _homeOverrides(
+          prefs,
+          snapshot: _establishedSnapshot(),
+          activityFeed: _establishedActivityFeed(),
+        ),
+        child: const HomePage(),
+      );
+      final hero = tester.getRect(
+        find
+            .byWidgetPredicate(
+              (widget) =>
+                  widget is SoftCard && widget.level == SoftCardLevel.hero,
+            )
+            .first,
+      );
+      final action = tester.getRect(find.text('Record expense'));
+      expect(action.left, greaterThan(hero.right));
+      expect(action.top, lessThan(hero.bottom));
+    },
+  );
 }

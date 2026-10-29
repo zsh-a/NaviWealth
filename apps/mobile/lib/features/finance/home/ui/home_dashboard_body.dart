@@ -54,32 +54,42 @@ class _DashboardBody extends ConsumerWidget {
                 amount: currentSnapshot.netWorth.amount.toDouble(),
                 currencyCode: currentSnapshot.baseCurrency,
                 compact: true,
-                style: TypographyTokens.numericTitleStrong,
+                style: context.appTheme.type.numericTitleStrong,
               ),
             ),
           );
         }
 
+        final pairQuickActions = hasEstablishedData && !showActivation;
+        final overview = showActivation && snapshot?.isEmpty == true
+            ? const SizedBox.shrink()
+            : snapshot != null
+            ? _NetWorthHeader(snapshot: snapshot)
+            : snapshotAsync.when(
+                loading: () => const _NetWorthStageSkeleton(),
+                error: (error, stackTrace) => _NetWorthStageError(
+                  error: error,
+                  stackTrace: stackTrace,
+                  onRetry: () => ref.invalidate(dashboardSnapshotProvider),
+                ),
+                data: (value) => _NetWorthHeader(snapshot: value),
+              );
+
         return BriefScaffold(
           padding: padding,
           maxContentWidth: !hasEstablishedData
               ? AdaptiveMaxWidth.narrow
-              : AdaptiveMaxWidth.dashboard,
+              : AdaptiveMaxWidth.page,
           onRefresh: onRefresh,
           greeting: const HomeGreetingHeader(),
-          stage: showActivation && snapshot?.isEmpty == true
-              ? const SizedBox.shrink()
-              : snapshot != null
-              ? _NetWorthHeader(snapshot: snapshot)
-              : snapshotAsync.when(
-                  loading: () => const _NetWorthStageSkeleton(),
-                  error: (error, stackTrace) => _NetWorthStageError(
-                    error: error,
-                    stackTrace: stackTrace,
-                    onRetry: () => ref.invalidate(dashboardSnapshotProvider),
+          stage: pairQuickActions
+              ? AdaptiveSupportingPane(
+                  primary: overview,
+                  supporting: const HomeQuickActions(
+                    mode: HomeQuickActionMode.active,
                   ),
-                  data: (value) => _NetWorthHeader(snapshot: value),
-                ),
+                )
+              : overview,
           stickyBuilder:
               snapshot == null || (showActivation && snapshot.isEmpty)
               ? null
@@ -87,6 +97,7 @@ class _DashboardBody extends ConsumerWidget {
           modules: [
             _HomeSummaryLayout(
               showActivation: showActivation,
+              showQuickActions: !pairQuickActions,
               quickActionMode: hasEstablishedData
                   ? HomeQuickActionMode.active
                   : HomeQuickActionMode.onboarding,
@@ -146,9 +157,11 @@ class _HomeSummaryLayout extends ConsumerWidget {
   const _HomeSummaryLayout({
     required this.showActivation,
     required this.quickActionMode,
+    required this.showQuickActions,
   });
 
   final bool showActivation;
+  final bool showQuickActions;
   final HomeQuickActionMode quickActionMode;
 
   @override
@@ -165,10 +178,11 @@ class _HomeSummaryLayout extends ConsumerWidget {
         ? const FinanceActivationCard()
         : HomeQuickActions(mode: quickActionMode);
     final ordered = <AdaptiveSummaryTile>[
-      AdaptiveSummaryTile(
-        role: AdaptiveSummaryTileRole.featured,
-        child: primary,
-      ),
+      if (showActivation || showQuickActions)
+        AdaptiveSummaryTile(
+          role: AdaptiveSummaryTileRole.featured,
+          child: primary,
+        ),
       if (hasInbox)
         const AdaptiveSummaryTile(
           role: AdaptiveSummaryTileRole.supporting,

@@ -65,7 +65,7 @@ class _HeroAmountCard extends StatelessWidget {
               amount: headline.units,
               unit: headline.unit,
               formatters: formatters,
-              style: TypographyTokens.displayLarge.copyWith(height: 1.05),
+              style: context.appTheme.type.display.copyWith(height: 1.05),
             ),
           const SizedBox(height: AppSpacing.s12),
           Text(title, style: context.titleLabelStyle.copyWith(height: 1.22)),

@@ -9,7 +9,7 @@ extension _NwLineChartAxes on _NwLineChartState {
     double maxY,
     bool hideAmounts,
   ) {
-    final labelStyle = TypographyTokens.numericCaption.copyWith(
+    final labelStyle = context.appTheme.type.numericCaption.copyWith(
       color: palette.axisLabel,
     );
     final xRange = (maxX - minX).abs();
@@ -20,6 +20,28 @@ extension _NwLineChartAxes on _NwLineChartState {
     final yInterval = widget.yAxis.maxLabels > 0 && yRange > 0
         ? yRange / math.max(1, widget.yAxis.maxLabels - 1)
         : null;
+    // Reserve the actual scaled text height, and thin ticks by their measured
+    // width. A fixed 24dp gutter clipped dates under Dynamic Type.
+    final painter = TextPainter(
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 1,
+    );
+    var xLabelWidth = kMinAxisLabelSpacing;
+    var xLabelHeight = _kBottomTitleReservedSize;
+    if (widget.showXAxis) {
+      final samples = math.max(1, widget.xAxis.maxLabels);
+      for (var i = 0; i <= samples; i++) {
+        painter.text = TextSpan(
+          text: widget.xAxis.formatTimestamp(minX + xRange * i / samples),
+          style: labelStyle,
+        );
+        painter.layout();
+        xLabelWidth = math.max(xLabelWidth, painter.width + AppSpacing.s8);
+        xLabelHeight = math.max(xLabelHeight, painter.height + AppSpacing.s4);
+      }
+    }
+    painter.dispose();
     final yLabel = widget.yAxis.tickFormatter(
       min: minY,
       max: maxY,
@@ -31,7 +53,7 @@ extension _NwLineChartAxes on _NwLineChartState {
       bottomTitles: AxisTitles(
         sideTitles: SideTitles(
           showTitles: widget.showXAxis,
-          reservedSize: widget.showXAxis ? _kBottomTitleReservedSize : 0,
+          reservedSize: widget.showXAxis ? xLabelHeight : 0,
           interval: xInterval,
           getTitlesWidget: (value, meta) {
             // Skip labels that would overlap on narrow charts.
@@ -40,6 +62,8 @@ extension _NwLineChartAxes on _NwLineChartState {
               meta: meta,
               range: xRange,
               maxLabels: widget.xAxis.maxLabels,
+              minLabelSpacing: xLabelWidth,
+              fitInside: true,
               formatLabel: widget.xAxis.formatTimestamp,
             )) {
               return const SizedBox.shrink();

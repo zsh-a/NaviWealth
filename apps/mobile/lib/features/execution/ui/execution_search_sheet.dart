@@ -116,19 +116,13 @@ class _ExecutionSearchBodyState extends ConsumerState<_ExecutionSearchBody> {
             clearLabel: l10n.aiChatSessionsSearchClear,
           ),
           const SizedBox(height: AppSpacing.s8),
-          AppAdaptiveChoice<_ExecutionSearchScope>(
-            title: l10n.executionSearchFilterTitle,
+          SegmentedRow<_ExecutionSearchScope>.inline(
             options: _ExecutionSearchScope.values,
             value: _scope,
             labelOf: (scope) => switch (scope) {
               _ExecutionSearchScope.all => l10n.executionSearchFilterAll,
               _ExecutionSearchScope.action => l10n.executionSearchKindAction,
               _ExecutionSearchScope.plan => l10n.executionSearchKindPlan,
-            },
-            iconOf: (scope) => switch (scope) {
-              _ExecutionSearchScope.all => FLucideIcons.search,
-              _ExecutionSearchScope.action => FLucideIcons.listTodo,
-              _ExecutionSearchScope.plan => FLucideIcons.layers,
             },
             onChanged: (scope) {
               setState(() => _scope = scope);

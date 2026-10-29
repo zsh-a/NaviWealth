@@ -114,7 +114,7 @@ class _RankRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.s8),
-                Text(amount, style: TypographyTokens.numericBodyStrong),
+                Text(amount, style: context.appTheme.type.numericBodyStrong),
               ],
             ),
             const SizedBox(height: AppSpacing.s2),

@@ -100,7 +100,7 @@ class _MetricCard extends StatelessWidget {
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: AlignmentDirectional.centerStart,
-            child: Text(value, style: TypographyTokens.numericTitle),
+            child: Text(value, style: context.appTheme.type.numericTitle),
           ),
           if (caption != null) ...[
             const SizedBox(height: AppSpacing.s4),

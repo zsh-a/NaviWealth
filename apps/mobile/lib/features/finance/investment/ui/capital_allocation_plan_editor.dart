@@ -248,7 +248,7 @@ class _CapitalAllocationPlanEditorState
                 Expanded(child: Text(l10n.capitalAllocationTotalLabel)),
                 Text(
                   '${_percentFromBps(_totalBps)}%',
-                  style: TypographyTokens.numericBodyStrong,
+                  style: context.appTheme.type.numericBodyStrong,
                 ),
               ],
             ),

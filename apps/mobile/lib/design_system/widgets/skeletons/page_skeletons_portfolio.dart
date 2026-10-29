@@ -8,135 +8,79 @@ class WealthHubSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isWide = !Breakpoints.isMobile(constraints.maxWidth);
-        final padding = isWide
-            ? const EdgeInsets.all(AppSpacing.s24)
-            : const EdgeInsets.all(AppSpacing.s16);
-
-        const hero = SkeletonCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SkeletonBox(width: 96, height: 14, radius: AppRadius.sm),
-              SizedBox(height: AppSpacing.s8),
-              SkeletonBox(width: 220, height: 36, radius: AppRadius.sm),
-              SizedBox(height: AppSpacing.s16),
-              Row(
-                children: [
-                  Expanded(
-                    child: SkeletonBox(height: 42, radius: AppRadius.sm),
-                  ),
-                  SizedBox(width: AppSpacing.s12),
-                  Expanded(
-                    child: SkeletonBox(height: 42, radius: AppRadius.sm),
-                  ),
-                ],
-              ),
-            ],
+        final hPad = Breakpoints.isMobile(constraints.maxWidth)
+            ? AppSpacing.s16
+            : AppSpacing.s24;
+        return ListView(
+          padding: EdgeInsets.fromLTRB(
+            hPad,
+            AppSpacing.s8,
+            hPad,
+            AppSpacing.s24,
           ),
-        );
-
-        const trend = SkeletonCard(
-          padding: EdgeInsets.all(AppSpacing.s16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SkeletonBox(width: 128, height: 16, radius: AppRadius.sm),
-              SizedBox(height: AppSpacing.s12),
-              SkeletonBox(height: 44, radius: AppRadius.full),
-              SizedBox(height: AppSpacing.s16),
-              Row(
+          children: [
+            AdaptiveContentFrame(
+              maxWidth: AdaptiveMaxWidth.page,
+              padding: EdgeInsets.zero,
+              primary: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(child: SkeletonBox(height: AppSpacing.s48)),
-                  SizedBox(width: AppSpacing.s16),
-                  Expanded(child: SkeletonBox(height: AppSpacing.s48)),
-                ],
-              ),
-              SizedBox(height: AppSpacing.s16),
-              SkeletonBox(height: AppChartHeights.standard),
-              SizedBox(height: AppSpacing.s16),
-              SkeletonBox(height: 44, radius: AppRadius.full),
-            ],
-          ),
-        );
-
-        final destinations = SkeletonCard(
-          padding: const EdgeInsets.all(AppSpacing.s16),
-          child: Column(
-            children: [
-              for (var i = 0; i < 3; i++) ...[
-                if (i != 0) const FDivider(),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: AppSpacing.s12),
-                  child: Row(
-                    children: [
-                      SkeletonBox(
-                        width: 36,
-                        height: 36,
-                        radius: AppRadius.full,
-                      ),
-                      SizedBox(width: AppSpacing.s12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  AdaptiveSupportingPane(
+                    primary: const Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: SkeletonBox(width: 96, height: 14),
+                        ),
+                        SizedBox(height: AppSpacing.s12),
+                        Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: SkeletonBox(width: 220, height: 44),
+                        ),
+                        SizedBox(height: AppSpacing.s20),
+                        Row(
                           children: [
-                            SkeletonBox(width: 140, height: 14),
-                            SizedBox(height: AppSpacing.s6),
-                            SkeletonBox(width: 88, height: 12),
+                            Expanded(child: SkeletonBox(height: 42)),
+                            SizedBox(width: AppSpacing.s16),
+                            Expanded(child: SkeletonBox(height: 42)),
                           ],
                         ),
-                      ),
-                      SizedBox(width: AppSpacing.s12),
-                      SkeletonBox(width: 80, height: 16),
-                    ],
+                        SizedBox(height: AppSpacing.s24),
+                        Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: SkeletonBox(width: 160, height: 18),
+                        ),
+                        SizedBox(height: AppSpacing.s16),
+                        SkeletonBox(height: AppChartHeights.compact),
+                        SizedBox(height: AppSpacing.s12),
+                        SkeletonBox(height: 44, radius: AppRadius.full),
+                      ],
+                    ),
+                    supporting: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SkeletonBox(width: 96, height: 14),
+                        const SizedBox(height: AppSpacing.s12),
+                        for (var i = 0; i < 2; i++)
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: AppSpacing.s8),
+                            child: Row(
+                              children: [
+                                Expanded(child: SkeletonBox(height: 44)),
+                                SizedBox(width: AppSpacing.s12),
+                                Expanded(child: SkeletonBox(height: 44)),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ],
-          ),
-        );
-
-        const allocation = SkeletonCard(
-          padding: EdgeInsets.all(AppSpacing.s16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SkeletonBox(width: 128, height: 16, radius: AppRadius.sm),
-              SizedBox(height: AppSpacing.s16),
-              SkeletonBox(height: AppSpacing.s10, radius: AppRadius.full),
-              SizedBox(height: AppSpacing.s12),
-              SkeletonBox(height: 18),
-              SizedBox(height: AppSpacing.s10),
-              SkeletonBox(height: 18),
-            ],
-          ),
-        );
-
-        if (isWide) {
-          return ListView(
-            padding: padding,
-            children: [
-              hero,
-              const SizedBox(height: AppSpacing.s16),
-              trend,
-              const SizedBox(height: AppSpacing.s16),
-              destinations,
-              const SizedBox(height: AppSpacing.s16),
-              allocation,
-            ],
-          );
-        }
-
-        return ListView(
-          padding: padding,
-          children: [
-            hero,
-            const SizedBox(height: AppSpacing.s12),
-            trend,
-            const SizedBox(height: AppSpacing.s12),
-            destinations,
-            const SizedBox(height: AppSpacing.s12),
-            allocation,
+                  const SizedBox(height: AppPageRhythm.section),
+                  const SkeletonBox(height: 160),
+                ],
+              ),
+            ),
           ],
         );
       },

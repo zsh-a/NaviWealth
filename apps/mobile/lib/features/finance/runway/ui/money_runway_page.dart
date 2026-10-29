@@ -127,7 +127,7 @@ class _RunwayContent extends ConsumerWidget {
                   snapshot.balanceAt(90),
                   code: snapshot.currency,
                 ),
-                style: TypographyTokens.displayLarge,
+                style: context.appTheme.type.display,
               ),
               const SizedBox(height: AppSpacing.s8),
               Text(status.$2, style: context.bodyCaptionStyle),
@@ -468,7 +468,7 @@ class _HorizonValue extends StatelessWidget {
       children: [
         Text(l10n.moneyRunwayDays(days), style: context.captionStyle),
         const SizedBox(height: AppSpacing.s4),
-        Text(value, style: TypographyTokens.numericTitleStrong),
+        Text(value, style: context.appTheme.type.numericTitleStrong),
       ],
     );
   }
@@ -618,7 +618,7 @@ class _ScenarioSectionState extends ConsumerState<_ScenarioSection> {
                             result.minimumExpectedBalance,
                             code: result.currency,
                           ),
-                          style: TypographyTokens.numericBodyStrong,
+                          style: context.appTheme.type.numericBodyStrong,
                         ),
                       ],
                     ),

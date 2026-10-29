@@ -38,11 +38,14 @@ class AppTypeScale {
   TextStyle _style(TextStyle style) => appVisualTextStyle(style, _visualStyle);
 
   // ── Display ────────────────────────────────────────────────────────────
-  /// 40px Outfit — reserved for the page-level hero number.
+  /// 40px — page hero; Outfit in classic, Inter in refined.
   TextStyle get display => _style(TypographyTokens.displayLarge);
 
   /// 32px — secondary marquee numbers and page heroes.
   TextStyle get displaySmall => _style(TypographyTokens.displayMedium);
+
+  /// 26px — compact verdicts and chart-center values.
+  TextStyle get displayCompact => _style(TypographyTokens.displaySmall);
 
   // ── Headings ───────────────────────────────────────────────────────────
   /// 24px w600 — page titles, empty-state titles.

@@ -336,6 +336,15 @@ Future<void> _openCompactDetails(
   await tester.pumpAndSettle();
 }
 
+Future<void> _openReviewSearch(WidgetTester tester) async {
+  await tester.tap(find.byKey(const ValueKey('ingest-open-search')));
+  await tester.pumpAndSettle();
+  final search = tester.widget<AppSearchField>(
+    find.byKey(const ValueKey('ingest-review-search')),
+  );
+  expect(search.focusNode!.hasFocus, isTrue);
+}
+
 Future<void> _toggleReviewOptions(WidgetTester tester) async {
   final options = find.byKey(const ValueKey('ingest-review-options'));
   await tester.ensureVisible(options);
@@ -371,6 +380,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('ingest-review-search')), findsNothing);
       expect(find.byKey(const ValueKey('ingest-review-sort')), findsNothing);
       expect(
         find.byKey(const ValueKey('ingest-review-category')),
@@ -385,7 +395,7 @@ void main() {
         tester
             .getTopLeft(find.byKey(const ValueKey('ingest-master-coffee')))
             .dy,
-        lessThan(390),
+        lessThan(300),
       );
       await _toggleReviewOptions(tester);
       expect(find.byKey(const ValueKey('ingest-review-sort')), findsOneWidget);
@@ -712,6 +722,7 @@ void main() {
         _app(db: db, store: store, service: service, accounts: [_account]),
       );
       await tester.pumpAndSettle();
+      await _openReviewSearch(tester);
       await tester.enterText(
         find.byKey(const ValueKey('ingest-review-search')),
         'Coffee',
@@ -1004,9 +1015,8 @@ void main() {
         find.widgetWithText(AppActionButton, 'Confirm (500)'),
         findsOneWidget,
       );
-      await tester.ensureVisible(
-        find.byKey(const ValueKey('ingest-review-search')),
-      );
+
+      await _openReviewSearch(tester);
       await tester.enterText(
         find.byKey(const ValueKey('ingest-review-search')),
         'Merchant-499',
@@ -1156,6 +1166,7 @@ void main() {
       _app(db: db, store: store, service: service, accounts: [_account]),
     );
     await tester.pumpAndSettle();
+    await _openReviewSearch(tester);
     await tester.enterText(
       find.byKey(const ValueKey('ingest-review-search')),
       'Coffee',
