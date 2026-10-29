@@ -74441,10 +74441,11 @@ class $$HealthMealsTableTableManager
               getPrefetchedDataCallback: (items) async {
                 return [
                   if (healthMealPhotosRefs)
-                    await $_getPrefetchedData<
+                    await $_getPrefetchedDataByColumns<
                       HealthMealRow,
                       $HealthMealsTable,
-                      HealthMealPhotoRow
+                      HealthMealPhotoRow,
+                      $HealthMealPhotosTable
                     >(
                       currentTable: table,
                       referencedTable: $$HealthMealsTableReferences
@@ -74455,8 +74456,8 @@ class $$HealthMealsTableTableManager
                             table,
                             p0,
                           ).healthMealPhotosRefs,
-                      referencedItemsForCurrentItem: (item, referencedItems) =>
-                          referencedItems.where((e) => e.mealId == item.id),
+                      currentColumn: 'id',
+                      referencedColumn: 'meal_id',
                       typedResults: items,
                     ),
                 ];
