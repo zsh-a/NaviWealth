@@ -82,7 +82,7 @@ dependencies:
   # AI replies are an untrusted surface (prompt-injection vector).
   url_launcher: ^6.3.3
   uuid: ^4.6.0
-  web: ^1.1.1
+  web: ^1.1.2
   # Cross-platform background task scheduler (Android WorkManager + iOS
   # BGTaskScheduler). Background callbacks only evaluate precomputed,
   # deterministic attention snapshots; they never invoke an LLM.
