@@ -67,7 +67,7 @@ dependencies:
   path_provider: ^2.1.6
   # Requires Swift Package Manager on iOS.
   receive_sharing_intent: 1.9.0
-  record: ^7.1.1
+  record: ^7.1.2
   # Sentry 10 uses Swift Package Manager on Apple platforms.
   sentry_flutter: 10.2.0
   share_plus: ^13.3.1
