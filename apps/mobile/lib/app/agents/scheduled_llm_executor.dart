@@ -280,7 +280,6 @@ Future<AgentRunResult> _executeScheduledLlmTask(
         agentId: task.id,
         surface: 'scheduled_assistant',
         mode: 'chat',
-        maxOutputTokens: 4096,
         cancelToken: cancel,
         messages: [
           ChatAgentMessage(

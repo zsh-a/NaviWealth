@@ -41,7 +41,6 @@ class FrbActivityEntryInsightClient implements ActivityEntryInsightClient {
           'content': activityEntryInsightPrompt(request, l10n),
         },
       ],
-      maxOutputTokens: 256,
       metadata: const <String, Object?>{
         'surface': surface,
         'agent_id': agentId,
@@ -82,7 +81,6 @@ class FrbKnowledgeRewriteClient implements KnowledgeRewriteClient {
           },
         ],
         temperature: 0,
-        maxOutputTokens: 8192,
         responseFormat: const <String, Object?>{'type': 'json_object'},
         metadata: <String, Object?>{
           'surface': surface,
@@ -342,7 +340,6 @@ class FrbMealRecognitionClient implements MealRecognitionClient {
         context: context,
       ),
       responseFormat: const {'type': 'json_object'},
-      maxOutputTokens: 3000,
       metadata: const {
         'surface': 'health_meal_recognition',
         'agent_id': 'health_meal_recognition',

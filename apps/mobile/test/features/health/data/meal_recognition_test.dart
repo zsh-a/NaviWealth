@@ -7,6 +7,7 @@ import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_profile_completion_clients.dart';
 import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
+import 'package:naviwealth/core/ai/runtime/device/device_system_prompt.dart';
 import 'package:naviwealth/features/health/data/meal_photo_capture.dart';
 import 'package:naviwealth/features/health/data/meal_recognition_client.dart';
 import 'package:naviwealth/features/health/domain/meal_photo.dart';
@@ -196,17 +197,19 @@ void main() {
     );
     expect(calls, isEmpty);
     final draft = await client.recognize(
-      photos: [
-        MealPhoto(bytes: Uint8List.fromList([1])),
-      ],
+      photos: List.generate(
+        4,
+        (index) => MealPhoto(bytes: Uint8List.fromList([index + 1])),
+      ),
       languageCode: 'zh',
       allowUpload: true,
     );
     expect(draft.foods.single.nutrients.kcal, 260);
     expect(calls.single['response_format'], {'type': 'json_object'});
+    expect(calls.single['max_output_tokens'], kDefaultLlmMaxOutputTokens);
     final messages = calls.single['messages']! as List<Map<String, Object?>>;
     final content = messages.last['content']! as List<Map<String, Object?>>;
-    expect(content.where((block) => block['type'] == 'image'), hasLength(1));
+    expect(content.where((block) => block['type'] == 'image'), hasLength(4));
     expect(traces.single['domain'], 'health');
   });
 }

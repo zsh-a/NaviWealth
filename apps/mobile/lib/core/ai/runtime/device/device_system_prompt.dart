@@ -23,7 +23,9 @@ const int kMaxProposalsPerConversation = 5;
 /// The provider may still enforce a lower model-specific maximum. Keeping the
 /// app default provider-neutral and applying it in the shared LLM bridge avoids
 /// silent provider fallbacks (Anthropic otherwise defaults to only 1024 in the
-/// native adapter). Explicitly smaller task budgets still override this value.
+/// native adapter). Content-generation tasks share this allowance so reasoning
+/// models have room for both reasoning and the final response. Explicit limits
+/// remain available for diagnostics such as the connectivity probe.
 const int kDefaultLlmMaxOutputTokens = 16 * 1024;
 
 /// Runtime context-window policy for interactive chat.

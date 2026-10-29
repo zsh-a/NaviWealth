@@ -5,6 +5,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import '../../core/ai/runtime/agent_runtime/agent_runtime_profile_turn.dart';
+import '../../core/ai/runtime/device/device_system_prompt.dart';
 import '../../core/lifeos/life_context.dart';
 import '../../core/lifeos/life_signal.dart';
 import '../../features/life/ui/life_event_l10n.dart';
@@ -124,7 +125,7 @@ class FrbDailyNavigatorSynthesizer implements DailyNavigatorSynthesizer {
   const FrbDailyNavigatorSynthesizer({
     required this.runtime,
     this.fallback = const ProgrammaticDailyNavigatorSynthesizer(),
-    this.maxTokens = 4096,
+    this.maxTokens = kDefaultLlmMaxOutputTokens,
     this.requestTimeout = const Duration(seconds: 45),
   });
 

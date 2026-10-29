@@ -19,9 +19,6 @@ import '../domain/ingest_models.dart';
 import 'ingest_llm_client.dart';
 import 'vision_ingest_client.dart';
 
-/// Mirrors the backend `VISION_MAX_TOKENS`.
-const int _kVisionMaxTokens = 4096;
-
 class FrbVisionIngestClient implements VisionIngestClient {
   const FrbVisionIngestClient({required IngestLlmProfileClient llmClient})
     : _llmClient = llmClient;
@@ -59,7 +56,6 @@ class FrbVisionIngestClient implements VisionIngestClient {
       response = await _llmClient.completeProfile(
         messages: messages,
         tools: tools,
-        maxOutputTokens: _kVisionMaxTokens,
         metadata: const <String, Object?>{
           'surface': 'finance_vision_ingest',
           'agent_id': 'finance_vision_ingest',
