@@ -29,7 +29,12 @@ void main() {
       // The union is derived from production DomainPack registrations.
       // Keep the exact count pinned so adding or removing a device tool is
       // an intentional contract change.
-      expect(productionToolDescriptors.values, hasLength(66));
+      expect(productionToolDescriptors.values, hasLength(68));
+      for (final name in ['search_bcr_notes', 'read_bcr_note']) {
+        final descriptor = productionToolDescriptors[name]!;
+        expect(descriptor.access, Access.read);
+        expect(descriptor.sideEffect, SideEffect.none);
+      }
       expect(
         productionToolDescriptors['propose_scheduled_task']
             ?.requiresConfirmation,

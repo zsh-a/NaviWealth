@@ -126,7 +126,7 @@ void main() {
     }
 
     await tester.binding.setSurfaceSize(const Size(1200, 1000));
-    await tester.pump(const Duration(milliseconds: 150));
+    await tester.pumpAndSettle();
 
     final priorityWideTop = tester
         .getTopLeft(find.text(l10n.lifeTimelinePriorityTitle))
