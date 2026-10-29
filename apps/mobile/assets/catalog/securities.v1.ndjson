@@ -1,4 +1,4 @@
-{"version":"v1.20261024","checksum":"853b25a152f8ef0e","count":23783}
+{"version":"v1.20261025","checksum":"45e4c294ff4f93a4","count":23783}
 {"s":"000001","m":"cn_a","t":"stock","c":"CNY","nc":"平安银行","p":"pinganyinhang","pi":"payh"}
 {"s":"000002","m":"cn_a","t":"stock","c":"CNY","nc":"万 科Ａ","p":"wan keａ","pi":"w kａ"}
 {"s":"000006","m":"cn_a","t":"stock","c":"CNY","nc":"深振业Ａ","p":"shenzhenyeａ","pi":"szyａ"}
@@ -8167,7 +8167,6 @@
 {"s":"AVAX-USD","m":"crypto","t":"crypto","c":"USD","ne":"Avalanche","nc":"雪崩","p":"xuebeng","pi":"xb","a":"avalanche-2"}
 {"s":"AVUSD-USD","m":"crypto","t":"crypto","c":"USD","ne":"Avant USD","a":"avant-usd"}
 {"s":"AWE-USD","m":"crypto","t":"crypto","c":"USD","ne":"AWE Network","a":"stp-network"}
-{"s":"AXIS-USD","m":"crypto","t":"crypto","c":"USD","ne":"Axis Robotics","a":"axis-robotics"}
 {"s":"AXL-USD","m":"crypto","t":"crypto","c":"USD","ne":"Axelar","a":"axelar"}
 {"s":"AXS-USD","m":"crypto","t":"crypto","c":"USD","ne":"Axie Infinity","a":"axie-infinity"}
 {"s":"AZTEC-USD","m":"crypto","t":"crypto","c":"USD","ne":"Aztec","a":"aztec"}
@@ -8177,7 +8176,6 @@
 {"s":"BABYDOGE-USD","m":"crypto","t":"crypto","c":"USD","ne":"Baby Doge Coin","a":"baby-doge-coin"}
 {"s":"BAN-USD","m":"crypto","t":"crypto","c":"USD","ne":"Comedian","a":"comedian"}
 {"s":"BANANAS31-USD","m":"crypto","t":"crypto","c":"USD","ne":"Banana For Scale","a":"banana-for-scale-2"}
-{"s":"BARD-USD","m":"crypto","t":"crypto","c":"USD","ne":"Lombard","a":"lombard-protocol"}
 {"s":"BAT-USD","m":"crypto","t":"crypto","c":"USD","ne":"Basic Attention","a":"basic-attention-token"}
 {"s":"BC-USD","m":"crypto","t":"crypto","c":"USD","ne":"BCGame Coin","a":"bc-token"}
 {"s":"BCH-USD","m":"crypto","t":"crypto","c":"USD","ne":"Bitcoin Cash","nc":"比特币现金","p":"bitebixianjin","pi":"btbxj","a":"bitcoin-cash"}
@@ -8189,13 +8187,13 @@
 {"s":"BGBTC-USD","m":"crypto","t":"crypto","c":"USD","ne":"Bitget Wrapped BTC","a":"bitget-wrapped-btc"}
 {"s":"BIM-USD","m":"crypto","t":"crypto","c":"USD","ne":"BIM","a":"bim-2"}
 {"s":"BIO-USD","m":"crypto","t":"crypto","c":"USD","ne":"Bio Protocol","a":"bio-protocol"}
-{"s":"BIRB-USD","m":"crypto","t":"crypto","c":"USD","ne":"Moonbirds","a":"moonbirds"}
 {"s":"BNB-USD","m":"crypto","t":"crypto","c":"USD","ne":"BNB","nc":"币安币","p":"bianbi","pi":"bab","a":"binancecoin"}
 {"s":"BONK-USD","m":"crypto","t":"crypto","c":"USD","ne":"Bonk","a":"bonk"}
 {"s":"BORG-USD","m":"crypto","t":"crypto","c":"USD","ne":"SwissBorg","a":"swissborg"}
 {"s":"BP-USD","m":"crypto","t":"crypto","c":"USD","ne":"Backpack","a":"backpack"}
 {"s":"BR-USD","m":"crypto","t":"crypto","c":"USD","ne":"Bedrock","a":"bedrock-token"}
 {"s":"BRETT-USD","m":"crypto","t":"crypto","c":"USD","ne":"Brett","a":"based-brett"}
+{"s":"BRLA-USD","m":"crypto","t":"crypto","c":"USD","ne":"BRLA Digital BRLA","a":"brla-digital-brla"}
 {"s":"BRLV-USD","m":"crypto","t":"crypto","c":"USD","ne":"Crown BRLV","a":"crown-brlv"}
 {"s":"BRSRV-USD","m":"crypto","t":"crypto","c":"USD","ne":"BlackRock Daily Reinvestment Stablecoin Reserve Vehicle","a":"blackrock-daily-reinvestment-stablecoin-reserve-vehicle"}
 {"s":"BRZ-USD","m":"crypto","t":"crypto","c":"USD","ne":"Brazilian Digital","a":"brz"}
@@ -8215,6 +8213,7 @@
 {"s":"CFX-USD","m":"crypto","t":"crypto","c":"USD","ne":"Conflux","a":"conflux-token"}
 {"s":"CGUSD-USD","m":"crypto","t":"crypto","c":"USD","ne":"Cygnus Finance Global USD","a":"cygnus-finance-global-usd"}
 {"s":"CHEEMS-USD","m":"crypto","t":"crypto","c":"USD","ne":"Cheems Token","a":"cheems-token"}
+{"s":"CHFAU-USD","m":"crypto","t":"crypto","c":"USD","ne":"AllUnity CHF","a":"allunity-chf"}
 {"s":"CHIP-USD","m":"crypto","t":"crypto","c":"USD","ne":"USD.AI","a":"chip-2"}
 {"s":"CHZ-USD","m":"crypto","t":"crypto","c":"USD","ne":"Chiliz","a":"chiliz"}
 {"s":"CKB-USD","m":"crypto","t":"crypto","c":"USD","ne":"Nervos Network","a":"nervos-network"}
@@ -8255,6 +8254,7 @@
 {"s":"EGLD-USD","m":"crypto","t":"crypto","c":"USD","ne":"MultiversX","a":"elrond-erd-2"}
 {"s":"EIGEN-USD","m":"crypto","t":"crypto","c":"USD","ne":"EigenCloud (prev. EigenLayer)","a":"eigenlayer"}
 {"s":"ELF-USD","m":"crypto","t":"crypto","c":"USD","ne":"aelf","a":"aelf"}
+{"s":"ELG-USD","m":"crypto","t":"crypto","c":"USD","ne":"Escoin","a":"escoin-token"}
 {"s":"ENA-USD","m":"crypto","t":"crypto","c":"USD","ne":"Ethena","a":"ethena"}
 {"s":"ENJ-USD","m":"crypto","t":"crypto","c":"USD","ne":"Enjin Coin","a":"enjincoin"}
 {"s":"ENS-USD","m":"crypto","t":"crypto","c":"USD","ne":"Ethereum Name Service","a":"ethereum-name-service"}
@@ -8277,7 +8277,6 @@
 {"s":"FIL-USD","m":"crypto","t":"crypto","c":"USD","ne":"Filecoin","nc":"Filecoin","p":"filecoin","pi":"f","a":"filecoin"}
 {"s":"FIUSD-USD","m":"crypto","t":"crypto","c":"USD","ne":"Sygnum FIUSD Liquidity Fund","a":"sygnum-fiusd-liquidity-fund"}
 {"s":"FLOKI-USD","m":"crypto","t":"crypto","c":"USD","ne":"FLOKI","a":"floki"}
-{"s":"FLOW-USD","m":"crypto","t":"crypto","c":"USD","ne":"Flow","a":"flow"}
 {"s":"FLR-USD","m":"crypto","t":"crypto","c":"USD","ne":"Flare","a":"flare-networks"}
 {"s":"FLUID-USD","m":"crypto","t":"crypto","c":"USD","ne":"Fluid","a":"instadapp"}
 {"s":"FONQ-USD","m":"crypto","t":"crypto","c":"USD","ne":"FONQ","a":"fonq"}
@@ -8327,6 +8326,7 @@
 {"s":"IVVON-USD","m":"crypto","t":"crypto","c":"USD","ne":"iShares Core S&P 500 ETF (Ondo Tokenized ETF)","a":"ishares-core-s-p-500-etf-ondo-tokenized-etf"}
 {"s":"JAAA-USD","m":"crypto","t":"crypto","c":"USD","ne":"Janus Henderson Anemoy AAA CLO Fund","a":"janus-henderson-anemoy-aaa-clo-fund"}
 {"s":"JASMY-USD","m":"crypto","t":"crypto","c":"USD","ne":"JasmyCoin","a":"jasmycoin"}
+{"s":"JCT-USD","m":"crypto","t":"crypto","c":"USD","ne":"Janction","a":"janction"}
 {"s":"JELLYJELLY-USD","m":"crypto","t":"crypto","c":"USD","ne":"Jelly-My-Jelly","a":"jelly-my-jelly"}
 {"s":"JPYC-USD","m":"crypto","t":"crypto","c":"USD","ne":"JPY Coin","a":"jpycoin"}
 {"s":"JPYSC-USD","m":"crypto","t":"crypto","c":"USD","ne":"JPYSC","a":"jpysc"}
@@ -8370,7 +8370,6 @@
 {"s":"METAL-USD","m":"crypto","t":"crypto","c":"USD","ne":"Metal Blockchain","a":"metal-blockchain"}
 {"s":"MF-ONE-USD","m":"crypto","t":"crypto","c":"USD","ne":"Midas mF-ONE","a":"midas-mf-one"}
 {"s":"MGLO-USD","m":"crypto","t":"crypto","c":"USD","ne":"Midas Fasanara Global Open","a":"midas-fasanara-global-open"}
-{"s":"MHORSE-USD","m":"crypto","t":"crypto","c":"USD","ne":"MEME HORSE","a":"meme-horse"}
 {"s":"MINA-USD","m":"crypto","t":"crypto","c":"USD","ne":"Mina Protocol","a":"mina-protocol"}
 {"s":"MNT-USD","m":"crypto","t":"crypto","c":"USD","ne":"Mantle","a":"mantle"}
 {"s":"MON-USD","m":"crypto","t":"crypto","c":"USD","ne":"Monad","a":"monad"}
@@ -8378,6 +8377,7 @@
 {"s":"MORPHO-USD","m":"crypto","t":"crypto","c":"USD","ne":"Morpho","a":"morpho"}
 {"s":"MSTRB-USD","m":"crypto","t":"crypto","c":"USD","ne":"Strategy (bStocks Tokenized Stock)","a":"strategy-tokenized-bstocks"}
 {"s":"MSTRX-USD","m":"crypto","t":"crypto","c":"USD","ne":"MicroStrategy xStock","a":"microstrategy-xstock"}
+{"s":"MSUSD-USD","m":"crypto","t":"crypto","c":"USD","ne":"Metronome Synth USD","a":"metronome-synth-usd"}
 {"s":"MTBILL-USD","m":"crypto","t":"crypto","c":"USD","ne":"Midas mTBILL","a":"midas-mtbill"}
 {"s":"MUB-USD","m":"crypto","t":"crypto","c":"USD","ne":"Micron Technology (bStocks Tokenized Stock)","a":"micron-technology-bstock"}
 {"s":"MUBARAK-USD","m":"crypto","t":"crypto","c":"USD","ne":"Mubarak","a":"mubarak"}
@@ -8388,14 +8388,14 @@
 {"s":"NEXO-USD","m":"crypto","t":"crypto","c":"USD","ne":"NEXO","a":"nexo"}
 {"s":"NFT-USD","m":"crypto","t":"crypto","c":"USD","ne":"AINFT","a":"apenft"}
 {"s":"NIGHT-USD","m":"crypto","t":"crypto","c":"USD","ne":"Midnight","a":"midnight-3"}
+{"s":"NIL-USD","m":"crypto","t":"crypto","c":"USD","ne":"Nillion","a":"nillion"}
 {"s":"NILA-USD","m":"crypto","t":"crypto","c":"USD","ne":"MindWaveDAO","a":"mindwavedao"}
 {"s":"NMR-USD","m":"crypto","t":"crypto","c":"USD","ne":"Numeraire","a":"numeraire"}
-{"s":"NOCK-USD","m":"crypto","t":"crypto","c":"USD","ne":"Nockchain","a":"nockchain"}
 {"s":"NOPAL-USD","m":"crypto","t":"crypto","c":"USD","ne":"Nest BlackOpal LiquidStone II Vault","a":"nest-blackopal-liquidstone-ii-vault"}
-{"s":"NOS-USD","m":"crypto","t":"crypto","c":"USD","ne":"Nosana","a":"nosana"}
 {"s":"NOXO-USD","m":"crypto","t":"crypto","c":"USD","ne":"NOXO","a":"noxo"}
 {"s":"NPC-USD","m":"crypto","t":"crypto","c":"USD","ne":"Non-Playable Coin","a":"non-playable-coin"}
 {"s":"NUSD-USD","m":"crypto","t":"crypto","c":"USD","ne":"Neutrl USD","a":"nusd-2"}
+{"s":"NVDAB-USD","m":"crypto","t":"crypto","c":"USD","ne":"NVIDIA (bStocks Tokenized Stock)","a":"nvidia-bstocks"}
 {"s":"NVDAX-USD","m":"crypto","t":"crypto","c":"USD","ne":"NVIDIA xStock","a":"nvidia-xstock"}
 {"s":"NXM-USD","m":"crypto","t":"crypto","c":"USD","ne":"Nexus Mutual","a":"nxm"}
 {"s":"NXPC-USD","m":"crypto","t":"crypto","c":"USD","ne":"Nexpace","a":"nexpace"}
@@ -8524,7 +8524,6 @@
 {"s":"THBILL-USD","m":"crypto","t":"crypto","c":"USD","ne":"Theo Short Duration US Treasury Fund","a":"theo-short-duration-us-treasury-fund"}
 {"s":"THETA-USD","m":"crypto","t":"crypto","c":"USD","ne":"Theta Network","a":"theta-token"}
 {"s":"TIA-USD","m":"crypto","t":"crypto","c":"USD","ne":"Celestia","a":"celestia"}
-{"s":"TOSHI-USD","m":"crypto","t":"crypto","c":"USD","ne":"Toshi","a":"toshi"}
 {"s":"TPT-USD","m":"crypto","t":"crypto","c":"USD","ne":"TokenPocket Token","a":"token-pocket"}
 {"s":"TRAC-USD","m":"crypto","t":"crypto","c":"USD","ne":"OriginTrail","a":"origintrail"}
 {"s":"TRB-USD","m":"crypto","t":"crypto","c":"USD","ne":"Tellor Tributes","a":"tellor"}
@@ -8606,6 +8605,7 @@
 {"s":"ZAMA-USD","m":"crypto","t":"crypto","c":"USD","ne":"Zama","a":"zama"}
 {"s":"ZANO-USD","m":"crypto","t":"crypto","c":"USD","ne":"Zano","a":"zano"}
 {"s":"ZBCN-USD","m":"crypto","t":"crypto","c":"USD","ne":"Zebec Network","a":"zebec-network"}
+{"s":"ZCAT-USD","m":"crypto","t":"crypto","c":"USD","ne":"Anonymous Cat","a":"anonymous-cat"}
 {"s":"ZEC-USD","m":"crypto","t":"crypto","c":"USD","ne":"Zcash","a":"zcash"}
 {"s":"ZEN-USD","m":"crypto","t":"crypto","c":"USD","ne":"Horizen","a":"zencash"}
 {"s":"ZETA-USD","m":"crypto","t":"crypto","c":"USD","ne":"ZetaChain","a":"zetachain"}
