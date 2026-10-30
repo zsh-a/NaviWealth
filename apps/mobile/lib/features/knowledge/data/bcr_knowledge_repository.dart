@@ -146,7 +146,7 @@ class BcrKnowledgeRepository {
     required String owner,
     required String id,
     required String label,
-    required Uri url,
+    required Uri? url,
     required String content,
   }) async {
     final rows = await (_db.select(
@@ -158,10 +158,12 @@ class BcrKnowledgeRepository {
             .where((row) => row.sourceId != id)
             .fold(0, (sum, row) => sum + utf8.encode(row.contentJson).length);
     if (size > maxCacheBytes) throw BcrKnowledgeCacheFailure.capacity;
+    // Keep the existing non-nullable column: an empty value has no page link.
+    final libraryUrl = url?.toString() ?? '';
     final previous = rows.where((row) => row.sourceId == id).firstOrNull;
     if (previous?.contentJson == content &&
         previous?.label == label.trim() &&
-        previous?.libraryUrl == url.toString()) {
+        previous?.libraryUrl == libraryUrl) {
       return;
     }
     await _db
@@ -171,7 +173,7 @@ class BcrKnowledgeRepository {
             ownerUserId: owner,
             sourceId: id,
             label: label.trim(),
-            libraryUrl: url.toString(),
+            libraryUrl: libraryUrl,
             importedAt: DateTime.now().toUtc(),
             contentJson: content,
             cacheRevision: const Uuid().v4(),
@@ -185,7 +187,9 @@ class BcrKnowledgeRepository {
     return BcrKnowledgeSource(
       id: row.sourceId,
       label: row.label,
-      libraryUrl: normalizeBcrLibraryUrl(row.libraryUrl),
+      libraryUrl: row.libraryUrl.isEmpty
+          ? null
+          : normalizeBcrLibraryUrl(row.libraryUrl),
       importedAt: row.importedAt,
       cacheRevision: row.cacheRevision,
       notes: (json['notes'] as List<dynamic>)

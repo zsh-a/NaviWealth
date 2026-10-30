@@ -38,10 +38,6 @@ class _SyncSheetState extends ConsumerState<_SyncSheet>
   late final _label = TextEditingController(
     text: widget.connection?.label ?? widget.source?.label,
   );
-  late final _url = TextEditingController(
-    text: (widget.connection?.libraryUrl ?? widget.source?.libraryUrl)
-        ?.toString(),
-  );
   late final _repository = TextEditingController(
     text: widget.connection == null
         ? ''
@@ -59,19 +55,13 @@ class _SyncSheetState extends ConsumerState<_SyncSheet>
   void initState() {
     super.initState();
     // Credentials never enter form recovery, preferences, sync or exports.
-    widget.dirty.bindTextControllers([
-      _label,
-      _url,
-      _repository,
-      _branch,
-      _token,
-    ]);
+    widget.dirty.bindTextControllers([_label, _repository, _branch, _token]);
   }
 
   @override
   void dispose() {
     _cancel?.cancel();
-    for (final controller in [_label, _url, _repository, _branch, _token]) {
+    for (final controller in [_label, _repository, _branch, _token]) {
       controller.dispose();
     }
     super.dispose();
@@ -80,7 +70,6 @@ class _SyncSheetState extends ConsumerState<_SyncSheet>
   Future<void> _connect() async {
     if (_busy) return;
     try {
-      normalizeBcrLibraryUrl(_url.text);
       final parsed = BcrGithubTarget.parseRepository(_repository.text);
       if (_branch.text.trim().isNotEmpty) {
         BcrGithubTarget(
@@ -120,7 +109,7 @@ class _SyncSheetState extends ConsumerState<_SyncSheet>
           label: _label.text,
           repositoryAddress: _repository.text,
           branch: _branch.text.trim(),
-          libraryUrl: normalizeBcrLibraryUrl(_url.text),
+          libraryUrl: widget.source?.libraryUrl,
           token: token,
           cancelToken: _cancel,
         );
@@ -195,15 +184,6 @@ class _SyncSheetState extends ConsumerState<_SyncSheet>
           Text(
             kIsWeb ? l10n.knowledgeBcrTokenWeb : l10n.knowledgeBcrTokenNative,
             style: context.captionStyle,
-          ),
-          const SizedBox(height: AppSpacing.s12),
-          FTextField(
-            key: const Key('bcr-source-url'),
-            control: FTextFieldControl.managed(controller: _url),
-            label: Text(l10n.knowledgeBcrUrl),
-            hint: l10n.knowledgeBcrUrlHint,
-            enabled: !_busy,
-            keyboardType: TextInputType.url,
           ),
           if (_error ?? submissionFailureMessage case final message?) ...[
             const SizedBox(height: AppSpacing.s12),

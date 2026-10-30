@@ -153,16 +153,20 @@ Library's **BCR sources** action opens `/knowledge/library/bcr` inside the
 existing Library branch. Connect the same private GitHub repository and branch
 used by BCR; no file export/import is needed. A blank branch resolves the
 repository's default branch on connection, then persists that explicit branch.
-The connection sheet also supplies a display name, BCR reading-page URL and
-GitHub access token. Navi needs only the repository's Contents read permission.
+The connection sheet also supplies a display name and GitHub access token;
+there is no BCR page URL field. Navi needs only the repository's Contents read
+permission.
 
 BCR owns the source documents. These snapshots are read-only projections, not
 additional KnowledgeOS business entities or synced `knowledge_notes` rows.
 The source id is a SHA-256 of normalized GitHub owner/repository and the
 case-sensitive branch, independently of display names, note titles, contents
-and reading-page URL. Notes keep BCR's stable ids. The HTTP(S) page URL is only
-a locator for opening the source in BCR. Connecting adopts an earlier
-file-import cache of that page atomically, without changing saved citations.
+and reading-page URL. Notes keep BCR's stable ids. New connections do not need
+a page URL. Existing HTTP(S) page URLs remain as metadata for opening the source
+in BCR and survive reconnection. Connecting from an earlier file-import cache
+adopts that page's cache atomically, without changing saved citations. Missing
+page URLs are stored as empty strings in the existing local cache/connection
+columns and exposed as absent links to readers and tools.
 
 `KnowledgeSourceConnections` keeps device-local connection metadata, credential
 ids, revision, last accepted Git HEAD and last check time. Tokens stay outside
@@ -204,11 +208,12 @@ fingerprint; cached documents must not be presented as a live BCR query.
 Decision capture can start from a source reader. Existing Decision editors can
 pick a source and explicitly insert its previewed excerpt into the rationale
 draft. The ordinary Save action persists it. Standard Markdown retains the
-source id, original note id, page URL, original update time, bounded excerpt
+source id, original note id, page URL when available, original update time, bounded excerpt
 and `sha256:` snapshot fingerprint. Updating/removing the cache never rewrites
 saved decision evidence. This reuses existing rationale editing, recovery,
 merge, proposal Undo, Sync and encrypted backup behavior without introducing a
-parallel Decision source field.
+parallel Decision source field. Without a page URL, the citation keeps a plain
+title and all other evidence, and the reader omits the external source link.
 
 The snapshot fingerprint covers the fixed-order note fields (id, title,
 optional path, body, tags, collection id, creation/update epoch milliseconds
@@ -240,7 +245,7 @@ contracts.
 
 Attachment metadata and Git tree sizes are checked, but binary attachments
 are neither downloaded, BLAKE3-verified nor cached. Offline support is
-for note text; attachments, relative links and backlinks use the BCR entry.
+for note text; view attachments, relative links and backlinks separately in BCR.
 The connection synchronizes remote BCR content into local read-only snapshots;
 it does not add a second writer for BCR documents.
 

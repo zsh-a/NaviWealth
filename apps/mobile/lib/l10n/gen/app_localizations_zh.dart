@@ -100,12 +100,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeBcrName => '来源名称';
 
   @override
-  String get knowledgeBcrUrl => 'BCR 知识库页面地址';
-
-  @override
-  String get knowledgeBcrUrlHint => 'https://notes.example.com/notes/knowledge';
-
-  @override
   String get knowledgeBcrUpdate => '立即同步';
 
   @override
@@ -122,7 +116,7 @@ class AppLocalizationsZh extends AppLocalizations {
       '连接 BCR 使用的同一个 GitHub 仓库，前台自动同步笔记，离线时继续阅读本机缓存。';
 
   @override
-  String get knowledgeBcrTextOnly => '笔记正文可离线阅读。附件、相对链接和双链请在 BCR 中打开。';
+  String get knowledgeBcrTextOnly => '笔记正文可离线阅读。附件、相对链接和双链请另行在 BCR 中查看。';
 
   @override
   String get knowledgeBcrSearch => '搜索已缓存的 BCR 笔记';
@@ -150,8 +144,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get knowledgeBcrCapacity => '本机资料缓存超过 32 MiB，请先断开一个资料来源。';
 
   @override
-  String get knowledgeBcrRequired =>
-      '请填写来源名称、GitHub 仓库、访问令牌和有效的 HTTP(S) BCR 页面地址。';
+  String get knowledgeBcrRequired => '请填写来源名称、有效的 GitHub 仓库和访问令牌，分支可留空使用默认值。';
 
   @override
   String knowledgeBcrNoteCount(int count) {

@@ -28,16 +28,16 @@ class BcrKnowledgeSource {
   BcrKnowledgeSource({
     required this.id,
     required this.label,
-    required this.libraryUrl,
     required this.importedAt,
     required this.cacheRevision,
     required List<BcrKnowledgeNote> notes,
     required this.attachmentCount,
+    this.libraryUrl,
   }) : notes = List.unmodifiable(notes);
 
   final String id;
   final String label;
-  final Uri libraryUrl;
+  final Uri? libraryUrl;
   final DateTime importedAt;
 
   /// Local optimistic-save token, distinct from every content fingerprint.
@@ -45,8 +45,8 @@ class BcrKnowledgeSource {
   final List<BcrKnowledgeNote> notes;
   final int attachmentCount;
 
-  Uri noteUrl(String noteId) =>
-      libraryUrl.replace(queryParameters: {'note': noteId});
+  Uri? noteUrl(String noteId) =>
+      libraryUrl?.replace(queryParameters: {'note': noteId});
 }
 
 class BcrKnowledgeHit {
@@ -143,16 +143,21 @@ class BcrKnowledgeReference {
   final String noteId;
   final String title;
   final String sourceLabel;
-  final Uri url;
+  final Uri? url;
   final String fingerprint;
   final DateTime updatedAt;
   final String excerpt;
 
-  String toMarkdown() =>
-      '[${_linkLabel(title)}](${url.toString().replaceAll('(', '%28').replaceAll(')', '%29')}) · ${_escape(sourceLabel)}\n\n'
-      '${excerpt.split('\n').map((line) => '> $line').join('\n')}\n\n'
-      '`$sourceId/$noteId`  \n'
-      '`$fingerprint` · ${updatedAt.toUtc().toIso8601String()}';
+  String toMarkdown() {
+    final link = url;
+    final heading = link == null
+        ? _escape(title)
+        : '[${_linkLabel(title)}](${link.toString().replaceAll('(', '%28').replaceAll(')', '%29')})';
+    return '$heading · ${_escape(sourceLabel)}\n\n'
+        '${excerpt.split('\n').map((line) => '> $line').join('\n')}\n\n'
+        '`$sourceId/$noteId`  \n'
+        '`$fingerprint` · ${updatedAt.toUtc().toIso8601String()}';
+  }
 
   // The app's lightweight link renderer reads labels literally. Neutralize
   // bracket delimiters while preserving readable titles in both renderers.

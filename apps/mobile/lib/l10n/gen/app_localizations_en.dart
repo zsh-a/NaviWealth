@@ -112,12 +112,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get knowledgeBcrName => 'Source name';
 
   @override
-  String get knowledgeBcrUrl => 'BCR knowledge page URL';
-
-  @override
-  String get knowledgeBcrUrlHint => 'https://notes.example.com/notes/knowledge';
-
-  @override
   String get knowledgeBcrUpdate => 'Sync now';
 
   @override
@@ -136,7 +130,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeBcrTextOnly =>
-      'Note text is available offline. Attachments, relative links and backlinks open in BCR.';
+      'Note text is available offline. View attachments, relative links and backlinks separately in BCR.';
 
   @override
   String get knowledgeBcrSearch => 'Search cached BCR notes';
@@ -168,7 +162,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get knowledgeBcrRequired =>
-      'Enter a source name, GitHub repository, access token and valid HTTP(S) BCR page URL.';
+      'Enter a source name, valid GitHub repository and access token. Leave the branch blank to use the default.';
 
   @override
   String knowledgeBcrNoteCount(int count) {

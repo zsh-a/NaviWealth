@@ -71,14 +71,14 @@ class BcrKnowledgeSyncService {
     required String label,
     required String repositoryAddress,
     required String branch,
-    required Uri libraryUrl,
     required String token,
+    Uri? libraryUrl,
     CancelToken? cancelToken,
   }) async {
     if (label.trim().isEmpty || label.length > 200 || token.trim().isEmpty) {
       throw const FormatException('Invalid BCR connection');
     }
-    normalizeBcrLibraryUrl(libraryUrl.toString());
+    if (libraryUrl != null) normalizeBcrLibraryUrl(libraryUrl.toString());
     final cancel = cancelToken ?? CancelToken();
     final epoch = _batchEpoch;
     await _checkOwner(cancel);

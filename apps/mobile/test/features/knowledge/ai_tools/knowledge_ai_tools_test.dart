@@ -22,6 +22,7 @@ import 'package:naviwealth/features/knowledge/knowledge_ai_tools.dart';
 
 import '../../../core/persistence/test_database.dart';
 import '../../../core/sync/_outbox_test_ext.dart';
+import '../bcr_sync_test_fixture.dart';
 import '../bcr_test_fixture.dart';
 
 const _owner = 'knowledge-tools-user';
@@ -238,6 +239,35 @@ void main() {
       expect(outbox.queued, isEmpty);
     },
   );
+
+  test('BCR tools search and read snapshots without a page URL', () async {
+    final sources = BcrKnowledgeRepository(database);
+    final remote = await FakeBcrGithubClient().read(
+      repository: 'account/research',
+      token: 'test-token',
+    );
+    await sources.commitConnection(
+      owner: _owner,
+      lease: await sources.beginConnection(_owner),
+      label: 'Research',
+      credentialId: 'credential',
+      remote: remote,
+    );
+    final result = await _invokeByName(container, 'search_bcr_notes', {
+      'query': 'allocation',
+    }) as Map<Object?, Object?>;
+    final row =
+        (result['notes']! as List<Object?>).single! as Map<Object?, Object?>;
+    expect(row['url'], isNull);
+    final note = await _invokeByName(container, 'read_bcr_note', {
+      'source_id': row['source_id'],
+      'note_id': row['note_id'],
+      'fingerprint': row['fingerprint'],
+    }) as Map<Object?, Object?>;
+    expect(note['url'], isNull);
+    expect(note['body'], contains('60%'));
+    expect(note['fingerprint'], row['fingerprint']);
+  });
 
   test(
     'capture proposal does not write before apply and undo tombstones it',

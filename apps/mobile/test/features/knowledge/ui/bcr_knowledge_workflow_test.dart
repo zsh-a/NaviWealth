@@ -28,7 +28,7 @@ import '../bcr_test_fixture.dart';
 
 void main() {
   testWidgets(
-    'sync, read and cite a snapshot into a decision without changing past evidence',
+    'connect without a page URL, read and cite a snapshot without changing past evidence',
     (tester) async {
       await tester.binding.setSurfaceSize(const Size(900, 1600));
       addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -76,10 +76,7 @@ void main() {
         find.byKey(const Key('bcr-source-name')),
         'Research',
       );
-      await tester.enterText(
-        find.byKey(const Key('bcr-source-url')),
-        'https://notes.example.com/notes/knowledge',
-      );
+      expect(find.byKey(const Key('bcr-source-url')), findsNothing);
       await tester.enterText(
         find.byKey(const Key('bcr-source-repository')),
         'account/research',
@@ -92,6 +89,7 @@ void main() {
       await tester.tap(find.byKey(const Key('bcr-connect-submit')));
       await _settle(tester);
       final snapshot = (await sources.listSources('owner')).single;
+      expect(snapshot.libraryUrl, isNull);
       expect(find.text('Asset allocation'), findsOneWidget);
       expect(await db.select(db.knowledgeNotes).get(), isEmpty);
       expect(outbox.items, isEmpty);
@@ -129,6 +127,7 @@ void main() {
       await _settle(tester);
       await tester.tap(find.text('Asset allocation'));
       await _settle(tester);
+      expect(find.byKey(const Key('knowledge-source-link')), findsNothing);
       expect(
         find.textContaining('Note text is available offline.'),
         findsOneWidget,
@@ -151,6 +150,8 @@ void main() {
         id: 'decision',
       ))!;
       expect(saved.rationaleMd, contains('60%'));
+      expect(saved.rationaleMd, contains('Asset allocation · Research'));
+      expect(saved.rationaleMd, isNot(contains('](null)')));
       expect(saved.rationaleMd, contains(snapshot.notes.single.fingerprint));
       expect(saved.rationaleMd, contains('${snapshot.id}/note-0'));
 
@@ -167,17 +168,7 @@ void main() {
         saved.rationaleMd,
       );
       await _settle(tester);
-      final semantics = tester.ensureSemantics();
-      final link = find.semantics.byLabel('Asset allocation');
-      expect(link, findsOneWidget);
-      tester.semantics.tap(link);
-      await _settle(tester);
-      expect(
-        find.text('https://notes.example.com/notes/knowledge?note=note-0'),
-        findsOneWidget,
-      );
       expect(tester.takeException(), isNull);
-      semantics.dispose();
       await tester.pumpWidget(const SizedBox.shrink());
       await _settle(tester);
     },
@@ -221,6 +212,10 @@ void main() {
       );
       await _settle(tester);
       expect(find.text('Asset allocation'), findsOneWidget);
+      expect(
+        find.text('https://notes.example.com/knowledge?note=note-0'),
+        findsOneWidget,
+      );
       await repository.removeSource(
         owner: 'owner',
         id: source.id,

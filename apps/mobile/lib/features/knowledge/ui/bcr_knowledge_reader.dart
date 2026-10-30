@@ -108,10 +108,10 @@ class _BcrKnowledgeReaderState extends ConsumerState<BcrKnowledgeReader> {
                   l10n.knowledgeBcrTextOnly,
                   style: context.bodyCaptionStyle,
                 ),
-                const SizedBox(height: AppSpacing.s12),
-                KnowledgeSourceLink(
-                  sourceUrl: hit.source.noteUrl(hit.note.id).toString(),
-                ),
+                if (hit.source.noteUrl(hit.note.id) case final url?) ...[
+                  const SizedBox(height: AppSpacing.s12),
+                  KnowledgeSourceLink(sourceUrl: url.toString()),
+                ],
                 const SizedBox(height: AppSpacing.s16),
                 AiMarkdown(key: ValueKey(page.offset), text: page.text),
                 const SizedBox(height: AppSpacing.s16),

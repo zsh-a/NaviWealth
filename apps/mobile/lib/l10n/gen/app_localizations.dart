@@ -278,18 +278,6 @@ abstract class AppLocalizations {
   /// **'Source name'**
   String get knowledgeBcrName;
 
-  /// No description provided for @knowledgeBcrUrl.
-  ///
-  /// In en, this message translates to:
-  /// **'BCR knowledge page URL'**
-  String get knowledgeBcrUrl;
-
-  /// No description provided for @knowledgeBcrUrlHint.
-  ///
-  /// In en, this message translates to:
-  /// **'https://notes.example.com/notes/knowledge'**
-  String get knowledgeBcrUrlHint;
-
   /// No description provided for @knowledgeBcrUpdate.
   ///
   /// In en, this message translates to:
@@ -323,7 +311,7 @@ abstract class AppLocalizations {
   /// No description provided for @knowledgeBcrTextOnly.
   ///
   /// In en, this message translates to:
-  /// **'Note text is available offline. Attachments, relative links and backlinks open in BCR.'**
+  /// **'Note text is available offline. View attachments, relative links and backlinks separately in BCR.'**
   String get knowledgeBcrTextOnly;
 
   /// No description provided for @knowledgeBcrSearch.
@@ -377,7 +365,7 @@ abstract class AppLocalizations {
   /// No description provided for @knowledgeBcrRequired.
   ///
   /// In en, this message translates to:
-  /// **'Enter a source name, GitHub repository, access token and valid HTTP(S) BCR page URL.'**
+  /// **'Enter a source name, valid GitHub repository and access token. Leave the branch blank to use the default.'**
   String get knowledgeBcrRequired;
 
   /// No description provided for @knowledgeBcrNoteCount.

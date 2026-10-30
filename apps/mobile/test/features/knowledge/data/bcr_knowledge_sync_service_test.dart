@@ -47,12 +47,15 @@ void main() {
     await db.close();
   });
 
-  Future<BcrKnowledgeConnection> connect({String token = 'old-token'}) async {
+  Future<BcrKnowledgeConnection> connect({
+    String token = 'old-token',
+    Uri? libraryUrl,
+  }) async {
     await service.connect(
       label: 'Research',
       repositoryAddress: 'account/research',
       branch: '',
-      libraryUrl: url,
+      libraryUrl: libraryUrl,
       token: token,
     );
     return (await repository.listConnections('owner')).single;
@@ -68,31 +71,46 @@ void main() {
     resetCleanups: {DomainScope.knowledge: credentials.clearOwner},
   );
 
+  test('connect without a page URL persists a target and keeps PAT out of the database', () async {
+    final connection = await connect();
+    expect(connection.libraryUrl, isNull);
+    expect(connection.target.branch, 'main');
+    expect(connection.remoteHead, client.head);
+    expect(
+      await credentials.read('owner', connection.credentialId),
+      'old-token',
+    );
+    final source = (await repository.listSources('owner')).single;
+    expect(source.id, connection.id);
+    expect(source.libraryUrl, isNull);
+    expect(source.noteUrl(source.notes.single.id), isNull);
+    expect(source.notes.single.body, contains('60%'));
+    expect(
+      (await db.select(db.knowledgeSourceConnections).get()).single
+          .toJson()
+          .toString(),
+      isNot(contains('old-token')),
+    );
+    expect(
+      (await db.select(db.knowledgeSourceCache).get()).single.contentJson,
+      isNot(contains('old-token')),
+    );
+    expect(await db.customSelect('SELECT * FROM op_outbox').get(), isEmpty);
+    expect(await db.select(db.knowledgeSourceImportLeases).get(), isEmpty);
+  });
+
   test(
-    'connect persists a resolved target and keeps PAT out of the database',
+    'reconnecting without a page URL preserves existing source links',
     () async {
-      final connection = await connect();
-      expect(connection.target.branch, 'main');
-      expect(connection.remoteHead, client.head);
-      expect(
-        await credentials.read('owner', connection.credentialId),
-        'old-token',
-      );
+      await connect(libraryUrl: url);
+      final connection = await connect(token: 'new-token');
+      expect(connection.libraryUrl, url);
       final source = (await repository.listSources('owner')).single;
-      expect(source.id, connection.id);
-      expect(source.notes.single.body, contains('60%'));
+      expect(source.libraryUrl, url);
       expect(
-        (await db.select(db.knowledgeSourceConnections).get()).single
-            .toJson()
-            .toString(),
-        isNot(contains('old-token')),
+        source.noteUrl('note-0'),
+        url.replace(queryParameters: {'note': 'note-0'}),
       );
-      expect(
-        (await db.select(db.knowledgeSourceCache).get()).single.contentJson,
-        isNot(contains('old-token')),
-      );
-      expect(await db.customSelect('SELECT * FROM op_outbox').get(), isEmpty);
-      expect(await db.select(db.knowledgeSourceImportLeases).get(), isEmpty);
     },
   );
 
@@ -111,6 +129,7 @@ void main() {
       connection = (await repository.listConnections('owner')).single;
       await service.sync(connection);
       expect(client.calls.last.hasCachedSnapshot, isFalse);
+      expect((await repository.listSources('owner')).single.libraryUrl, isNull);
       expect(
         (await repository.listSources('owner')).single.notes.single.body,
         before.notes.single.body,

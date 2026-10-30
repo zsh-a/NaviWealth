@@ -4,9 +4,9 @@ class BcrKnowledgeConnection {
   const BcrKnowledgeConnection({
     required this.target,
     required this.label,
-    required this.libraryUrl,
     required this.revision,
     required this.credentialId,
+    this.libraryUrl,
     this.remoteHead,
     this.checkedAt,
   });
@@ -14,7 +14,7 @@ class BcrKnowledgeConnection {
   final BcrGithubTarget target;
   String get id => target.sourceId;
   final String label;
-  final Uri libraryUrl;
+  final Uri? libraryUrl;
   final String revision;
   final String credentialId;
   final String? remoteHead;

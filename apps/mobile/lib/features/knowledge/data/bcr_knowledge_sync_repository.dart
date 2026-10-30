@@ -110,9 +110,9 @@ extension BcrKnowledgeSyncRepository on BcrKnowledgeRepository {
     required String owner,
     required BcrSyncLease lease,
     required String label,
-    required Uri libraryUrl,
     required String credentialId,
     required BcrGithubRead remote,
+    Uri? libraryUrl,
   }) => _db.transaction(() async {
     await _verifySyncLease(owner, lease);
     final current = await findConnection(owner, remote.target.sourceId);
@@ -120,14 +120,18 @@ extension BcrKnowledgeSyncRepository on BcrKnowledgeRepository {
         remote.snapshot == null) {
       throw BcrKnowledgeCacheFailure.changed;
     }
-    final url = normalizeBcrLibraryUrl(libraryUrl.toString());
-    // Adopt any older file-import projection of the same configured page.
-    await (_db.delete(_db.knowledgeSourceCache)..where(
-          (row) =>
-              row.ownerUserId.equals(owner) &
-              row.sourceId.equals(bcrSourceId(url)),
-        ))
-        .go();
+    final url = libraryUrl == null
+        ? current?.libraryUrl
+        : normalizeBcrLibraryUrl(libraryUrl.toString());
+    if (url != null) {
+      // Adopt an older file-import projection when its page is already known.
+      await (_db.delete(_db.knowledgeSourceCache)..where(
+            (row) =>
+                row.ownerUserId.equals(owner) &
+                row.sourceId.equals(bcrSourceId(url)),
+          ))
+          .go();
+    }
     await _storeRemoteSnapshot(
       owner,
       remote.target.sourceId,
@@ -142,7 +146,7 @@ extension BcrKnowledgeSyncRepository on BcrKnowledgeRepository {
             ownerUserId: owner,
             sourceId: remote.target.sourceId,
             label: label.trim(),
-            libraryUrl: url.toString(),
+            libraryUrl: url?.toString() ?? '',
             repositoryOwner: remote.target.owner,
             repositoryName: remote.target.repository,
             branch: remote.target.branch,
@@ -227,7 +231,7 @@ extension BcrKnowledgeSyncRepository on BcrKnowledgeRepository {
     String owner,
     String id,
     String label,
-    Uri url,
+    Uri? url,
     BcrKnowledgeArchive snapshot,
   ) async {
     if (owner.isEmpty || label.trim().isEmpty || label.length > 200) {
@@ -255,7 +259,9 @@ extension BcrKnowledgeSyncRepository on BcrKnowledgeRepository {
           branch: row.branch,
         ),
         label: row.label,
-        libraryUrl: normalizeBcrLibraryUrl(row.libraryUrl),
+        libraryUrl: row.libraryUrl.isEmpty
+            ? null
+            : normalizeBcrLibraryUrl(row.libraryUrl),
         revision: row.revision,
         credentialId: row.credentialId,
         remoteHead: row.remoteHead,
