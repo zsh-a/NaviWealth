@@ -357,10 +357,9 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.s4),
             child: Align(
               alignment: AlignmentDirectional.center,
-              child: FButton(
+              child: AppQuietButton(
                 key: const Key('transfer-swap-accounts'),
-                variant: FButtonVariant.ghost,
-                size: FButtonSizeVariant.sm,
+                label: l10n.transferSwapAccountsAction,
                 onPress: _fromAccountId == null && _toAccountId == null
                     ? null
                     : () => _swapAccounts(accountsById),
@@ -368,7 +367,6 @@ class _TransferFormPageState extends ConsumerState<TransferFormPage>
                   FLucideIcons.arrowUpDown,
                   size: AppIconSizes.sm,
                 ),
-                child: Text(l10n.transferSwapAccountsAction),
               ),
             ),
           ),

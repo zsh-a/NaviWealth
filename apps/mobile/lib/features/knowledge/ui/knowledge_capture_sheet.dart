@@ -233,10 +233,12 @@ class _KnowledgeCaptureSheetState
               : l10n.knowledgeWriterRationaleMarkdownLabel,
         ),
         if (_type == _CaptureType.note) ...[
-          FButton(
-            variant: FButtonVariant.ghost,
+          AppQuietButton(
+            label: l10n.knowledgeCaptureMetadata,
+            prefix: Icon(
+              _showMetadata ? FLucideIcons.chevronUp : FLucideIcons.chevronDown,
+            ),
             onPress: () => setState(() => _showMetadata = !_showMetadata),
-            child: Text(l10n.knowledgeCaptureMetadata),
           ),
         ],
         if (_type == _CaptureType.note)
@@ -277,9 +279,11 @@ class _KnowledgeCaptureSheetState
                     ),
                   ),
                   const SizedBox(height: AppSpacing.s8),
-                  FButton(
-                    key: const Key('knowledge-duplicate-source-open'),
+                  AppActionButton(
+                    buttonKey: const Key('knowledge-duplicate-source-open'),
                     variant: FButtonVariant.outline,
+                    size: FButtonSizeVariant.md,
+                    hapticIntent: AppInteractionIntent.select,
                     onPress: _saving ? null : _viewExistingNote,
                     child: Text(l10n.knowledgeSourceViewExisting),
                   ),

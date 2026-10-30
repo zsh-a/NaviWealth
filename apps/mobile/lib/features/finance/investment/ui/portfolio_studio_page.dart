@@ -393,11 +393,10 @@ class _StudioTransferTask extends ConsumerWidget {
             child: Text(l10n.portfolioStudioAddAssetsAction),
           ),
           const SizedBox(height: AppSpacing.s8),
-          FButton(
-            variant: FButtonVariant.ghost,
+          AppQuietButton(
+            label: l10n.rebalanceTransferTaskRecalculateAction,
             onPress: () => context.go(FinanceRoutes.planRebalance),
             prefix: const Icon(FLucideIcons.refreshCw),
-            child: Text(l10n.rebalanceTransferTaskRecalculateAction),
           ),
         ],
       ),

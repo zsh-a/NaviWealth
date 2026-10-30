@@ -433,7 +433,8 @@ class _DcaPlanCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.s8),
           Row(
             children: [
-              FButton(
+              AppActionButton(
+                size: FButtonSizeVariant.md,
                 onPress: plan.enabled ? onExecute : null,
                 child: Text(l10n.dcaPlanExecuteNow),
               ),
@@ -454,16 +455,20 @@ class _DcaPlanCard extends StatelessWidget {
                     onPress: onDelete,
                   ),
                 ],
-                triggerBuilder: (context, openMenu, focusNode) => FButton(
-                  variant: FButtonVariant.ghost,
-                  focusNode: focusNode,
-                  onPress: openMenu,
-                  prefix: const Icon(
-                    FLucideIcons.ellipsis,
-                    size: AppIconSizes.sm,
-                  ),
-                  child: Text(l10n.shellMoreActions),
-                ),
+                triggerBuilder: (context, openMenu, focusNode) =>
+                    AppActionButton(
+                      variant: FButtonVariant.ghost,
+                      size: FButtonSizeVariant.md,
+                      mainAxisSize: MainAxisSize.min,
+                      hapticIntent: AppInteractionIntent.select,
+                      focusNode: focusNode,
+                      onPress: openMenu,
+                      prefix: const Icon(
+                        FLucideIcons.ellipsis,
+                        size: AppIconSizes.sm,
+                      ),
+                      child: Text(l10n.shellMoreActions),
+                    ),
               ),
             ],
           ),
@@ -630,16 +635,13 @@ class _DcaControls extends StatelessWidget {
               onPress: onSave,
             ),
             const SizedBox(height: AppSpacing.s8),
-            FButton(
+            AppBusyButton(
+              label: l10n.dcaPlanPreviewAction,
+              busy: previewBusy,
               variant: FButtonVariant.outline,
+              size: FButtonSizeVariant.md,
               onPress: busy || previewBusy ? null : onRun,
               prefix: const Icon(FLucideIcons.workflow, size: AppIconSizes.h18),
-              child: Flexible(
-                child: Text(
-                  l10n.dcaPlanPreviewAction,
-                  textAlign: TextAlign.center,
-                ),
-              ),
             ),
           ],
         ),

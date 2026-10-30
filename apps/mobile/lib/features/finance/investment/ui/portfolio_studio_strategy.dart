@@ -20,12 +20,11 @@ class _StudioStructure extends StatelessWidget {
         _StudioSectionHeader(
           title: l10n.portfolioStudioStructureTitle,
           subtitle: l10n.portfolioStudioStructureHint,
-          action: FButton(
-            variant: FButtonVariant.ghost,
+          action: AppQuietButton(
+            label: l10n.portfolioGroupAddAction,
             onPress: () =>
                 showAddStrategySleeve(context, portfolioId: portfolio.id),
             prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
-            child: Text(l10n.portfolioGroupAddAction),
           ),
         ),
         const SizedBox(height: AppSpacing.s8),
@@ -123,12 +122,11 @@ class _StudioRules extends ConsumerWidget {
         _StudioSectionHeader(
           title: l10n.portfolioStudioRulesTitle,
           subtitle: l10n.portfolioStudioRulesHint,
-          action: FButton(
-            variant: FButtonVariant.ghost,
+          action: AppQuietButton(
+            label: l10n.portfolioOverlayAddAction,
             onPress: () =>
                 showAddStrategyRule(context, portfolioId: portfolio.id),
             prefix: const Icon(FLucideIcons.plus, size: AppIconSizes.sm),
-            child: Text(l10n.portfolioOverlayAddAction),
           ),
         ),
         const SizedBox(height: AppSpacing.s8),

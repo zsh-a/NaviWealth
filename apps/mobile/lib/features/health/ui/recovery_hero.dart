@@ -16,8 +16,8 @@ class _RecoveryHeroState extends ConsumerState<_RecoveryHero> {
     final colors = context.theme.colors;
     final l10n = AppLocalizations.of(context);
     return AppCollapsingStage(
-      child: SoftCard.raised(
-        padding: const EdgeInsets.all(AppSpacing.s16),
+      child: SoftCard.hero(
+        padding: AppPageRhythm.heroPadding,
         child: async.when(
           loading: () => const SizedBox(
             height: AppControlHeights.compactLoadingState,
@@ -69,7 +69,7 @@ class _RecoveryHeroState extends ConsumerState<_RecoveryHero> {
                 ? colors.mutedForeground
                 : color;
             final actions = healthPlanActionsForVerdict(verdict, l10n);
-            if (score == null ||
+            if (scoreValue == null ||
                 confidence == 'insufficient' ||
                 verdict == 'insufficient_data') {
               return _RecoveryInsufficientState(
@@ -83,80 +83,120 @@ class _RecoveryHeroState extends ConsumerState<_RecoveryHero> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    AppIconTile(
-                      icon: RecoveryVerdict.icon(verdict),
-                      color: color,
-                      size: 28,
-                      iconSize: AppIconSizes.sm,
-                      backgroundOpacity: AppOpacity.medium,
-                      foregroundOpacity: 1,
-                    ),
-                    const SizedBox(width: AppSpacing.s12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.healthRecoveryTitle,
-                            style: context.captionStyle,
-                          ),
-                          Text(
-                            RecoveryVerdict.label(verdict, l10n),
-                            style: context.titleLabelStyle.copyWith(
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final scale = MediaQuery.textScalerOf(context).scale(1);
+                    final summary = Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.healthRecoveryTitle,
+                          style: context.captionMediumStyle,
+                        ),
+                        const SizedBox(height: AppSpacing.s8),
+                        Row(
+                          children: [
+                            Icon(
+                              RecoveryVerdict.icon(verdict),
+                              size: AppIconSizes.md,
                               color: color,
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    AnimatedValueText(
-                      value: scoreValue,
-                      format: (v) => '${v.round()}',
-                      style: context.appTheme.type.numericTitleStrong.copyWith(
-                        color: scoreColor,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.s4),
-                    AppIconButton(
-                      icon: _showEvidence
-                          ? FLucideIcons.chevronUp
-                          : FLucideIcons.chevronDown,
-                      tooltip: _showEvidence
-                          ? l10n.healthRecoveryWhyLess
-                          : l10n.healthRecoveryWhyTitle,
-                      onPress: () =>
-                          setState(() => _showEvidence = !_showEvidence),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.s8),
-                Wrap(
-                  spacing: AppSpacing.s6,
-                  runSpacing: AppSpacing.s6,
-                  children: [
-                    AppBadge(
-                      label: l10n.healthRecoveryConfidence(
-                        _confidenceLabel(confidence, l10n),
-                        (coverage * 100).round(),
-                      ),
-                      size: AppBadgeSize.compact,
-                    ),
-                    if (freshnessHours != null && freshnessHours > 36)
-                      AppBadge(
-                        label: l10n.healthRecoveryWorstFreshness(
-                          _ago(
-                            l10n,
-                            DateTime.now().toUtc().subtract(
-                              Duration(minutes: (freshnessHours * 60).round()),
+                            const SizedBox(width: AppSpacing.s8),
+                            Expanded(
+                              child: Text(
+                                RecoveryVerdict.label(verdict, l10n),
+                                style: context.appTheme.type.heading.copyWith(
+                                  color: color,
+                                ),
+                              ),
                             ),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.s8),
+                        Text(
+                          l10n.healthRecoveryConfidence(
+                            _confidenceLabel(confidence, l10n),
+                            (coverage * 100).round(),
+                          ),
+                          style: context.microCaptionStyle,
+                        ),
+                      ],
+                    );
+                    final indicator = _RecoveryScore(
+                      score: scoreValue.toDouble(),
+                      color: scoreColor,
+                      diameter: math.min(
+                        (AppSpacing.s64 + AppSpacing.s24) * scale,
+                        constraints.maxWidth,
+                      ),
+                    );
+                    if (constraints.maxWidth < 260 * scale) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          summary,
+                          const SizedBox(height: AppSpacing.s16),
+                          indicator,
+                        ],
+                      );
+                    }
+                    return Row(
+                      children: [
+                        Expanded(child: summary),
+                        const SizedBox(width: AppSpacing.s16),
+                        indicator,
+                      ],
+                    );
+                  },
+                ),
+                if (freshnessHours != null && freshnessHours > 36) ...[
+                  const SizedBox(height: AppSpacing.s12),
+                  AppBadge(
+                    label: l10n.healthRecoveryWorstFreshness(
+                      _ago(
+                        l10n,
+                        DateTime.now().toUtc().subtract(
+                          Duration(minutes: (freshnessHours * 60).round()),
+                        ),
+                      ),
+                    ),
+                    tone: AppBadgeTone.warning,
+                    size: AppBadgeSize.compact,
+                  ),
+                ],
+                const SizedBox(height: AppSpacing.s12),
+                const AppGroupedDivider(indent: 0),
+                AppTappable(
+                  key: const Key('health-recovery-evidence'),
+                  semanticsLabel: _showEvidence
+                      ? l10n.healthRecoveryWhyLess
+                      : l10n.healthRecoveryWhyTitle,
+                  onPress: () => setState(() => _showEvidence = !_showEvidence),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minHeight: AppControlHeights.touchTarget,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _showEvidence
+                                ? l10n.healthRecoveryWhyLess
+                                : l10n.healthRecoveryWhyTitle,
+                            style: context.captionMediumStyle,
                           ),
                         ),
-                        tone: AppBadgeTone.warning,
-                        size: AppBadgeSize.compact,
-                      ),
-                  ],
+                        const SizedBox(width: AppSpacing.s8),
+                        Icon(
+                          _showEvidence
+                              ? FLucideIcons.chevronUp
+                              : FLucideIcons.chevronDown,
+                          size: AppIconSizes.sm,
+                          color: colors.mutedForeground,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 AnimatedSizeFade(
                   visible: _showEvidence,
@@ -200,6 +240,86 @@ class _RecoveryHeroState extends ConsumerState<_RecoveryHero> {
   }
 }
 
+class _RecoveryScore extends StatelessWidget {
+  const _RecoveryScore({
+    required this.score,
+    required this.color,
+    required this.diameter,
+  });
+
+  final double score;
+  final Color color;
+  final double diameter;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    label: AppLocalizations.of(context).healthRecoveryTitle,
+    value: '${score.round()} / 100',
+    child: ExcludeSemantics(
+      child: SizedBox.square(
+        dimension: diameter,
+        child: CustomPaint(
+          painter: _RecoveryScorePainter(
+            score: score,
+            color: color,
+            track: color.withValues(alpha: AppOpacity.light),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedValueText(
+                  value: score,
+                  format: (value) => '${value.round()}',
+                  style: context.appTheme.type.displaySmall.copyWith(
+                    color: color,
+                  ),
+                ),
+                Text('/ 100', style: context.microCaptionStyle),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+class _RecoveryScorePainter extends CustomPainter {
+  const _RecoveryScorePainter({
+    required this.score,
+    required this.color,
+    required this.track,
+  });
+
+  final double score;
+  final Color color;
+  final Color track;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = (Offset.zero & size).deflate(AppStroke.indicator);
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = AppStroke.indicator
+      ..strokeCap = StrokeCap.round;
+    canvas.drawArc(rect, 0, math.pi * 2, false, paint..color = track);
+    canvas.drawArc(
+      rect,
+      -math.pi / 2,
+      math.pi * 2 * (score / 100).clamp(0, 1),
+      false,
+      paint..color = color,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_RecoveryScorePainter oldDelegate) =>
+      score != oldDelegate.score ||
+      color != oldDelegate.color ||
+      track != oldDelegate.track;
+}
+
 class _RecoveryInsufficientState extends StatelessWidget {
   const _RecoveryInsufficientState({
     required this.verdict,
@@ -226,7 +346,7 @@ class _RecoveryInsufficientState extends StatelessWidget {
             AppIconTile(
               icon: RecoveryVerdict.icon(verdict),
               color: color,
-              size: 36,
+              size: AppSpacing.s40,
               iconSize: AppIconSizes.md,
               backgroundOpacity: AppOpacity.medium,
               foregroundOpacity: 1,
@@ -424,7 +544,7 @@ class _PlanActionRow extends StatelessWidget {
         AppIconTile(
           icon: action.icon,
           color: color,
-          size: 28,
+          size: AppSpacing.s28,
           iconSize: AppIconSizes.sm,
           radius: AppRadius.sm,
           backgroundOpacity: AppOpacity.light,

@@ -1,5 +1,4 @@
 import 'package:flutter/widgets.dart';
-import 'package:forui/forui.dart';
 
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
@@ -43,11 +42,10 @@ class KnowledgeEditNotice extends StatelessWidget {
         ),
         if (!deleted) ...[
           const SizedBox(height: AppSpacing.s8),
-          FButton(
+          AppQuietButton(
             key: const Key('knowledge-edit-reload'),
-            variant: FButtonVariant.outline,
+            label: l10n.knowledgeEditReload,
             onPress: onReload,
-            child: Text(l10n.knowledgeEditReload),
           ),
         ],
         const SizedBox(height: AppSpacing.s12),

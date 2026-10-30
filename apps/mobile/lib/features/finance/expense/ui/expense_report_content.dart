@@ -170,27 +170,14 @@ class _ExpenseReportRangeSheetState extends State<_ExpenseReportRangeSheet> {
           subtitle: selected == null
               ? null
               : '${formatter.date(selected.$1)} - ${formatter.date(selected.$2)}',
-          footer: Row(
-            children: [
-              Expanded(
-                child: FButton(
-                  variant: FButtonVariant.outline,
-                  onPress: () => Navigator.of(context).maybePop(),
-                  child: Text(l10n.commonCancel),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.s12),
-              Expanded(
-                child: FButton(
-                  onPress: selected == null
-                      ? null
-                      : () =>
-                            Navigator.of(context)
-                                .pop((from: selected.$1, to: selected.$2)),
-                  child: Text(l10n.commonConfirm),
-                ),
-              ),
-            ],
+          footer: AppSheetFooter(
+            cancelLabel: l10n.commonCancel,
+            submitLabel: l10n.commonConfirm,
+            enabled: selected != null,
+            onSubmit: () {
+              if (selected == null) return;
+              Navigator.of(context).pop((from: selected.$1, to: selected.$2));
+            },
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

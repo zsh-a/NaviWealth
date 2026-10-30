@@ -890,6 +890,24 @@ abstract class AppLocalizations {
   /// **'Health overview'**
   String get healthOverviewTitle;
 
+  /// No description provided for @healthKeyMetrics.
+  ///
+  /// In en, this message translates to:
+  /// **'Key readings'**
+  String get healthKeyMetrics;
+
+  /// No description provided for @healthDailyRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily records'**
+  String get healthDailyRecords;
+
+  /// No description provided for @healthPeriodComparison.
+  ///
+  /// In en, this message translates to:
+  /// **'Period comparison'**
+  String get healthPeriodComparison;
+
   /// No description provided for @executionTodayActionsTitle.
   ///
   /// In en, this message translates to:
@@ -31488,6 +31506,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Preview image'**
   String get healthMealPreview;
+
+  /// No description provided for @healthMealPhotoSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to photos'**
+  String get healthMealPhotoSave;
+
+  /// No description provided for @healthMealPhotoSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving…'**
+  String get healthMealPhotoSaving;
+
+  /// No description provided for @healthMealPhotoSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved to photos.'**
+  String get healthMealPhotoSaved;
+
+  /// No description provided for @healthMealPhotoSaveDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow photo or storage access for NaviWealth in system settings, then try again.'**
+  String get healthMealPhotoSaveDenied;
+
+  /// No description provided for @healthMealPhotoSaveNoSpace.
+  ///
+  /// In en, this message translates to:
+  /// **'Your device is out of storage. Free up space and try again.'**
+  String get healthMealPhotoSaveNoSpace;
+
+  /// No description provided for @healthMealPhotoSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save this photo. Please try again.'**
+  String get healthMealPhotoSaveFailed;
 
   /// No description provided for @healthMealVideo.
   ///

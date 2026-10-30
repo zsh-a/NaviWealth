@@ -1,6 +1,5 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/design_system/design_system.dart';
@@ -140,11 +139,7 @@ class _ActivityPreviewError extends StatelessWidget {
           Expanded(
             child: Text(l10n.commonLoadFailed, style: context.bodyCaptionStyle),
           ),
-          FButton(
-            variant: FButtonVariant.ghost,
-            onPress: onRetry,
-            child: Text(l10n.commonRetry),
-          ),
+          AppQuietButton(label: l10n.commonRetry, onPress: onRetry),
         ],
       ),
     );

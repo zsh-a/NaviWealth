@@ -94,10 +94,9 @@ class _InboxGroup extends ConsumerWidget {
           child: Row(
             children: [
               Expanded(child: Text(label, style: context.mutedLabelStyle)),
-              FButton(
-                variant: FButtonVariant.ghost,
+              AppQuietButton(
+                label: l10n.financialInboxResolveGroup,
                 onPress: () => _resolveGroup(context, ref),
-                child: Text(l10n.financialInboxResolveGroup),
               ),
             ],
           ),
@@ -478,8 +477,11 @@ class _InboxDetail extends ConsumerWidget {
               onPress: () => _resolve(context, ref),
             ),
           ],
-          triggerBuilder: (context, openMenu, focusNode) => FButton(
-            variant: FButtonVariant.outline,
+          triggerBuilder: (context, openMenu, focusNode) => AppActionButton(
+            variant: FButtonVariant.ghost,
+            size: FButtonSizeVariant.md,
+            mainAxisSize: MainAxisSize.min,
+            hapticIntent: AppInteractionIntent.select,
             focusNode: focusNode,
             onPress: openMenu,
             prefix: const Icon(FLucideIcons.ellipsis, size: AppIconSizes.sm),

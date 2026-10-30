@@ -188,11 +188,7 @@ class _PortfolioPlanList extends StatelessWidget {
           if (valuationStatus == _PlanValuationStatus.failed)
             Align(
               alignment: AlignmentDirectional.centerStart,
-              child: FButton(
-                variant: FButtonVariant.ghost,
-                onPress: onRetry,
-                child: Text(l10n.commonRetry),
-              ),
+              child: AppQuietButton(label: l10n.commonRetry, onPress: onRetry),
             ),
         ],
         const SizedBox(height: AppSpacing.s12),

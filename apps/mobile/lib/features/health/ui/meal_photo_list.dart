@@ -4,6 +4,7 @@ import 'package:forui/forui.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../domain/meal_photo.dart';
+import 'meal_photo_preview.dart';
 
 String mealPhotoRoleLabel(AppLocalizations l, MealPhotoRole role) =>
     switch (role) {
@@ -41,16 +42,12 @@ class MealPhotoList extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   AppTappable(
+                    key: ValueKey('meal-view-preview-$index'),
                     semanticsLabel: l.healthMealPreview,
                     onPress: () => showAppSheet<void>(
                       context: context,
                       title: mealPhotoRoleLabel(l, photo.role),
-                      builder: (_) => Image.memory(
-                        photo.bytes,
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, _, _) =>
-                            Text(l.healthMealPhotoFailed),
-                      ),
+                      builder: (_) => MealPhotoPreview(photo: photo),
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(AppRadius.sm),

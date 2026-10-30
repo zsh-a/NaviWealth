@@ -359,10 +359,12 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
                   icon: FLucideIcons.arrowUpDown,
                 ),
             ],
-            triggerBuilder: (context, openMenu, focusNode) => FButton(
-              key: const ValueKey('portfolio-holdings-sort'),
-              variant: FButtonVariant.outline,
+            triggerBuilder: (context, openMenu, focusNode) => AppActionButton(
+              buttonKey: const ValueKey('portfolio-holdings-sort'),
+              variant: FButtonVariant.ghost,
+              size: FButtonSizeVariant.md,
               mainAxisSize: MainAxisSize.min,
+              hapticIntent: AppInteractionIntent.select,
               focusNode: focusNode,
               onPress: openMenu,
               prefix: const Icon(

@@ -618,14 +618,11 @@ class _LibraryList extends ConsumerWidget {
       limit == null ? entries : entries.take(limit!).toList(growable: false);
   bool get hasMore => limit != null && entries.length > limit!;
 
-  Widget _loadMore(BuildContext context) => FButton(
-    variant: FButtonVariant.ghost,
+  Widget _loadMore(BuildContext context) => AppQuietButton(
+    label: AppLocalizations.of(context).commonLoadMore,
+    busyLabel: AppLocalizations.of(context).commonLoading,
+    busy: onLoadMore == null,
     onPress: onLoadMore,
-    child: Text(
-      onLoadMore == null
-          ? AppLocalizations.of(context).commonLoading
-          : AppLocalizations.of(context).commonLoadMore,
-    ),
   );
   final String emptyTitle;
   final String? emptyMessage;

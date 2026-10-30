@@ -527,10 +527,10 @@ class _LeapsCallPositionFormState
           ),
           if (_loaded != null) ...[
             _gap,
-            FButton(
-              variant: FButtonVariant.destructive,
+            AppQuietButton(
+              label: l10n.commonDelete,
+              tone: AppQuietButtonTone.danger,
               onPress: _busy ? null : _delete,
-              child: Text(l10n.commonDelete),
             ),
           ],
         ],

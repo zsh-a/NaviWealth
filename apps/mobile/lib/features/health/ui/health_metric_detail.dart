@@ -72,7 +72,8 @@ class _HealthMetricDetailState extends ConsumerState<HealthMetricDetail> {
         message: l.healthNoRecordsInWindow,
         compact: true,
         action: kind.isMeasurement
-            ? FButton(
+            ? AppActionButton(
+                size: FButtonSizeVariant.md,
                 onPress: () => showBodyMeasurementEntrySheet(
                   context: context,
                   initialKind: kind,
@@ -92,13 +93,34 @@ class _HealthMetricDetailState extends ConsumerState<HealthMetricDetail> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SoftCard.raised(
-          padding: const EdgeInsets.all(AppSpacing.s16),
+          padding: AppPageRhythm.heroPadding,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Row(
+                children: [
+                  AppIconTile(
+                    icon: kind.icon,
+                    color: context.appTheme.categorical.adapt(kind.accent),
+                    size: AppSpacing.s28,
+                    iconSize: AppIconSizes.sm,
+                    radius: AppRadius.sm,
+                    backgroundOpacity: AppOpacity.faint,
+                    foregroundOpacity: 1,
+                  ),
+                  const SizedBox(width: AppSpacing.s8),
+                  Expanded(
+                    child: Text(
+                      kind.title(l),
+                      style: context.captionMediumStyle,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.s12),
               Text(
                 kind.formatValue(l, sample.value),
-                style: context.strongTitleStyle,
+                style: context.appTheme.type.displayCompact,
               ),
               const SizedBox(height: AppSpacing.s4),
               Text(
@@ -496,16 +518,14 @@ class _RecordEvidence extends StatelessWidget {
               ],
             ),
           if (manual && row.kind.isMeasurement)
-            FButton(
-              variant: FButtonVariant.ghost,
-              mainAxisSize: MainAxisSize.min,
+            AppQuietButton(
+              label: l.healthEditMeasurement,
               prefix: const Icon(FLucideIcons.pencil, size: AppIconSizes.xs),
               onPress: () => showBodyMeasurementEntrySheet(
                 context: context,
                 initialKind: row.kind,
                 initialMetric: row,
               ),
-              child: Text(l.healthEditMeasurement),
             ),
         ],
       ),

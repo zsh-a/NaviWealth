@@ -599,19 +599,11 @@ class _Segmented<T> extends StatelessWidget {
       children: [
         Text(label, style: context.mutedLabelStyle),
         const SizedBox(height: AppSpacing.s8),
-        Wrap(
-          spacing: AppSpacing.s8,
-          runSpacing: AppSpacing.s8,
-          children: [
-            for (final entry in options.entries)
-              FButton(
-                variant: entry.key == value
-                    ? FButtonVariant.primary
-                    : FButtonVariant.outline,
-                onPress: () => onChanged(entry.key),
-                child: Text(entry.value),
-              ),
-          ],
+        SegmentedRow<T>(
+          options: options.keys.toList(growable: false),
+          value: value,
+          labelOf: (option) => options[option]!,
+          onChanged: onChanged,
         ),
       ],
     );

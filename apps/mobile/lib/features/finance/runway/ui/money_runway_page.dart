@@ -277,9 +277,9 @@ class _RunwayTimeline extends StatelessWidget {
             const SizedBox(height: AppSpacing.s8),
             Align(
               alignment: AlignmentDirectional.centerStart,
-              child: FButton(
+              child: AppQuietButton(
                 key: const ValueKey('runway-timeline-details'),
-                variant: FButtonVariant.ghost,
+                label: l10n.financeViewAllItems(flows.length),
                 onPress: () => showFinanceDetailSheet<void>(
                   context: context,
                   title: l10n.moneyRunwayTimelineTitle,
@@ -300,9 +300,6 @@ class _RunwayTimeline extends StatelessWidget {
                 prefix: const Icon(
                   FLucideIcons.listChecks,
                   size: AppIconSizes.sm,
-                ),
-                child: Flexible(
-                  child: Text(l10n.financeViewAllItems(flows.length)),
                 ),
               ),
             ),
@@ -649,19 +646,12 @@ class _ScenarioSectionState extends ConsumerState<_ScenarioSection> {
                           ),
                         ),
                         const SizedBox(height: AppSpacing.s6),
-                        FButton(
-                          variant: FButtonVariant.ghost,
+                        AppQuietButton(
+                          label: l10n.moneyRunwayCustomReset,
                           onPress: () => setState(() {
                             _customResult = null;
                             _customInput = null;
                           }),
-                          child: Flexible(
-                            child: Text(
-                              l10n.moneyRunwayCustomReset,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
                         ),
                       ],
                     ),

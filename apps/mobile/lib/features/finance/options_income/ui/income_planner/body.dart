@@ -244,42 +244,31 @@ class _PlannerOverviewCard extends ConsumerWidget {
             spacing: AppSpacing.s8,
             runSpacing: AppSpacing.s8,
             children: [
-              FButton(
-                onPress: running ? null : onRefresh,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (running)
-                      const Padding(
-                        padding: EdgeInsets.only(right: AppSpacing.s8),
-                        child: SizedBox.square(
-                          dimension: AppIconSizes.sm,
-                          child: FCircularProgress(),
-                        ),
-                      )
-                    else
-                      const Padding(
-                        padding: EdgeInsets.only(right: AppSpacing.s8),
-                        child: Icon(
-                          FLucideIcons.scanSearch,
-                          size: AppIconSizes.sm,
-                        ),
-                      ),
-                    Text(
-                      running
-                          ? l10n.incomePlannerRefreshRunning
-                          : l10n.incomePlannerRefreshAction,
-                    ),
-                  ],
+              AppBusyButton(
+                label: l10n.incomePlannerRefreshAction,
+                busyLabel: l10n.incomePlannerRefreshRunning,
+                busy: running,
+                size: FButtonSizeVariant.md,
+                mainAxisSize: MainAxisSize.min,
+                prefix: const Icon(
+                  FLucideIcons.scanSearch,
+                  size: AppIconSizes.sm,
                 ),
+                onPress: running ? null : onRefresh,
               ),
-              FButton(
+              AppActionButton(
                 variant: FButtonVariant.outline,
+                size: FButtonSizeVariant.md,
+                mainAxisSize: MainAxisSize.min,
+                hapticIntent: AppInteractionIntent.select,
                 onPress: onManageUnderlyings,
                 child: Text(l10n.incomePlannerManageApprovedAction),
               ),
-              FButton(
+              AppActionButton(
                 variant: FButtonVariant.outline,
+                size: FButtonSizeVariant.md,
+                mainAxisSize: MainAxisSize.min,
+                hapticIntent: AppInteractionIntent.select,
                 onPress: () => context.push(FinanceRoutes.planWheel),
                 child: Text(l10n.planWheelTitle),
               ),

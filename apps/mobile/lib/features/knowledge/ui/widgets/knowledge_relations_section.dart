@@ -124,8 +124,10 @@ class _KnowledgeRelationsSectionState
           ),
         ),
         if (onCreateDecision case final action?) ...[
-          FButton(
+          AppActionButton(
             variant: FButtonVariant.outline,
+            size: FButtonSizeVariant.md,
+            hapticIntent: AppInteractionIntent.select,
             onPress: _saving ? null : action,
             prefix: const Icon(
               FLucideIcons.gitBranchPlus,
@@ -464,6 +466,7 @@ class _KnowledgeRelationRow extends StatelessWidget {
           AppIconButton(
             key: ValueKey('knowledge-relation-remove-${item.relation.id}'),
             icon: FLucideIcons.unlink,
+            iconColor: context.appTheme.status.danger.fg,
             tooltip: l10n.knowledgeRelationRemoveAction,
             onPress: onRemove,
             size: AppSpacing.s32,

@@ -58,4 +58,29 @@ void main() {
     );
     expect(tester.takeException(), isNull);
   });
+  for (final (name, path, page) in [
+    ('health_today_large_text', '/health', const HealthTodayPage()),
+    ('health_overview_large_text', '/health/trend', const HealthTrendPage()),
+  ]) {
+    testVisualGolden('$name dark', (tester) async {
+      final fixture = await HealthTestFixture.create();
+      addTearDown(fixture.db.close);
+      await pumpAndSnapshotMobile(
+        tester,
+        name: name,
+        routePath: path,
+        variant: GoldenTheme.dark,
+        locale: const Locale('zh'),
+        overrides: fixture.overrides,
+        child: Builder(
+          builder: (context) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: const TextScaler.linear(2)),
+            child: page,
+          ),
+        ),
+      );
+      expect(tester.takeException(), isNull);
+    });
+  }
 }

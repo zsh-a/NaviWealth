@@ -42,23 +42,61 @@ class _MetricGridState extends ConsumerState<_MetricGrid> {
                     MediaQuery.textScalerOf(context).scale(14) > 20
                 ? 1
                 : 2;
-            final width =
-                (constraints.maxWidth - AppSpacing.s8 * (columns - 1)) /
-                columns;
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                _HealthSectionHeading(l.healthKeyMetrics),
                 AppGroupedSurface(
                   padding: EdgeInsets.zero,
-                  child: Wrap(
-                    spacing: AppSpacing.s8,
-                    runSpacing: AppSpacing.s8,
+                  child: Column(
                     children: [
-                      for (final kind in primary)
-                        SizedBox(
-                          width: width,
-                          child: _TodayMetricCard(kind: kind, model: model),
+                      for (
+                        var start = 0;
+                        start < primary.length;
+                        start += columns
+                      ) ...[
+                        if (start > 0)
+                          const AppGroupedDivider(
+                            indent: AppSpacing.s16,
+                            endIndent: AppSpacing.s16,
+                          ),
+                        IntrinsicHeight(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              for (
+                                var offset = 0;
+                                offset < columns;
+                                offset++
+                              ) ...[
+                                if (offset > 0)
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: AppSpacing.s16,
+                                    ),
+                                    child: SizedBox(
+                                      width: AppStroke.hairline,
+                                      child: ColoredBox(
+                                        color: context.theme.colors.border
+                                            .withValues(
+                                              alpha: AppOpacity.faint,
+                                            ),
+                                      ),
+                                    ),
+                                  ),
+                                Expanded(
+                                  child: start + offset < primary.length
+                                      ? _TodayMetricCard(
+                                          kind: primary[start + offset],
+                                          model: model,
+                                        )
+                                      : const SizedBox.shrink(),
+                                ),
+                              ],
+                            ],
+                          ),
                         ),
+                      ],
                     ],
                   ),
                 ),
@@ -162,16 +200,20 @@ class _TodayMetricCard extends StatelessWidget {
     return AppTappable(
       onPress: open,
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.s12),
+        padding: const EdgeInsets.all(AppSpacing.s16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(
-                  kind.icon,
-                  size: AppIconSizes.sm,
+                AppIconTile(
+                  icon: kind.icon,
+                  size: AppSpacing.s28,
+                  iconSize: AppIconSizes.sm,
+                  radius: AppRadius.sm,
                   color: context.appTheme.categorical.adapt(kind.accent),
+                  backgroundOpacity: AppOpacity.faint,
+                  foregroundOpacity: 1,
                 ),
                 const SizedBox(width: AppSpacing.s8),
                 Expanded(
@@ -184,8 +226,11 @@ class _TodayMetricCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.s8),
-            Text(kind.formatValue(l, value), style: context.strongTitleStyle),
+            const SizedBox(height: AppSpacing.s12),
+            Text(
+              kind.formatValue(l, value),
+              style: context.appTheme.type.numericTitleStrong,
+            ),
             const SizedBox(height: AppSpacing.s4),
             Text(healthDateLabel(l, day), style: context.microCaptionStyle),
           ],

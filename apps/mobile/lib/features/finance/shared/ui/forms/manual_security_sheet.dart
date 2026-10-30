@@ -302,18 +302,18 @@ class _ManualSecuritySheetState extends ConsumerState<ManualSecuritySheet> {
             const SizedBox(height: AppSpacing.s8),
             Align(
               alignment: Alignment.centerLeft,
-              child: FButton(
-                key: const Key('manual-security-import'),
+              child: AppBusyButton(
+                buttonKey: const Key('manual-security-import'),
                 variant: FButtonVariant.ghost,
+                size: FButtonSizeVariant.md,
+                mainAxisSize: MainAxisSize.min,
+                label: l10n.manualSecurityImportAction,
+                busyLabel: l10n.manualSecurityImporting,
+                busy: _importing,
                 onPress: _importing ? null : _importFromNetwork,
                 prefix: const Icon(
                   FLucideIcons.cloudDownload,
                   size: AppIconSizes.sm,
-                ),
-                child: Text(
-                  _importing
-                      ? l10n.manualSecurityImporting
-                      : l10n.manualSecurityImportAction,
                 ),
               ),
             ),

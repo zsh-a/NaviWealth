@@ -297,10 +297,9 @@ class _CategoryFormSheetState extends State<_CategoryFormSheet> {
             const SizedBox(height: AppSpacing.s6),
             Align(
               alignment: AlignmentDirectional.centerEnd,
-              child: FButton(
-                variant: FButtonVariant.ghost,
+              child: AppQuietButton(
+                label: l10n.expenseCategoriesMakeTopLevel,
                 onPress: () => setState(() => _parentId = null),
-                child: Text(l10n.expenseCategoriesMakeTopLevel),
               ),
             ),
           ],

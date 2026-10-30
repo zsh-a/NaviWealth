@@ -705,15 +705,13 @@ class _ReconciliationRow extends ConsumerWidget {
             children: [
               if (reconciliation?.status ==
                   AccountReconciliationStatus.mismatch)
-                FButton(
-                  variant: FButtonVariant.ghost,
+                AppQuietButton(
+                  label: l10n.monthlyCloseAcceptDifference,
                   onPress: () => _override(context, ref, reconciliation!),
-                  child: Text(l10n.monthlyCloseAcceptDifference),
                 ),
-              FButton(
-                variant: FButtonVariant.ghost,
+              AppQuietButton(
+                label: l10n.monthlyCloseEnterStatementBalance,
                 onPress: () => _verify(context, ref),
-                child: Text(l10n.monthlyCloseEnterStatementBalance),
               ),
             ],
           ),

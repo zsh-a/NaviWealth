@@ -196,11 +196,10 @@ class _TodayListState extends ConsumerState<_TodayList> {
                     ? l10n.executionOpenActionsUnavailable
                     : l10n.commonLoading,
                 action: inventory.hasError
-                    ? FButton(
-                        variant: FButtonVariant.ghost,
+                    ? AppQuietButton(
+                        label: l10n.commonRetry,
                         onPress: () =>
                             ref.invalidate(executionOpenActionsProvider),
-                        child: Text(l10n.commonRetry),
                       )
                     : null,
               ),
@@ -232,6 +231,7 @@ class _TodayListState extends ConsumerState<_TodayList> {
                       : l10n.executionTodayFilteredEmptyBody,
                   action: _filter == ExecutionTodayFilter.today
                       ? AppActionButton(
+                          hapticIntent: AppInteractionIntent.select,
                           onPress: () =>
                               showExecutionActionSheet(context: context),
                           child: FittedBox(
@@ -400,12 +400,11 @@ class _DailyFocusPanelState extends ConsumerState<_DailyFocusPanel> {
             color: context.appTheme.status.info.fg,
             trailing: selected.isEmpty
                 ? null
-                : FButton(
-                    variant: FButtonVariant.ghost,
+                : AppQuietButton(
+                    label: _editing
+                        ? l10n.commonDone
+                        : l10n.executionDailyFocusEdit,
                     onPress: () => setState(() => _editing = !_editing),
-                    child: Text(
-                      _editing ? l10n.commonDone : l10n.executionDailyFocusEdit,
-                    ),
                   ),
           ),
           const SizedBox(height: AppSpacing.s8),
@@ -422,10 +421,9 @@ class _DailyFocusPanelState extends ConsumerState<_DailyFocusPanel> {
                       .map((action) => action.title)
                       .join(' · '),
                 ),
-                action: FButton(
-                  variant: FButtonVariant.ghost,
+                action: AppQuietButton(
+                  label: l10n.executionDailyFocusUseSuggestion,
                   onPress: widget.onAdoptSuggestions,
-                  child: Text(l10n.executionDailyFocusUseSuggestion),
                 ),
               ),
             ],

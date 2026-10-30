@@ -146,8 +146,11 @@ class _Disconnected extends StatelessWidget {
           const SizedBox(height: AppSpacing.s8),
           Align(
             alignment: AlignmentDirectional.centerEnd,
-            child: FButton(
+            child: AppActionButton(
               variant: FButtonVariant.outline,
+              size: FButtonSizeVariant.md,
+              mainAxisSize: MainAxisSize.min,
+              hapticIntent: AppInteractionIntent.select,
               onPress: () => showGarminAccountBindSheet(context: context),
               child: Text(l10n.healthGarminConnect),
             ),
@@ -214,8 +217,11 @@ class _MfaPending extends StatelessWidget {
           const SizedBox(height: AppSpacing.s8),
           Align(
             alignment: AlignmentDirectional.centerEnd,
-            child: FButton(
+            child: AppActionButton(
               variant: FButtonVariant.outline,
+              size: FButtonSizeVariant.md,
+              mainAxisSize: MainAxisSize.min,
+              hapticIntent: AppInteractionIntent.select,
               onPress: () => showGarminAccountBindSheet(context: context),
               child: Text(l10n.healthGarminEnterCode),
             ),
@@ -340,8 +346,9 @@ class _Connected extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: FButton(
+                child: AppActionButton(
                   variant: FButtonVariant.outline,
+                  size: FButtonSizeVariant.md,
                   onPress: () => refreshing
                       ? ref
                             .read(
@@ -444,7 +451,7 @@ class _Syncing extends ConsumerWidget {
             borderRadius: BorderRadius.circular(AppRadius.sm),
             child: LinearProgressIndicator(
               value: progress,
-              minHeight: 3,
+              minHeight: AppStroke.accent,
               backgroundColor: colors.muted.withValues(
                 alpha: AppOpacity.highlight,
               ),
@@ -525,10 +532,11 @@ class _Error extends StatelessWidget {
           const SizedBox(height: AppSpacing.s8),
           Align(
             alignment: AlignmentDirectional.centerEnd,
-            child: AppQuietButton(
-              label: issue.requiresReconnect
-                  ? l10n.healthGarminConnect
-                  : l10n.healthGarminRetry,
+            child: AppActionButton(
+              variant: FButtonVariant.outline,
+              size: FButtonSizeVariant.md,
+              mainAxisSize: MainAxisSize.min,
+              hapticIntent: AppInteractionIntent.select,
               onPress: () {
                 if (issue.requiresReconnect) {
                   showGarminAccountBindSheet(context: context);
@@ -536,6 +544,11 @@ class _Error extends StatelessWidget {
                 }
                 _retryGarmin(context);
               },
+              child: Text(
+                issue.requiresReconnect
+                    ? l10n.healthGarminConnect
+                    : l10n.healthGarminRetry,
+              ),
             ),
           ),
         ],

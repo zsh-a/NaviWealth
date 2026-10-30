@@ -347,9 +347,11 @@ class _ScenarioCardState extends ConsumerState<_ScenarioCard> {
                   : l10n.lifeEventFireDelay(exactFireDelay),
             ),
           const SizedBox(height: AppSpacing.s10),
-          FButton(
+          AppBusyButton(
+            label: l10n.lifeEventChooseScenario,
+            busy: _saving,
+            size: FButtonSizeVariant.md,
             onPress: _saving ? null : saveDecision,
-            child: Text(l10n.lifeEventChooseScenario),
           ),
           const SizedBox(height: AppSpacing.s6),
           AppAdaptiveActionMenu(

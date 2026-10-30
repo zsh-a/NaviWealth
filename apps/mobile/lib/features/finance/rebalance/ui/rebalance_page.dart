@@ -265,10 +265,9 @@ class _UniversePortfolioAllocation extends ConsumerWidget {
             const SizedBox(height: AppSpacing.s4),
             Text(l10n.rebalanceCapitalTreeHint, style: context.captionStyle),
             const SizedBox(height: AppSpacing.s8),
-            FButton(
-              variant: FButtonVariant.ghost,
+            AppQuietButton(
+              label: l10n.rebalanceConfigurePlanAction,
               onPress: () => context.push(FinanceRoutes.wealthPortfolio),
-              child: Text(l10n.rebalanceConfigurePlanAction),
             ),
             const SizedBox(height: AppSpacing.s8),
             FSelect<String>.rich(

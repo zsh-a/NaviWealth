@@ -449,10 +449,10 @@ class _ExecutionActionFormState extends ConsumerState<_ExecutionActionForm>
                     const SizedBox(height: AppSpacing.s16),
                     const AppDivider(),
                     const SizedBox(height: AppSpacing.s12),
-                    FButton(
-                      variant: FButtonVariant.destructive,
+                    AppQuietButton(
+                      label: l10n.commonDelete,
+                      tone: AppQuietButtonTone.danger,
                       onPress: _saving ? null : _delete,
-                      child: Text(l10n.commonDelete),
                     ),
                   ],
                 ],

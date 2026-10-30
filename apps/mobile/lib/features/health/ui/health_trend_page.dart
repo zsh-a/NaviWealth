@@ -84,26 +84,69 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
         ? SegmentedRow<TrendGroup>.inline(
             options: TrendGroup.values,
             value: group,
-            minSegmentWidth: 72,
             labelOf: (g) => healthGroupLabel(l, g),
             onChanged: (g) => _go(group: g),
           )
         : Align(
             alignment: AlignmentDirectional.centerStart,
-            child: FButton(
+            child: AppActionButton(
               variant: FButtonVariant.ghost,
+              size: FButtonSizeVariant.md,
               mainAxisSize: MainAxisSize.min,
-              prefix: const Icon(FLucideIcons.arrowLeft, size: AppIconSizes.sm),
+              hapticIntent: AppInteractionIntent.select,
+              prefix: const Icon(FLucideIcons.arrowLeft, size: AppIconSizes.xs),
               onPress: () => _go(group: group),
-              child: Flexible(child: Text(l.healthAllMetrics)),
+              child: Flexible(
+                child: Text(
+                  l.healthAllMetrics,
+                  style: context.appTheme.type.numericCaption,
+                ),
+              ),
             ),
           );
-    final range = SegmentedRow<int>.inline(
-      options: const [7, 30, 90],
+    final range = AppAdaptiveSelectionMenu<int>(
+      title: l.healthTimeWindow,
+      options: [
+        for (final window in const [7, 30, 90])
+          AppAdaptiveSelection(
+            value: window,
+            title: l.healthWindowDays(window),
+            icon: FLucideIcons.calendarDays,
+          ),
+      ],
       value: days,
-      labelOf: l.healthWindowShort,
-      semanticLabelOf: l.healthWindowDays,
       onChanged: (window) => _go(window: window, metric: metric),
+      triggerBuilder: (context, openMenu, focusNode) => AppActionButton(
+        buttonKey: const Key('health-trend-range'),
+        variant: FButtonVariant.ghost,
+        size: FButtonSizeVariant.md,
+        mainAxisSize: MainAxisSize.min,
+        hapticIntent: AppInteractionIntent.select,
+        semanticsLabel: l.healthWindowDays(days),
+        focusNode: focusNode,
+        onPress: openMenu,
+        child: Flexible(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  l.healthWindowShort(days),
+                  style: context.appTheme.type.numericCaptionStrong.copyWith(
+                    color: context.theme.colors.primary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s6),
+              Icon(
+                FLucideIcons.chevronDown,
+                size: AppIconSizes.xs,
+                color: context.theme.colors.mutedForeground,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
     return ShellTabScaffold(
       title: metric?.title(l) ?? l.healthTrendTitle,
@@ -137,19 +180,52 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
                 LayoutBuilder(
                   builder: (context, constraints) {
                     final scale = MediaQuery.textScalerOf(context).scale(1);
+                    var segmentWidth = AppControlHeights.touchTarget;
+                    for (final option in TrendGroup.values) {
+                      final painter = TextPainter(
+                        text: TextSpan(
+                          text: healthGroupLabel(l, option),
+                          style: context.appTheme.type.numericCaptionStrong,
+                        ),
+                        textDirection: Directionality.of(context),
+                        textScaler: MediaQuery.textScalerOf(context),
+                      )..layout();
+                      final width =
+                          painter.width.ceilToDouble() + AppSpacing.s24;
+                      if (width > segmentWidth) segmentWidth = width;
+                      painter.dispose();
+                    }
+                    final minimumNavigationWidth = metric == null
+                        ? segmentWidth * TrendGroup.values.length +
+                              AppSpacing.s8
+                        : 200 * scale;
+                    final minimumRangeWidth = 128 * scale;
                     final sideBySide =
                         constraints.maxWidth >=
-                        Breakpoints.readingColumn * scale;
-                    final slotWidth = sideBySide
-                        ? (constraints.maxWidth - AppSpacing.s12) / 2
+                        minimumNavigationWidth +
+                            minimumRangeWidth +
+                            AppSpacing.s12;
+                    final rangeWidth = sideBySide
+                        ? minimumRangeWidth
                         : constraints.maxWidth;
+                    final navigationWidth = sideBySide
+                        ? constraints.maxWidth - rangeWidth - AppSpacing.s12
+                        : constraints.maxWidth;
+                    // Keep both controls in stable slots as they wrap so
+                    // resizing and route updates preserve keyboard focus.
                     return Wrap(
                       spacing: AppSpacing.s12,
-                      runSpacing: AppSpacing.s4,
+                      runSpacing: AppSpacing.s8,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        SizedBox(width: slotWidth, child: navigation),
-                        SizedBox(width: slotWidth, child: range),
+                        SizedBox(width: navigationWidth, child: navigation),
+                        SizedBox(
+                          width: rangeWidth,
+                          child: Align(
+                            alignment: AlignmentDirectional.centerEnd,
+                            child: range,
+                          ),
+                        ),
                       ],
                     );
                   },
@@ -202,8 +278,10 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
                               title: l.healthNoData,
                               message: l.healthNoRecordsInWindow,
                               compact: true,
-                              action: FButton(
+                              action: AppActionButton(
                                 variant: FButtonVariant.outline,
+                                size: FButtonSizeVariant.md,
+                                hapticIntent: AppInteractionIntent.select,
                                 onPress: () => group == TrendGroup.body
                                     ? showBodyMeasurementEntrySheet(
                                         context: context,

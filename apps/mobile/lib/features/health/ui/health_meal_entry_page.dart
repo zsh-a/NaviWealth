@@ -183,7 +183,11 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
                 kind: AppStatusKind.error,
                 message: _error ?? l.healthMealNotFound,
               ),
-              FButton(onPress: _load, child: Text(l.commonRetry)),
+              AppActionButton(
+                size: FButtonSizeVariant.md,
+                onPress: _load,
+                child: Text(l.commonRetry),
+              ),
             ] else ...[
               Text(l.healthMealPhoto, style: context.labelStyle),
               const SizedBox(height: AppSpacing.s8),
@@ -217,16 +221,20 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
                 spacing: AppSpacing.s8,
                 runSpacing: AppSpacing.s8,
                 children: [
-                  FButton(
+                  AppActionButton(
                     variant: FButtonVariant.outline,
+                    size: FButtonSizeVariant.md,
+                    hapticIntent: AppInteractionIntent.select,
                     mainAxisSize: MainAxisSize.min,
                     onPress: _busy || _photos.length >= MealPhoto.maxCount
                         ? null
                         : () => _capture(camera: true),
                     child: Text(l.healthMealCamera),
                   ),
-                  FButton(
+                  AppActionButton(
                     variant: FButtonVariant.outline,
+                    size: FButtonSizeVariant.md,
+                    hapticIntent: AppInteractionIntent.select,
                     mainAxisSize: MainAxisSize.min,
                     onPress: _busy || _photos.length >= MealPhoto.maxCount
                         ? null
@@ -234,9 +242,11 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
                     child: Text(l.healthMealGallery),
                   ),
                   if (ref.watch(mealPhotoCaptureProvider).supportsVideo)
-                    FButton(
-                      key: const Key('meal-video'),
+                    AppActionButton(
+                      buttonKey: const Key('meal-video'),
                       variant: FButtonVariant.outline,
+                      size: FButtonSizeVariant.md,
+                      hapticIntent: AppInteractionIntent.select,
                       mainAxisSize: MainAxisSize.min,
                       onPress: _busy || _photos.length >= MealPhoto.maxCount
                           ? null
@@ -347,22 +357,19 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
                         spacing: AppSpacing.s8,
                         runSpacing: AppSpacing.s4,
                         children: [
-                          FButton(
-                            variant: FButtonVariant.ghost,
-                            mainAxisSize: MainAxisSize.min,
+                          AppQuietButton(
+                            label: l.healthMealEditFood,
                             onPress: _busy ? null : () => _editFood(index),
-                            child: Text(l.healthMealEditFood),
                           ),
-                          FButton(
-                            variant: FButtonVariant.ghost,
-                            mainAxisSize: MainAxisSize.min,
+                          AppQuietButton(
+                            label: l.healthMealRemoveFood,
+                            tone: AppQuietButtonTone.danger,
                             onPress: _busy
                                 ? null
                                 : () {
                                     setState(() => _foods.removeAt(index));
                                     dirty.markDirty();
                                   },
-                            child: Text(l.healthMealRemoveFood),
                           ),
                         ],
                       ),
@@ -372,8 +379,10 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
                 const AppGroupedDivider(),
               ],
               const SizedBox(height: AppSpacing.s8),
-              FButton(
+              AppActionButton(
                 variant: FButtonVariant.outline,
+                size: FButtonSizeVariant.md,
+                hapticIntent: AppInteractionIntent.select,
                 onPress: _busy || _foods.length >= 30
                     ? null
                     : () => _editFood(null),
@@ -392,9 +401,9 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
               Text(l.healthMealEstimateHint, style: context.captionStyle),
               if (_initial != null) ...[
                 const SizedBox(height: AppSpacing.s20),
-                AppBusyButton(
+                AppQuietButton(
                   label: l.commonDelete,
-                  variant: FButtonVariant.destructive,
+                  tone: AppQuietButtonTone.danger,
                   onPress: _busy ? null : _delete,
                 ),
               ],

@@ -268,9 +268,11 @@ class _CapitalAllocationPlanEditorState
                   alignment: WrapAlignment.end,
                   spacing: AppSpacing.s8,
                   children: [
-                    FButton(
-                      key: const ValueKey('allocation-restore'),
+                    AppActionButton(
+                      buttonKey: const ValueKey('allocation-restore'),
                       variant: FButtonVariant.ghost,
+                      size: FButtonSizeVariant.md,
+                      hapticIntent: AppInteractionIntent.select,
                       mainAxisSize: MainAxisSize.min,
                       onPress: _busy || !_hasChanges ? null : _restore,
                       child: Flexible(
@@ -281,8 +283,10 @@ class _CapitalAllocationPlanEditorState
                       ),
                     ),
                     if (_drafts.length > 1)
-                      FButton(
+                      AppActionButton(
                         variant: FButtonVariant.ghost,
+                        size: FButtonSizeVariant.md,
+                        hapticIntent: AppInteractionIntent.select,
                         mainAxisSize: MainAxisSize.min,
                         onPress: _busy ? null : _balanceEvenly,
                         child: Flexible(

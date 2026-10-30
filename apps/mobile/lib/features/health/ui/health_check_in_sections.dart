@@ -53,10 +53,14 @@ class HealthCheckInToday extends ConsumerWidget {
             padding: const EdgeInsets.all(AppSpacing.s16),
             child: Row(
               children: [
-                Icon(
-                  FLucideIcons.notebookPen,
-                  size: AppIconSizes.sm,
+                AppIconTile(
+                  icon: FLucideIcons.notebookPen,
+                  size: AppSpacing.s40,
+                  iconSize: AppIconSizes.md,
+                  radius: AppRadius.md,
                   color: context.theme.colors.primary,
+                  backgroundOpacity: AppOpacity.faint,
+                  foregroundOpacity: 1,
                 ),
                 const SizedBox(width: AppSpacing.s12),
                 Expanded(
@@ -305,12 +309,7 @@ class _SectionHeader extends StatelessWidget {
         ),
         ConstrainedBox(
           constraints: BoxConstraints(maxWidth: constraints.maxWidth),
-          child: FButton(
-            variant: FButtonVariant.ghost,
-            mainAxisSize: MainAxisSize.min,
-            onPress: onPress,
-            child: Flexible(child: Text(action)),
-          ),
+          child: AppQuietButton(label: action, onPress: onPress),
         ),
       ],
     ),

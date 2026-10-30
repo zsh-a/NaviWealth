@@ -165,7 +165,7 @@ class KnowledgeEntryTile extends StatelessWidget {
                           icon: FLucideIcons.ellipsis,
                           tooltip: l10n.shellMoreActions,
                           onPress: openMenu,
-                          size: 32,
+                          size: AppSpacing.s32,
                           iconSize: AppIconSizes.xs,
                           iconColor: colors.mutedForeground,
                           surface: AppIconButtonSurface.softMuted,

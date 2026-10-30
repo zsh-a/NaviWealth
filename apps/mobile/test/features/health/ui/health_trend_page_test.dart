@@ -88,7 +88,13 @@ Future<void> _selectWindow(
     -250,
     scrollable: find.byType(Scrollable).first,
   );
-  await tester.tap(find.text('${days}d'));
+  await tester.tap(find.byKey(const Key('health-trend-range')));
+  await tester.pumpAndSettle();
+  await tester.tap(
+    find
+        .text(lookupAppLocalizations(const Locale('en')).healthWindowDays(days))
+        .last,
+  );
   await tester.pumpAndSettle();
 }
 
@@ -100,15 +106,22 @@ void main() {
     addTearDown(fixture.db.close);
     final router = await _pump(tester, fixture, width: 900);
 
-    await tester.tap(find.text('7d'));
-    await tester.pumpAndSettle();
+    await _selectWindow(tester, current: 30, days: 7);
     expect(
       router.routeInformationProvider.value.uri.queryParameters['window'],
       '7',
     );
     tester.view.physicalSize = const Size(320, 1000);
     await tester.pumpAndSettle();
-    await tester.sendKeyEvent(LogicalKeyboardKey.end);
+    final rangeButton = find.byKey(const Key('health-trend-range'));
+    expect(tester.widget<FButton>(rangeButton).focusNode!.hasFocus, isTrue);
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find
+          .text(lookupAppLocalizations(const Locale('en')).healthWindowDays(90))
+          .last,
+    );
     await tester.pumpAndSettle();
     expect(
       router.routeInformationProvider.value.uri.queryParameters['window'],
@@ -617,15 +630,28 @@ void main() {
     '/health/trend?metric=sleep_session',
     '/health/trend?metric=weight',
   ]) {
-    testWidgets('narrow large-text layout $location has no overflow', (
-      tester,
-    ) async {
-      final f = await HealthTestFixture.create();
-      addTearDown(f.db.close);
-      await _pump(tester, f, location: location, width: 320, scale: 2);
-      expect(tester.takeException(), isNull);
-      await tester.pumpWidget(const SizedBox.shrink());
-      await tester.pumpAndSettle();
-    });
+    for (final (width, height, scale) in [
+      (320.0, 1000.0, 2.0),
+      (1024.0, 768.0, 1.0),
+    ]) {
+      testWidgets(
+        'responsive layout $location at $width×$height, text $scale has no overflow',
+        (tester) async {
+          final f = await HealthTestFixture.create();
+          addTearDown(f.db.close);
+          await _pump(
+            tester,
+            f,
+            location: location,
+            width: width,
+            height: height,
+            scale: scale,
+          );
+          expect(tester.takeException(), isNull);
+          await tester.pumpWidget(const SizedBox.shrink());
+          await tester.pumpAndSettle();
+        },
+      );
+    }
   }
 }

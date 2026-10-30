@@ -130,15 +130,15 @@ class _HealthPlatformSourceRowState
           ? null
           : () => context.push(SettingsRoutes.domainsHealth),
       action: widget.manage && platform.value?.available == true
-          ? FButton(
+          ? AppBusyButton(
+              label: platform.value?.needsPermission == true
+                  ? l.healthActivationAction
+                  : l.healthGarminSync,
               variant: FButtonVariant.outline,
+              size: FButtonSizeVariant.md,
               mainAxisSize: MainAxisSize.min,
+              busy: _running,
               onPress: _running ? null : _sync,
-              child: Text(
-                platform.value?.needsPermission == true
-                    ? l.healthActivationAction
-                    : l.healthGarminSync,
-              ),
             )
           : null,
     );

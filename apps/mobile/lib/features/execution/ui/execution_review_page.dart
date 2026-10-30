@@ -606,7 +606,10 @@ class _ReviewNextActionsBatchState
     final l10n = AppLocalizations.of(context);
     return Align(
       alignment: Alignment.centerLeft,
-      child: FButton(
+      child: AppActionButton(
+        size: FButtonSizeVariant.md,
+        mainAxisSize: MainAxisSize.min,
+        hapticIntent: AppInteractionIntent.select,
         onPress: () => _review(planIds: widget.planIds),
         child: Text(l10n.executionReviewDraftNextActions(count)),
       ),
@@ -715,7 +718,8 @@ class _ReviewBatchDraftSheetState extends State<_ReviewBatchDraftSheet> {
       title: l10n.executionReviewDraftNextActions(widget.drafts.length),
       footer: SafeArea(
         top: false,
-        child: FButton(
+        child: AppActionButton(
+          emphasis: AppButtonEmphasis.filled,
           onPress: selected.isEmpty ? null : () => widget.onConfirm(selected),
           child: Text(l10n.executionReviewCreateNextActions(selected.length)),
         ),

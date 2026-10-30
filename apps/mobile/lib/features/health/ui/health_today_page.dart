@@ -12,6 +12,8 @@
 /// so HealthOS reads as the same app as Finance / Knowledge.
 library;
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -138,12 +140,12 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
                         ),
                       ),
                     const AdaptiveSummaryTile(
-                      role: AdaptiveSummaryTileRole.supporting,
-                      child: _SourcesSection(),
-                    ),
-                    const AdaptiveSummaryTile(
                       role: AdaptiveSummaryTileRole.continuous,
                       child: _WeeklySummaryPanel(),
+                    ),
+                    const AdaptiveSummaryTile(
+                      role: AdaptiveSummaryTileRole.supporting,
+                      child: _SourcesSection(),
                     ),
                   ])
                 // The activation card already exposes the three first-run
@@ -167,14 +169,38 @@ class _HealthTodayRecords extends StatelessWidget {
   const _HealthTodayRecords();
 
   @override
-  Widget build(BuildContext context) => const AppGroupedSurface(
-    padding: EdgeInsets.zero,
-    child: Column(
-      children: [
-        HealthMealToday(),
-        AppGroupedDivider(indent: AppSpacing.s16, endIndent: AppSpacing.s16),
-        HealthCheckInToday(),
-      ],
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      _HealthSectionHeading(AppLocalizations.of(context).healthDailyRecords),
+      const AppGroupedSurface(
+        padding: EdgeInsets.zero,
+        child: Column(
+          children: [
+            HealthMealToday(),
+            AppGroupedDivider(
+              indent: AppSpacing.s16,
+              endIndent: AppSpacing.s16,
+            ),
+            HealthCheckInToday(),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+class _HealthSectionHeading extends StatelessWidget {
+  const _HealthSectionHeading(this.title);
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: AppSpacing.s12),
+    child: Semantics(
+      header: true,
+      child: Text(title, style: context.labelStyle),
     ),
   );
 }
@@ -289,9 +315,8 @@ class _HealthActivationCardState extends ConsumerState<_HealthActivationCard> {
       data: (value) {
         if (value) return const SizedBox.shrink();
         final l10n = AppLocalizations.of(context);
-        return SoftCard(
-          level: SoftCardLevel.raised,
-          padding: AppPageRhythm.cardPadding,
+        return SoftCard.hero(
+          padding: AppPageRhythm.heroPadding,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -305,12 +330,7 @@ class _HealthActivationCardState extends ConsumerState<_HealthActivationCard> {
               Text(l10n.healthActivationBody, style: context.captionStyle),
               if (_error != null) ...[
                 const SizedBox(height: AppSpacing.s8),
-                Text(
-                  _error!,
-                  style: context.captionStyle.copyWith(
-                    color: context.appTheme.status.danger.fg,
-                  ),
-                ),
+                AppStatusBanner(message: _error!, kind: AppStatusKind.error),
               ],
               const SizedBox(height: AppSpacing.s12),
               if (ref
@@ -320,11 +340,11 @@ class _HealthActivationCardState extends ConsumerState<_HealthActivationCard> {
                   true) ...[
                 SizedBox(
                   width: double.infinity,
-                  child: FButton(
+                  child: AppBusyButton(
+                    label: l10n.healthActivationAction,
+                    size: FButtonSizeVariant.md,
+                    busy: _running,
                     onPress: _running ? null : _activatePlatform,
-                    child: _running
-                        ? const FCircularProgress()
-                        : Text(l10n.healthActivationAction),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.s8),
@@ -333,14 +353,18 @@ class _HealthActivationCardState extends ConsumerState<_HealthActivationCard> {
                 spacing: AppSpacing.s8,
                 runSpacing: AppSpacing.s8,
                 children: [
-                  FButton(
+                  AppActionButton(
                     variant: FButtonVariant.outline,
+                    size: FButtonSizeVariant.md,
+                    hapticIntent: AppInteractionIntent.select,
                     mainAxisSize: MainAxisSize.min,
                     onPress: _running ? null : _activateGarmin,
                     child: Text(l10n.healthActivationGarminAction),
                   ),
-                  FButton(
+                  AppActionButton(
                     variant: FButtonVariant.outline,
+                    size: FButtonSizeVariant.md,
+                    hapticIntent: AppInteractionIntent.select,
                     mainAxisSize: MainAxisSize.min,
                     onPress: _running ? null : _recordManually,
                     child: Text(l10n.healthActivationManualAction),
@@ -390,7 +414,7 @@ class _HealthRecoveryStickyBar extends ConsumerWidget {
         leading: AppIconTile(
           icon: RecoveryVerdict.icon(verdict),
           color: accent,
-          size: 28,
+          size: AppSpacing.s28,
           iconSize: AppIconSizes.sm,
           radius: AppRadius.sm,
           backgroundOpacity: AppOpacity.subtle,

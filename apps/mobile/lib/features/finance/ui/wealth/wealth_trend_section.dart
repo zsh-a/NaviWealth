@@ -483,11 +483,7 @@ class _WealthTrendError extends StatelessWidget {
           children: [
             Text(l10n.commonLoadFailed, style: context.bodyCaptionStyle),
             const SizedBox(height: AppSpacing.s8),
-            FButton(
-              variant: FButtonVariant.ghost,
-              onPress: onRetry,
-              child: Text(l10n.commonRetry),
-            ),
+            AppQuietButton(label: l10n.commonRetry, onPress: onRetry),
           ],
         ),
       ),

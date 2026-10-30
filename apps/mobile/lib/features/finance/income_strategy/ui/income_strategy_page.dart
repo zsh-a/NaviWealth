@@ -397,8 +397,11 @@ class _WorkspaceActions extends StatelessWidget {
             onPress: () => context.push(FinanceRoutes.planWheel),
           ),
       ],
-      triggerBuilder: (context, openMenu, focusNode) => FButton(
-        variant: FButtonVariant.outline,
+      triggerBuilder: (context, openMenu, focusNode) => AppActionButton(
+        variant: FButtonVariant.ghost,
+        size: FButtonSizeVariant.md,
+        mainAxisSize: MainAxisSize.min,
+        hapticIntent: AppInteractionIntent.select,
         focusNode: focusNode,
         onPress: openMenu,
         prefix: const Icon(FLucideIcons.ellipsis, size: AppIconSizes.sm),

@@ -288,15 +288,12 @@ class _DecisionOptionCard extends StatelessWidget {
                 ),
               ),
               if (canRemove)
-                FTooltip(
-                  tipBuilder: (_, _) =>
-                      Text(l10n.knowledgeDecisionRemoveOption),
-                  child: FButton.icon(
-                    key: ValueKey<String>('$keyPrefix-remove-$index'),
-                    variant: FButtonVariant.ghost,
-                    onPress: enabled ? onRemove : null,
-                    child: const Icon(FLucideIcons.trash2),
-                  ),
+                AppIconButton(
+                  key: ValueKey<String>('$keyPrefix-remove-$index'),
+                  icon: FLucideIcons.trash2,
+                  iconColor: context.appTheme.status.danger.fg,
+                  tooltip: l10n.knowledgeDecisionRemoveOption,
+                  onPress: enabled ? onRemove : null,
                 ),
             ],
           ),

@@ -343,16 +343,11 @@ extension _IngestReviewControls on _IngestReviewPageState {
 
   Widget _loadMore(int total) => Padding(
     padding: const EdgeInsets.symmetric(vertical: AppSpacing.s12),
-    child: FButton(
+    child: AppQuietButton(
       key: const ValueKey('ingest-load-more'),
-      variant: FButtonVariant.outline,
+      label: AppLocalizations.of(context)
+          .ingestLoadMore(_visibleLimit.clamp(0, total), total),
       onPress: () => setState(() => _visibleLimit += 100),
-      child: Flexible(
-        child: Text(
-          AppLocalizations.of(context)
-              .ingestLoadMore(_visibleLimit.clamp(0, total), total),
-        ),
-      ),
     ),
   );
 }

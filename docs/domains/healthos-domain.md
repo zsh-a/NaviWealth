@@ -226,6 +226,15 @@ Domain reset clears both resources, while ordinary cache cleanup preserves
 them. A storage trigger also removes photo bytes when a meal tombstone arrives
 through Sync.
 
+On iOS and Android, each image preview offers an explicit Save to photos
+action, including images loaded from an existing meal and stills extracted
+from video. It exports the selected normalized JPEG to the system photo
+library, requesting save permission only on demand. Permission denials,
+insufficient storage, and save failures remain visible with a retry action;
+an in-flight save cannot be submitted twice. Exported copies are managed by
+the user and the system photo library, independently of app record deletion,
+domain reset, sync, and backups.
+
 Android and iOS support short-video capture/import (up to 10 seconds and
 50 MiB; recording requests 8 seconds). Native codecs extract eight bounded
 candidate frames off the main thread. Local image processing selects up to
@@ -336,6 +345,12 @@ HealthOS is active only when the user enables it in Settings.
 
 Presentation contract:
 
+- Today uses a dated heading, one recovery surface with a score out of 100
+  when available, and separate Key readings and Daily records sections.
+  Readings use tabular values and quiet internal dividers; meal and check-in
+  rows share consistent touch targets and icon treatment. The seven-day
+  digest precedes the collapsed source details. Light/dark themes, narrow
+  screens, and large text retain the same information order.
 - Today puts recovery and the latest four available readings before daily
   records. Readings share one grouped surface, keep their capture date, and
   link to metric-specific Trends; historical charts belong in Trends. Narrow
@@ -348,7 +363,9 @@ Presentation contract:
   space permits, stacking controls for narrow screens or large text. Readings
   and charts precede comparison explanations. Metric detail keeps the actual
   source and coverage visible; measurement definitions and source preferences
-  sit behind a data-details disclosure. Save failures remain visible.
+  sit behind a data-details disclosure. The range menu retains the selected
+  metric and URL state, and toolbar controls retain focus when they wrap.
+  Save failures remain visible.
 - Today, Trends, and the seven-day digest use `data/health_series.dart` for
   source-deduplicated calendar aggregation. Windows contain exactly 7, 30, or
   90 dates including today. Range queries are time-bounded, not truncated by

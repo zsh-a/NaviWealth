@@ -581,11 +581,7 @@ class _WatchlistFilterSheetState extends State<_WatchlistFilterSheet> {
           ],
         ),
         const SizedBox(height: AppSpacing.s16),
-        FButton(
-          variant: FButtonVariant.outline,
-          onPress: _reset,
-          child: Text(l10n.watchlistFilterClearAction),
-        ),
+        AppQuietButton(label: l10n.watchlistFilterClearAction, onPress: _reset),
         const SizedBox(height: AppSpacing.s20),
         AppSheetFooter(
           cancelLabel: l10n.commonCancel,
@@ -685,11 +681,11 @@ class _WatchlistCollectionSheetState
           ),
           if (widget.collection != null) ...[
             const SizedBox(height: AppSpacing.s12),
-            FButton(
-              variant: FButtonVariant.destructive,
+            AppQuietButton(
+              label: l10n.watchlistDeleteCollectionAction,
+              tone: AppQuietButtonTone.danger,
               onPress: _saving ? null : _delete,
               prefix: const Icon(FLucideIcons.trash2),
-              child: Text(l10n.watchlistDeleteCollectionAction),
             ),
           ],
           const SizedBox(height: AppSpacing.s20),

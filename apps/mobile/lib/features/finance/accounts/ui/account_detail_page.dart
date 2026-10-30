@@ -135,10 +135,9 @@ class _AccountDetailBody extends ConsumerWidget {
                 style: context.strongTitleStyle,
               ),
             ),
-            FButton(
-              variant: FButtonVariant.ghost,
+            AppQuietButton(
+              label: l10n.dashboardActivityPreviewViewAll,
               onPress: () => context.push(FinanceRoutes.journalEntries),
-              child: Text(l10n.dashboardActivityPreviewViewAll),
             ),
           ],
         ),

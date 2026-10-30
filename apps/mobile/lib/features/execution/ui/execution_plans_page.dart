@@ -185,7 +185,9 @@ class _PlansBodyState extends ConsumerState<_PlansBody> {
               ? l10n.executionPlansEmptyBody
               : l10n.executionPlansClosedEmptyBody,
           action: activeView
-              ? FButton(
+              ? AppActionButton(
+                  size: FButtonSizeVariant.md,
+                  hapticIntent: AppInteractionIntent.select,
                   onPress: () => showExecutionActionSheet(context: context),
                   child: Text(l10n.executionCreateActionTitle),
                 )

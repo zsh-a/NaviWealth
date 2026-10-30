@@ -485,6 +485,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthOverviewTitle => 'Health overview';
 
   @override
+  String get healthKeyMetrics => 'Key readings';
+
+  @override
+  String get healthDailyRecords => 'Daily records';
+
+  @override
+  String get healthPeriodComparison => 'Period comparison';
+
+  @override
   String get executionTodayActionsTitle => 'Today’s actions';
 
   @override
@@ -18765,6 +18774,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get healthMealPreview => 'Preview image';
+
+  @override
+  String get healthMealPhotoSave => 'Save to photos';
+
+  @override
+  String get healthMealPhotoSaving => 'Saving…';
+
+  @override
+  String get healthMealPhotoSaved => 'Saved to photos.';
+
+  @override
+  String get healthMealPhotoSaveDenied =>
+      'Allow photo or storage access for NaviWealth in system settings, then try again.';
+
+  @override
+  String get healthMealPhotoSaveNoSpace =>
+      'Your device is out of storage. Free up space and try again.';
+
+  @override
+  String get healthMealPhotoSaveFailed =>
+      'Could not save this photo. Please try again.';
 
   @override
   String get healthMealVideo => 'Short video';

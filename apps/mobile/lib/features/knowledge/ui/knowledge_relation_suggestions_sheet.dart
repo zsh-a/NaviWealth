@@ -263,17 +263,17 @@ class _SuggestionRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppSpacing.s8),
-          FButton(
-            key: ValueKey<String>(
+          AppBusyButton(
+            buttonKey: ValueKey<String>(
               'knowledge-relation-suggestion-link-${_key(hit)}',
             ),
+            label: l10n.knowledgeRelationSuggestionLinkAction,
+            busyLabel: l10n.commonSaving,
+            busy: saving,
             variant: FButtonVariant.outline,
+            size: FButtonSizeVariant.md,
+            mainAxisSize: MainAxisSize.min,
             onPress: saving ? null : onLink,
-            child: Text(
-              saving
-                  ? l10n.commonSaving
-                  : l10n.knowledgeRelationSuggestionLinkAction,
-            ),
           ),
         ],
       ),

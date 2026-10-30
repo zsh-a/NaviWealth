@@ -584,10 +584,10 @@ class _TradeJournalFormState extends ConsumerState<_TradeJournalForm>
           ),
           const SizedBox(height: AppSpacing.s12),
           if (_loaded != null) ...[
-            FButton(
-              variant: FButtonVariant.destructive,
+            AppQuietButton(
+              label: l10n.commonDelete,
+              tone: AppQuietButtonTone.danger,
               onPress: _busy ? null : _delete,
-              child: Text(l10n.commonDelete),
             ),
             const SizedBox(height: AppSpacing.s12),
           ],

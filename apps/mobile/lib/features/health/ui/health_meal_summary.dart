@@ -67,10 +67,14 @@ class HealthMealToday extends ConsumerWidget {
           padding: const EdgeInsets.all(AppSpacing.s16),
           child: Row(
             children: [
-              Icon(
-                FLucideIcons.utensils,
-                size: AppIconSizes.sm,
+              AppIconTile(
+                icon: FLucideIcons.utensils,
+                size: AppSpacing.s40,
+                iconSize: AppIconSizes.md,
+                radius: AppRadius.md,
                 color: context.theme.colors.primary,
+                backgroundOpacity: AppOpacity.faint,
+                foregroundOpacity: 1,
               ),
               const SizedBox(width: AppSpacing.s12),
               Expanded(

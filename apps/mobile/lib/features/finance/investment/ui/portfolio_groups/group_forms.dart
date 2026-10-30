@@ -431,12 +431,12 @@ class _EditPortfolioGroupFormState
                             )?.displayName(languageCode) ??
                             overlays[index].kind.wire,
                       ),
-                      suffix: FButton(
-                        variant: FButtonVariant.ghost,
+                      suffix: AppQuietButton(
+                        label: l10n.commonDelete,
+                        tone: AppQuietButtonTone.danger,
                         onPress: _busy
                             ? null
                             : () => _deleteOverlay(overlays[index]),
-                        child: Text(l10n.commonDelete),
                       ),
                     ),
                     if (index != overlays.length - 1)
@@ -460,10 +460,10 @@ class _EditPortfolioGroupFormState
             ),
             const SizedBox(height: AppSpacing.s8),
           ],
-          FButton(
-            variant: FButtonVariant.destructive,
+          AppQuietButton(
+            label: l10n.portfolioStrategyDeleteAction,
+            tone: AppQuietButtonTone.danger,
             onPress: _busy || portfolioGroupCount <= 1 ? null : _delete,
-            child: Text(l10n.portfolioStrategyDeleteAction),
           ),
         ],
       ),

@@ -28,11 +28,10 @@ class PortfolioGroupsSection extends ConsumerWidget {
                   ),
                 ),
                 if (items.isNotEmpty)
-                  FButton(
-                    variant: FButtonVariant.ghost,
+                  AppQuietButton(
+                    label: l10n.capitalAllocationEditAction,
                     onPress: () =>
                         showStrategySleeveAllocationEditor(context, ref, items),
-                    child: Text(l10n.capitalAllocationEditAction),
                   ),
               ],
             ),

@@ -22,6 +22,7 @@ import 'package:naviwealth/features/health/data/health_meal_repository.dart';
 import 'package:naviwealth/features/health/data/health_series_providers.dart';
 import 'package:naviwealth/features/health/data/meal_food_catalog.dart';
 import 'package:naviwealth/features/health/data/meal_photo_capture.dart';
+import 'package:naviwealth/features/health/data/meal_photo_saver.dart';
 import 'package:naviwealth/features/health/data/meal_recognition_client.dart';
 import 'package:naviwealth/features/health/data/meal_video_frames.dart';
 import 'package:naviwealth/features/health/domain/health_meal.dart';
@@ -35,6 +36,14 @@ import '../../../support/test_app_theme.dart';
 import '../../finance/data/repositories/_stub_stamper.dart';
 
 final _now = DateTime(2026, 10, 28, 12);
+
+class _PhotoSaver extends MealPhotoSaver {
+  Uint8List? savedBytes;
+  @override
+  bool get supported => true;
+  @override
+  Future<void> save(Uint8List bytes) async => savedBytes = bytes;
+}
 
 class _Capture extends MealPhotoCapture {
   _Capture({this.count = 1, this.videoError});
@@ -143,6 +152,7 @@ Future<GoRouter> _pump(
   AppDatabase db, {
   _Recognition? client,
   _Capture? capture,
+  MealPhotoSaver? photoSaver,
   HealthMealRepository? repository,
   double width = 800,
   double scale = 1,
@@ -185,6 +195,8 @@ Future<GoRouter> _pump(
         ),
         healthClockProvider.overrideWithValue(() => _now),
         mealPhotoCaptureProvider.overrideWithValue(capture ?? _Capture()),
+        if (photoSaver != null)
+          mealPhotoSaverProvider.overrideWithValue(photoSaver),
         mealRecognitionClientProvider.overrideWithValue(client),
         if (repository != null)
           healthMealRepositoryProvider.overrideWith((_) async => repository),
@@ -229,7 +241,14 @@ void main() {
       final db = makeTestDatabase();
       addTearDown(db.close);
       final client = _Recognition();
-      await _pump(tester, db, client: client, capture: _Capture(count: 2));
+      final photoSaver = _PhotoSaver();
+      await _pump(
+        tester,
+        db,
+        client: client,
+        capture: _Capture(count: 2),
+        photoSaver: photoSaver,
+      );
       await tester.tap(find.text('Choose photo'));
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('meal-view-1')), findsOneWidget);
@@ -262,6 +281,15 @@ void main() {
       await tester.tap(find.text('Lunch'));
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('meal-view-1')), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('meal-view-preview-1')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('meal-photo-save')));
+      await tester.pumpAndSettle();
+      expect(photoSaver.savedBytes, stored.last.bytes);
+      expect(find.text('Saved to photos.'), findsOneWidget);
+      expect(await db.select(db.healthMealPhotos).get(), hasLength(2));
+      Navigator.of(tester.element(find.byType(AppSheet))).pop();
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('meal-view-remove-1')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('meal-save')));

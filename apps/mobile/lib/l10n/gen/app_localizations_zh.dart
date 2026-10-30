@@ -448,6 +448,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthOverviewTitle => '健康概览';
 
   @override
+  String get healthKeyMetrics => '关键指标';
+
+  @override
+  String get healthDailyRecords => '日常记录';
+
+  @override
+  String get healthPeriodComparison => '区间对比';
+
+  @override
   String get executionTodayActionsTitle => '今日行动';
 
   @override
@@ -17732,6 +17741,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get healthMealPreview => '查看图片';
+
+  @override
+  String get healthMealPhotoSave => '保存到相册';
+
+  @override
+  String get healthMealPhotoSaving => '正在保存…';
+
+  @override
+  String get healthMealPhotoSaved => '已保存到相册。';
+
+  @override
+  String get healthMealPhotoSaveDenied => '请在系统设置中允许 NaviWealth 访问相册或存储空间后重试。';
+
+  @override
+  String get healthMealPhotoSaveNoSpace => '手机存储空间不足，请清理后重试。';
+
+  @override
+  String get healthMealPhotoSaveFailed => '保存失败，请重试。';
 
   @override
   String get healthMealVideo => '短视频';

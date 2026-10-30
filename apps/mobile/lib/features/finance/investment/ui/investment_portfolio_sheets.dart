@@ -344,10 +344,10 @@ class _InvestmentPortfolioFormState
             const SizedBox(height: AppSpacing.s16),
             if (widget.existing != null) ...[
               const SizedBox(height: AppSpacing.s24),
-              FButton(
-                variant: FButtonVariant.destructive,
+              AppQuietButton(
+                label: l10n.portfolioDeleteAction,
+                tone: AppQuietButtonTone.danger,
                 onPress: _busy || !removalDataReady ? null : _delete,
-                child: Text(l10n.portfolioDeleteAction),
               ),
             ],
           ],

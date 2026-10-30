@@ -56,23 +56,22 @@ class _PortfolioStrategyLibrary extends ConsumerWidget {
                             ),
                           ),
                           if (!template.isBuiltIn) ...[
-                            FButton(
-                              variant: FButtonVariant.ghost,
+                            AppQuietButton(
+                              label: l10n.portfolioStrategyEditAction,
                               onPress: () =>
                                   showCustomPortfolioStrategyTemplateSheet(
                                     context,
                                     existing: template,
                                   ),
-                              child: Text(l10n.portfolioStrategyEditAction),
                             ),
-                            FButton(
-                              variant: FButtonVariant.ghost,
+                            AppQuietButton(
+                              label: l10n.portfolioStrategyArchiveAction,
+                              tone: AppQuietButtonTone.danger,
                               onPress: () => _archiveStrategyTemplate(
                                 context,
                                 ref,
                                 template,
                               ),
-                              child: Text(l10n.portfolioStrategyArchiveAction),
                             ),
                           ],
                         ],

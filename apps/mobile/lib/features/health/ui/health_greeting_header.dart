@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/shell/shell_chrome.dart';
 import '../../../design_system/design_system.dart';
@@ -24,14 +25,29 @@ class HealthGreetingHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    return ShellPageHeading(
-      title: l10n.healthOverviewTitle,
-      actions: [
-        ShellHeaderActionSpec(
-          icon: FLucideIcons.plus,
-          label: l10n.healthRecordAction,
-          onPress: () => _capture(context, ref),
-          order: -10,
+    final day = ref.watch(healthCalendarDayProvider);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ShellPageHeading(
+          title: l10n.healthOverviewTitle,
+          padding: const EdgeInsets.only(
+            top: AppSpacing.s8,
+            bottom: AppSpacing.s4,
+          ),
+          actions: [
+            ShellHeaderActionSpec(
+              icon: FLucideIcons.plus,
+              label: l10n.healthRecordAction,
+              onPress: () => _capture(context, ref),
+              order: -10,
+            ),
+          ],
+        ),
+        Text(
+          DateFormat.MMMEd(Localizations.localeOf(context).toLanguageTag())
+              .format(day),
+          style: context.captionStyle,
         ),
       ],
     );

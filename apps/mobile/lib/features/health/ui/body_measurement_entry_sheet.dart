@@ -192,13 +192,15 @@ class _BodyMeasurementEntrySheetState
             ),
             const SizedBox(height: AppSpacing.s12),
             if (!_showNote)
-              FButton(
-                variant: FButtonVariant.ghost,
-                mainAxisSize: MainAxisSize.min,
-                onPress: _saving
-                    ? null
-                    : () => setState(() => _showNote = true),
-                child: Text(l10n.healthMeasurementNoteOptional),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: AppQuietButton(
+                  label: l10n.healthMeasurementNoteOptional,
+                  prefix: const Icon(FLucideIcons.plus),
+                  onPress: _saving
+                      ? null
+                      : () => setState(() => _showNote = true),
+                ),
               ),
             if (_showNote)
               FTextFormField(

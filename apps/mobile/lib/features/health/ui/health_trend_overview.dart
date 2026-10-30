@@ -18,7 +18,7 @@ class _TrendOverviewRow extends StatelessWidget {
         key: ValueKey('health-trend-${kind.name}'),
         onPress: onPress,
         child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.s12),
+          padding: const EdgeInsets.all(AppSpacing.s16),
           child: LayoutBuilder(
             builder: (context, constraints) => Row(
               children: [
@@ -28,9 +28,13 @@ class _TrendOverviewRow extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Icon(
-                            kind.icon,
-                            size: AppIconSizes.sm,
+                          AppIconTile(
+                            icon: kind.icon,
+                            size: AppSpacing.s28,
+                            iconSize: AppIconSizes.sm,
+                            radius: AppRadius.sm,
+                            backgroundOpacity: AppOpacity.faint,
+                            foregroundOpacity: 1,
                             color: context.appTheme.categorical.adapt(
                               kind.accent,
                             ),
@@ -39,26 +43,30 @@ class _TrendOverviewRow extends StatelessWidget {
                           Expanded(
                             child: Text(
                               kind.title(l),
-                              style: context.rowTitleStyle,
+                              style: context.labelStyle,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: AppSpacing.s4),
-                      Text(value, style: context.titleLabelStyle),
-                      const SizedBox(height: AppSpacing.s4),
+                      const SizedBox(height: AppSpacing.s10),
+                      Text(
+                        value,
+                        style: context.appTheme.type.numericTitleStrong,
+                      ),
+                      const SizedBox(height: AppSpacing.s6),
                       Text(
                         kind.isMeasurement ||
                                 kind.chartStyle == HealthChartStyle.states
                             ? l.healthLatestRecordOn(date)
                             : '${l.healthAverageShort} · ${l.healthObservedDayAverage(series.recordedDays, series.window.days)}',
-                        style: context.captionStyle,
+                        style: context.microCaptionStyle,
                       ),
                     ],
                   ),
                 ),
                 if (series.samples.length > 1 &&
                     constraints.maxWidth >= 280 &&
+                    MediaQuery.textScalerOf(context).scale(1) <= 1.3 &&
                     kind.chartStyle != HealthChartStyle.states) ...[
                   const SizedBox(width: AppSpacing.s12),
                   SizedBox(
@@ -99,9 +107,14 @@ class _TrendPeriodSummary extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Semantics(
+          header: true,
+          child: Text(l.healthPeriodComparison, style: context.labelStyle),
+        ),
+        const SizedBox(height: AppSpacing.s6),
         Text(
           '${healthDateLabel(l, window.start)} – ${healthDateLabel(l, window.today)}',
-          style: context.captionStyle,
+          style: context.microCaptionStyle,
         ),
         const SizedBox(height: AppSpacing.s8),
         if (comparable.isEmpty)
@@ -112,16 +125,17 @@ class _TrendPeriodSummary extends StatelessWidget {
             runSpacing: AppSpacing.s8,
             children: [
               for (final item in comparable.take(2))
-                Text(
-                  '${item.kind.title(l)} ${_signedChange(context, item.changePercent!)}',
-                  style: context.labelStyle,
+                AppBadge(
+                  label:
+                      '${item.kind.title(l)} ${_signedChange(context, item.changePercent!)}',
+                  size: AppBadgeSize.compact,
                 ),
             ],
           ),
           const SizedBox(height: AppSpacing.s4),
           Text(
             l.healthComparisonDefinition(window.days),
-            style: context.captionStyle,
+            style: context.microCaptionStyle,
           ),
         ],
       ],

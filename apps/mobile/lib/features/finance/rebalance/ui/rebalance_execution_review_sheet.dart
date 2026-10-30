@@ -294,11 +294,13 @@ class _ReviewEditorState extends ConsumerState<_ReviewEditor> {
               maxLines: 3,
             ),
             const SizedBox(height: AppSpacing.s16),
-            FButton(
+            AppBusyButton(
+              label: l10n.rebalanceExecutionSaveReviewAction,
+              busy: _busy,
+              size: FButtonSizeVariant.md,
               onPress: _busy
                   ? null
                   : () => _save(accounts: accounts, assets: assets),
-              child: Text(l10n.rebalanceExecutionSaveReviewAction),
             ),
           ],
         ),

@@ -1,5 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Saving a meal image to Photos on Android 10 and earlier. -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29"/>
     <!-- GitHub APK self-update. Android still displays the system install
          confirmation; the app never performs a silent install. -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>

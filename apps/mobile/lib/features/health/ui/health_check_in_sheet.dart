@@ -224,12 +224,15 @@ class _HealthCheckInSheetState extends ConsumerState<HealthCheckInSheet>
                 ),
                 const SizedBox(height: AppSpacing.s12),
                 if (!_showNote)
-                  FButton(
-                    variant: FButtonVariant.ghost,
-                    onPress: _saving
-                        ? null
-                        : () => setState(() => _showNote = true),
-                    child: Text(l.healthMeasurementNoteOptional),
+                  Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: AppQuietButton(
+                      label: l.healthMeasurementNoteOptional,
+                      prefix: const Icon(FLucideIcons.plus),
+                      onPress: _saving
+                          ? null
+                          : () => setState(() => _showNote = true),
+                    ),
                   ),
                 if (_showNote)
                   FTextFormField(
@@ -253,10 +256,10 @@ class _HealthCheckInSheetState extends ConsumerState<HealthCheckInSheet>
                 ],
                 if (_entry != null) ...[
                   const SizedBox(height: AppSpacing.s12),
-                  FButton(
-                    variant: FButtonVariant.ghost,
+                  AppQuietButton(
+                    label: l.healthCheckInDelete,
+                    tone: AppQuietButtonTone.danger,
                     onPress: _saving ? null : _delete,
-                    child: Text(l.healthCheckInDelete),
                   ),
                 ],
               ],
