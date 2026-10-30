@@ -25,6 +25,7 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/persistence/test_database.dart';
+import '../../../support/button_finder.dart';
 import '../../finance/data/repositories/_stub_stamper.dart';
 
 late SharedPreferences _prefs;
@@ -507,7 +508,7 @@ void main() {
       'Busy draft',
     );
     await _settlePaint(tester);
-    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.tap(find.buttonWithText('Save'));
     await _settlePaint(tester);
     await tester.tap(find.text('Another note'));
     clearSelectedDetail(context);

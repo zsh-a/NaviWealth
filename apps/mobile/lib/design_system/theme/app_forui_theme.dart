@@ -6,9 +6,12 @@ import '../tokens/dimens_tokens.dart';
 import '../tokens/typography_tokens.dart';
 import 'accent_colors.dart';
 import 'accent_seed.dart';
+import 'app_button_styles.dart';
 import 'app_type_scale.dart';
 import 'app_visual_style.dart';
+import 'market_color_mode.dart';
 import 'surface_ladder.dart';
+import 'theme_resolver.dart';
 
 /// Builds the production Forui theme for NaviWealth.
 ///
@@ -32,9 +35,19 @@ FThemeData buildAppForuiTheme({
   );
   final platform = isDark ? FTheme.neutral.dark : FTheme.neutral.light;
   final base = touch ? platform.touch : platform.desktop;
+  final status = resolveAppTheme(
+    ThemeInputs(
+      brightness: brightness,
+      marketMode: MarketColorMode.redUpGreenDown,
+      highContrast: highContrast,
+      visualStyle: visualStyle,
+      accentSeed: accentSeed,
+    ),
+  ).status;
   final colors = base.colors.copyWith(
     primary: AccentColors.primary(brightness, seed: accentSeed),
     primaryForeground: AccentColors.onPrimary(brightness),
+    destructive: status.danger.fg,
     background: ladder.canvas,
     foreground: ladder.contentBody,
     mutedForeground: ladder.contentMuted,
@@ -65,18 +78,27 @@ FThemeData buildAppForuiTheme({
     touch: touch,
   );
   final radius = BorderRadius.circular(visualStyle.spec.controlRadius);
+  final resolvedStyle = visualStyle == AppVisualStyle.classic
+      ? style
+      : style.copyWith(
+          borderRadius: style.borderRadius.copyWith(md: radius),
+          focusedOutlineStyle: style.focusedOutlineStyle.copyWith(
+            borderRadius: radius,
+          ),
+        );
   return FThemeData(
     touch: touch,
     typography: typography,
     colors: colors,
-    style: visualStyle == AppVisualStyle.classic
-        ? style
-        : style.copyWith(
-            borderRadius: style.borderRadius.copyWith(md: radius),
-            focusedOutlineStyle: style.focusedOutlineStyle.copyWith(
-              borderRadius: radius,
-            ),
-          ),
+    style: resolvedStyle,
+    buttonStyles: buildAppButtonStyles(
+      colors: colors,
+      typography: typography,
+      style: resolvedStyle,
+      touch: touch,
+      highContrast: highContrast,
+      visualStyle: visualStyle,
+    ),
   );
 }
 

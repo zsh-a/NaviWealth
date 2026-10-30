@@ -90,7 +90,9 @@ class _IngestSelectionActions extends StatelessWidget {
               ),
             if (finalizeCount > 0)
               AppActionButton(
-                variant: FButtonVariant.primary,
+                variant: confirmCount > 0
+                    ? FButtonVariant.secondary
+                    : FButtonVariant.primary,
                 mainAxisSize: MainAxisSize.min,
                 onPress: busy ? null : onFinalize,
                 child: Flexible(child: Text(l10n.ingestResolveAction)),

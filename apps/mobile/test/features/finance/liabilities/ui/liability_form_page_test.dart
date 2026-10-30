@@ -24,6 +24,7 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/persistence/test_database.dart';
+import '../../../../support/button_finder.dart';
 import '../../data/repositories/_stub_stamper.dart';
 
 class _IdentityFx implements FxRateSource {
@@ -157,10 +158,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('New account'), findsOneWidget);
-    expect(
-      tester.widget<FButton>(find.widgetWithText(FButton, 'Save')).onPress,
-      isNull,
-    );
+    expect(tester.widget<FButton>(find.buttonWithText('Save')).onPress, isNull);
     expect(tester.takeException(), isNull);
   });
 
@@ -243,7 +241,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Backup checking · CNY').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.tap(find.buttonWithText('Save'));
     await tester.pumpAndSettle();
 
     expect(router.routeInformationProvider.value.uri.path, detailPath);
@@ -287,7 +285,7 @@ void main() {
     await tester.tap(find.text('Schedule details'));
     await tester.pumpAndSettle();
     expect(tester.widget<Semantics>(toggle).properties.expanded, isFalse);
-    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.tap(find.buttonWithText('Save'));
     await tester.pumpAndSettle();
 
     expect(tester.widget<Semantics>(toggle).properties.expanded, isTrue);
@@ -358,7 +356,7 @@ void main() {
       await tester.enterText(_field('Principal'), '120000');
       await tester.enterText(_field('Annual rate (%)'), '4.8');
       await tester.enterText(_field('Term (months)'), '12');
-      await tester.tap(find.widgetWithText(FButton, 'Save'));
+      await tester.tap(find.buttonWithText('Save'));
       await tester.pump();
 
       expect(outbox.calls, 1);
@@ -368,7 +366,7 @@ void main() {
             .widget<FButton>(
               find.ancestor(
                 of: find.text('Saving…'),
-                matching: find.byType(FButton),
+                matching: find.bySubtype<FButton>(),
               ),
             )
             .onPress,
@@ -392,11 +390,11 @@ void main() {
       expect(find.text('Draft mortgage'), findsOneWidget);
       expect(find.text("Couldn't save your changes. Try again."), findsWidgets);
       expect(
-        tester.widget<FButton>(find.widgetWithText(FButton, 'Save')).onPress,
+        tester.widget<FButton>(find.buttonWithText('Save')).onPress,
         isNotNull,
       );
 
-      await tester.tap(find.widgetWithText(FButton, 'Save'));
+      await tester.tap(find.buttonWithText('Save'));
       await tester.pump();
       await tester.pump();
       await tester.pumpAndSettle();

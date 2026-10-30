@@ -14,6 +14,8 @@ import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../../support/button_finder.dart';
+
 class _CreatedAsset extends Fake implements PhysicalAsset {}
 
 class _CapturingRepository extends Fake implements PhysicalAssetRepository {
@@ -92,7 +94,7 @@ void main() {
       matching: find.byType(EditableText, skipOffstage: false),
     );
     tester.widget<EditableText>(field).controller.text = '85.125';
-    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.tap(find.buttonWithText('Save'));
     await tester.pumpAndSettle();
     expect(repo.savedRate, Decimal.parse('0.85125'));
   });
@@ -166,7 +168,7 @@ void main() {
     tester.widget<EditableText>(residualInput).controller.text = '120';
     await tester.pump();
 
-    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.tap(find.buttonWithText('Save'));
     await tester.pump();
 
     expect(
@@ -245,7 +247,7 @@ void main() {
       find.byKey(const Key('physical-asset-purchase-price-field')),
       '180000',
     );
-    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.tap(find.buttonWithText('Save'));
     await tester.pump();
     repository.completeError(StateError('write failed'));
     await tester.pump(const Duration(milliseconds: 300));
@@ -254,7 +256,7 @@ void main() {
     expect(find.text('Family car'), findsOneWidget);
     expect(find.text("Couldn't save your changes. Try again."), findsOneWidget);
     expect(
-      tester.widget<FButton>(find.widgetWithText(FButton, 'Save')).onPress,
+      tester.widget<FButton>(find.buttonWithText('Save')).onPress,
       isNotNull,
     );
     await tester.pump(const Duration(seconds: 7));

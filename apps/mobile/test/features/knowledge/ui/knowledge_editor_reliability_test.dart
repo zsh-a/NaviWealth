@@ -17,6 +17,7 @@ import 'package:naviwealth/features/knowledge/ui/knowledge_note_detail_page.dart
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../../../core/persistence/test_database.dart';
+import '../../../support/button_finder.dart';
 import '../../finance/data/repositories/_stub_stamper.dart';
 
 const _owner = 'knowledge-editor-user';
@@ -108,7 +109,7 @@ void main() {
       'Updated body',
     );
     await _settle(tester);
-    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.tap(find.buttonWithText('Save'));
     await _settle(tester);
     final saved = await repository.findNote(ownerUserId: _owner, id: note.id);
     expect(saved?.title, '');
@@ -149,15 +150,12 @@ void main() {
     await tester.tap(find.byKey(const Key('knowledge-note-edit-toggle')));
     await _settle(tester);
 
-    expect(
-      tester.widget<FButton>(find.widgetWithText(FButton, 'Save')).onPress,
-      isNull,
-    );
+    expect(tester.widget<FButton>(find.buttonWithText('Save')).onPress, isNull);
     final titleField = find.byKey(const Key('knowledge-note-title'));
     await tester.enterText(titleField, 'Updated evidence');
     await _settle(tester);
     expect(
-      tester.widget<FButton>(find.widgetWithText(FButton, 'Save')).onPress,
+      tester.widget<FButton>(find.buttonWithText('Save')).onPress,
       isNotNull,
     );
 
@@ -168,7 +166,7 @@ void main() {
     await _settle(tester);
     expect(find.text('Updated evidence'), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.tap(find.buttonWithText('Save'));
     await _settle(tester);
     final saved = await repository.findNote(ownerUserId: _owner, id: note.id);
     expect(saved?.title, 'Updated evidence');
@@ -177,10 +175,7 @@ void main() {
     expect(find.text('Updated evidence'), findsOneWidget);
     await tester.tap(find.byKey(const Key('knowledge-note-edit-toggle')));
     await _settle(tester);
-    expect(
-      tester.widget<FButton>(find.widgetWithText(FButton, 'Save')).onPress,
-      isNull,
-    );
+    expect(tester.widget<FButton>(find.buttonWithText('Save')).onPress, isNull);
 
     await tester.tap(find.byIcon(FLucideIcons.ellipsis));
     await _settle(tester);
@@ -244,10 +239,7 @@ void main() {
       find.byKey(const Key('knowledge-edit-change-notice')),
       findsOneWidget,
     );
-    expect(
-      tester.widget<FButton>(find.widgetWithText(FButton, 'Save')).onPress,
-      isNull,
-    );
+    expect(tester.widget<FButton>(find.buttonWithText('Save')).onPress, isNull);
     await tester.tap(find.byKey(const Key('knowledge-edit-reload')));
     await _settle(tester);
     await tester.tap(find.text('Keep editing'));
@@ -271,10 +263,7 @@ void main() {
     );
     await _settle(tester);
     expect(find.text('Deleted source draft'), findsOneWidget);
-    expect(
-      tester.widget<FButton>(find.widgetWithText(FButton, 'Save')).onPress,
-      isNull,
-    );
+    expect(tester.widget<FButton>(find.buttonWithText('Save')).onPress, isNull);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(Duration.zero);
   });

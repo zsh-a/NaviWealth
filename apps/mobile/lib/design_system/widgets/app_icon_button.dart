@@ -13,19 +13,19 @@ enum AppIconButtonSurface {
   /// Undecorated chrome icon (default shell header pattern).
   plain,
 
-  /// Circular soft primary fill — dense card primary actions.
+  /// Soft primary fill — dense card primary actions.
   softPrimary,
 
   /// Circular soft primary fill + primary hairline ring (dock Ask AI).
   softPrimaryRing,
 
-  /// Squircle soft primary fill + ring (compact review tools).
+  /// Rounded soft primary fill (compact review tools).
   softPrimaryTile,
 
   /// Soft primary fill, square-ish radius — selected dock / rail items.
   softSelected,
 
-  /// Circular soft muted fill — secondary compact tools.
+  /// Rounded soft muted fill — secondary compact tools.
   softMuted,
 }
 
@@ -33,10 +33,10 @@ enum AppIconButtonSurface {
 ///
 /// Replaces the scattered `_ShellIconButton`, `_OverlayIconButton`,
 /// `_AskAiDockButton` and `_ReviewIconButton` patterns with a single
-/// configurable widget.  All icon buttons in the app should route through
+/// configurable widget. All icon buttons in the app should route through
 /// this class so tooltip semantics, press feedback, and sizing stay
 /// consistent.
-class AppIconButton extends StatefulWidget {
+class AppIconButton extends StatelessWidget {
   const AppIconButton({
     super.key,
     required this.icon,
@@ -52,7 +52,7 @@ class AppIconButton extends StatefulWidget {
     this.busy = false,
   });
 
-  /// Soft primary circular action (Execution done / resume / progress).
+  /// Soft primary action (Execution done / resume / progress).
   const AppIconButton.softPrimary({
     Key? key,
     required IconData icon,
@@ -160,124 +160,116 @@ class AppIconButton extends StatefulWidget {
   final bool busy;
 
   @override
-  State<AppIconButton> createState() => _AppIconButtonState();
-}
-
-class _AppIconButtonState extends State<AppIconButton> {
-  bool _hovered = false;
-
-  @override
   Widget build(BuildContext context) {
-    final resolvedIconSize = widget.iconSize ?? AppIconSizes.md;
-    final resolvedSize = widget.size < AppControlHeights.touchTarget
+    final resolvedIconSize = iconSize ?? AppIconSizes.md;
+    final resolvedSize = size < AppControlHeights.touchTarget
         ? AppControlHeights.touchTarget
-        : widget.size;
+        : size;
     final colors = context.theme.colors;
     final resolvedIconColor =
-        widget.iconColor ??
-        switch (widget.surface) {
-          AppIconButtonSurface.plain => colors.foreground,
+        iconColor ??
+        switch (surface) {
+          AppIconButtonSurface.plain ||
+          AppIconButtonSurface.softMuted => colors.foreground,
           AppIconButtonSurface.softPrimary ||
           AppIconButtonSurface.softPrimaryRing ||
           AppIconButtonSurface.softPrimaryTile ||
-          AppIconButtonSurface.softSelected ||
-          AppIconButtonSurface.softMuted => colors.primary,
+          AppIconButtonSurface.softSelected => colors.primary,
         };
 
-    final enabled = !widget.busy && widget.onPress != null;
-    var resolvedDecoration = widget.decoration ?? _surfaceDecoration(colors);
-    // Desktop hover state (citizenship audit §7): a quiet foreground tint on
-    // every surface, including plain chrome icons that previously had none.
-    if (_hovered && enabled) {
-      final tint = colors.foreground.withValues(alpha: AppOpacity.faint);
-      final base = resolvedDecoration;
-      resolvedDecoration = base == null
-          ? BoxDecoration(
-              color: tint,
-              borderRadius: BorderRadius.circular(_focusRadius),
-            )
-          : base.copyWith(
-              color: base.color == null
-                  ? tint
-                  : Color.alphaBlend(tint, base.color!),
-            );
-    }
+    final enabled = !busy && onPress != null;
+    final baseDecoration = decoration ?? _surfaceDecoration(context, colors);
+    final radius = _resolvedRadius(context);
 
     Widget button = Semantics(
       container: true,
-      label: widget.tooltip,
+      label: tooltip,
       button: true,
       enabled: enabled,
-      onTap: widget.busy ? null : widget.onPress,
+      onTap: busy ? null : onPress,
       excludeSemantics: true,
       child: FTappable(
-        onPress: widget.busy ? null : widget.onPress,
-        onHoverChange: (hovered) => setState(() => _hovered = hovered),
+        style: context.theme.buttonStyles.ghost.md.tappableStyle,
+        onPress: busy ? null : onPress,
         focusedOutlineStyle: FFocusedOutlineStyleDelta.delta(
-          borderRadius: BorderRadius.circular(_focusRadius),
+          borderRadius: radius,
         ),
-        child: AnimatedContainer(
-          duration: AppMotionPolicy.duration(
-            context,
-            Motion.fast,
-            role: AppMotionRole.decorative,
-          ),
-          curve: Motion.standardDecelerate,
-          constraints: const BoxConstraints(
-            minWidth: AppControlHeights.touchTarget,
-            minHeight: AppControlHeights.touchTarget,
-          ),
-          width: resolvedSize,
-          height: resolvedSize,
-          margin: widget.margin,
-          decoration: resolvedDecoration,
-          alignment: Alignment.center,
-          child: widget.busy
-              ? SizedBox(
-                  width: resolvedIconSize,
-                  height: resolvedIconSize,
-                  child: const FCircularProgress(
-                    size: FCircularProgressSizeVariant.xs,
+        builder: (context, variants, _) {
+          var decoration = baseDecoration;
+          final pressed =
+              enabled && variants.contains(FTappableVariant.pressed);
+          final hovered =
+              enabled && variants.contains(FTappableVariant.hovered);
+          if (pressed || hovered) {
+            final tint = colors.foreground.withValues(
+              alpha: pressed ? AppOpacity.light : AppOpacity.faint,
+            );
+            decoration = decoration == null
+                ? BoxDecoration(color: tint, borderRadius: radius)
+                : decoration.copyWith(
+                    color: Color.alphaBlend(
+                      tint,
+                      decoration.color ?? colors.card,
+                    ),
+                  );
+          }
+          return AnimatedContainer(
+            duration: AppMotionPolicy.duration(
+              context,
+              Motion.fast,
+              role: AppMotionRole.decorative,
+            ),
+            curve: Motion.standardDecelerate,
+            constraints: const BoxConstraints(
+              minWidth: AppControlHeights.touchTarget,
+              minHeight: AppControlHeights.touchTarget,
+            ),
+            width: resolvedSize,
+            height: resolvedSize,
+            margin: margin,
+            decoration: decoration,
+            alignment: Alignment.center,
+            child: busy
+                ? SizedBox(
+                    width: resolvedIconSize,
+                    height: resolvedIconSize,
+                    child: const FCircularProgress(
+                      size: FCircularProgressSizeVariant.xs,
+                    ),
+                  )
+                : Icon(
+                    icon,
+                    size: resolvedIconSize,
+                    color: enabled
+                        ? resolvedIconColor
+                        : resolvedIconColor.withValues(
+                            alpha: AppOpacity.disabled,
+                          ),
                   ),
-                )
-              : Icon(
-                  widget.icon,
-                  size: resolvedIconSize,
-                  color: resolvedIconColor,
-                ),
-        ),
+          );
+        },
       ),
     );
 
-    if (widget.tooltip != null) {
-      button = FTooltip(
-        tipBuilder: (_, _) => Text(widget.tooltip!),
-        child: button,
-      );
+    if (tooltip != null) {
+      button = FTooltip(tipBuilder: (_, _) => Text(tooltip!), child: button);
     }
 
     return button;
   }
 
-  /// Focus-ring / hover shape: plain icons get a small rounding instead of
-  /// a hard rectangle.
-  double get _focusRadius =>
-      _resolvedRadius == 0 ? AppRadius.sm : _resolvedRadius;
+  // The dock's explicit ring remains circular; ordinary action surfaces share
+  // the text buttons' theme-owned shape, including the refined preset.
+  BorderRadiusGeometry _resolvedRadius(BuildContext context) =>
+      borderRadius != null
+      ? BorderRadius.circular(borderRadius!)
+      : surface == AppIconButtonSurface.softPrimaryRing
+      ? BorderRadius.circular(AppRadius.full)
+      : context.theme.buttonStyles.ghost.md.focusedOutlineStyle.borderRadius;
 
-  double get _resolvedRadius =>
-      widget.borderRadius ??
-      switch (widget.surface) {
-        AppIconButtonSurface.plain => 0,
-        AppIconButtonSurface.softPrimary ||
-        AppIconButtonSurface.softPrimaryRing ||
-        AppIconButtonSurface.softMuted => AppRadius.full,
-        AppIconButtonSurface.softPrimaryTile ||
-        AppIconButtonSurface.softSelected => AppRadius.sm,
-      };
-
-  BoxDecoration? _surfaceDecoration(FColors colors) {
-    final radius = BorderRadius.circular(_resolvedRadius);
-    return switch (widget.surface) {
+  BoxDecoration? _surfaceDecoration(BuildContext context, FColors colors) {
+    final radius = _resolvedRadius(context);
+    return switch (surface) {
       AppIconButtonSurface.plain => null,
       AppIconButtonSurface.softPrimary => BoxDecoration(
         color: colors.primary.withValues(alpha: AppOpacity.subtle),
@@ -294,17 +286,16 @@ class _AppIconButtonState extends State<AppIconButton> {
       AppIconButtonSurface.softPrimaryTile => BoxDecoration(
         color: colors.primary.withValues(alpha: AppOpacity.subtle),
         borderRadius: radius,
-        border: Border.all(
-          color: colors.primary.withValues(alpha: AppOpacity.light),
-          width: AppStroke.hairline,
-        ),
       ),
       AppIconButtonSurface.softSelected => BoxDecoration(
         color: colors.primary.withValues(alpha: AppOpacity.subtle),
         borderRadius: radius,
       ),
       AppIconButtonSurface.softMuted => BoxDecoration(
-        color: colors.muted.withValues(alpha: AppOpacity.medium),
+        color: Color.alphaBlend(
+          colors.foreground.withValues(alpha: AppOpacity.faint),
+          colors.card,
+        ),
         borderRadius: radius,
       ),
     };

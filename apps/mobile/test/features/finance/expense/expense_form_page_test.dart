@@ -31,6 +31,7 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/persistence/test_database.dart';
+import '../../../support/button_finder.dart';
 import '../data/repositories/_stub_stamper.dart';
 
 class _Harness {
@@ -204,7 +205,7 @@ void _expectSubmitAvailability(WidgetTester tester, {required bool enabled}) {
   final button = tester.widget<FButton>(
     find.descendant(
       of: find.byType(AppFormActionBar),
-      matching: find.byType(FButton),
+      matching: find.bySubtype<FButton>(),
     ),
   );
   if (enabled) {
@@ -302,7 +303,7 @@ void main() {
         '18.50',
       );
       _expectSubmitAvailability(tester, enabled: true);
-      await tester.tap(find.widgetWithText(FButton, 'Save'));
+      await tester.tap(find.buttonWithText('Save'));
       await tester.pumpAndSettle();
       expect(
         await harness.db.select(harness.db.journalEntries).get(),
@@ -369,7 +370,7 @@ void main() {
       tester.widget<EditableText>(_amountInput()).controller.text,
       '12.50',
     );
-    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.tap(find.buttonWithText('Save'));
     await tester.pumpAndSettle();
     expect(
       LocalFormDraftStore(
@@ -748,7 +749,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final save = find.widgetWithText(FButton, 'Save');
+    final save = find.buttonWithText('Save');
     expect(save, findsOneWidget);
     _expectSubmitAvailability(tester, enabled: true);
     expect(
@@ -790,7 +791,7 @@ void main() {
     await tester.pump();
     _expectSubmitAvailability(tester, enabled: true);
 
-    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.tap(find.buttonWithText('Save'));
     await tester.pump();
     _expectSubmitAvailability(tester, enabled: false);
 
@@ -843,7 +844,7 @@ void main() {
       ),
       findsOneWidget,
     );
-    await tester.tap(find.widgetWithText(FButton, 'Delete'));
+    await tester.tap(find.buttonWithText('Delete'));
     await tester.pumpAndSettle();
 
     expect(await harness.repository.getById(original.entry.id), isNull);
@@ -884,7 +885,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(_amountInput(), '12.50');
-    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.tap(find.buttonWithText('Save'));
     await tester.pumpAndSettle();
 
     final entry = await harness.db
@@ -944,7 +945,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(_amountInput(), '25');
-    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.tap(find.buttonWithText('Save'));
     await tester.pumpAndSettle();
 
     final edited = (await harness.repository.getById(original.entry.id))!;
@@ -995,7 +996,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.enterText(_amountInput(), '12.50');
-    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.tap(find.buttonWithText('Save'));
     await tester.pumpAndSettle();
 
     final committed = await harness.db

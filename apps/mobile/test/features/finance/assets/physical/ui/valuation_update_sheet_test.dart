@@ -14,6 +14,7 @@ import 'package:naviwealth/features/finance/data/repositories/price_repository.d
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../../../../../core/persistence/test_database.dart';
+import '../../../../../support/button_finder.dart';
 import '../../../data/repositories/_stub_stamper.dart';
 
 class _ControlledOutbox implements OutboxStore {
@@ -106,15 +107,13 @@ void main() {
 
       expect(find.text('New valuation *', findRichText: true), findsOneWidget);
       await tester.enterText(_field('New valuation', required: true), '25000');
-      await tester.tap(find.widgetWithText(FButton, 'Save valuation'));
+      await tester.tap(find.buttonWithText('Save valuation'));
       await tester.pump();
 
       expect(outbox.calls, 1);
       expect(find.byType(ValuationUpdateSheet), findsOneWidget);
       expect(
-        tester
-            .widget<FButton>(find.widgetWithText(FButton, 'Save valuation'))
-            .onPress,
+        tester.widget<FButton>(find.buttonWithText('Save valuation')).onPress,
         isNull,
       );
 
@@ -130,16 +129,14 @@ void main() {
       expect(find.text('25000'), findsOneWidget);
       expect(find.text("Couldn't save your changes. Try again."), findsWidgets);
       expect(
-        tester
-            .widget<FButton>(find.widgetWithText(FButton, 'Save valuation'))
-            .onPress,
+        tester.widget<FButton>(find.buttonWithText('Save valuation')).onPress,
         isNotNull,
       );
 
       // The error toast intentionally owns pointer input while visible.
       await tester.pump(const Duration(seconds: 7));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(FButton, 'Save valuation'));
+      await tester.tap(find.buttonWithText('Save valuation'));
       await tester.pump();
       await tester.pump();
       await tester.pumpAndSettle();

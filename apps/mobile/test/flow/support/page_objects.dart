@@ -17,6 +17,7 @@ import 'package:naviwealth/features/execution/ui/execution_detail_page.dart';
 import 'package:naviwealth/features/execution/ui/execution_review_page.dart';
 import 'package:naviwealth/features/finance/shared/ui/account_tree_picker.dart';
 
+import '../../support/button_finder.dart';
 import 'app_harness.dart';
 
 /// The app shell: bottom navigation + the active primary destination.
@@ -248,7 +249,7 @@ class ExpenseFormObject {
   }
 
   Future<void> save() async {
-    final save = find.widgetWithText(FButton, 'Save');
+    final save = find.buttonWithText('Save');
     expect(save, findsOneWidget);
     await tester.tap(save);
     await settle(tester);
@@ -266,7 +267,7 @@ class TransferFormObject {
     expect(find.text('Transfer'), findsWidgets);
     expect(find.text('From account'), findsOneWidget);
     expect(find.text('To account'), findsOneWidget);
-    expect(find.widgetWithText(FButton, 'Transfer'), findsOneWidget);
+    expect(find.buttonWithText('Transfer'), findsOneWidget);
   }
 
   Future<void> selectFromAccount(String accountName) async {
@@ -308,7 +309,7 @@ class TransferFormObject {
   }
 
   Future<void> save() async {
-    final save = find.widgetWithText(FButton, 'Transfer');
+    final save = find.buttonWithText('Transfer');
     expect(save, findsOneWidget);
     await tester.tap(save);
     await settle(tester);
@@ -627,14 +628,10 @@ class LifePageObject {
 
   Future<void> createAction(String actionTitle) async {
     expect(find.text(actionTitle), findsOneWidget);
-    await tester.tap(
-      find.widgetWithText(FButton, 'Create action').hitTestable().last,
-    );
+    await tester.tap(find.buttonWithText('Create action').hitTestable().last);
     await settle(tester);
     expect(find.text('Create this action?'), findsOneWidget);
-    await tester.tap(
-      find.widgetWithText(FButton, 'Create action').hitTestable().last,
-    );
+    await tester.tap(find.buttonWithText('Create action').hitTestable().last);
     await settle(tester);
   }
 
@@ -953,7 +950,7 @@ class BudgetPageObject {
     await tester.enterText(noteField, note);
     await settle(tester);
 
-    final save = find.widgetWithText(FButton, 'Save');
+    final save = find.buttonWithText('Save');
     expect(save, findsWidgets);
     await tester.tap(save.last);
     await settle(tester);
@@ -1077,7 +1074,7 @@ class AccountFormObject {
   }
 
   Future<void> save() async {
-    final save = find.widgetWithText(FButton, 'Save');
+    final save = find.buttonWithText('Save');
     expect(save, findsOneWidget);
     await tester.tap(save);
     await settle(tester);

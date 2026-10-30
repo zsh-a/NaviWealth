@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
 import '../tokens/dimens_tokens.dart';
+import 'app_actions.dart';
 import 'app_interaction.dart';
 
 /// App-standard button for async actions.
@@ -9,11 +10,8 @@ import 'app_interaction.dart';
 /// Keeps the label visible while busy so button width and semantics stay
 /// stable, and uses the same compact spinner everywhere forms submit.
 ///
-/// Two busy-display modes:
-/// - **Inline** (default): spinner is prepended to the label as a [Row].
-/// - **Prefix** ([busyPrefix] provided): the prefix slot swaps from [prefix]
-///   to [busyPrefix] and the label stays plain.  Useful for small buttons
-///   where the inline row would widen the button.
+/// Reserves progress and label space in both states, including content-width
+/// actions. Loading never shifts the label or changes the button's width.
 class AppBusyButton extends StatelessWidget {
   const AppBusyButton({
     super.key,
@@ -36,7 +34,7 @@ class AppBusyButton extends StatelessWidget {
   final bool busy;
   final FButtonVariant variant;
 
-  /// Optional size variant.  Defaults to null (Forui's default sizing).
+  /// Defaults to the same large action size as [AppActionButton].
   final FButtonSizeVariant? size;
 
   /// Prefix widget shown before the label when not busy (e.g. an icon).
@@ -44,9 +42,7 @@ class AppBusyButton extends StatelessWidget {
 
   /// Prefix widget shown before the label when busy.
   ///
-  /// When null the default inline spinner + label [Row] is used instead.
-  /// Set this to a small spinner to keep the button width stable in
-  /// compact layouts.
+  /// When null the shared compact spinner occupies the reserved prefix slot.
   final Widget? busyPrefix;
 
   /// Label shown when busy.  Falls back to [label] when null.
@@ -62,49 +58,57 @@ class AppBusyButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final effectiveLabel = busy ? (busyLabel ?? label) : label;
 
-    final Widget child;
-    if (busy && busyPrefix == null) {
-      // Inline mode: spinner + label in a Row.
-      child = Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(
-            width: AppIconSizes.h18,
-            height: AppIconSizes.h18,
-            child: FCircularProgress(size: FCircularProgressSizeVariant.sm),
-          ),
-          const SizedBox(width: AppSpacing.s8),
-          Flexible(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(effectiveLabel, maxLines: 1),
-            ),
-          ),
-        ],
-      );
-    } else {
-      child = Flexible(
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(effectiveLabel, maxLines: 1),
-        ),
-      );
-    }
-
-    return FButton(
-      key: buttonKey,
+    final progress =
+        busyPrefix ??
+        const FCircularProgress(size: FCircularProgressSizeVariant.sm);
+    return AppActionButton(
+      buttonKey: buttonKey,
       variant: variant,
       mainAxisSize: mainAxisSize,
-      size: size ?? FButtonSizeVariant.md,
-      prefix: busy ? busyPrefix : prefix,
-      onPress: busy
-          ? null
-          : switch (hapticIntent) {
-              final intent? => AppInteraction.wrap(onPress, intent: intent),
-              null => onPress,
-            },
-      child: child,
+      size: size ?? FButtonSizeVariant.lg,
+      busy: busy,
+      semanticsLabel: effectiveLabel,
+      onPress: onPress,
+      hapticIntent: hapticIntent,
+      child: Flexible(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox.square(
+              dimension: AppIconSizes.h18,
+              child: Center(child: busy ? progress : prefix),
+            ),
+            const SizedBox(width: AppSpacing.s8),
+            Flexible(
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Both labels participate in layout so longer localized
+                  // busy copy cannot resize the control during a request.
+                  _reserveLabel(label),
+                  if (busyLabel != null) _reserveLabel(busyLabel!),
+                  Text(effectiveLabel, textAlign: TextAlign.center),
+                ],
+              ),
+            ),
+            if (prefix == null) ...[
+              const SizedBox(width: AppSpacing.s8),
+              const SizedBox(width: AppIconSizes.h18),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }
+
+Widget _reserveLabel(String label) => Visibility.maintain(
+  visible: false,
+  child: Builder(
+    builder: (context) => RichText(
+      textAlign: TextAlign.center,
+      textScaler: MediaQuery.textScalerOf(context),
+      text: TextSpan(text: label, style: DefaultTextStyle.of(context).style),
+    ),
+  ),
+);

@@ -46,15 +46,13 @@ class AppQuietButton extends StatelessWidget {
       AppQuietButtonTone.neutral => colors.foreground,
       AppQuietButtonTone.danger => status.danger.fg,
     };
-    final activeContainer = switch (tone) {
-      AppQuietButtonTone.neutral => colors.muted.withValues(
-        alpha: AppOpacity.disabled,
-      ),
-      AppQuietButtonTone.danger => status.danger.container,
-    };
-    final foreground = enabled
+    final foreground = enabled || busy
         ? activeForeground
         : colors.mutedForeground.withValues(alpha: AppOpacity.disabled);
+    final style = context.theme.buttonStyles.ghost.resolve({
+      FButtonSizeVariant.md,
+      context.platformVariant,
+    });
     final effectiveLabel = busy ? (busyLabel ?? label) : label;
     final effectivePrefix = busy
         ? busyPrefix ??
@@ -91,39 +89,23 @@ class AppQuietButton extends StatelessWidget {
     return AppActionTappable(
       semanticsLabel: effectiveLabel,
       onPress: enabled ? onPress : null,
-      focusedOutlineStyle: FFocusedOutlineStyleDelta.delta(
-        borderRadius: BorderRadius.circular(AppRadius.full),
-      ),
-      child: AnimatedContainer(
+      style: style.tappableStyle,
+      focusedOutlineStyle: style.focusedOutlineStyle,
+      builder: (context, variants, child) => AnimatedContainer(
         duration: AppMotionPolicy.duration(
           context,
           Motion.fast,
           role: AppMotionRole.decorative,
         ),
         curve: Motion.standard,
-        constraints: BoxConstraints(
-          minHeight: context.platformVariant.touch
-              ? AppControlHeights.touchTarget
-              : 36,
-        ),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.s12,
-          vertical: AppSpacing.s8,
-        ),
-        decoration: BoxDecoration(
-          color: enabled
-              ? activeContainer
-              : colors.muted.withValues(alpha: AppOpacity.subtle),
-          borderRadius: BorderRadius.circular(AppRadius.full),
-          border: Border.all(
-            color: foreground.withValues(alpha: AppOpacity.light),
-          ),
-        ),
-        alignment: Alignment.center,
-        child: DefaultTextStyle.merge(
-          style: context.mediumLabelStyle.copyWith(color: foreground),
-          child: content,
-        ),
+        constraints: style.contentStyle.constraints,
+        padding: style.contentStyle.padding,
+        decoration: style.decoration.resolve(busy ? {} : variants),
+        child: child,
+      ),
+      child: DefaultTextStyle.merge(
+        style: context.mediumLabelStyle.copyWith(color: foreground),
+        child: content,
       ),
     );
   }

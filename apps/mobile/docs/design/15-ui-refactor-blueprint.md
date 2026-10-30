@@ -64,6 +64,13 @@ Navigator、ProviderScope 或表单。外观预览复用正式 theme 和 SoftCar
   状态必须有具体动作，错误不能被空态吞掉。
 - 用户操作反馈走共享 `AppMessenger`、busy/action button 和提交协议。成功仅在
   操作完成后呈现；已有 wrapper 提供 haptic 时，调用方不重复触发。
+- 按钮外观由 `theme/app_button_styles.dart` 统一提供给 Forui 和共享封装。
+  主操作用实色 primary，辅助操作用中性 secondary，必要的边界操作用 outline，
+  行内低强调动作使用透明底的 `AppQuietButton`。同一操作组通常只有一个 primary。
+  普通文字和图标按钮共享经典 12dp / 精致 16dp 圆角，dock 的显式 ring 保留圆形。
+  触屏所有尺寸至少 48dp；桌面按位置选择紧凑尺寸。Action 与 Busy 默认同为 lg，
+  异步状态不决定尺寸。Busy 保留原按钮底色、文字字号与占位，显示进度并阻止重复
+  点按、键盘和语义激活；长文案允许换行，不缩小系统字体。
 - 图表短时间范围、展示维度与页面内的少量互斥分类使用 `SegmentedRow.inline`：居中的内容宽度、轻量文字与选中短线，
   不铺满图表宽度或增加整条容器背景。保留 48dp 触控区域，按实际文字宽度与系统
   字体缩放均衡换行；不隐藏选项，也不截断标签。普通表单选择继续使用默认分段样式。

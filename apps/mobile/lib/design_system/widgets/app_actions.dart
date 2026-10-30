@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
 
+import '../tokens/app_motion_policy.dart';
+import '../tokens/motion_tokens.dart';
 import 'app_interaction.dart';
 
 /// Keyboard activation shared by app-owned button primitives.
@@ -43,6 +45,7 @@ class AppActionTappable extends StatelessWidget {
     required this.onPress,
     required this.child,
     this.selected = false,
+    this.style = const FTappableStyleDelta.context(),
     this.focusedOutlineStyle,
     this.builder = FTappable.defaultBuilder,
   }) : assert(semanticsLabel != '', 'semanticsLabel must not be empty');
@@ -51,6 +54,7 @@ class AppActionTappable extends StatelessWidget {
   final VoidCallback? onPress;
   final Widget child;
   final bool selected;
+  final FTappableStyleDelta style;
   final FFocusedOutlineStyleDelta? focusedOutlineStyle;
   final ValueWidgetBuilder<Set<FTappableVariant>> builder;
 
@@ -59,6 +63,7 @@ class AppActionTappable extends StatelessWidget {
     enabled: onPress != null,
     focusNode: null,
     builder: (focusNode) => FTappable(
+      style: style,
       semanticsLabel: semanticsLabel,
       onPress: onPress,
       selected: selected,
@@ -88,6 +93,11 @@ class AppActionButton extends StatelessWidget {
     required this.onPress,
     required this.child,
     this.variant = FButtonVariant.primary,
+    this.buttonKey,
+    this.size = FButtonSizeVariant.lg,
+    this.style = const FButtonStyleDelta.context(),
+    this.busy = false,
+    this.semanticsLabel,
     this.prefix,
     this.mainAxisSize = MainAxisSize.max,
     this.autofocus = false,
@@ -98,6 +108,11 @@ class AppActionButton extends StatelessWidget {
 
   final VoidCallback? onPress;
   final FButtonVariant variant;
+  final Key? buttonKey;
+  final FButtonSizeVariant size;
+  final FButtonStyleDelta style;
+  final bool busy;
+  final String? semanticsLabel;
   final Widget? prefix;
   final Widget child;
   final MainAxisSize mainAxisSize;
@@ -110,16 +125,23 @@ class AppActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveOnPress = switch (hapticIntent) {
-      final intent? => AppInteraction.wrap(onPress, intent: intent),
-      null => onPress,
-    };
+    final effectiveOnPress = busy
+        ? null
+        : switch (hapticIntent) {
+            final intent? => AppInteraction.wrap(onPress, intent: intent),
+            null => onPress,
+          };
     return _ManagedActionFocus(
-      enabled: onPress != null,
+      enabled: effectiveOnPress != null,
       focusNode: focusNode,
       builder: (focusNode) => _AppActionFButton(
+        key: buttonKey,
         onPress: effectiveOnPress,
         variant: variant,
+        size: size,
+        style: style,
+        busy: busy,
+        semanticsLabel: semanticsLabel,
         prefix: prefix,
         mainAxisSize: mainAxisSize,
         autofocus: autofocus,
@@ -189,19 +211,25 @@ class AppHeaderAction extends StatelessWidget {
 
 class _AppActionFButton extends FButton {
   _AppActionFButton({
+    super.key,
     required super.onPress,
     required super.variant,
     required super.child,
+    required super.size,
+    required this.busy,
+    super.style,
+    super.semanticsLabel,
     super.prefix,
     super.mainAxisSize,
     super.autofocus,
     super.focusNode,
     super.onFocusChange,
   }) : super(
-         size: FButtonSizeVariant.lg,
          shortcuts: appActionActivationShortcuts,
          actions: _disabledActivationActions(onPress),
        );
+
+  final bool busy;
 
   @override
   Widget build(BuildContext context) {
@@ -229,14 +257,25 @@ class _AppActionFButton extends FButton {
       excludeSemantics: semanticsLabel != null,
       shortcuts: shortcuts,
       actions: actions,
-      builder: (_, variants, _) => DecoratedBox(
-        decoration: resolvedStyle.decoration.resolve(variants),
-        child: FButtonData(
-          style: resolvedStyle,
-          variants: variants,
-          child: child,
-        ),
-      ),
+      builder: (_, variants, _) {
+        // Busy blocks every activation path while retaining the action's
+        // visual identity. The disabled semantic state remains authoritative.
+        final visualVariants = busy ? <FTappableVariant>{} : variants;
+        return AnimatedContainer(
+          duration: AppMotionPolicy.duration(
+            context,
+            Motion.fast,
+            role: AppMotionRole.decorative,
+          ),
+          curve: Motion.standard,
+          decoration: resolvedStyle.decoration.resolve(visualVariants),
+          child: FButtonData(
+            style: resolvedStyle,
+            variants: visualVariants,
+            child: child,
+          ),
+        );
+      },
     );
   }
 }

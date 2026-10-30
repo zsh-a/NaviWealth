@@ -29,6 +29,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/persistence/test_database.dart';
 import '../../../core/sync/_outbox_test_ext.dart';
+import '../../../support/button_finder.dart';
 import '../data/repositories/_stub_stamper.dart';
 
 class _Harness {
@@ -268,8 +269,7 @@ void main() {
     await tester.pumpWidget(_wrap(h, accounts: const []));
     await tester.pumpAndSettle();
 
-    FButton saveButton() =>
-        tester.widget<FButton>(find.widgetWithText(FButton, 'Save'));
+    FButton saveButton() => tester.widget<FButton>(find.buttonWithText('Save'));
 
     expect(saveButton().onPress, isNull);
     await tester.enterText(
@@ -426,7 +426,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Tap save.
-    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.tap(find.buttonWithText('Save'));
     await tester.pumpAndSettle();
 
     // The repo-driven write completes before the form leaves.
@@ -454,7 +454,7 @@ void main() {
       'My Bank',
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.tap(find.buttonWithText('Save'));
     await tester.pumpAndSettle();
 
     // The v2 outbox is a pure dirty-pointer log — the row's icon / color
@@ -506,7 +506,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.bySemanticsLabel(RegExp('Institution')), findsNothing);
 
-    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.tap(find.buttonWithText('Save'));
     await tester.pumpAndSettle();
     final saved = await h.db.select(h.db.accounts).getSingle();
     expect(saved.institution, 'Kept while collapsed');
@@ -540,7 +540,7 @@ void main() {
 
     await tester.tap(find.text('Brokerage'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.tap(find.buttonWithText('Save'));
     await tester.pumpAndSettle();
     expect((await repository.findById(child.id))!.parentId, parent.id);
 
@@ -562,7 +562,7 @@ void main() {
       'Undo account',
     );
     await tester.pump();
-    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.tap(find.buttonWithText('Save'));
     await tester.pumpAndSettle();
 
     final saved = await (h.db.select(
@@ -610,7 +610,7 @@ void main() {
       find.widgetWithText(FTextFormField, 'Institution'),
       '',
     );
-    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.tap(find.buttonWithText('Save'));
     await tester.pumpAndSettle();
     expect((await repository.findById(original.id))!.name, 'Edited account');
 
@@ -635,7 +635,7 @@ void main() {
       'Committed account',
     );
     await tester.pump();
-    await tester.tap(find.widgetWithText(FButton, 'Save'));
+    await tester.tap(find.buttonWithText('Save'));
     await tester.pumpAndSettle();
 
     final repository = AccountRepository(

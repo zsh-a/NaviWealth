@@ -26,6 +26,7 @@ import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/persistence/test_database.dart';
+import '../../../support/button_finder.dart';
 import '../data/repositories/_stub_stamper.dart';
 
 class _Harness {
@@ -177,7 +178,7 @@ void _expectSubmitAvailability(WidgetTester tester, {required bool enabled}) {
   final button = tester.widget<FButton>(
     find.descendant(
       of: find.byType(AppFormActionBar),
-      matching: find.byType(FButton),
+      matching: find.bySubtype<FButton>(),
     ),
   );
   if (enabled) {
@@ -323,7 +324,7 @@ void main() {
       find.byType(AccountTreePicker).at(1),
     );
     expect(destination.accounts.map((account) => account.id), ['a-cny']);
-    expect(find.widgetWithText(FButton, 'Convert'), findsOneWidget);
+    expect(find.buttonWithText('Convert'), findsOneWidget);
 
     await _selectAccount(tester, pickerIndex: 1, accountName: 'CNY Bank');
     expect(tester.widget<AmountField>(_amountField).label, 'Amount (USD)');
@@ -446,9 +447,7 @@ void main() {
     expect(find.text('-¥500'), findsNothing);
     expect(find.text('+¥500'), findsNothing);
 
-    final submit = tester.widget<FButton>(
-      find.widgetWithText(FButton, 'Transfer'),
-    );
+    final submit = tester.widget<FButton>(find.buttonWithText('Transfer'));
     expect(submit.onPress, isNull);
   });
 
@@ -501,9 +500,7 @@ void main() {
     expect(find.text('+¥7,100'), findsAtLeastNWidgets(1));
 
     // Submit is enabled.
-    final submit = tester.widget<FButton>(
-      find.widgetWithText(FButton, 'Transfer'),
-    );
+    final submit = tester.widget<FButton>(find.buttonWithText('Transfer'));
     expect(submit.onPress, isNotNull);
   });
 
@@ -544,7 +541,7 @@ void main() {
       await tester.enterText(_toAmountField, '7100');
       await tester.pumpAndSettle();
 
-      await tester.tap(find.widgetWithText(FButton, 'Transfer'));
+      await tester.tap(find.buttonWithText('Transfer'));
       await tester.pumpAndSettle();
 
       // The repo persisted both legs; the destination posting carries
@@ -597,7 +594,7 @@ void main() {
     await _selectAccount(tester, pickerIndex: 1, accountName: 'Bank B');
     await tester.enterText(_amountField, '100');
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FButton, 'Transfer'));
+    await tester.tap(find.buttonWithText('Transfer'));
     await tester.pumpAndSettle();
 
     final committed = await h.db.select(h.db.journalEntries).getSingle();

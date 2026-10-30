@@ -633,14 +633,12 @@ class _DcaControls extends StatelessWidget {
             FButton(
               variant: FButtonVariant.outline,
               onPress: busy || previewBusy ? null : onRun,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(FLucideIcons.workflow, size: AppIconSizes.h18),
-                  const SizedBox(width: AppSpacing.s6),
-                  Flexible(child: Text(l10n.dcaPlanPreviewAction)),
-                ],
+              prefix: const Icon(FLucideIcons.workflow, size: AppIconSizes.h18),
+              child: Flexible(
+                child: Text(
+                  l10n.dcaPlanPreviewAction,
+                  textAlign: TextAlign.center,
+                ),
               ),
             ),
           ],

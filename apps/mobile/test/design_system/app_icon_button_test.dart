@@ -10,7 +10,7 @@ Widget wrap(Widget child) {
   return MaterialApp(
     theme: AppTheme.light(),
     home: FTheme(
-      data: FTheme.neutral.light.desktop,
+      data: buildAppForuiTheme(brightness: Brightness.light, touch: false),
       child: Scaffold(body: Center(child: child)),
     ),
   );
@@ -44,9 +44,7 @@ void main() {
     semantics.dispose();
   });
 
-  testWidgets('softPrimary paints a circular primary-tint surface', (
-    tester,
-  ) async {
+  testWidgets('softPrimary shares the text action radius', (tester) async {
     await tester.pumpWidget(
       wrap(
         AppIconButton.softPrimary(
@@ -60,7 +58,7 @@ void main() {
     final container = tester.widget<Container>(find.byType(Container).first);
     final decoration = container.decoration! as BoxDecoration;
     expect(decoration.shape, BoxShape.rectangle);
-    expect(decoration.borderRadius, BorderRadius.circular(AppRadius.full));
+    expect(decoration.borderRadius, BorderRadius.circular(AppRadius.md));
     expect(decoration.color, isNotNull);
   });
 
@@ -96,7 +94,7 @@ void main() {
     expect(tester.getSize(find.byType(AppIconButton)), const Size(48, 48));
   });
 
-  testWidgets('softPrimaryRing and softPrimaryTile paint borders', (
+  testWidgets('dock ring stays circular while review tiles use a quiet fill', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -128,7 +126,7 @@ void main() {
       find.byType(AnimatedContainer).first,
     );
     final tileDeco = tile.decoration! as BoxDecoration;
-    expect(tileDeco.border, isNotNull);
-    expect(tileDeco.borderRadius, BorderRadius.circular(AppRadius.sm));
+    expect(tileDeco.border, isNull);
+    expect(tileDeco.borderRadius, BorderRadius.circular(AppRadius.md));
   });
 }

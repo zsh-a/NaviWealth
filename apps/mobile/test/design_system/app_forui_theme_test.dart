@@ -4,6 +4,87 @@ import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 
 void main() {
+  test('all touch button variants retain a 48dp target', () {
+    final theme = buildAppForuiTheme(brightness: Brightness.light, touch: true);
+    for (final variant in [
+      FButtonVariant.primary,
+      FButtonVariant.secondary,
+      FButtonVariant.outline,
+      FButtonVariant.ghost,
+      FButtonVariant.destructive,
+    ]) {
+      for (final size in [
+        FButtonSizeVariant.xs,
+        FButtonSizeVariant.sm,
+        FButtonSizeVariant.md,
+        FButtonSizeVariant.lg,
+      ]) {
+        final style = theme.buttonStyles.resolve({variant}).resolve({size});
+        expect(
+          style.contentStyle.constraints.minHeight,
+          greaterThanOrEqualTo(48),
+        );
+        expect(
+          style.iconContentStyle.constraints.minWidth,
+          greaterThanOrEqualTo(48),
+        );
+      }
+    }
+  });
+
+  test('active button labels retain AA contrast across themes and accents', () {
+    for (final brightness in Brightness.values) {
+      for (final visual in AppVisualStyle.values) {
+        for (final highContrast in [false, true]) {
+          for (final seed in AppAccentSeed.values) {
+            final theme = buildAppForuiTheme(
+              brightness: brightness,
+              touch: true,
+              highContrast: highContrast,
+              accentSeed: seed,
+              visualStyle: visual,
+            );
+            for (final variant in [
+              FButtonVariant.primary,
+              FButtonVariant.secondary,
+              FButtonVariant.outline,
+              FButtonVariant.ghost,
+              FButtonVariant.destructive,
+            ]) {
+              final style = theme.buttonStyles.resolve({variant}).md;
+              for (final states in <Set<FTappableVariant>>[
+                {},
+                {FTappableVariant.hovered},
+                {FTappableVariant.pressed},
+                {FTappableVariant.selected},
+              ]) {
+                final foreground = style.contentStyle.textStyle
+                    .resolve(states)
+                    .color!;
+                final background = Color.alphaBlend(
+                  style.decoration.resolve(states).color ??
+                      const Color(0x00000000),
+                  theme.colors.card,
+                );
+                final a = foreground.computeLuminance();
+                final b = background.computeLuminance();
+                final ratio = a > b
+                    ? (a + .05) / (b + .05)
+                    : (b + .05) / (a + .05);
+                expect(
+                  ratio,
+                  greaterThanOrEqualTo(4.5),
+                  reason:
+                      '$brightness/$visual/$seed/highContrast=$highContrast/$variant/$states',
+                );
+              }
+            }
+          }
+        }
+      }
+    }
+  });
+
   test('buildAppForuiTheme applies brand colors in light and dark modes', () {
     for (final brightness in Brightness.values) {
       final isDark = brightness == Brightness.dark;
@@ -12,7 +93,7 @@ void main() {
 
         expect(
           theme.buttonStyles.primary.md.contentStyle.constraints.minHeight,
-          touch ? 44 : 36,
+          touch ? 48 : 36,
         );
         expect(theme.colors.primary, AccentColors.primary(brightness));
         expect(
@@ -68,49 +149,45 @@ void main() {
   });
 
   for (final touch in <bool>[false, true]) {
-    testWidgets(
-      '${touch ? 'touch' : 'desktop'} theme preserves Forui button sizes',
-      (tester) async {
-        const mediumKey = ValueKey('medium-button');
-        const largeKey = ValueKey('large-button');
+    testWidgets('${touch ? 'touch' : 'desktop'} buttons use app target sizes', (
+      tester,
+    ) async {
+      const mediumKey = ValueKey('medium-button');
+      const largeKey = ValueKey('large-button');
 
-        await tester.pumpWidget(
-          MaterialApp(
-            home: FTheme(
-              data: buildAppForuiTheme(
-                brightness: Brightness.dark,
-                touch: touch,
-              ),
-              child: Scaffold(
-                body: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      FButton(
-                        key: mediumKey,
-                        size: .md,
-                        mainAxisSize: MainAxisSize.min,
-                        onPress: () {},
-                        child: const Text('Medium'),
-                      ),
-                      FButton(
-                        key: largeKey,
-                        size: .lg,
-                        mainAxisSize: MainAxisSize.min,
-                        onPress: () {},
-                        child: const Text('Large'),
-                      ),
-                    ],
-                  ),
+      await tester.pumpWidget(
+        MaterialApp(
+          home: FTheme(
+            data: buildAppForuiTheme(brightness: Brightness.dark, touch: touch),
+            child: Scaffold(
+              body: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    FButton(
+                      key: mediumKey,
+                      size: .md,
+                      mainAxisSize: MainAxisSize.min,
+                      onPress: () {},
+                      child: const Text('Medium'),
+                    ),
+                    FButton(
+                      key: largeKey,
+                      size: .lg,
+                      mainAxisSize: MainAxisSize.min,
+                      onPress: () {},
+                      child: const Text('Large'),
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
-        );
+        ),
+      );
 
-        expect(tester.getSize(find.byKey(mediumKey)).height, touch ? 44 : 36);
-        expect(tester.getSize(find.byKey(largeKey)).height, touch ? 48 : 40);
-      },
-    );
+      expect(tester.getSize(find.byKey(mediumKey)).height, touch ? 48 : 36);
+      expect(tester.getSize(find.byKey(largeKey)).height, touch ? 48 : 40);
+    });
   }
 }

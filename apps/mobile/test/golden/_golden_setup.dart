@@ -467,7 +467,7 @@ Future<void> pumpAndSnapshotResponsive(
     final foruiTheme = FTheme.of(mediaContext);
     expect(
       foruiTheme.buttonStyles.primary.md.contentStyle.constraints.minHeight,
-      touch ? 44 : 36,
+      touch ? 48 : 36,
     );
     expect(foruiTheme.colors.primary, AccentColors.primary(Brightness.dark));
     final materialThemeAtProfile = Theme.of(mediaContext);

@@ -97,7 +97,7 @@ void _expectSubmitWiring(WidgetTester tester, {required bool enabled}) {
   final button = tester.widget<FButton>(
     find.descendant(
       of: find.byType(AppFormActionBar),
-      matching: find.byType(FButton),
+      matching: find.bySubtype<FButton>(),
     ),
   );
   if (enabled) {
