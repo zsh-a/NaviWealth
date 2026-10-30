@@ -40,27 +40,24 @@ void main() {
     expect(_decoration(tester).border, isNull);
   });
 
-  testWidgets('raised cards add a modern surface shadow', (tester) async {
+  testWidgets('raised cards separate with a solid fill', (tester) async {
     await tester.pumpWidget(
       _wrap(const SoftCard(level: SoftCardLevel.raised, child: Text('raised'))),
     );
 
-    expect(_decoration(tester).boxShadow, isNotNull);
-    expect(_decoration(tester).boxShadow, isNotEmpty);
+    expect(_decoration(tester).boxShadow, isNull);
+    expect(_decoration(tester).color, isNotNull);
   });
 
-  testWidgets('raised cards are borderless — shadow carries the elevation', (
-    tester,
-  ) async {
+  testWidgets('raised cards remain borderless at rest', (tester) async {
     await tester.pumpWidget(
       _wrap(const SoftCard(level: SoftCardLevel.raised, child: Text('raised'))),
     );
 
-    // Blueprint §8.3: raised = borderless + shadow, one strategy app-wide.
     expect(_decoration(tester).border, isNull);
   });
 
-  testWidgets('dark raised cards combine tonal lift with soft shadow', (
+  testWidgets('dark raised cards use tonal lift without a shadow', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -69,9 +66,7 @@ void main() {
       ),
     );
 
-    expect(_decoration(tester).boxShadow, isNotNull);
-    expect(_decoration(tester).boxShadow, isNotEmpty);
-    // Dark separation comes from the navyRaised fill, not an edge.
+    expect(_decoration(tester).boxShadow, isNull);
     expect(_decoration(tester).border, isNull);
   });
 
@@ -86,12 +81,12 @@ void main() {
     expect(radius?.topLeft.x, AppRadius.lg);
   });
 
-  testWidgets('hero cards use a brand-wash gradient', (tester) async {
+  testWidgets('hero cards remain neutral and shadowless', (tester) async {
     await tester.pumpWidget(
       _wrap(const SoftCard(level: SoftCardLevel.hero, child: Text('hero'))),
     );
 
-    expect(_decoration(tester).gradient, isNotNull);
-    expect(_decoration(tester).boxShadow, isNotEmpty);
+    expect(_decoration(tester).gradient, isNull);
+    expect(_decoration(tester).boxShadow, isNull);
   });
 }

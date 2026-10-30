@@ -124,9 +124,14 @@ signal of direction, even in colorblind mode.
 
 ## Visual hierarchy and transitions
 
-- Ordinary cards use the medium radius with close, soft shadows. Hero cards
-  use the large radius and a faint accent wash; dark separation comes mainly
-  from the surface ladder rather than bright outlines.
+- Content cards use neutral opaque fills with no resting shadow or gradient.
+  Hero cards use a larger radius and stronger typography. Light pointer hover
+  adds a short contact shadow; dark separation comes from the surface ladder.
+  Floating menus and navigation retain restrained neutral shadows. Page-wide
+  atmosphere is an explicit opt-in; standard canvases remain neutral.
+- Primary buttons use a light tonal fill. Pinned form actions and sheet submits
+  opt into `AppButtonEmphasis.filled`, with separately resolved fill and label
+  colors. Ordinary commands stay light even when other actions are submitting.
 - Use `emphasizeInteger: true` on display-size `MoneyText`,
   `AnimatedMoneyText`, or `SignedMoneyText`. This preserves the formatter's
   full amount and accessibility label while reducing the size of the currency

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:forui/forui.dart';
 
+import '../theme/app_button_styles.dart';
 import '../tokens/app_motion_policy.dart';
 import '../tokens/motion_tokens.dart';
 import 'app_interaction.dart';
@@ -31,6 +32,28 @@ Map<Type, Action<Intent>>? _disabledActivationActions(VoidCallback? onPress) =>
 class _DisabledActivateAction extends Action<ActivateIntent> {
   @override
   void invoke(ActivateIntent intent) {}
+}
+
+/// Gives pinned form actions submission emphasis without restyling field-level
+/// commands. Individual buttons can explicitly request tonal emphasis.
+class AppButtonEmphasisScope extends InheritedWidget {
+  const AppButtonEmphasisScope({
+    super.key,
+    required this.emphasis,
+    required super.child,
+  });
+
+  final AppButtonEmphasis emphasis;
+
+  static AppButtonEmphasis of(BuildContext context) =>
+      context
+          .dependOnInheritedWidgetOfExactType<AppButtonEmphasisScope>()
+          ?.emphasis ??
+      AppButtonEmphasis.tonal;
+
+  @override
+  bool updateShouldNotify(AppButtonEmphasisScope oldWidget) =>
+      emphasis != oldWidget.emphasis;
 }
 
 /// Named interaction surface for custom app buttons and navigation controls.
@@ -93,6 +116,7 @@ class AppActionButton extends StatelessWidget {
     required this.onPress,
     required this.child,
     this.variant = FButtonVariant.primary,
+    this.emphasis,
     this.buttonKey,
     this.size = FButtonSizeVariant.lg,
     this.style = const FButtonStyleDelta.context(),
@@ -108,6 +132,7 @@ class AppActionButton extends StatelessWidget {
 
   final VoidCallback? onPress;
   final FButtonVariant variant;
+  final AppButtonEmphasis? emphasis;
   final Key? buttonKey;
   final FButtonSizeVariant size;
   final FButtonStyleDelta style;
@@ -138,6 +163,7 @@ class AppActionButton extends StatelessWidget {
         key: buttonKey,
         onPress: effectiveOnPress,
         variant: variant,
+        emphasis: emphasis ?? AppButtonEmphasisScope.of(context),
         size: size,
         style: style,
         busy: busy,
@@ -217,6 +243,7 @@ class _AppActionFButton extends FButton {
     required super.child,
     required super.size,
     required this.busy,
+    required this.emphasis,
     super.style,
     super.semanticsLabel,
     super.prefix,
@@ -230,13 +257,17 @@ class _AppActionFButton extends FButton {
        );
 
   final bool busy;
+  final AppButtonEmphasis emphasis;
 
   @override
   Widget build(BuildContext context) {
+    final themeStyle = context.theme.buttonStyles
+        .resolve({variant, context.platformVariant})
+        .resolve({size, context.platformVariant});
     final resolvedStyle = style(
-      context.theme.buttonStyles
-          .resolve({variant, context.platformVariant})
-          .resolve({size, context.platformVariant}),
+      emphasis == AppButtonEmphasis.filled && variant == FButtonVariant.primary
+          ? withFilledAppButtonStyle(themeStyle, context.theme.colors)
+          : themeStyle,
     );
 
     return FTappable(

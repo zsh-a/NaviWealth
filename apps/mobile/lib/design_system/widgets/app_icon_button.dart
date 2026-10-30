@@ -202,7 +202,7 @@ class AppIconButton extends StatelessWidget {
               enabled && variants.contains(FTappableVariant.hovered);
           if (pressed || hovered) {
             final tint = colors.foreground.withValues(
-              alpha: pressed ? AppOpacity.light : AppOpacity.faint,
+              alpha: pressed ? AppOpacity.faint : AppOpacity.whisper,
             );
             decoration = decoration == null
                 ? BoxDecoration(color: tint, borderRadius: radius)
@@ -272,11 +272,11 @@ class AppIconButton extends StatelessWidget {
     return switch (surface) {
       AppIconButtonSurface.plain => null,
       AppIconButtonSurface.softPrimary => BoxDecoration(
-        color: colors.primary.withValues(alpha: AppOpacity.subtle),
+        color: colors.primary.withValues(alpha: AppOpacity.whisper),
         borderRadius: radius,
       ),
       AppIconButtonSurface.softPrimaryRing => BoxDecoration(
-        color: colors.primary.withValues(alpha: AppOpacity.subtle),
+        color: colors.primary.withValues(alpha: AppOpacity.faint),
         borderRadius: radius,
         border: Border.all(
           color: colors.primary.withValues(alpha: AppOpacity.muted),
@@ -284,16 +284,20 @@ class AppIconButton extends StatelessWidget {
         ),
       ),
       AppIconButtonSurface.softPrimaryTile => BoxDecoration(
-        color: colors.primary.withValues(alpha: AppOpacity.subtle),
+        color: colors.primary.withValues(alpha: AppOpacity.whisper),
         borderRadius: radius,
       ),
       AppIconButtonSurface.softSelected => BoxDecoration(
-        color: colors.primary.withValues(alpha: AppOpacity.subtle),
+        color: colors.primary.withValues(alpha: AppOpacity.softTint),
         borderRadius: radius,
       ),
       AppIconButtonSurface.softMuted => BoxDecoration(
         color: Color.alphaBlend(
-          colors.foreground.withValues(alpha: AppOpacity.faint),
+          colors.foreground.withValues(
+            alpha: colors.brightness == Brightness.dark
+                ? AppOpacity.hoverTintDark
+                : AppOpacity.hoverTint,
+          ),
           colors.card,
         ),
         borderRadius: radius,

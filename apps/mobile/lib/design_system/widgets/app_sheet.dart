@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
 import '../../l10n/gen/app_localizations.dart';
+import '../theme/app_button_styles.dart';
 import '../theme/app_theme_scope.dart';
 import '../theme/component_specs.dart';
 import '../tokens/app_motion_policy.dart';
@@ -660,6 +661,7 @@ class AppSheetFooter extends StatelessWidget {
     );
     final submit = AppBusyButton(
       buttonKey: submitKey,
+      emphasis: AppButtonEmphasis.filled,
       variant: destructive
           ? FButtonVariant.destructive
           : FButtonVariant.primary,

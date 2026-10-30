@@ -27,9 +27,9 @@ const kClassicVisualSpec = AppVisualSpec(
   surfaceRadius: AppRadius.lg,
   sheetRadius: AppRadius.lg,
   overlayRadius: AppRadius.lg,
-  cardGradient: true,
-  cardBorders: true,
-  cardShadows: true,
+  cardGradient: false,
+  cardBorders: false,
+  cardShadows: false,
   sheetDuration: Motion.medium,
   sheetCurve: Curves.easeOutCubic,
 );

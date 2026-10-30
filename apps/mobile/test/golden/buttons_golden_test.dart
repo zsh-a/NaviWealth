@@ -61,14 +61,24 @@ class _ButtonExamples extends StatelessWidget {
                 ),
               ],
             ),
-            AppBusyButton(label: '保存记录', busyLabel: '正在保存记录', onPress: () {}),
+            AppBusyButton(
+              label: '保存记录',
+              emphasis: AppButtonEmphasis.filled,
+              busyLabel: '正在保存记录',
+              onPress: () {},
+            ),
             AppBusyButton(
               label: '保存记录',
               busyLabel: '正在保存记录',
+              emphasis: AppButtonEmphasis.filled,
               busy: true,
               onPress: () {},
             ),
-            const AppBusyButton(label: '保存记录', onPress: null),
+            const AppBusyButton(
+              label: '保存记录',
+              emphasis: AppButtonEmphasis.filled,
+              onPress: null,
+            ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [

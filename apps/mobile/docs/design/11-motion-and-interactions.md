@@ -100,7 +100,8 @@
 
 - 按压缩放**全 App 单值** `theme.press.scale = 0.98`
   (`SoftCard` / `PressableScale` / FAB 共用,无 per-site 覆盖)。
-- 交互卡片 hover:阴影抬升(`AppShadow.cardHover`)+ `click` 光标。
+- 交互卡片 hover：浅色使用贴近表面的轻阴影(`AppShadow.cardHover`)，深色仅使用
+  明度反馈；保留 `click` 光标。普通卡片无常驻阴影。
 - **键盘焦点**:交互卡片可聚焦,焦点环 = 2dp `primary` 描边,
   Enter/Space 激活并触发与点按相同的触觉意图。
 - `Cmd/Ctrl+1..N` 作用于当前域 tab;`Cmd/Ctrl+K` 命令面板。

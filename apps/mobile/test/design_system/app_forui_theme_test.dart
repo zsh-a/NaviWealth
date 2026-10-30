@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/design_system/theme/app_button_styles.dart'
+    show buildAppButtonStyle;
 
 void main() {
   test('all touch button variants retain a 48dp target', () {
@@ -51,32 +53,44 @@ void main() {
               FButtonVariant.ghost,
               FButtonVariant.destructive,
             ]) {
-              final style = theme.buttonStyles.resolve({variant}).md;
-              for (final states in <Set<FTappableVariant>>[
-                {},
-                {FTappableVariant.hovered},
-                {FTappableVariant.pressed},
-                {FTappableVariant.selected},
-              ]) {
-                final foreground = style.contentStyle.textStyle
-                    .resolve(states)
-                    .color!;
-                final background = Color.alphaBlend(
-                  style.decoration.resolve(states).color ??
-                      const Color(0x00000000),
-                  theme.colors.card,
+              for (final emphasis in AppButtonEmphasis.values) {
+                final style = buildAppButtonStyle(
+                  colors: theme.colors,
+                  typography: theme.typography,
+                  style: theme.style,
+                  touch: true,
+                  highContrast: highContrast,
+                  visual: visual.spec,
+                  variant: variant,
+                  size: FButtonSizeVariant.md,
+                  emphasis: emphasis,
                 );
-                final a = foreground.computeLuminance();
-                final b = background.computeLuminance();
-                final ratio = a > b
-                    ? (a + .05) / (b + .05)
-                    : (b + .05) / (a + .05);
-                expect(
-                  ratio,
-                  greaterThanOrEqualTo(4.5),
-                  reason:
-                      '$brightness/$visual/$seed/highContrast=$highContrast/$variant/$states',
-                );
+                for (final states in <Set<FTappableVariant>>[
+                  {},
+                  {FTappableVariant.hovered},
+                  {FTappableVariant.pressed},
+                  {FTappableVariant.selected},
+                ]) {
+                  final foreground = style.contentStyle.textStyle
+                      .resolve(states)
+                      .color!;
+                  final background = Color.alphaBlend(
+                    style.decoration.resolve(states).color ??
+                        const Color(0x00000000),
+                    theme.colors.card,
+                  );
+                  final a = foreground.computeLuminance();
+                  final b = background.computeLuminance();
+                  final ratio = a > b
+                      ? (a + .05) / (b + .05)
+                      : (b + .05) / (a + .05);
+                  expect(
+                    ratio,
+                    greaterThanOrEqualTo(4.5),
+                    reason:
+                        '$brightness/$visual/$seed/highContrast=$highContrast/$variant/$emphasis/$states',
+                  );
+                }
               }
             }
           }
@@ -102,7 +116,9 @@ void main() {
         );
         expect(
           theme.colors.background,
-          isDark ? ColorPalette.navy950 : ColorPalette.surfaceBackground,
+          isDark
+              ? ColorPalette.surfaceBackgroundDark
+              : ColorPalette.surfaceBackground,
         );
         expect(
           theme.colors.foreground,
@@ -114,18 +130,20 @@ void main() {
         );
         expect(
           theme.colors.card,
-          isDark ? ColorPalette.navyGlass : ColorPalette.neutral0,
+          isDark ? ColorPalette.surfaceDark : ColorPalette.neutral0,
         );
         expect(
           theme.colors.border,
-          isDark ? ColorPalette.navy800 : ColorPalette.surfaceHairline,
+          isDark
+              ? ColorPalette.surfaceHairlineDark
+              : ColorPalette.surfaceHairline,
         );
         expect(
           theme.colors.muted,
           isDark
               ? Color.alphaBlend(
                   ColorPalette.navy50.withValues(alpha: AppOpacity.whisper),
-                  ColorPalette.navyGlass,
+                  ColorPalette.surfaceDark,
                 )
               : ColorPalette.surfaceOverlay,
         );

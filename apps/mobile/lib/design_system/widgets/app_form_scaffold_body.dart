@@ -1,11 +1,13 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
+import '../theme/app_button_styles.dart';
 import '../theme/component_specs.dart';
 import '../tokens/app_motion_policy.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import 'adaptive_content_frame.dart';
+import 'app_actions.dart';
 import 'app_glass.dart';
 
 /// Full-screen form body with a scrollable field area and a pinned action bar.
@@ -166,11 +168,14 @@ class AppFormActionBar extends StatelessWidget {
             alignment: Alignment.topCenter,
             child: SizedBox(width: contentWidth, child: child),
           );
-    return AppGlassSurface(
-      role: AppGlassRole.sheet,
-      softLight: softLight,
-      status: status,
-      child: SafeArea(top: false, minimum: padding, child: content),
+    return AppButtonEmphasisScope(
+      emphasis: AppButtonEmphasis.filled,
+      child: AppGlassSurface(
+        role: AppGlassRole.sheet,
+        softLight: softLight,
+        status: status,
+        child: SafeArea(top: false, minimum: padding, child: content),
+      ),
     );
   }
 }

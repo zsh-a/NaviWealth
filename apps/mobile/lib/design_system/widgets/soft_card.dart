@@ -219,6 +219,7 @@ class _SoftCardState extends State<SoftCard> {
     required bool focused,
   }) {
     final colors = context.theme.colors;
+    final highContrast = MediaQuery.highContrastOf(context);
     final isDark = colors.brightness == Brightness.dark;
     final card = context.appTheme.card;
     final visual = context.appTheme.visual;
@@ -244,9 +245,8 @@ class _SoftCardState extends State<SoftCard> {
         ? colors.foreground.withValues(alpha: hoverBoost)
         : baseFill;
 
-    // One border strategy for the whole app (blueprint §8.3):
-    // raised = borderless + shadow (fill difference carries dark mode),
-    // flat = whisper edge in dark only, hero = a quiet edge with depth carried by the surface.
+    // Resting modules separate through neutral fills and spacing. Explicit
+    // contrast and keyboard focus retain a visible edge.
     final borderAlpha = !visual.cardBorders
         ? 0.0
         : switch (widget.level) {
@@ -275,6 +275,8 @@ class _SoftCardState extends State<SoftCard> {
     // Keyboard focus ring wins over the level border (doc 11 §9).
     final border = focused
         ? BorderSide(color: colors.primary, width: AppStroke.branch)
+        : highContrast
+        ? BorderSide(color: context.appTheme.surfaces.border)
         : borderAlpha == AppOpacity.transparent
         ? BorderSide.none
         : BorderSide(color: borderColor, width: AppStroke.hairline);
@@ -284,7 +286,7 @@ class _SoftCardState extends State<SoftCard> {
       gradient: gradient,
       radius: radius,
       side: border,
-      shadows: visual.cardShadows
+      shadows: !highContrast && (visual.cardShadows || hovered)
           ? _shadows(isDark: isDark, hovered: hovered, pressed: pressed)
           : null,
     );
@@ -313,18 +315,7 @@ class _SoftCardState extends State<SoftCard> {
     required bool hovered,
     required bool pressed,
   }) {
-    final level = pressed && widget.onPress != null
-        ? SoftCardLevel.flat
-        : widget.level;
-    return switch (level) {
-      SoftCardLevel.flat => null,
-      SoftCardLevel.raised =>
-        isDark
-            ? AppShadow.cardDark
-            : hovered && widget.onPress != null
-            ? AppShadow.cardHover
-            : AppShadow.card,
-      SoftCardLevel.hero => isDark ? AppShadow.heroDark : AppShadow.hero,
-    };
+    if (isDark || pressed || !hovered || widget.onPress == null) return null;
+    return AppShadow.cardHover;
   }
 }

@@ -11,6 +11,7 @@ export 'charts/charts.dart';
 export 'preferences/theme_preferences.dart';
 export 'theme/accent_colors.dart';
 export 'theme/accent_seed.dart';
+export 'theme/app_button_styles.dart' show AppButtonEmphasis;
 export 'theme/app_categorical.dart';
 export 'theme/app_forui_theme.dart';
 export 'theme/app_page_transitions.dart';

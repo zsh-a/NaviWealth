@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../theme/app_button_styles.dart';
 import '../tokens/dimens_tokens.dart';
 import 'app_actions.dart';
 import 'app_interaction.dart';
@@ -20,6 +21,7 @@ class AppBusyButton extends StatelessWidget {
     this.buttonKey,
     this.busy = false,
     this.variant = FButtonVariant.primary,
+    this.emphasis,
     this.size,
     this.prefix,
     this.busyPrefix,
@@ -33,6 +35,7 @@ class AppBusyButton extends StatelessWidget {
   final VoidCallback? onPress;
   final bool busy;
   final FButtonVariant variant;
+  final AppButtonEmphasis? emphasis;
 
   /// Defaults to the same large action size as [AppActionButton].
   final FButtonSizeVariant? size;
@@ -64,6 +67,7 @@ class AppBusyButton extends StatelessWidget {
     return AppActionButton(
       buttonKey: buttonKey,
       variant: variant,
+      emphasis: emphasis,
       mainAxisSize: mainAxisSize,
       size: size ?? FButtonSizeVariant.lg,
       busy: busy,

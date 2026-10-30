@@ -17,16 +17,14 @@ AtmospherePeriod atmospherePeriodForHour(int hour) {
   return AtmospherePeriod.evening;
 }
 
-/// Soft radial + linear wash behind brief pages.
-///
-/// Keeps content readable: max ~6% brand / navy tint, never a decorative
-/// illustration. Pair with [BriefScaffold] / [AppCanvasScaffold].
+/// Optional mood wash. Standard brief/canvas pages remain neutral; callers
+/// must explicitly opt into decorative atmosphere with a nonzero intensity.
 class AppAtmosphere extends StatelessWidget {
   const AppAtmosphere({
     super.key,
     required this.child,
     this.period,
-    this.intensity = 1,
+    this.intensity = 0,
   });
 
   final Widget child;
@@ -39,6 +37,7 @@ class AppAtmosphere extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (intensity <= 0 || MediaQuery.highContrastOf(context)) return child;
     final colors = context.theme.colors;
     final isDark = colors.brightness == Brightness.dark;
     final period = this.period ?? atmospherePeriodForHour(clock.now().hour);

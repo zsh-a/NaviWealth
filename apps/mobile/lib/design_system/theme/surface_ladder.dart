@@ -86,11 +86,13 @@ AppSurfaceLadder resolveSurfaceLadder({
 
   return isDark
       ? AppSurfaceLadder(
-          canvas: ColorPalette.navy950,
-          card: ColorPalette.navyGlass,
-          raised: ColorPalette.navyRaised,
-          hero: ColorPalette.navyHero,
-          border: highContrast ? ColorPalette.navy500 : ColorPalette.navy800,
+          canvas: ColorPalette.surfaceBackgroundDark,
+          card: ColorPalette.surfaceDark,
+          raised: ColorPalette.surfaceRaisedDark,
+          hero: ColorPalette.surfaceHeroDark,
+          border: highContrast
+              ? ColorPalette.navy500
+              : ColorPalette.surfaceHairlineDark,
           scrim: ColorPalette.scrimDark,
           contentStrong: ColorPalette.neutral0,
           contentBody: ColorPalette.navy50,

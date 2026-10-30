@@ -9,10 +9,10 @@ class ColorPalette {
   const ColorPalette._();
 
   // Neutral surfaces and text for the refined visual preset.
-  static const Color refinedCanvasLight = Color(0xFFF3F4F6);
-  static const Color refinedRaisedLight = Color(0xFFF8F9FB);
-  static const Color refinedHeroLight = Color(0xFFECEEF2);
-  static const Color refinedBorderLight = Color(0xFFD9DDE3);
+  static const Color refinedCanvasLight = Color(0xFFF6F7F8);
+  static const Color refinedRaisedLight = Color(0xFFFFFFFF);
+  static const Color refinedHeroLight = Color(0xFFFAFBFC);
+  static const Color refinedBorderLight = Color(0xFFE3E6EA);
   static const Color refinedContrastBorderLight = Color(0xFF626B78);
   static const Color refinedStrongLight = Color(0xFF1C1D21);
   static const Color refinedBodyLight = Color(0xFF25262B);
@@ -20,10 +20,10 @@ class ColorPalette {
   static const Color refinedContrastMutedLight = Color(0xFF383D45);
   static const Color refinedFaintLight = Color(0xFF727985);
   static const Color refinedCanvasDark = Color(0xFF101114);
-  static const Color refinedCardDark = Color(0xFF1B1D22);
-  static const Color refinedRaisedDark = Color(0xFF25282E);
-  static const Color refinedHeroDark = Color(0xFF30343C);
-  static const Color refinedBorderDark = Color(0xFF383E48);
+  static const Color refinedCardDark = Color(0xFF191C20);
+  static const Color refinedRaisedDark = Color(0xFF22252A);
+  static const Color refinedHeroDark = Color(0xFF272B31);
+  static const Color refinedBorderDark = Color(0xFF343940);
   static const Color refinedContrastBorderDark = Color(0xFF8A94A3);
   static const Color refinedStrongDark = Color(0xFFF4F5F7);
   static const Color refinedBodyDark = Color(0xFFE8EBEF);
@@ -88,16 +88,19 @@ class ColorPalette {
   static const Color neutral950 = Color(0xFF0B1220);
   static const Color neutral1000 = Color(0xFF000000);
 
-  // ── Light surfaces ──────────────────────────────────────────────────────
-  // Cool canvas + pure white cards. Raised / hero levels add a stepped cool
-  // tint (alphaBlend of cyanBrand700 over white at 2% / 4%) so the elevation
-  // ladder reads without relying on shadow alone.
-  static const Color surfaceBackground = Color(0xFFF4F7F7);
+  // ── Neutral surfaces ────────────────────────────────────────────────────
+  // Large surfaces stay neutral; hue belongs to data and interaction accents.
+  static const Color surfaceBackground = Color(0xFFF6F7F8);
   static const Color surface = neutral0;
-  static const Color surfaceRaised = Color(0xFFFAFDFD); // 2% cyanBrand700 wash
-  static const Color surfaceHero = Color(0xFFF6FAFB); // 4% cyanBrand700 wash
-  static const Color surfaceOverlay = Color(0xFFEEF6F7);
-  static const Color surfaceHairline = Color(0xFFD5E0E2);
+  static const Color surfaceRaised = neutral0;
+  static const Color surfaceHero = Color(0xFFFAFBFC);
+  static const Color surfaceOverlay = Color(0xFFF3F4F6);
+  static const Color surfaceHairline = Color(0xFFE3E6EA);
+  static const Color surfaceBackgroundDark = Color(0xFF111315);
+  static const Color surfaceDark = Color(0xFF191C20);
+  static const Color surfaceRaisedDark = Color(0xFF202429);
+  static const Color surfaceHeroDark = Color(0xFF272B31);
+  static const Color surfaceHairlineDark = Color(0xFF343940);
 
   // ── Profit / gain (emerald) ─────────────────────────────────────────────
   // Migrated from legacy "standard green" #16A34A to Tailwind emerald
@@ -149,11 +152,12 @@ class ColorPalette {
   static const Color shadowMedium = Color(0x33000000);
   static const Color shadowDarkRaised = Color(0x40000000);
   static const Color shadowDarkHero = Color(0x66000000);
-  static const Color scrimLight = Color(0x66002A38);
-  static const Color scrimDark = Color(0x99002A38);
-  static const Color shadowNavy04 = Color(0x0A002A38);
-  static const Color shadowNavy08 = Color(0x14002A38);
-  static const Color shadowNavy10 = Color(0x1A002A38);
+  static const Color scrimLight = Color(0x52000000);
+  static const Color scrimDark = Color(0x80000000);
+  // Legacy names remain stable for token consumers; shadows are neutral.
+  static const Color shadowNavy04 = Color(0x0A000000);
+  static const Color shadowNavy08 = Color(0x14000000);
+  static const Color shadowNavy10 = Color(0x1A000000);
   static const Color shadowCyan04 = Color(0x0A3AABBB); // 4% cyanBrand500
   // The hero profit glow is derived in MarketColors.fromMode (mode's `up`
   // foreground at AppOpacity.glow) so it follows the active market mode.

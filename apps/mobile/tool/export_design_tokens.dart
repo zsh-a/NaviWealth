@@ -291,13 +291,18 @@ Map<String, Object> _colorGroup() => {
     '1000': _color(ColorPalette.neutral1000),
   },
   'surface': {
-    r'$description': 'Light-mode surfaces — ColorPalette.surface*.',
+    r'$description': 'Neutral light/dark surfaces — ColorPalette.surface*.',
     'background': _color(ColorPalette.surfaceBackground),
     'surface': _color(ColorPalette.surface),
     'raised': _color(ColorPalette.surfaceRaised),
     'hero': _color(ColorPalette.surfaceHero),
     'overlay': _color(ColorPalette.surfaceOverlay),
     'hairline': _color(ColorPalette.surfaceHairline),
+    'backgroundDark': _color(ColorPalette.surfaceBackgroundDark),
+    'surfaceDark': _color(ColorPalette.surfaceDark),
+    'raisedDark': _color(ColorPalette.surfaceRaisedDark),
+    'heroDark': _color(ColorPalette.surfaceHeroDark),
+    'hairlineDark': _color(ColorPalette.surfaceHairlineDark),
   },
   'accent': {
     'green': {
@@ -607,6 +612,7 @@ Map<String, Object> _opacityGroup() => {
   'inputSurface': _number(AppOpacity.inputSurface),
   'glow': _number(AppOpacity.glow),
   'disabled': _number(AppOpacity.disabled),
+  'buttonShade': _number(AppOpacity.buttonShade),
   'scrim': _number(AppOpacity.scrim),
   'prominent': _number(AppOpacity.prominent),
   'strong': _number(AppOpacity.strong),

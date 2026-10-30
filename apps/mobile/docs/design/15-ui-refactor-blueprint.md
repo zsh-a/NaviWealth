@@ -31,8 +31,8 @@ MarketColors、AccentColors 是 resolver 的数据来源，业务页面消费解
 涨跌不能硬编码红绿，状态色和分类色也不能被领域 accent 替换。
 
 外观设置支持经典 / 精致两个视觉预设，使用同一套导航、组件和表单状态。
-经典保留既有配色；精致使用中性色阶、连续圆角、减少装饰性描边与阴影、
-统一字体及阻尼弹层曲线。`AppVisualStyle` 与明暗模式、系统高对比度、
+两个预设共用中性表面，普通卡片无常驻阴影和渐变；经典使用紧凑圆角，精致使用
+连续圆角、统一字体及阻尼弹层曲线。`AppVisualStyle` 与明暗模式、系统高对比度、
 强调色、涨跌色和材质效果独立；偏好保存在 SharedPreferences，旧安装默认经典。
 Material、Forui 和语义主题必须同时消费同一 visual style；不要按预设重建
 Navigator、ProviderScope 或表单。外观预览复用正式 theme 和 SoftCard。
@@ -65,12 +65,18 @@ Navigator、ProviderScope 或表单。外观预览复用正式 theme 和 SoftCar
 - 用户操作反馈走共享 `AppMessenger`、busy/action button 和提交协议。成功仅在
   操作完成后呈现；已有 wrapper 提供 haptic 时，调用方不重复触发。
 - 按钮外观由 `theme/app_button_styles.dart` 统一提供给 Forui 和共享封装。
-  主操作用实色 primary，辅助操作用中性 secondary，必要的边界操作用 outline，
+  普通 primary 使用浅色调填充，辅助操作用轻量中性 secondary，边界操作用 outline，
   行内低强调动作使用透明底的 `AppQuietButton`。同一操作组通常只有一个 primary。
+  最终提交使用 `AppButtonEmphasis.filled`，`AppFormActionBar` 在固定操作区内提供
+  此强调，sheet footer 显式指定；字段内命令继续使用浅填充。实色填充与链接、焦点的
+  accent 独立解析，深色模式压低填充亮度，文字和各交互状态保持 AA 对比度。
   普通文字和图标按钮共享经典 12dp / 精致 16dp 圆角，dock 的显式 ring 保留圆形。
   触屏所有尺寸至少 48dp；桌面按位置选择紧凑尺寸。Action 与 Busy 默认同为 lg，
   异步状态不决定尺寸。Busy 保留原按钮底色、文字字号与占位，显示进度并阻止重复
   点按、键盘和语义激活；长文案允许换行，不缩小系统字体。
+- 页面背景与内容表面使用中性色阶；默认不叠加时段氛围染色。普通卡片以底色和间距
+  分层，浅色交互卡片仅在 pointer hover 使用贴近表面的轻阴影；深色使用明度反馈。
+  阴影保留给菜单、弹窗及浮动导航，使用中性色和较短偏移；高对比度保留可见边界。
 - 图表短时间范围、展示维度与页面内的少量互斥分类使用 `SegmentedRow.inline`：居中的内容宽度、轻量文字与选中短线，
   不铺满图表宽度或增加整条容器背景。保留 48dp 触控区域，按实际文字宽度与系统
   字体缩放均衡换行；不隐藏选项，也不截断标签。普通表单选择继续使用默认分段样式。

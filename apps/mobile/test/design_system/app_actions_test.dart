@@ -17,6 +17,58 @@ Widget _themed({required bool touch, required Widget child}) {
 }
 
 void main() {
+  testWidgets('submission emphasis stays local and preserves action geometry', (
+    tester,
+  ) async {
+    const captureKey = ValueKey('capture');
+    const saveKey = ValueKey('save');
+    final busy = ValueNotifier(false);
+    addTearDown(busy.dispose);
+    await tester.pumpWidget(
+      _themed(
+        touch: true,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AppActionButton(
+              key: captureKey,
+              onPress: () {},
+              child: const Text('Capture'),
+            ),
+            AppFormActionBar(
+              child: ValueListenableBuilder<bool>(
+                valueListenable: busy,
+                builder: (_, value, _) => AppBusyButton(
+                  key: saveKey,
+                  label: 'Save',
+                  busy: value,
+                  onPress: () {},
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    Color? fill(String label) =>
+        FButtonData.of(tester.element(find.text(label))).style.decoration
+            .resolve({})
+            .color;
+    final captureFill = fill('Capture');
+    final saveFill = fill('Save');
+    expect(saveFill, isNot(captureFill));
+    expect(tester.getSize(find.byKey(captureKey)).height, 48);
+    expect(tester.getSize(find.byKey(saveKey)).height, 48);
+    busy.value = true;
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(fill('Capture'), captureFill);
+    expect(fill('Save'), saveFill);
+    expect(tester.getSize(find.byKey(saveKey)).height, 48);
+    busy.value = false;
+    await tester.pumpAndSettle();
+  });
+
   for (final touch in <bool>[false, true]) {
     testWidgets('actions use ${touch ? 'touch' : 'desktop'} target size', (
       tester,

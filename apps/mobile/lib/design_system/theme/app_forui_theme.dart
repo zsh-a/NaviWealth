@@ -53,13 +53,13 @@ FThemeData buildAppForuiTheme({
     mutedForeground: ladder.contentMuted,
     card: ladder.card,
     border: ladder.border,
-    // Muted fills stay cooler than pure slate so SoftCard modules lift cleanly.
+    // Quiet neutral fills separate inactive controls from the canvas.
     muted: visualStyle == AppVisualStyle.refined
         ? ladder.hero
         : isDark
         ? Color.alphaBlend(
-            ColorPalette.navy50.withValues(alpha: AppOpacity.whisper),
-            ColorPalette.navyGlass,
+            ladder.contentBody.withValues(alpha: AppOpacity.whisper),
+            ladder.card,
           )
         : ColorPalette.surfaceOverlay,
     // Single scrim source for every overlay (sheets, dialogs, popovers):

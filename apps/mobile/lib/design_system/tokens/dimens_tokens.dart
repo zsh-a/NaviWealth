@@ -140,6 +140,9 @@ class AppOpacity {
   /// Disabled / dimmed -- container fills, de-emphasized content. (~0.40)
   static const double disabled = 0.40;
 
+  /// Neutral shade mixed into dark filled buttons to reduce luminous area.
+  static const double buttonShade = 0.40;
+
   /// Scrim / overlay backdrop. (~0.50)
   static const double scrim = 0.50;
 
@@ -223,8 +226,8 @@ class AppBlur {
 
 /// Canonical shadow sets keyed by surface role.
 ///
-/// Shadows use the navy text color (#002A38) at low opacity for a soft,
-/// tinted look that matches the fintech spec — no harsh black shadows.
+/// Neutral, close shadows reserved for floating surfaces and pointer hover.
+/// Ordinary content cards separate through their fill and spacing.
 class AppShadow {
   const AppShadow._();
 
@@ -263,9 +266,9 @@ class AppShadow {
   ];
   static const List<BoxShadow> cardHover = [
     BoxShadow(
-      color: ColorPalette.shadowNavy08,
-      blurRadius: 14,
-      offset: Offset(0, 4),
+      color: ColorPalette.shadowNavy04,
+      blurRadius: 8,
+      offset: Offset(0, 2),
     ),
   ];
   static const List<BoxShadow> hero = [
@@ -295,9 +298,14 @@ class AppShadow {
   /// Desktop sheet elevation — floating overlays.
   static const List<BoxShadow> desktopSheet = [
     BoxShadow(
-      color: ColorPalette.shadowNavy10,
-      blurRadius: 24,
-      offset: Offset(0, 12),
+      color: ColorPalette.shadowNavy04,
+      blurRadius: 4,
+      offset: Offset(0, 1),
+    ),
+    BoxShadow(
+      color: ColorPalette.shadowNavy08,
+      blurRadius: 20,
+      offset: Offset(0, 6),
     ),
   ];
 
@@ -313,9 +321,9 @@ class AppShadow {
   /// Floating glass nav bar — one restrained elevation layer.
   static const List<BoxShadow> nav = [
     BoxShadow(
-      color: ColorPalette.shadowNavy10,
-      blurRadius: 20,
-      offset: Offset(0, 8),
+      color: ColorPalette.shadowNavy04,
+      blurRadius: 16,
+      offset: Offset(0, 4),
     ),
   ];
 }
