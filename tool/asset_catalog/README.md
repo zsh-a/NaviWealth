@@ -116,18 +116,10 @@ Catalog refresh remains separate from release creation so rebuilding the same
 tag is deterministic and upstream outages cannot mutate or partially degrade a
 published catalog.
 
-`.github/workflows/securities-catalog-refresh.yml` runs every Monday at 02:00
-Asia/Shanghai on a GitHub-hosted `ubuntu-latest` runner and also supports manual
-dispatch. It performs a full refresh, runs the catalog test suite and release
-validator, uploads the generated files for diagnostics, and creates or updates
-the `automation/securities-catalog-refresh` PR when data changed. The PR is
-never auto-merged.
-
-The workflow uses `CATALOG_PR_TOKEN` when configured and otherwise falls back
-to `github.token`. Repository settings must allow GitHub Actions to create pull
-requests. Use a fine-grained PAT or GitHub App token for `CATALOG_PR_TOKEN` when
-the created PR must trigger other workflows; events created by the default
-`GITHUB_TOKEN` do not start new workflow runs.
+Catalog refresh runs manually with `./tool/build-asset-catalog.sh --full`.
+Run the catalog tests and release validator, then review and commit the source
+CSV and generated NDJSON changes. There is no scheduled refresh workflow or
+automatic catalog PR.
 
 ## Output
 

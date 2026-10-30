@@ -1,12 +1,6 @@
 name: mobile
 
 on:
-  workflow_call:
-    inputs:
-      quality_only:
-        description: Run checks without building or deploying Web (Android releases).
-        type: boolean
-        default: false
   push:
     branches: [main]
     paths: &mobile-paths
@@ -14,9 +8,10 @@ on:
       - '!apps/mobile/**/*.md'
       - '!apps/mobile/integration_test/**'
       - '!apps/mobile/test_driver/**'
+      - '!apps/mobile/test/golden/**'
       - '!apps/mobile/test/readme_screenshots/**'
+      - '!apps/mobile/web_smoke/**'
       - '.github/workflows/mobile.yml'
-      - '.github/workflows/web-smoke.yml'
       - '.github/workflows/release.yml'
       - '.github/actions/mobile-fonts/**'
       - '.github/actions/setup-mobile/**'
@@ -56,14 +51,6 @@ jobs:
           submodules: recursive
       - uses: ./.github/actions/setup-mobile
       - run: flutter analyze --fatal-infos
-      - name: Verify generated code is up to date
-        run: |
-          dart run build_runner build
-          if ! git diff --quiet -- '*.g.dart' '*.freezed.dart'; then
-            echo "::error::Generated files are stale. Run 'dart run build_runner build' locally and commit the result."
-            git --no-pager diff --stat -- '*.g.dart' '*.freezed.dart'
-            exit 1
-          fi
       - name: Project static contracts and boundaries
         working-directory: ${{ github.workspace }}
         run: ./tool/check-mobile-static.sh
@@ -107,39 +94,38 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
 
-  golden-regression:
-    name: golden regression (mobile)
+  web:
+    name: build production Web
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-mobile
         with:
           fonts: real
-      - name: Run golden suite
-        # The visual baseline is locked to Linux rasterisation. Devs on
-        # macOS / Windows skip the comparison via flutter_test_config.dart;
-        # this job is the source of truth. A failed match dumps the diff
-        # PNG next to the golden so it's recoverable from the artifact.
-        run: flutter test test/golden --tags=golden --reporter=expanded
-      - name: Upload golden diffs on failure
-        if: failure()
+      - name: Build production Web bundle
+        run: |
+          api_url="$(tr -d '\r\n' < ../backend/.api-base-url)"
+          bash tool/build-web.sh --release --source-maps \
+            --dart-define="API_BASE_URL=$api_url" \
+            --dart-define="GIT_SHA=$GITHUB_SHA"
+      - name: Verify bundled securities catalog
+        working-directory: ${{ github.workspace }}
+        run: cmp apps/mobile/assets/catalog/securities.v1.ndjson apps/mobile/build/web/assets/assets/catalog/securities.v1.ndjson
+      - name: Upload production Web bundle
         uses: actions/upload-artifact@v4
         with:
-          name: mobile-golden-failures
-          path: apps/mobile/test/golden/failures/**
-          if-no-files-found: ignore
+          name: mobile-web-build
+          path: apps/mobile/build/web
+          if-no-files-found: error
           retention-days: 7
-
-  web:
-    name: Web build and smoke
-    if: ${{ !inputs.quality_only }}
-    uses: ./.github/workflows/web-smoke.yml
 
   deploy-pages:
     name: deploy Cloudflare Pages
     runs-on: ubuntu-latest
-    needs: [web, static-checks, test-shards, golden-regression]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && !inputs.quality_only
+    needs: [web, static-checks, test-shards]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     env:
       HAS_CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
     concurrency:

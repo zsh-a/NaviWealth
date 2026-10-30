@@ -659,9 +659,8 @@ Behavior:
   only the four manifest-declared runtime files.
 - `apps/mobile/tool/run-asr-native-smoke.sh` downloads checksummed, pinned model
   and WAV fixtures and invokes `asr_native_smoke.dart` against the production
-  recognizer configuration. `.github/workflows/asr-native-smoke.yml` runs the
-  exact-transcript native regression for relevant changes, weekly, and on
-  manual dispatch.
+  recognizer configuration. This exact-transcript native regression runs
+  manually; it is not a CI or release gate.
 
 ## Sync V3
 

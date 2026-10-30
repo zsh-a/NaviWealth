@@ -68,19 +68,15 @@ and run against a deployed build instead.
 
 ## CI
 
-Mobile CI calls the reusable `web-smoke` workflow
-(`.github/workflows/web-smoke.yml`) for pull requests and `main`. It builds once
-with the production API URL and source SHA, checks the bundled catalog bytes,
-and runs Chromium. On `main`, the passing bundle is uploaded as `mobile-web-build`;
-Pages deploys those exact bytes after static checks, test shards, and full
-goldens also succeed. Weekly and manually dispatched runs execute the same
-build with Chromium, Firefox, and WebKit.
+Browser smoke runs manually and is not a CI or deployment gate. Mobile CI
+builds Web only on `main` with the production API URL and source SHA, checks
+the bundled catalog bytes, and uploads `mobile-web-build`. Pages deploys those
+exact bytes after static checks and ordinary test shards succeed.
 
-PRs and `main` set `WEB_SMOKE_RESPONSIVE=compact`: `/wealth/accounts` and
-`/plan/rebalance` at 390px and 1200px (four app boots). Weekly/manual runs use
-`full`: all five Finance routes at all four widths (20 boots). Direct-hit,
-refresh/history, storage, and PWA suites run in both modes. Local runs default
-to `full`; set `WEB_SMOKE_RESPONSIVE=compact` to reproduce the PR gate.
+Local runs default to `WEB_SMOKE_RESPONSIVE=full`: all five Finance routes at
+all four widths (20 boots). Set `WEB_SMOKE_RESPONSIVE=compact` to sample
+`/wealth/accounts` and `/plan/rebalance` at 390px and 1200px (four boots).
+Direct-hit, refresh/history, storage, and PWA suites run in both modes.
 
 ## Adding a check
 

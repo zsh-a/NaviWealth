@@ -189,23 +189,22 @@ wrangler pages deploy --branch main
 
 `.github/workflows/mobile.yml` 在 `apps/mobile/**` 变更时触发：
 
-1. `static checks` — `flutter analyze --fatal-infos`、生成代码 freshness、l10n 与架构边界检查
+1. `static checks` — `flutter analyze --fatal-infos`、l10n、协议与架构边界检查
 2. `test shard 0..3 / 4` — 按文件分片执行完整普通 unit/widget/flow/integration 测试，每个文件只加载一次
-3. `golden regression (mobile)` — PR、`main` 和发布统一执行完整 Linux golden 回归
-4. `Web build and smoke` — PR 与 `main` 复用同一 release 构建和 Chromium 冒烟流程；Pages 只部署冒烟通过的原产物，并等待静态检查、全部分片及 golden 回归通过
+3. `build production Web` — 仅 `main` 构建生产 Web 并校验目录资产；Pages 等待静态检查和全部测试分片通过后部署同一产物
 
 所有 Flutter job 通过 `setup-mobile` action 统一 SDK 版本与依赖安装。
-静态检查与普通测试使用字体占位文件，真实截图和 Web 构建通过共享 action
+静态检查与普通测试使用字体占位文件，Web 构建通过共享 action
 按字体脚本与所需字符集缓存字体。各分片直接写入耗时摘要，仅失败时上传
 JSON 事件；Markdown、设备 harness 和 README 图片维护不再
 触发整套移动端检查。README 图片使用本地脚本按需更新。
 Android 签名 APK/AAB、native payload 与 16 KiB ELF 检查由 `release.yml`
-负责；设备集成测试仍在相关 PR、每周及发布流程运行。
+负责，发布流程不重跑或等待 PR/`main` 的质量检查。
 
-`.github/workflows/asr-native-smoke.yml` 独立运行真实 `sherpa_onnx` 推理：
-语音运行时相关变更会在 PR/main 上触发，同时每周一和手动调度也会执行。
-模型与 WAV 均固定 SHA-256；诊断仅输出音频时长、推理时长和实时因子，不
-记录转录文本。
+生成代码 freshness、Linux golden、浏览器 smoke、设备集成、原生 ASR、
+文档构建和目录刷新均改为本地按需执行，不再运行定时 CI。
+原生 Rust 测试仅由 `agent-runtime.yml` 在相关源码变更时运行；
+后端检查与部署由 `backend.yml` 负责。
 
 架构 lint gates（CI 和本地均可运行）：
 
@@ -218,7 +217,7 @@ Android 签名 APK/AAB、native payload 与 16 KiB ELF 检查由 `release.yml`
 ./tool/check-ai-contract-wire-enums.sh   # AI wire enum fixture 一致
 ```
 
-`release.yml` 只从已存在且与源码一致的 `vX.Y.Z` tag 发布 Android arm64 APK/AAB 和更新清单；手动运行也必须选择 tag。版本与 build number 由 `tool/release.py` 从 tag 解析，APK/AAB 共用构建参数；设备质量门槛复用 `integration-device.yml`。Web 与后端仅由 `main` 部署。当前没有 iOS tag 构建或分发 job；其验证与分发条件见 [LifeOS 路线图](../../docs/roadmap/roadmap-lifeos.md#triggered-bets)。
+`release.yml` 只从已存在且与源码一致的 `vX.Y.Z` tag 发布 Android arm64 APK/AAB 和更新清单；手动运行也必须选择 tag。版本与 build number 由 `tool/release.py` 从 tag 解析，APK/AAB 共用构建参数，并保留 native payload、16 KiB 与目录资产校验。Web 与后端仅由 `main` 部署。当前没有 iOS tag 构建或分发 job；其验证与分发条件见 [LifeOS 路线图](../../docs/roadmap/roadmap-lifeos.md#triggered-bets)。
 
 ## 数据库基线
 

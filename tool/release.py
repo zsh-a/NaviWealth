@@ -127,8 +127,6 @@ def render_notes(
         "",
         "## Release Validation",
         "",
-        "- Mobile tests, full Linux goldens, backend contracts, and native runtime gates passed",
-        "- Android device database encryption and backup recovery gates passed",
         "- Signed APK/AAB passed native payload, 16 KiB alignment, and catalog checks",
         "",
         "## What's Changed",

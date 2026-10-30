@@ -1,7 +1,6 @@
 name: backend
 
 on:
-  workflow_call:
   push:
     branches:
       - main

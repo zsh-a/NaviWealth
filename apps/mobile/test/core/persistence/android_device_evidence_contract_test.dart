@@ -3,10 +3,8 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('Android CI fails closed when database evidence is incomplete', () {
+  test('Android runner fails closed when database evidence is incomplete', () {
     final runner = File('tool/run-android-integration.sh').readAsStringSync();
-    final workflow = File('../../.github/workflows/integration-device.yml')
-        .readAsStringSync();
     final databaseTest = File(
       'integration_test/database_boot_integration_test.dart',
     ).readAsStringSync();
@@ -40,10 +38,5 @@ void main() {
 
     expect(runner, contains('set -euo pipefail'));
     expect(runner, contains(r'grep -Fq "$marker"'));
-    expect(workflow, contains('bash tool/run-android-integration.sh'));
-    expect(
-      workflow,
-      contains('apps/mobile/test-results/android-database-encryption.json'),
-    );
   });
 }

@@ -221,7 +221,7 @@ cd apps/mobile
 ./tool/update-readme-screenshots.sh --update
 ```
 
-效果图使用固定 Flutter、字体、locale、viewport 和演示数据，按需在本地更新并审阅；产品 CI 通过 golden 和任务流测试验证界面，不再要求每次 UI 变更重渲染 README 图片。详见 [Visual Baseline](docs/visual-baseline/README.md)。
+效果图使用固定 Flutter、字体、locale、viewport 和演示数据，按需在本地更新并审阅；产品 CI 保留普通单元、组件和任务流测试，golden 改为本地按需验证。无需每次 UI 变更重渲染 README 图片。详见 [Visual Baseline](docs/visual-baseline/README.md)。
 
 ### 仓库入口
 

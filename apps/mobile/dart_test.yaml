@@ -3,8 +3,7 @@
 #
 # golden: Visual regression goldens (FIR-113). Tag is applied via the
 # `tags: 'golden'` argument on each `testGoldens(...)` call under
-# `test/golden/`. CI runs them in a dedicated job after `flutter test`
-# so a font / theme regression doesn't get masked by the unit suite.
+# `test/golden/`. Run these manually on Linux; CI excludes visual suites.
 #
 # flow: Task-oriented flow tests (test/flow/) — boot the real app shell and
 # drive a user task through Page Objects. See docs/testing-strategy.md §4.

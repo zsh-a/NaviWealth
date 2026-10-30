@@ -121,12 +121,10 @@ Private Safari reports a tiny IndexedDB quota and may refuse OPFS. `WasmDatabase
 
 ## 5. Smoke automation
 
-`apps/mobile/web_smoke/` is enforced by
-`.github/workflows/web-smoke.yml`, called by mobile CI for pull requests and
-`main`. The workflow builds once with production settings and runs Chromium
-before uploading the same bundle for Pages. Deployment also waits for all
-mobile checks. Weekly and manually dispatched runs cover Chromium, Firefox,
-and WebKit. The suite remains available locally for targeted checks.
+`apps/mobile/web_smoke/` runs locally for targeted checks with Chromium,
+Firefox, and WebKit. It is not a CI or deployment gate. Mobile CI builds Web
+only on `main`, verifies bundled catalog bytes, and deploys that artifact to
+Pages after mobile static checks and ordinary test shards succeed.
 
 Covered headless:
 - App boots with a real local-only identity and renders the expected content;

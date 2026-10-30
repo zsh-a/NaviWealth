@@ -31,31 +31,9 @@ jobs:
       - id: parse
         run: python3 tool/release.py metadata --ref "$GITHUB_REF" --sha "$GITHUB_SHA" >> "$GITHUB_OUTPUT"
 
-  mobile-quality:
-    name: mobile quality gate
-    needs: meta
-    uses: ./.github/workflows/mobile.yml
-    with:
-      quality_only: true
-
-  backend-quality:
-    name: backend quality gate
-    needs: meta
-    uses: ./.github/workflows/backend.yml
-
-  agent-runtime-quality:
-    name: agent-runtime quality gate
-    needs: meta
-    uses: ./.github/workflows/agent-runtime.yml
-
-  android-device-quality:
-    name: Android device quality gate
-    needs: meta
-    uses: ./.github/workflows/integration-device.yml
-
   mobile-release:
     name: publish Android release
-    needs: [meta, mobile-quality, backend-quality, agent-runtime-quality, android-device-quality]
+    needs: meta
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:

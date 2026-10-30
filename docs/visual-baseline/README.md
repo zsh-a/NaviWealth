@@ -93,18 +93,17 @@ cd apps/mobile
 flutter test test/golden/task_flow_responsive_golden_test.dart \
   --tags=responsive-golden --update-goldens
 
-# PR verification (responsive task flows only):
+# Focused manual verification (responsive task flows only):
 flutter test test/golden/task_flow_responsive_golden_test.dart \
   --tags=responsive-golden
 
-# Main verification (all page/component and responsive goldens):
+# Full manual verification (all page/component and responsive goldens):
 flutter test test/golden --tags=golden
 ```
 
-In CI, ordinary unit/widget tests run in four shards. Pull requests run the
-responsive task flows in the same golden job; `main` and releases run the full
-golden regression and compare all checked-in baselines. On failure, diff PNGs in
-`apps/mobile/test/golden/failures/` are uploaded as a workflow artifact.
+CI runs ordinary unit/widget tests in four shards and excludes goldens.
+Golden comparisons run manually on Linux. On failure, diff PNGs remain in
+`apps/mobile/test/golden/failures/` for local review.
 
 ### Adding a new golden
 
@@ -118,6 +117,7 @@ golden regression and compare all checked-in baselines. On failure, diff PNGs in
 3. Run with `--update-goldens` on Linux and commit the resulting
    `goldens/<name>_<variant>.png` files.
 
-If regeneration is needed from a non-Linux machine, use the same Linux
-Flutter container as CI, then run `flutter test test/golden --tags=golden
---update-goldens` inside it. Do not commit macOS or Windows raster output.
+If regeneration is needed from a non-Linux machine, use a Linux container with
+the Flutter SDK version pinned in `.github/actions/setup-mobile/action.yml`,
+then run `flutter test test/golden --tags=golden --update-goldens` inside it.
+Do not commit macOS or Windows raster output.

@@ -32,7 +32,7 @@ sake.
 ## 2. The pyramid (target shape)
 
 ```
-         AI exploratory + semantic   ~1%   weekly, non-blocking
+         AI exploratory + semantic   ~1%   manual, non-blocking
        Flow / Task (Page Objects)   ~4%   17 journeys, test/flow + integration_test
        Contract (Dart↔Rust↔wire)     ~5%   schema-driven, blocking
       Golden (visual regression)     ~5%   expanded surfaces + breakpoints, Linux-pinned
@@ -198,7 +198,8 @@ surface evolves.
 ### Golden (visual, ~5%)
 `test/golden/` uses Flutter's native `matchesGoldenFile` matcher through the
 repository's deterministic harness. Comparison remains Linux-pinned (other
-hosts still pump the surfaces; CI `golden-regression` is the source of truth).
+hosts still pump the surfaces). Golden comparison is a manual check and does
+not run in CI.
 Golden test files and their PNG baselines live under `test/golden/`;
 theme-matrix pages run light, dark, and dark-colorblind variants, while AI primitive goldens use
 component-scoped light surfaces. Keep new Task primary surfaces and
@@ -213,7 +214,7 @@ across tabs, domain enablement, Knowledge/Execution concrete detail URLs,
 content after reload, and tab/browser history navigation. Assertions await
 business content, not only an engine host or URL. Missing persistence fails;
 no storage-initialization skip or mocked auth shim masks the result.
-Chromium runs on relevant PRs; weekly/manual jobs also run Firefox and WebKit.
+The suite runs manually; it is not a PR, deployment, or scheduled CI gate.
 Real-backend auth, native capabilities, and real Safari/PWA install remain
 separate acceptance evidence under [Web Compatibility](web-compat-matrix.md).
 
@@ -257,30 +258,27 @@ must resolve rather than merely resemble paths.
 
 ## 5. CI gate design
 
-Target: **< 12 min** of blocking PR checks; heavy/flaky-prone work nightly.
+CI keeps only static analysis, ordinary tests, native Rust tests, and production
+builds/deployments. Golden comparison, browser smoke, on-device integration,
+native ASR smoke, documentation builds, and catalog refresh run manually.
 
 ```
-PR  ├─ analyze --fatal-infos + boundary lints      (mobile.yml, existing)
-    ├─ build_runner freshness + l10n parity         (existing)
-    ├─ flutter test (4 shards; unit/widget/flow/integ.)       flow/integ run here today
-    ├─ full golden regression (Linux-pinned)                (parallel)
-    ├─ cargo test (backend, native host)            ~1 min
-    ├─ contract tests                               ~30 s
-    ├─ native ASR pinned-WAV regression             speech changes, macOS
-    └─ web build + Chromium smoke                  (reusable web-smoke.yml)
-Weekly ├─ web smoke full matrix (Firefox/WebKit/OPFS)
-       └─ native ASR pinned model/WAV exact-transcript smoke
-Main ├─ same mobile checks + Web build/Chromium smoke (parallel)
-     └─ Pages deploys the verified bundle after all checks succeed
-Release └─ signed Android APK/AAB + native payload/16 KiB checks + device gate
+PR   ├─ analyze --fatal-infos + static contracts/l10n/boundary lints
+     ├─ flutter test (4 file shards; unit/widget/flow/integration)
+     ├─ backend fmt + wasm clippy + host tests + sync fixtures (backend changes)
+     └─ native Rust fmt/tests (runtime changes)
+Main ├─ same checks + production Web build in parallel
+     ├─ Pages deploy after mobile checks and Web build succeed
+     └─ backend migration/deploy after backend checks succeed
+Release └─ tagged signed Android APK/AAB + native payload/16 KiB/catalog checks
 ```
 
 **Zero-failure unit/widget gate.** `mobile.yml` distributes
 all regular `*_test.dart` files across four deterministic **file** shards using
 `apps/mobile/tool/run-test-shard.mjs`, with bounded concurrency. Sorted paths
 are interleaved across shards; every file belongs to exactly one shard. The
-inventory excludes `test/golden/` (its own gate) and `test/readme_screenshots/`
-(manual documentation generation). It does not use Flutter's native case
+inventory excludes `test/golden/` and `test/readme_screenshots/` (manual visual
+checks and documentation generation). It does not use Flutter's native case
 sharding, which loads every file in every runner before splitting cases.
 Invalid or empty shards fail instead of silently passing. There is no
 known-failing allowlist: any regular test failure fails CI.
@@ -310,45 +308,38 @@ Design-token export freshness runs once in the Flutter shards; the root
 token guards share one cached source inventory rather than rereading files for
 each rule, and prohibit raw values without imposing minimum usage counts.
 
-One Linux-pinned `golden-regression` job runs the full suite on PRs, `main`, and
-release calls so visual failures are caught before merging. Every Flutter job
-uses `.github/actions/setup-mobile` for the pinned SDK and dependency setup.
-Its default font stubs keep headless checks independent of font generation;
-rendering and release builds request real fonts, cached by font tooling and
-the extracted CN glyph set. Unrelated code changes cannot force font
-regeneration.
+Every Flutter job uses `.github/actions/setup-mobile` for the pinned SDK and
+dependency setup. Its default font stubs keep headless checks independent of
+font generation; production builds request real fonts, cached by font tooling
+and the extracted CN glyph set. Unrelated code changes cannot force font
+regeneration. Generated-code freshness is checked locally with
+`dart run build_runner build`; CI does not regenerate committed Dart files.
 
-Mobile PRs and `main` call the same Web build-and-smoke workflow. It compiles
-once with the production API URL and source SHA, checks the bundled catalog
-bytes, and verifies direct hits, refresh/history, persistence, and PWA behavior in
-Chromium. Its document-overflow matrix samples two content-heavy routes at
-phone/desktop sizes; weekly/manual runs retain all five routes and four widths
-alongside the full browser matrix. Flutter's internal responsive rendering is
-covered by the responsive goldens rather than DOM width assertions.
+Only `main` builds Web, once with the production API URL and source SHA, and
+checks the bundled catalog bytes. Pages deploys that exact artifact after
+static checks and all Flutter test shards succeed. PRs do not build Web or
+install Playwright browsers. Browser smoke and Linux-pinned goldens remain
+available as targeted local checks.
 
 README screenshots are curated documentation and updated manually with
 `apps/mobile/tool/update-readme-screenshots.sh`; they are not a product CI gate.
 Ordinary `main` pushes no longer build and discard an Android release bundle. Signed
 APK/AAB generation, native payload validation, and 16 KiB compatibility remain
-release gates, alongside the Android device evidence. Web builds run in
-parallel with quality checks. Only the bundle that passed browser smoke is
-uploaded for Pages deployment; deployment also waits for static checks, all
-test shards, and full goldens. Weekly/manual Web runs use the same build path
-with all browsers and the full responsive matrix.
+release gates. Web builds run in parallel with quality checks. There are no
+scheduled CI workflows.
 
 Production Web and backend deployments have one owner each: their `main`
-workflows. `release.yml` publishes Android only and calls the mobile workflow
-with `quality_only: true`. A pushed or manually selected `vX.Y.Z` tag must match
-the checked-out commit and event SHA before any release quality jobs start.
+workflows. `release.yml` publishes Android only; it does not rerun or wait for
+the PR/`main` quality workflows. A pushed or manually selected `vX.Y.Z` tag must
+match the checked-out commit and event SHA before the signed build starts.
 `tool/release.py` derives version/build metadata from that tag and packages
 APK/AAB, release notes, and `latest.json`; it never falls back to a branch.
 Published ancestor releases define the changelog boundary, excluding failed
 candidate tags. `tool/build-android-release.sh` supplies the same version and
 native flags to APK/AAB builds and removes the decoded signing key on exit.
 
-**Native ASR regression gate.** `.github/workflows/asr-native-smoke.yml` runs
-on speech-runtime dependency changes, every Monday, and by manual dispatch. It
-downloads model and Mandarin WAV fixtures pinned by SHA-256, loads the actual
+**Manual native ASR regression.** The local smoke runner downloads model and
+Mandarin WAV fixtures pinned by SHA-256, loads the actual
 macOS `sherpa_onnx` dynamic libraries, and requires an exact transcript from
 the production streaming recognizer configuration. The runner emits audio
 duration, inference duration, and real-time factor without logging transcript
@@ -414,12 +405,12 @@ restore. Machine values must never contain currency symbols, grouping
 separators, or locale-dependent display text.
 `backup_process_interruption_integration_test.dart` adds the destructive
 Android case as a two-process protocol. Its interrupt phase restores a large,
-valid archive and the workflow waits for the production log emitted after the
+valid archive and the runner waits for the production log emitted after the
 transactional wipe, then sends `adb shell am force-stop`. A separately compiled
 verify phase reopens the same app database and requires the previous account
 and outbox pointer to be intact. The first phase uses Flutter's
 `--no-uninstall` option so the fresh process observes the same application data;
-the workflow fails if restore commits before the force-stop arrives. The
+the runner fails if restore commits before the force-stop arrives. The
 runner binds every invocation to the explicit `adb` serial, requires the app
 to have a live PID at the destructive-wipe marker, and verifies that PID is
 gone after `am force-stop`. The fresh process must emit a dedicated rollback
@@ -431,15 +422,11 @@ balanced journal entry, postings, and Drift-backed outbox pointers through the
 same production file-backed connection, then proves they survive close/reopen.
 The `integration_test` dev dependency is wired in `pubspec.yaml`.
 
-Because it needs a real device, it runs via the `integration-device.yml`
-workflow on an Android emulator (weekly + manual + PRs touching the
-harness, backup, Sync, or persistence code), not the unit-test VM. The workflow
-retains a machine-readable event stream, the ordinary integration log, a
-privacy-safe database-encryption evidence JSON, the process-interruption log,
-and its separate interruption evidence JSON on both successful and failed runs
-for 30 days. Artifact names bind the Android API/architecture, commit SHA, run
-id, and attempt so release evidence can be traced to its build and device
-configuration. `run-android-integration.sh`
+On-device integration runs manually on an attached Android device, not in CI
+or the headless unit-test VM. The local runners write a machine-readable event
+stream, the ordinary integration log, a privacy-safe database-encryption
+evidence JSON, the process-interruption log, and its separate interruption
+evidence JSON under `test-results/`. `run-android-integration.sh`
 fails even after a nominally green Flutter run unless dedicated markers prove
 SQLCipher availability, encrypted bytes, correct/wrong-key behavior, plaintext
 migration, Android Keystore persistence and fail-closed behavior, successful
@@ -464,15 +451,16 @@ conversion remains separate from the unsupported historical schema upgrades.
 
 Current baseline:
 
-- Backend tests, Web smoke, non-golden Flutter tests, Linux-pinned goldens,
-  contract fixtures, and boundary lints are blocking CI checks.
+- Backend/native Rust tests, non-golden Flutter tests, contract fixtures, and
+  boundary lints are blocking CI checks. Visual, browser, and device suites run
+  manually.
 - Headless flows cover the 17-task inventory with auxiliary route smoke where
   useful.
 - Real-Drift integration covers net worth through manual assets, liabilities,
   and ledger-reconstructed securities.
 - Android on-device integration owns database encryption, baseline boot/reopen,
-  backup/restore, and a journal repository write. A green packaged emulator run
-  remains required release evidence for newly added SQLCipher assertions.
+  backup/restore, and a journal repository write. These tests run manually and
+  are not an automated release gate.
 - Sync v3 request/response fixtures are generated from the Dart/Rust
   serializers, including pagination and accepted-row edge cases.
 - State-machine tests cover conventional async state, chat streaming,
@@ -480,13 +468,14 @@ Current baseline:
 - Managed speech unit/widget tests cover exclusive sessions, startup and stream
   failures, maximum duration, background finalization, user-edit protection,
   transcript-free diagnostics, and repeated-session cleanup. A pinned native
-  ASR inference smoke covers the Dart-to-native model path on macOS.
+  ASR inference smoke is available manually for the Dart-to-native model path
+  on macOS.
 
 Known coverage gaps are descriptive, not a second product roadmap:
 
 - iOS native build/load smoke is not present in CI.
-- Android SQLCipher packaging and Keystore behavior still require the emulator
-  integration gate; host native tests do not substitute for device evidence.
+- Android SQLCipher packaging and Keystore behavior are checked only by manual
+  device runs; host native tests do not substitute for device evidence.
 - Goldens and on-device tests should deepen existing durable journeys when a
   real rendering or platform risk is identified.
 - Runtime skips are reserved for platform/native/artifact dependency gates;

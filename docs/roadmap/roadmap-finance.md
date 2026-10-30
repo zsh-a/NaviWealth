@@ -89,8 +89,7 @@ Current evidence:
   1,000-row restore stays inside a ten-second test budget.
 - A native file-backed failure test starts destructive restore work, forces an
   insert error, then closes and reopens the database to prove the previous
-  account and outbox pointer were durably rolled back. Android emulator CI
-  owns the device run.
+  account and outbox pointer were durably rolled back. Device runs are manual.
 - The two-process Android interruption runner now proves it targeted a live
   app PID, confirms `am force-stop` removed it, rejects skipped verification,
   and writes a privacy-safe evidence JSON only after the fresh process proves
@@ -103,8 +102,9 @@ Current evidence:
 Exit evidence:
 
 - Prove interruption recovery on the production Android file-backed database.
-  The shared Android emulator integration workflow is enabled; a successful
-  run with the required recovery evidence remains the device exit criterion.
+  Run the local Android integration and interruption runners on an attached
+  device; a successful run with the required recovery evidence remains the
+  device exit criterion. Device runs are not a CI release gate.
   See the shared delivery-risk note in `roadmap-lifeos.md` Next.
 - Expand the representative dataset only when measured production exports
   exceed the current 1,000-row boundary.

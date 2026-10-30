@@ -109,7 +109,7 @@ void _verifyGoldenFontAssets() {
 
 /// Load every font declared in `pubspec.yaml` (Inter, Outfit, AppCnSans).
 ///
-/// On CI these .ttf files are regenerated before the golden job starts. The
+/// Regenerate these .ttf files before running the manual golden suite. The
 /// assets are gitignored build artifacts, so fail early if a checkout only has
 /// empty placeholder files. Production uses WOFF2; Linux golden tests need TTF
 /// because the native Flutter renderer cannot decode webfont containers.
