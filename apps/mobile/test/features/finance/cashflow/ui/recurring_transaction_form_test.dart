@@ -12,6 +12,8 @@ import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../support/button_finder.dart';
+
 Account _account(String id, String name, AccountSide side) {
   return Account(
     id: id,
@@ -129,7 +131,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.widget<Semantics>(toggle).properties.expanded, isFalse);
 
-      await tester.tap(find.widgetWithText(FButton, 'Save'));
+      await tester.tap(find.buttonWithText('Save'));
       await tester.pumpAndSettle();
       expect(tester.widget<Semantics>(toggle).properties.expanded, isTrue);
       expect(find.text('Enter a positive whole number'), findsOneWidget);

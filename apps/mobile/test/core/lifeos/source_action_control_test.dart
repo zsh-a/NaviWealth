@@ -8,6 +8,8 @@ import 'package:naviwealth/core/lifeos/ui/source_action_control.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
+import '../../support/button_finder.dart';
+
 const _source = (rowFamily: 'know:knowledge_decisions', rowId: 'decision');
 
 Widget _wrap({
@@ -210,7 +212,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       final button = tester.widget<FButton>(
-        find.widgetWithText(FButton, 'Create action'),
+        find.buttonWithText('Create action'),
       );
       button.onPress!();
       button.onPress!();

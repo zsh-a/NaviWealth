@@ -31,6 +31,7 @@ import 'package:naviwealth/features/execution/ui/execution_widgets.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../../../core/persistence/test_database.dart';
+import '../../../support/button_finder.dart';
 import '../../../support/test_app_theme.dart';
 import '../../finance/data/repositories/_stub_stamper.dart';
 
@@ -817,7 +818,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('What is blocking this action?'), findsOneWidget);
-    final blockButton = find.widgetWithText(FButton, 'Block');
+    final blockButton = find.buttonWithText('Block');
     expect(tester.widget<FButton>(blockButton).onPress, isNull);
 
     await tester.enterText(

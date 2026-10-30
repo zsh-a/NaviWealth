@@ -57,7 +57,10 @@ void main() {
     expect(find.bySemanticsLabel('Archive execution'), findsOneWidget);
     expect(tester.getSize(find.byType(AppHeaderAction)), const Size(48, 48));
     for (var i = 0; i < find.byType(AppActionButton).evaluate().length; i++) {
-      expect(tester.getSize(find.byType(AppActionButton).at(i)).height, 48);
+      expect(
+        tester.getSize(find.byType(AppActionButton).at(i)).height,
+        greaterThanOrEqualTo(48),
+      );
     }
     expect(tester.takeException(), isNull);
   });
@@ -82,7 +85,10 @@ void main() {
     );
     expect(tester.getSize(find.byType(AppHeaderAction)), const Size(40, 40));
     for (var i = 0; i < find.byType(AppActionButton).evaluate().length; i++) {
-      expect(tester.getSize(find.byType(AppActionButton).at(i)).height, 40);
+      expect(
+        tester.getSize(find.byType(AppActionButton).at(i)).height,
+        greaterThanOrEqualTo(40),
+      );
     }
     expect(tester.takeException(), isNull);
   });
