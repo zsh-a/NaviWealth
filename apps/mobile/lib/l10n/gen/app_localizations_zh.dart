@@ -17716,4 +17716,54 @@ class AppLocalizationsZh extends AppLocalizations {
   String healthMealVideoFrame(String seconds) {
     return '视频关键帧 · $seconds 秒';
   }
+
+  @override
+  String get healthMealSave => '保存餐食';
+
+  @override
+  String get healthMealManualEntry => '手动添加';
+
+  @override
+  String get healthMealDetails => '补充说明与拍摄选项';
+
+  @override
+  String get healthMealHideDetails => '收起补充说明';
+
+  @override
+  String get healthMealPhotoPrivacyHint => '照片保存在本机，识别前会征求你的同意。';
+
+  @override
+  String get healthMealReviewHint => '请核对食物与实际食用量。';
+
+  @override
+  String get healthMealTotal => '本餐合计';
+
+  @override
+  String get healthMealNutritionDetails => '营养与来源明细';
+
+  @override
+  String get healthMealNutritionHide => '收起营养明细';
+
+  @override
+  String get healthMealFoodSave => '保存修改';
+
+  @override
+  String get healthMealGramsError => '请输入大于 0 且不超过 10,000 克的食用量。';
+
+  @override
+  String get healthMealEnergyError => '请输入每百克 0–1,000 千卡的热量。';
+
+  @override
+  String get healthMealNutrientError => '请输入每百克 0–100 克的营养素含量。';
+
+  @override
+  String get healthMealNutrientTotalError => '每百克蛋白质、碳水和脂肪的合计不能超过 105 克。';
+
+  @override
+  String healthMealPortionKcal(String kcal) {
+    return '本份约 $kcal 千卡';
+  }
+
+  @override
+  String get healthMealFoodActions => '食物操作';
 }

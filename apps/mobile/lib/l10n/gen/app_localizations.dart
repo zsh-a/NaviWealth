@@ -31484,6 +31484,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Video frame · {seconds}s'**
   String healthMealVideoFrame(String seconds);
+
+  /// No description provided for @healthMealSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save meal'**
+  String get healthMealSave;
+
+  /// No description provided for @healthMealManualEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Add manually'**
+  String get healthMealManualEntry;
+
+  /// No description provided for @healthMealDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Meal details & photo tips'**
+  String get healthMealDetails;
+
+  /// No description provided for @healthMealHideDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide details'**
+  String get healthMealHideDetails;
+
+  /// No description provided for @healthMealPhotoPrivacyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos stay on this device. Identification asks for your permission.'**
+  String get healthMealPhotoPrivacyHint;
+
+  /// No description provided for @healthMealReviewHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the foods and amounts you actually ate.'**
+  String get healthMealReviewHint;
+
+  /// No description provided for @healthMealTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Meal total'**
+  String get healthMealTotal;
+
+  /// No description provided for @healthMealNutritionDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Nutrition & source details'**
+  String get healthMealNutritionDetails;
+
+  /// No description provided for @healthMealNutritionHide.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide nutrition details'**
+  String get healthMealNutritionHide;
+
+  /// No description provided for @healthMealFoodSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply changes'**
+  String get healthMealFoodSave;
+
+  /// No description provided for @healthMealGramsError.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an amount greater than 0 and no more than 10,000 g.'**
+  String get healthMealGramsError;
+
+  /// No description provided for @healthMealEnergyError.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter 0–1,000 kcal per 100 g.'**
+  String get healthMealEnergyError;
+
+  /// No description provided for @healthMealNutrientError.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter 0–100 g per 100 g of food.'**
+  String get healthMealNutrientError;
+
+  /// No description provided for @healthMealNutrientTotalError.
+  ///
+  /// In en, this message translates to:
+  /// **'Protein, carbs and fat must total no more than 105 g per 100 g.'**
+  String get healthMealNutrientTotalError;
+
+  /// No description provided for @healthMealPortionKcal.
+  ///
+  /// In en, this message translates to:
+  /// **'This amount · about {kcal} kcal'**
+  String healthMealPortionKcal(String kcal);
+
+  /// No description provided for @healthMealFoodActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Food actions'**
+  String get healthMealFoodActions;
 }
 
 class _AppLocalizationsDelegate

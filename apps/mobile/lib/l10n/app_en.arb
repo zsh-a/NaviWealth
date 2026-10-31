@@ -9087,5 +9087,22 @@
         "type": "String"
       }
     }
-  }
+  },
+  "healthMealSave": "Save meal",
+  "healthMealManualEntry": "Add manually",
+  "healthMealDetails": "Meal details & photo tips",
+  "healthMealHideDetails": "Hide details",
+  "healthMealPhotoPrivacyHint": "Photos stay on this device. Identification asks for your permission.",
+  "healthMealReviewHint": "Check the foods and amounts you actually ate.",
+  "healthMealTotal": "Meal total",
+  "healthMealNutritionDetails": "Nutrition & source details",
+  "healthMealNutritionHide": "Hide nutrition details",
+  "healthMealFoodSave": "Apply changes",
+  "healthMealGramsError": "Enter an amount greater than 0 and no more than 10,000 g.",
+  "healthMealEnergyError": "Enter 0–1,000 kcal per 100 g.",
+  "healthMealNutrientError": "Enter 0–100 g per 100 g of food.",
+  "healthMealNutrientTotalError": "Protein, carbs and fat must total no more than 105 g per 100 g.",
+  "healthMealPortionKcal": "This amount · about {kcal} kcal",
+  "@healthMealPortionKcal": {"placeholders": {"kcal": {"type": "String"}}},
+  "healthMealFoodActions": "Food actions"
 }

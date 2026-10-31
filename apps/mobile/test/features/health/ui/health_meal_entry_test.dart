@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image/image.dart' as img;
 import 'package:naviwealth/core/auth/auth_state.dart';
@@ -155,10 +156,11 @@ Future<GoRouter> _pump(
   MealPhotoSaver? photoSaver,
   HealthMealRepository? repository,
   double width = 800,
+  double height = 1400,
   double scale = 1,
   Locale locale = const Locale('en'),
 }) async {
-  tester.view.physicalSize = Size(width, 1400);
+  tester.view.physicalSize = Size(width, height);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   await DomainOptInStore(db).write(DomainOptIns(const {DomainScope.health}));
@@ -252,9 +254,15 @@ void main() {
       await tester.tap(find.text('Choose photo'));
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('meal-view-1')), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('meal-view-preview-1')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('meal-view-role-1-overview')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('After meal · leftovers').last);
+      await tester.pumpAndSettle();
+      Navigator.of(tester.element(find.byType(AppSheet))).pop();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Meal details & photo tips'));
       await tester.pumpAndSettle();
       await tester.enterText(
         find.descendant(
@@ -290,6 +298,11 @@ void main() {
       expect(await db.select(db.healthMealPhotos).get(), hasLength(2));
       Navigator.of(tester.element(find.byType(AppSheet))).pop();
       await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('meal-view-preview-1')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('meal-view-remove-1')),
+      );
       await tester.tap(find.byKey(const ValueKey('meal-view-remove-1')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('meal-save')));
@@ -307,6 +320,8 @@ void main() {
     addTearDown(db.close);
     final client = _Recognition();
     await _pump(tester, db, client: client);
+    await tester.tap(find.text('Meal details & photo tips'));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('meal-video')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Choose short video'));
@@ -348,6 +363,8 @@ void main() {
     );
     await tester.tap(find.text('Choose photo'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Meal details & photo tips'));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('meal-video')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Choose short video'));
@@ -386,9 +403,19 @@ void main() {
       expect(client.calls, 1);
       expect(find.text('Rice'), findsOneWidget);
       expect(await db.select(db.healthMeals).get(), isEmpty);
-      await tester.ensureVisible(find.text('Edit food'));
-      await tester.tap(find.text('Edit food'));
+      await tester.ensureVisible(find.byKey(const ValueKey('meal-food-0')));
+      await tester.tap(find.byKey(const ValueKey('meal-food-0')));
       await tester.pumpAndSettle();
+      // Moving the caret must not turn a catalog snapshot into manual data.
+      await tester.tap(find.byKey(const Key('meal-food-name')));
+      await tester.pumpAndSettle();
+      tester.testTextInput.updateEditingValue(
+        const TextEditingValue(
+          text: 'Rice',
+          selection: TextSelection.collapsed(offset: 2),
+        ),
+      );
+      await tester.pump();
       await tester.enterText(
         find.descendant(
           of: find.byKey(const Key('meal-food-grams')),
@@ -396,12 +423,18 @@ void main() {
         ),
         '100',
       );
-      await tester.tap(find.text('Save').last);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('meal-food-kcal')), findsNothing);
+      expect(find.text('This amount · about 130 kcal'), findsOneWidget);
+      await tester.tap(find.text('Apply changes').last);
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('meal-save')));
       await tester.pumpAndSettle();
       final first = (await db.select(db.healthMeals).get()).single;
       expect(first.foodsJson, contains('100.0'));
+      final savedFood = HealthMeal.decodeFoods(first.foodsJson).single;
+      expect(savedFood.catalogId, mealFoodCatalog.first.id);
+      expect(savedFood.per100g.kcal, mealFoodCatalog.first.per100g.kcal);
       expect(
         (await db.select(db.healthMealPhotos).get()).single.bytes,
         isNotEmpty,
@@ -483,7 +516,7 @@ void main() {
       ),
       '80',
     );
-    await tester.tap(find.text('Save').last);
+    await tester.tap(find.text('Add food').last);
     await tester.pumpAndSettle();
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
@@ -553,6 +586,169 @@ void main() {
       await tester.tap(find.byKey(const Key('meal-save')));
       await tester.pumpAndSettle();
       expect(await db.select(db.healthMeals).get(), isEmpty);
+    },
+  );
+
+  testWidgets(
+    'phone capture keeps manual entry available and blocks empty saves',
+    (tester) async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      await _pump(tester, db, width: 390, height: 844);
+      expect(find.text('Take photo').hitTestable(), findsOneWidget);
+      expect(find.text('Add manually').hitTestable(), findsOneWidget);
+      expect(find.byKey(const Key('meal-recognize')), findsNothing);
+      expect(
+        tester.widget<AppBusyButton>(find.byType(AppBusyButton)).onPress,
+        isNull,
+      );
+      await tester.tap(find.text('Add manually'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.descendant(
+          of: find.byKey(const Key('meal-food-name')),
+          matching: find.byType(EditableText),
+        ),
+        'Homemade soup',
+      );
+      await tester.enterText(
+        find.descendant(
+          of: find.byKey(const Key('meal-food-grams')),
+          matching: find.byType(EditableText),
+        ),
+        '0',
+      );
+      await tester.enterText(
+        find.descendant(
+          of: find.byKey(const Key('meal-food-kcal')),
+          matching: find.byType(EditableText),
+        ),
+        '1500',
+      );
+      await tester.tap(find.text('Add food').last);
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Enter an amount greater than 0 and no more than 10,000 g.'),
+        findsOneWidget,
+      );
+      expect(find.text('Enter 0–1,000 kcal per 100 g.'), findsOneWidget);
+      expect(find.byKey(const Key('meal-food-name')), findsOneWidget);
+      await tester.enterText(
+        find.descendant(
+          of: find.byKey(const Key('meal-food-grams')),
+          matching: find.byType(EditableText),
+        ),
+        '150',
+      );
+      await tester.enterText(
+        find.descendant(
+          of: find.byKey(const Key('meal-food-kcal')),
+          matching: find.byType(EditableText),
+        ),
+        '100',
+      );
+      await tester.tap(find.text('Add food').last);
+      await tester.pumpAndSettle();
+      expect(find.text('Homemade soup'), findsOneWidget);
+      expect(find.text('About 150 kcal'), findsWidgets);
+      expect(await db.select(db.healthMeals).get(), isEmpty);
+      await tester.tap(find.byKey(const Key('meal-save')));
+      await tester.pumpAndSettle();
+      expect(await db.select(db.healthMeals).get(), hasLength(1));
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets('four-photo recognition brings phone review into view', (
+    tester,
+  ) async {
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    await _pump(
+      tester,
+      db,
+      width: 390,
+      height: 844,
+      client: _Recognition(),
+      capture: _Capture(count: 4),
+    );
+    await tester.tap(find.text('Choose photo'));
+    await tester.pumpAndSettle();
+    expect(find.text('Image role'), findsNothing);
+    await tester.ensureVisible(find.byKey(const Key('meal-recognize')));
+    await tester.tap(find.byKey(const Key('meal-recognize')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Send and identify'));
+    await tester.pumpAndSettle();
+    final food = find.byKey(const ValueKey('meal-food-0'));
+    expect(food.hitTestable(), findsOneWidget);
+    expect(
+      tester.getRect(food).bottom,
+      lessThan(tester.getRect(find.byKey(const Key('meal-save'))).top),
+    );
+    expect(await db.select(db.healthMeals).get(), isEmpty);
+    await tester.tap(find.byKey(const Key('meal-save')));
+    await tester.pumpAndSettle();
+    expect(find.byType(Image), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+  });
+  testWidgets(
+    'portion typing updates the total without rebuilding form fields',
+    (tester) async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      await _pump(tester, db, width: 390, height: 844);
+      await tester.tap(find.text('Add manually'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('meal-food-kcal')), findsOneWidget);
+      expect(find.byKey(const Key('meal-food-protein')), findsNothing);
+      expect(find.byKey(const Key('meal-food-carbs')), findsNothing);
+      expect(find.byKey(const Key('meal-food-fat')), findsNothing);
+      await tester.enterText(
+        find.descendant(
+          of: find.byKey(const Key('meal-food-kcal')),
+          matching: find.byType(EditableText),
+        ),
+        '100',
+      );
+      await tester.pumpAndSettle();
+      var fieldRebuilds = 0;
+      final previous = debugOnRebuildDirtyWidget;
+      try {
+        debugOnRebuildDirtyWidget = (element, builtOnce) {
+          if (element.widget is FTextFormField) fieldRebuilds++;
+        };
+        for (final amount in ['150', '175', '200']) {
+          await tester.enterText(
+            find.descendant(
+              of: find.byKey(const Key('meal-food-grams')),
+              matching: find.byType(EditableText),
+            ),
+            amount,
+          );
+          await tester.pump();
+        }
+      } finally {
+        debugOnRebuildDirtyWidget = previous;
+      }
+      expect(
+        fieldRebuilds,
+        0,
+        reason: 'Typing should update the field and energy preview, not rebuild the form.',
+      );
+      expect(find.text('This amount · about 200 kcal'), findsOneWidget);
+      await tester.tap(find.text('Nutrition & source details'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('meal-food-protein')), findsOneWidget);
+      expect(find.byKey(const Key('meal-food-carbs')), findsOneWidget);
+      expect(find.byKey(const Key('meal-food-fat')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
     },
   );
 }

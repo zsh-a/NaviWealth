@@ -211,6 +211,18 @@ a wearable, Health platform permissions, or an AI profile. Energy intake is
 separate from `active_energy_daily` and `total_energy_daily` expenditure;
 missing meal records never mean zero intake or an established calorie deficit.
 
+Capture is photo-first, with library and manual entry available alongside the
+camera. Supplemental notes and video capture use progressive disclosure.
+Photo thumbnails open preview, view-role, and removal controls; previews
+support zoom. Identification brings the editable food/consumed-amount review
+into view, and an empty food list cannot be saved. Editing an existing food
+starts with its name, consumed grams, and calculated portion energy; nutrient
+and source details remain expandable. Custom entry shows per-100g energy
+directly, with protein, carbs, and fat under nutrition details. Custom foods
+still require a valid nutrient snapshot, with field-level errors. History
+includes the capture time and a device-local photo thumbnail, with a neutral
+fallback when no photo is available. None of these review actions persist a meal before explicit Save.
+
 Camera/library capture is resized to at most 1280 pixels on the longest side,
 re-encoded as JPEG without original EXIF/GPS metadata, and capped at 2 MiB.
 Each meal accepts up to four images, appended from camera or multi-select.

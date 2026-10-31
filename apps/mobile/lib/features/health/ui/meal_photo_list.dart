@@ -29,84 +29,55 @@ class MealPhotoList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    return AppGroupedSurface(
-      padding: EdgeInsets.zero,
-      child: Column(
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           for (final (index, photo) in photos.indexed) ...[
-            if (index > 0) const AppGroupedDivider(),
-            Padding(
+            if (index > 0) const SizedBox(width: AppSpacing.s8),
+            SizedBox(
               key: ValueKey('meal-view-$index'),
-              padding: const EdgeInsets.all(AppSpacing.s12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  AppTappable(
-                    key: ValueKey('meal-view-preview-$index'),
-                    semanticsLabel: l.healthMealPreview,
-                    onPress: () => showAppSheet<void>(
-                      context: context,
-                      title: mealPhotoRoleLabel(l, photo.role),
-                      builder: (_) => MealPhotoPreview(photo: photo),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
+              width: AppSpacing.s64 + AppSpacing.s40,
+              child: AppTappable(
+                key: ValueKey('meal-view-preview-$index'),
+                semanticsLabel:
+                    '${l.healthMealPreview} ${index + 1} · ${mealPhotoRoleLabel(l, photo.role)}',
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                onPress: () => _preview(context, index, photo),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       child: Image.memory(
                         photo.bytes,
-                        width: AppSpacing.s64,
+                        width: AppSpacing.s64 + AppSpacing.s40,
                         height: AppSpacing.s64 + AppSpacing.s16,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => const SizedBox(
-                          width: AppSpacing.s64,
+                        cacheWidth: 320,
+                        errorBuilder: (_, _, _) => SizedBox(
                           height: AppSpacing.s64 + AppSpacing.s16,
-                          child: Icon(FLucideIcons.imageOff),
+                          child: ColoredBox(
+                            color: context.theme.colors.muted,
+                            child: const Icon(FLucideIcons.imageOff),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: AppSpacing.s12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        FSelect<MealPhotoRole>(
-                          key: ValueKey(
-                            'meal-view-role-$index-${photo.role.name}',
-                          ),
-                          enabled: onRoleChanged != null,
-                          label: Text(l.healthMealPhotoRole),
-                          items: {
-                            for (final role in MealPhotoRole.values)
-                              mealPhotoRoleLabel(l, role): role,
-                          },
-                          control: FSelectControl<MealPhotoRole>.managed(
-                            initial: photo.role,
-                            onChange: (role) {
-                              if (role != null) {
-                                onRoleChanged?.call(index, role);
-                              }
-                            },
-                          ),
-                        ),
-                        if (photo.timestampMs case final int time) ...[
-                          const SizedBox(height: AppSpacing.s4),
-                          Text(
-                            l.healthMealVideoFrame(
-                              (time / 1000).toStringAsFixed(1),
-                            ),
-                            style: context.microCaptionStyle,
-                          ),
-                        ],
-                      ],
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSpacing.s8,
+                        horizontal: AppSpacing.s4,
+                      ),
+                      child: Text(
+                        mealPhotoRoleLabel(l, photo.role),
+                        style: context.microCaptionStyle,
+                        textAlign: TextAlign.center,
+                      ),
                     ),
-                  ),
-                  AppIconButton(
-                    key: ValueKey('meal-view-remove-$index'),
-                    icon: FLucideIcons.x,
-                    tooltip: l.healthMealRemovePhoto,
-                    onPress: onRemove == null ? null : () => onRemove!(index),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],
@@ -114,4 +85,60 @@ class MealPhotoList extends StatelessWidget {
       ),
     );
   }
+
+  Future<void> _preview(BuildContext context, int index, MealPhoto photo) =>
+      showAppSheet<void>(
+        context: context,
+        title: AppLocalizations.of(context).healthMealPreview,
+        builder: (sheetContext) {
+          final l = AppLocalizations.of(sheetContext);
+          var role = photo.role;
+          return StatefulBuilder(
+            builder: (context, setState) => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                MealPhotoPreview(photo: photo),
+                const SizedBox(height: AppSpacing.s16),
+                FSelect<MealPhotoRole>(
+                  key: ValueKey('meal-view-role-$index-${role.name}'),
+                  enabled: onRoleChanged != null,
+                  label: Text(l.healthMealPhotoRole),
+                  items: {
+                    for (final role in MealPhotoRole.values)
+                      mealPhotoRoleLabel(l, role): role,
+                  },
+                  control: FSelectControl<MealPhotoRole>.managed(
+                    initial: role,
+                    onChange: (value) {
+                      if (value == null || onRoleChanged == null) return;
+                      onRoleChanged!(index, value);
+                      setState(() => role = value);
+                    },
+                  ),
+                ),
+                if (photo.timestampMs case final int time) ...[
+                  const SizedBox(height: AppSpacing.s8),
+                  Text(
+                    l.healthMealVideoFrame((time / 1000).toStringAsFixed(1)),
+                    style: context.microCaptionStyle,
+                  ),
+                ],
+                if (onRemove != null) ...[
+                  const SizedBox(height: AppSpacing.s12),
+                  AppQuietButton(
+                    key: ValueKey('meal-view-remove-$index'),
+                    label: l.healthMealRemovePhoto,
+                    prefix: const Icon(FLucideIcons.trash2),
+                    tone: AppQuietButtonTone.danger,
+                    onPress: () {
+                      Navigator.of(sheetContext).pop();
+                      onRemove!(index);
+                    },
+                  ),
+                ],
+              ],
+            ),
+          );
+        },
+      );
 }

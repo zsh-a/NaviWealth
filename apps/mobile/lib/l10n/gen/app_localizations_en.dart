@@ -18751,4 +18751,58 @@ class AppLocalizationsEn extends AppLocalizations {
   String healthMealVideoFrame(String seconds) {
     return 'Video frame · ${seconds}s';
   }
+
+  @override
+  String get healthMealSave => 'Save meal';
+
+  @override
+  String get healthMealManualEntry => 'Add manually';
+
+  @override
+  String get healthMealDetails => 'Meal details & photo tips';
+
+  @override
+  String get healthMealHideDetails => 'Hide details';
+
+  @override
+  String get healthMealPhotoPrivacyHint =>
+      'Photos stay on this device. Identification asks for your permission.';
+
+  @override
+  String get healthMealReviewHint =>
+      'Check the foods and amounts you actually ate.';
+
+  @override
+  String get healthMealTotal => 'Meal total';
+
+  @override
+  String get healthMealNutritionDetails => 'Nutrition & source details';
+
+  @override
+  String get healthMealNutritionHide => 'Hide nutrition details';
+
+  @override
+  String get healthMealFoodSave => 'Apply changes';
+
+  @override
+  String get healthMealGramsError =>
+      'Enter an amount greater than 0 and no more than 10,000 g.';
+
+  @override
+  String get healthMealEnergyError => 'Enter 0–1,000 kcal per 100 g.';
+
+  @override
+  String get healthMealNutrientError => 'Enter 0–100 g per 100 g of food.';
+
+  @override
+  String get healthMealNutrientTotalError =>
+      'Protein, carbs and fat must total no more than 105 g per 100 g.';
+
+  @override
+  String healthMealPortionKcal(String kcal) {
+    return 'This amount · about $kcal kcal';
+  }
+
+  @override
+  String get healthMealFoodActions => 'Food actions';
 }

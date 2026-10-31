@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/auth/current_user.dart';
@@ -47,4 +49,17 @@ final healthMealsProvider = StreamProvider.autoDispose
         from: date,
         to: date.add(const Duration(days: 1)),
       );
+    });
+
+/// Photos are device-local. A synced meal may legitimately have no thumbnail.
+/// Revision is part of the key so photo edits reload after the meal is saved.
+final healthMealPhotoProvider = FutureProvider.autoDispose
+    .family<Uint8List?, ({String id, String revision})>((ref, meal) async {
+      final owner = ref.watch(activeUserIdProvider);
+      final optIns = ref.watch(auth.domainOptInsProvider).value;
+      if (owner == null || !(optIns?.contains(DomainScope.health) ?? false)) {
+        return null;
+      }
+      final repo = await ref.watch(healthMealRepositoryProvider.future);
+      return repo.photo(id: meal.id, ownerUserId: owner);
     });

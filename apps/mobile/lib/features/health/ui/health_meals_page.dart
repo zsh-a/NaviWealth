@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/format/providers.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../composition/health_route_paths.dart';
@@ -40,6 +41,7 @@ class _HealthMealsPageState extends ConsumerState<HealthMealsPage> {
           FDateField.calendar(
             key: ValueKey(_day),
             label: Text(l.commonDate),
+            format: (_, value, _) => context.formatters(ref).date(value),
             clearable: false,
             selectionControl: FDateSelectionControl.managedSingle(
               initial: _day,
@@ -87,46 +89,7 @@ class _HealthMealsPageState extends ConsumerState<HealthMealsPage> {
                   ),
                   const SizedBox(height: AppSpacing.s16),
                   for (final meal in entries) ...[
-                    AppTappable(
-                      onPress: () =>
-                          context.push(HealthRoutes.mealEdit(meal.id)),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: AppSpacing.s12,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    healthMealTypeLabel(l, meal.type),
-                                    style: context.rowTitleStyle,
-                                  ),
-                                ),
-                                Text(
-                                  l.healthMealKcal(
-                                    meal.total.kcal.round().toString(),
-                                  ),
-                                  style: context.labelStyle,
-                                ),
-                                const SizedBox(width: AppSpacing.s8),
-                                const Icon(
-                                  FLucideIcons.pencil,
-                                  size: AppIconSizes.sm,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: AppSpacing.s4),
-                            Text(
-                              meal.foods.map((food) => food.name).join(' · '),
-                              style: context.captionStyle,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    _MealHistoryRow(meal: meal),
                     const AppGroupedDivider(),
                   ],
                 ],
@@ -136,6 +99,96 @@ class _HealthMealsPageState extends ConsumerState<HealthMealsPage> {
           const SizedBox(height: AppSpacing.s16),
           Text(l.healthMealEstimateHint, style: context.captionStyle),
         ],
+      ),
+    );
+  }
+}
+
+class _MealHistoryRow extends ConsumerWidget {
+  const _MealHistoryRow({required this.meal});
+  final HealthMeal meal;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
+    final image = ref
+        .watch(
+          healthMealPhotoProvider((
+            id: meal.id,
+            revision: meal.sync.hlc.toString(),
+          )),
+        )
+        .asData
+        ?.value;
+    final type = healthMealTypeLabel(l, meal.type);
+    final time = context.formatters(ref).time(meal.capturedAt.toLocal());
+    final fallback = AppIconTile(
+      icon: FLucideIcons.utensils,
+      size: AppSpacing.s64,
+      iconSize: AppIconSizes.md,
+      radius: AppRadius.md,
+      color: context.theme.colors.mutedForeground,
+      backgroundOpacity: AppOpacity.whisper,
+    );
+    return AppTappable(
+      semanticsLabel: '${l.healthMealEdit}: $type · $time',
+      onPress: () => context.push(HealthRoutes.mealEdit(meal.id)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ExcludeSemantics(
+              child: image == null
+                  ? fallback
+                  : ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      child: Image.memory(
+                        image,
+                        width: AppSpacing.s64,
+                        height: AppSpacing.s64,
+                        cacheWidth: 192,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => fallback,
+                      ),
+                    ),
+            ),
+            const SizedBox(width: AppSpacing.s12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Wrap(
+                    spacing: AppSpacing.s8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(type, style: context.rowTitleStyle),
+                      Text(time, style: context.microCaptionStyle),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.s4),
+                  Text(
+                    meal.foods.map((food) => food.name).join(' · '),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.captionStyle,
+                  ),
+                  const SizedBox(height: AppSpacing.s4),
+                  Text(
+                    l.healthMealKcal(meal.total.kcal.round().toString()),
+                    style: context.labelStyle,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: AppSpacing.s8),
+            Icon(
+              FLucideIcons.pencil,
+              size: AppIconSizes.sm,
+              color: context.theme.colors.mutedForeground,
+            ),
+          ],
+        ),
       ),
     );
   }

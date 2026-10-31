@@ -54,10 +54,13 @@ class _MealPhotoPreviewState extends ConsumerState<MealPhotoPreview> {
           constraints: BoxConstraints(
             maxHeight: MediaQuery.sizeOf(context).height * 0.5,
           ),
-          child: Image.memory(
-            widget.photo.bytes,
-            fit: BoxFit.contain,
-            errorBuilder: (_, _, _) => Text(l.healthMealPhotoFailed),
+          child: InteractiveViewer(
+            maxScale: 5,
+            child: Image.memory(
+              widget.photo.bytes,
+              fit: BoxFit.contain,
+              errorBuilder: (_, _, _) => Text(l.healthMealPhotoFailed),
+            ),
           ),
         ),
         if (ref.watch(mealPhotoSaverProvider).supported) ...[
@@ -83,6 +86,7 @@ class _MealPhotoPreviewState extends ConsumerState<MealPhotoPreview> {
           else
             AppBusyButton(
               buttonKey: const Key('meal-photo-save'),
+              variant: FButtonVariant.outline,
               label: l.healthMealPhotoSave,
               busyLabel: l.healthMealPhotoSaving,
               prefix: const Icon(FLucideIcons.download),

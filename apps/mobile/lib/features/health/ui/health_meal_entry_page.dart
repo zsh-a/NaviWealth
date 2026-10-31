@@ -7,6 +7,7 @@ import 'package:forui/forui.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as auth;
+import '../../../core/format/providers.dart';
 import '../../../core/forms/forms.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -37,6 +38,8 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
         FormSubmission<HealthMealEntryPage> {
   final _note = TextEditingController();
   final _foods = <MealFood>[];
+  final _foodsAnchor = GlobalKey();
+  bool _showDetails = false;
   HealthMeal? _initial;
   late final String? _owner;
   late DateTime _capturedAt;
@@ -105,6 +108,7 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
           _type = meal.type;
           _foods.addAll(meal.foods);
           _note.text = meal.note ?? '';
+          _showDetails = _note.text.isNotEmpty;
           _recognitionModel = meal.recognitionModel;
           _photos.addAll(photos);
         }
@@ -158,17 +162,52 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
     final client = ref.watch(mealRecognitionClientProvider);
     final editable =
         valid && !_loading && (widget.mealId == null || _initial != null);
+    final canSave = editable && !_busy && _foods.isNotEmpty;
+    final canCapture = !_busy && _photos.length < MealPhoto.maxCount;
+    final total = _foods.fold(
+      MealNutrients.zero,
+      (sum, food) => sum + food.nutrients,
+    );
+    final failure = _error ?? submissionFailureMessage;
     return guardedScope(
       child: AppFormPageScaffold(
         title: Text(widget.mealId == null ? l.healthMealNew : l.healthMealEdit),
         confirmLeave: handleBackIntent,
         child: AppFormScaffoldBody(
-          onSubmit: editable && !_busy ? _save : null,
-          action: AppBusyButton(
-            buttonKey: const Key('meal-save'),
-            label: l.commonSave,
-            busy: _saving,
-            onPress: editable && !_working ? _save : null,
+          onSubmit: canSave ? _save : null,
+          action: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (editable) ...[
+                if (failure != null) ...[
+                  AppStatusBanner(kind: AppStatusKind.error, message: failure),
+                  const SizedBox(height: AppSpacing.s8),
+                ],
+                if (_foods.isEmpty)
+                  Text(l.healthMealNeedFood, style: context.captionStyle)
+                else
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    spacing: AppSpacing.s12,
+                    runSpacing: AppSpacing.s4,
+                    children: [
+                      Text(l.healthMealTotal, style: context.captionStyle),
+                      Text(
+                        l.healthMealKcal(total.kcal.round().toString()),
+                        style: context.labelStyle,
+                      ),
+                    ],
+                  ),
+                const SizedBox(height: AppSpacing.s8),
+              ],
+              AppBusyButton(
+                buttonKey: const Key('meal-save'),
+                label: l.healthMealSave,
+                busy: _saving,
+                onPress: canSave ? _save : null,
+              ),
+            ],
           ),
           children: [
             if (!valid)
@@ -189,114 +228,10 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
                 child: Text(l.commonRetry),
               ),
             ] else ...[
-              Text(l.healthMealPhoto, style: context.labelStyle),
-              const SizedBox(height: AppSpacing.s8),
-              Text(l.healthMealViewsHint, style: context.captionStyle),
-              const SizedBox(height: AppSpacing.s8),
-              if (_photos.isNotEmpty) ...[
-                MealPhotoList(
-                  photos: _photos,
-                  onRoleChanged: _busy
-                      ? null
-                      : (index, role) {
-                          setState(() {
-                            _photos[index] = _photos[index].withRole(role);
-                            _photosChanged = true;
-                          });
-                          dirty.markDirty();
-                        },
-                  onRemove: _busy
-                      ? null
-                      : (index) {
-                          setState(() {
-                            _photos.removeAt(index);
-                            _photosChanged = true;
-                          });
-                          dirty.markDirty();
-                        },
-                ),
-                const SizedBox(height: AppSpacing.s8),
-              ],
-              Wrap(
-                spacing: AppSpacing.s8,
-                runSpacing: AppSpacing.s8,
-                children: [
-                  AppActionButton(
-                    variant: FButtonVariant.outline,
-                    size: FButtonSizeVariant.md,
-                    hapticIntent: AppInteractionIntent.select,
-                    mainAxisSize: MainAxisSize.min,
-                    onPress: _busy || _photos.length >= MealPhoto.maxCount
-                        ? null
-                        : () => _capture(camera: true),
-                    child: Text(l.healthMealCamera),
-                  ),
-                  AppActionButton(
-                    variant: FButtonVariant.outline,
-                    size: FButtonSizeVariant.md,
-                    hapticIntent: AppInteractionIntent.select,
-                    mainAxisSize: MainAxisSize.min,
-                    onPress: _busy || _photos.length >= MealPhoto.maxCount
-                        ? null
-                        : () => _capture(camera: false),
-                    child: Text(l.healthMealGallery),
-                  ),
-                  if (ref.watch(mealPhotoCaptureProvider).supportsVideo)
-                    AppActionButton(
-                      buttonKey: const Key('meal-video'),
-                      variant: FButtonVariant.outline,
-                      size: FButtonSizeVariant.md,
-                      hapticIntent: AppInteractionIntent.select,
-                      mainAxisSize: MainAxisSize.min,
-                      onPress: _busy || _photos.length >= MealPhoto.maxCount
-                          ? null
-                          : _captureVideo,
-                      child: Text(l.healthMealVideo),
-                    ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.s8),
-              Text(l.healthMealPhotoLocal, style: context.microCaptionStyle),
-              const SizedBox(height: AppSpacing.s12),
-              FTextFormField(
-                key: const Key('meal-context'),
-                label: Text(l.healthMealContext),
-                enabled: !_busy,
-                maxLength: 1000,
-                maxLines: 3,
-                control: FTextFieldControl.managed(controller: _note),
-              ),
-              const SizedBox(height: AppSpacing.s12),
-              if (_photos.isNotEmpty &&
-                  !_photos.any((photo) => photo.isMealView)) ...[
-                Text(l.healthMealNeedMealView, style: context.captionStyle),
-                const SizedBox(height: AppSpacing.s8),
-              ],
-              if (_working && !_recognizing) ...[
-                Text(l.healthMealPreparingImages, style: context.captionStyle),
-                const SizedBox(height: AppSpacing.s8),
-              ],
-              AppBusyButton(
-                buttonKey: const Key('meal-recognize'),
-                label: l.healthMealRecognize,
-                busyLabel: l.healthMealRecognizing,
-                busy: _recognizing,
-                variant: FButtonVariant.outline,
-                onPress:
-                    !_photos.any((photo) => photo.isMealView) ||
-                        _busy ||
-                        client == null
-                    ? null
-                    : _recognize,
-              ),
-              if (client == null) ...[
-                const SizedBox(height: AppSpacing.s8),
-                Text(l.healthMealModelRequired, style: context.captionStyle),
-              ],
-              const SizedBox(height: AppSpacing.s20),
               FDateField.calendar(
                 key: ValueKey(_day),
                 label: Text(l.commonDate),
+                format: (_, value, _) => context.formatters(ref).date(value),
                 enabled: !_busy,
                 clearable: false,
                 selectionControl: FDateSelectionControl.managedSingle(
@@ -318,8 +253,8 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
                   ),
                 ),
               ),
-              const SizedBox(height: AppSpacing.s12),
-              SegmentedRow<HealthMealType>(
+              const SizedBox(height: AppSpacing.s8),
+              SegmentedRow<HealthMealType>.inline(
                 options: HealthMealType.values,
                 value: _type,
                 labelOf: (type) => healthMealTypeLabel(l, type),
@@ -331,74 +266,155 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
                       },
               ),
               const SizedBox(height: AppSpacing.s20),
-              Text(l.healthMealFoods, style: context.labelStyle),
-              const SizedBox(height: AppSpacing.s8),
-              for (final (index, food) in _foods.indexed) ...[
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.s8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(food.name, style: context.rowTitleStyle),
-                      const SizedBox(height: AppSpacing.s4),
-                      Text(
-                        '${food.grams.toStringAsFixed(0)} g · ${l.healthMealKcal(food.nutrients.kcal.round().toString())}',
-                        style: context.captionStyle,
-                      ),
-                      Text(
-                        food.isEstimate
-                            ? l.healthMealModelEstimate
-                            : food.catalogId != null
-                            ? '${l.healthMealCatalogSource} · ${food.catalogId}'
-                            : l.healthMealManualSource,
-                        style: context.microCaptionStyle,
-                      ),
-                      Wrap(
-                        spacing: AppSpacing.s8,
-                        runSpacing: AppSpacing.s4,
-                        children: [
-                          AppQuietButton(
-                            label: l.healthMealEditFood,
-                            onPress: _busy ? null : () => _editFood(index),
-                          ),
-                          AppQuietButton(
-                            label: l.healthMealRemoveFood,
-                            tone: AppQuietButtonTone.danger,
-                            onPress: _busy
-                                ? null
-                                : () {
-                                    setState(() => _foods.removeAt(index));
-                                    dirty.markDirty();
-                                  },
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const AppGroupedDivider(),
-              ],
-              const SizedBox(height: AppSpacing.s8),
               AppActionButton(
-                variant: FButtonVariant.outline,
-                size: FButtonSizeVariant.md,
+                buttonKey: const Key('meal-camera'),
+                variant: _photos.isEmpty && _foods.isEmpty
+                    ? FButtonVariant.primary
+                    : FButtonVariant.outline,
+                emphasis: AppButtonEmphasis.filled,
+                prefix: const Icon(FLucideIcons.camera),
                 hapticIntent: AppInteractionIntent.select,
-                onPress: _busy || _foods.length >= 30
-                    ? null
-                    : () => _editFood(null),
-                child: Text(l.healthMealAddFood),
+                onPress: canCapture ? () => _capture(camera: true) : null,
+                child: Text(l.healthMealCamera),
               ),
-              if (_foods.isNotEmpty) ...[
-                const SizedBox(height: AppSpacing.s16),
-                HealthMealTotals(
-                  total: _foods.fold(
-                    MealNutrients.zero,
-                    (sum, food) => sum + food.nutrients,
-                  ),
+              const SizedBox(height: AppSpacing.s8),
+              if (_photos.isNotEmpty) ...[
+                MealPhotoList(
+                  photos: _photos,
+                  onRoleChanged: _busy
+                      ? null
+                      : (index, role) {
+                          if (!_sessionValid || _busy) return;
+                          setState(() {
+                            _photos[index] = _photos[index].withRole(role);
+                            _photosChanged = true;
+                          });
+                          dirty.markDirty();
+                        },
+                  onRemove: _busy
+                      ? null
+                      : (index) {
+                          if (!_sessionValid || _busy) return;
+                          setState(() {
+                            _photos.removeAt(index);
+                            _photosChanged = true;
+                          });
+                          dirty.markDirty();
+                        },
                 ),
+                const SizedBox(height: AppSpacing.s8),
               ],
-              const SizedBox(height: AppSpacing.s12),
-              Text(l.healthMealEstimateHint, style: context.captionStyle),
+              Wrap(
+                spacing: AppSpacing.s8,
+                runSpacing: AppSpacing.s4,
+                children: [
+                  AppQuietButton(
+                    label: l.healthMealGallery,
+                    prefix: const Icon(FLucideIcons.image),
+                    onPress: canCapture ? () => _capture(camera: false) : null,
+                  ),
+                  AppQuietButton(
+                    label: l.healthMealManualEntry,
+                    prefix: const Icon(FLucideIcons.plus),
+                    onPress: _busy || _foods.length >= 30
+                        ? null
+                        : () => _editFood(null),
+                  ),
+                ],
+              ),
+              Text(
+                l.healthMealPhotoPrivacyHint,
+                style: context.microCaptionStyle,
+              ),
+              AppRevealControl(
+                expanded: _showDetails,
+                collapsedLabel: l.healthMealDetails,
+                expandedLabel: l.healthMealHideDetails,
+                enabled: !_busy,
+                onToggle: () => setState(() => _showDetails = !_showDetails),
+              ),
+              if (_showDetails) ...[
+                FTextFormField(
+                  key: const Key('meal-context'),
+                  label: Text(l.healthMealContext),
+                  enabled: !_busy,
+                  maxLength: 1000,
+                  maxLines: 3,
+                  control: FTextFieldControl.managed(controller: _note),
+                ),
+                const SizedBox(height: AppSpacing.s12),
+                Text(l.healthMealViewsHint, style: context.captionStyle),
+                const SizedBox(height: AppSpacing.s8),
+                Text(l.healthMealPhotoLocal, style: context.microCaptionStyle),
+                if (ref.watch(mealPhotoCaptureProvider).supportsVideo)
+                  AppQuietButton(
+                    key: const Key('meal-video'),
+                    label: l.healthMealVideo,
+                    prefix: const Icon(FLucideIcons.video),
+                    onPress: canCapture ? _captureVideo : null,
+                  ),
+                const SizedBox(height: AppSpacing.s12),
+              ],
+              if (_working && !_recognizing) ...[
+                Text(l.healthMealPreparingImages, style: context.captionStyle),
+                const SizedBox(height: AppSpacing.s8),
+              ],
+              if (_photos.isNotEmpty) ...[
+                if (client != null) ...[
+                  if (!_photos.any((photo) => photo.isMealView)) ...[
+                    Text(l.healthMealNeedMealView, style: context.captionStyle),
+                    const SizedBox(height: AppSpacing.s8),
+                  ],
+                  AppBusyButton(
+                    buttonKey: const Key('meal-recognize'),
+                    label: l.healthMealRecognize,
+                    busyLabel: l.healthMealRecognizing,
+                    busy: _recognizing,
+                    emphasis: AppButtonEmphasis.filled,
+                    variant: _foods.isEmpty
+                        ? FButtonVariant.primary
+                        : FButtonVariant.outline,
+                    onPress: !_photos.any((photo) => photo.isMealView) || _busy
+                        ? null
+                        : _recognize,
+                  ),
+                ] else
+                  Text(l.healthMealModelRequired, style: context.captionStyle),
+                const SizedBox(height: AppSpacing.s20),
+              ],
+              Column(
+                key: _foodsAnchor,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(l.healthMealFoods, style: context.labelStyle),
+                  if (_foods.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.s4),
+                    Text(l.healthMealReviewHint, style: context.captionStyle),
+                  ],
+                  const SizedBox(height: AppSpacing.s8),
+                  for (final (index, food) in _foods.indexed) ...[
+                    _foodRow(context, index, food),
+                    const AppGroupedDivider(),
+                  ],
+                  const SizedBox(height: AppSpacing.s8),
+                  AppActionButton(
+                    variant: FButtonVariant.outline,
+                    size: FButtonSizeVariant.md,
+                    prefix: const Icon(FLucideIcons.plus),
+                    hapticIntent: AppInteractionIntent.select,
+                    onPress: _busy || _foods.length >= 30
+                        ? null
+                        : () => _editFood(null),
+                    child: Text(l.healthMealAddFood),
+                  ),
+                  if (_foods.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.s16),
+                    HealthMealTotals(total: total),
+                    const SizedBox(height: AppSpacing.s12),
+                    Text(l.healthMealEstimateHint, style: context.captionStyle),
+                  ],
+                ],
+              ),
               if (_initial != null) ...[
                 const SizedBox(height: AppSpacing.s20),
                 AppQuietButton(
@@ -407,18 +423,97 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
                   onPress: _busy ? null : _delete,
                 ),
               ],
-              if (_error != null || submissionFailureMessage != null) ...[
-                const SizedBox(height: AppSpacing.s12),
-                AppStatusBanner(
-                  kind: AppStatusKind.error,
-                  message: _error ?? submissionFailureMessage!,
-                ),
-              ],
             ],
           ],
         ),
       ),
     );
+  }
+
+  Widget _foodRow(BuildContext context, int index, MealFood food) {
+    final l = AppLocalizations.of(context);
+    return Row(
+      children: [
+        Expanded(
+          child: AppTappable(
+            key: ValueKey('meal-food-$index'),
+            semanticsLabel: '${l.healthMealEditFood}: ${food.name}',
+            onPress: _busy ? null : () => _editFood(index),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.s12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(food.name, style: context.rowTitleStyle),
+                  const SizedBox(height: AppSpacing.s4),
+                  Text(
+                    '${food.grams.toStringAsFixed(0)} g · ${l.healthMealKcal(food.nutrients.kcal.round().toString())}',
+                    style: context.captionStyle,
+                  ),
+                  Text(
+                    food.isEstimate
+                        ? l.healthMealModelEstimate
+                        : food.catalogId != null
+                        ? l.healthMealCatalogSource
+                        : l.healthMealManualSource,
+                    style: context.microCaptionStyle,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        AppIconButton(
+          key: ValueKey('meal-food-actions-$index'),
+          icon: FLucideIcons.ellipsis,
+          tooltip: l.healthMealFoodActions,
+          onPress: _busy ? null : () => _foodActions(index),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _foodActions(int index) async {
+    final l = AppLocalizations.of(context);
+    final action = await showAppSheet<String>(
+      context: context,
+      title: _foods[index].name,
+      builder: (context) => AppActionSheetList(
+        children: [
+          AppActionSheetTile(
+            icon: FLucideIcons.pencil,
+            title: l.healthMealEditFood,
+            onPress: () => Navigator.of(context).pop('edit'),
+          ),
+          AppActionSheetTile(
+            icon: FLucideIcons.trash2,
+            title: l.healthMealRemoveFood,
+            destructive: true,
+            onPress: () => Navigator.of(context).pop('remove'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || !_sessionValid || _busy) return;
+    if (action == 'edit') {
+      await _editFood(index);
+    } else if (action == 'remove') {
+      setState(() => _foods.removeAt(index));
+      dirty.markDirty();
+    }
+  }
+
+  void _revealFoods() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final target = _foodsAnchor.currentContext;
+      if (target == null) return;
+      Scrollable.ensureVisible(
+        target,
+        duration: AppMotionPolicy.duration(context, Motion.componentChange),
+        curve: Motion.standardDecelerate,
+      );
+    });
   }
 
   Future<void> _capture({required bool camera}) async {
@@ -579,6 +674,7 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
         _recognitionModel = result.model;
       });
       dirty.markDirty();
+      _revealFoods();
     } catch (_) {
       if (mounted) setState(() => _error = l.healthMealRecognitionFailed);
     } finally {
@@ -594,6 +690,7 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
   }
 
   Future<void> _editFood(int? index) async {
+    if (_busy || !_sessionValid) return;
     final food = await showMealFoodSheet(
       context,
       initial: index == null ? null : _foods[index],
@@ -608,6 +705,7 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
       _error = null;
     });
     dirty.markDirty();
+    _revealFoods();
   }
 
   Future<void> _save() async {
@@ -615,6 +713,7 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
     final l = AppLocalizations.of(context);
     if (_foods.isEmpty) {
       setState(() => _error = l.healthMealNeedFood);
+      _revealFoods();
       return;
     }
     final foods = List<MealFood>.of(_foods);
