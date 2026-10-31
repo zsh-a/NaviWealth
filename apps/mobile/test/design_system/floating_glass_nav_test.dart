@@ -26,25 +26,47 @@ Widget _nav({
   double width = 360,
   Brightness brightness = Brightness.light,
   double textScale = 1,
+  int selectedIndex = 0,
+  AppVisualStyle visualStyle = AppVisualStyle.refined,
+  bool touch = false,
 }) => MaterialApp(
+  theme: brightness == Brightness.light
+      ? AppTheme.light(visualStyle: visualStyle)
+      : AppTheme.dark(visualStyle: visualStyle),
   builder: (context, child) => MediaQuery(
     data: MediaQuery.of(context)
         .copyWith(textScaler: TextScaler.linear(textScale)),
     child: child!,
   ),
-  home: FTheme(
-    data: buildAppForuiTheme(brightness: brightness, touch: false),
-    child: Scaffold(
-      body: Center(
-        child: SizedBox(
-          width: width,
-          child: FloatingGlassNavBar(
-            items: _tabs,
-            selectedIndex: 0,
-            onIndexChanged: onIndexChanged,
-            onAssistantAction: onAssistant,
-            assistantLabel: 'Ask AI',
-            assistantSemanticLabel: 'Open assistant conversation',
+  home: AppThemeScope(
+    data: resolveAppTheme(
+      ThemeInputs(
+        brightness: brightness,
+        marketMode: MarketColorMode.redUpGreenDown,
+        visualStyle: visualStyle,
+      ),
+    ),
+    child: FTheme(
+      data: buildAppForuiTheme(
+        brightness: brightness,
+        touch: touch,
+        visualStyle: visualStyle,
+      ),
+      child: Scaffold(
+        body: Center(
+          child: RepaintBoundary(
+            key: const ValueKey('nav-paint'),
+            child: SizedBox(
+              width: width,
+              child: FloatingGlassNavBar(
+                items: _tabs,
+                selectedIndex: selectedIndex,
+                onIndexChanged: onIndexChanged,
+                onAssistantAction: onAssistant,
+                assistantLabel: 'Ask AI',
+                assistantSemanticLabel: 'Open assistant conversation',
+              ),
+            ),
           ),
         ),
       ),
@@ -53,6 +75,70 @@ Widget _nav({
 );
 
 void main() {
+  for (final brightness in Brightness.values) {
+    for (final visualStyle in AppVisualStyle.values) {
+      testWidgets(
+        'touch selection does not darken the previous tab: '
+        '${brightness.name}/${visualStyle.name}',
+        (tester) async {
+          var selected = 0;
+          await tester.pumpWidget(
+            StatefulBuilder(
+              builder: (context, setState) => _nav(
+                brightness: brightness,
+                visualStyle: visualStyle,
+                touch: true,
+                selectedIndex: selected,
+                onIndexChanged: (index) => setState(() => selected = index),
+                onAssistant: () {},
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+          final previousTab = find.ancestor(
+            of: find.text('Today'),
+            matching: find.byType(AppActionTappable),
+          );
+          // Empty inset, clear of the icon, text, rounded edge and indicator.
+          final sample = tester.getTopLeft(previousTab) + const Offset(24, 8);
+          final before = await _samplePixel(tester, sample);
+          await tester.tap(find.text('Wealth'));
+          await tester.pump();
+          final frames = <Color>[];
+          for (var frame = 0; frame < 10; frame++) {
+            await tester.pump(const Duration(milliseconds: 16));
+            frames.add(await _samplePixel(tester, sample));
+          }
+          await tester.pumpAndSettle();
+          final after = await _samplePixel(tester, sample);
+          for (var frame = 0; frame < frames.length; frame++) {
+            final color = frames[frame];
+            for (final channel in [
+              (before.r, after.r, color.r),
+              (before.g, after.g, color.g),
+              (before.b, after.b, color.b),
+            ]) {
+              final lower = channel.$1 < channel.$2 ? channel.$1 : channel.$2;
+              expect(
+                channel.$3,
+                greaterThanOrEqualTo(lower - 2 / 255),
+                reason:
+                    'Unpressed tab must fade without a dark pulse '
+                    'at frame $frame; $before -> $color -> $after',
+              );
+            }
+          }
+          expect(selected, 1);
+          expect(tester.takeException(), isNull);
+        },
+        variant: const TargetPlatformVariant({
+          TargetPlatform.android,
+          TargetPlatform.iOS,
+        }),
+      );
+    }
+  }
+
   for (final scale in [2.0, 3.0]) {
     testWidgets('enlarged navigation labels retain their scale at $scale', (
       tester,
@@ -156,4 +242,25 @@ void main() {
     await tester.pumpAndSettle();
     semantics.dispose();
   });
+}
+
+Future<Color> _samplePixel(WidgetTester tester, Offset globalPosition) async {
+  return (await tester.runAsync(() async {
+    final boundary = tester.renderObject<RenderRepaintBoundary>(
+      find.byKey(const ValueKey('nav-paint')),
+    );
+    final position = boundary.globalToLocal(globalPosition);
+    final image = await boundary.toImage();
+    final bytes = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
+    final offset =
+        (position.dy.floor() * image.width + position.dx.floor()) * 4;
+    final color = Color.fromARGB(
+      bytes!.getUint8(offset + 3),
+      bytes.getUint8(offset),
+      bytes.getUint8(offset + 1),
+      bytes.getUint8(offset + 2),
+    );
+    image.dispose();
+    return color;
+  }))!;
 }

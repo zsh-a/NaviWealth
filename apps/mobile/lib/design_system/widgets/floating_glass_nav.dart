@@ -168,6 +168,10 @@ class _NavTabButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final selectedColor = accentColor ?? colors.primary;
+    final selectedSurface = Color.alphaBlend(
+      selectedColor.withValues(alpha: AppOpacity.softTint),
+      colors.card,
+    );
     final iconColor = selected ? selectedColor : colors.mutedForeground;
     final labelColor = selected ? selectedColor : colors.mutedForeground;
     return AppActionTappable(
@@ -184,12 +188,11 @@ class _NavTabButton extends StatelessWidget {
           duration: AppMotionPolicy.duration(context, Motion.fast),
           decoration: context.appTheme.visual.decoration(
             radius: BorderRadius.circular(AppRadius.md),
+            // Fade only alpha. Transparent black also interpolates the RGB
+            // channels and makes the outgoing destination briefly turn gray.
             color: selected
-                ? Color.alphaBlend(
-                    selectedColor.withValues(alpha: AppOpacity.softTint),
-                    colors.card,
-                  )
-                : Colors.transparent,
+                ? selectedSurface
+                : selectedSurface.withValues(alpha: 0),
           ),
           child: child,
         ),
