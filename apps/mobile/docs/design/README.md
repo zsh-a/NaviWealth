@@ -6,6 +6,8 @@
 [LifeOS Shell](../../../../docs/architecture/lifeos-shell.md) 为准，AI 行为以
 [AI 架构](../../../../docs/ai/ai-architecture.md) 为准，实际路由与设计值以代码中的
 registry 和 token 为准。页面示意不另行定义全局架构。
+全局澄白视觉语言见根目录 [DESIGN.md](../../../../DESIGN.md)，
+Flutter 的 Impeccable 工作流边界见 [.agents/IMPECCABLE.md](../../../../.agents/IMPECCABLE.md)。
 
 ## 阅读顺序
 

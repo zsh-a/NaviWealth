@@ -5,15 +5,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   group('AppAccentSeed resolution', () {
-    test('cyan (default) stays pixel-identical to the legacy brand accent', () {
+    test('unconfigured themes use the porcelain iris accent', () {
       final theme = resolveAppTheme(
         const ThemeInputs(
           brightness: Brightness.light,
           marketMode: MarketColorMode.redUpGreenDown,
         ),
       );
-      expect(theme.accent.fg, ColorPalette.cyanBrand800);
-      expect(theme.accent.container, ColorPalette.surfaceOverlay);
+      expect(theme.accent.fg, ColorPalette.indigo700);
+      expect(theme.accent.container, ColorPalette.indigo50);
     });
 
     test('each seed swaps the accent role in both brightnesses', () {
@@ -68,16 +68,16 @@ void main() {
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
       final controller = AccentSeedController(prefs);
-      expect(controller.state, AppAccentSeed.cyan);
+      expect(controller.state, AppAccentSeed.indigo);
 
-      await controller.set(AppAccentSeed.indigo);
-      expect(prefs.getString('naviwealth.theme.accent_seed'), 'indigo');
-      expect(AccentSeedController(prefs).state, AppAccentSeed.indigo);
+      await controller.set(AppAccentSeed.cyan);
+      expect(prefs.getString('naviwealth.theme.accent_seed'), 'cyan');
+      expect(AccentSeedController(prefs).state, AppAccentSeed.cyan);
     });
 
-    test('unknown persisted keys fall back to cyan', () {
-      expect(AppAccentSeed.fromKey('nope'), AppAccentSeed.cyan);
-      expect(AppAccentSeed.fromKey(null), AppAccentSeed.cyan);
+    test('unknown persisted keys fall back to iris', () {
+      expect(AppAccentSeed.fromKey('nope'), AppAccentSeed.indigo);
+      expect(AppAccentSeed.fromKey(null), AppAccentSeed.indigo);
     });
   });
 }

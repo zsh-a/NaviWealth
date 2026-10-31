@@ -21,11 +21,12 @@ class _NetWorthHeader extends ConsumerWidget {
     // Scroll-linked collapse keeps the Today stage from dominating long feeds.
     return AppCollapsingStage(
       child: SoftCard.hero(
+        tinted: false,
         // SoftCard owns select haptics; keep navigation as plain side-effect.
         onPress: () =>
             StatefulNavigationShell.of(context)
                 .goBranch(FinanceShellTab.wealth.index, initialLocation: true),
-        padding: AppPageRhythm.heroPadding,
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.s20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

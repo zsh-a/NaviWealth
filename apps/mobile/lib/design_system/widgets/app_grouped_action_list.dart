@@ -10,9 +10,7 @@ import '../tokens/text_style_presets.dart';
 /// nest inside a box widget). Single source for the color expression.
 Color appGroupedSurfaceFill(BuildContext context) {
   final theme = context.appTheme;
-  return theme.visual.continuousCorners || theme.brightness == Brightness.light
-      ? theme.surfaces.raised
-      : theme.surfaces.card.withValues(alpha: AppOpacity.muted);
+  return theme.surfaces.card;
 }
 
 /// Shared inset-grouped surface used by settings, action menus and dense
@@ -57,11 +55,7 @@ class AppGroupedDivider extends StatelessWidget {
       padding: EdgeInsetsDirectional.only(start: indent, end: endIndent),
       child: SizedBox(
         height: AppSpacing.hairline,
-        child: ColoredBox(
-          color: context.theme.colors.border.withValues(
-            alpha: AppOpacity.faint,
-          ),
-        ),
+        child: ColoredBox(color: context.appTheme.surfaces.border),
       ),
     );
   }
@@ -145,20 +139,13 @@ class _ActionRow extends StatelessWidget {
                   children: [
                     Text(
                       action.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                       style: context.labelStyle.copyWith(
                         color: colors.foreground,
                       ),
                     ),
                     if (action.subtitle.isNotEmpty) ...[
                       const SizedBox(height: AppSpacing.s2),
-                      Text(
-                        action.subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: context.captionStyle,
-                      ),
+                      Text(action.subtitle, style: context.captionStyle),
                     ],
                   ],
                 ),

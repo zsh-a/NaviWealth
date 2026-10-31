@@ -474,6 +474,9 @@ class AppControlWidths {
   /// localized labels at large text scales while remaining compact.
   static const double emptyStateAction = 320;
 
+  /// Readable line length for empty/error guidance on wide layouts.
+  static const double emptyStateBody = 400;
+
   /// Short statistic tile in sheet summary grids.
   static const double statsTile = 140;
 

@@ -1998,6 +1998,7 @@
   "settingsMaterialStyleTitle": "Materials",
   "settingsMaterialStyleSubtitle": "Solid surfaces keep things clear. Translucency adds depth; system high contrast uses solid surfaces.",
   "materialStyleSolid": "Solid",
+  "materialStyleNavigation": "Light navigation",
   "materialStyleTranslucent": "Translucent",
   "settingsAccentSeedTitle": "Accent color",
   "accentSeedCyan": "Turquoise",

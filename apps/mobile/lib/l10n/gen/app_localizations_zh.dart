@@ -3919,6 +3919,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get materialStyleSolid => '实色';
 
   @override
+  String get materialStyleNavigation => '轻透导航';
+
+  @override
   String get materialStyleTranslucent => '通透';
 
   @override

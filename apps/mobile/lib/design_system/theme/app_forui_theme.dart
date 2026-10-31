@@ -22,8 +22,8 @@ FThemeData buildAppForuiTheme({
   required Brightness brightness,
   required bool touch,
   bool highContrast = false,
-  AppAccentSeed accentSeed = AppAccentSeed.cyan,
-  AppVisualStyle visualStyle = AppVisualStyle.classic,
+  AppAccentSeed accentSeed = AppAccentSeed.indigo,
+  AppVisualStyle visualStyle = AppVisualStyle.refined,
 }) {
   final isDark = brightness == Brightness.dark;
   // Surface/content ramp comes from the shared ladder (surface_ladder.dart)

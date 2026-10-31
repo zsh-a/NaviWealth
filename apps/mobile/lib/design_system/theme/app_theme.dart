@@ -45,17 +45,17 @@ class AppTheme {
 
   static ThemeData light({
     bool compact = false,
-    AppAccentSeed accentSeed = AppAccentSeed.cyan,
+    AppAccentSeed accentSeed = AppAccentSeed.indigo,
     bool highContrast = false,
-    AppVisualStyle visualStyle = AppVisualStyle.classic,
+    AppVisualStyle visualStyle = AppVisualStyle.refined,
   }) =>
       _build(Brightness.light, compact, accentSeed, highContrast, visualStyle);
 
   static ThemeData dark({
     bool compact = false,
-    AppAccentSeed accentSeed = AppAccentSeed.cyan,
+    AppAccentSeed accentSeed = AppAccentSeed.indigo,
     bool highContrast = false,
-    AppVisualStyle visualStyle = AppVisualStyle.classic,
+    AppVisualStyle visualStyle = AppVisualStyle.refined,
   }) => _build(Brightness.dark, compact, accentSeed, highContrast, visualStyle);
 
   static ThemeData _build(

@@ -1,0 +1,644 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-31T06:36:16Z",
+  "title": "Design System: NaviWealth",
+  "extensions": {
+    "colorMeta": {
+      "iris-light": {
+        "role": "primary",
+        "displayName": "Iris Light",
+        "tonalRamp": [
+          "oklch(15% 0.0681 274.64)",
+          "oklch(26% 0.1093 274.64)",
+          "oklch(37% 0.1377 274.64)",
+          "oklch(49% 0.1499 274.64)",
+          "oklch(61% 0.1411 274.64)",
+          "oklch(73% 0.1125 274.64)",
+          "oklch(85% 0.0681 274.64)",
+          "oklch(95% 0.0235 274.64)"
+        ]
+      },
+      "iris-dark": {
+        "role": "primary",
+        "displayName": "Iris Dark",
+        "tonalRamp": [
+          "oklch(15% 0.0496 276.42)",
+          "oklch(26% 0.0797 276.42)",
+          "oklch(37% 0.1004 276.42)",
+          "oklch(49% 0.1093 276.42)",
+          "oklch(61% 0.1029 276.42)",
+          "oklch(73% 0.0820 276.42)",
+          "oklch(85% 0.0496 276.42)",
+          "oklch(95% 0.0171 276.42)"
+        ]
+      },
+      "iris-container-light": {
+        "role": "primary",
+        "displayName": "Iris Container Light",
+        "tonalRamp": [
+          "oklch(15% 0.0080 279.06)",
+          "oklch(26% 0.0128 279.06)",
+          "oklch(37% 0.0161 279.06)",
+          "oklch(49% 0.0176 279.06)",
+          "oklch(61% 0.0165 279.06)",
+          "oklch(73% 0.0132 279.06)",
+          "oklch(85% 0.0080 279.06)",
+          "oklch(95% 0.0028 279.06)"
+        ]
+      },
+      "iris-container-dark": {
+        "role": "primary",
+        "displayName": "Iris Container Dark",
+        "tonalRamp": [
+          "oklch(15% 0.0267 276.07)",
+          "oklch(26% 0.0429 276.07)",
+          "oklch(37% 0.0541 276.07)",
+          "oklch(49% 0.0589 276.07)",
+          "oklch(61% 0.0554 276.07)",
+          "oklch(73% 0.0442 276.07)",
+          "oklch(85% 0.0267 276.07)",
+          "oklch(95% 0.0092 276.07)"
+        ]
+      },
+      "iris-on-container-light": {
+        "role": "primary",
+        "displayName": "Iris On Container Light",
+        "tonalRamp": [
+          "oklch(15% 0.0607 274.12)",
+          "oklch(26% 0.0975 274.12)",
+          "oklch(37% 0.1228 274.12)",
+          "oklch(49% 0.1337 274.12)",
+          "oklch(61% 0.1259 274.12)",
+          "oklch(73% 0.1003 274.12)",
+          "oklch(85% 0.0607 274.12)",
+          "oklch(95% 0.0209 274.12)"
+        ]
+      },
+      "iris-on-container-dark": {
+        "role": "primary",
+        "displayName": "Iris On Container Dark",
+        "tonalRamp": [
+          "oklch(15% 0.0136 279.62)",
+          "oklch(26% 0.0218 279.62)",
+          "oklch(37% 0.0274 279.62)",
+          "oklch(49% 0.0299 279.62)",
+          "oklch(61% 0.0281 279.62)",
+          "oklch(73% 0.0224 279.62)",
+          "oklch(85% 0.0136 279.62)",
+          "oklch(95% 0.0047 279.62)"
+        ]
+      },
+      "canvas-light": {
+        "role": "neutral",
+        "displayName": "Canvas Light",
+        "tonalRamp": [
+          "oklch(15% 0.0019 271.37)",
+          "oklch(26% 0.0030 271.37)",
+          "oklch(37% 0.0038 271.37)",
+          "oklch(49% 0.0041 271.37)",
+          "oklch(61% 0.0039 271.37)",
+          "oklch(73% 0.0031 271.37)",
+          "oklch(85% 0.0019 271.37)",
+          "oklch(95% 0.0006 271.37)"
+        ]
+      },
+      "card-light": {
+        "role": "neutral",
+        "displayName": "Card Light",
+        "tonalRamp": [
+          "oklch(15% 0.0000 0.00)",
+          "oklch(26% 0.0000 0.00)",
+          "oklch(37% 0.0000 0.00)",
+          "oklch(49% 0.0000 0.00)",
+          "oklch(61% 0.0000 0.00)",
+          "oklch(73% 0.0000 0.00)",
+          "oklch(85% 0.0000 0.00)",
+          "oklch(95% 0.0000 0.00)"
+        ]
+      },
+      "hero-light": {
+        "role": "neutral",
+        "displayName": "Hero Light",
+        "tonalRamp": [
+          "oklch(15% 0.0018 286.33)",
+          "oklch(26% 0.0029 286.33)",
+          "oklch(37% 0.0036 286.33)",
+          "oklch(49% 0.0040 286.33)",
+          "oklch(61% 0.0037 286.33)",
+          "oklch(73% 0.0030 286.33)",
+          "oklch(85% 0.0018 286.33)",
+          "oklch(95% 0.0006 286.33)"
+        ]
+      },
+      "border-light": {
+        "role": "neutral",
+        "displayName": "Border Light",
+        "tonalRamp": [
+          "oklch(15% 0.0051 269.54)",
+          "oklch(26% 0.0082 269.54)",
+          "oklch(37% 0.0104 269.54)",
+          "oklch(49% 0.0113 269.54)",
+          "oklch(61% 0.0106 269.54)",
+          "oklch(73% 0.0085 269.54)",
+          "oklch(85% 0.0051 269.54)",
+          "oklch(95% 0.0018 269.54)"
+        ]
+      },
+      "strong-light": {
+        "role": "neutral",
+        "displayName": "Strong Light",
+        "tonalRamp": [
+          "oklch(15% 0.0101 269.09)",
+          "oklch(26% 0.0162 269.09)",
+          "oklch(37% 0.0204 269.09)",
+          "oklch(49% 0.0222 269.09)",
+          "oklch(61% 0.0209 269.09)",
+          "oklch(73% 0.0166 269.09)",
+          "oklch(85% 0.0101 269.09)",
+          "oklch(95% 0.0035 269.09)"
+        ]
+      },
+      "body-light": {
+        "role": "neutral",
+        "displayName": "Body Light",
+        "tonalRamp": [
+          "oklch(15% 0.0131 267.65)",
+          "oklch(26% 0.0210 267.65)",
+          "oklch(37% 0.0265 267.65)",
+          "oklch(49% 0.0288 267.65)",
+          "oklch(61% 0.0271 267.65)",
+          "oklch(73% 0.0216 267.65)",
+          "oklch(85% 0.0131 267.65)",
+          "oklch(95% 0.0045 267.65)"
+        ]
+      },
+      "muted-light": {
+        "role": "neutral",
+        "displayName": "Muted Light",
+        "tonalRamp": [
+          "oklch(15% 0.0123 264.31)",
+          "oklch(26% 0.0197 264.31)",
+          "oklch(37% 0.0248 264.31)",
+          "oklch(49% 0.0270 264.31)",
+          "oklch(61% 0.0254 264.31)",
+          "oklch(73% 0.0203 264.31)",
+          "oklch(85% 0.0123 264.31)",
+          "oklch(95% 0.0042 264.31)"
+        ]
+      },
+      "faint-light": {
+        "role": "neutral",
+        "displayName": "Faint Light",
+        "tonalRamp": [
+          "oklch(15% 0.0119 264.35)",
+          "oklch(26% 0.0192 264.35)",
+          "oklch(37% 0.0241 264.35)",
+          "oklch(49% 0.0263 264.35)",
+          "oklch(61% 0.0248 264.35)",
+          "oklch(73% 0.0197 264.35)",
+          "oklch(85% 0.0119 264.35)",
+          "oklch(95% 0.0041 264.35)"
+        ]
+      },
+      "canvas-dark": {
+        "role": "neutral",
+        "displayName": "Canvas Dark",
+        "tonalRamp": [
+          "oklch(15% 0.0066 272.46)",
+          "oklch(26% 0.0107 272.46)",
+          "oklch(37% 0.0134 272.46)",
+          "oklch(49% 0.0146 272.46)",
+          "oklch(61% 0.0138 272.46)",
+          "oklch(73% 0.0110 272.46)",
+          "oklch(85% 0.0066 272.46)",
+          "oklch(95% 0.0023 272.46)"
+        ]
+      },
+      "card-dark": {
+        "role": "neutral",
+        "displayName": "Card Dark",
+        "tonalRamp": [
+          "oklch(15% 0.0090 271.79)",
+          "oklch(26% 0.0144 271.79)",
+          "oklch(37% 0.0182 271.79)",
+          "oklch(49% 0.0198 271.79)",
+          "oklch(61% 0.0186 271.79)",
+          "oklch(73% 0.0148 271.79)",
+          "oklch(85% 0.0090 271.79)",
+          "oklch(95% 0.0031 271.79)"
+        ]
+      },
+      "raised-dark": {
+        "role": "neutral",
+        "displayName": "Raised Dark",
+        "tonalRamp": [
+          "oklch(15% 0.0113 271.35)",
+          "oklch(26% 0.0182 271.35)",
+          "oklch(37% 0.0229 271.35)",
+          "oklch(49% 0.0249 271.35)",
+          "oklch(61% 0.0235 271.35)",
+          "oklch(73% 0.0187 271.35)",
+          "oklch(85% 0.0113 271.35)",
+          "oklch(95% 0.0039 271.35)"
+        ]
+      },
+      "hero-dark": {
+        "role": "neutral",
+        "displayName": "Hero Dark",
+        "tonalRamp": [
+          "oklch(15% 0.0121 269.40)",
+          "oklch(26% 0.0194 269.40)",
+          "oklch(37% 0.0245 269.40)",
+          "oklch(49% 0.0266 269.40)",
+          "oklch(61% 0.0251 269.40)",
+          "oklch(73% 0.0200 269.40)",
+          "oklch(85% 0.0121 269.40)",
+          "oklch(95% 0.0042 269.40)"
+        ]
+      },
+      "border-dark": {
+        "role": "neutral",
+        "displayName": "Border Dark",
+        "tonalRamp": [
+          "oklch(15% 0.0142 267.33)",
+          "oklch(26% 0.0227 267.33)",
+          "oklch(37% 0.0286 267.33)",
+          "oklch(49% 0.0312 267.33)",
+          "oklch(61% 0.0293 267.33)",
+          "oklch(73% 0.0234 267.33)",
+          "oklch(85% 0.0142 267.33)",
+          "oklch(95% 0.0049 267.33)"
+        ]
+      },
+      "strong-dark": {
+        "role": "neutral",
+        "displayName": "Strong Dark",
+        "tonalRamp": [
+          "oklch(15% 0.0025 274.97)",
+          "oklch(26% 0.0039 274.97)",
+          "oklch(37% 0.0050 274.97)",
+          "oklch(49% 0.0054 274.97)",
+          "oklch(61% 0.0051 274.97)",
+          "oklch(73% 0.0041 274.97)",
+          "oklch(85% 0.0025 274.97)",
+          "oklch(95% 0.0008 274.97)"
+        ]
+      },
+      "body-dark": {
+        "role": "neutral",
+        "displayName": "Body Dark",
+        "tonalRamp": [
+          "oklch(15% 0.0051 269.55)",
+          "oklch(26% 0.0082 269.55)",
+          "oklch(37% 0.0103 269.55)",
+          "oklch(49% 0.0112 269.55)",
+          "oklch(61% 0.0106 269.55)",
+          "oklch(73% 0.0084 269.55)",
+          "oklch(85% 0.0051 269.55)",
+          "oklch(95% 0.0018 269.55)"
+        ]
+      },
+      "muted-dark": {
+        "role": "neutral",
+        "displayName": "Muted Dark",
+        "tonalRamp": [
+          "oklch(15% 0.0115 267.87)",
+          "oklch(26% 0.0185 267.87)",
+          "oklch(37% 0.0233 267.87)",
+          "oklch(49% 0.0254 267.87)",
+          "oklch(61% 0.0239 267.87)",
+          "oklch(73% 0.0190 267.87)",
+          "oklch(85% 0.0115 267.87)",
+          "oklch(95% 0.0040 267.87)"
+        ]
+      },
+      "faint-dark": {
+        "role": "neutral",
+        "displayName": "Faint Dark",
+        "tonalRamp": [
+          "oklch(15% 0.0107 259.19)",
+          "oklch(26% 0.0171 259.19)",
+          "oklch(37% 0.0216 259.19)",
+          "oklch(49% 0.0235 259.19)",
+          "oklch(61% 0.0221 259.19)",
+          "oklch(73% 0.0176 259.19)",
+          "oklch(85% 0.0107 259.19)",
+          "oklch(95% 0.0037 259.19)"
+        ]
+      },
+      "contrast-border-light": {
+        "role": "neutral",
+        "displayName": "Contrast Border Light",
+        "tonalRamp": [
+          "oklch(15% 0.0106 257.51)",
+          "oklch(26% 0.0170 257.51)",
+          "oklch(37% 0.0214 257.51)",
+          "oklch(49% 0.0233 257.51)",
+          "oklch(61% 0.0219 257.51)",
+          "oklch(73% 0.0175 257.51)",
+          "oklch(85% 0.0106 257.51)",
+          "oklch(95% 0.0036 257.51)"
+        ]
+      },
+      "contrast-border-dark": {
+        "role": "neutral",
+        "displayName": "Contrast Border Dark",
+        "tonalRamp": [
+          "oklch(15% 0.0114 258.37)",
+          "oklch(26% 0.0183 258.37)",
+          "oklch(37% 0.0230 258.37)",
+          "oklch(49% 0.0251 258.37)",
+          "oklch(61% 0.0236 258.37)",
+          "oklch(73% 0.0188 258.37)",
+          "oklch(85% 0.0114 258.37)",
+          "oklch(95% 0.0039 258.37)"
+        ]
+      },
+      "contrast-muted-light": {
+        "role": "neutral",
+        "displayName": "Contrast Muted Light",
+        "tonalRamp": [
+          "oklch(15% 0.0070 259.81)",
+          "oklch(26% 0.0112 259.81)",
+          "oklch(37% 0.0142 259.81)",
+          "oklch(49% 0.0154 259.81)",
+          "oklch(61% 0.0145 259.81)",
+          "oklch(73% 0.0116 259.81)",
+          "oklch(85% 0.0070 259.81)",
+          "oklch(95% 0.0024 259.81)"
+        ]
+      },
+      "contrast-muted-dark": {
+        "role": "neutral",
+        "displayName": "Contrast Muted Dark",
+        "tonalRamp": [
+          "oklch(15% 0.0075 262.75)",
+          "oklch(26% 0.0120 262.75)",
+          "oklch(37% 0.0152 262.75)",
+          "oklch(49% 0.0165 262.75)",
+          "oklch(61% 0.0155 262.75)",
+          "oklch(73% 0.0124 262.75)",
+          "oklch(85% 0.0075 262.75)",
+          "oklch(95% 0.0026 262.75)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Page-level amount; medium-weight Inter with tabular figures."
+      },
+      "display-small": {
+        "displayName": "Display Small",
+        "purpose": "Secondary display amounts."
+      },
+      "display-compact": {
+        "displayName": "Display Compact",
+        "purpose": "Compact verdicts and chart-center values."
+      },
+      "heading": {
+        "displayName": "Heading",
+        "purpose": "Page titles."
+      },
+      "heading-small": {
+        "displayName": "Heading Small",
+        "purpose": "Prominent section and sheet titles."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Group and card titles."
+      },
+      "title-small": {
+        "displayName": "Title Small",
+        "purpose": "Compact row titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Long-form body copy."
+      },
+      "body-small": {
+        "displayName": "Body Small",
+        "purpose": "Ordinary compact copy."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Actions and emphasized labels."
+      },
+      "label-small": {
+        "displayName": "Label Small",
+        "purpose": "Compact controls."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Metadata and timestamps."
+      },
+      "chart-caption": {
+        "displayName": "Chart Caption",
+        "purpose": "Chart-internal annotations."
+      },
+      "numeric-display": {
+        "displayName": "Numeric Display",
+        "purpose": "Secondary marquee amount with numeric tracking."
+      },
+      "numeric-title": {
+        "displayName": "Numeric Title",
+        "purpose": "Prominent numeric value."
+      },
+      "numeric-body": {
+        "displayName": "Numeric Body",
+        "purpose": "Dense numeric value."
+      }
+    },
+    "shadows": [
+      {
+        "name": "card-hover",
+        "value": "0 2px 8px rgba(0,0,0,0.039216)",
+        "purpose": "AppShadow.cardHover; light interactive-card pointer hover only."
+      },
+      {
+        "name": "nav",
+        "value": "0 4px 16px rgba(0,0,0,0.039216)",
+        "purpose": "AppShadow.nav; floating navigation."
+      },
+      {
+        "name": "desktop-sheet",
+        "value": "0 1px 4px rgba(0,0,0,0.039216), 0 6px 20px rgba(0,0,0,0.078431)",
+        "purpose": "AppShadow.desktopSheet; floating desktop overlays."
+      }
+    ],
+    "motion": [
+      {
+        "name": "fast",
+        "value": "120ms",
+        "purpose": "Dock selection and control feedback; subject to AppMotionPolicy."
+      },
+      {
+        "name": "medium",
+        "value": "220ms",
+        "purpose": "Component changes and classic sheet duration; subject to AppMotionPolicy."
+      },
+      {
+        "name": "ambient",
+        "value": "300ms",
+        "purpose": "Refined sheet duration; uses the bounded AppSheetSpringCurve in Dart."
+      },
+      {
+        "name": "standard",
+        "value": "cubic-bezier(0.2,0,0,1)",
+        "purpose": "Shared component state curve."
+      },
+      {
+        "name": "standard-decelerate",
+        "value": "cubic-bezier(0,0,0,1)",
+        "purpose": "Shared arriving-state curve."
+      },
+      {
+        "name": "press-scale",
+        "value": "0.98",
+        "purpose": "PressSpec scale; decorative motion is policy-gated."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "mobile",
+        "value": "600px"
+      },
+      {
+        "name": "expanded",
+        "value": "840px"
+      },
+      {
+        "name": "large-and-shell-desktop",
+        "value": "1200px"
+      },
+      {
+        "name": "extra-large",
+        "value": "1600px"
+      },
+      {
+        "name": "shell-expanded-sidebar",
+        "value": "1360px"
+      },
+      {
+        "name": "content-two-column",
+        "value": "1024px"
+      },
+      {
+        "name": "content-three-column",
+        "value": "720px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Tonal Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Large touch primary command; opaque primary blend over the light card surface.",
+      "html": "<button class=\"ds-btn-primary\">Add record</button>",
+      "css": ".ds-btn-primary{font-family:Inter,AppCnSans,'PingFang SC','Microsoft YaHei',sans-serif;font-variant-numeric:tabular-nums lining-nums;min-height:48px;min-width:48px;padding:10px 16px;border:0;border-radius:16px;font-size:14px;font-weight:500;line-height:1;cursor:pointer;transition:background 120ms cubic-bezier(.2,0,0,1),transform 120ms cubic-bezier(.2,0,0,1);color:#535FC5;background:color-mix(in srgb,#535FC5 8%,#FFFFFF)}.ds-btn-primary:hover{background:color-mix(in srgb,#535FC5 4%,color-mix(in srgb,#535FC5 8%,#FFFFFF))}.ds-btn-primary:active{background:color-mix(in srgb,#535FC5 6%,color-mix(in srgb,#535FC5 8%,#FFFFFF));transform:scale(.98)}.ds-btn-primary:focus-visible{outline:2px solid #535FC5;outline-offset:2px}.ds-btn-primary:disabled{background:color-mix(in srgb,#252B3A 2%,#FFFFFF);color:rgba(99,107,123,.4);cursor:default}@media(prefers-reduced-motion:reduce){.ds-btn-primary{transition:none}.ds-btn-primary:active{transform:none}}"
+    },
+    {
+      "name": "Filled Commit Button",
+      "kind": "button",
+      "refersTo": "button-filled",
+      "description": "Final submission emphasis reuses ordinary button geometry and uses a white label.",
+      "html": "<button class=\"ds-btn-filled\">Save changes</button>",
+      "css": ".ds-btn-filled{font-family:Inter,AppCnSans,'PingFang SC','Microsoft YaHei',sans-serif;font-variant-numeric:tabular-nums lining-nums;min-height:48px;min-width:48px;padding:10px 16px;border:0;border-radius:16px;font-size:14px;font-weight:500;line-height:1;cursor:pointer;transition:background 120ms cubic-bezier(.2,0,0,1),transform 120ms cubic-bezier(.2,0,0,1);color:#FFFFFF;background:color-mix(in srgb,#FFFFFF 8%,#535FC5)}.ds-btn-filled:hover{background:color-mix(in srgb,#000000 4%,color-mix(in srgb,#FFFFFF 8%,#535FC5))}.ds-btn-filled:active{background:color-mix(in srgb,#000000 6%,color-mix(in srgb,#FFFFFF 8%,#535FC5));transform:scale(.98)}.ds-btn-filled:focus-visible{outline:2px solid #535FC5;outline-offset:2px}.ds-btn-filled:disabled{background:color-mix(in srgb,#252B3A 2%,#FFFFFF);color:rgba(99,107,123,.4);cursor:default}@media(prefers-reduced-motion:reduce){.ds-btn-filled{transition:none}.ds-btn-filled:active{transform:none}}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Quiet neutral companion to the primary command.",
+      "html": "<button class=\"ds-btn-secondary\">Cancel</button>",
+      "css": ".ds-btn-secondary{font-family:Inter,AppCnSans,'PingFang SC','Microsoft YaHei',sans-serif;font-variant-numeric:tabular-nums lining-nums;min-height:48px;min-width:48px;padding:10px 16px;border:0;border-radius:16px;font-size:14px;font-weight:500;line-height:1;cursor:pointer;transition:background 120ms cubic-bezier(.2,0,0,1),transform 120ms cubic-bezier(.2,0,0,1);color:#252B3A;background:color-mix(in srgb,#252B3A 2%,#FFFFFF)}.ds-btn-secondary:hover{background:color-mix(in srgb,#252B3A 4%,color-mix(in srgb,#252B3A 2%,#FFFFFF))}.ds-btn-secondary:active{background:color-mix(in srgb,#252B3A 6%,color-mix(in srgb,#252B3A 2%,#FFFFFF));transform:scale(.98)}.ds-btn-secondary:focus-visible{outline:2px solid #535FC5;outline-offset:2px}.ds-btn-secondary:disabled{color:rgba(99,107,123,.4);cursor:default}@media(prefers-reduced-motion:reduce){.ds-btn-secondary{transition:none}.ds-btn-secondary:active{transform:none}}"
+    },
+    {
+      "name": "Forui Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Translation of the medium touch field inherited from Forui with the refined shared theme.",
+      "html": "<label class=\"ds-field-label\">Amount<input class=\"ds-field\" aria-label=\"Amount\" inputmode=\"decimal\" placeholder=\"0.00\" /></label>",
+      "css": ".ds-field-label{font-family:Inter,AppCnSans,'PingFang SC','Microsoft YaHei',sans-serif;font-variant-numeric:tabular-nums lining-nums;display:grid;gap:6px;color:#252B3A;font-size:14px}.ds-field{font-family:Inter,AppCnSans,'PingFang SC','Microsoft YaHei',sans-serif;font-variant-numeric:tabular-nums lining-nums;min-height:44px;padding:10px 12px;border:1px solid #E3E6EE;border-radius:16px;background:#FFFFFF;color:#252B3A;font-size:14px;line-height:1.44;outline:none}.ds-field::placeholder{color:#636B7B}.ds-field:hover{border-color:#E3E6EE}.ds-field:focus-visible{border-color:#535FC5}.ds-field:disabled{opacity:.5}.ds-field[aria-invalid=true]{border-color:#BE123C}"
+    },
+    {
+      "name": "Active Filter Chip",
+      "kind": "chip",
+      "refersTo": "filter-chip",
+      "description": "A selected filter shows a check, primary text, quiet wash and border.",
+      "html": "<button class=\"ds-filter\" aria-pressed=\"true\"><svg viewBox=\"0 0 24 24\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"m20 6-11 11-5-5\"/></svg>This month</button>",
+      "css": ".ds-filter{font-family:Inter,AppCnSans,'PingFang SC','Microsoft YaHei',sans-serif;font-variant-numeric:tabular-nums lining-nums;display:inline-flex;align-items:center;gap:6px;min-height:48px;padding:0 10px;border:1px solid rgba(83,95,197,.2);border-radius:9999px;background:rgba(83,95,197,.06);color:#535FC5;font-size:12px;font-weight:600;line-height:1.248;cursor:pointer}.ds-filter:hover{border-color:rgba(83,95,197,.2)}.ds-filter:focus-visible{outline:2px solid #535FC5;outline-offset:2px}.ds-filter:active{background:rgba(83,95,197,.06)}"
+    },
+    {
+      "name": "Soft Card",
+      "kind": "card",
+      "refersTo": "soft-card",
+      "description": "An opaque content module; padding is a call-site recommendation, with hover depth only for an interactive card.",
+      "html": "<button class=\"ds-card\"><span class=\"ds-card-title\">Account balance</span><span class=\"ds-card-value\">¥24,580.00</span><span class=\"ds-card-caption\">Available today</span></button>",
+      "css": ".ds-card{font-family:Inter,AppCnSans,'PingFang SC','Microsoft YaHei',sans-serif;font-variant-numeric:tabular-nums lining-nums;display:grid;gap:8px;min-width:240px;text-align:left;padding:16px;border:0;border-radius:16px;background:#FFFFFF;color:#252B3A;cursor:pointer;transition:background 120ms cubic-bezier(0,0,0,1),box-shadow 120ms cubic-bezier(0,0,0,1)}.ds-card-title{font-size:16px;font-weight:500;line-height:1.344}.ds-card-value{font-size:20px;font-weight:600;line-height:1.248}.ds-card-caption{font-size:12px;font-weight:500;line-height:1.248;color:#636B7B}.ds-card:hover{background:color-mix(in srgb,#252B3A 2%,#FFFFFF);box-shadow:0 2px 8px rgba(0,0,0,.039216)}.ds-card:focus-visible{outline:2px solid #535FC5}.ds-card:active{background:color-mix(in srgb,#252B3A 6%,#FFFFFF);box-shadow:none}@media(prefers-reduced-motion:reduce){.ds-card{transition:none}}"
+    },
+    {
+      "name": "Grouped Surface",
+      "kind": "card",
+      "refersTo": "grouped-surface",
+      "description": "One opaque group owns related rows and indented hairlines.",
+      "html": "<div class=\"ds-group\"><button class=\"ds-group-row\"><span><span class=\"ds-group-title\">Appearance</span><span class=\"ds-group-caption\">Refined · Iris · Navigation glass</span></span><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"m9 18 6-6-6-6\"/></svg></button><div class=\"ds-group-divider\"></div><button class=\"ds-group-row\"><span><span class=\"ds-group-title\">Privacy</span><span class=\"ds-group-caption\">Amounts visible</span></span><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"m9 18 6-6-6-6\"/></svg></button></div>",
+      "css": ".ds-group{font-family:Inter,AppCnSans,'PingFang SC','Microsoft YaHei',sans-serif;font-variant-numeric:tabular-nums lining-nums;min-width:260px;padding:0 10px;border-radius:16px;background:#FFFFFF;color:#252B3A}.ds-group-row{font-family:Inter,AppCnSans,'PingFang SC','Microsoft YaHei',sans-serif;font-variant-numeric:tabular-nums lining-nums;display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;padding:12px 2px;border:0;background:transparent;color:#252B3A;text-align:left;cursor:pointer}.ds-group-title{display:block;font-size:14px;font-weight:600;line-height:1.248}.ds-group-caption{display:block;margin-top:2px;font-size:12px;font-weight:500;line-height:1.248;color:#636B7B}.ds-group-row svg{color:rgba(99,107,123,.4)}.ds-group-divider{height:1px;margin-left:48px;background:#E3E6EE}.ds-group-row:hover{background:transparent}.ds-group-row:focus-visible{outline:2px solid #535FC5;outline-offset:-2px}.ds-group-row:active{background:transparent}"
+    },
+    {
+      "name": "Floating Navigation",
+      "kind": "nav",
+      "refersTo": "floating-navigation",
+      "description": "Light default dock translated to CSS; Flutter owns text-scaler growth, shell reservation and pointer material behavior.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Finance\"><button class=\"ds-nav-tab\" aria-current=\"page\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z\"/></svg><span>Today</span><i></i></button><button class=\"ds-nav-tab\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M6 3h12v18l-3-2-3 2-3-2-3 2zM9 7h6M9 11h6M9 15h3\"/></svg><span>Activity</span><i></i></button><button class=\"ds-nav-tab\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M3 6h16v14H3zM3 6V3h14v3M15 11h6v5h-6z\"/></svg><span>Wealth</span><i></i></button><button class=\"ds-nav-tab\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><circle cx=\"12\" cy=\"12\" r=\"5\"/><circle cx=\"12\" cy=\"12\" r=\"1\"/></svg><span>Plan</span><i></i></button></nav>",
+      "css": ".ds-nav{font-family:Inter,AppCnSans,'PingFang SC','Microsoft YaHei',sans-serif;font-variant-numeric:tabular-nums lining-nums;display:flex;gap:0;width:min(100%,360px);min-height:64px;padding:6px 8px;border:1px solid rgba(227,230,238,.7);border-radius:20px;background:rgba(255,255,255,.86);backdrop-filter:blur(14px);box-shadow:0 4px 16px rgba(0,0,0,.039216)}.ds-nav-tab{font-family:Inter,AppCnSans,'PingFang SC','Microsoft YaHei',sans-serif;font-variant-numeric:tabular-nums lining-nums;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:52px;padding:4px 6px;border:0;border-radius:12px;background:transparent;color:#636B7B;font-size:11px;font-weight:500;line-height:1.15;letter-spacing:.5px;cursor:pointer;transition:background 120ms cubic-bezier(.2,0,0,1)}.ds-nav-tab svg{margin:4px}.ds-nav-tab i{width:16px;height:2px;border-radius:9999px;background:transparent}.ds-nav-tab[aria-current=page]{background:color-mix(in srgb,#535FC5 8%,#FFFFFF);color:#535FC5;font-weight:600}.ds-nav-tab[aria-current=page] i{background:#535FC5}.ds-nav-tab:hover{background:color-mix(in srgb,#535FC5 8%,#FFFFFF)}.ds-nav-tab:focus-visible{outline:2px solid #535FC5;outline-offset:-2px}.ds-nav-tab:active{background:color-mix(in srgb,#535FC5 8%,#FFFFFF)}@media(prefers-reduced-motion:reduce){.ds-nav-tab{transition:none}}@media(forced-colors:active){.ds-nav{background:Canvas;backdrop-filter:none}.ds-nav-tab[aria-current=page]{outline:1px solid Highlight}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "澄白 · Porcelain, with 流光 navigation",
+    "overview": "A precise, quiet workspace for inspecting a situation, recording a change,\nand taking the next action. Porcelain canvases, opaque grouped surfaces and\ngraphite text keep dense personal data readable. Iris blue marks actions and\nselection; the floating dock contributes the light material chosen from 流光.\n\nThis records the implemented Flutter system. Dart under\n`apps/mobile/lib/design_system/` remains the source of truth; the frontmatter\nis a portable snapshot of its default refined appearance. Dimensions expressed\nas px here correspond to Flutter logical pixels, before text scaling. The\nsidecar's HTML/CSS previews translate Flutter primitives and do not validate\nthe app. Its synthesized tonal strips are preview metadata, not runtime color\nramps. Product and architecture context stays in [PRODUCT.md](PRODUCT.md)\nand [the agent map](docs/agent-map.md).",
+    "keyCharacteristics": [
+      "Opaque porcelain content with a quiet ink-and-slate dark appearance.",
+      "Medium-weight tabular display figures and compact, readable labels.",
+      "Shared continuous corners and grouped rows, with few resting shadows.",
+      "Translucency concentrated in navigation by default.",
+      "Independent, persisted appearance choices and accessible state cues."
+    ],
+    "rules": [
+      {
+        "name": "The Meaning Before Accent Rule",
+        "body": "Status, market direction and categorical\ndata retain their semantic roles. Read `status`, `market` or `categorical`;\ndo not recolor them with the interaction or domain accent.",
+        "section": "colors"
+      },
+      {
+        "name": "The Chrome Identity Rule",
+        "body": "A domain accent identifies shell chrome only.\nFinance iris and Knowledge violet stay distinct. Domain inventory and current\naccent registration belong to the existing registry and `DomainAccents`.",
+        "section": "colors"
+      },
+      {
+        "name": "The Measured Figure Rule",
+        "body": "Use shared money and delta formatters and\ncomponents so privacy, localization, full semantic values and market preferences\nsurvive styling. Do not introduce a new display family or feature-local size ladder.",
+        "section": "typography"
+      },
+      {
+        "name": "The Opaque Content Rule",
+        "body": "Content modules and forms remain opaque.\nThe default `navigation` material permits live glass on navigation chrome;\nsticky surfaces, sheets and overlays resolve opaque. `solid` disables live\nglass. Broader `translucent` material remains an explicit user option, and\nsystem high contrast disables live blur and decorative light.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do read resolved semantic colors and type through `context.appTheme`.",
+      "Do use opaque shared groups, meaningful spacing and a clear primary task.",
+      "Do preserve saved visual, accent, material, market, privacy and theme preferences.",
+      "Do verify light/dark, Chinese/English, large text and state cues in Flutter."
+    ],
+    "donts": [
+      "Don't tint content groups with domain identity or substitute accent for status or market meaning.",
+      "Don't add resting content shadows, decorative card gradients or nested card stacks.",
+      "Don't freeze navigation height, shrink system text to fit ordinary controls, or duplicate shell navigation.",
+      "Don't use HTML direction sketches or sidecar previews as proof of Flutter rendering or device performance.",
+      "Don't edit generated token exports or introduce feature-local palette and typography tables."
+    ]
+  }
+}

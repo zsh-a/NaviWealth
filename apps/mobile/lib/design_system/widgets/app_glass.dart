@@ -54,9 +54,7 @@ BoxDecoration appGlassDecoration(
         ? kAppSoftGlassSpec.chromeFillOpacity(colors.brightness)
         : material.fillOpacity,
   );
-  final borderColor = isDark
-      ? colors.border.withValues(alpha: material.borderOpacity)
-      : ColorPalette.navySoftBorder.withValues(alpha: material.borderOpacity);
+  final borderColor = surfaces.border.withValues(alpha: material.borderOpacity);
   return BoxDecoration(
     color: glassColor,
     borderRadius: borderRadius,

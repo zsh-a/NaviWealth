@@ -21,6 +21,7 @@ class _AppearanceSection extends ConsumerWidget {
           value: ref.watch(materialStyleProvider),
           options: {
             l10n.materialStyleSolid: AppMaterialStyle.solid,
+            l10n.materialStyleNavigation: AppMaterialStyle.navigation,
             l10n.materialStyleTranslucent: AppMaterialStyle.translucent,
           },
           onChanged: (style) {

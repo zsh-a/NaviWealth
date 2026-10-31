@@ -25,7 +25,13 @@ Widget _nav({
   required VoidCallback onAssistant,
   double width = 360,
   Brightness brightness = Brightness.light,
+  double textScale = 1,
 }) => MaterialApp(
+  builder: (context, child) => MediaQuery(
+    data: MediaQuery.of(context)
+        .copyWith(textScaler: TextScaler.linear(textScale)),
+    child: child!,
+  ),
   home: FTheme(
     data: buildAppForuiTheme(brightness: brightness, touch: false),
     child: Scaffold(
@@ -47,6 +53,26 @@ Widget _nav({
 );
 
 void main() {
+  for (final scale in [2.0, 3.0]) {
+    testWidgets('enlarged navigation labels retain their scale at $scale', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _nav(onIndexChanged: (_) {}, onAssistant: () {}, textScale: scale),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(
+        tester.getSize(find.byType(FloatingGlassNavBar)).height,
+        greaterThan(kFloatingGlassNavBarHeight),
+      );
+      expect(
+        MediaQuery.textScalerOf(tester.element(find.text('Today'))).scale(11),
+        11 * scale,
+      );
+    });
+  }
+
   for (final brightness in Brightness.values) {
     for (final width in [360.0, 500.0]) {
       testWidgets('one semantic control per destination: $brightness $width', (

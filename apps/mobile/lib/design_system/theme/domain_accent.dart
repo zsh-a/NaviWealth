@@ -26,31 +26,13 @@ class DomainAccent {
       brightness == Brightness.dark ? dark : light;
 }
 
-/// Canonical accent per LifeOS domain.
-///
-/// Hue choices avoid colors that already carry app semantics — green/red are
-/// market up/down (and success/danger), amber is warning, cyan-brand is the
-/// global interaction primary:
-///
-///  * [finance] — the brand cyan ramp itself. FinanceOS is the seed,
-///    always-on domain the app identity was authored for, so its accent is
-///    the default primary (emerald was rejected: it collides with market
-///    up/down in both red-up CN and green-up modes). Finance therefore
-///    renders exactly as before under the default cyan accent seed.
-///  * [health] — pink, the de-facto HealthOS hue already established by
-///    `HealthMetricColors.body` ("Pink, not violet"); vitality-adjacent
-///    without touching the danger rose ramp.
-///  * [knowledge] — indigo/blue-violet (product decision). Uses the same
-///    shades as [AccentSeedSlots.indigo]; note-type accents
-///    (`KnowledgeTypeColors`, e.g. concept violet) stay independent.
-///  * [execution] — orange, the action hue. The light variant mirrors
-///    Tailwind orange-600 (same value as `ExpenseCategoryColors.dining`) so
-///    selected labels stay legible on white; the dark variant reuses the
-///    palette's [ColorPalette.orange500].
+/// Canonical chrome identity per LifeOS domain. Finance shares the iris-blue
+/// interaction default; Health is pink, Knowledge violet, and Execution orange.
+/// Business states and market direction retain their separate semantic roles.
 abstract final class DomainAccents {
   static const DomainAccent finance = DomainAccent(
-    light: ColorPalette.cyanBrand800,
-    dark: ColorPalette.cyanBrand500,
+    light: ColorPalette.indigo700,
+    dark: ColorPalette.indigo400,
   );
 
   static const DomainAccent health = DomainAccent(
@@ -59,8 +41,8 @@ abstract final class DomainAccents {
   );
 
   static const DomainAccent knowledge = DomainAccent(
-    light: ColorPalette.indigo700,
-    dark: ColorPalette.indigo400,
+    light: ColorPalette.violet700,
+    dark: ColorPalette.violet400,
   );
 
   static const DomainAccent execution = DomainAccent(

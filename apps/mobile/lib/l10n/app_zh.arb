@@ -1343,6 +1343,7 @@
   "settingsMaterialStyleTitle": "材质效果",
   "settingsMaterialStyleSubtitle": "实色清晰，通透更有层次；系统高对比度开启时使用实色。",
   "materialStyleSolid": "实色",
+  "materialStyleNavigation": "轻透导航",
   "materialStyleTranslucent": "通透",
   "settingsAccentSeedTitle": "强调色",
   "accentSeedCyan": "青蓝",

@@ -169,8 +169,8 @@ class _MobileLayout extends ConsumerWidget {
 
   /// Total visual height reserved for the floating dock:
   /// nav bar + top/bottom spacing + device safe-area inset.
-  double _dockTotalHeight(double safeAreaBottom) =>
-      kFloatingGlassNavBarHeight +
+  double _dockTotalHeight(BuildContext context, double safeAreaBottom) =>
+      floatingGlassNavBarHeight(context) +
       _kMobileDockTopPadding +
       _kMobileDockBottomPadding +
       safeAreaBottom;
@@ -219,7 +219,7 @@ class _MobileLayout extends ConsumerWidget {
         // Pushed pages keep the device safe-area bottom so content does not
         // sit under the home indicator, without reserving dock space.
         final bottomInset = onTabRoot
-            ? _dockTotalHeight(safeAreaBottom)
+            ? _dockTotalHeight(context, safeAreaBottom)
             : safeAreaBottom;
         final content = Positioned.fill(
           child: MediaQuery(

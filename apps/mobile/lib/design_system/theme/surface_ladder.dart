@@ -44,7 +44,7 @@ class AppSurfaceLadder {
 AppSurfaceLadder resolveSurfaceLadder({
   required Brightness brightness,
   bool highContrast = false,
-  AppVisualStyle visualStyle = AppVisualStyle.classic,
+  AppVisualStyle visualStyle = AppVisualStyle.refined,
 }) {
   final isDark = brightness == Brightness.dark;
 
@@ -94,14 +94,14 @@ AppSurfaceLadder resolveSurfaceLadder({
               ? ColorPalette.navy500
               : ColorPalette.surfaceHairlineDark,
           scrim: ColorPalette.scrimDark,
-          contentStrong: ColorPalette.neutral0,
-          contentBody: ColorPalette.navy50,
+          contentStrong: ColorPalette.refinedStrongDark,
+          contentBody: ColorPalette.refinedBodyDark,
           contentMuted: highContrast
-              ? ColorPalette.navy100
-              : ColorPalette.navy300,
+              ? ColorPalette.refinedContrastMutedDark
+              : ColorPalette.refinedMutedDark,
           contentFaint: highContrast
-              ? ColorPalette.navy300
-              : ColorPalette.navy400,
+              ? ColorPalette.refinedMutedDark
+              : ColorPalette.refinedFaintDark,
         )
       : AppSurfaceLadder(
           canvas: ColorPalette.surfaceBackground,
@@ -112,13 +112,13 @@ AppSurfaceLadder resolveSurfaceLadder({
               ? ColorPalette.navy400
               : ColorPalette.surfaceHairline,
           scrim: ColorPalette.scrimLight,
-          contentStrong: ColorPalette.neutral1000,
-          contentBody: ColorPalette.navy900,
+          contentStrong: ColorPalette.refinedStrongLight,
+          contentBody: ColorPalette.refinedBodyLight,
           contentMuted: highContrast
-              ? ColorPalette.navy700
-              : ColorPalette.navy500,
+              ? ColorPalette.refinedContrastMutedLight
+              : ColorPalette.refinedMutedLight,
           contentFaint: highContrast
-              ? ColorPalette.navy500
-              : ColorPalette.neutral400,
+              ? ColorPalette.refinedMutedLight
+              : ColorPalette.refinedFaintLight,
         );
 }

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
+import '../theme/app_theme_scope.dart';
+import '../tokens/app_motion_policy.dart';
 import '../tokens/dimens_tokens.dart';
+import '../tokens/motion_tokens.dart';
 import '../tokens/typography_tokens.dart';
 import 'app_actions.dart';
 import 'app_glass.dart';
@@ -9,9 +12,20 @@ import 'app_interaction.dart';
 import 'app_selection_indicator.dart';
 
 const double kFloatingGlassNavBarHeight = AppSpacing.s64;
-const double _kDestinationHeight = 52;
 const double _kIconSlotSize = 26;
 const double _kAssistantLabelBreakpoint = 390;
+const double _kNavLabelLineHeight = 1.15;
+
+/// Shared by the dock and shell reservation; enlarged labels keep their scale.
+double floatingGlassNavBarHeight(BuildContext context) {
+  final fontSize = TypographyTokens.labelSmall.fontSize!;
+  final scaledSize = MediaQuery.textScalerOf(context).scale(fontSize);
+  final extraHeight = ((scaledSize - fontSize) * _kNavLabelLineHeight).clamp(
+    0.0,
+    double.infinity,
+  );
+  return (kFloatingGlassNavBarHeight + extraHeight).ceilToDouble();
+}
 
 /// A floating glass-morphism bottom navigation bar.
 ///
@@ -70,6 +84,8 @@ class FloatingGlassNavBar extends StatelessWidget {
       builder: (context, constraints) {
         final compactAssistant =
             constraints.maxWidth < _kAssistantLabelBreakpoint;
+        final destinationHeight =
+            floatingGlassNavBarHeight(context) - AppSpacing.s12;
         return AppGlassSurface(
           // The dock is the primary soft-glass surface. Keep the theme-owned
           // liveBlur capability gate so system high contrast still fall
@@ -78,14 +94,14 @@ class FloatingGlassNavBar extends StatelessWidget {
           frosted: true,
           softLight: true,
           trackPointer: true,
-          borderRadius: BorderRadius.circular(AppRadius.full),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           boxShadow: AppShadow.nav,
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.s8,
             vertical: AppSpacing.s6,
           ),
           child: SizedBox(
-            height: _kDestinationHeight,
+            height: destinationHeight,
             child: Row(
               children: [
                 for (var i = 0; i < items.length; i++)
@@ -93,6 +109,7 @@ class FloatingGlassNavBar extends StatelessWidget {
                     child: _NavTabButton(
                       tab: items[i],
                       selected: i == selectedIndex,
+                      height: destinationHeight,
                       accentColor: accentColor,
                       onTap: () => onIndexChanged(i),
                     ),
@@ -137,12 +154,14 @@ class _NavTabButton extends StatelessWidget {
     required this.tab,
     required this.selected,
     required this.onTap,
+    required this.height,
     this.accentColor,
   });
 
   final FloatingNavTab tab;
   final bool selected;
   final VoidCallback onTap;
+  final double height;
   final Color? accentColor;
 
   @override
@@ -155,12 +174,25 @@ class _NavTabButton extends StatelessWidget {
       selected: selected,
       semanticsLabel: tab.label,
       focusedOutlineStyle: FFocusedOutlineStyleDelta.delta(
-        borderRadius: BorderRadius.circular(AppRadius.full),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       builder: (context, variants, child) => AppGlassFeedback(
         variants: variants,
         accentColor: accentColor,
-        child: child!,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        child: AnimatedContainer(
+          duration: AppMotionPolicy.duration(context, Motion.fast),
+          decoration: context.appTheme.visual.decoration(
+            radius: BorderRadius.circular(AppRadius.md),
+            color: selected
+                ? Color.alphaBlend(
+                    selectedColor.withValues(alpha: AppOpacity.softTint),
+                    colors.card,
+                  )
+                : Colors.transparent,
+          ),
+          child: child,
+        ),
       ),
       onPress: () {
         if (!selected) {
@@ -169,7 +201,7 @@ class _NavTabButton extends StatelessWidget {
         onTap();
       },
       child: SizedBox(
-        height: _kDestinationHeight,
+        height: height,
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.s6,
@@ -199,7 +231,10 @@ class _NavTabButton extends StatelessWidget {
                     (selected
                             ? TypographyTokens.labelSmall
                             : TypographyTokens.labelSmallMedium)
-                        .copyWith(color: labelColor, height: 1.15),
+                        .copyWith(
+                          color: labelColor,
+                          height: _kNavLabelLineHeight,
+                        ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),

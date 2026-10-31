@@ -122,11 +122,13 @@ void main() {
         );
         expect(
           theme.colors.foreground,
-          isDark ? ColorPalette.navy50 : ColorPalette.navy900,
+          isDark ? ColorPalette.refinedBodyDark : ColorPalette.refinedBodyLight,
         );
         expect(
           theme.colors.mutedForeground,
-          isDark ? ColorPalette.navy300 : ColorPalette.navy500,
+          isDark
+              ? ColorPalette.refinedMutedDark
+              : ColorPalette.refinedMutedLight,
         );
         expect(
           theme.colors.card,
@@ -140,12 +142,7 @@ void main() {
         );
         expect(
           theme.colors.muted,
-          isDark
-              ? Color.alphaBlend(
-                  ColorPalette.navy50.withValues(alpha: AppOpacity.whisper),
-                  ColorPalette.surfaceDark,
-                )
-              : ColorPalette.surfaceOverlay,
+          isDark ? ColorPalette.refinedHeroDark : ColorPalette.refinedHeroLight,
         );
         for (final typeface in <FTypeface>[
           theme.typography.display,

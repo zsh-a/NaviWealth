@@ -6999,6 +6999,12 @@ abstract class AppLocalizations {
   /// **'Solid'**
   String get materialStyleSolid;
 
+  /// No description provided for @materialStyleNavigation.
+  ///
+  /// In en, this message translates to:
+  /// **'Light navigation'**
+  String get materialStyleNavigation;
+
   /// No description provided for @materialStyleTranslucent.
   ///
   /// In en, this message translates to:

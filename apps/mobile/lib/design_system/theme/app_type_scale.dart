@@ -32,13 +32,13 @@ class AppTypeScale {
   /// is ever revisited.
   static AppTypeScale resolve(
     AppDensity density, {
-    AppVisualStyle visualStyle = AppVisualStyle.classic,
+    AppVisualStyle visualStyle = AppVisualStyle.refined,
   }) => visualStyle == AppVisualStyle.refined ? _refined : _classic;
 
   TextStyle _style(TextStyle style) => appVisualTextStyle(style, _visualStyle);
 
   // ── Display ────────────────────────────────────────────────────────────
-  /// 40px — page hero; Outfit in classic, Inter in refined.
+  /// 48px — measured, medium-weight Inter for page-level amounts.
   TextStyle get display => _style(TypographyTokens.displayLarge);
 
   /// 32px — secondary marquee numbers and page heroes.
@@ -48,14 +48,14 @@ class AppTypeScale {
   TextStyle get displayCompact => _style(TypographyTokens.displaySmall);
 
   // ── Headings ───────────────────────────────────────────────────────────
-  /// 24px w600 — page titles, empty-state titles.
+  /// 26px w600 — page titles.
   TextStyle get heading => _style(TypographyTokens.headlineLarge);
 
   /// 20px w600 — prominent section titles, sheet titles.
   TextStyle get headingSmall => _style(TypographyTokens.headlineMedium);
 
   // ── Titles / body ──────────────────────────────────────────────────────
-  /// 16px w600 — card titles, row heroes.
+  /// 16px w500 — card titles, row heroes.
   TextStyle get title => _style(TypographyTokens.titleLarge);
 
   /// 14px w600 — compact row titles, list labels.
@@ -105,7 +105,7 @@ TextStyle appVisualTextStyle(TextStyle style, AppVisualStyle visualStyle) =>
         fontFamily: style.fontFamily == TypographyTokens.fontFamilyDisplay
             ? TypographyTokens.fontFamilySans
             : style.fontFamily,
-        letterSpacing: 0,
+        letterSpacing: (style.fontSize ?? 0) >= 26 ? style.letterSpacing : 0,
         height: style.height == null ? null : style.height! * 0.96,
       );
 

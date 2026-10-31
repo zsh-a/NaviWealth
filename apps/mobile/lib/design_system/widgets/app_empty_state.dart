@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../theme/app_theme_scope.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
 import 'app_actions.dart';
@@ -123,7 +124,6 @@ class AppEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final typography = context.theme.typography;
     final iconColor = switch (tone) {
       AppEmptyStateTone.neutral => colors.primary,
       AppEmptyStateTone.error => colors.destructive,
@@ -162,42 +162,44 @@ class AppEmptyState extends StatelessWidget {
     return Center(
       child: Padding(
         padding: EdgeInsets.all(compact ? AppSpacing.s16 : AppSpacing.s20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: AppOpacity.whisper),
-                shape: BoxShape.circle,
-              ),
-              child: SizedBox.square(
-                dimension:
-                    iconSize + (compact ? AppSpacing.s12 : AppSpacing.s16),
-                child: Center(
-                  child: Icon(icon, size: iconSize, color: iconColor),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: AppControlWidths.emptyStateBody,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: iconSize, color: iconColor),
+              SizedBox(height: compact ? AppSpacing.s10 : AppSpacing.s14),
+              Semantics(
+                header: true,
+                child: Text(
+                  title,
+                  style: context.appTheme.type.headingSmall.copyWith(
+                    color: colors.foreground,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
               ),
-            ),
-            SizedBox(height: compact ? AppSpacing.s10 : AppSpacing.s14),
-            Text(title, style: typography.body.lg, textAlign: TextAlign.center),
-            if (message != null) ...[
-              SizedBox(height: compact ? AppSpacing.s4 : AppSpacing.s8),
-              Text(
-                message!,
-                style: context.bodyCaptionStyle,
-                textAlign: TextAlign.center,
-              ),
-            ],
-            if (action != null) ...[
-              SizedBox(height: compact ? AppSpacing.s10 : AppSpacing.s16),
-              ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: AppControlWidths.emptyStateAction,
+              if (message != null) ...[
+                SizedBox(height: compact ? AppSpacing.s4 : AppSpacing.s8),
+                Text(
+                  message!,
+                  style: context.bodyCaptionStyle,
+                  textAlign: TextAlign.center,
                 ),
-                child: SizedBox(width: double.infinity, child: action!),
-              ),
+              ],
+              if (action != null) ...[
+                SizedBox(height: compact ? AppSpacing.s10 : AppSpacing.s16),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: AppControlWidths.emptyStateAction,
+                  ),
+                  child: SizedBox(width: double.infinity, child: action!),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

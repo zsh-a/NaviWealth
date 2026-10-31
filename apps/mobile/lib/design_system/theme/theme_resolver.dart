@@ -28,10 +28,10 @@ class ThemeInputs {
     required this.brightness,
     required this.marketMode,
     this.highContrast = false,
-    this.accentSeed = AppAccentSeed.cyan,
+    this.accentSeed = AppAccentSeed.indigo,
     this.density = AppDensity.touch,
-    this.visualStyle = AppVisualStyle.classic,
-    this.materialStyle = AppMaterialStyle.solid,
+    this.visualStyle = AppVisualStyle.refined,
+    this.materialStyle = AppMaterialStyle.navigation,
   });
 
   final Brightness brightness;
@@ -104,6 +104,7 @@ AppThemeData resolveAppTheme(ThemeInputs inputs) {
   final highContrast = inputs.highContrast;
 
   final solid = inputs.materialStyle == AppMaterialStyle.solid;
+  final translucent = inputs.materialStyle == AppMaterialStyle.translucent;
   final glass = highContrast
       ? const GlassSpec(
           chrome: GlassMaterialSpec(
@@ -140,21 +141,25 @@ AppThemeData resolveAppTheme(ThemeInputs inputs) {
           ),
           sticky: GlassMaterialSpec(
             blurSigma: AppBlur.chrome,
-            fillOpacity: solid ? AppOpacity.opaque : AppOpacity.solidSurface,
+            fillOpacity: translucent
+                ? AppOpacity.solidSurface
+                : AppOpacity.opaque,
             borderOpacity: AppOpacity.medium,
-            liveBlur: !solid,
+            liveBlur: translucent,
           ),
           sheet: GlassMaterialSpec(
             blurSigma: AppBlur.sheet,
-            fillOpacity: solid ? AppOpacity.opaque : AppOpacity.overlay,
+            fillOpacity: translucent ? AppOpacity.overlay : AppOpacity.opaque,
             borderOpacity: AppOpacity.medium,
-            liveBlur: !solid,
+            liveBlur: translucent,
           ),
           overlay: GlassMaterialSpec(
             blurSigma: AppBlur.sheet,
-            fillOpacity: solid ? AppOpacity.opaque : AppOpacity.solidSurface,
+            fillOpacity: translucent
+                ? AppOpacity.solidSurface
+                : AppOpacity.opaque,
             borderOpacity: AppOpacity.medium,
-            liveBlur: !solid,
+            liveBlur: translucent,
           ),
         );
 

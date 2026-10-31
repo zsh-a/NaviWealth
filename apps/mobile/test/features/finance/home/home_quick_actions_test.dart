@@ -42,7 +42,11 @@ void main() {
     expect(find.text('Transfer'), findsOneWidget);
     expect(find.text('Monthly close'), findsNothing);
     expect(find.text('Add account'), findsNothing);
-    expect(find.byIcon(FLucideIcons.chevronRight), findsNWidgets(3));
+    expect(find.byIcon(FLucideIcons.chevronRight), findsNothing);
+    expect(
+      tester.getTopLeft(find.text('Import statements')).dy,
+      lessThan(tester.getTopLeft(find.text('Transfer')).dy),
+    );
     expect(tester.takeException(), isNull);
   });
 

@@ -13,7 +13,7 @@ enum AppVisualStyle {
   String get persistedKey => name;
 
   static AppVisualStyle fromKey(String? key) =>
-      values.where((value) => value.name == key).firstOrNull ?? classic;
+      values.where((value) => value.name == key).firstOrNull ?? refined;
 
   AppVisualSpec get spec => switch (this) {
     classic => kClassicVisualSpec,
@@ -37,7 +37,7 @@ const kClassicVisualSpec = AppVisualSpec(
 const kRefinedVisualSpec = AppVisualSpec(
   continuousCorners: true,
   controlRadius: AppRadius.lg,
-  surfaceRadius: AppRadius.xl,
+  surfaceRadius: AppRadius.lg,
   sheetRadius: AppRadius.xxl,
   overlayRadius: AppRadius.xxl,
   cardGradient: false,
@@ -47,15 +47,16 @@ const kRefinedVisualSpec = AppVisualSpec(
   sheetCurve: AppSheetSpringCurve(),
 );
 
-/// Independent of the visual preset; solid is the low-cost default.
+/// Independent of the visual preset; navigation keeps content and forms solid.
 enum AppMaterialStyle {
   solid,
+  navigation,
   translucent;
 
   String get persistedKey => name;
 
   static AppMaterialStyle fromKey(String? key) =>
-      values.where((value) => value.name == key).firstOrNull ?? solid;
+      values.where((value) => value.name == key).firstOrNull ?? navigation;
 }
 
 @immutable

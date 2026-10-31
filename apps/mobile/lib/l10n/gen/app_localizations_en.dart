@@ -4113,6 +4113,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get materialStyleSolid => 'Solid';
 
   @override
+  String get materialStyleNavigation => 'Light navigation';
+
+  @override
   String get materialStyleTranslucent => 'Translucent';
 
   @override

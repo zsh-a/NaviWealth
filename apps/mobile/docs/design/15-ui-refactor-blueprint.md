@@ -4,6 +4,8 @@
 跨域导航由 [LifeOS Shell](../../../../docs/architecture/lifeos-shell.md) 拥有，
 AI 交互由 [AI 架构](../../../../docs/ai/ai-architecture.md) 拥有。
 设计值以 Dart 源码为准，设计工具读取生成的 token export。
+全局视觉语言与默认 token 快照见根目录 [DESIGN.md](../../../../DESIGN.md)，
+Impeccable 的 Flutter 使用边界见 [.agents/IMPECCABLE.md](../../../../.agents/IMPECCABLE.md)。
 
 ## 主题解析与读取
 
@@ -33,12 +35,16 @@ MarketColors、AccentColors 是 resolver 的数据来源，业务页面消费解
 外观设置支持经典 / 精致两个视觉预设，使用同一套导航、组件和表单状态。
 两个预设共用中性表面，普通卡片无常驻阴影和渐变；经典使用紧凑圆角，精致使用
 连续圆角、统一字体及阻尼弹层曲线。`AppVisualStyle` 与明暗模式、系统高对比度、
-强调色、涨跌色和材质效果独立；偏好保存在 SharedPreferences，旧安装默认经典。
+强调色、涨跌色和材质效果独立；偏好保存在 SharedPreferences。
+缺失或无效偏好默认精致、鸢尾蓝（`indigo`）和仅导航通透（`navigation`）；
+已保存的经典、青色、紫色、实色和全通透选择仍按原值解析。
 Material、Forui 和语义主题必须同时消费同一 visual style；不要按预设重建
 Navigator、ProviderScope 或表单。外观预览复用正式 theme 和 SoftCard。
 
-材质默认实色，通透需用户选择；系统高对比度优先取消通透。
-表单始终不透明。手机 sheet 遮罩只使用 AnimatedModalBarrier 颜色动画，
+材质默认仅导航通透：浮动 dock 可使用 live backdrop，sticky、sheet 和 overlay
+保持不透明。实色关闭 live blur；全通透是显式选择，可按 role 开启更多 chrome
+材质。系统高对比度优先取消通透与装饰光场，表单始终不透明。
+手机 sheet 遮罩只使用 AnimatedModalBarrier 颜色动画，
 不得对整页做背景过滤；sheet Future 保持 pop 时返回的既有契约，dock 隐藏持续到退场
 动画真正结束，链式导航等待 route.completed。AI sheet 的键盘由内容处理，路由不重复避让。
 
@@ -87,7 +93,9 @@ Navigator、ProviderScope 或表单。外观预览复用正式 theme 和 SoftCar
 ## 字体与格式化
 
 读取 `context.appTheme.type`，遵守系统 text scaling，避免 feature 自建字号层级。
-Display 使用 `display` / `displaySmall` / `displayCompact`（40 / 32 / 26）；
+Display 使用自托管 Inter 的 `display` / `displaySmall` / `displayCompact`
+（48 / 32 / 26），页面级金额为 48dp medium；`numericDisplay` 是 32dp 的次级金额。
+精致预设保留字号、字重和 tabular figures，行高在底表上乘以 0.96，26dp 以下字距归零。
 金额与图表使用对应 `numeric*` / `chartCaption`。`TypographyTokens` 是主题底表，
 业务 UI 不直接读取 display、headline 或 numeric 样式，避免绕过精致预设的字体、
 字距和行高；`lint-typography.sh` 守护此边界。
@@ -117,6 +125,12 @@ Wealth 把余额、区间变化与历史曲线组合为一个主区域，对象�
 
 `DomainPack.accent` 仅影响 chrome。页面内容、状态与金融涨跌继续使用语义主题。
 新增领域不应要求复制 Shell、另建侧栏或增加 feature 分支到主题 resolver。
+Finance chrome 使用鸢尾蓝，Knowledge 保留紫色；当前领域清单与 accent
+映射由 registry 和 `DomainAccents` 拥有，不在设计文档中另立清单。
+
+浮动 dock 使用 20dp 连续圆角，普通高度为 64dp。`floatingGlassNavBarHeight`
+按当前 `TextScaler` 的实际 11dp 标签增量和 1.15 行高增加高度；Shell 的底部内容预留
+复用同一函数，再加 dock 间距与 safe area。不要固定大字体高度或在页面重复留白。
 
 ## 动效与材质
 
@@ -124,8 +138,9 @@ Wealth 把余额、区间变化与历史曲线组合为一个主区域，对象�
 [动效与交互](11-motion-and-interactions.md)。Reduced motion 保留可识别的状态变化，
 停止装饰性空间运动。关键状态不能只通过动效或声音表达。
 
-Live backdrop 只用于主题允许的浮动 dock 和 modal sheet；内容模块保持不透明，
-sticky chrome 使用共享静态光场。Glass 光效不能替代 focus、selection、busy 或错误
+Live backdrop 由 `GlassSpec` 的 role 和材质偏好统一控制；默认只对导航 chrome 开启，
+全通透选择才允许 sheet 等额外 role。内容模块保持不透明，sticky chrome 复用共享光场，
+调用方不添加独立的滚动模糊层。Glass 光效不能替代 focus、selection、busy 或错误
 语义，也不能增加第二套手势识别。系统高对比度不使用装饰性光场。
 
 ## 验证
@@ -137,3 +152,9 @@ motion policy lint；脚本清单由 CI 维护。主题变更运行对比度测�
 截图 harness 同时传递 Material / Forui / AppThemeScope 的 visual style。
 视觉基线使用 CI 指定的 Linux Flutter 版本生成。
 跨域 Shell 变更额外检查启用状态、路由和键盘导航。
+
+本次澄白更新的视觉证据位于 `.impeccable/review/goldens/`，来自 Flutter widget
+renderer，覆盖代表性深浅主题、领域页面、宽屏及大字体导航。HTML 方向稿和 sidecar
+预览只表达方向或组件翻译；它们不是 Flutter 验证。真机材质/性能和 Linux golden
+基线比对尚未完成，不能由这些截图推断通过。该实现由代码和向量图标构成，未引入
+需要溯源的 shipping raster asset。

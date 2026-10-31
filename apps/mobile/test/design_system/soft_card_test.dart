@@ -5,17 +5,46 @@ import 'package:naviwealth/design_system/design_system.dart';
 
 Widget _wrap(Widget child) {
   return MaterialApp(
-    theme: AppTheme.light(),
-    home: FTheme(data: FTheme.neutral.light.desktop, child: child),
+    theme: AppTheme.light(visualStyle: AppVisualStyle.classic),
+    home: AppThemeScope(
+      data: resolveAppTheme(
+        const ThemeInputs(
+          brightness: Brightness.light,
+          marketMode: MarketColorMode.redUpGreenDown,
+          visualStyle: AppVisualStyle.classic,
+        ),
+      ),
+      child: FTheme(
+        data: buildAppForuiTheme(
+          brightness: Brightness.light,
+          touch: false,
+          visualStyle: AppVisualStyle.classic,
+        ),
+        child: child,
+      ),
+    ),
   );
 }
 
 Widget _wrapDark(Widget child) {
   return MaterialApp(
-    theme: AppTheme.dark(),
-    home: FTheme(
-      data: buildAppForuiTheme(brightness: Brightness.dark, touch: false),
-      child: child,
+    theme: AppTheme.dark(visualStyle: AppVisualStyle.classic),
+    home: AppThemeScope(
+      data: resolveAppTheme(
+        const ThemeInputs(
+          brightness: Brightness.dark,
+          marketMode: MarketColorMode.redUpGreenDown,
+          visualStyle: AppVisualStyle.classic,
+        ),
+      ),
+      child: FTheme(
+        data: buildAppForuiTheme(
+          brightness: Brightness.dark,
+          touch: false,
+          visualStyle: AppVisualStyle.classic,
+        ),
+        child: child,
+      ),
     ),
   );
 }

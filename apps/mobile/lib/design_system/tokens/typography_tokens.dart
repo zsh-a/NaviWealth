@@ -2,31 +2,10 @@ import 'package:flutter/material.dart';
 
 /// Type scale.
 ///
-/// Swapped the primary fontFamily from `AppCnSans` (the Noto Sans
-/// SC subset) to **Inter** for Latin / numeric / English copy. Inter
-/// brings the things a fintech UI needs out of the box:
-///
-///   * tabular figures + lining figures (no horizontal jitter when a money
-///     ticker animates),
-///   * a tight x-height, and
-///   * a wide weight range (400 / 500 / 600 / 700) so we can hit the
-///     "extreme contrast" the design vision asks for.
-///
-/// **Outfit** is reserved for the largest hero number ([displayLarge], aka
-/// "Display 2XL"). Its taller proportions give the dashboard's net-worth
-/// figure the marquee feel of Copilot Money / Stripe Dashboard without
-/// requiring a custom variable axis.
-///
-/// CJK still goes through `AppCnSans` and the platform CJK fonts via
-/// [fontFamilyFallback] — when a glyph isn't present in the Latin subset,
-/// the renderer walks the fallback chain. That keeps Chinese text from
-/// dropping to tofu while the Inter / Outfit subsets stay tiny (~200 KB
-/// total).
-///
-/// Tabular figures are now applied **globally** via [tabularFigures] on
-/// every text style so a money column never has to opt in by hand. Inter
-/// supports tnum + lnum as native OpenType features; non-money copy is
-/// unaffected because the substitution only fires for digit glyphs.
+/// Porcelain uses self-hosted Inter for Latin text and tabular numerals.
+/// Medium-weight display amounts stay distinct from compact semibold labels.
+/// CJK follows AppCnSans and the platform fallback stack. Font features are
+/// shared by every role so changing values remain aligned.
 class TypographyTokens {
   const TypographyTokens._();
 
@@ -34,9 +13,7 @@ class TypographyTokens {
   /// registered in pubspec.yaml.
   static const String fontFamilySans = 'Inter';
 
-  /// Display family — only used by [displayLarge] (Display 2XL). Outfit's
-  /// tall x-height and condensed digits give the hero net-worth figure
-  /// the marquee read the design vision asks for.
+  /// Legacy display family retained for older authored styles and font assets.
   static const String fontFamilyDisplay = 'Outfit';
 
   /// Resolved in order when [fontFamilySans] cannot render a glyph yet —
@@ -82,20 +59,17 @@ class TypographyTokens {
     );
   }
 
-  // Display — large numeric headlines (net worth, FIRE %).
-  // displayLarge ("Display 2XL") is the only style that uses Outfit; it's
-  // reserved for the dashboard hero number. Anything below stays on Inter.
+  // Display — medium-weight tabular amounts with a clear size hierarchy.
   static final TextStyle displayLarge = _t(
-    40,
-    height: 1.1,
-    weight: FontWeight.w700,
-    letterSpacing: -0.5,
-    fontFamily: fontFamilyDisplay,
+    48,
+    height: 1.12,
+    weight: FontWeight.w500,
+    letterSpacing: -1.2,
   );
   static final TextStyle displayMedium = _t(
     32,
     height: 1.15,
-    weight: FontWeight.w700,
+    weight: FontWeight.w600,
     letterSpacing: -0.25,
   );
   static final TextStyle displaySmall = _t(
@@ -106,7 +80,7 @@ class TypographyTokens {
 
   // Headline — section titles.
   static final TextStyle headlineLarge = _t(
-    24,
+    26,
     height: 1.25,
     weight: FontWeight.w600,
   );
@@ -125,7 +99,7 @@ class TypographyTokens {
   static final TextStyle titleLarge = _t(
     16,
     height: 1.4,
-    weight: FontWeight.w600,
+    weight: FontWeight.w500,
   );
   static final TextStyle titleMedium = _t(
     14,
@@ -178,7 +152,7 @@ class TypographyTokens {
   // height) on top, so a given size has exactly one source of truth.
   //
   // Secondary marquee (Wealth sub-metrics, plan secondary). Page-level
-  // hero numbers should use [displayLarge] (Outfit 40) instead.
+  // hero numbers should use [displayLarge] (Inter 48) instead.
   static final TextStyle numericDisplay = displayMedium.copyWith(
     height: 1.12,
     letterSpacing: -0.4,

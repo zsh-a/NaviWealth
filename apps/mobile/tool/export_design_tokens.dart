@@ -167,7 +167,11 @@ Map<String, Object> buildTokens() => {
     'controlHeight': {
       'chartLoadingState': _dimension(AppControlHeights.chartLoadingState),
     },
-    'controlWidth': {'scheduleDate': _dimension(AppControlWidths.scheduleDate)},
+    'controlWidth': {
+      'scheduleDate': _dimension(AppControlWidths.scheduleDate),
+      'emptyStateBody': _dimension(AppControlWidths.emptyStateBody),
+      'emptyStateAction': _dimension(AppControlWidths.emptyStateAction),
+    },
   },
   'stroke': _strokeGroup(),
   'radius': _radiusGroup(),
@@ -660,9 +664,9 @@ Map<String, Object> _shadowGroup() => {
 
 Map<String, Object> _typographyGroup() => {
   r'$description':
-      'Type scale — TypographyTokens. Inter is the primary family; Outfit '
-      'is reserved for displayLarge (Display 2XL). Tabular + lining figures '
-      'apply globally. CJK resolves through fontFamilyFallback.',
+      'Type scale — TypographyTokens. Inter is the primary and current '
+      'display family; Outfit remains a legacy family constant. Tabular + '
+      'lining figures apply globally. CJK resolves through fontFamilyFallback.',
   'fontFamily': {
     'sans': {
       r'$value': TypographyTokens.fontFamilySans,

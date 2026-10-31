@@ -70,7 +70,11 @@ void main() {
       final background = tester.widget<DecoratedBox>(
         find.descendant(of: form, matching: find.byType(DecoratedBox)).first,
       );
-      expect((background.decoration as BoxDecoration).color!.a, 1);
+      final color = switch (background.decoration) {
+        BoxDecoration(:final color) || ShapeDecoration(:final color) => color,
+        _ => null,
+      };
+      expect(color?.a, 1);
       await tester.tapAt(const Offset(4, 4));
       await tester.pumpAndSettle();
       expect(find.text('Form content'), findsNothing);

@@ -1,8 +1,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../theme/app_theme_scope.dart';
 import '../tokens/dimens_tokens.dart';
-import '../tokens/typography_tokens.dart';
 
 /// Neutral section header used above grouped cards / lists.
 ///
@@ -87,17 +87,19 @@ class SectionHeader extends StatelessWidget {
     final colors = context.theme.colors;
     final explicitTitleStyle = titleStyle;
     final resolvedTitleStyle = explicitTitleStyle == null
-        ? TypographyTokens.sectionHeaderTitle(titleColor ?? colors.foreground)
+        ? context.appTheme.type.title.copyWith(
+            color: titleColor ?? colors.foreground,
+          )
         : titleColor != null
         ? explicitTitleStyle.copyWith(color: titleColor)
         : explicitTitleStyle;
     final resolvedSubtitleStyle =
         subtitleStyle ??
-        TypographyTokens.sectionHeaderSubtitle(colors.mutedForeground);
+        context.appTheme.type.bodySmall.copyWith(color: colors.mutedForeground);
     final titleBlock = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: resolvedTitleStyle),
+        Semantics(header: true, child: Text(title, style: resolvedTitleStyle)),
         if (subtitle != null) ...[
           const SizedBox(height: AppSpacing.s4),
           Text(subtitle!, style: resolvedSubtitleStyle),

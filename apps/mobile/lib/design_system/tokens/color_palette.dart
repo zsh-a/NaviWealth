@@ -8,26 +8,26 @@ import 'package:flutter/material.dart';
 class ColorPalette {
   const ColorPalette._();
 
-  // Neutral surfaces and text for the refined visual preset.
-  static const Color refinedCanvasLight = Color(0xFFF6F7F8);
+  // Porcelain surfaces: quiet violet-gray neutrals with graphite content.
+  static const Color refinedCanvasLight = Color(0xFFF7F8FB);
   static const Color refinedRaisedLight = Color(0xFFFFFFFF);
-  static const Color refinedHeroLight = Color(0xFFFAFBFC);
-  static const Color refinedBorderLight = Color(0xFFE3E6EA);
+  static const Color refinedHeroLight = Color(0xFFFBFBFE);
+  static const Color refinedBorderLight = Color(0xFFE3E6EE);
   static const Color refinedContrastBorderLight = Color(0xFF626B78);
-  static const Color refinedStrongLight = Color(0xFF1C1D21);
-  static const Color refinedBodyLight = Color(0xFF25262B);
-  static const Color refinedMutedLight = Color(0xFF555B65);
+  static const Color refinedStrongLight = Color(0xFF191D28);
+  static const Color refinedBodyLight = Color(0xFF252B3A);
+  static const Color refinedMutedLight = Color(0xFF636B7B);
   static const Color refinedContrastMutedLight = Color(0xFF383D45);
-  static const Color refinedFaintLight = Color(0xFF727985);
-  static const Color refinedCanvasDark = Color(0xFF101114);
-  static const Color refinedCardDark = Color(0xFF191C20);
-  static const Color refinedRaisedDark = Color(0xFF22252A);
-  static const Color refinedHeroDark = Color(0xFF272B31);
-  static const Color refinedBorderDark = Color(0xFF343940);
+  static const Color refinedFaintLight = Color(0xFF747C8C);
+  static const Color refinedCanvasDark = Color(0xFF11131A);
+  static const Color refinedCardDark = Color(0xFF1B1E28);
+  static const Color refinedRaisedDark = Color(0xFF222633);
+  static const Color refinedHeroDark = Color(0xFF262B39);
+  static const Color refinedBorderDark = Color(0xFF343B4C);
   static const Color refinedContrastBorderDark = Color(0xFF8A94A3);
-  static const Color refinedStrongDark = Color(0xFFF4F5F7);
-  static const Color refinedBodyDark = Color(0xFFE8EBEF);
-  static const Color refinedMutedDark = Color(0xFFB0B7C3);
+  static const Color refinedStrongDark = Color(0xFFF7F8FC);
+  static const Color refinedBodyDark = Color(0xFFE7EAF2);
+  static const Color refinedMutedDark = Color(0xFFB0B7C8);
   static const Color refinedContrastMutedDark = Color(0xFFCED4DF);
   static const Color refinedFaintDark = Color(0xFF828B99);
 
@@ -90,17 +90,17 @@ class ColorPalette {
 
   // ── Neutral surfaces ────────────────────────────────────────────────────
   // Large surfaces stay neutral; hue belongs to data and interaction accents.
-  static const Color surfaceBackground = Color(0xFFF6F7F8);
+  static const Color surfaceBackground = refinedCanvasLight;
   static const Color surface = neutral0;
   static const Color surfaceRaised = neutral0;
-  static const Color surfaceHero = Color(0xFFFAFBFC);
-  static const Color surfaceOverlay = Color(0xFFF3F4F6);
-  static const Color surfaceHairline = Color(0xFFE3E6EA);
-  static const Color surfaceBackgroundDark = Color(0xFF111315);
-  static const Color surfaceDark = Color(0xFF191C20);
-  static const Color surfaceRaisedDark = Color(0xFF202429);
-  static const Color surfaceHeroDark = Color(0xFF272B31);
-  static const Color surfaceHairlineDark = Color(0xFF343940);
+  static const Color surfaceHero = refinedHeroLight;
+  static const Color surfaceOverlay = Color(0xFFF0F1F6);
+  static const Color surfaceHairline = refinedBorderLight;
+  static const Color surfaceBackgroundDark = refinedCanvasDark;
+  static const Color surfaceDark = refinedCardDark;
+  static const Color surfaceRaisedDark = refinedRaisedDark;
+  static const Color surfaceHeroDark = refinedHeroDark;
+  static const Color surfaceHairlineDark = refinedBorderDark;
 
   // ── Profit / gain (emerald) ─────────────────────────────────────────────
   // Migrated from legacy "standard green" #16A34A to Tailwind emerald
@@ -172,12 +172,12 @@ class ColorPalette {
   static const Color violet900 = Color(0xFF4C1D95);
 
   // ── Indigo (accent seed ramp) ──────────────────────────────────────────
-  static const Color indigo50 = Color(0xFFEEF2FF);
-  static const Color indigo100 = Color(0xFFE0E7FF);
-  static const Color indigo400 = Color(0xFF818CF8);
-  static const Color indigo700 = Color(0xFF4338CA);
-  static const Color indigo800 = Color(0xFF3730A3);
-  static const Color indigo900 = Color(0xFF312E81);
+  static const Color indigo50 = Color(0xFFEAECF9);
+  static const Color indigo100 = Color(0xFFE4E7FD);
+  static const Color indigo400 = Color(0xFF98A4EF);
+  static const Color indigo700 = Color(0xFF535FC5);
+  static const Color indigo800 = Color(0xFF414C9F);
+  static const Color indigo900 = Color(0xFF2C3152);
 
   // ── Orange (knowledge / expense accent) ────────────────────────────────
   static const Color orange500 = Color(0xFFF97316);

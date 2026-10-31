@@ -24,12 +24,12 @@ void main() {
       expect(style.fontFeatures, TypographyTokens.tabularFigures);
     }
 
-    test('numericDisplay resolves to 32/1.12 w700 -0.4', () {
+    test('numericDisplay resolves to 32/1.12 w600 -0.4', () {
       expectStyle(
         TypographyTokens.numericDisplay,
         size: 32,
         height: 1.12,
-        weight: FontWeight.w700,
+        weight: FontWeight.w600,
         letterSpacing: -0.4,
       );
     });

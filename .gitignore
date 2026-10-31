@@ -25,6 +25,15 @@ apps/mobile/apps/
 # Agent / platform
 .agent_context/
 
+# Impeccable local decision pages, captures and engine state.
+.impeccable/questions/
+.impeccable/mocks/
+.impeccable/review/
+.impeccable/build/
+.impeccable/data/
+.impeccable/direction-options.json
+.impeccable/config.local.json
+
 .codegraph
 
 .cache

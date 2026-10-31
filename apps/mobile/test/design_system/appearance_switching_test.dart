@@ -76,6 +76,35 @@ Future<ProviderContainer> _pump(
 void main() {
   setUp(() => appSheetOverlayDepthListenable.value = 0);
 
+  test('material modes keep navigation blur separate from content', () {
+    for (final material in AppMaterialStyle.values) {
+      for (final highContrast in [false, true]) {
+        final theme = resolveAppTheme(
+          ThemeInputs(
+            brightness: Brightness.light,
+            marketMode: MarketColorMode.redUpGreenDown,
+            materialStyle: material,
+            highContrast: highContrast,
+          ),
+        );
+        expect(
+          theme.glass.chrome.liveBlur,
+          !highContrast && material != AppMaterialStyle.solid,
+        );
+        for (final role in [
+          AppGlassRole.sheet,
+          AppGlassRole.sticky,
+          AppGlassRole.overlay,
+        ]) {
+          expect(
+            theme.glass.resolve(role).liveBlur,
+            !highContrast && material == AppMaterialStyle.translucent,
+          );
+        }
+      }
+    }
+  });
+
   test(
     'old and unknown preferences fall back; choices persist independently',
     () async {
@@ -88,16 +117,16 @@ void main() {
       final material = MaterialStyleController(prefs);
       addTearDown(visual.dispose);
       addTearDown(material.dispose);
-      expect(visual.state, AppVisualStyle.classic);
-      expect(material.state, AppMaterialStyle.solid);
-      await visual.set(AppVisualStyle.refined);
-      await material.set(AppMaterialStyle.translucent);
+      expect(visual.state, AppVisualStyle.refined);
+      expect(material.state, AppMaterialStyle.navigation);
+      await visual.set(AppVisualStyle.classic);
+      await material.set(AppMaterialStyle.solid);
       final reloadedVisual = VisualStyleController(prefs);
       final reloadedMaterial = MaterialStyleController(prefs);
       addTearDown(reloadedVisual.dispose);
       addTearDown(reloadedMaterial.dispose);
-      expect(reloadedVisual.state, AppVisualStyle.refined);
-      expect(reloadedMaterial.state, AppMaterialStyle.translucent);
+      expect(reloadedVisual.state, AppVisualStyle.classic);
+      expect(reloadedMaterial.state, AppMaterialStyle.solid);
     },
   );
 
@@ -126,7 +155,7 @@ void main() {
           expect(material.colorScheme.surface, app.surfaces.canvas);
           expect(material.colorScheme.surfaceContainerLow, app.surfaces.card);
           expect(app.glass.sheet.liveBlur, isFalse);
-          expect(app.glass.chrome.liveBlur, isFalse);
+          expect(app.glass.chrome.liveBlur, isTrue);
           expect(
             app.type.numericMono.fontFamily,
             TypographyTokens.fontFamilyMono,
@@ -294,16 +323,16 @@ void main() {
         ),
         textScale: 1.8,
       );
-      final option = find.byKey(const ValueKey('appearance-style.refined'));
+      final option = find.byKey(const ValueKey('appearance-style.classic'));
       await tester.ensureVisible(option);
       await tester.tap(option);
       await tester.pumpAndSettle();
-      expect(container.read(visualStyleProvider), AppVisualStyle.refined);
+      expect(container.read(visualStyleProvider), AppVisualStyle.classic);
       expect(
         container
             .read(sharedPreferencesProvider)
             .getString('naviwealth.theme.visual_style'),
-        'refined',
+        'classic',
       );
       expect(tester.takeException(), isNull);
     },

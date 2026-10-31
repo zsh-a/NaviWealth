@@ -12,28 +12,27 @@ import '../tokens/color_palette.dart';
 /// Hues that carry app semantics (green = profit/success, red = loss,
 /// amber = warning, orange = colorblind-down) are deliberately not offered.
 enum AppAccentSeed {
-  /// Default turquoise brand hue.
+  /// Turquoise alternative.
   cyan,
 
   /// Violet.
   violet,
 
-  /// Indigo.
+  /// Default iris-blue interaction hue.
   indigo;
 
   String get persistedKey => name;
 
   static AppAccentSeed fromKey(String? raw, {AppAccentSeed? fallback}) {
-    if (raw == null) return fallback ?? AppAccentSeed.cyan;
+    if (raw == null) return fallback ?? AppAccentSeed.indigo;
     for (final v in AppAccentSeed.values) {
       if (v.name == raw) return v;
     }
-    return fallback ?? AppAccentSeed.cyan;
+    return fallback ?? AppAccentSeed.indigo;
   }
 }
 
-/// Semantic slots one accent seed must provide. Mirrors how the cyan brand
-/// ramp is consumed today so the default seed stays pixel-identical.
+/// Semantic slots provided by each independently persisted interaction hue.
 @immutable
 class AccentSeedSlots {
   const AccentSeedSlots({

@@ -29,7 +29,6 @@ import '../domain/dashboard_models.dart';
 import 'activity_timeline_preview.dart';
 import 'currency_mismatch_banner.dart';
 import 'home_greeting_header.dart';
-import 'home_section.dart';
 
 part 'home_dashboard_body.dart';
 part 'home_net_worth_header.dart';

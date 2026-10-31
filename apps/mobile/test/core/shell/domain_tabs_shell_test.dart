@@ -144,6 +144,58 @@ GoRouter _routerWithHiddenReview() => GoRouter(
 void main() {
   tearDown(() => appSheetOverlayDepthListenable.value = 0);
 
+  testWidgets('enlarged dock reserves the same additional height in content', (
+    tester,
+  ) async {
+    tester.view
+      ..physicalSize = const Size(390, 844)
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    double? bottomPadding;
+    final router = _router(
+      one: Builder(
+        builder: (context) {
+          bottomPadding = MediaQuery.paddingOf(context).bottom;
+          return const Text('content');
+        },
+      ),
+    );
+    addTearDown(router.dispose);
+
+    Widget app(double scale) => ProviderScope(
+      child: MaterialApp.router(
+        routerConfig: router,
+        theme: AppTheme.light(),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: TextScaler.linear(scale)),
+          child: FTheme(
+            data: buildAppForuiTheme(brightness: Brightness.light, touch: true),
+            child: child!,
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(app(1));
+    await tester.pumpAndSettle();
+    final normalHeight = tester
+        .getSize(find.byType(FloatingGlassNavBar))
+        .height;
+    final normalPadding = bottomPadding!;
+    await tester.pumpWidget(app(2));
+    await tester.pumpAndSettle();
+    final largeHeight = tester.getSize(find.byType(FloatingGlassNavBar)).height;
+    expect(largeHeight, greaterThan(normalHeight));
+    expect(
+      bottomPadding! - normalPadding,
+      closeTo(largeHeight - normalHeight, 0.01),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('switching branches keeps the navigation shell mounted once', (
     tester,
   ) async {

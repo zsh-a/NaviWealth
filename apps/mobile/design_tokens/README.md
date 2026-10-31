@@ -6,6 +6,11 @@ this directory is a **generated, read-only export** of those values in the
 [W3C Design Tokens Community Group format] for design-tool handoff (it imports
 cleanly into [Tokens Studio for Figma]). Never edit `tokens.json` by hand —
 edit the Dart token files and regenerate. The [design system contract](../docs/design/15-ui-refactor-blueprint.md) defines theme and component ownership.
+[DESIGN.md](../../../DESIGN.md) records the implemented visual language and a
+portable default token snapshot; [.impeccable/design.json](../../../.impeccable/design.json)
+extends it with preview metadata. Neither replaces the Dart source or this
+generated W3C export. Flutter-specific Impeccable boundaries are recorded in
+[.agents/IMPECCABLE.md](../../../.agents/IMPECCABLE.md).
 
 [W3C Design Tokens Community Group format]: https://design-tokens.github.io/community-group/format/
 [Tokens Studio for Figma]: https://tokens.studio/
@@ -19,10 +24,10 @@ types (`Color`, `TextStyle`, `Cubic`), so it cannot run under plain
 
 ```bash
 # Regenerate design_tokens/tokens.json from the Dart tokens:
-UPDATE_DESIGN_TOKENS=1 flutter test test/tools/export_design_tokens_test.dart
+UPDATE_DESIGN_TOKENS=1 rtk flutter test test/tools/export_design_tokens_test.dart
 
 # Verify the committed file matches the Dart tokens (what CI runs):
-flutter test test/tools/export_design_tokens_test.dart
+rtk flutter test test/tools/export_design_tokens_test.dart
 ```
 
 CI runs this freshness test once in the regular Flutter test shards.
@@ -117,13 +122,23 @@ signal of direction, even in colorblind mode.
 1. Edit the Dart token file under `apps/mobile/lib/design_system/tokens/` or
    `theme/` (see the table above).
 2. Regenerate the JSON export:
-   `UPDATE_DESIGN_TOKENS=1 flutter test test/tools/export_design_tokens_test.dart`
-3. Run `flutter analyze` and `flutter test` from `apps/mobile/`.
+   `UPDATE_DESIGN_TOKENS=1 rtk flutter test test/tools/export_design_tokens_test.dart`
+3. Run the relevant `rtk flutter analyze` and focused `rtk flutter test` checks from `apps/mobile/`.
 4. Commit the Dart change together with the regenerated `tokens.json`.
 5. For Figma, re-import the regenerated `tokens.json` via Tokens Studio.
 
 ## Visual hierarchy and transitions
 
+- Porcelain is the shared content palette for classic and refined. Refined,
+  iris-blue (`indigo`) interaction color and navigation-only glass are the
+  defaults for absent or invalid preferences. Explicitly saved choices remain
+  valid. Domain chrome accents keep their identity; status and market colors
+  retain their own semantic roles.
+- The semantic display is Inter 48 medium; secondary display roles are 32 and
+  26. Numerals use lining tabular figures. Refined resolves the base line
+  height at 0.96 and removes tracking below 26dp; read `context.appTheme.type`
+  rather than styling feature text from the base table. Outfit remains a
+  legacy family constant, not the current display family.
 - Content cards use neutral opaque fills with no resting shadow or gradient.
   Hero cards use a larger radius and stronger typography. Light pointer hover
   adds a short contact shadow; dark separation comes from the surface ladder.
@@ -143,13 +158,19 @@ signal of direction, even in colorblind mode.
 - Segmented controls use a sliding selection surface when options fit one
   row, and retain local selection marks in wrapped layouts. Selection motion
   and chart interpolation stop under reduced motion.
-- Material effects default to solid and can be enabled independently of the
-  classic/refined visual preset in Appearance. System high contrast takes
-  precedence; forms always remain opaque. Modal scrims use color barriers.
-- Glass highlights are reserved for application chrome: the floating dock and
-  modal sheets use one live backdrop layer, while sticky summaries keep the
-  shared static light field without a per-scroll blur pass. Content modules
-  remain opaque and high-contrast surfaces omit live blur.
+- Material effects are independent of classic/refined. The default navigation
+  material enables live blur on navigation chrome while sticky surfaces,
+  sheets and overlays remain opaque. Solid disables live blur; fully
+  translucent is an explicit choice that permits additional chrome roles.
+  System high contrast takes precedence; forms remain opaque and scrims use
+  color barriers.
+- Glass highlights belong to shared application chrome. Theme role gates
+  control the live backdrop; content modules remain opaque. Do not add
+  per-scroll blur passes at feature call sites.
+- The floating dock has a 20dp radius and a normal 64dp height. Its shared
+  height function grows with actual scaled navigation-label metrics; the
+  shell uses that same result for bottom content reservation plus spacing
+  and safe area. Preserve this relationship under large text.
 - `AppGlassEnvironment` owns one light field for the shell. The active domain
   accent is mixed into that field at low energy, so switching FinanceOS,
   HealthOS, KnowledgeOS or ExecutionOS changes the chrome atmosphere without
@@ -169,10 +190,17 @@ signal of direction, even in colorblind mode.
   omits decorative light entirely. `SoftGlassSpec` owns both light/dark budgets.
 - Advanced material depth is role-aware: chrome, sticky, sheet and overlay use
   progressively stronger specular, occlusion and inset-rim budgets. The light
-  field is a paint-only approximation of thin translucent glass; only the
-  floating dock and modal sheets opt into the theme-gated `BackdropFilter`,
-  while sticky chrome remains static for scroll performance on Web and
-  low-power devices. The surface pointer listener is translucent so a drag can
+  field is a paint-only approximation of thin translucent glass. Navigation
+  uses the theme-gated `BackdropFilter` by default; the fully translucent
+  option can enable sheet and other chrome roles. The surface pointer listener is translucent so a drag can
   start in any empty part of the chrome without stealing child semantics.
   Keep the role from `AppGlassSurface`; do not recreate gradients at feature
   call sites.
+
+The redesign's captured evidence is Flutter widget-renderer output under
+`.impeccable/review/goldens/`, not a simulator or device capture. Native-device
+material/performance verification and comparison against the Linux golden
+baseline remain outstanding. Sidecar HTML/CSS snippets are self-contained
+translations for the preview panel; synthesized tonal strips are display
+metadata, not additional runtime tokens. No raster assets were added by this
+code-led redesign.
