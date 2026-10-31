@@ -16,26 +16,31 @@ const double _kIconSlotSize = 26;
 const double _kAssistantLabelBreakpoint = 390;
 const double _kNavLabelLineHeight = 1.15;
 
+int _navigationLabelMaxLines(BuildContext context) {
+  final size = TypographyTokens.labelSmall.fontSize!;
+  return MediaQuery.textScalerOf(context).scale(size) > size * 1.5 ? 2 : 1;
+}
+
 /// Shared by the dock and shell reservation; enlarged labels keep their scale.
 double floatingGlassNavBarHeight(BuildContext context) {
   final fontSize = TypographyTokens.labelSmall.fontSize!;
   final scaledSize = MediaQuery.textScalerOf(context).scale(fontSize);
-  final extraHeight = ((scaledSize - fontSize) * _kNavLabelLineHeight).clamp(
-    0.0,
-    double.infinity,
-  );
+  final extraHeight =
+      ((scaledSize * _navigationLabelMaxLines(context) - fontSize) *
+              _kNavLabelLineHeight)
+          .clamp(0.0, double.infinity);
   return (kFloatingGlassNavBarHeight + extraHeight).ceilToDouble();
 }
 
 /// A floating glass-morphism bottom navigation bar.
 ///
-/// Renders as a compact, translucent dock that floats above the content. The
-/// optional assistant action sits inside the same height as the tab
-/// destinations so the dock does not cover page-level floating actions.
+/// Renders the page destinations in a translucent capsule, with an optional
+/// independent assistant action at the trailing edge. Both share one height
+/// and reveal lifecycle, so the action never reads as another page tab or
+/// covers page-level floating actions.
 ///
-/// Tabs share the remaining width evenly. The optional assistant action is a
-/// separate, low-emphasis affordance at the trailing edge so it never reads as
-/// a selected navigation destination.
+/// The assistant uses an opaque accent tint rather than another live-blur
+/// surface. Labels appear only when every destination retains enough room.
 ///
 /// When [onAssistantAction] is null, no assistant button is rendered and tabs
 /// fill the full width evenly.
@@ -82,55 +87,114 @@ class FloatingGlassNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final compactAssistant =
-            constraints.maxWidth < _kAssistantLabelBreakpoint;
-        final destinationHeight =
-            floatingGlassNavBarHeight(context) - AppSpacing.s12;
-        return AppGlassSurface(
-          // The dock is the primary soft-glass surface. Keep the theme-owned
-          // liveBlur capability gate so system high contrast still fall
-          // back to an opaque fill, while normal devices preserve the content
-          // relationship that makes the material visibly glass-like.
-          frosted: true,
-          softLight: true,
-          trackPointer: true,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          boxShadow: AppShadow.nav,
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s8,
-            vertical: AppSpacing.s6,
-          ),
-          child: SizedBox(
-            height: destinationHeight,
-            child: Row(
-              children: [
-                for (var i = 0; i < items.length; i++)
-                  Expanded(
-                    child: _NavTabButton(
-                      tab: items[i],
-                      selected: i == selectedIndex,
-                      height: destinationHeight,
-                      accentColor: accentColor,
-                      onTap: () => onIndexChanged(i),
-                    ),
+        final height = floatingGlassNavBarHeight(context);
+        final destinationHeight = height - AppSpacing.s12;
+        final labeledAssistantWidth = onAssistantAction == null
+            ? null
+            : _labeledAssistantWidth(
+                context,
+                constraints.maxWidth,
+                kFloatingGlassNavBarHeight,
+              );
+        return SizedBox(
+          height: height,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: AppGlassSurface(
+                  key: const ValueKey('floating-nav.destinations'),
+                  // Keep live glass confined to the navigation capsule. The
+                  // theme still supplies the opaque high-contrast fallback.
+                  frosted: true,
+                  softLight: true,
+                  trackPointer: true,
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
+                  boxShadow: AppShadow.nav,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.s8,
+                    vertical: AppSpacing.s6,
                   ),
-                if (onAssistantAction != null)
-                  Padding(
-                    padding: const EdgeInsets.only(left: AppSpacing.s8),
-                    child: _AssistantActionButton(
-                      icon: assistantIcon,
-                      label: compactAssistant ? null : assistantLabel,
-                      semanticLabel: assistantSemanticLabel,
-                      compact: compactAssistant,
-                      onTap: onAssistantAction!,
-                    ),
+                  child: Row(
+                    children: [
+                      for (var i = 0; i < items.length; i++)
+                        Expanded(
+                          child: _NavTabButton(
+                            tab: items[i],
+                            selected: i == selectedIndex,
+                            height: destinationHeight,
+                            accentColor: accentColor,
+                            onTap: () => onIndexChanged(i),
+                          ),
+                        ),
+                    ],
                   ),
+                ),
+              ),
+              if (onAssistantAction != null) ...[
+                const SizedBox(width: AppSpacing.s12),
+                _AssistantActionButton(
+                  icon: assistantIcon,
+                  label: labeledAssistantWidth == null ? null : assistantLabel,
+                  semanticLabel: assistantSemanticLabel,
+                  width: labeledAssistantWidth ?? kFloatingGlassNavBarHeight,
+                  height: kFloatingGlassNavBarHeight,
+                  onTap: onAssistantAction!,
+                ),
               ],
-            ),
+            ],
           ),
         );
       },
     );
+  }
+
+  double? _labeledAssistantWidth(
+    BuildContext context,
+    double availableWidth,
+    double height,
+  ) {
+    final label = assistantLabel;
+    if (label == null ||
+        label.isEmpty ||
+        availableWidth < _kAssistantLabelBreakpoint) {
+      return null;
+    }
+    final painter = TextPainter(
+      textDirection: Directionality.of(context),
+      textScaler: MediaQuery.textScalerOf(context),
+      maxLines: 1,
+    );
+    try {
+      double measure(String text, TextStyle style) {
+        painter.text = TextSpan(text: text, style: style);
+        painter.layout();
+        return painter.width;
+      }
+
+      var tabWidth = AppControlHeights.touchTarget;
+      for (final tab in items) {
+        final width =
+            measure(tab.label, TypographyTokens.labelSmall) + AppSpacing.s12;
+        if (width > tabWidth) tabWidth = width;
+      }
+      final contentWidth =
+          measure(label, TypographyTokens.labelSmallMedium) +
+          AppIconSizes.md +
+          AppSpacing.s6 +
+          AppSpacing.s24;
+      final actionWidth = contentWidth < height
+          ? height
+          : contentWidth.ceilToDouble();
+      final requiredWidth =
+          tabWidth * items.length +
+          AppSpacing.s16 +
+          AppSpacing.s12 +
+          actionWidth;
+      return requiredWidth <= availableWidth ? actionWidth : null;
+    } finally {
+      painter.dispose();
+    }
   }
 }
 
@@ -238,7 +302,8 @@ class _NavTabButton extends StatelessWidget {
                           color: labelColor,
                           height: _kNavLabelLineHeight,
                         ),
-                maxLines: 1,
+                maxLines: _navigationLabelMaxLines(context),
+                textAlign: TextAlign.center,
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: AppSpacing.s2),
@@ -261,14 +326,16 @@ class _AssistantActionButton extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.semanticLabel,
-    required this.compact,
+    required this.width,
+    required this.height,
     required this.onTap,
   });
 
   final IconData icon;
   final String? label;
   final String? semanticLabel;
-  final bool compact;
+  final double width;
+  final double height;
   final VoidCallback onTap;
 
   @override
@@ -282,26 +349,38 @@ class _AssistantActionButton extends StatelessWidget {
       focusedOutlineStyle: FFocusedOutlineStyleDelta.delta(
         borderRadius: BorderRadius.circular(AppRadius.full),
       ),
-      builder: (context, variants, child) =>
-          AppGlassFeedback(variants: variants, child: child!),
-      child: Container(
+      builder: (context, variants, child) {
+        final tint = variants.contains(FTappableVariant.pressed)
+            ? AppOpacity.highlight
+            : variants.contains(FTappableVariant.hovered)
+            ? AppOpacity.light
+            : AppOpacity.softTint;
+        return AnimatedContainer(
+          duration: AppMotionPolicy.duration(
+            context,
+            Motion.fast,
+            role: AppMotionRole.decorative,
+          ),
+          curve: Motion.standardDecelerate,
+          decoration: BoxDecoration(
+            color: Color.alphaBlend(
+              foreground.withValues(alpha: tint),
+              colors.card,
+            ),
+            borderRadius: BorderRadius.circular(AppRadius.full),
+          ),
+          child: child,
+        );
+      },
+      child: SizedBox(
         key: const ValueKey<String>('floating-nav.assistant'),
-        height: AppSpacing.s40,
-        constraints: BoxConstraints(
-          minWidth: compact ? AppSpacing.s40 : AppSpacing.s64,
-        ),
-        padding: EdgeInsets.symmetric(
-          horizontal: compact ? AppSpacing.s8 : AppSpacing.s10,
-        ),
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(AppRadius.full),
-        ),
+        height: height,
+        width: width,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: foreground, size: AppIconSizes.h18),
+            Icon(icon, color: foreground, size: AppIconSizes.md),
             if (label != null) ...[
               const SizedBox(width: AppSpacing.s6),
               Text(

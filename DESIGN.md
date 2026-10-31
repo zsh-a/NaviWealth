@@ -284,10 +284,11 @@ Finance's established Today and Wealth views use the page-width cap, with
 Today pairing actions beside the amount when the supporting-pane composition fits.
 Narrow and large-text layouts stack in reading order.
 
-The dock's normal height is s64. It grows by the actual scaled 11px navigation
-label increase times its 1.15 line height, rounded upward. The shell reserves
-that same computed height plus dock spacing and the safe-area inset. Do not
-freeze the dock height or duplicate its bottom reservation in pages.
+The dock's normal height is s64. It grows by the scaled 11px navigation label
+height, including a second line above 150% text scale, minus the normal
+single-line height; line height is 1.15 and the result rounds upward. The shell
+reserves that same computed height plus dock spacing and the safe-area inset.
+Do not freeze the dock height or duplicate its bottom reservation in pages.
 
 ## Elevation & Depth
 
@@ -371,9 +372,17 @@ The floating dock uses the xl continuous radius, s8 horizontal and s6 vertical
 inset, shared nav shadow and theme-gated soft glass. A selected destination
 combines an opaque 8% accent blend over the card surface, a stronger 11px label,
 accent icon and short underline; unselected labels are medium weight and muted.
-The dock grows with system text scaling. Focus and selected semantics remain
-independent of the light field. Tablet and desktop navigation retain their
-existing shell ownership and keyboard behavior.
+The assistant action sits outside the destination capsule, separated by s12.
+Its opaque soft primary tint and independent circular/pill shape identify an
+action rather than another selected tab; it adds no second live-blur layer.
+The action retains a 64px touch target while enlarged destination labels grow
+the dock height. Above 150% text scale, destination labels may use two lines;
+the shared height helper reserves the same space in the routed page. A visible
+assistant label is added only when the remaining width fits the scaled
+destination labels; its full accessible name is retained
+in the icon-only layout. Both groups share the shell's reveal and safe-area
+reservation. Tablet and desktop navigation retain their existing shell
+ownership and keyboard behavior.
 
 State changes use `AppMotionPolicy`, the shared Motion durations and curves.
 Reduced motion suppresses decorative movement and retains recognizable states.

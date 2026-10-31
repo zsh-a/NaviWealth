@@ -22,7 +22,9 @@ const _tabs = [
 
 Widget _nav({
   required ValueChanged<int> onIndexChanged,
-  required VoidCallback onAssistant,
+  required VoidCallback? onAssistant,
+  List<FloatingNavTab> items = _tabs,
+  String? assistantLabel = 'Ask AI',
   double width = 360,
   Brightness brightness = Brightness.light,
   double textScale = 1,
@@ -59,11 +61,11 @@ Widget _nav({
             child: SizedBox(
               width: width,
               child: FloatingGlassNavBar(
-                items: _tabs,
+                items: items,
                 selectedIndex: selectedIndex,
                 onIndexChanged: onIndexChanged,
                 onAssistantAction: onAssistant,
-                assistantLabel: 'Ask AI',
+                assistantLabel: assistantLabel,
                 assistantSemanticLabel: 'Open assistant conversation',
               ),
             ),
@@ -73,6 +75,29 @@ Widget _nav({
     ),
   ),
 );
+
+const _fourTabs = [
+  FloatingNavTab(
+    icon: FLucideIcons.house,
+    selectedIcon: FLucideIcons.house,
+    label: 'Today',
+  ),
+  FloatingNavTab(
+    icon: FLucideIcons.receipt,
+    selectedIcon: FLucideIcons.receipt,
+    label: 'Activity',
+  ),
+  FloatingNavTab(
+    icon: FLucideIcons.wallet,
+    selectedIcon: FLucideIcons.wallet,
+    label: 'Wealth',
+  ),
+  FloatingNavTab(
+    icon: FLucideIcons.lightbulb,
+    selectedIcon: FLucideIcons.lightbulb,
+    label: 'Plan',
+  ),
+];
 
 void main() {
   for (final brightness in Brightness.values) {
@@ -241,6 +266,149 @@ void main() {
     expect(assistantTaps, 2);
     await tester.pumpAndSettle();
     semantics.dispose();
+  });
+  testWidgets(
+    'assistant is a separate action with its own target and no tab change',
+    (tester) async {
+      final selected = <int>[];
+      var assistantTaps = 0;
+      await tester.pumpWidget(
+        _nav(
+          items: _fourTabs,
+          onIndexChanged: selected.add,
+          onAssistant: () => assistantTaps++,
+        ),
+      );
+      final destinations = find.byKey(
+        const ValueKey('floating-nav.destinations'),
+      );
+      final assistant = find.byKey(const ValueKey('floating-nav.assistant'));
+      final navRect = tester.getRect(destinations);
+      final aiRect = tester.getRect(assistant);
+      expect(aiRect.left - navRect.right, AppSpacing.s12);
+      expect(aiRect.center.dy, navRect.center.dy);
+      expect(aiRect.size.shortestSide, greaterThanOrEqualTo(48));
+      expect(
+        find.ancestor(of: assistant, matching: find.byType(AppGlassSurface)),
+        findsNothing,
+      );
+      expect(find.byType(AppGlassSurface), findsOneWidget);
+      await tester.tapAt(
+        Offset(navRect.right + AppSpacing.s6, navRect.center.dy),
+      );
+      expect(selected, isEmpty);
+      expect(assistantTaps, 0);
+      await tester.tap(assistant);
+      expect(selected, isEmpty);
+      expect(assistantTaps, 1);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  for (final scale in [1.0, 2.0, 3.0]) {
+    testWidgets(
+      'four destinations retain touch targets on a narrow dock at $scale',
+      (tester) async {
+        await tester.pumpWidget(
+          _nav(
+            width: 288,
+            textScale: scale,
+            items: _fourTabs,
+            onIndexChanged: (_) {},
+            onAssistant: () {},
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        for (final tab in _fourTabs) {
+          final target = find.ancestor(
+            of: find.text(tab.label),
+            matching: find.byType(AppActionTappable),
+          );
+          expect(tester.getSize(target).width, greaterThanOrEqualTo(48));
+          expect(tester.getSize(target).height, greaterThanOrEqualTo(48));
+        }
+        final action = find.byKey(const ValueKey('floating-nav.assistant'));
+        final destinations = find.byKey(
+          const ValueKey('floating-nav.destinations'),
+        );
+        expect(
+          tester.getRect(action).center.dy,
+          tester.getRect(destinations).center.dy,
+        );
+        expect(tester.getSize(action), const Size(64, 64));
+        expect(find.text('Ask AI'), findsNothing);
+      },
+    );
+  }
+
+  testWidgets('assistant label yields to page labels at large text sizes', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _nav(width: 500, onIndexChanged: (_) {}, onAssistant: () {}),
+    );
+    expect(find.text('Ask AI'), findsOneWidget);
+    await tester.pumpWidget(
+      _nav(
+        width: 500,
+        textScale: 3,
+        onIndexChanged: (_) {},
+        onAssistant: () {},
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Ask AI'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'large Chinese destination names remain readable on narrow screens',
+    (tester) async {
+      const labels = ['今日', '记录', '资产', '规划'];
+      final tabs = [
+        for (var i = 0; i < _fourTabs.length; i++)
+          FloatingNavTab(
+            icon: _fourTabs[i].icon,
+            selectedIcon: _fourTabs[i].selectedIcon,
+            label: labels[i],
+          ),
+      ];
+      await tester.pumpWidget(
+        _nav(
+          width: 288,
+          textScale: 3,
+          items: tabs,
+          onIndexChanged: (_) {},
+          onAssistant: () {},
+        ),
+      );
+      await tester.pumpAndSettle();
+      for (final label in labels) {
+        final paragraph = tester.renderObject<RenderParagraph>(
+          find.text(label),
+        );
+        expect(paragraph.didExceedMaxLines, isFalse);
+      }
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('destinations fill the dock when assistant is unavailable', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _nav(width: 360, onIndexChanged: (_) {}, onAssistant: null),
+    );
+    expect(find.byKey(const ValueKey('floating-nav.assistant')), findsNothing);
+    expect(
+      tester
+          .getSize(find.byKey(const ValueKey('floating-nav.destinations')))
+          .width,
+      360,
+    );
+    expect(tester.getSize(find.byType(FloatingGlassNavBar)).height, 64);
   });
 }
 
