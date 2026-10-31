@@ -201,7 +201,7 @@ void main() {
     tester,
   ) async {
     await _pump(tester, initialLocation: '/appearance');
-    expect(find.text('界面风格'), findsOneWidget);
+    expect(find.text('界面风格'), findsNothing);
     expect(find.text('材质效果'), findsOneWidget);
     expect(find.text('主题模式'), findsOneWidget);
     expect(find.text('显示增强'), findsNothing);
