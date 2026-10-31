@@ -31580,6 +31580,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Food actions'**
   String get healthMealFoodActions;
+
+  /// No description provided for @healthMealDateToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get healthMealDateToday;
+
+  /// No description provided for @healthMealDateYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get healthMealDateYesterday;
+
+  /// No description provided for @healthMealDateChoose.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose meal date'**
+  String get healthMealDateChoose;
+
+  /// No description provided for @healthMealDatePrevious.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous day'**
+  String get healthMealDatePrevious;
+
+  /// No description provided for @healthMealDateNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next day'**
+  String get healthMealDateNext;
+
+  /// No description provided for @healthMealDateReturnToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to today'**
+  String get healthMealDateReturnToday;
+
+  /// No description provided for @healthMealDateSelectLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose meal date: {date}'**
+  String healthMealDateSelectLabel(String date);
 }
 
 class _AppLocalizationsDelegate

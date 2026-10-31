@@ -17766,4 +17766,27 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get healthMealFoodActions => '食物操作';
+
+  @override
+  String get healthMealDateToday => '今天';
+
+  @override
+  String get healthMealDateYesterday => '昨天';
+
+  @override
+  String get healthMealDateChoose => '选择餐食日期';
+
+  @override
+  String get healthMealDatePrevious => '前一天';
+
+  @override
+  String get healthMealDateNext => '后一天';
+
+  @override
+  String get healthMealDateReturnToday => '回到今天';
+
+  @override
+  String healthMealDateSelectLabel(String date) {
+    return '选择餐食日期：$date';
+  }
 }

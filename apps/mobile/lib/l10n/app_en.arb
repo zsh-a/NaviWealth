@@ -9104,5 +9104,13 @@
   "healthMealNutrientTotalError": "Protein, carbs and fat must total no more than 105 g per 100 g.",
   "healthMealPortionKcal": "This amount · about {kcal} kcal",
   "@healthMealPortionKcal": {"placeholders": {"kcal": {"type": "String"}}},
-  "healthMealFoodActions": "Food actions"
+  "healthMealFoodActions": "Food actions",
+  "healthMealDateToday": "Today",
+  "healthMealDateYesterday": "Yesterday",
+  "healthMealDateChoose": "Choose meal date",
+  "healthMealDatePrevious": "Previous day",
+  "healthMealDateNext": "Next day",
+  "healthMealDateReturnToday": "Back to today",
+  "healthMealDateSelectLabel": "Choose meal date: {date}",
+  "@healthMealDateSelectLabel": {"placeholders": {"date": {"type": "String"}}}
 }

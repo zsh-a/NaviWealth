@@ -30,6 +30,7 @@ import 'package:naviwealth/features/health/domain/health_meal.dart';
 import 'package:naviwealth/features/health/domain/meal_photo.dart';
 import 'package:naviwealth/features/health/ui/health_meal_entry_page.dart';
 import 'package:naviwealth/features/health/ui/health_meals_page.dart';
+import 'package:naviwealth/features/health/ui/meal_date_control.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 import '../../../core/persistence/test_database.dart';
@@ -155,6 +156,7 @@ Future<GoRouter> _pump(
   _Capture? capture,
   MealPhotoSaver? photoSaver,
   HealthMealRepository? repository,
+  bool openEntry = true,
   double width = 800,
   double height = 1400,
   double scale = 1,
@@ -171,7 +173,14 @@ Future<GoRouter> _pump(
         path: HealthRoutes.meals,
         builder: (_, _) => const HealthMealsPage(),
         routes: [
-          GoRoute(path: 'new', builder: (_, _) => const HealthMealEntryPage()),
+          GoRoute(
+            path: 'new',
+            builder: (_, state) => HealthMealEntryPage(
+              initialDay: DateTime.tryParse(
+                state.uri.queryParameters['day'] ?? '',
+              ),
+            ),
+          ),
           GoRoute(
             path: ':id',
             builder: (_, state) =>
@@ -207,7 +216,10 @@ Future<GoRouter> _pump(
         routerConfig: router,
         theme: AppTheme.light(),
         locale: locale,
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        localizationsDelegates: const [
+          ...AppLocalizations.localizationsDelegates,
+          ...FLocalizations.localizationsDelegates,
+        ],
         supportedLocales: AppLocalizations.supportedLocales,
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(context).copyWith(
@@ -220,10 +232,12 @@ Future<GoRouter> _pump(
     ),
   );
   await tester.pumpAndSettle();
-  await tester.tap(
-    find.text(locale.languageCode == 'zh' ? '记录饮食' : 'Record a meal'),
-  );
-  await tester.pumpAndSettle();
+  if (openEntry) {
+    await tester.tap(
+      find.text(locale.languageCode == 'zh' ? '记录饮食' : 'Record a meal'),
+    );
+    await tester.pumpAndSettle();
+  }
   return router;
 }
 
@@ -746,6 +760,123 @@ void main() {
       expect(find.byKey(const Key('meal-food-protein')), findsOneWidget);
       expect(find.byKey(const Key('meal-food-carbs')), findsOneWidget);
       expect(find.byKey(const Key('meal-food-fat')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+    },
+  );
+  testWidgets(
+    'history date browsing is carried into a new meal and persisted',
+    (tester) async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final repository = _DelayedRepository(db);
+      for (final offset in [0, 1]) {
+        final day = DateTime.utc(2026, 10, 28 - offset);
+        await repository.save(
+          expectedOwnerUserId: kLocalOnlyUserId,
+          capturedAt: DateTime(2026, 10, 28 - offset, 12),
+          day: day,
+          type: HealthMealType.lunch,
+          foods: [
+            mealFoodCatalog.first.portion(
+              100,
+              name: offset == 0 ? 'Today rice' : 'Yesterday rice',
+            ),
+          ],
+        );
+      }
+      await _pump(
+        tester,
+        db,
+        openEntry: false,
+        repository: repository,
+        client: _Recognition(),
+      );
+      expect(find.text('Today rice'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('meal-date-previous')));
+      await tester.pumpAndSettle();
+      expect(find.text('Yesterday rice'), findsOneWidget);
+      expect(find.text('Today rice'), findsNothing);
+      await tester.tap(find.text('Record a meal'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<MealDateControl>(find.byType(MealDateControl)).day,
+        DateTime.utc(2026, 10, 27),
+      );
+      await _identify(tester);
+      await tester.tap(find.byKey(const Key('meal-save')));
+      await tester.pumpAndSettle();
+      final stored = (await db.select(db.healthMeals).get()).singleWhere(
+        (row) => row.foodsJson.contains('Rice'),
+      );
+      expect(stored.day.toUtc(), DateTime.utc(2026, 10, 27));
+      expect(find.text('Yesterday rice'), findsOneWidget);
+      expect(find.text('Rice'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets(
+    'date changes guard unsaved input while cancel and same-day choices do not',
+    (tester) async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      await _pump(tester, db);
+      await tester.tap(find.byKey(const Key('meal-date-open')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('meal-date-open')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('meal-date-today')));
+      await tester.pumpAndSettle();
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.text('Discard changes?'), findsNothing);
+      expect(find.byType(HealthMealsPage), findsOneWidget);
+      await tester.tap(find.text('Record a meal'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('meal-date-open')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('meal-date-yesterday')));
+      await tester.pumpAndSettle();
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.text('Discard changes?'), findsOneWidget);
+      expect(await db.select(db.healthMeals).get(), isEmpty);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets(
+    'moving an older evening meal to today preserves type and saves a valid instant',
+    (tester) async {
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final repository = _DelayedRepository(db);
+      final meal = await repository.save(
+        expectedOwnerUserId: kLocalOnlyUserId,
+        capturedAt: DateTime(2026, 10, 27, 21),
+        day: DateTime.utc(2026, 10, 27),
+        type: HealthMealType.dinner,
+        foods: [mealFoodCatalog.first.portion(100)],
+      );
+      final router = await _pump(tester, db, repository: repository);
+      router.go(HealthRoutes.mealEdit(meal.id));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('meal-date-open')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('meal-date-today')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('meal-save')));
+      await tester.pumpAndSettle();
+      final row = (await db.select(db.healthMeals).get()).single;
+      expect(row.day.toUtc(), DateTime.utc(2026, 10, 28));
+      expect(row.capturedAt.isAfter(_now), isFalse);
+      expect(row.mealType, 'dinner');
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pumpAndSettle();

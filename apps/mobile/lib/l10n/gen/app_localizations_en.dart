@@ -18805,4 +18805,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get healthMealFoodActions => 'Food actions';
+
+  @override
+  String get healthMealDateToday => 'Today';
+
+  @override
+  String get healthMealDateYesterday => 'Yesterday';
+
+  @override
+  String get healthMealDateChoose => 'Choose meal date';
+
+  @override
+  String get healthMealDatePrevious => 'Previous day';
+
+  @override
+  String get healthMealDateNext => 'Next day';
+
+  @override
+  String get healthMealDateReturnToday => 'Back to today';
+
+  @override
+  String healthMealDateSelectLabel(String date) {
+    return 'Choose meal date: $date';
+  }
 }

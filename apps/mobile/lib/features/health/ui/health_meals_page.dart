@@ -11,6 +11,7 @@ import '../data/health_meal_providers.dart';
 import '../data/health_series_providers.dart';
 import '../domain/health_meal.dart';
 import 'health_meal_summary.dart';
+import 'meal_date_control.dart';
 
 class HealthMealsPage extends ConsumerStatefulWidget {
   const HealthMealsPage({super.key});
@@ -38,28 +39,11 @@ class _HealthMealsPageState extends ConsumerState<HealthMealsPage> {
       ),
       child: ListView(
         children: [
-          FDateField.calendar(
-            key: ValueKey(_day),
-            label: Text(l.commonDate),
-            format: (_, value, _) => context.formatters(ref).date(value),
-            clearable: false,
-            selectionControl: FDateSelectionControl.managedSingle(
-              initial: _day,
-              onChange: (day) {
-                if (day != null) {
-                  setState(
-                    () => _day = DateTime.utc(day.year, day.month, day.day),
-                  );
-                }
-              },
-            ),
-            calendar: FDateFieldGridCalendarProperties(
-              control: FGridCalendarControl(
-                start: DateTime.utc(1970),
-                end: today.add(const Duration(days: 1)),
-                today: today,
-              ),
-            ),
+          MealDateControl(
+            day: _day,
+            today: today,
+            browse: true,
+            onChanged: (day) => setState(() => _day = day),
           ),
           const SizedBox(height: AppSpacing.s12),
           AppBusyButton(

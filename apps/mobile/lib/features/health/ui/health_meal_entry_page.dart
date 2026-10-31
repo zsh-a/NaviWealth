@@ -7,7 +7,6 @@ import 'package:forui/forui.dart';
 import '../../../core/auth/current_user.dart';
 import '../../../core/auth/domain_scope.dart';
 import '../../../core/auth/providers.dart' as auth;
-import '../../../core/format/providers.dart';
 import '../../../core/forms/forms.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -20,6 +19,7 @@ import '../data/meal_video_frames.dart';
 import '../domain/health_meal.dart';
 import '../domain/meal_photo.dart';
 import 'health_meal_summary.dart';
+import 'meal_date_control.dart';
 import 'meal_food_sheet.dart';
 import 'meal_photo_list.dart';
 
@@ -142,7 +142,7 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
 
   void _setCaptureDay(DateTime day) {
     final time = _capturedAt.toLocal();
-    _capturedAt = DateTime(
+    final candidate = DateTime(
       day.year,
       day.month,
       day.day,
@@ -150,6 +150,25 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
       time.minute,
       time.second,
     );
+    final now = ref.read(healthClockProvider)();
+    // Moving an older evening meal to today must not create a future instant.
+    _capturedAt = candidate.isAfter(now) ? now : candidate;
+  }
+
+  void _changeMealDay(DateTime day) {
+    final today = ref.read(healthCalendarDayProvider);
+    if (_busy ||
+        !_sessionValid ||
+        day.year < 1970 ||
+        day.isAfter(today) ||
+        day == _day) {
+      return;
+    }
+    setState(() {
+      _day = DateTime.utc(day.year, day.month, day.day);
+      _setCaptureDay(_day);
+    });
+    dirty.markDirty();
   }
 
   @override
@@ -228,30 +247,10 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
                 child: Text(l.commonRetry),
               ),
             ] else ...[
-              FDateField.calendar(
-                key: ValueKey(_day),
-                label: Text(l.commonDate),
-                format: (_, value, _) => context.formatters(ref).date(value),
-                enabled: !_busy,
-                clearable: false,
-                selectionControl: FDateSelectionControl.managedSingle(
-                  initial: _day,
-                  onChange: (day) {
-                    if (day == null || _busy) return;
-                    setState(() {
-                      _day = DateTime.utc(day.year, day.month, day.day);
-                      _setCaptureDay(_day);
-                    });
-                    dirty.markDirty();
-                  },
-                ),
-                calendar: FDateFieldGridCalendarProperties(
-                  control: FGridCalendarControl(
-                    start: DateTime.utc(1970),
-                    end: today.add(const Duration(days: 1)),
-                    today: today,
-                  ),
-                ),
+              MealDateControl(
+                day: _day,
+                today: today,
+                onChanged: _busy ? null : _changeMealDay,
               ),
               const SizedBox(height: AppSpacing.s8),
               SegmentedRow<HealthMealType>.inline(

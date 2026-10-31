@@ -5850,5 +5850,13 @@
   "healthMealNutrientTotalError": "每百克蛋白质、碳水和脂肪的合计不能超过 105 克。",
   "healthMealPortionKcal": "本份约 {kcal} 千卡",
   "@healthMealPortionKcal": {"placeholders": {"kcal": {"type": "String"}}},
-  "healthMealFoodActions": "食物操作"
+  "healthMealFoodActions": "食物操作",
+  "healthMealDateToday": "今天",
+  "healthMealDateYesterday": "昨天",
+  "healthMealDateChoose": "选择餐食日期",
+  "healthMealDatePrevious": "前一天",
+  "healthMealDateNext": "后一天",
+  "healthMealDateReturnToday": "回到今天",
+  "healthMealDateSelectLabel": "选择餐食日期：{date}",
+  "@healthMealDateSelectLabel": {"placeholders": {"date": {"type": "String"}}}
 }

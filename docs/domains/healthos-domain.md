@@ -211,6 +211,13 @@ a wearable, Health platform permissions, or an AI profile. Energy intake is
 separate from `active_energy_daily` and `total_energy_daily` expenditure;
 missing meal records never mean zero intake or an established calorie deficit.
 
+Capture presents the selected day as compact date context, with relative labels,
+an absolute date, and a weekday. Capture and history share an immediate-selection
+date sheet with Today/Yesterday shortcuts and no future dates. History also has
+previous/next-day controls and Return to Today; its selected day carries into a
+new meal. Cancelling or reselecting the same day leaves the form unchanged.
+Date-only values retain the authored calendar day across timezones.
+
 Capture is photo-first, with library and manual entry available alongside the
 camera. Supplemental notes and video capture use progressive disclosure.
 Photo thumbnails open preview, view-role, and removal controls; previews
