@@ -256,7 +256,7 @@ class _NavTabButton extends StatelessWidget {
             // channels and makes the outgoing destination briefly turn gray.
             color: selected
                 ? selectedSurface
-                : selectedSurface.withValues(alpha: 0),
+                : selectedSurface.withValues(alpha: AppOpacity.transparent),
           ),
           child: child,
         ),

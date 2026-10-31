@@ -120,13 +120,15 @@ void main() {
   });
 
   group('FloatingGlassNavBar', () {
-    testWidgets('renders a compact trailing assistant action', (tester) async {
+    testWidgets('renders a labeled independent assistant action on wide bars', (
+      tester,
+    ) async {
       var assistantTaps = 0;
       await tester.pumpWidget(
         _wrap(
           Center(
             child: SizedBox(
-              width: 420,
+              width: 500,
               child: FloatingGlassNavBar(
                 items: const [
                   FloatingNavTab(
@@ -200,13 +202,21 @@ void main() {
       final assistant = find.byKey(
         const ValueKey<String>('floating-nav.assistant'),
       );
-      expect(tester.getSize(assistant).height, AppSpacing.s40);
+      expect(tester.getSize(assistant).height, kFloatingGlassNavBarHeight);
       expect(find.text('Ask AI'), findsOneWidget);
       expect(find.bySemanticsLabel('Open assistant'), findsOneWidget);
 
-      final surface = tester.widget<Container>(assistant);
-      final decoration = surface.decoration! as BoxDecoration;
-      expect(decoration.border, isNull);
+      final destinations = find.byKey(
+        const ValueKey('floating-nav.destinations'),
+      );
+      expect(
+        tester.getRect(assistant).left - tester.getRect(destinations).right,
+        AppSpacing.s12,
+      );
+      expect(
+        find.ancestor(of: assistant, matching: find.byType(AppGlassSurface)),
+        findsNothing,
+      );
 
       await tester.tap(assistant);
       await tester.pumpAndSettle();
@@ -255,7 +265,7 @@ void main() {
       );
       expect(find.text('Ask AI'), findsNothing);
       expect(find.bySemanticsLabel('Open assistant'), findsOneWidget);
-      expect(tester.getSize(assistant).width, AppSpacing.s40);
+      expect(tester.getSize(assistant).width, kFloatingGlassNavBarHeight);
     });
   });
 }
