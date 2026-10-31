@@ -4094,15 +4094,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAppearanceSection => 'Appearance';
 
   @override
-  String get settingsVisualStyleTitle => 'Interface style';
-
-  @override
-  String get visualStyleClassic => 'Classic';
-
-  @override
-  String get visualStyleRefined => 'Refined';
-
-  @override
   String get settingsMaterialStyleTitle => 'Materials';
 
   @override
@@ -8362,13 +8353,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsAiHubTrustSection => 'Memory & privacy';
 
   @override
-  String get settingsAiHistoryTitle => 'Conversations';
-
-  @override
-  String get settingsAiHistorySubtitle =>
-      'Continue or review your AI conversations';
-
-  @override
   String get personalMemoryTitle => 'Personal memory';
 
   @override
@@ -8871,59 +8855,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String agentSettingsOverviewNotificationsOn(int count) {
     return 'Notifications $count';
   }
-
-  @override
-  String get agentQualityTitle => '30-day quality';
-
-  @override
-  String get agentQualityNoRuns => 'No completed runs in this window';
-
-  @override
-  String agentQualityCompletedRuns(int count) {
-    return '$count completed runs';
-  }
-
-  @override
-  String agentQualityReadyRate(int percent, int count, int total) {
-    return 'Ready $percent% · $count/$total';
-  }
-
-  @override
-  String agentQualityNoFindingRate(int percent, int count, int total) {
-    return 'No finding $percent% · $count/$total';
-  }
-
-  @override
-  String agentQualityFailureRate(int percent, int count, int total) {
-    return 'Failed $percent% · $count/$total';
-  }
-
-  @override
-  String agentQualitySuppressedRate(int percent, int count, int total) {
-    return 'Hidden or delayed $percent% · $count/$total';
-  }
-
-  @override
-  String agentQualityEvidenceRate(int percent, int count, int total) {
-    return 'Evidence-linked $percent% · $count/$total';
-  }
-
-  @override
-  String get agentQualityEvidenceNavigationNoSamples =>
-      'No evidence-open samples';
-
-  @override
-  String agentQualityEvidenceNavigationRate(
-    int percent,
-    int successes,
-    int attempts,
-  ) {
-    return 'Evidence opened $percent% · $successes/$attempts';
-  }
-
-  @override
-  String get agentQualityPrivacyNote =>
-      'Device-only aggregates · no result content, evidence ids, or routes retained';
 
   @override
   String get agentSettingsNeverRun => 'Never run';
@@ -16148,23 +16079,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get financialInboxEvidenceAssetId => 'Asset';
-
-  @override
-  String get settingsProductMetricsTitle => 'Local product metrics';
-
-  @override
-  String get settingsProductMetricsSubtitle =>
-      'Opt in to device-only funnel counters. No financial values or identifiers are recorded or uploaded.';
-
-  @override
-  String get settingsProductMetricsCopy => 'Copy product evidence';
-
-  @override
-  String get settingsProductMetricsCopySubtitle =>
-      'Export privacy-safe daily and total aggregates from this device.';
-
-  @override
-  String get settingsProductMetricsCopied => 'Product evidence copied';
 
   @override
   String get lifeEventScenariosTitle => 'Life-event scenarios';

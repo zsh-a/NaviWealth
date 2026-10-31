@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/ai/composition/proposal_applier.dart';
 import '../../../core/ai/composition/proposal_apply_state.dart';
 import '../../../core/ai/composition/proposal_plan.dart';
-import '../../../core/product/product_metrics.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../application/knowledge_merge_proposal_applier.dart';
@@ -20,13 +19,11 @@ class KnowledgeProposalApplier implements ProposalApplier {
     required this.repository,
     required this.ownerUserId,
     required this.stamp,
-    this.onDecisionCreated,
   });
 
   final KnowledgeRepository repository;
   final String ownerUserId;
   final Future<SyncMeta> Function() stamp;
-  final Future<void> Function()? onDecisionCreated;
 
   @override
   Future<ProposalApplyState> apply(ReadyProposalPlan plan) async {
@@ -99,12 +96,6 @@ class KnowledgeProposalApplier implements ProposalApplier {
           sync: sync,
         ),
       );
-      try {
-        await onDecisionCreated?.call();
-      } on Object {
-        // Product evidence is best-effort and must not invalidate a confirmed
-        // domain write.
-      }
       return _createdState(id, 'knowledge_decisions', '已记录决策：$title');
     }
     throw ProposalApplyException('capture 只支持 note / decision');
@@ -228,10 +219,5 @@ final knowledgeProposalApplierProvider =
             hlc: value.hlc,
           );
         },
-        onDecisionCreated: () => recordProductMetric(
-          () => ref.read(productMetricsProvider.notifier),
-          ProductFunnelEvent.knowledgeDecisionCreated,
-          success: true,
-        ),
       );
     });

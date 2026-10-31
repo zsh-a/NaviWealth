@@ -12,8 +12,6 @@ class _AppearanceSection extends ConsumerWidget {
 
     return Column(
       children: [
-        const AppearanceStylePicker(),
-        const AppGroupedDivider(),
         InlineSettingRow<AppMaterialStyle>(
           icon: FLucideIcons.layers,
           label: l10n.settingsMaterialStyleTitle,
@@ -274,50 +272,6 @@ class _CrashReportingRow extends ConsumerWidget {
       value: enabled,
       onChanged: (next) =>
           ref.read(crashReportingEnabledProvider.notifier).setEnabled(next),
-    );
-  }
-}
-
-class _ProductMetricsRow extends ConsumerWidget {
-  const _ProductMetricsRow();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final enabled = ref.watch(productMetricsProvider);
-    return Column(
-      children: [
-        InlineSwitchRow(
-          icon: FLucideIcons.chartNoAxesColumnIncreasing,
-          label: l10n.settingsProductMetricsTitle,
-          subtitle: l10n.settingsProductMetricsSubtitle,
-          value: enabled,
-          onChanged: (next) =>
-              ref.read(productMetricsProvider.notifier).setEnabled(next),
-        ),
-        if (enabled) ...[
-          const AppGroupedDivider(),
-          InlineActionRow(
-            icon: FLucideIcons.copy,
-            label: l10n.settingsProductMetricsCopy,
-            subtitle: l10n.settingsProductMetricsCopySubtitle,
-            actionIcon: FLucideIcons.copy,
-            onPress: () async {
-              final report = ref
-                  .read(productMetricsProvider.notifier)
-                  .exportAggregates();
-              await Clipboard.setData(ClipboardData(text: jsonEncode(report)));
-              if (context.mounted) {
-                AppMessenger.show(
-                  context,
-                  ToastKind.success,
-                  l10n.settingsProductMetricsCopied,
-                );
-              }
-            },
-          ),
-        ],
-      ],
     );
   }
 }

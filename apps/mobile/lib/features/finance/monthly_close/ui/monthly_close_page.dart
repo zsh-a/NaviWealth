@@ -5,7 +5,6 @@ import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/lifeos/action_dispatcher.dart';
-import '../../../../core/product/product_metrics.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../composition/finance_route_paths.dart';
@@ -248,13 +247,6 @@ class _MonthlyClosePageState extends ConsumerState<MonthlyClosePage> {
         overrideReason: reason,
         now: now,
       );
-      await ref
-          .read(productMetricsProvider.notifier)
-          .record(
-            ProductFunnelEvent.monthlyCloseCompleted,
-            duration: duration,
-            success: true,
-          );
     } catch (error, stackTrace) {
       if (context.mounted) {
         AppMessenger.show(

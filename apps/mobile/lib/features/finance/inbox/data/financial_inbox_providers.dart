@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/lifeos/action_outcome.dart';
 import '../../../../core/persistence/providers.dart';
-import '../../../../core/product/product_metrics.dart';
 import '../../../../core/sync/mutation_context.dart';
 import '../../../../core/sync/outbox_provider.dart';
 import '../../ai_tools/expense_to_transaction_input.dart';
@@ -377,7 +376,6 @@ final financialSignalRevalidationProvider =
       if (completed.isNotEmpty) {
         final candidates = ref.watch(financialSignalScanCandidatesProvider);
         if (candidates.isLoading) {
-          await _recordRevalidationMetrics(ref, report);
           return report;
         }
         final completedReport = await repository.revalidateClosedActions(
@@ -394,7 +392,7 @@ final financialSignalRevalidationProvider =
           actionDropped: report.actionDropped + completedReport.actionDropped,
         );
       }
-      await _recordRevalidationMetrics(ref, report);
+
       return report;
     });
 
@@ -425,38 +423,6 @@ DateTime _observationAfter(List<LifeClosedAction> actions) {
   return now.isAfter(latest)
       ? now
       : latest.add(const Duration(microseconds: 1));
-}
-
-Future<void> _recordRevalidationMetrics(
-  Ref ref,
-  FinancialSignalRevalidationReport report,
-) async {
-  final metrics = ref.read(productMetricsProvider.notifier);
-  await metrics.record(
-    ProductFunnelEvent.executionActionCompleted,
-    success: true,
-    quantity: report.actionCompleted,
-  );
-  await metrics.record(
-    ProductFunnelEvent.executionActionDropped,
-    success: false,
-    quantity: report.actionDropped,
-  );
-  await metrics.record(
-    ProductFunnelEvent.financialSignalRevalidatedCleared,
-    success: true,
-    quantity: report.cleared,
-  );
-  await metrics.record(
-    ProductFunnelEvent.financialSignalRevalidatedStillActive,
-    success: false,
-    quantity: report.stillDetected,
-  );
-  await metrics.record(
-    ProductFunnelEvent.financialSignalRevalidationInconclusive,
-    success: false,
-    quantity: report.inconclusive,
-  );
 }
 
 String _periodKey(DateTime value) =>

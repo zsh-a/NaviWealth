@@ -8,7 +8,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/lifeos/action_dispatcher.dart';
 import '../../../../core/lifeos/ui/source_action_control.dart';
-import '../../../../core/product/product_metrics.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../composition/finance_route_paths.dart';
@@ -454,11 +453,6 @@ class _InboxDetail extends ConsumerWidget {
               actionId: id,
               now: DateTime.now(),
             );
-            await recordProductMetric(
-              () => ref.read(productMetricsProvider.notifier),
-              ProductFunnelEvent.executionActionCreated,
-              success: true,
-            );
             _refresh(ref);
           },
         ),
@@ -498,12 +492,6 @@ class _InboxDetail extends ConsumerWidget {
         financialSignalRepositoryProvider.future,
       );
       await repository.resolve(item.id, now: DateTime.now());
-      final remaining = await repository.listVisible(now: DateTime.now());
-      if (remaining.isEmpty) {
-        await ref
-            .read(productMetricsProvider.notifier)
-            .record(ProductFunnelEvent.financialInboxCleared, success: true);
-      }
       _refresh(ref);
       if (context.mounted) Navigator.of(context).pop();
     } catch (error, stackTrace) {

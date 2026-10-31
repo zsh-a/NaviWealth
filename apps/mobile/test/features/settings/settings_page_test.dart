@@ -560,6 +560,9 @@ void main() {
       expect(find.byType(AppearanceSettingsPage), findsOneWidget);
       expect(find.text('Theme'), findsOneWidget);
       expect(find.text('Language'), findsOneWidget);
+      expect(find.text('Interface style'), findsNothing);
+      expect(find.text('Classic'), findsNothing);
+      expect(find.text('Refined'), findsNothing);
       await tester.tap(find.byKey(const ValueKey('app.back')));
       await tester.pumpAndSettle();
       expect(find.byType(SettingsPage), findsOneWidget);
@@ -600,41 +603,43 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    _testWidgets('exposes conversations from the AI hub', (tester) async {
-      final prefs = await SharedPreferences.getInstance();
-      await tester.pumpWidget(
-        await _wrap(prefs, initialLocation: AppRoutes.settingsAi),
-      );
-      await tester.pumpAndSettle();
+    _testWidgets(
+      'AI hub contains configuration rather than conversation navigation',
+      (tester) async {
+        final prefs = await SharedPreferences.getInstance();
+        await tester.pumpWidget(
+          await _wrap(prefs, initialLocation: AppRoutes.settingsAi),
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.text('Conversations'), findsOneWidget);
-      expect(
-        find.text('Continue or review your AI conversations'),
-        findsOneWidget,
-      );
-    });
+        expect(find.text('Conversations'), findsNothing);
+        expect(find.text('AI Models'), findsOneWidget);
+        expect(find.text('AI privacy'), findsOneWidget);
+      },
+    );
 
-    _testWidgets('unsupported platforms keep history but hide native setup', (
-      tester,
-    ) async {
-      final prefs = await SharedPreferences.getInstance();
-      await tester.pumpWidget(
-        await _wrap(
-          prefs,
-          initialLocation: AppRoutes.settingsAi,
-          aiSupported: false,
-        ),
-      );
-      await tester.pumpAndSettle();
-      final l10n = AppLocalizations.of(
-        tester.element(find.byType(AiSettingsHubPage)),
-      );
-      expect(find.text(l10n.settingsAiNativeOnly), findsOneWidget);
-      expect(find.text(l10n.settingsAiLlmTitle), findsNothing);
-      expect(find.text(l10n.settingsAiModelsTitle), findsNothing);
-      expect(find.text(l10n.settingsAiHistoryTitle), findsOneWidget);
-      expect(find.text(l10n.personalMemoryTitle), findsOneWidget);
-    });
+    _testWidgets(
+      'unsupported platforms keep memory controls but hide native setup',
+      (tester) async {
+        final prefs = await SharedPreferences.getInstance();
+        await tester.pumpWidget(
+          await _wrap(
+            prefs,
+            initialLocation: AppRoutes.settingsAi,
+            aiSupported: false,
+          ),
+        );
+        await tester.pumpAndSettle();
+        final l10n = AppLocalizations.of(
+          tester.element(find.byType(AiSettingsHubPage)),
+        );
+        expect(find.text(l10n.settingsAiNativeOnly), findsOneWidget);
+        expect(find.text(l10n.settingsAiLlmTitle), findsNothing);
+        expect(find.text(l10n.settingsAiModelsTitle), findsNothing);
+        expect(find.text('Conversations'), findsNothing);
+        expect(find.text(l10n.personalMemoryTitle), findsOneWidget);
+      },
+    );
 
     _testWidgets('does not overflow at large text scale', (tester) async {
       tester.view.physicalSize = const Size(390, 844);

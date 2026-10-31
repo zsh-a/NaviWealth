@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/product/product_metrics.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../composition/finance_route_paths.dart';
@@ -39,9 +38,6 @@ class FinancialInboxCard extends ConsumerWidget {
           );
     return SoftCard.raised(
       onPress: () {
-        ref
-            .read(productMetricsProvider.notifier)
-            .record(ProductFunnelEvent.financialInboxOpened);
         context.push(FinanceRoutes.activityInbox);
       },
       padding: AppPageRhythm.cardPadding,

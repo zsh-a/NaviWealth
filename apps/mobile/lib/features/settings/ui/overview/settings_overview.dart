@@ -1,7 +1,4 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
@@ -10,7 +7,6 @@ import '../../../../core/auth/auth_state.dart';
 import '../../../../core/auth/providers.dart' as auth_providers;
 import '../../../../core/config/app_version.dart';
 import '../../../../core/logging/crash_reporting_preference.dart';
-import '../../../../core/product/product_metrics.dart';
 import '../../../../core/security/biometric_auth_service.dart';
 import '../../../../core/security/biometric_lock_preferences.dart';
 import '../../../../core/shell/auth_route_paths.dart';
@@ -21,7 +17,6 @@ import '../../../../core/sync/providers.dart';
 import '../../../../core/update/native_update.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
-import 'appearance_style_picker.dart';
 
 part 'settings_overview_account.dart';
 part 'settings_overview_preferences.dart';
@@ -121,8 +116,6 @@ class SettingsOverview extends ConsumerWidget {
             const _BiometricUnlockRow(),
             const AppGroupedDivider(),
             const _CrashReportingRow(),
-            const AppGroupedDivider(),
-            const _ProductMetricsRow(),
           ],
         ),
       ),

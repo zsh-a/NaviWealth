@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/format/providers.dart';
-import 'package:naviwealth/core/product/product_metrics.dart';
 import 'package:naviwealth/core/shell/shell_chrome.dart';
 import 'package:naviwealth/core/shell/shell_visibility.dart';
 import 'package:naviwealth/core/sync/providers.dart';

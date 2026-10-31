@@ -9,7 +9,6 @@ import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/format/formatters.dart';
 import 'package:naviwealth/core/format/providers.dart';
 import 'package:naviwealth/core/lifeos/action_dispatcher.dart';
-import 'package:naviwealth/core/product/product_metrics.dart';
 import 'package:naviwealth/core/shell/settings_route_paths.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/composition/finance_route_paths.dart';
@@ -963,11 +962,6 @@ Future<void> _createRunwayAction(
       ),
     );
     if (context.mounted && id != null) {
-      unawaited(
-        ref
-            .read(productMetricsProvider.notifier)
-            .record(ProductFunnelEvent.executionActionCreated, success: true),
-      );
       AppMessenger.show(
         context,
         ToastKind.success,

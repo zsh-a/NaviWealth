@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/activity/ui/activity_action_panel.dart';
-import 'package:naviwealth/features/settings/ui/overview/appearance_style_picker.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -308,33 +307,4 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(BackdropFilter), findsNothing);
   });
-
-  testWidgets(
-    'appearance picker applies and saves a preset at large text scale',
-    (tester) async {
-      tester.view
-        ..physicalSize = const Size(320, 800)
-        ..devicePixelRatio = 1;
-      addTearDown(tester.view.reset);
-      final container = await _pump(
-        tester,
-        const Scaffold(
-          body: SingleChildScrollView(child: AppearanceStylePicker()),
-        ),
-        textScale: 1.8,
-      );
-      final option = find.byKey(const ValueKey('appearance-style.classic'));
-      await tester.ensureVisible(option);
-      await tester.tap(option);
-      await tester.pumpAndSettle();
-      expect(container.read(visualStyleProvider), AppVisualStyle.classic);
-      expect(
-        container
-            .read(sharedPreferencesProvider)
-            .getString('naviwealth.theme.visual_style'),
-        'classic',
-      );
-      expect(tester.takeException(), isNull);
-    },
-  );
 }

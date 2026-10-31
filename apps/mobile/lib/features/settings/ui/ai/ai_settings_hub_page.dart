@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/ai/composition/assistant_route_paths.dart';
 import '../../../../core/ai/llm_credentials/providers.dart';
 import '../../../../core/shell/settings_route_paths.dart';
 import '../../../../core/shell/settings_ui/inline_setting_row.dart';
@@ -72,13 +71,6 @@ class AiSettingsHubPage extends ConsumerWidget {
                   onTap: () => context.pushNamed(SettingsRouteNames.aiPrivacy),
                 ),
               ],
-              const AppGroupedDivider(),
-              InlineLinkRow(
-                icon: FLucideIcons.history,
-                label: l10n.settingsAiHistoryTitle,
-                subtitle: l10n.settingsAiHistorySubtitle,
-                onTap: () => context.pushNamed(AssistantRouteNames.home),
-              ),
             ],
           ),
         ],

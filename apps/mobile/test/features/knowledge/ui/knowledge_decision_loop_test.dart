@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/core/lifeos/action_dispatcher.dart';
-import 'package:naviwealth/core/product/product_metrics.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/mutation_context.dart';
@@ -15,7 +14,6 @@ import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
 import 'package:naviwealth/features/knowledge/ui/knowledge_capture_sheet.dart';
 import 'package:naviwealth/features/knowledge/ui/knowledge_decision_detail_page.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/persistence/test_database.dart';
 import '../../finance/data/repositories/_stub_stamper.dart';
@@ -36,10 +34,6 @@ void main() {
     );
     final note = _note();
     await repository.upsertNote(note);
-    SharedPreferences.setMockInitialValues(<String, Object>{});
-    final preferences = await SharedPreferences.getInstance();
-    final metrics = ProductMetricsController(preferences);
-    await metrics.setEnabled(true);
 
     String? decisionId;
     await tester.pumpWidget(
@@ -56,7 +50,6 @@ void main() {
           ),
         ),
         repository: repository,
-        metrics: metrics,
         executionAvailable: false,
       ),
     );
@@ -119,7 +112,6 @@ void main() {
       _wrap(
         KnowledgeDecisionDetailPage(decisionId: decisionId!),
         repository: repository,
-        metrics: metrics,
         executionAvailable: true,
         readLinkedAction: (_) async => linked,
         dispatchAction: (draft) async {
@@ -169,25 +161,6 @@ void main() {
       'The pilot removed the repetitive handoff.',
     );
 
-    final totals =
-        metrics.exportAggregates()['totals']! as Map<String, Object?>;
-    expect(
-      totals[ProductFunnelEvent.knowledgeDecisionCreated.name],
-      containsPair('count', 1),
-    );
-    expect(
-      totals[ProductFunnelEvent.knowledgeDecisionActionCreated.name],
-      containsPair('count', 1),
-    );
-    expect(
-      totals[ProductFunnelEvent.knowledgeDecisionReviewed.name],
-      containsPair('count', 1),
-    );
-    expect(
-      preferences.getString('naviwealth.product_metrics.aggregates.v5'),
-      isNot(contains('pilot removed')),
-      reason: 'product evidence must never contain Knowledge text',
-    );
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(Duration.zero);
   });
@@ -196,7 +169,6 @@ void main() {
 Widget _wrap(
   Widget child, {
   required KnowledgeRepository repository,
-  required ProductMetricsController metrics,
   required bool executionAvailable,
   LifeSourceActionReader? readLinkedAction,
   LifeActionDispatcher? dispatchAction,
@@ -208,7 +180,6 @@ Widget _wrap(
       mutationStamperProvider.overrideWith(
         (ref) async => makeStubStamper(userId: _owner),
       ),
-      productMetricsProvider.overrideWith((ref) => metrics),
       lifeOpenActionCountProvider.overrideWith(
         (ref) => AsyncValue<int?>.data(executionAvailable ? 0 : null),
       ),

@@ -22,7 +22,6 @@ import 'package:naviwealth/features/finance/domain/models/account.dart';
 import '../../../../core/ai/visual/visual.dart';
 import '../../../../core/auth/current_user.dart';
 import '../../../../core/logging/providers.dart';
-import '../../../../core/product/product_metrics.dart';
 import '../../../../core/shell/master_detail_layout.dart';
 import '../../../../core/shortcuts/keyboard_platform.dart';
 import '../../../../core/shortcuts/master_detail_shortcuts.dart';

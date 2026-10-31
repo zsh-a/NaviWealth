@@ -65,9 +65,6 @@ class _OnboardingQuickActions extends ConsumerWidget {
           icon: FLucideIcons.walletCards,
           label: l10n.homeQuickAddAccount,
           onPress: () {
-            ref
-                .read(productMetricsProvider.notifier)
-                .record(ProductFunnelEvent.activationStarted);
             context.push(FinanceRoutes.wealthAccountNew);
           },
         ),
@@ -75,9 +72,6 @@ class _OnboardingQuickActions extends ConsumerWidget {
           icon: FLucideIcons.upload,
           label: l10n.homeQuickImport,
           onPress: () {
-            ref
-                .read(productMetricsProvider.notifier)
-                .record(ProductFunnelEvent.activationStarted);
             context.push(FinanceRoutes.activityIngest);
           },
         ),

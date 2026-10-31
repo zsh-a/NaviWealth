@@ -8,7 +8,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/ai/composition/ask_ai.dart';
 import '../../../../core/format/providers.dart';
 import '../../../../core/lifeos/action_dispatcher.dart';
-import '../../../../core/product/product_metrics.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../composition/finance_route_paths.dart';
@@ -178,9 +177,6 @@ class _ScenarioCardState extends ConsumerState<_ScenarioCard> {
       if (reviewDate == null || !mounted) return;
       setState(() => _saving = true);
       try {
-        await ref
-            .read(productMetricsProvider.notifier)
-            .record(ProductFunnelEvent.lifeEventCompared);
         final repository = await ref.read(
           financialDecisionRepositoryProvider.future,
         );
@@ -208,9 +204,7 @@ class _ScenarioCardState extends ConsumerState<_ScenarioCard> {
         if (actionId != null) {
           await repository.linkAction(id: decision.id, actionId: actionId);
         }
-        await ref
-            .read(productMetricsProvider.notifier)
-            .record(ProductFunnelEvent.financialDecisionSaved);
+
         if (context.mounted) {
           AppMessenger.show(
             context,
@@ -491,11 +485,7 @@ class _DecisionRow extends ConsumerWidget {
                           ),
                           now: DateTime.now(),
                         );
-                        await ref
-                            .read(productMetricsProvider.notifier)
-                            .record(
-                              ProductFunnelEvent.financialDecisionReviewed,
-                            );
+
                         if (context.mounted) {
                           AppMessenger.show(
                             context,

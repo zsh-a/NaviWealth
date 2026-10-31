@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../../core/forms/forms.dart';
-import '../../../core/product/product_metrics.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../application/knowledge_decision_review_service.dart';
@@ -360,19 +359,6 @@ Future<bool> reviewSavedKnowledgeDecision({
   if (context.mounted) {
     ref.invalidate(knowledgeDecisionsProvider);
     ref.invalidate(knowledgeDueReviewsProvider);
-  }
-  if (draft.status != decision.status ||
-      (draft.actualOutcomeMd?.trim() ?? '') !=
-          (decision.actualOutcomeMd?.trim() ?? '')) {
-    final elapsed = DateTime.now().toUtc().difference(
-      decision.decidedAt.toUtc(),
-    );
-    await recordProductMetric(
-      () => container.read(productMetricsProvider.notifier),
-      ProductFunnelEvent.knowledgeDecisionReviewed,
-      success: true,
-      duration: elapsed.isNegative ? Duration.zero : elapsed,
-    );
   }
   return true;
 }

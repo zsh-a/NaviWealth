@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 
 import '../../../core/forms/forms.dart';
-import '../../../core/product/product_metrics.dart';
 import '../../../core/sync/mutation_context.dart';
 import '../../../core/sync/sync_meta.dart';
 import '../../../design_system/design_system.dart';
@@ -437,13 +436,6 @@ class _KnowledgeCaptureSheetState
             ),
           );
         }
-      }
-      if (_type == _CaptureType.decision) {
-        await recordProductMetric(
-          () => ref.read(productMetricsProvider.notifier),
-          ProductFunnelEvent.knowledgeDecisionCreated,
-          success: true,
-        );
       }
       ref.invalidate(knowledgeNotesProvider);
       ref.invalidate(knowledgeDecisionsProvider);

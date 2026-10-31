@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/product/product_metrics.dart';
 import '../../../../design_system/design_system.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../../activity/ui/activity_action_panel.dart';
@@ -14,37 +13,14 @@ import '../data/finance_activation_providers.dart';
 import '../data/finance_activation_store.dart';
 import '../domain/finance_activation.dart';
 
-class FinanceActivationCard extends ConsumerStatefulWidget {
+class FinanceActivationCard extends ConsumerWidget {
   const FinanceActivationCard({super.key});
 
   @override
-  ConsumerState<FinanceActivationCard> createState() =>
-      _FinanceActivationCardState();
-}
-
-class _FinanceActivationCardState extends ConsumerState<FinanceActivationCard> {
-  bool _completionRecorded = false;
-
-  void _recordCompletion(FinanceActivationSnapshot? snapshot) {
-    if (_completionRecorded || snapshot?.isComplete != true) return;
-    _completionRecorded = true;
-    unawaited(
-      ref
-          .read(productMetricsProvider.notifier)
-          .record(ProductFunnelEvent.firstUsefulResultCompleted, success: true),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    ref.listen(
-      financeActivationProvider,
-      (_, next) => _recordCompletion(next.value),
-    );
+  Widget build(BuildContext context, WidgetRef ref) {
     final activation = ref.watch(financeActivationProvider);
     final dismissed = ref.watch(financeActivationDismissedProvider);
     final snapshot = activation.value;
-    _recordCompletion(snapshot);
     if (dismissed || snapshot == null || snapshot.isComplete) {
       return const SizedBox.shrink();
     }
@@ -103,9 +79,6 @@ class _FinanceActivationCardState extends ConsumerState<FinanceActivationCard> {
           const SizedBox(height: AppSpacing.s12),
           FButton(
             onPress: () {
-              ref
-                  .read(productMetricsProvider.notifier)
-                  .record(ProductFunnelEvent.activationStarted);
               if (snapshot.stage == FinanceActivationStage.addData) {
                 unawaited(showActivityActionPanel(context));
               } else {

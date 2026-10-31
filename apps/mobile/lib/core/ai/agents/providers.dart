@@ -15,7 +15,6 @@ import 'agent_feedback_store.dart';
 import 'agent_finding_store.dart';
 import 'agent_preference_store.dart';
 import 'agent_presentation.dart';
-import 'agent_quality_report.dart';
 import 'agent_registry.dart';
 import 'agent_run_store.dart';
 
@@ -58,24 +57,6 @@ final agentEvidenceNavigationStoreProvider =
     FutureProvider<AgentEvidenceNavigationStore>((ref) async {
       final preferences = await SharedPreferences.getInstance();
       return SharedPreferencesAgentEvidenceNavigationStore(preferences);
-    });
-
-final agentQualityReportProvider =
-    FutureProvider.autoDispose<AgentQualityReport>((ref) async {
-      final db = await ref.watch(appDatabaseProvider.future);
-      final navigationStore = await ref.watch(
-        agentEvidenceNavigationStoreProvider.future,
-      );
-      final ownerUserId = await ref.read(currentUserIdProvider)();
-      final now = DateTime.now().toUtc();
-      return SqliteAgentQualityReportReader(
-        db,
-        evidenceNavigationStore: navigationStore,
-      ).read(
-        ownerUserId: ownerUserId,
-        since: now.subtract(const Duration(days: 30)),
-        now: now,
-      );
     });
 
 class AgentResultScope {

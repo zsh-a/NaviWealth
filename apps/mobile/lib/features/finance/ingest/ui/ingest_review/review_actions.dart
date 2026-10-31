@@ -126,9 +126,6 @@ extension _IngestReviewActions on _IngestReviewPageState {
 
   Future<void> _recordExternalImportCompletion() async {
     await ref.read(financeImportConfirmedProvider.notifier).markConfirmed();
-    await ref
-        .read(productMetricsProvider.notifier)
-        .record(ProductFunnelEvent.importReviewCompleted, success: true);
   }
 
   Future<void> _confirmSelected(
@@ -287,9 +284,7 @@ extension _IngestReviewActions on _IngestReviewPageState {
         fromAccountId: accountId,
         allowDuplicate: draft.verdict.skipByDefault,
       );
-      await ref
-          .read(productMetricsProvider.notifier)
-          .record(ProductFunnelEvent.importReviewCompleted, success: true);
+
       if (mounted) {
         final undoOffer = _offerBatchUndo(svc, [confirmed], l10n);
         AppMessenger.show(
@@ -437,9 +432,6 @@ extension _IngestReviewActions on _IngestReviewPageState {
       }
       if (outcome.confirmed.isNotEmpty) {
         await ref.read(financeImportConfirmedProvider.notifier).markConfirmed();
-        await ref
-            .read(productMetricsProvider.notifier)
-            .record(ProductFunnelEvent.importReviewCompleted, success: true);
       }
       if (mounted) {
         final undoOffer = outcome.canUndo

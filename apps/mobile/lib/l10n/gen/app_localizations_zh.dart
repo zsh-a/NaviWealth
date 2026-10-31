@@ -3901,15 +3901,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsAppearanceSection => '外观';
 
   @override
-  String get settingsVisualStyleTitle => '界面风格';
-
-  @override
-  String get visualStyleClassic => '经典';
-
-  @override
-  String get visualStyleRefined => '精致';
-
-  @override
   String get settingsMaterialStyleTitle => '材质效果';
 
   @override
@@ -7909,12 +7900,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsAiHubTrustSection => '记忆与隐私';
 
   @override
-  String get settingsAiHistoryTitle => 'AI 对话';
-
-  @override
-  String get settingsAiHistorySubtitle => '继续或查看已保存的 AI 对话';
-
-  @override
   String get personalMemoryTitle => '个人记忆';
 
   @override
@@ -8392,57 +8377,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String agentSettingsOverviewNotificationsOn(int count) {
     return '通知 $count';
   }
-
-  @override
-  String get agentQualityTitle => '近 30 天质量';
-
-  @override
-  String get agentQualityNoRuns => '此周期内暂无已完成运行';
-
-  @override
-  String agentQualityCompletedRuns(int count) {
-    return '已完成 $count 次';
-  }
-
-  @override
-  String agentQualityReadyRate(int percent, int count, int total) {
-    return '有结果 $percent% · $count/$total';
-  }
-
-  @override
-  String agentQualityNoFindingRate(int percent, int count, int total) {
-    return '无发现 $percent% · $count/$total';
-  }
-
-  @override
-  String agentQualityFailureRate(int percent, int count, int total) {
-    return '失败 $percent% · $count/$total';
-  }
-
-  @override
-  String agentQualitySuppressedRate(int percent, int count, int total) {
-    return '隐藏或延后 $percent% · $count/$total';
-  }
-
-  @override
-  String agentQualityEvidenceRate(int percent, int count, int total) {
-    return '证据可达 $percent% · $count/$total';
-  }
-
-  @override
-  String get agentQualityEvidenceNavigationNoSamples => '暂无证据打开样本';
-
-  @override
-  String agentQualityEvidenceNavigationRate(
-    int percent,
-    int successes,
-    int attempts,
-  ) {
-    return '证据打开成功 $percent% · $successes/$attempts';
-  }
-
-  @override
-  String get agentQualityPrivacyNote => '仅在设备本地汇总 · 不保留结果内容、证据 ID 或路由';
 
   @override
   String get agentSettingsNeverRun => '尚未运行';
@@ -15278,22 +15212,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get financialInboxEvidenceAssetId => '资产';
-
-  @override
-  String get settingsProductMetricsTitle => '本地产品指标';
-
-  @override
-  String get settingsProductMetricsSubtitle =>
-      '自愿开启仅存于设备的漏斗计数；不记录或上传财务数值与身份标识。';
-
-  @override
-  String get settingsProductMetricsCopy => '复制产品验证数据';
-
-  @override
-  String get settingsProductMetricsCopySubtitle => '导出本设备上隐私安全的每日与累计指标。';
-
-  @override
-  String get settingsProductMetricsCopied => '已复制产品验证数据';
 
   @override
   String get lifeEventScenariosTitle => '人生事件推演';

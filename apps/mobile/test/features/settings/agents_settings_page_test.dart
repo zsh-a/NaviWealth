@@ -12,7 +12,6 @@ import 'package:naviwealth/core/ai/agents/agent_artifact_routes.dart';
 import 'package:naviwealth/core/ai/agents/agent_artifact_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_preference_store.dart';
 import 'package:naviwealth/core/ai/agents/agent_presentation.dart';
-import 'package:naviwealth/core/ai/agents/agent_quality_report.dart';
 import 'package:naviwealth/core/ai/agents/agent_registry.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_controller.dart';
 import 'package:naviwealth/core/ai/agents/agent_run_store.dart';
@@ -143,21 +142,6 @@ void main() {
           ),
           agent_providers.agentRunStoreProvider.overrideWith(
             (ref) async => runStore,
-          ),
-          agent_providers.agentQualityReportProvider.overrideWith(
-            (ref) async => AgentQualityReport(
-              windowStart: DateTime.utc(2026, 6, 5),
-              generatedAt: DateTime.utc(2026, 7, 5),
-              readyRuns: 6,
-              noFindingRuns: 3,
-              failedRuns: 1,
-              artifactCount: 5,
-              dismissedOrSnoozedArtifacts: 1,
-              evidenceBearingArtifacts: 4,
-              fullyAnchoredEvidenceArtifacts: 3,
-              evidenceNavigationAttempts: 5,
-              evidenceNavigationSuccesses: 4,
-            ),
           ),
         ],
         child: MaterialApp(
@@ -369,29 +353,11 @@ void main() {
     expect(find.text('Disabled'), findsWidgets);
   });
 
-  testWidgets('advanced settings owns agent quality diagnostics', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          agent_providers.agentQualityReportProvider.overrideWith(
-            (ref) async => AgentQualityReport(
-              windowStart: DateTime.utc(2026, 6, 5),
-              generatedAt: DateTime.utc(2026, 7, 5),
-              readyRuns: 6,
-              noFindingRuns: 3,
-              failedRuns: 1,
-              artifactCount: 5,
-              dismissedOrSnoozedArtifacts: 1,
-              evidenceBearingArtifacts: 4,
-              fullyAnchoredEvidenceArtifacts: 3,
-              evidenceNavigationAttempts: 5,
-              evidenceNavigationSuccesses: 4,
-            ),
-          ),
-        ],
-        child: MaterialApp(
+  testWidgets(
+    'advanced settings keeps tools without product quality counters',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
           theme: AppTheme.light(),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
@@ -400,16 +366,13 @@ void main() {
             child: const AdvancedSettingsPage(),
           ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('30-day quality'), findsOneWidget);
-    expect(find.text('10 completed runs'), findsOneWidget);
-    expect(find.text('Ready 60% · 6/10'), findsOneWidget);
-    expect(find.text('Failed 10% · 1/10'), findsOneWidget);
-    expect(find.text('Evidence opened 80% · 4/5'), findsOneWidget);
-  });
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('30-day quality'), findsNothing);
+      expect(find.text('App Logs'), findsOneWidget);
+      expect(find.text('Performance'), findsOneWidget);
+    },
+  );
 
   testWidgets('disabled agents cannot be run manually from settings', (
     tester,

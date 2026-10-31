@@ -347,10 +347,5 @@ extension _IngestReviewWorkspace on _IngestReviewPageState {
   void _onAccountChanged(String? value) {
     if (value == _accountId) return;
     setState(() => _accountId = value);
-    unawaited(
-      ref
-          .read(productMetricsProvider.notifier)
-          .record(ProductFunnelEvent.importReviewCorrected),
-    );
   }
 }

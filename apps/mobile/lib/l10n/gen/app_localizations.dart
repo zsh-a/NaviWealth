@@ -6963,24 +6963,6 @@ abstract class AppLocalizations {
   /// **'Appearance'**
   String get settingsAppearanceSection;
 
-  /// No description provided for @settingsVisualStyleTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Interface style'**
-  String get settingsVisualStyleTitle;
-
-  /// No description provided for @visualStyleClassic.
-  ///
-  /// In en, this message translates to:
-  /// **'Classic'**
-  String get visualStyleClassic;
-
-  /// No description provided for @visualStyleRefined.
-  ///
-  /// In en, this message translates to:
-  /// **'Refined'**
-  String get visualStyleRefined;
-
   /// No description provided for @settingsMaterialStyleTitle.
   ///
   /// In en, this message translates to:
@@ -14077,18 +14059,6 @@ abstract class AppLocalizations {
   /// **'Memory & privacy'**
   String get settingsAiHubTrustSection;
 
-  /// Settings row that opens saved AI conversation history.
-  ///
-  /// In en, this message translates to:
-  /// **'Conversations'**
-  String get settingsAiHistoryTitle;
-
-  /// Settings row subtitle for saved AI conversation history.
-  ///
-  /// In en, this message translates to:
-  /// **'Continue or review your AI conversations'**
-  String get settingsAiHistorySubtitle;
-
   /// No description provided for @personalMemoryTitle.
   ///
   /// In en, this message translates to:
@@ -14922,76 +14892,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Notifications {count}'**
   String agentSettingsOverviewNotificationsOn(int count);
-
-  /// Title for the privacy-safe rolling Agent quality summary.
-  ///
-  /// In en, this message translates to:
-  /// **'30-day quality'**
-  String get agentQualityTitle;
-
-  /// Agent quality summary shown before any terminal runs exist.
-  ///
-  /// In en, this message translates to:
-  /// **'No completed runs in this window'**
-  String get agentQualityNoRuns;
-
-  /// Completed Agent runs included in the quality window.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} completed runs'**
-  String agentQualityCompletedRuns(int count);
-
-  /// Share of completed Agent runs with a ready result.
-  ///
-  /// In en, this message translates to:
-  /// **'Ready {percent}% · {count}/{total}'**
-  String agentQualityReadyRate(int percent, int count, int total);
-
-  /// Share of completed Agent runs with no meaningful finding.
-  ///
-  /// In en, this message translates to:
-  /// **'No finding {percent}% · {count}/{total}'**
-  String agentQualityNoFindingRate(int percent, int count, int total);
-
-  /// Share of completed Agent runs that failed.
-  ///
-  /// In en, this message translates to:
-  /// **'Failed {percent}% · {count}/{total}'**
-  String agentQualityFailureRate(int percent, int count, int total);
-
-  /// Share of Agent artifacts dismissed or snoozed by the user.
-  ///
-  /// In en, this message translates to:
-  /// **'Hidden or delayed {percent}% · {count}/{total}'**
-  String agentQualitySuppressedRate(int percent, int count, int total);
-
-  /// Share of evidence-bearing Agent artifacts whose evidence references all have routes.
-  ///
-  /// In en, this message translates to:
-  /// **'Evidence-linked {percent}% · {count}/{total}'**
-  String agentQualityEvidenceRate(int percent, int count, int total);
-
-  /// Agent quality summary shown before any evidence navigation attempts exist.
-  ///
-  /// In en, this message translates to:
-  /// **'No evidence-open samples'**
-  String get agentQualityEvidenceNavigationNoSamples;
-
-  /// Share of Agent evidence navigation attempts accepted by the app router.
-  ///
-  /// In en, this message translates to:
-  /// **'Evidence opened {percent}% · {successes}/{attempts}'**
-  String agentQualityEvidenceNavigationRate(
-    int percent,
-    int successes,
-    int attempts,
-  );
-
-  /// Privacy explanation below the rolling Agent quality summary.
-  ///
-  /// In en, this message translates to:
-  /// **'Device-only aggregates · no result content, evidence ids, or routes retained'**
-  String get agentQualityPrivacyNote;
 
   /// Subtitle when an agent has no run history.
   ///
@@ -27095,36 +26995,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Asset'**
   String get financialInboxEvidenceAssetId;
-
-  /// No description provided for @settingsProductMetricsTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Local product metrics'**
-  String get settingsProductMetricsTitle;
-
-  /// No description provided for @settingsProductMetricsSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Opt in to device-only funnel counters. No financial values or identifiers are recorded or uploaded.'**
-  String get settingsProductMetricsSubtitle;
-
-  /// No description provided for @settingsProductMetricsCopy.
-  ///
-  /// In en, this message translates to:
-  /// **'Copy product evidence'**
-  String get settingsProductMetricsCopy;
-
-  /// No description provided for @settingsProductMetricsCopySubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Export privacy-safe daily and total aggregates from this device.'**
-  String get settingsProductMetricsCopySubtitle;
-
-  /// No description provided for @settingsProductMetricsCopied.
-  ///
-  /// In en, this message translates to:
-  /// **'Product evidence copied'**
-  String get settingsProductMetricsCopied;
 
   /// No description provided for @lifeEventScenariosTitle.
   ///

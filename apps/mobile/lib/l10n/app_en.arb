@@ -1992,9 +1992,6 @@
     }
   },
   "settingsAppearanceSection": "Appearance",
-  "settingsVisualStyleTitle": "Interface style",
-  "visualStyleClassic": "Classic",
-  "visualStyleRefined": "Refined",
   "settingsMaterialStyleTitle": "Materials",
   "settingsMaterialStyleSubtitle": "Solid surfaces keep things clear. Translucency adds depth; system high contrast uses solid surfaces.",
   "materialStyleSolid": "Solid",
@@ -4109,10 +4106,6 @@
   "settingsAiHubSubtitle": "Services, memory, and privacy",
   "settingsAiHubRuntimeSection": "Services & voice",
   "settingsAiHubTrustSection": "Memory & privacy",
-  "settingsAiHistoryTitle": "Conversations",
-  "@settingsAiHistoryTitle": { "description": "Settings row that opens saved AI conversation history." },
-  "settingsAiHistorySubtitle": "Continue or review your AI conversations",
-  "@settingsAiHistorySubtitle": { "description": "Settings row subtitle for saved AI conversation history." },
   "personalMemoryTitle": "Personal memory",
   "personalMemorySubtitle": "Manage goals, preferences, constraints, and rules used by AI",
   "personalMemorySection": "Confirmed profile",
@@ -4357,75 +4350,6 @@
     "description": "Compact overview metric showing enabled notification-capable agents with notifications on.",
     "placeholders": { "count": { "type": "int", "example": "3" } }
   },
-  "agentQualityTitle": "30-day quality",
-  "@agentQualityTitle": { "description": "Title for the privacy-safe rolling Agent quality summary." },
-  "agentQualityNoRuns": "No completed runs in this window",
-  "@agentQualityNoRuns": { "description": "Agent quality summary shown before any terminal runs exist." },
-  "agentQualityCompletedRuns": "{count} completed runs",
-  "@agentQualityCompletedRuns": {
-    "description": "Completed Agent runs included in the quality window.",
-    "placeholders": { "count": { "type": "int", "example": "12" } }
-  },
-  "agentQualityReadyRate": "Ready {percent}% · {count}/{total}",
-  "@agentQualityReadyRate": {
-    "description": "Share of completed Agent runs with a ready result.",
-    "placeholders": {
-      "percent": { "type": "int", "example": "75" },
-      "count": { "type": "int", "example": "9" },
-      "total": { "type": "int", "example": "12" }
-    }
-  },
-  "agentQualityNoFindingRate": "No finding {percent}% · {count}/{total}",
-  "@agentQualityNoFindingRate": {
-    "description": "Share of completed Agent runs with no meaningful finding.",
-    "placeholders": {
-      "percent": { "type": "int", "example": "20" },
-      "count": { "type": "int", "example": "2" },
-      "total": { "type": "int", "example": "10" }
-    }
-  },
-  "agentQualityFailureRate": "Failed {percent}% · {count}/{total}",
-  "@agentQualityFailureRate": {
-    "description": "Share of completed Agent runs that failed.",
-    "placeholders": {
-      "percent": { "type": "int", "example": "5" },
-      "count": { "type": "int", "example": "1" },
-      "total": { "type": "int", "example": "20" }
-    }
-  },
-  "agentQualitySuppressedRate": "Hidden or delayed {percent}% · {count}/{total}",
-  "@agentQualitySuppressedRate": {
-    "description": "Share of Agent artifacts dismissed or snoozed by the user.",
-    "placeholders": {
-      "percent": { "type": "int", "example": "10" },
-      "count": { "type": "int", "example": "1" },
-      "total": { "type": "int", "example": "10" }
-    }
-  },
-  "agentQualityEvidenceRate": "Evidence-linked {percent}% · {count}/{total}",
-  "@agentQualityEvidenceRate": {
-    "description": "Share of evidence-bearing Agent artifacts whose evidence references all have routes.",
-    "placeholders": {
-      "percent": { "type": "int", "example": "90" },
-      "count": { "type": "int", "example": "9" },
-      "total": { "type": "int", "example": "10" }
-    }
-  },
-  "agentQualityEvidenceNavigationNoSamples": "No evidence-open samples",
-  "@agentQualityEvidenceNavigationNoSamples": {
-    "description": "Agent quality summary shown before any evidence navigation attempts exist."
-  },
-  "agentQualityEvidenceNavigationRate": "Evidence opened {percent}% · {successes}/{attempts}",
-  "@agentQualityEvidenceNavigationRate": {
-    "description": "Share of Agent evidence navigation attempts accepted by the app router.",
-    "placeholders": {
-      "percent": { "type": "int", "example": "95" },
-      "successes": { "type": "int", "example": "19" },
-      "attempts": { "type": "int", "example": "20" }
-    }
-  },
-  "agentQualityPrivacyNote": "Device-only aggregates · no result content, evidence ids, or routes retained",
-  "@agentQualityPrivacyNote": { "description": "Privacy explanation below the rolling Agent quality summary." },
   "agentSettingsNeverRun": "Never run",
   "@agentSettingsNeverRun": { "description": "Subtitle when an agent has no run history." },
   "agentSettingsLastRunAt": "Last run {date}",
@@ -8022,11 +7946,6 @@
   "financialInboxEvidenceTtmGross": "TTM gross",
   "financialInboxEvidencePriorTtmGross": "Prior TTM gross",
   "financialInboxEvidenceAssetId": "Asset",
-  "settingsProductMetricsTitle": "Local product metrics",
-  "settingsProductMetricsSubtitle": "Opt in to device-only funnel counters. No financial values or identifiers are recorded or uploaded.",
-  "settingsProductMetricsCopy": "Copy product evidence",
-  "settingsProductMetricsCopySubtitle": "Export privacy-safe daily and total aggregates from this device.",
-  "settingsProductMetricsCopied": "Product evidence copied",
   "lifeEventScenariosTitle": "Life-event scenarios",
   "lifeEventScenariosIntro": "Compare deterministic outcomes before making a choice. Assumptions, your selection, and the later review stay together.",
   "lifeEventOptimistic": "Optimistic",

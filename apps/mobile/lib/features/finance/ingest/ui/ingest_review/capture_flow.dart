@@ -165,7 +165,7 @@ extension _IngestCaptureFlow on _IngestReviewPageState {
       if (!mounted) return;
       final qualityReport = IngestQualityReport.fromResult(source.kind, result);
       setState(() => _latestQualityReport = qualityReport);
-      await _recordIngestQualityMetrics(result);
+
       if (!mounted) return;
       if (result.isRejected) {
         final rejection = result.rejectedReason!;
@@ -212,29 +212,6 @@ extension _IngestCaptureFlow on _IngestReviewPageState {
     } finally {
       if (mounted) setState(() => _busy = null);
     }
-  }
-
-  Future<void> _recordIngestQualityMetrics(IngestResult result) async {
-    final metrics = ref.read(productMetricsProvider.notifier);
-    await metrics.record(
-      ProductFunnelEvent.importCycleCompleted,
-      success: !result.isRejected,
-    );
-    await metrics.record(
-      ProductFunnelEvent.importRowsAccepted,
-      success: true,
-      quantity: result.newCount,
-    );
-    await metrics.record(
-      ProductFunnelEvent.importRowsDeduplicated,
-      success: true,
-      quantity: result.duplicateCount,
-    );
-    await metrics.record(
-      ProductFunnelEvent.importRowsRejected,
-      success: false,
-      quantity: result.skippedCount + (result.isRejected ? 1 : 0),
-    );
   }
 
   void _copyLatestQualityReport() {

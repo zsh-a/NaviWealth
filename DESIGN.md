@@ -318,8 +318,9 @@ Scrims use animated color barriers rather than a whole-page blur.
 
 Refined is the default: continuous superellipse corners for shared surfaces,
 with the lg content/control, xl floating-dock and xxl sheet/overlay steps.
-Classic remains a saved option with conventional rounded geometry, md regular
-cards and buttons, and lg sheets. Both share the porcelain/graphite palette;
+Classic remains supported for previously saved preferences, with conventional
+rounded geometry, md regular cards and buttons, and lg sheets. Appearance no
+longer exposes the redundant preset preview picker. Both share the porcelain/graphite palette;
 they are not separate color identities. Chips retain the full pill radius.
 
 ## Components
