@@ -86,7 +86,10 @@ Navigator、ProviderScope 或表单。外观预览复用正式 theme 和 SoftCar
   阴影保留给菜单、弹窗及浮动导航，使用中性色和较短偏移；高对比度保留可见边界。
 - 图表短时间范围、展示维度与页面内的少量互斥分类使用 `SegmentedRow.inline`：居中的内容宽度、轻量文字与选中短线，
   不铺满图表宽度或增加整条容器背景。保留 48dp 触控区域，按实际文字宽度与系统
-  字体缩放均衡换行；不隐藏选项，也不截断标签。普通表单选择继续使用默认分段样式。
+  字体缩放均衡换行；不隐藏选项，也不截断标签。普通表单选择使用默认分段样式：
+  不透明中性底槽、与 tonal button 相同的浅色调选中面、共享连续圆角和选中短线；
+  高对比度补充明确边界。换行后仍保留选中填充与完整标签。`AppAdaptiveChoice`
+  的窄屏入口复用同样的表面和形状规则，不能保留独立的旧式描边与半透明底色。
   财富范围、资产分布的类别 / 币种、投资趋势的指标 / 范围、现金流趋势与汇率历史
   共用此变体；健康趋势的分组与时间范围、知识库内容类型、执行任务视图及搜索类型
   也遵循相同契约。多选标签、数据录入与持久化偏好继续使用各自的表单和筛选组件。
@@ -152,6 +155,9 @@ motion policy lint；脚本清单由 CI 维护。主题变更运行对比度测�
 深浅主题与 reduced motion。代表性的 Wealth、Today、导入审核另覆盖精致预设；
 截图 harness 同时传递 Material / Forui / AppThemeScope 的 visual style。
 视觉基线使用 CI 指定的 Linux Flutter 版本生成。
+表单选择组件的经典 / 精致、深浅主题基线由 `segmented_row_golden_test.dart` 覆盖；
+交易录入在 `task_flow_responsive_golden_test.dart` 中额外覆盖精致预设的中文深浅主题，
+避免仅检查经典外观而漏掉默认预设。
 跨域 Shell 变更额外检查启用状态、路由和键盘导航。
 
 本次澄白更新的视觉证据位于 `.impeccable/review/goldens/`，来自 Flutter widget

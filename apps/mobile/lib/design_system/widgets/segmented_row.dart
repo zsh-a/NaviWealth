@@ -8,7 +8,6 @@ import '../theme/app_theme_scope.dart';
 import '../tokens/app_motion_policy.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
-import '../tokens/text_style_presets.dart';
 import 'app_glass.dart';
 import 'app_interaction.dart';
 import 'app_selection_indicator.dart';
@@ -16,7 +15,7 @@ import 'app_tappable.dart';
 
 part 'segmented_row_inline.dart';
 
-/// Shared Forui-based segmented control with a quiet single-surface chrome.
+/// Shared form choice with opaque tonal selection and theme-owned geometry.
 ///
 /// The single segmented picker for every domain. It replaces three
 /// hand-rolled copies that had drifted apart — KnowledgeOS's
@@ -72,16 +71,21 @@ class SegmentedRow<T> extends StatelessWidget {
   final bool _inline;
 
   /// Uses the shared floating-glass material for navigation-like controls.
-  /// Keep the default opaque/translucent surface for dense in-content filters.
+  /// Keep the default opaque surface for dense in-content filters.
   final bool glass;
 
   static const double _defaultMinSegmentWidth = 96;
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
     if (options.isEmpty) return const SizedBox.shrink();
     if (_inline) return _InlineSegments<T>(control: this);
+    final theme = context.appTheme;
+    final radius = BorderRadius.circular(
+      theme.visual.continuousCorners ? AppRadius.lg : AppRadius.md,
+    );
+    final segmentRadius = radius - BorderRadius.circular(AppSpacing.s4);
+    final highContrast = MediaQuery.highContrastOf(context);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -107,6 +111,7 @@ class SegmentedRow<T> extends StatelessWidget {
                 options[i],
                 expand: true,
                 minWidth: effectiveMinSegmentWidth,
+                radius: segmentRadius,
               ),
             ],
           ],
@@ -138,24 +143,24 @@ class SegmentedRow<T> extends StatelessWidget {
                   option,
                   expand: false,
                   minWidth: wrappedSegmentWidth,
+                  radius: segmentRadius,
                 ),
               ),
           ],
         );
 
         final surface = DecoratedBox(
-          decoration: BoxDecoration(
+          decoration: theme.visual.decoration(
             color: glass
-                ? colors.foreground.withValues(alpha: AppOpacity.transparent)
-                : colors.foreground.withValues(alpha: AppOpacity.whisper),
-            borderRadius: BorderRadius.circular(
-              fits ? AppRadius.md : AppRadius.lg,
-            ),
-            border: glass
                 ? null
-                : Border.all(
-                    color: colors.border.withValues(alpha: AppOpacity.subtle),
+                : Color.alphaBlend(
+                    theme.content.strong.withValues(alpha: AppOpacity.whisper),
+                    theme.surfaces.card,
                   ),
+            radius: radius,
+            side: highContrast
+                ? BorderSide(color: theme.surfaces.border)
+                : BorderSide.none,
           ),
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.s4),
@@ -177,13 +182,9 @@ class SegmentedRow<T> extends StatelessWidget {
                           bottom: 0,
                           child: IgnorePointer(
                             child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                color: colors.primary.withValues(
-                                  alpha: AppOpacity.faint,
-                                ),
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.sm,
-                                ),
+                              decoration: _selectionDecoration(
+                                context,
+                                segmentRadius,
                               ),
                             ),
                           ),
@@ -198,9 +199,7 @@ class SegmentedRow<T> extends StatelessWidget {
         if (!glass) return surface;
         return AppGlassSurface(
           softLight: true,
-          borderRadius: BorderRadius.circular(
-            fits ? AppRadius.md : AppRadius.lg,
-          ),
+          borderRadius: radius,
           child: surface,
         );
       },
@@ -212,12 +211,13 @@ class SegmentedRow<T> extends StatelessWidget {
     T option, {
     required bool expand,
     required double minWidth,
+    required BorderRadius radius,
   }) {
-    final colors = context.theme.colors;
+    final theme = context.appTheme;
     final icon = iconOf?.call(option);
     final selected = option == value;
     final enabled = onChanged != null;
-    final tone = selected ? colors.primary : colors.mutedForeground;
+    final tone = selected ? theme.accent.fg : theme.content.muted;
     final foreground = enabled
         ? tone
         : tone.withValues(alpha: AppOpacity.disabled);
@@ -232,8 +232,10 @@ class SegmentedRow<T> extends StatelessWidget {
     final content = AnimatedDefaultTextStyle(
       duration: duration,
       curve: Motion.standard,
-      style: (selected ? context.labelStyle : context.mediumLabelStyle)
-          .copyWith(color: foreground),
+      style: theme.type.label.copyWith(
+        color: foreground,
+        fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+      ),
       child: Row(
         mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -244,12 +246,7 @@ class SegmentedRow<T> extends StatelessWidget {
           ],
           Flexible(
             fit: expand ? FlexFit.tight : FlexFit.loose,
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-            ),
+            child: Text(label, textAlign: TextAlign.center),
           ),
         ],
       ),
@@ -258,6 +255,7 @@ class SegmentedRow<T> extends StatelessWidget {
     final segment = Semantics(
       button: true,
       selected: selected,
+      inMutuallyExclusiveGroup: true,
       enabled: enabled,
       label: semanticLabel,
       onTap: AppInteraction.wrap(
@@ -267,7 +265,7 @@ class SegmentedRow<T> extends StatelessWidget {
       excludeSemantics: true,
       child: AppTappable(
         selected: selected,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: radius,
         onPress: enabled ? () => _select(option) : null,
         child: Container(
           constraints: const BoxConstraints(
@@ -282,26 +280,49 @@ class SegmentedRow<T> extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               content,
-              if (!expand) ...[
-                const SizedBox(height: AppSpacing.s2),
-                AppSelectionIndicator(
-                  selected: selected,
-                  length: AppSpacing.s16,
-                  thickness: AppSpacing.s2,
-                ),
-              ],
+              const SizedBox(height: AppSpacing.s4),
+              AppSelectionIndicator(
+                selected: selected,
+                length: AppSpacing.s16,
+                thickness: AppSpacing.s2,
+                color: foreground,
+              ),
             ],
           ),
         ),
       ),
     );
 
+    // Keep the opaque selected fill below AppTappable's hover/press paint.
+    final surface = DecoratedBox(
+      decoration: !expand && selected
+          ? _selectionDecoration(context, radius)
+          : const BoxDecoration(),
+      child: segment,
+    );
     return expand
-        ? Expanded(child: segment)
+        ? Expanded(child: surface)
         : ConstrainedBox(
             constraints: BoxConstraints(minWidth: minWidth),
-            child: segment,
+            child: surface,
           );
+  }
+
+  Decoration _selectionDecoration(BuildContext context, BorderRadius radius) {
+    final theme = context.appTheme;
+    final enabled = onChanged != null;
+    return theme.visual.decoration(
+      radius: radius,
+      color: Color.alphaBlend(
+        (enabled ? theme.accent.fg : theme.content.muted).withValues(
+          alpha: AppOpacity.softTint,
+        ),
+        theme.surfaces.card,
+      ),
+      side: MediaQuery.highContrastOf(context)
+          ? BorderSide(color: enabled ? theme.accent.fg : theme.content.muted)
+          : BorderSide.none,
+    );
   }
 
   void _select(T option) {

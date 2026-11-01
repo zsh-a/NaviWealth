@@ -348,6 +348,20 @@ and a quiet border. Active state adds a 6% primary wash, 20% primary border
 and primary text. It has explicit selected semantics; color is supplemental.
 High-level exclusive modes use the existing segmented control instead.
 
+### Single-choice Controls
+
+`SegmentedRow` keeps form choices visible in an opaque neutral track. Its
+selected segment uses the same opaque 8% accent blend as tonal buttons,
+theme-owned continuous geometry, a stronger label and a short selection mark.
+Classic retains conventional corners. High contrast adds explicit track and
+selection boundaries. Wrapped choices retain the selected fill and complete
+labels at large text sizes. `AppAdaptiveChoice` uses the same neutral surface
+and geometry for its compact picker trigger.
+
+`SegmentedRow.inline` remains the content-sized, unframed variant for chart
+ranges and display dimensions. Use the form variant for record input; changing
+the visual theme must not change selection, fields or navigation.
+
 ### Cards / Containers
 
 `SoftCard` uses the theme's card, raised or hero surface. Default refined

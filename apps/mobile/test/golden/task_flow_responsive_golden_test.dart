@@ -305,6 +305,31 @@ void main() {
       ),
     ),
   );
+  for (final variant in [GoldenTheme.light, GoldenTheme.dark]) {
+    testVisualGolden('task flow trade — refined ${variant.name}', (
+      tester,
+    ) async {
+      await pumpAndSnapshotMobile(
+        tester,
+        name: 'task_flow_trade_refined',
+        variant: variant,
+        visualStyle: AppVisualStyle.refined,
+        locale: const Locale('zh'),
+        overrides: tradeOverrides(),
+        child: TradeEntryFormPage(
+          accountId: 'golden-broker',
+          prefill: TradeEntryPrefill(
+            type: TradeType.buy,
+            quantity: Decimal.parse('12.5'),
+            price: Decimal.parse('189.75'),
+            currency: 'USD',
+            tradeDate: DateTime(2026, 6, 14, 15),
+          ),
+        ),
+      );
+      expect(tester.takeException(), isNull);
+    });
+  }
   runResponsiveGolden(
     'task flow persistent undo — narrow',
     profile: ResponsiveGoldenProfile.narrow,

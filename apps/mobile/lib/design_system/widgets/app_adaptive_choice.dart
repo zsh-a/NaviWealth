@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../theme/app_theme_scope.dart';
 import '../tokens/breakpoints.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
@@ -121,7 +122,10 @@ class _ChoiceTrigger extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
+    final theme = context.appTheme;
+    final radius = BorderRadius.circular(
+      theme.visual.continuousCorners ? AppRadius.lg : AppRadius.md,
+    );
     final hasSubtitle = subtitle != null && subtitle!.isNotEmpty;
     return Semantics(
       button: true,
@@ -130,17 +134,20 @@ class _ChoiceTrigger extends StatelessWidget {
       excludeSemantics: true,
       child: Opacity(
         opacity: onPress == null ? AppOpacity.disabled : AppOpacity.opaque,
-        child: AppTappable(
-          onPress: onPress,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: colors.muted.withValues(alpha: AppOpacity.disabled),
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(
-                color: colors.border.withValues(alpha: AppOpacity.highlight),
-              ),
+        child: DecoratedBox(
+          decoration: theme.visual.decoration(
+            color: Color.alphaBlend(
+              theme.content.strong.withValues(alpha: AppOpacity.whisper),
+              theme.surfaces.card,
             ),
+            radius: radius,
+            side: MediaQuery.highContrastOf(context)
+                ? BorderSide(color: theme.surfaces.border)
+                : BorderSide.none,
+          ),
+          child: AppTappable(
+            onPress: onPress,
+            borderRadius: radius,
             child: ConstrainedBox(
               constraints: const BoxConstraints(
                 minHeight: AppControlHeights.touchTarget,
@@ -153,7 +160,7 @@ class _ChoiceTrigger extends StatelessWidget {
                 child: Row(
                   children: [
                     if (icon != null) ...[
-                      Icon(icon, size: AppIconSizes.sm, color: colors.primary),
+                      Icon(icon, size: AppIconSizes.sm, color: theme.accent.fg),
                       const SizedBox(width: AppSpacing.s8),
                     ],
                     Expanded(
@@ -183,7 +190,7 @@ class _ChoiceTrigger extends StatelessWidget {
                     Icon(
                       FLucideIcons.chevronsUpDown,
                       size: AppIconSizes.sm,
-                      color: colors.mutedForeground,
+                      color: theme.content.muted,
                     ),
                   ],
                 ),

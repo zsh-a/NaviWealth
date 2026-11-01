@@ -17,7 +17,8 @@
 | 转账 (transfer) | 来源账户、目标账户、金额、币种、日期、汇率（跨币种） | 资金账户内转 |
 | 调整 (adjust) | 资产、数量调整 / 成本调整、日期、原因 | 用于纠正历史误差 |
 
-> 类型切换不重新打开页面 — 顶部 SegmentedButton。表单字段动态显示 / 隐藏。
+> 类型切换不重新打开页面，使用设计系统的 `SegmentedRow` 表单变体。
+> 外观遵循[设计系统契约](15-ui-refactor-blueprint.md)，表单字段动态显示 / 隐藏。
 
 ## 3. Wireframe
 
@@ -153,7 +154,7 @@
 | 输入框边框 | hover/focus `primary` 1.5dp | 同 |
 | 估算带 BG | `surfaceContainer` | 同 |
 | 错误色 | `error` | `error` |
-| Segmented 选中 | `secondaryContainer` | 同 |
+| 分段选中 | 共享 tonal 选中面、主题圆角和选中短线 | 同，使用解析后的深色主题 |
 
 字段间距：`space.4` 16dp（同行）/ `space.5` 24dp（区块间）。
 

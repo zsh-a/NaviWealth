@@ -8,11 +8,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 
-Widget _wrap(Widget child, {double width = 400, double textScale = 1}) {
+Widget _wrap(
+  Widget child, {
+  double width = 400,
+  double textScale = 1,
+  bool highContrast = false,
+}) {
   return MaterialApp(
     theme: AppTheme.light(),
     home: MediaQuery(
-      data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
+      data: MediaQueryData(
+        textScaler: TextScaler.linear(textScale),
+        highContrast: highContrast,
+      ),
       child: FTheme(
         data: FTheme.neutral.light.desktop,
         child: FScaffold(
@@ -27,6 +35,77 @@ Widget _wrap(Widget child, {double width = 400, double textScale = 1}) {
 }
 
 void main() {
+  testWidgets('selected labels retain AA contrast across theme preferences', (
+    tester,
+  ) async {
+    for (final visual in AppVisualStyle.values) {
+      for (final brightness in Brightness.values) {
+        for (final accent in AppAccentSeed.values) {
+          for (final highContrast in [false, true]) {
+            await tester.pumpWidget(
+              AppThemeScope(
+                data: resolveAppTheme(
+                  ThemeInputs(
+                    brightness: brightness,
+                    marketMode: MarketColorMode.redUpGreenDown,
+                    visualStyle: visual,
+                    accentSeed: accent,
+                    highContrast: highContrast,
+                  ),
+                ),
+                child: _wrap(
+                  SegmentedRow<String>(
+                    options: const ['Buy', 'Sell'],
+                    value: 'Buy',
+                    labelOf: (value) => value,
+                    onChanged: (_) {},
+                  ),
+                  highContrast: highContrast,
+                ),
+              ),
+            );
+            await tester.pumpAndSettle();
+            final label = tester.widget<AnimatedDefaultTextStyle>(
+              find
+                  .ancestor(
+                    of: find.text('Buy'),
+                    matching: find.byType(AnimatedDefaultTextStyle),
+                  )
+                  .first,
+            );
+            final decoration = tester
+                .widget<DecoratedBox>(
+                  find
+                      .descendant(
+                        of: find.byType(AnimatedPositionedDirectional),
+                        matching: find.byType(DecoratedBox),
+                      )
+                      .first,
+                )
+                .decoration;
+            final fill = switch (decoration) {
+              ShapeDecoration(:final color) => color!,
+              BoxDecoration(:final color) => color!,
+              _ => throw StateError('Unexpected segment decoration'),
+            };
+            final foreground = label.style.color!.computeLuminance();
+            final background = fill.computeLuminance();
+            final ratio = foreground > background
+                ? (foreground + 0.05) / (background + 0.05)
+                : (background + 0.05) / (foreground + 0.05);
+            expect(fill.a, 1);
+            expect(
+              ratio,
+              greaterThanOrEqualTo(4.5),
+              reason:
+                  '$visual / $brightness / $accent / contrast=$highContrast',
+            );
+          }
+        }
+      }
+    }
+  });
+
   testWidgets('disabled segments expose no activation or focus target', (
     tester,
   ) async {
@@ -101,7 +180,7 @@ void main() {
     expect(find.text('B'), findsOneWidget);
     expect(find.text('C'), findsOneWidget);
     expect(find.byType(AnimatedPositionedDirectional), findsOneWidget);
-    expect(find.byType(AppSelectionIndicator), findsNothing);
+    expect(find.byType(AppSelectionIndicator), findsNWidgets(3));
 
     await tester.tap(find.text('B'));
     await tester.pump(const Duration(milliseconds: 120));
@@ -205,6 +284,31 @@ void main() {
 
     expect(find.byType(Wrap), findsOneWidget);
     expect(find.byType(SingleChildScrollView), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('wrapped form choices keep full localized labels readable', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _wrap(
+        SegmentedRow<String>(
+          options: const ['使用经纪账户现金结算', '转入其他账户后结算'],
+          value: '使用经纪账户现金结算',
+          labelOf: (value) => value,
+          onChanged: (_) {},
+        ),
+        width: 200,
+        textScale: 2,
+      ),
+    );
+
+    for (final label in ['使用经纪账户现金结算', '转入其他账户后结算']) {
+      final text = tester.widget<Text>(find.text(label));
+      expect(text.maxLines, isNull);
+      expect(text.overflow, isNull);
+      expect(tester.getSize(find.text(label)).height, greaterThan(48));
+    }
     expect(tester.takeException(), isNull);
   });
 
