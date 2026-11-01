@@ -122,8 +122,14 @@ class Motion {
   /// List item enter, cross-fade between states. → [medium]
   static const Duration contentTransition = medium;
 
-  /// Page route transition. → [slow]
-  static const Duration pageTransition = slow;
+  /// Peer navigation changes content while navigation chrome stays stable.
+  static const Duration navigationSwitch = Duration(milliseconds: 180);
+
+  /// Details enter in one short, directional transition.
+  static const Duration pageTransition = medium;
+
+  /// Returning to a familiar page is quicker than entering it.
+  static const Duration pageReturn = navigationSwitch;
 }
 
 /// Shared spring-drive helper so widgets don't hand-roll

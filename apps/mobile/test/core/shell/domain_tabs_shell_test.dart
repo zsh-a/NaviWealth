@@ -327,7 +327,7 @@ void main() {
     expect(bottomPadding, paddingBeforeSheet);
   });
 
-  testWidgets('branch switch is immediate and preserves paused branch state', (
+  testWidgets('branch reveal preserves paused state and leaves chrome stable', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(400, 800);
@@ -362,12 +362,26 @@ void main() {
     router.go('/two');
     await tester.pump();
 
-    // Switching branches does not add a full-shell opacity layer.
+    // Only content reveals; the dock's selection remains immediately visible.
     expect(
-      find.byKey(const ValueKey<String>('domain-tabs-shell.branch-fade')),
+      find.ancestor(
+        of: find.byKey(const ValueKey<String>('dock-reveal.visible')),
+        matching: find.byType(AppContentReveal),
+      ),
       findsNothing,
     );
     expect(find.byType(StatefulNavigationShell), findsOneWidget);
+    final fade = tester.widget<FadeTransition>(
+      find
+          .descendant(
+            of: find.byType(AppContentReveal),
+            matching: find.byType(FadeTransition),
+          )
+          .first,
+    );
+    expect(fade.opacity.value, 0);
+    await tester.pump(Motion.navigationSwitch ~/ 2);
+    expect(fade.opacity.value, inExclusiveRange(0, 1));
 
     // Back to branch one: state below ShellTabPause survives the round trip.
     router.go('/one');

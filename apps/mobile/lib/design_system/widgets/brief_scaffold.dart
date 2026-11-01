@@ -7,7 +7,6 @@ import 'adaptive_supporting_pane.dart';
 import 'app_collapsing_stage.dart';
 import 'app_refresh_indicator.dart';
 import 'atmosphere.dart';
-import 'staggered_column.dart';
 
 /// Immersive "brief" page composition (Phase A).
 ///
@@ -31,7 +30,6 @@ class BriefScaffold extends StatelessWidget {
     this.secondary = const <Widget>[],
     this.padding,
     this.atmosphere = true,
-    this.stagger = false,
     this.onRefresh,
     this.stickyBuilder,
     this.stickyPadding,
@@ -56,9 +54,6 @@ class BriefScaffold extends StatelessWidget {
 
   /// Soft time-of-day wash behind the brief.
   final bool atmosphere;
-
-  /// Stagger module entrance when motion is enabled.
-  final bool stagger;
 
   final Future<void> Function()? onRefresh;
 
@@ -137,14 +132,7 @@ class BriefScaffold extends StatelessWidget {
       ],
     ];
 
-    final contentChildren = stagger
-        ? <Widget>[
-            StaggeredColumn(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: columnChildren,
-            ),
-          ]
-        : columnChildren;
+    final contentChildren = columnChildren;
     var listChildren = contentChildren;
     if (maxContentWidth case final width?) {
       listChildren = [

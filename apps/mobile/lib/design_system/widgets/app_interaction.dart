@@ -89,7 +89,11 @@ class FocusDim extends StatelessWidget {
       role: AppMotionRole.decorative,
     );
     return AnimatedScale(
-      scale: active ? scale : 1,
+      scale:
+          active &&
+              AppMotionPolicy.isEnabled(context, role: AppMotionRole.decorative)
+          ? scale
+          : 1,
       duration: duration,
       curve: Motion.emphasizedDecelerate,
       child: AnimatedOpacity(
@@ -121,7 +125,9 @@ class ContentCrossFade extends StatelessWidget {
       switchOutCurve: Motion.standardAccelerate,
       transitionBuilder: (child, animation) {
         final offset = Tween<Offset>(
-          begin: const Offset(0, 0.02),
+          begin: AppMotionPolicy.reduceMotion(context)
+              ? Offset.zero
+              : const Offset(0, 0.02),
           end: Offset.zero,
         ).animate(animation);
         return FadeTransition(

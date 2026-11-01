@@ -31,11 +31,13 @@ test.describe('go_router (PathUrlStrategy)', () => {
   test('hard refresh preserves the rebalance destination', async ({ page }) => {
     const spy = attachConsoleSpy(page);
     await openApp(page, '/plan/rebalance');
-    await expect(page.getByRole('group', { name: /^No data yet Add assets/ })).toBeVisible();
+    await expect(page.getByRole('banner', { name: 'Rebalance', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Portfolio', exact: true })).toBeVisible();
     await page.reload();
     await enableFlutterSemantics(page);
     await expect(page).toHaveURL(/\/plan\/rebalance$/);
-    await expect(page.getByRole('group', { name: /^No data yet Add assets/ })).toBeVisible();
+    await expect(page.getByRole('banner', { name: 'Rebalance', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Portfolio', exact: true })).toBeVisible();
     await expectNoConsoleErrors(spy);
   });
 

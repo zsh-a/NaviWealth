@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 import 'package:forui/forui.dart';
 
@@ -157,7 +156,7 @@ class AppTheme {
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: <TargetPlatform, PageTransitionsBuilder>{
           TargetPlatform.android: AppPageTransitionsBuilder(),
-          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.iOS: AppCupertinoPageTransitionsBuilder(),
           TargetPlatform.linux: AppPageTransitionsBuilder(),
           TargetPlatform.macOS: AppPageTransitionsBuilder(),
           TargetPlatform.windows: AppPageTransitionsBuilder(),

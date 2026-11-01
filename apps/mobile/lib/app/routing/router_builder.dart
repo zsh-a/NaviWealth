@@ -1,5 +1,4 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -9,12 +8,11 @@ import '../../core/auth/domain_scope.dart';
 import '../../core/lifeos/domain_pack.dart';
 import '../../core/logging/providers.dart';
 import '../../core/logging/talker_route_observer.dart';
+import '../../core/shell/app_go_route.dart';
 import '../../core/shell/auth_route_paths.dart';
 import '../../core/shell/deferred_route.dart';
 import '../../core/shell/route_error_page.dart';
 import '../../core/shell/settings_route_paths.dart';
-import '../../design_system/tokens/app_motion_policy.dart';
-import '../../design_system/tokens/motion_tokens.dart';
 import '../../design_system/widgets/form_leave_scope.dart';
 import '../../design_system/widgets/system_back_scope.dart';
 import '../../features/ai_chat/ui/ai_chat_page.dart' deferred as ai_chat_lib;
@@ -105,13 +103,13 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = LifeRoutes.home}) {
     redirect: (context, state) => routerRedirect(ref.container, context, state),
     errorBuilder: (context, state) => RouteErrorPage(state: state),
     routes: [
-      GoRoute(
+      AppGoRoute(
         path: AuthRoutes.login,
         name: AuthRouteNames.login,
         builder: (context, state) =>
             const ExitConfirmingSystemBackScope(child: LoginPage()),
       ),
-      GoRoute(
+      AppGoRoute(
         path: AuthRoutes.onboarding,
         name: AuthRouteNames.onboarding,
         builder: (context, state) =>
@@ -121,9 +119,8 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = LifeRoutes.home}) {
       // `/settings`. An AI surface can open these pages while carrying a
       // large message list; keeping the settings overview in the matched
       // stack would build and paint it during the transition for no user
-      // value. The routes retain their canonical URLs and names, but use a
-      // short fade so the outgoing AI surface does not run the global
-      // slide/parallax transition at the same time.
+      // value. These routes retain their canonical URLs, names and the shared
+      // detail transition, with no animation on the outgoing page.
       ..._aiSurfaceRoutes(),
       // Settings — global meta, accessed from Today's header gear. Lives
       // outside the dock shell so it covers the full canvas while open and
@@ -136,14 +133,21 @@ GoRouter buildAppRouter(Ref ref, {String initialLocation = LifeRoutes.home}) {
       // `routes`; a domain-less test build should still boot).
       if (shellRoutes.isNotEmpty)
         ShellRoute(
-          builder: (context, state, child) => AppDockShell(child: child),
+          pageBuilder: (context, state, child) => MaterialPage<void>(
+            key: state.pageKey,
+            name: state.name,
+            child: AppDockShell(child: child),
+          ),
           routes: [
             // Cross-domain Life hub (Phase B) — sibling of domain shells so
             // it shares dock chrome without claiming a domain tab stack.
-            GoRoute(
+            AppGoRoute(
               path: LifeRoutes.home,
               name: LifeRouteNames.home,
-              builder: (context, state) => const LifePage(),
+              pageBuilder: (context, state) => NoTransitionPage<void>(
+                key: state.pageKey,
+                child: const LifePage(),
+              ),
             ),
             ...shellRoutes,
           ],
@@ -166,7 +170,7 @@ List<RouteBase> _aiSurfaceRoutes() {
     // Results can be opened from either a domain or a root-level execution
     // page. Keep them on the root navigator so a drill-down never pushes a
     // second copy of the underlying dock shell with the same page key.
-    GoRoute(
+    AppGoRoute(
       path: AgentArtifactRoutes.detailPath,
       name: AgentArtifactRoutes.detailName,
       pageBuilder: (context, state) => _aiSurfacePage(
@@ -179,13 +183,13 @@ List<RouteBase> _aiSurfaceRoutes() {
         ),
       ),
     ),
-    GoRoute(
+    AppGoRoute(
       path: SettingsRoutes.ai,
       name: SettingsRouteNames.ai,
       pageBuilder: (context, state) =>
           _aiSurfacePage(context, state, _backSafe(const AiSettingsHubPage())),
     ),
-    GoRoute(
+    AppGoRoute(
       path: AssistantRoutes.home,
       name: AssistantRouteNames.home,
       pageBuilder: (context, state) => _aiSurfacePage(
@@ -199,13 +203,13 @@ List<RouteBase> _aiSurfaceRoutes() {
         ),
       ),
     ),
-    GoRoute(
+    AppGoRoute(
       path: SettingsRoutes.aiPrivacy,
       name: SettingsRouteNames.aiPrivacy,
       pageBuilder: (context, state) =>
           _aiSurfacePage(context, state, _backSafe(const AiPrivacyPage())),
     ),
-    GoRoute(
+    AppGoRoute(
       path: SettingsRoutes.aiLlm,
       name: SettingsRouteNames.aiLlm,
       onExit: (context, _) =>
@@ -221,25 +225,25 @@ List<RouteBase> _aiSurfaceRoutes() {
         ),
       ),
     ),
-    GoRoute(
+    AppGoRoute(
       path: SettingsRoutes.aiModels,
       name: SettingsRouteNames.aiModels,
       pageBuilder: (context, state) =>
           _aiSurfacePage(context, state, _backSafe(const AiModelsPage())),
     ),
-    GoRoute(
+    AppGoRoute(
       path: SettingsRoutes.personalMemory,
       name: SettingsRouteNames.personalMemory,
       pageBuilder: (context, state) =>
           _aiSurfacePage(context, state, _backSafe(const PersonalMemoryPage())),
     ),
-    GoRoute(
+    AppGoRoute(
       path: SettingsRoutes.agents,
       name: SettingsRouteNames.agents,
       pageBuilder: (context, state) =>
           _aiSurfacePage(context, state, _backSafe(const AgentsSettingsPage())),
     ),
-    GoRoute(
+    AppGoRoute(
       path: SettingsRoutes.agentExecutionPattern,
       pageBuilder: (context, state) => _aiSurfacePage(
         context,
@@ -252,13 +256,13 @@ List<RouteBase> _aiSurfaceRoutes() {
         ),
       ),
     ),
-    GoRoute(
+    AppGoRoute(
       path: SettingsRoutes.aiTransparency,
       name: SettingsRouteNames.aiTransparency,
       pageBuilder: (context, state) =>
           _aiSurfacePage(context, state, _backSafe(const AiTransparencyPage())),
     ),
-    GoRoute(
+    AppGoRoute(
       path: '${SettingsRoutes.aiTransparency}/:requestId',
       name: SettingsRouteNames.aiTransparencyDetail,
       pageBuilder: (context, state) => _aiSurfacePage(
@@ -274,52 +278,13 @@ List<RouteBase> _aiSurfaceRoutes() {
   ];
 }
 
-/// AI pages enter with a short fade and no secondary-page animation on
-/// non-iOS platforms. iOS keeps its native Cupertino route for edge-swipe
-/// back behavior.
-///
-/// The default app transition intentionally parallax-dims the outgoing page,
-/// which is pleasant for light pages but makes a conversation full of
-/// Markdown/tool/chart render objects participate in every frame. The trace
-/// and settings destinations show their own skeleton immediately, so a
-/// 120ms fade gives feedback without extending the expensive overlap window.
+/// AI details share the same app transition as other detail destinations.
+/// Sibling routes still avoid building unrelated Settings parent pages.
 Page<void> _aiSurfacePage(
   BuildContext context,
   GoRouterState state,
   Widget child,
-) {
-  // Keep the native Cupertino route on iOS so the edge-swipe back gesture
-  // remains available. Android, desktop, and web use the short fade below;
-  // their app-level transition is the one that previously parallax-dimmed
-  // the large outgoing AI render tree.
-  if (defaultTargetPlatform == TargetPlatform.iOS) {
-    return CupertinoPage<void>(
-      key: state.pageKey,
-      name: state.name,
-      child: child,
-    );
-  }
-  final duration = AppMotionPolicy.duration(
-    context,
-    Motion.fast,
-    role: AppMotionRole.transition,
-  );
-  return CustomTransitionPage<void>(
-    key: state.pageKey,
-    name: state.name,
-    transitionDuration: duration,
-    reverseTransitionDuration: duration,
-    child: child,
-    transitionsBuilder: (context, animation, _, child) {
-      final curved = CurvedAnimation(
-        parent: animation,
-        curve: Motion.aiCalm,
-        reverseCurve: Motion.standardAccelerate,
-      );
-      return FadeTransition(opacity: curved, child: child);
-    },
-  );
-}
+) => MaterialPage<void>(key: state.pageKey, name: state.name, child: child);
 
 /// Top-level settings sub-tree. Outside the shell so opening Settings
 /// covers the bottom nav and `pop` returns to whatever tab the user
@@ -332,7 +297,7 @@ Page<void> _aiSurfacePage(
 /// through to the OS and exiting the app when a settings route is the
 /// stack root (reached via `go()` / deep link / app restore).
 GoRoute _settingsRoute(List<DomainPack> packs) {
-  return GoRoute(
+  return AppGoRoute(
     path: SettingsRoutes.root,
     name: SettingsRouteNames.root,
     builder: (context, state) => _backSafe(
@@ -342,7 +307,7 @@ GoRoute _settingsRoute(List<DomainPack> packs) {
       ),
     ),
     routes: [
-      GoRoute(
+      AppGoRoute(
         path: 'appearance',
         name: SettingsRouteNames.appearance,
         builder: (context, state) => _backSafe(
@@ -352,7 +317,7 @@ GoRoute _settingsRoute(List<DomainPack> packs) {
           ),
         ),
       ),
-      GoRoute(
+      AppGoRoute(
         path: 'devices',
         name: SettingsRouteNames.devices,
         builder: (context, state) => _backSafe(
@@ -362,7 +327,7 @@ GoRoute _settingsRoute(List<DomainPack> packs) {
           ),
         ),
       ),
-      GoRoute(
+      AppGoRoute(
         path: 'backup',
         name: SettingsRouteNames.backup,
         builder: (context, state) => _backSafe(
@@ -373,49 +338,49 @@ GoRoute _settingsRoute(List<DomainPack> packs) {
           ),
         ),
       ),
-      GoRoute(
+      AppGoRoute(
         path: 'data-management',
         name: SettingsRouteNames.dataManagement,
         builder: (context, state) => _backSafe(const DataManagementPage()),
       ),
-      GoRoute(
+      AppGoRoute(
         path: 'notifications',
         name: SettingsRouteNames.notifications,
         builder: (context, state) =>
             _backSafe(const NotificationSettingsPage()),
       ),
-      GoRoute(
+      AppGoRoute(
         path: 'logs',
         name: SettingsRouteNames.logs,
         builder: (context, state) => _backSafe(const LogViewerPage()),
       ),
-      GoRoute(
+      AppGoRoute(
         path: 'performance',
         name: SettingsRouteNames.performance,
         builder: (context, state) => _backSafe(const PerfDiagnosticsPage()),
       ),
-      GoRoute(
+      AppGoRoute(
         path: 'developer-issues',
         name: SettingsRouteNames.developerIssues,
         builder: (context, state) => _backSafe(const DeveloperIssuesPage()),
       ),
-      GoRoute(
+      AppGoRoute(
         path: 'sync',
         name: SettingsRouteNames.sync,
         builder: (context, state) => _backSafe(const SyncStatusPage()),
       ),
-      GoRoute(
+      AppGoRoute(
         path: 'advanced',
         name: SettingsRouteNames.advanced,
         builder: (context, state) => _backSafe(const AdvancedSettingsPage()),
       ),
-      GoRoute(
+      AppGoRoute(
         path: 'advanced/data-maintenance',
         name: SettingsRouteNames.dataMaintenance,
         builder: (context, state) =>
             _backSafe(const DataManagementPage.maintenance()),
       ),
-      GoRoute(
+      AppGoRoute(
         path: 'domains',
         name: SettingsRouteNames.domains,
         builder: (context, state) => _backSafe(const DomainsSettingsPage()),

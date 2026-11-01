@@ -65,12 +65,12 @@ class _DomainTabsShellState extends ConsumerState<DomainTabsShell> {
       'DomainTabsShell: branch $index of ${widget.spec.scope} has no matching '
       'visible or hidden tab in its DomainShellSpec',
     );
-    // Branch roots are already retained by StatefulShellRoute.indexedStack.
-    // Keep tab switches immediate: fading the entire navigation shell creates
-    // a full-page opacity layer exactly while the newly selected charts and
-    // lists are laying out, which is one of the most expensive moments to add
-    // extra compositing work.
-    final shellChild = widget.shell;
+    // Animate presentation without keying/remounting the retained branch
+    // Navigators. Navigation chrome remains outside the content reveal.
+    final shellChild = AppContentReveal(
+      transitionKey: index,
+      child: widget.shell,
+    );
 
     // Selected tab chrome tints with the domain accent when the pack
     // declares one; an empty registry (isolated tests) falls back to the
@@ -309,8 +309,7 @@ class _MobileLayout extends ConsumerWidget {
 
 /// Animated show/hide for mobile dock chrome.
 ///
-/// The outgoing child slides down and fades without animating layout, so a
-/// sheet opening or a pushed page no longer hard-cuts the floating dock.
+/// The outgoing child fades in place without animating layout.
 /// Duration comes from [Motion.fast] and is halved under reduce-motion via
 /// [AppMotionPolicy]'s transition role, matching the branch fade-in above.
 class _DockReveal extends StatelessWidget {
@@ -326,16 +325,8 @@ class _DockReveal extends StatelessWidget {
       duration: duration,
       switchInCurve: Motion.standardDecelerate,
       switchOutCurve: Motion.standardAccelerate,
-      transitionBuilder: (child, animation) => FadeTransition(
-        opacity: animation,
-        child: SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(0, 1),
-            end: Offset.zero,
-          ).animate(animation),
-          child: child,
-        ),
-      ),
+      transitionBuilder: (child, animation) =>
+          FadeTransition(opacity: animation, child: child),
       child: visible
           ? KeyedSubtree(
               key: const ValueKey<String>('dock-reveal.visible'),

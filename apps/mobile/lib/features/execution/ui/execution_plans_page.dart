@@ -277,16 +277,11 @@ class _PlansBodyState extends ConsumerState<_PlansBody> {
       maxWidth: Breakpoints.readingColumn,
       expandSinglePrimary: true,
       padding: EdgeInsets.zero,
-      primary: AppEntranceScope(
-        child: ListView.builder(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: shellTabContentPadding(context),
-          itemCount: itemBuilders.length,
-          itemBuilder: (context, index) => AppOnceEntrance(
-            index: index,
-            child: itemBuilders[index](context),
-          ),
-        ),
+      primary: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: shellTabContentPadding(context),
+        itemCount: itemBuilders.length,
+        itemBuilder: (context, index) => itemBuilders[index](context),
       ),
     );
   }

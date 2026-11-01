@@ -429,8 +429,27 @@ in the icon-only layout. Both groups share the shell's reveal and safe-area
 reservation. Tablet and desktop navigation retain their existing shell
 ownership and keyboard behavior.
 
+Navigation keeps chrome stable and animates the content relationship:
+
+- Peer tab/workspace changes use a 180ms `AppContentReveal`; initial display
+  and ordinary data rebuilds stay fully visible. Retained tab Navigators keep
+  scroll positions and local state. Rapid changes interrupt the active reveal.
+- Detail routes use a bounded 16dp directional fade, 220ms in and 180ms out.
+  iOS retains native navigation and edge-swipe back. AI and account details
+  use the same route rules rather than separate fades or container morphs.
+- Ordered page categories use a directional reveal on selection, shared by
+  touch shortcuts and selector taps. Horizontal child controls and system
+  back edges retain gesture priority.
+- Master-detail selection reveals only the right pane for 120ms; the selected
+  key resets form state without keeping outgoing forms mounted.
+- Page sections and existing list rows appear in place. Do not stack section
+  staggers on top of navigation. Live-message and local status feedback remain
+  purposeful, separate interactions.
+
 State changes use `AppMotionPolicy`, the shared Motion durations and curves.
-Reduced motion suppresses decorative movement and retains recognizable states.
+iOS Reduce Motion uses short fades without spatial movement and stops
+decorative/status loops. System Remove animations displays final states
+immediately. Both platform signals are observed, including runtime changes.
 Refined sheets use the bounded damped spring in `AppVisualStyle`; keep that
 curve in Dart rather than approximating it at a feature call site.
 

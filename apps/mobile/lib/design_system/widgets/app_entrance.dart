@@ -56,6 +56,9 @@ class AppEntrance extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!enabled) return child;
+    final distance = AppMotionPolicy.reduceMotion(context)
+        ? 0.0
+        : slideDistance;
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0, end: 1),
       duration: AppMotionPolicy.duration(context, duration, role: role),
@@ -64,7 +67,7 @@ class AppEntrance extends StatelessWidget {
         return Opacity(
           opacity: value,
           child: Transform.translate(
-            offset: Offset(0, slideDistance * (1 - value)),
+            offset: Offset(0, distance * (1 - value)),
             child: child,
           ),
         );

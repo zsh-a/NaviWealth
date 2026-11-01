@@ -199,6 +199,6 @@ class _HomeSummaryLayout extends ConsumerWidget {
           child: ActivityTimelinePreview(),
         ),
     ];
-    return AdaptiveSummaryGrid(items: staggeredSummaryTiles(ordered));
+    return AdaptiveSummaryGrid(items: ordered);
   }
 }

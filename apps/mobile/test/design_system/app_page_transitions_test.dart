@@ -69,7 +69,19 @@ void main() {
         of: find.text('page'),
         matching: find.byType(FadeTransition),
       ),
-      findsNothing,
+      findsOneWidget,
+    );
+    expect(
+      tester
+          .widget<FadeTransition>(
+            find.ancestor(
+              of: find.text('page'),
+              matching: find.byType(FadeTransition),
+            ),
+          )
+          .opacity
+          .value,
+      1,
     );
 
     // At rest (nothing pushing over this page) the result is unchanged too.
@@ -84,40 +96,110 @@ void main() {
         of: find.text('page'),
         matching: find.byType(FadeTransition),
       ),
-      findsNothing,
+      findsOneWidget,
+    );
+    expect(
+      tester
+          .widget<FadeTransition>(
+            find.ancestor(
+              of: find.text('page'),
+              matching: find.byType(FadeTransition),
+            ),
+          )
+          .opacity
+          .value,
+      1,
     );
   });
 
-  testWidgets('reduce motion keeps a plain cross-fade (no parallax)', (
+  testWidgets(
+    'removed animations keep the page fully visible with no displacement',
+    (tester) async {
+      final primary = AnimationController(
+        vsync: tester,
+        duration: Motion.pageTransition,
+      );
+      final secondary = AnimationController(
+        vsync: tester,
+        duration: Motion.pageTransition,
+        value: 0.5,
+      );
+      addTearDown(primary.dispose);
+      addTearDown(secondary.dispose);
+
+      await tester.pumpWidget(
+        _buildTransition(
+          primary: primary,
+          secondary: secondary,
+          disableAnimations: true,
+        ),
+      );
+
+      expect(_ancestorSlides(tester).single.position.value, Offset.zero);
+      expect(
+        tester
+            .widget<FadeTransition>(
+              find.ancestor(
+                of: find.text('page'),
+                matching: find.byType(FadeTransition),
+              ),
+            )
+            .opacity
+            .value,
+        1,
+      );
+      expect(
+        find.ancestor(
+          of: find.text('page'),
+          matching: find.byType(FadeTransition),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+  for (final width in [400.0, 1440.0]) {
+    testWidgets('detail motion stays within 16dp at width $width', (
+      tester,
+    ) async {
+      const primary = AlwaysStoppedAnimation<double>(0);
+      const secondary = AlwaysStoppedAnimation<double>(0);
+      await tester.pumpWidget(
+        _buildTransition(
+          primary: primary,
+          secondary: secondary,
+          size: Size(width, 800),
+        ),
+      );
+      expect(_ancestorSlides(tester).single.position.value.dx * width, 16);
+    });
+  }
+
+  testWidgets('iOS reduced motion fades details without spatial motion', (
     tester,
   ) async {
-    final primary = AnimationController(
-      vsync: tester,
-      duration: Motion.pageTransition,
+    tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(reduceMotion: true);
+    addTearDown(
+      tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue,
     );
-    final secondary = AnimationController(
-      vsync: tester,
-      duration: Motion.pageTransition,
-      value: 0.5,
-    );
-    addTearDown(primary.dispose);
-    addTearDown(secondary.dispose);
-
     await tester.pumpWidget(
       _buildTransition(
-        primary: primary,
-        secondary: secondary,
-        disableAnimations: true,
+        primary: const AlwaysStoppedAnimation<double>(0.5),
+        secondary: const AlwaysStoppedAnimation<double>(0.5),
       ),
     );
-
-    expect(find.byType(SlideTransition), findsNothing);
+    expect(_ancestorSlides(tester).single.position.value, Offset.zero);
     expect(
-      find.ancestor(
-        of: find.text('page'),
-        matching: find.byType(FadeTransition),
-      ),
-      findsOneWidget,
+      tester
+          .widget<FadeTransition>(
+            find.ancestor(
+              of: find.text('page'),
+              matching: find.byType(FadeTransition),
+            ),
+          )
+          .opacity
+          .value,
+      inExclusiveRange(0, 1),
     );
   });
 }

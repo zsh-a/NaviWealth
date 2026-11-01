@@ -135,6 +135,16 @@ The router uses a two-layer shell:
 - Outer shell: `AppDockShell`, global lifecycle, route context, system-back behavior, and adaptive workspace navigation.
 - Inner shell: one `StatefulShellRoute` per active domain route builder.
 
+Domain shell roots and the Life root use `NoTransitionPage`; the retained
+`DomainTabsShell` and `AppDockShell` own peer content reveals through the
+design system's `AppContentReveal`. The indexed-stack Navigators keep their
+identity across tab changes. Navigation chrome stays outside tab reveals;
+detail routes retain their shared theme transition and iOS back gestures.
+`AppGoRoute` explicitly builds Flutter Material pages for widget routes:
+go_router 18's automatic app detection targets standalone `material_ui`, while
+this app uses Flutter's MaterialApp. Explicit pages keep the theme transition,
+route state, guards and restoration without relying on that detection.
+
 Important files:
 
 - `app/routing/router_builder.dart`

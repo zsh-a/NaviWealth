@@ -161,7 +161,7 @@ class _WealthHubBody extends ConsumerWidget {
               ),
             ),
           ),
-          summaryTiles: staggeredSummaryTiles([
+          summaryTiles: [
             if (isEmpty)
               AdaptiveSummaryTile(
                 role: AdaptiveSummaryTileRole.continuous,
@@ -181,7 +181,7 @@ class _WealthHubBody extends ConsumerWidget {
                 role: AdaptiveSummaryTileRole.continuous,
                 child: WealthPerspectiveSection(),
               ),
-          ]),
+          ],
         );
       },
     );

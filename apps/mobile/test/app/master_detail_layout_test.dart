@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:naviwealth/core/shell/master_detail_layout.dart';
 import 'package:naviwealth/core/shell/shell_preferences.dart';
 import 'package:naviwealth/design_system/design_system.dart';
@@ -39,6 +40,51 @@ Future<void> _pumpLayout(
 }
 
 void main() {
+  testWidgets(
+    'selection reveals the new detail without retaining the old form',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      await tester.binding.setSurfaceSize(const Size(1000, 600));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final router = GoRouter(
+        initialLocation: '/?selected=a',
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (_, state) => Scaffold(
+              body: MasterDetailLayout(
+                master: const SizedBox.expand(),
+                detail: TextFormField(
+                  initialValue: state.uri.queryParameters['selected'],
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+          child: MaterialApp.router(
+            theme: AppTheme.light(),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            routerConfig: router,
+          ),
+        ),
+      );
+      await tester.enterText(find.byType(TextFormField), 'draft for a');
+      router.go('/?selected=b');
+      await tester.pump();
+      expect(find.text('draft for a'), findsNothing);
+      expect(find.text('b'), findsOneWidget);
+      expect(find.byType(TextFormField), findsOneWidget);
+      await tester.pumpAndSettle();
+    },
+  );
+
   testWidgets('splitter supports keyboard resizing and clamps width', (
     tester,
   ) async {

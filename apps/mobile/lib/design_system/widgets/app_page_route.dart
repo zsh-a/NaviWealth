@@ -1,43 +1,45 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
+import 'package:flutter/material.dart';
 
-import '../theme/app_page_transitions.dart';
 import '../tokens/app_motion_policy.dart';
 import '../tokens/motion_tokens.dart';
 
-/// Builds an imperative page route that shares the app motion policy.
-///
-/// The default transition is the same width-aware fade + slide declarative
-/// routes get from [AppPageTransitionsBuilder] — imperative pushes no longer
-/// teleport. Pass [transitionsBuilder] only for surfaces that genuinely need
-/// a bespoke enter animation.
-PageRouteBuilder<T> buildAppPageRoute<T>({
+/// Imperative details share declarative navigation, including iOS back gestures.
+PageRoute<T> buildAppPageRoute<T>({
   required BuildContext context,
   required RoutePageBuilder pageBuilder,
-  RouteTransitionsBuilder? transitionsBuilder,
   bool fullscreenDialog = false,
-  Duration transitionDuration = Motion.pageTransition,
-  Duration reverseTransitionDuration = Motion.componentChange,
 }) {
-  return PageRouteBuilder<T>(
+  final native = Theme.of(context).platform == TargetPlatform.iOS;
+  final enter = native
+      ? const CupertinoPageTransitionsBuilder().transitionDuration
+      : Motion.pageTransition;
+  final leave = native ? enter : Motion.pageReturn;
+  return _AppPageRoute<T>(
+    enter: AppMotionPolicy.duration(context, enter),
+    leave: AppMotionPolicy.duration(context, leave),
     fullscreenDialog: fullscreenDialog,
-    pageBuilder: pageBuilder,
-    transitionsBuilder:
-        transitionsBuilder ??
-        (context, animation, _, child) =>
-            AppPageTransitionsBuilder.buildAppTransition(
-              context,
-              animation,
-              child,
-            ),
-    transitionDuration: AppMotionPolicy.duration(
-      context,
-      transitionDuration,
-      role: AppMotionRole.transition,
-    ),
-    reverseTransitionDuration: AppMotionPolicy.duration(
-      context,
-      reverseTransitionDuration,
-      role: AppMotionRole.transition,
-    ),
+    builder: (context) {
+      final route = ModalRoute.of(context)!;
+      return pageBuilder(context, route.animation!, route.secondaryAnimation!);
+    },
   );
+}
+
+class _AppPageRoute<T> extends MaterialPageRoute<T> {
+  _AppPageRoute({
+    required this.enter,
+    required this.leave,
+    required super.builder,
+    required super.fullscreenDialog,
+  });
+
+  final Duration enter;
+  final Duration leave;
+
+  @override
+  Duration get transitionDuration => enter;
+
+  @override
+  Duration get reverseTransitionDuration => leave;
 }

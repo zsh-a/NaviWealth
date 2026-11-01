@@ -32,114 +32,99 @@ class SettingsOverview extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
 
-    final accountGroup = AppEntrance(
-      role: AppMotionRole.decorative,
-      child: _Section(
-        title: l10n.settingsAccountSection,
-        child: _AccountSection(),
-      ),
+    final accountGroup = _Section(
+      title: l10n.settingsAccountSection,
+      child: _AccountSection(),
     );
-    final preferencesGroup = AppEntrance(
-      role: AppMotionRole.decorative,
-      child: _Section(
-        title: l10n.settingsPreferencesSection,
-        child: Column(
-          children: [
-            InlineLinkRow(
-              icon: FLucideIcons.palette,
-              label: l10n.settingsAppearanceSection,
-              trailingValue: switch (ref.watch(themeModeProvider)) {
-                ThemeMode.system => l10n.themeModeSystem,
-                ThemeMode.light => l10n.themeModeLight,
-                ThemeMode.dark => l10n.themeModeDark,
-              },
-              onTap: () => context.pushNamed(SettingsRouteNames.appearance),
-            ),
-            const AppGroupedDivider(),
-            InlineLinkRow(
-              icon: FLucideIcons.blocks,
-              label: l10n.settingsDomainsTitle,
-              onTap: () => context.pushNamed(SettingsRouteNames.domains),
-            ),
-            const AppGroupedDivider(),
-            InlineLinkRow(
-              icon: FLucideIcons.sparkles,
-              label: l10n.settingsAiHubTitle,
-              onTap: () => context.pushNamed(SettingsRouteNames.ai),
-            ),
-          ],
-        ),
+    final preferencesGroup = _Section(
+      title: l10n.settingsPreferencesSection,
+      child: Column(
+        children: [
+          InlineLinkRow(
+            icon: FLucideIcons.palette,
+            label: l10n.settingsAppearanceSection,
+            trailingValue: switch (ref.watch(themeModeProvider)) {
+              ThemeMode.system => l10n.themeModeSystem,
+              ThemeMode.light => l10n.themeModeLight,
+              ThemeMode.dark => l10n.themeModeDark,
+            },
+            onTap: () => context.pushNamed(SettingsRouteNames.appearance),
+          ),
+          const AppGroupedDivider(),
+          InlineLinkRow(
+            icon: FLucideIcons.blocks,
+            label: l10n.settingsDomainsTitle,
+            onTap: () => context.pushNamed(SettingsRouteNames.domains),
+          ),
+          const AppGroupedDivider(),
+          InlineLinkRow(
+            icon: FLucideIcons.sparkles,
+            label: l10n.settingsAiHubTitle,
+            onTap: () => context.pushNamed(SettingsRouteNames.ai),
+          ),
+        ],
       ),
     );
     final isLocalOnly =
         ref.watch(auth_providers.authStateProvider) is AuthLocalOnly;
-    final dataGroup = AppEntrance(
-      role: AppMotionRole.decorative,
-      child: _Section(
-        title: l10n.settingsDataSection,
-        child: Column(
-          children: [
-            if (!isLocalOnly) ...[
-              InlineLinkRow(
-                icon: FLucideIcons.refreshCw,
-                label: l10n.settingsSyncTitle,
-                subtitle: syncOverviewMessage(
-                  l10n,
-                  ref.watch(syncStatusEventStreamProvider).value,
-                ),
-                onTap: () => context.pushNamed(SettingsRouteNames.sync),
-              ),
-              const AppGroupedDivider(),
-            ],
+    final dataGroup = _Section(
+      title: l10n.settingsDataSection,
+      child: Column(
+        children: [
+          if (!isLocalOnly) ...[
             InlineLinkRow(
-              icon: FLucideIcons.database,
-              label: l10n.settingsDataManagementTitle,
-              subtitle: l10n.settingsDataManagementOverviewSummary,
-              onTap: () => context.pushNamed(SettingsRouteNames.dataManagement),
+              icon: FLucideIcons.refreshCw,
+              label: l10n.settingsSyncTitle,
+              subtitle: syncOverviewMessage(
+                l10n,
+                ref.watch(syncStatusEventStreamProvider).value,
+              ),
+              onTap: () => context.pushNamed(SettingsRouteNames.sync),
             ),
+            const AppGroupedDivider(),
           ],
-        ),
+          InlineLinkRow(
+            icon: FLucideIcons.database,
+            label: l10n.settingsDataManagementTitle,
+            subtitle: l10n.settingsDataManagementOverviewSummary,
+            onTap: () => context.pushNamed(SettingsRouteNames.dataManagement),
+          ),
+        ],
       ),
     );
-    final notificationsPrivacyGroup = AppEntrance(
-      role: AppMotionRole.decorative,
-      child: _Section(
-        title: l10n.settingsNotificationsPrivacySection,
-        child: Column(
-          children: [
-            InlineLinkRow(
-              icon: FLucideIcons.bell,
-              label: l10n.settingsNotificationsTitle,
-              onTap: () => context.pushNamed(SettingsRouteNames.notifications),
-            ),
-            const AppGroupedDivider(),
-            const _BiometricUnlockRow(),
-            const AppGroupedDivider(),
-            const _CrashReportingRow(),
-          ],
-        ),
+    final notificationsPrivacyGroup = _Section(
+      title: l10n.settingsNotificationsPrivacySection,
+      child: Column(
+        children: [
+          InlineLinkRow(
+            icon: FLucideIcons.bell,
+            label: l10n.settingsNotificationsTitle,
+            onTap: () => context.pushNamed(SettingsRouteNames.notifications),
+          ),
+          const AppGroupedDivider(),
+          const _BiometricUnlockRow(),
+          const AppGroupedDivider(),
+          const _CrashReportingRow(),
+        ],
       ),
     );
     // Logs viewer is exposed in release as well — the talker history is
     // already kept in memory in every build, and dogfood users need a
     // way to copy diagnostics out (e.g. Health Connect permission flow)
     // without a debug attach.
-    final advancedGroup = AppEntrance(
-      role: AppMotionRole.decorative,
-      child: _Section(
-        title: l10n.settingsAboutDiagnosticsSection,
-        child: Column(
-          children: [
-            InlineLinkRow(
-              icon: FLucideIcons.settings2,
-              label: l10n.settingsAdvancedHubTitle,
-              subtitle: l10n.settingsAdvancedHubSubtitle,
-              onTap: () => context.pushNamed(SettingsRouteNames.advanced),
-            ),
-            const AppGroupedDivider(),
-            const _AboutTile(),
-          ],
-        ),
+    final advancedGroup = _Section(
+      title: l10n.settingsAboutDiagnosticsSection,
+      child: Column(
+        children: [
+          InlineLinkRow(
+            icon: FLucideIcons.settings2,
+            label: l10n.settingsAdvancedHubTitle,
+            subtitle: l10n.settingsAdvancedHubSubtitle,
+            onTap: () => context.pushNamed(SettingsRouteNames.advanced),
+          ),
+          const AppGroupedDivider(),
+          const _AboutTile(),
+        ],
       ),
     );
 

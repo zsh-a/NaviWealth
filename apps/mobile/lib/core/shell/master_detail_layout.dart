@@ -34,10 +34,8 @@ class MasterDetailLayout extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final masterWidth = ref.watch(masterPaneWidthProvider);
     final colors = context.theme.colors;
-    // Drive AnimatedSwitcher from `?selected=`: switching rows (or
-    // clearing the selection) crossfades the detail pane instead of
-    // snapping to a blank surface. Empty state collapses to a fixed key
-    // so the fade plays both directions.
+    // Replace the selected detail once, then reveal it. Outgoing forms do
+    // not remain mounted during a fade; the selected key resets their state.
     final selected = selectedQueryOf(context) ?? _emptyDetailKey;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -51,30 +49,12 @@ class MasterDetailLayout extends ConsumerWidget {
           },
         ),
         Expanded(
-          child: AnimatedSwitcher(
-            duration: AppMotionPolicy.duration(context, Motion.fast),
-            switchInCurve: Motion.standardDecelerate,
-            switchOutCurve: Motion.standardAccelerate,
-            transitionBuilder: (child, animation) =>
-                FadeTransition(opacity: animation, child: child),
-            // Default layoutBuilder centers children with loose
-            // constraints, which shrinks form/empty panes that have no
-            // intrinsic size. Override with expand-fit so the detail
-            // pane fills the column.
-            layoutBuilder: (current, previous) => Stack(
-              fit: StackFit.expand,
-              alignment: Alignment.topLeft,
-              children: [
-                for (final outgoing in previous)
-                  ExcludeFocus(
-                    child: ExcludeSemantics(
-                      child: IgnorePointer(child: outgoing),
-                    ),
-                  ),
-                ?current,
-              ],
+          child: AppContentReveal(
+            transitionKey: selected,
+            duration: Motion.fast,
+            child: SizedBox.expand(
+              child: KeyedSubtree(key: ValueKey(selected), child: detail),
             ),
-            child: KeyedSubtree(key: ValueKey(selected), child: detail),
           ),
         ),
       ],

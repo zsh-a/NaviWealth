@@ -1,4 +1,6 @@
 import 'package:flutter/widgets.dart';
+import 'package:forui/forui.dart'
+    show FAccessibilityMotion, FAccessibilityScope;
 
 /// Semantic motion categories used across the app.
 ///
@@ -11,18 +13,43 @@ enum AppMotionRole { transition, decorative, status }
 ///
 /// Under reduce-motion the three roles degrade differently (doc 11 §12):
 ///
-/// * [AppMotionRole.transition] — stays enabled with **halved** durations,
-///   so navigation and sheet chrome keep a legible cross-fade instead of
-///   teleporting (the route builders already swap slides for fades).
+/// * [AppMotionRole.transition] — short fades under reduced motion.
 /// * [AppMotionRole.decorative] — disabled outright (shimmer, staggers,
 ///   press scales, chart draw-ins).
 /// * [AppMotionRole.status] — disabled; status is always double-encoded
 ///   (color + icon/text), so losing the pulse loses no information.
+/// System "Remove animations" disables all three roles.
 abstract final class AppMotionPolicy {
+  static FAccessibilityMotion _platformMotion() {
+    final features =
+        WidgetsBinding.instance.platformDispatcher.accessibilityFeatures;
+    if (features.disableAnimations) return FAccessibilityMotion.disabled;
+    if (features.reduceMotion) return FAccessibilityMotion.reduced;
+    return FAccessibilityMotion.all;
+  }
+
+  static bool get platformReduceMotion =>
+      _platformMotion() != FAccessibilityMotion.all;
+
+  static FAccessibilityMotion _motion(BuildContext context) {
+    // Forui observes accessibility changes, including the iOS-only
+    // reduceMotion flag that MediaQuery.disableAnimations does not expose.
+    if (context.findAncestorWidgetOfExactType<FAccessibilityScope>() != null) {
+      return FAccessibilityScope.motionOf(context);
+    }
+    return _platformMotion();
+  }
+
+  static bool disableAnimations(BuildContext context) =>
+      MediaQuery.disableAnimationsOf(context) ||
+      _motion(context) == FAccessibilityMotion.disabled;
+
   static bool reduceMotion(BuildContext context) =>
-      MediaQuery.disableAnimationsOf(context);
+      disableAnimations(context) ||
+      _motion(context) == FAccessibilityMotion.reduced;
 
   static bool isEnabled(BuildContext context, {required AppMotionRole role}) {
+    if (disableAnimations(context)) return false;
     if (!reduceMotion(context)) return true;
     return switch (role) {
       AppMotionRole.transition => true,
@@ -35,10 +62,20 @@ abstract final class AppMotionPolicy {
     Duration duration, {
     AppMotionRole role = AppMotionRole.transition,
   }) {
+    if (disableAnimations(context)) return Duration.zero;
     if (!reduceMotion(context)) return duration;
     return switch (role) {
       AppMotionRole.transition => duration * 0.5,
       AppMotionRole.decorative || AppMotionRole.status => Duration.zero,
+    };
+  }
+
+  /// Route duration getters have no BuildContext; use the same system flags.
+  static Duration platformDuration(Duration duration) {
+    return switch (_platformMotion()) {
+      FAccessibilityMotion.disabled => Duration.zero,
+      FAccessibilityMotion.reduced => duration * 0.5,
+      FAccessibilityMotion.all => duration,
     };
   }
 }

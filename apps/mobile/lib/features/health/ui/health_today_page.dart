@@ -85,7 +85,7 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
             )
           : dataReady
           ? hasRecovery
-                ? const FadeSlideIn(child: _RecoveryHero())
+                ? const _RecoveryHero()
                 : const _MetricGrid()
           : const _HealthActivationCard(),
     );
@@ -105,7 +105,7 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
                       _HealthRecoveryStickyBar(progress: progress)
                 : null,
             summaryTiles: dataReady
-                ? staggeredSummaryTiles([
+                ? [
                     if (hasRecovery)
                       const AdaptiveSummaryTile(
                         role: AdaptiveSummaryTileRole.featured,
@@ -147,7 +147,7 @@ class _HealthTodayPageState extends ConsumerState<HealthTodayPage> {
                       role: AdaptiveSummaryTileRole.supporting,
                       child: _SourcesSection(),
                     ),
-                  ])
+                  ]
                 // The activation card already exposes the three first-run
                 // source actions. Repeating the same collapsed source section
                 // below it makes the empty state feel like two onboarding

@@ -95,7 +95,7 @@ class LifePage extends ConsumerWidget {
               ),
             ),
           ),
-          summaryTiles: staggeredSummaryTiles([
+          summaryTiles: [
             if (priorityEvents.isNotEmpty)
               AdaptiveSummaryTile(
                 role: AdaptiveSummaryTileRole.featured,
@@ -128,7 +128,7 @@ class LifePage extends ConsumerWidget {
                 role: AdaptiveSummaryTileRole.continuous,
                 child: _LifeEmptySection(l10n: l10n),
               ),
-          ]),
+          ],
         ),
       ),
     );

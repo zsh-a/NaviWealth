@@ -1609,7 +1609,11 @@ class _WatchlistSimulationMethodDisclosureState
                 ),
                 AnimatedRotation(
                   turns: _expanded ? 0.5 : 0,
-                  duration: const Duration(milliseconds: 180),
+                  duration: AppMotionPolicy.duration(
+                    context,
+                    Motion.navigationSwitch,
+                    role: AppMotionRole.decorative,
+                  ),
                   child: Icon(
                     FLucideIcons.chevronDown,
                     size: AppIconSizes.sm,

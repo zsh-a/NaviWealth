@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 
+import '../../../core/shell/app_go_route.dart';
 import '../../../core/shell/domain_tabs_shell.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../ui/execution_detail_page.dart';
@@ -11,19 +12,22 @@ import 'execution_route_paths.dart';
 
 StatefulShellRoute executionShellRoute() {
   return StatefulShellRoute.indexedStack(
-    builder: (context, state, shell) => DomainTabsShell(
-      shell: shell,
-      spec: executionDomainShell(AppLocalizations.of(context)),
+    pageBuilder: (context, state, shell) => NoTransitionPage<void>(
+      key: state.pageKey,
+      child: DomainTabsShell(
+        shell: shell,
+        spec: executionDomainShell(AppLocalizations.of(context)),
+      ),
     ),
     branches: [
       StatefulShellBranch(
         routes: [
-          GoRoute(
+          AppGoRoute(
             path: ExecutionRoutes.today,
             name: ExecutionRouteNames.today,
             builder: (context, state) => const ExecutionTodayPage(),
             routes: [
-              GoRoute(
+              AppGoRoute(
                 path: 'action/:id',
                 name: ExecutionRouteNames.actionDetail,
                 builder: (context, state) => ExecutionActionDetailPage(
@@ -36,12 +40,12 @@ StatefulShellRoute executionShellRoute() {
       ),
       StatefulShellBranch(
         routes: [
-          GoRoute(
+          AppGoRoute(
             path: ExecutionRoutes.plans,
             name: ExecutionRouteNames.plans,
             builder: (context, state) => const ExecutionPlansPage(),
             routes: [
-              GoRoute(
+              AppGoRoute(
                 path: ':id',
                 name: ExecutionRouteNames.planDetail,
                 builder: (context, state) => ExecutionPlanDetailPage(
@@ -54,7 +58,7 @@ StatefulShellRoute executionShellRoute() {
       ),
       StatefulShellBranch(
         routes: [
-          GoRoute(
+          AppGoRoute(
             path: ExecutionRoutes.review,
             name: ExecutionRouteNames.review,
             builder: (context, state) => const ExecutionReviewPage(),

@@ -171,13 +171,13 @@ class _AppDockShellState extends ConsumerState<AppDockShell> {
                 activeSpec.scope,
                 context.appTheme.brightness,
               );
+        final content = AppContentReveal(
+          transitionKey: activeSpec?.scope,
+          child: routedChild,
+        );
         final shellChild = specs.isEmpty
-            ? routedChild
-            : _DockChrome(
-                specs: specs,
-                activePath: location,
-                child: routedChild,
-              );
+            ? content
+            : _DockChrome(specs: specs, activePath: location, child: content);
 
         return ExitConfirmingSystemBackScope(
           onBack: _handleSystemBackBeforeExit,

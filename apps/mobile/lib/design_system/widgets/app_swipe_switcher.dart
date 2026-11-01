@@ -4,6 +4,7 @@ import 'package:flutter/material.dart' show Theme;
 import 'package:flutter/widgets.dart';
 
 import '../tokens/dimens_tokens.dart';
+import 'app_content_reveal.dart';
 import 'app_interaction.dart';
 
 /// Touch shortcut for adjacent page categories shown by a visible selector.
@@ -35,10 +36,18 @@ class _AppSwipeSwitcherState<T> extends State<AppSwipeSwitcher<T>> {
   static const _backGestureInset = 24.0;
   int? _startIndex;
   double _distance = 0;
+  double _entryDirection = 0;
 
   @override
   void didUpdateWidget(AppSwipeSwitcher<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.value != oldWidget.value) {
+      final previous = oldWidget.options.indexOf(oldWidget.value);
+      final next = widget.options.indexOf(widget.value);
+      _entryDirection = previous >= 0 && next >= 0
+          ? (next - previous).sign.toDouble()
+          : 0;
+    }
     if (widget.value != oldWidget.value ||
         !listEquals(widget.options, oldWidget.options) ||
         widget.onChanged == null) {
@@ -117,7 +126,16 @@ class _AppSwipeSwitcherState<T> extends State<AppSwipeSwitcher<T>> {
               },
             ),
     },
-    child: widget.child,
+    child: AppContentReveal(
+      transitionKey: widget.value,
+      offset: Offset(
+        _entryDirection *
+            AppSpacing.s16 *
+            (Directionality.of(context) == TextDirection.ltr ? 1 : -1),
+        0,
+      ),
+      child: widget.child,
+    ),
   );
 }
 

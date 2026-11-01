@@ -1,8 +1,8 @@
 import 'package:flutter/widgets.dart';
-import 'package:go_router/go_router.dart';
-
 import 'package:naviwealth/core/lifeos/domain_pack.dart';
 import 'package:naviwealth/core/shell/settings_route_paths.dart';
+
+import '../../core/shell/app_go_route.dart';
 
 DomainSettingsSpec domainSettingsSpec({
   required IconData icon,
@@ -19,7 +19,7 @@ DomainSettingsSpec domainSettingsSpec({
     subtitle: subtitle,
     alwaysEnabled: alwaysEnabled,
     detailPath: routePath,
-    routeBuilder: (wrap) => GoRoute(
+    routeBuilder: (wrap) => AppGoRoute(
       path: _settingsChildPath(routePath),
       name: routeName,
       builder: (context, state) => wrap(page),

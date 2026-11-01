@@ -205,19 +205,6 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
   String _query = '';
   _HoldingSort _sort = _HoldingSort.value;
   bool _ascending = false;
-  // First-frame entrance stagger (doc 11 §5) — first-paint rows cascade in;
-  // later builds (data ticks) appear instantly.
-  bool _entranceStagger = true;
-  static const int _kStaggerRowCap = 8;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _entranceStagger = false;
-    });
-  }
-
   @override
   void dispose() {
     _search.dispose();
@@ -501,12 +488,6 @@ class _PortfolioHubBodyState extends State<_PortfolioHubBody> {
                       holding: holdings[index],
                       tabular: tabular,
                     );
-                    if (_entranceStagger && index < _kStaggerRowCap) {
-                      return FadeSlideIn(
-                        delay: Motion.staggerDelayFor(index, _kStaggerRowCap),
-                        child: row,
-                      );
-                    }
                     return row;
                   },
                 ),

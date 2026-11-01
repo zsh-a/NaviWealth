@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 
 void main() {
@@ -53,22 +54,15 @@ void main() {
         ),
       );
 
-      // Tiered degradation (doc 11 §2): transitions keep a halved
-      // cross-fade; decorative and status motion stop entirely.
-      if (role == AppMotionRole.transition) {
-        expect(duration, Motion.medium * 0.5);
-        expect(enabled, isTrue);
-      } else {
-        expect(duration, Duration.zero);
-        expect(enabled, isFalse);
-      }
+      expect(duration, Duration.zero);
+      expect(enabled, isFalse);
     });
   }
 
   testWidgets('imperative routes inherit the reduced-motion duration', (
     tester,
   ) async {
-    late PageRouteBuilder<void> route;
+    late PageRoute<void> route;
     await tester.pumpWidget(
       MaterialApp(
         home: MediaQuery(
@@ -86,9 +80,48 @@ void main() {
       ),
     );
 
-    // Transition role halves under reduce-motion instead of zeroing, so
-    // imperative pushes keep a short legible cross-fade.
-    expect(route.transitionDuration, Motion.pageTransition * 0.5);
-    expect(route.reverseTransitionDuration, Motion.componentChange * 0.5);
+    expect(route.transitionDuration, Duration.zero);
+    expect(route.reverseTransitionDuration, Duration.zero);
+  });
+
+  testWidgets('observes the independent iOS reduced-motion flag and changes', (
+    tester,
+  ) async {
+    addTearDown(
+      tester.binding.platformDispatcher.clearAccessibilityFeaturesTestValue,
+    );
+    late Duration transition;
+    late bool decorative;
+    late bool disabled;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: FAccessibilityScope(
+          child: Builder(
+            builder: (context) {
+              transition = AppMotionPolicy.duration(context, Motion.medium);
+              decorative = AppMotionPolicy.isEnabled(
+                context,
+                role: AppMotionRole.decorative,
+              );
+              disabled = AppMotionPolicy.disableAnimations(context);
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      ),
+    );
+    expect(transition, Motion.medium);
+    tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(reduceMotion: true);
+    await tester.pump();
+    expect(transition, Motion.medium * 0.5);
+    expect(decorative, isFalse);
+    expect(disabled, isFalse);
+
+    tester.binding.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    await tester.pump();
+    expect(transition, Duration.zero);
+    expect(disabled, isTrue);
   });
 }

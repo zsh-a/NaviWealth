@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/core/shell/app_go_route.dart';
 import 'package:naviwealth/core/shell/master_detail_layout.dart';
 import 'package:naviwealth/core/shell/selection_query.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
@@ -35,14 +36,14 @@ Widget _wrap({required SharedPreferences prefs, required double contentWidth}) {
   final router = GoRouter(
     initialLocation: '/wealth/accounts',
     routes: [
-      GoRoute(
+      AppGoRoute(
         path: '/wealth/accounts',
         builder: (_, _) => Align(
           alignment: Alignment.topLeft,
           child: SizedBox(width: contentWidth, child: const AccountsPage()),
         ),
       ),
-      GoRoute(
+      AppGoRoute(
         path: '/wealth/accounts/:id',
         builder: (_, _) => const Text('single-account-detail'),
       ),
@@ -95,27 +96,34 @@ void main() {
     expect(find.text('single-account-detail'), findsNothing);
   });
 
-  testWidgets('opens the detail through a container transform when the local '
-      'pane is narrow', (tester) async {
-    await _setSurface(tester, 1600);
-    final prefs = await SharedPreferences.getInstance();
-    await tester.pumpWidget(_wrap(prefs: prefs, contentWidth: 900));
-    await tester.pumpAndSettle();
+  testWidgets(
+    'opens the routed detail with the shared transition in a narrow pane',
+    (tester) async {
+      await _setSurface(tester, 1600);
+      final prefs = await SharedPreferences.getInstance();
+      await tester.pumpWidget(_wrap(prefs: prefs, contentWidth: 900));
+      await tester.pumpAndSettle();
 
-    expect(find.byType(MasterDetailLayout), findsNothing);
-    await tester.tap(find.text('Checking account'));
-    await tester.pump();
-    await tester.pump(Motion.pageTransition ~/ 2);
+      expect(find.byType(MasterDetailLayout), findsNothing);
+      await tester.tap(find.text('Checking account'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(find.text('single-account-detail'), findsOneWidget);
+      final context = tester.element(find.text('single-account-detail'));
+      final route = ModalRoute.of(context)!;
 
-    // Mid-flight the container morph is already carrying the real
-    // AccountDetailPage (pushed by the row's AppContainerTransform), not
-    // the '/wealth/accounts/:id' stub from this test's router.
-    expect(find.byType(AccountDetailPage), findsOneWidget);
-
-    await tester.pumpAndSettle();
-    expect(find.byType(AccountDetailPage), findsOneWidget);
-    expect(find.text('single-account-detail'), findsNothing);
-  });
+      expect(route.transitionDuration, Motion.pageTransition);
+      expect(
+        GoRouterState.of(context).uri.path,
+        '/wealth/accounts/${_account.id}',
+      );
+      await tester.pumpAndSettle();
+      expect(route.animation!.isCompleted, isTrue);
+      GoRouter.of(context).pop();
+      await tester.pumpAndSettle();
+      expect(find.text('Checking account'), findsOneWidget);
+    },
+  );
 
   testWidgets('keeps the account collection compact on mobile', (tester) async {
     await _setSurface(tester, 320);

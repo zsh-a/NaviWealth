@@ -3,6 +3,7 @@ library;
 
 import 'package:go_router/go_router.dart';
 
+import '../../../core/shell/app_go_route.dart';
 import '../../../core/shell/deferred_route.dart';
 import '../../../core/shell/domain_tabs_shell.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -16,14 +17,17 @@ import 'health_route_paths.dart';
 /// HealthOS shell: Today / Trends.
 StatefulShellRoute healthShellRoute() {
   return StatefulShellRoute.indexedStack(
-    builder: (context, state, shell) => DomainTabsShell(
-      shell: shell,
-      spec: healthDomainShell(AppLocalizations.of(context)),
+    pageBuilder: (context, state, shell) => NoTransitionPage<void>(
+      key: state.pageKey,
+      child: DomainTabsShell(
+        shell: shell,
+        spec: healthDomainShell(AppLocalizations.of(context)),
+      ),
     ),
     branches: [
       StatefulShellBranch(
         routes: [
-          GoRoute(
+          AppGoRoute(
             path: HealthRoutes.today,
             name: HealthRouteNames.today,
             builder: (context, state) => DeferredRoute(
@@ -31,7 +35,7 @@ StatefulShellRoute healthShellRoute() {
               builder: (_) => today_lib.HealthTodayPage(),
             ),
             routes: [
-              GoRoute(
+              AppGoRoute(
                 path: 'meals',
                 name: HealthRouteNames.meals,
                 builder: (context, state) => DeferredRoute(
@@ -39,7 +43,7 @@ StatefulShellRoute healthShellRoute() {
                   builder: (_) => meals_lib.HealthMealsPage(),
                 ),
                 routes: [
-                  GoRoute(
+                  AppGoRoute(
                     path: 'new',
                     name: HealthRouteNames.mealNew,
                     builder: (context, state) => DeferredRoute(
@@ -51,7 +55,7 @@ StatefulShellRoute healthShellRoute() {
                       ),
                     ),
                   ),
-                  GoRoute(
+                  AppGoRoute(
                     path: ':mealId',
                     name: HealthRouteNames.mealEdit,
                     builder: (context, state) => DeferredRoute(
@@ -69,7 +73,7 @@ StatefulShellRoute healthShellRoute() {
       ),
       StatefulShellBranch(
         routes: [
-          GoRoute(
+          AppGoRoute(
             path: HealthRoutes.trend,
             name: HealthRouteNames.trend,
             builder: (context, state) {

@@ -4,6 +4,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 
 import '../theme/component_specs.dart';
+import '../tokens/app_motion_policy.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/text_style_presets.dart';
 import 'app_glass.dart';
@@ -19,8 +20,7 @@ const double kAppCollapseExtent = 88;
 /// Place this *inside* a scroll view so [Scrollable.maybeOf] resolves.
 /// Prefer wrapping the whole hero module — alignment stays top-centered.
 ///
-/// Scroll→collapse mapping always runs (including under reduced motion). It is
-/// a layout response, not a decorative animation.
+/// Reduced motion keeps the content at its natural scale and opacity.
 class AppCollapsingStage extends StatelessWidget {
   const AppCollapsingStage({
     super.key,
@@ -43,6 +43,7 @@ class AppCollapsingStage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final reduced = AppMotionPolicy.reduceMotion(context);
     final position = Scrollable.maybeOf(context)?.position;
     if (position == null) {
       return child;
@@ -55,8 +56,8 @@ class AppCollapsingStage extends StatelessWidget {
           pixels: position.hasPixels ? position.pixels : 0,
           extent: collapseExtent,
         );
-        final scale = ui.lerpDouble(1, minScale, t)!;
-        final opacity = ui.lerpDouble(1, minOpacity, t)!;
+        final scale = reduced ? 1.0 : ui.lerpDouble(1, minScale, t)!;
+        final opacity = reduced ? 1.0 : ui.lerpDouble(1, minOpacity, t)!;
         // Avoid FilterQuality.medium — it forces extra texture sampling
         // every scroll frame for a subtle visual polish that is not worth
         // the raster cost on chart-heavy dashboards.
@@ -295,7 +296,10 @@ class AppCollapsedSummaryBar extends StatelessWidget {
           child: Opacity(
             opacity: opacity,
             child: Transform.translate(
-              offset: Offset(0, slide),
+              offset: Offset(
+                0,
+                AppMotionPolicy.reduceMotion(context) ? 0 : slide,
+              ),
               child: _StickyGlassChrome(padding: padding, child: child),
             ),
           ),

@@ -12,7 +12,6 @@ import '../../shared/ui/account_color.dart';
 import '../../shared/ui/account_icon_catalog.dart';
 import '../domain/account_balances.dart';
 import '../domain/account_semantics.dart';
-import 'account_detail_page.dart';
 import 'account_labels.dart';
 
 typedef AccountPressed = void Function(BuildContext context, Account account);
@@ -24,19 +23,12 @@ class AccountsGroupedSections extends StatelessWidget {
     required this.balances,
     required this.onAccountPressed,
     this.selectedId,
-    this.containerTransformEnabled = false,
   });
 
   final List<Account> accounts;
   final Map<String, AccountBalances> balances;
   final AccountPressed onAccountPressed;
   final String? selectedId;
-
-  /// Push-mode affordance: rows open their detail through an
-  /// [AppContainerTransform]. Master-detail callers pass `false` — the
-  /// detail swaps inside the right pane instead of pushing, so there is no
-  /// route to morph into (same gate contract as `OptionalHero.enabled`).
-  final bool containerTransformEnabled;
 
   @override
   Widget build(BuildContext context) {
@@ -47,18 +39,12 @@ class AccountsGroupedSections extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (final entry in groups.entries)
-          // Column children stay mounted for the list's lifetime, so a plain
-          // one-shot entrance is safe here (no ListView recycling replay).
-          AppEntrance(
-            role: AppMotionRole.decorative,
-            child: _AccountsSection(
-              title: accountCategoryLabel(l10n, entry.key),
-              accounts: entry.value,
-              balances: balances,
-              selectedId: selectedId,
-              containerTransformEnabled: containerTransformEnabled,
-              onAccountPressed: onAccountPressed,
-            ),
+          _AccountsSection(
+            title: accountCategoryLabel(l10n, entry.key),
+            accounts: entry.value,
+            balances: balances,
+            selectedId: selectedId,
+            onAccountPressed: onAccountPressed,
           ),
       ],
     );
@@ -87,7 +73,6 @@ class _AccountsSection extends StatelessWidget {
     required this.accounts,
     required this.balances,
     required this.selectedId,
-    required this.containerTransformEnabled,
     required this.onAccountPressed,
   });
 
@@ -95,7 +80,6 @@ class _AccountsSection extends StatelessWidget {
   final List<Account> accounts;
   final Map<String, AccountBalances> balances;
   final String? selectedId;
-  final bool containerTransformEnabled;
   final AccountPressed onAccountPressed;
 
   @override
@@ -144,8 +128,6 @@ class _AccountsSection extends StatelessWidget {
                           balances[accounts[i].id] ??
                           AccountBalances.empty(accounts[i].id),
                       selected: accounts[i].id == selectedId,
-                      surfaceColor: background,
-                      containerTransformEnabled: containerTransformEnabled,
                       onAccountPressed: onAccountPressed,
                     ),
                     if (i < accounts.length - 1)
@@ -178,8 +160,6 @@ class _AccountRow extends StatelessWidget {
     required this.account,
     required this.balances,
     required this.selected,
-    required this.surfaceColor,
-    required this.containerTransformEnabled,
     required this.onAccountPressed,
   });
 
@@ -187,27 +167,10 @@ class _AccountRow extends StatelessWidget {
   final AccountBalances balances;
   final bool selected;
 
-  /// The section card fill the row sits on — the container transform starts
-  /// from this colour so the first morph frame is seamless with the row.
-  final Color surfaceColor;
-  final bool containerTransformEnabled;
   final AccountPressed onAccountPressed;
 
   @override
   Widget build(BuildContext context) {
-    if (containerTransformEnabled) {
-      // The container transform replaces the row→detail title Hero on this
-      // path: the morph already carries the eye from the row to the page,
-      // and a simultaneous Hero flight on the account name would double the
-      // motion. The detail page's title Hero stays — it pairs with the
-      // account edit form (`account-{id}-name`).
-      return AppContainerTransform(
-        closedColor: surfaceColor,
-        closedBorderRadius: BorderRadius.circular(AppRadius.lg),
-        openBuilder: (_) => AccountDetailPage(accountId: account.id),
-        closedBuilder: (context, open) => _buildRow(context, onPress: open),
-      );
-    }
     return _buildRow(
       context,
       onPress: () => onAccountPressed(context, account),

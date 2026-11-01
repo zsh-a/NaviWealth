@@ -50,6 +50,7 @@ import 'package:naviwealth/features/finance/options_income/ui/wheel_lifecycle_pa
     deferred as wheel_lib;
 import 'package:naviwealth/features/finance/runway/ui/money_runway_page.dart';
 
+import '../../../core/shell/app_go_route.dart';
 import '../../../core/shell/deferred_route.dart';
 import '../../../core/shell/domain_tabs_shell.dart';
 import '../../../core/shell/route_error_page.dart';
@@ -81,17 +82,20 @@ import 'route_prefill.dart';
 /// shared header chrome (`core/shell/shell_chrome.dart`), not a bottom-nav slot.
 StatefulShellRoute financeShellRoute() {
   return StatefulShellRoute.indexedStack(
-    builder: (context, state, shell) => FinanceAmountPrivacyScope(
-      child: DomainTabsShell(
-        shell: shell,
-        spec: financeDomainShell(AppLocalizations.of(context)),
+    pageBuilder: (context, state, shell) => NoTransitionPage<void>(
+      key: state.pageKey,
+      child: FinanceAmountPrivacyScope(
+        child: DomainTabsShell(
+          shell: shell,
+          spec: financeDomainShell(AppLocalizations.of(context)),
+        ),
       ),
     ),
     branches: [
       // ── Branch 0: Today ──────────────────────────────────────────────
       StatefulShellBranch(
         routes: [
-          GoRoute(
+          AppGoRoute(
             path: FinanceRoutes.home,
             name: FinanceRouteNames.home,
             builder: (context, state) => const HomePage(),
@@ -101,49 +105,49 @@ StatefulShellRoute financeShellRoute() {
       // ── Branch 1: Activity ───────────────────────────────────────────
       StatefulShellBranch(
         routes: [
-          GoRoute(
+          AppGoRoute(
             path: FinanceRoutes.activity,
             name: FinanceRouteNames.activity,
             builder: (context, state) => const ActivityPage(),
             routes: [
-              GoRoute(
+              AppGoRoute(
                 path: 'inbox',
                 name: FinanceRouteNames.activityInbox,
                 builder: (context, state) => const FinancialInboxPage(),
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'monthly-close',
                 name: FinanceRouteNames.activityMonthlyClose,
                 builder: (context, state) => const MonthlyClosePage(),
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'spending',
                 name: FinanceRouteNames.spending,
                 builder: (context, state) => const SpendingPage(),
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'expense/new',
                 name: FinanceRouteNames.expenseNew,
                 builder: (context, state) => const ExpenseFormPage(),
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'income/new',
                 name: FinanceRouteNames.incomeNew,
                 builder: (context, state) => const IncomeFormPage(),
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'expense/:expenseId',
                 name: FinanceRouteNames.expenseDetail,
                 builder: (context, state) => ExpenseFormPage(
                   expenseId: state.pathParameters['expenseId'],
                 ),
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'cashflow',
                 name: FinanceRouteNames.cashflow,
                 builder: (context, state) => const CashFlowPage(),
                 routes: [
-                  GoRoute(
+                  AppGoRoute(
                     path: 'recurring',
                     name: FinanceRouteNames.cashflowRecurring,
                     builder: (context, state) =>
@@ -151,7 +155,7 @@ StatefulShellRoute financeShellRoute() {
                   ),
                 ],
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'trade',
                 name: FinanceRouteNames.tradeEntry,
                 builder: (context, state) {
@@ -175,7 +179,7 @@ StatefulShellRoute financeShellRoute() {
                   );
                 },
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'transfer',
                 name: FinanceRouteNames.transfer,
                 builder: (context, state) {
@@ -185,7 +189,7 @@ StatefulShellRoute financeShellRoute() {
                   );
                 },
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'entry/:entryId',
                 name: FinanceRouteNames.activityEntryDetail,
                 builder: (context, state) {
@@ -203,7 +207,7 @@ StatefulShellRoute financeShellRoute() {
                   return ActivityEntryDetailRoute(entryId: entryId);
                 },
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'journal',
                 name: FinanceRouteNames.journalEntries,
                 // Activity is the canonical ledger. Keep the old URL without
@@ -211,7 +215,7 @@ StatefulShellRoute financeShellRoute() {
                 redirect: (context, state) => FinanceRoutes.activity,
               ),
               // §5.10.10 / S5a — Layer 4 ingest review queue.
-              GoRoute(
+              AppGoRoute(
                 path: 'ingest',
                 name: FinanceRouteNames.activityIngest,
                 builder: (context, state) => const IngestReviewPage(),
@@ -223,28 +227,28 @@ StatefulShellRoute financeShellRoute() {
       // ── Branch 2: Wealth ─────────────────────────────────────────────
       StatefulShellBranch(
         routes: [
-          GoRoute(
+          AppGoRoute(
             path: FinanceRoutes.wealth,
             name: FinanceRouteNames.wealth,
             builder: (context, state) => const WealthHubPage(),
             routes: [
-              GoRoute(
+              AppGoRoute(
                 path: 'accounts',
                 name: FinanceRouteNames.wealthAccounts,
                 builder: (context, state) => const AccountsPage(),
                 routes: [
-                  GoRoute(
+                  AppGoRoute(
                     path: 'new',
                     name: FinanceRouteNames.wealthAccountNew,
                     builder: (context, state) => const AccountFormPage(),
                   ),
-                  GoRoute(
+                  AppGoRoute(
                     path: ':accountId/edit',
                     builder: (context, state) => AccountFormPage(
                       accountId: state.pathParameters['accountId'],
                     ),
                   ),
-                  GoRoute(
+                  AppGoRoute(
                     path: ':accountId',
                     name: FinanceRouteNames.wealthAccount,
                     builder: (context, state) => AccountDetailPage(
@@ -253,24 +257,24 @@ StatefulShellRoute financeShellRoute() {
                   ),
                 ],
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'new/cash',
                 name: FinanceRouteNames.wealthNewCash,
                 builder: (context, state) => CashFormPage(
                   initialAccountId: state.uri.queryParameters['accountId'],
                 ),
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'new/deposit',
                 name: FinanceRouteNames.wealthNewDeposit,
                 builder: (context, state) => const DepositFormPage(),
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'new/wealth',
                 name: FinanceRouteNames.wealthNewWealth,
                 builder: (context, state) => const WealthProductFormPage(),
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'corporate-action',
                 name: FinanceRouteNames.wealthCorporateAction,
                 builder: (context, state) => DeferredRoute(
@@ -278,7 +282,7 @@ StatefulShellRoute financeShellRoute() {
                   builder: (_) => corp_action_lib.CorporateActionEntryRoute(),
                 ),
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'portfolio',
                 name: FinanceRouteNames.wealthPortfolio,
                 builder: (context, state) => DeferredRoute(
@@ -286,7 +290,7 @@ StatefulShellRoute financeShellRoute() {
                   builder: (_) => portfolio_hub_lib.PortfolioHubPage(),
                 ),
                 routes: [
-                  GoRoute(
+                  AppGoRoute(
                     path: 'plan',
                     name: FinanceRouteNames.wealthPortfolioPlan,
                     builder: (context, state) => DeferredRoute(
@@ -294,7 +298,7 @@ StatefulShellRoute financeShellRoute() {
                       builder: (_) => portfolio_hub_lib.PortfolioPlanPage(),
                     ),
                   ),
-                  GoRoute(
+                  AppGoRoute(
                     path: 'assign/positions',
                     name: FinanceRouteNames.wealthPortfolioAssignLots,
                     builder: (context, state) => DeferredRoute(
@@ -306,7 +310,7 @@ StatefulShellRoute financeShellRoute() {
                           ),
                     ),
                   ),
-                  GoRoute(
+                  AppGoRoute(
                     path: 'assign/cash',
                     name: FinanceRouteNames.wealthPortfolioAssignCash,
                     builder: (context, state) => DeferredRoute(
@@ -322,14 +326,14 @@ StatefulShellRoute financeShellRoute() {
                           ),
                     ),
                   ),
-                  GoRoute(
+                  AppGoRoute(
                     path: 'dividends',
                     name: FinanceRouteNames.cashflowDividends,
                     builder: (context, state) => DividendCenterPage(
                       focusAssetId: state.uri.queryParameters['assetId'],
                     ),
                   ),
-                  GoRoute(
+                  AppGoRoute(
                     path: ':portfolioId/studio',
                     name: FinanceRouteNames.wealthPortfolioStudio,
                     builder: (context, state) => DeferredRoute(
@@ -351,7 +355,7 @@ StatefulShellRoute financeShellRoute() {
                   ),
                 ],
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'watchlist',
                 name: FinanceRouteNames.wealthWatchlist,
                 builder: (context, state) => DeferredRoute(
@@ -359,7 +363,7 @@ StatefulShellRoute financeShellRoute() {
                   builder: (_) => watchlist_lib.WatchlistPage(),
                 ),
                 routes: [
-                  GoRoute(
+                  AppGoRoute(
                     path: 'collections/:collectionId/simulations',
                     builder: (context, state) => DeferredRoute(
                       load: watchlist_lib.loadLibrary,
@@ -372,19 +376,19 @@ StatefulShellRoute financeShellRoute() {
                   ),
                 ],
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'assets/:assetId/edit',
                 builder: (context, state) => ManualAssetEditRoute(
                   assetId: state.pathParameters['assetId']!,
                 ),
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'assets/:assetId',
                 name: FinanceRouteNames.wealthAssetDetail,
                 builder: (context, state) =>
                     AssetDetailPage(assetId: state.pathParameters['assetId']!),
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'physical/:id',
                 name: FinanceRouteNames.wealthPhysicalDetail,
                 builder: (context, state) {
@@ -396,7 +400,7 @@ StatefulShellRoute financeShellRoute() {
                   );
                 },
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'liabilities',
                 name: FinanceRouteNames.wealthLiabilities,
                 builder: (context, state) => DeferredRoute(
@@ -404,18 +408,18 @@ StatefulShellRoute financeShellRoute() {
                   builder: (_) => liabilities_lib.LiabilitiesPage(),
                 ),
                 routes: [
-                  GoRoute(
+                  AppGoRoute(
                     path: 'new',
                     name: FinanceRouteNames.wealthLiabilityNew,
                     builder: (context, state) => const LiabilityFormPage(),
                   ),
-                  GoRoute(
+                  AppGoRoute(
                     path: ':id/edit',
                     builder: (context, state) => LiabilityFormPage(
                       liabilityId: state.pathParameters['id'],
                     ),
                   ),
-                  GoRoute(
+                  AppGoRoute(
                     path: ':id',
                     name: FinanceRouteNames.wealthLiabilityDetail,
                     builder: (context, state) {
@@ -436,12 +440,12 @@ StatefulShellRoute financeShellRoute() {
       // ── Branch 3: Plan ───────────────────────────────────────────────
       StatefulShellBranch(
         routes: [
-          GoRoute(
+          AppGoRoute(
             path: FinanceRoutes.plan,
             name: FinanceRouteNames.plan,
             builder: (context, state) => const PlanHubPage(),
             routes: [
-              GoRoute(
+              AppGoRoute(
                 path: 'fire',
                 name: FinanceRouteNames.planFire,
                 builder: (context, state) => DeferredRoute(
@@ -449,7 +453,7 @@ StatefulShellRoute financeShellRoute() {
                   builder: (_) => fire_lib.FirePage(),
                 ),
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'rebalance',
                 name: FinanceRouteNames.planRebalance,
                 builder: (context, state) => DeferredRoute(
@@ -457,7 +461,7 @@ StatefulShellRoute financeShellRoute() {
                   builder: (_) => rebalance_lib.RebalancePage(),
                 ),
                 routes: [
-                  GoRoute(
+                  AppGoRoute(
                     path: 'execution/:sessionId',
                     name: FinanceRouteNames.planRebalanceExecution,
                     builder: (context, state) {
@@ -473,7 +477,7 @@ StatefulShellRoute financeShellRoute() {
                   ),
                 ],
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'income',
                 name: FinanceRouteNames.planIncome,
                 builder: (context, state) => DeferredRoute(
@@ -481,7 +485,7 @@ StatefulShellRoute financeShellRoute() {
                   builder: (_) => income_strategy_lib.IncomeStrategyPage(),
                 ),
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'income/options',
                 name: FinanceRouteNames.planIncomeOptions,
                 builder: (context, state) => DeferredRoute(
@@ -489,7 +493,7 @@ StatefulShellRoute financeShellRoute() {
                   builder: (_) => income_planner_lib.IncomePlannerPage(),
                 ),
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'income/stats',
                 name: FinanceRouteNames.planIncomeStats,
                 builder: (context, state) => DeferredRoute(
@@ -497,7 +501,7 @@ StatefulShellRoute financeShellRoute() {
                   builder: (_) => options_stats_lib.OptionsTradeStatsPage(),
                 ),
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'income/wheel',
                 name: FinanceRouteNames.planWheel,
                 builder: (context, state) => DeferredRoute(
@@ -505,7 +509,7 @@ StatefulShellRoute financeShellRoute() {
                   builder: (_) => wheel_lib.WheelLifecyclePage(),
                 ),
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'dca',
                 name: FinanceRouteNames.planDca,
                 builder: (context, state) => DeferredRoute(
@@ -513,22 +517,22 @@ StatefulShellRoute financeShellRoute() {
                   builder: (_) => dca_simulator_lib.DcaSimulatorPage(),
                 ),
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'runway',
                 name: FinanceRouteNames.planRunway,
                 builder: (context, state) => const MoneyRunwayPage(),
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'life-events',
                 name: FinanceRouteNames.planLifeEvents,
                 builder: (context, state) => const LifeEventScenariosPage(),
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'budget',
                 name: FinanceRouteNames.planBudget,
                 builder: (context, state) => const PlanBudgetPage(),
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'expense-categories',
                 name: FinanceRouteNames.planExpenseCategories,
                 builder: (context, state) => const ExpenseCategoriesPage(),

@@ -6,6 +6,7 @@ library;
 
 import 'package:go_router/go_router.dart';
 
+import '../../../core/shell/app_go_route.dart';
 import '../../../core/shell/domain_tabs_shell.dart';
 import '../../../design_system/widgets/form_leave_scope.dart';
 import '../../../l10n/gen/app_localizations.dart';
@@ -20,14 +21,17 @@ import 'knowledge_route_paths.dart';
 
 StatefulShellRoute knowledgeShellRoute() {
   return StatefulShellRoute.indexedStack(
-    builder: (context, state, shell) => DomainTabsShell(
-      shell: shell,
-      spec: knowledgeDomainShell(AppLocalizations.of(context)),
+    pageBuilder: (context, state, shell) => NoTransitionPage<void>(
+      key: state.pageKey,
+      child: DomainTabsShell(
+        shell: shell,
+        spec: knowledgeDomainShell(AppLocalizations.of(context)),
+      ),
     ),
     branches: [
       StatefulShellBranch(
         routes: [
-          GoRoute(
+          AppGoRoute(
             path: KnowledgeRoutes.inbox,
             name: KnowledgeRouteNames.inbox,
             builder: (context, state) => const KnowledgeInboxPage(),
@@ -36,7 +40,7 @@ StatefulShellRoute knowledgeShellRoute() {
       ),
       StatefulShellBranch(
         routes: [
-          GoRoute(
+          AppGoRoute(
             path: KnowledgeRoutes.library,
             name: KnowledgeRouteNames.library,
             redirect: guardKnowledgeDetailChange,
@@ -46,12 +50,12 @@ StatefulShellRoute knowledgeShellRoute() {
             ),
             builder: (context, state) => const KnowledgeLibraryPage(),
             routes: [
-              GoRoute(
+              AppGoRoute(
                 path: 'bcr',
                 name: KnowledgeRouteNames.bcrLibrary,
                 builder: (context, state) => const BcrKnowledgeLibraryPage(),
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'note/:id',
                 name: KnowledgeRouteNames.noteDetail,
                 onExit: (context, state) => FormLeaveScope.confirmRouteLeave(
@@ -62,7 +66,7 @@ StatefulShellRoute knowledgeShellRoute() {
                   noteId: state.pathParameters['id'] ?? '',
                 ),
               ),
-              GoRoute(
+              AppGoRoute(
                 path: 'decision/:id',
                 name: KnowledgeRouteNames.decisionDetail,
                 onExit: (context, state) => FormLeaveScope.confirmRouteLeave(

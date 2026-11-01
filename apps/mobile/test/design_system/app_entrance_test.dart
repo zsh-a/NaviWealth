@@ -50,18 +50,13 @@ void main() {
     expect(find.text('static'), findsOneWidget);
   });
 
-  testWidgets('transition role halves duration under reduce motion', (
+  testWidgets('system animation removal shows the final entrance immediately', (
     tester,
   ) async {
     await tester.pumpWidget(
       _wrap(const AppEntrance(child: Text('fast')), disableAnimations: true),
     );
 
-    // Motion.medium (220ms) is halved to 110ms for the transition role.
-    await tester.pump(const Duration(milliseconds: 60));
-    expect(_entranceOpacity(tester).opacity, lessThan(1));
-
-    await tester.pump(const Duration(milliseconds: 60));
     expect(_entranceOpacity(tester).opacity, 1);
   });
 
