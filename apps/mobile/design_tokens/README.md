@@ -155,9 +155,8 @@ signal of direction, even in colorblind mode.
 - Use `AnimatedSizeFade` for disclosures. Outgoing content fades before being
   removed and cannot receive input or accessibility focus. Reduced motion
   uses a short fade without spatial expansion.
-- Segmented controls use a sliding selection surface when options fit one
-  row, and retain local selection marks in wrapped layouts. Selection motion
-  and chart interpolation stop under reduced motion.
+- Segmented controls switch their selection surface and underline immediately,
+  including wrapped layouts. Chart interpolation stops under reduced motion.
 - Material effects are independent of classic/refined. The default navigation
   material enables live blur on navigation chrome while sticky surfaces,
   sheets and overlays remain opaque. Solid disables live blur; fully
@@ -175,27 +174,19 @@ signal of direction, even in colorblind mode.
   accent is mixed into that field at low energy, so switching FinanceOS,
   HealthOS, KnowledgeOS or ExecutionOS changes the chrome atmosphere without
   tinting readable content cards.
-- `AppGlassFeedback` consumes the owning Forui control's selected, hovered,
-  focused, pressed and disabled variants. The dock owns one surface-level
-  hover/drag light and keeps item-level state feedback local; pointer drag
-  uses a tinted core, velocity-based soft trail and leading specular glint.
-  Do not add a second gesture recognizer or pointer response at the tab call
-  site. Keep selection indicators, keyboard focus outlines and control
-  semantics alongside the light.
-- `AppGlassStatus` gives pinned actions a steady busy wash, subdued disabled
-  finish or semantic error rim. Busy/disabled stops pointer tracking immediately.
-  Loading indicators and inline errors remain authoritative; light is never
-  the only status cue. Transitions do not change geometry or run continuously.
-  Reduced motion keeps static state differences, while system high contrast
-  omits decorative light entirely. `SoftGlassSpec` owns both light/dark budgets.
+- Soft glass uses static reflections from the shared environment. It has no
+  pointer tracking, drag trails, or selection/hover/status-driven light.
+  Controls retain flat hover/press feedback, selection indicators, keyboard
+  focus outlines and semantics. Buttons and inline messages own busy,
+  disabled and error feedback. System high contrast omits decorative light
+  entirely. `SoftGlassSpec` owns the static light/dark material budgets.
 - Advanced material depth is role-aware: chrome, sticky, sheet and overlay use
   progressively stronger specular, occlusion and inset-rim budgets. The light
   field is a paint-only approximation of thin translucent glass. Navigation
   uses the theme-gated `BackdropFilter` by default; the fully translucent
-  option can enable sheet and other chrome roles. The surface pointer listener is translucent so a drag can
-  start in any empty part of the chrome without stealing child semantics.
-  Keep the role from `AppGlassSurface`; do not recreate gradients at feature
-  call sites.
+  option can enable sheet and other chrome roles. The material paint does not
+  observe pointer events or run animation controllers. Keep the role from
+  `AppGlassSurface`; do not recreate gradients at feature call sites.
 
 The redesign's captured evidence is Flutter widget-renderer output under
 `.impeccable/review/goldens/`, not a simulator or device capture. Native-device

@@ -169,13 +169,7 @@ class SegmentedRow<T> extends StatelessWidget {
                     children: [
                       if (options.indexOf(value) case final selected
                           when selected >= 0)
-                        AnimatedPositionedDirectional(
-                          duration: AppMotionPolicy.duration(
-                            context,
-                            Motion.componentChange,
-                            role: AppMotionRole.decorative,
-                          ),
-                          curve: Motion.standardDecelerate,
+                        PositionedDirectional(
                           start: selected * ((maxW + gap) / n),
                           width: (maxW - gap * (n - 1)) / n,
                           top: 0,

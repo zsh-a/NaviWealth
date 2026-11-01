@@ -171,16 +171,6 @@ void main() {
       );
       expect(glassSurface.frosted, isTrue);
       expect(glassSurface.softLight, isTrue);
-      expect(glassSurface.trackPointer, isTrue);
-      final feedback = tester.widgetList<AppGlassFeedback>(
-        find.byType(AppGlassFeedback),
-      );
-      expect(
-        feedback.where(
-          (item) => item.variants.contains(FTappableVariant.selected),
-        ),
-        hasLength(1),
-      );
       expect(glassSurface.boxShadow, hasLength(1));
       expect(glassSurface.borderRadius, BorderRadius.circular(AppRadius.xl));
       final selectionIndicators = find.descendant(
@@ -190,10 +180,10 @@ void main() {
       expect(selectionIndicators, findsNWidgets(3));
       expect(
         tester
-            .widgetList<AnimatedOpacity>(
+            .widgetList<Opacity>(
               find.descendant(
                 of: selectionIndicators,
-                matching: find.byType(AnimatedOpacity),
+                matching: find.byType(Opacity),
               ),
             )
             .map((widget) => widget.opacity),

@@ -311,8 +311,10 @@ glass. Broader `translucent` material remains an explicit user option, and
 system high contrast disables live blur and decorative light.
 
 Glass belongs to the shared `AppGlassSurface` and its role-specific theme
-budget. Soft navigation light uses the shared shell environment and restrained
-pointer feedback. It supplements selection, focus, busy and error cues.
+budget. Soft navigation light uses static reflections from the shared shell
+environment. Pointer tracking, drag trails and state-driven glow are removed.
+Selection fills and underlines switch immediately; controls retain normal
+press feedback, focus outlines and explicit busy/error cues.
 Scrims use animated color barriers rather than a whole-page blur.
 
 ## Shapes

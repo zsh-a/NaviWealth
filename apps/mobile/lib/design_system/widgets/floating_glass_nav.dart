@@ -108,7 +108,6 @@ class FloatingGlassNavBar extends StatelessWidget {
                   // theme still supplies the opaque high-contrast fallback.
                   frosted: true,
                   softLight: true,
-                  trackPointer: true,
                   borderRadius: BorderRadius.circular(AppRadius.xl),
                   boxShadow: AppShadow.nav,
                   padding: const EdgeInsets.symmetric(
@@ -244,23 +243,27 @@ class _NavTabButton extends StatelessWidget {
       focusedOutlineStyle: FFocusedOutlineStyleDelta.delta(
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
-      builder: (context, variants, child) => AppGlassFeedback(
-        variants: variants,
-        accentColor: accentColor,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        child: AnimatedContainer(
-          duration: AppMotionPolicy.duration(context, Motion.fast),
+      builder: (context, variants, child) {
+        final feedbackAlpha = variants.contains(FTappableVariant.pressed)
+            ? AppOpacity.light
+            : variants.contains(FTappableVariant.hovered)
+            ? AppOpacity.faint
+            : AppOpacity.transparent;
+        return DecoratedBox(
           decoration: context.appTheme.visual.decoration(
             radius: BorderRadius.circular(AppRadius.md),
-            // Fade only alpha. Transparent black also interpolates the RGB
-            // channels and makes the outgoing destination briefly turn gray.
-            color: selected
-                ? selectedSurface
-                : selectedSurface.withValues(alpha: AppOpacity.transparent),
+            color: Color.alphaBlend(
+              (selected ? selectedColor : colors.foreground).withValues(
+                alpha: feedbackAlpha,
+              ),
+              selected
+                  ? selectedSurface
+                  : selectedSurface.withValues(alpha: AppOpacity.transparent),
+            ),
           ),
           child: child,
-        ),
-      ),
+        );
+      },
       onPress: () {
         if (!selected) {
           AppInteraction.signal(AppInteractionIntent.navigate);

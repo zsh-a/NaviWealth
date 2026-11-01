@@ -77,7 +77,7 @@ void main() {
                 .widget<DecoratedBox>(
                   find
                       .descendant(
-                        of: find.byType(AnimatedPositionedDirectional),
+                        of: find.byType(PositionedDirectional),
                         matching: find.byType(DecoratedBox),
                       )
                       .first,
@@ -179,12 +179,55 @@ void main() {
     expect(find.text('A'), findsOneWidget);
     expect(find.text('B'), findsOneWidget);
     expect(find.text('C'), findsOneWidget);
-    expect(find.byType(AnimatedPositionedDirectional), findsOneWidget);
+    expect(find.byType(PositionedDirectional), findsOneWidget);
     expect(find.byType(AppSelectionIndicator), findsNWidgets(3));
 
     await tester.tap(find.text('B'));
     await tester.pump(const Duration(milliseconds: 120));
     expect(changedTo, 'b');
+  });
+
+  testWidgets('selection fill and underline switch without travelling', (
+    tester,
+  ) async {
+    var value = 'a';
+    await tester.pumpWidget(
+      _wrap(
+        StatefulBuilder(
+          builder: (context, setState) => SegmentedRow<String>(
+            options: const ['a', 'b', 'c'],
+            value: value,
+            labelOf: (option) => option,
+            onChanged: (option) => setState(() => value = option),
+          ),
+        ),
+      ),
+    );
+    final marker = find.descendant(
+      of: find.byType(PositionedDirectional),
+      matching: find.byType(DecoratedBox),
+    );
+    final before = tester.getRect(marker);
+    final rowSize = tester.getSize(find.byType(SegmentedRow<String>));
+    await tester.tap(find.text('c'));
+    await tester.pump();
+    final after = tester.getRect(marker);
+    expect(after.size, before.size);
+    expect(after.center.dx, closeTo(tester.getCenter(find.text('c')).dx, 1));
+    expect(after.left - before.left, greaterThan(rowSize.width / 2));
+    expect(
+      tester
+          .widgetList<Opacity>(
+            find.descendant(
+              of: find.byType(AppSelectionIndicator),
+              matching: find.byType(Opacity),
+            ),
+          )
+          .map((indicator) => indicator.opacity),
+      orderedEquals([0.0, 0.0, 1.0]),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.getRect(marker), after);
   });
 
   testWidgets('supports shared glass chrome for navigation segments', (

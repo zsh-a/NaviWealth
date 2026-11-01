@@ -317,14 +317,13 @@ void main() {
         .getSemantics(find.bySemanticsLabel('Trend: All'))
         .getSemanticsData();
     expect(selected.flagsCollection.isSelected, Tristate.isTrue);
-    for (final animation in tester.widgetList<AnimatedScale>(
+    expect(
       find.descendant(
         of: find.byType(AppSelectionIndicator),
         matching: find.byType(AnimatedScale),
       ),
-    )) {
-      expect(animation.duration, Duration.zero);
-    }
+      findsNothing,
+    );
     semantics.dispose();
   });
 }

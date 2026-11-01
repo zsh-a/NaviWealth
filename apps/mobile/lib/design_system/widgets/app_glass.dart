@@ -94,8 +94,6 @@ class AppGlassSurface extends StatefulWidget {
     this.role = AppGlassRole.chrome,
     this.frosted = true,
     this.softLight = false,
-    this.status = AppGlassStatus.idle,
-    this.trackPointer = true,
     this.boxShadow,
     this.padding = EdgeInsets.zero,
   });
@@ -108,13 +106,9 @@ class AppGlassSurface extends StatefulWidget {
   /// while replacing live blur with an opaque surface.
   final bool frosted;
 
-  /// Adds a directional wash and pointer-following light beneath the content.
+  /// Adds a static directional reflection beneath the content.
   /// Opt-in independently of live blur. System high contrast disables both.
   final bool softLight;
-  final AppGlassStatus status;
-
-  /// Disable when descendants supply their own local feedback (e.g. dock tabs).
-  final bool trackPointer;
   final List<BoxShadow>? boxShadow;
   final EdgeInsetsGeometry padding;
 
@@ -164,8 +158,6 @@ class _AppGlassSurfaceState extends State<AppGlassSurface> {
             ? AppSoftGlassLight(
                 borderRadius: widget.borderRadius,
                 role: widget.role,
-                status: widget.status,
-                trackPointer: widget.trackPointer,
                 child: content,
               )
             : content,
@@ -190,44 +182,6 @@ class _AppGlassSurfaceState extends State<AppGlassSurface> {
                 )
               : contents,
         ),
-      ),
-    );
-  }
-}
-
-/// Paint-only local feedback for controls inside a glass surface. Feed the
-/// existing FTappable variants; this adds no focus node or gesture recognizer.
-/// Keep the control's focus outline, selected indicator and disabled semantics.
-class AppGlassFeedback extends StatelessWidget {
-  const AppGlassFeedback({
-    super.key,
-    required this.variants,
-    required this.child,
-    this.accentColor,
-    this.borderRadius = const BorderRadius.all(Radius.circular(AppRadius.full)),
-  });
-
-  final Set<FTappableVariant> variants;
-  final Widget child;
-  final Color? accentColor;
-  final BorderRadius borderRadius;
-
-  @override
-  Widget build(BuildContext context) {
-    if (!context.appTheme.glass.resolve(AppGlassRole.chrome).liveBlur ||
-        (MediaQuery.maybeOf(context)?.highContrast ?? false)) {
-      return child;
-    }
-    return ClipRRect(
-      borderRadius: borderRadius,
-      child: AppSoftGlassLight(
-        borderRadius: borderRadius,
-        role: AppGlassRole.chrome,
-        variants: variants,
-        accentColor: accentColor,
-        ambient: false,
-        trackPointer: false,
-        child: child,
       ),
     );
   }

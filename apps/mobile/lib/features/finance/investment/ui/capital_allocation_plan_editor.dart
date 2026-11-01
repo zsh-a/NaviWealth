@@ -211,11 +211,6 @@ class _CapitalAllocationPlanEditorState
         confirmLeave: handleBackIntent,
         child: AppFormScaffoldBody(
           softActionBar: true,
-          actionStatus: _busy
-              ? AppGlassStatus.busy
-              : _saveFailed || _errors.isNotEmpty
-              ? AppGlassStatus.error
-              : AppGlassStatus.idle,
           onSubmit: _busy ? null : _save,
           action: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

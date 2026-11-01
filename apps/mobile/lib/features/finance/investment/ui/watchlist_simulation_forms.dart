@@ -263,9 +263,6 @@ class _WatchlistSimulationCreatePageState
               absorbing: _saving,
               child: AppFormScaffoldBody(
                 softActionBar: true,
-                actionStatus: _saving
-                    ? AppGlassStatus.busy
-                    : AppGlassStatus.idle,
                 onSubmit: _saving ? null : _save,
                 action: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -643,9 +640,6 @@ class _WatchlistSimulationAllocationPageState
               absorbing: _saving,
               child: AppFormScaffoldBody(
                 softActionBar: true,
-                actionStatus: _saving
-                    ? AppGlassStatus.busy
-                    : AppGlassStatus.idle,
                 onSubmit: _saving ? null : _save,
                 action: Column(
                   mainAxisSize: MainAxisSize.min,

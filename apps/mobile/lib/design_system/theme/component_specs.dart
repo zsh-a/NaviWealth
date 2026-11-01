@@ -95,9 +95,6 @@ class MetricTileSpec {
 /// chrome: navigation, sticky context, modal sheets, and temporary overlays.
 enum AppGlassRole { chrome, sticky, sheet, overlay }
 
-/// Visual status only. The owning control still owns actions and semantics.
-enum AppGlassStatus { idle, busy, disabled, error }
-
 /// Opt-in soft-light chrome. These are visual budgets, not a physical glass
 /// simulation. Dense surfaces retain their existing, more opaque material.
 @immutable
@@ -110,37 +107,6 @@ class SoftGlassSpec {
       brightness == Brightness.dark ? 0.045 : 0.11;
   double rimOpacity(Brightness brightness) =>
       brightness == Brightness.dark ? 0.16 : 0.34;
-  double touchOpacity(Brightness brightness) =>
-      brightness == Brightness.dark ? 0.30 : 0.46;
-
-  /// Additional alpha budget for the directional tail while a pointer is
-  /// moving. The core light remains visible when the pointer is resting.
-  double pointerTrailOpacity(Brightness brightness) =>
-      brightness == Brightness.dark ? 0.08 : 0.10;
-
-  /// Alpha budget for the small specular glint at the leading edge of a drag.
-  double pointerSpecularOpacity(Brightness brightness) =>
-      brightness == Brightness.dark ? 0.12 : 0.16;
-
-  /// Mixes the semantic accent into the otherwise neutral field so the light
-  /// has a readable hue on white chrome without tinting the whole surface.
-  double pointerColorMix(Brightness brightness) =>
-      brightness == Brightness.dark ? 0.62 : 0.54;
-
-  double get touchRadius => 96;
-
-  /// Maximum length of the motion tail in logical pixels.
-  double get pointerTrailLength => 132;
-
-  /// Maximum width of the motion tail in logical pixels.
-  double get pointerTrailWidth => 46;
-
-  /// Pointer speed at which the tail reaches its maximum stretch.
-  double get pointerSpeedForMax => 1200;
-
-  /// Resting pointer-light energy while a mouse/trackpad hovers the surface.
-  /// Press/drag raises this to 1.0; touch pointers never use the hover level.
-  double get pointerHoverIntensity => 0.24;
 
   /// Relative material thickness for the four chrome roles. Sheets and
   /// overlays sit above scrolling content, while the dock stays quieter.
@@ -157,26 +123,8 @@ class SoftGlassSpec {
   double occlusionOpacity(Brightness brightness, AppGlassRole role) =>
       (brightness == Brightness.dark ? 0.045 : 0.06) * depthFor(role);
 
-  double edgeHighlightOpacity(Brightness brightness, AppGlassRole role) =>
-      (brightness == Brightness.dark ? 0.18 : 0.28) * depthFor(role);
-
   double edgeShadeOpacity(Brightness brightness, AppGlassRole role) =>
       (brightness == Brightness.dark ? 0.12 : 0.10) * depthFor(role);
-
-  double stateOpacity(Brightness brightness) =>
-      brightness == Brightness.dark ? 0.11 : 0.10;
-
-  /// Kept as a token for callers that need to describe a state rim, but the
-  /// painter intentionally uses one shared edge highlight in the resting
-  /// state so glass does not turn into a collection of bright outlines.
-  double get stateRimOpacity => 0.18;
-  double get selectedEmphasis => 0.38;
-  double get hoverEmphasis => 0.34;
-  double get focusEmphasis => 0.82;
-  double get pressedEmphasis => 0.95;
-  double get busyEmphasis => 0.30;
-  double get errorEmphasis => 0.48;
-  double get disabledWash => 0.30;
 }
 
 const SoftGlassSpec kAppSoftGlassSpec = SoftGlassSpec();

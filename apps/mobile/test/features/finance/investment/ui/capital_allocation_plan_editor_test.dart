@@ -309,10 +309,6 @@ void main() {
     expect(find.byType(AppFormPageScaffold), findsOneWidget);
     expect(_input(tester, 0), '62.15');
     expect(find.text(l10n.capitalAllocationSaveFailed), findsOneWidget);
-    expect(
-      tester.widget<AppFormActionBar>(find.byType(AppFormActionBar)).status,
-      AppGlassStatus.error,
-    );
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
     expect(attempts, 2);
@@ -337,10 +333,6 @@ void main() {
     await tester.pump();
     expect(find.byType(AppFormPageScaffold), findsOneWidget);
     expect(calls, 1);
-    expect(
-      tester.widget<AppFormActionBar>(find.byType(AppFormActionBar)).status,
-      AppGlassStatus.busy,
-    );
     expect(
       tester
           .widget<FButton>(find.byKey(const ValueKey('allocation-restore')))
