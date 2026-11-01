@@ -5,10 +5,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
+import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 Widget _wrap(Widget child) {
   return MaterialApp(
     theme: AppTheme.light(),
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
     home: FTheme(
       data: FTheme.neutral.light.desktop,
       child: FScaffold(childPad: false, child: Center(child: child)),
@@ -17,6 +20,49 @@ Widget _wrap(Widget child) {
 }
 
 void main() {
+  testWidgets('summary labels preserve filters and only clear removes them', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    final removed = <int>[];
+    var cleared = 0;
+    await tester.pumpWidget(
+      _wrap(
+        AppFilterSummary(
+          labels: const ['Meals', 'Notes'],
+          onRemove: removed.add,
+          onClear: () => cleared++,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Meals'));
+    await tester.pump();
+    expect(removed, isEmpty);
+    expect(
+      tester
+          .getSemantics(find.bySemanticsLabel('Meals'))
+          .getSemanticsData()
+          .flagsCollection
+          .isButton,
+      isFalse,
+    );
+
+    final clear = find.bySemanticsLabel('Clear filters: Notes');
+    final node = tester.getSemantics(clear);
+    expect(node.getSemanticsData().flagsCollection.isButton, isTrue);
+    node.owner!.performAction(node.id, SemanticsAction.tap);
+    await tester.pump();
+    expect(removed, [1]);
+    expect(cleared, 0);
+
+    await tester.tap(find.text('Clear filters'));
+    await tester.pumpAndSettle();
+    expect(cleared, 1);
+    semantics.dispose();
+  });
+
   testWidgets(
     'keyboard and semantic actions keep selection and clear distinct',
     (tester) async {

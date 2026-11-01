@@ -9,6 +9,7 @@ import 'app_interaction.dart';
 import 'app_quiet_button.dart';
 
 /// Applied filters stay visible regardless of their picker presentation.
+/// Labels are passive; only the explicit clear action removes a condition.
 class AppFilterSummary extends StatelessWidget {
   const AppFilterSummary({
     super.key,
@@ -36,7 +37,7 @@ class AppFilterSummary extends StatelessWidget {
           AppFilterChip(
             label: labels[index],
             active: true,
-            onPress: () => onRemove!(index),
+            onPress: null,
             onClear: () => onRemove!(index),
             clearSemanticLabel:
                 '${AppLocalizations.of(context).commonClearFilters}: ${labels[index]}',

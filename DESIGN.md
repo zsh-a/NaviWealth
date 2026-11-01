@@ -157,8 +157,8 @@ components:
     rounded: "{rounded.lg}"
     padding: "10px 12px"
   filter-chip:
-    rounded: "{rounded.full}"
-    padding: "0px 10px"
+    rounded: "{rounded.lg}"
+    padding: "8px 12px"
   soft-card:
     backgroundColor: "{colors.card-light}"
     textColor: "{colors.body-light}"
@@ -339,7 +339,8 @@ with the lg content/control, xl floating-dock and xxl sheet/overlay steps.
 Classic remains supported for previously saved preferences, with conventional
 rounded geometry, md regular cards and buttons, and lg sheets. Appearance no
 longer exposes the redundant preset preview picker. Both share the porcelain/graphite palette;
-they are not separate color identities. Chips retain the full pill radius.
+they are not separate color identities. Filter chips follow the same lg/md
+control geometry; compact status badges retain their pill shape.
 
 ## Components
 
@@ -360,9 +361,14 @@ activation, and own the shared commit haptic.
 
 ### Chips
 
-`AppFilterChip` uses a full pill, a s48 minimum height, a check/circle icon,
-and a quiet border. Active state adds a 6% primary wash, 20% primary border
-and primary text. It has explicit selected semantics; color is supplemental.
+`AppFilterChip` uses continuous lg corners in Refined and rounded md corners
+in Classic, with a s48 minimum touch target. Active filters use an opaque 8%
+accent blend over the card surface and a stronger foreground label; inactive
+filters use a faint neutral blend. Resting borders are reserved for high
+contrast. Ordinary selected options show a check; picker triggers show a
+chevron. Removable conditions have a separate, labeled s48 clear action.
+Tapping a label opens its existing editor when available; summary labels are
+passive and never remove a condition. Selected semantics supplement color.
 High-level exclusive modes use the existing segmented control instead.
 
 ### Single-choice Controls
@@ -409,8 +415,8 @@ for the app's form scaffolds or dirty guards.
 
 The floating dock uses the xl continuous radius, s8 horizontal and s6 vertical
 inset, shared nav shadow and theme-gated soft glass. A selected destination
-combines an opaque 8% accent blend over the card surface, a stronger 11px label,
-accent icon and short underline; unselected labels are medium weight and muted.
+uses a stronger 11px label, accent icon and short underline without a selected
+background or shadow; unselected labels are medium weight and muted.
 The assistant action sits outside the destination capsule, separated by s12.
 Its opaque soft primary tint and independent circular/pill shape identify an
 action rather than another selected tab; it adds no second live-blur layer.

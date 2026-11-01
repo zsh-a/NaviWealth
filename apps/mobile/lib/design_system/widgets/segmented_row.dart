@@ -228,7 +228,9 @@ class SegmentedRow<T> extends StatelessWidget {
       curve: Motion.standard,
       style: theme.type.label.copyWith(
         color: foreground,
-        fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+        fontWeight: selected
+            ? theme.type.label.fontWeight
+            : theme.type.title.fontWeight,
       ),
       child: Row(
         mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,

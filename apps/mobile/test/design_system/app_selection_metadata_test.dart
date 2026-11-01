@@ -25,31 +25,38 @@ Widget _wrap(
 }
 
 void main() {
-  testWidgets('selection indicator reserves its slot in both states', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      _wrap(
-        const Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AppSelectionIndicator(selected: true),
-            AppSelectionIndicator(selected: false),
-          ],
+  testWidgets(
+    'selection indicator switches immediately and reserves its slot',
+    (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AppSelectionIndicator(selected: true),
+              AppSelectionIndicator(selected: false),
+            ],
+          ),
         ),
-      ),
-    );
+      );
 
-    final indicators = find.byType(AppSelectionIndicator);
-    expect(indicators, findsNWidgets(2));
-    expect(
-      tester
-          .widgetList<AnimatedOpacity>(find.byType(AnimatedOpacity))
-          .map((widget) => widget.opacity),
-      orderedEquals(const [1.0, 0.0]),
-    );
-    expect(tester.getSize(indicators.at(0)), tester.getSize(indicators.at(1)));
-  });
+      final indicators = find.byType(AppSelectionIndicator);
+      expect(indicators, findsNWidgets(2));
+      expect(
+        tester
+            .widgetList<Opacity>(
+              find.descendant(of: indicators, matching: find.byType(Opacity)),
+            )
+            .map((widget) => widget.opacity),
+        orderedEquals(const [1.0, 0.0]),
+      );
+      expect(find.byType(AnimatedOpacity), findsNothing);
+      expect(
+        tester.getSize(indicators.at(0)),
+        tester.getSize(indicators.at(1)),
+      );
+    },
+  );
 
   testWidgets('metadata stays background-free and wraps in dark large type', (
     tester,

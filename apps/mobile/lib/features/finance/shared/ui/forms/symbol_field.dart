@@ -393,7 +393,7 @@ class _SymbolFieldBodyState extends State<SymbolFieldBody> {
         if (showDropdown)
           Padding(
             padding: const EdgeInsets.only(top: AppSpacing.s4),
-            child: FCard(
+            child: SoftCard(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxHeight: 320),
                 child: ListView(
@@ -414,6 +414,7 @@ class _SymbolFieldBodyState extends State<SymbolFieldBody> {
                       const FDivider(),
                       FTile(
                         key: const Key('symbol-field-manual'),
+                        style: _resultRowStyle(context),
                         prefix: const Icon(FLucideIcons.plus),
                         title: Text(l10n.localSecuritiesManualAdd),
                         subtitle: _lastQuery.isEmpty
@@ -475,25 +476,23 @@ class _ReadOnlySummary extends StatelessWidget {
       symbolFieldMarketLabel(l10n, choice.market),
       choice.currency,
     ];
-    return FCard(
-      builder: (context, style, _) => Padding(
-        padding: style.padding,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              choice.name == null
-                  ? choice.symbol
-                  : '${choice.symbol} — ${choice.name}',
-              style: context.labelStyle,
-            ),
-            const SizedBox(height: AppSpacing.s4),
-            Text(
-              subtitleParts.join(' · '),
-              style: context.theme.typography.body.xs,
-            ),
-          ],
-        ),
+    return SoftCard(
+      padding: const EdgeInsets.all(AppSpacing.s16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            choice.name == null
+                ? choice.symbol
+                : '${choice.symbol} — ${choice.name}',
+            style: context.labelStyle,
+          ),
+          const SizedBox(height: AppSpacing.s4),
+          Text(
+            subtitleParts.join(' · '),
+            style: context.theme.typography.body.xs,
+          ),
+        ],
       ),
     );
   }
@@ -524,6 +523,7 @@ class _HitTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final display = hit.nameCn ?? hit.nameEn;
     return FTile(
+      style: _resultRowStyle(context),
       title: Text(hit.symbol, style: context.labelStyle),
       subtitle: display == null
           ? null
@@ -533,6 +533,24 @@ class _HitTile extends StatelessWidget {
     );
   }
 }
+
+// The result surface owns the grouping; rows retain Forui's focus and press
+// handling without introducing a separate bordered card for every result.
+FItemStyleDelta _resultRowStyle(BuildContext context) => FItemStyleDelta.delta(
+  contentDecoration: FVariants.from(
+    const BoxDecoration(),
+    variants: {
+      [
+        FTappableVariant.hovered,
+        FTappableVariant.pressed,
+      ]: DecorationDelta.boxDelta(
+        color: context.appTheme.content.strong.withValues(
+          alpha: AppOpacity.faint,
+        ),
+      ),
+    },
+  ),
+);
 
 /// Human label for an [AssetMarket], shared by the selector and the
 /// read-only summary row. Exposed (top-level) so feature pages with

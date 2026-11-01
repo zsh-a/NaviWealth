@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../../core/ai/contracts/context_evidence.dart';
 import '../../../../core/auth/current_user.dart';
+import '../../../../core/forms/forms.dart';
 import '../../../../core/lifeos/personal_profile/personal_profile_fact.dart';
 import '../../../../core/lifeos/personal_profile/providers.dart';
 import '../../../../core/shell/settings_ui/inline_setting_row.dart';
@@ -36,13 +37,16 @@ class _PersonalMemoryPageState extends ConsumerState<PersonalMemoryPage> {
   }
 
   void _reload() {
-    setState(() => _facts = _load());
+    setState(() {
+      _facts = _load();
+    });
   }
 
   Future<void> _openEditor([PersonalProfileFact? fact]) async {
-    final changed = await showAppFormSheet<bool>(
+    final changed = await showGuardedFormSheet<bool>(
       context: context,
-      builder: (_) => _PersonalProfileFactSheet(initial: fact),
+      builder: (_, dirty) =>
+          _PersonalProfileFactSheet(initial: fact, dirty: dirty),
     );
     if (changed == true && mounted) _reload();
   }
@@ -165,21 +169,23 @@ class _ProfileFactRow extends StatelessWidget {
         if (fact.domainScope != null) fact.domainScope!,
         if (!domainActive) l10n.personalMemoryInactiveDomain,
       ].join(' · '),
-      trailing: Icon(
-        FLucideIcons.trash2,
-        size: AppIconSizes.sm,
-        color: context.theme.colors.destructive,
+      trailing: AppIconButton(
+        icon: FLucideIcons.trash2,
+        iconSize: AppIconSizes.sm,
+        iconColor: context.theme.colors.destructive,
+        tooltip: l10n.commonDelete,
+        onPress: onForget,
       ),
-      onTrailingTap: onForget,
       onTap: onEdit,
     );
   }
 }
 
 class _PersonalProfileFactSheet extends ConsumerStatefulWidget {
-  const _PersonalProfileFactSheet({required this.initial});
+  const _PersonalProfileFactSheet({required this.initial, required this.dirty});
 
   final PersonalProfileFact? initial;
+  final FormDirtyController dirty;
 
   @override
   ConsumerState<_PersonalProfileFactSheet> createState() =>
@@ -187,7 +193,8 @@ class _PersonalProfileFactSheet extends ConsumerStatefulWidget {
 }
 
 class _PersonalProfileFactSheetState
-    extends ConsumerState<_PersonalProfileFactSheet> {
+    extends ConsumerState<_PersonalProfileFactSheet>
+    with FormSubmission<_PersonalProfileFactSheet> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _key;
   late final TextEditingController _value;
@@ -195,7 +202,6 @@ class _PersonalProfileFactSheetState
   late final TextEditingController _domain;
   late PersonalProfileFactKind _kind;
   bool _saving = false;
-  String? _error;
 
   @override
   void initState() {
@@ -206,6 +212,25 @@ class _PersonalProfileFactSheetState
     _summary = TextEditingController(text: initial?.summary ?? '');
     _domain = TextEditingController(text: initial?.domainScope ?? '');
     _kind = initial?.kind ?? PersonalProfileFactKind.goal;
+    for (final controller in [_key, _value, _summary, _domain]) {
+      controller.addListener(_onEdited);
+    }
+  }
+
+  bool get _hasChanges =>
+      _kind != (widget.initial?.kind ?? PersonalProfileFactKind.goal) ||
+      _key.text != (widget.initial?.key ?? '') ||
+      _value.text != _displayValue(widget.initial?.value) ||
+      _summary.text != (widget.initial?.summary ?? '') ||
+      _domain.text != (widget.initial?.domainScope ?? '');
+
+  void _onEdited() {
+    if (_hasChanges) {
+      widget.dirty.markDirty();
+    } else {
+      widget.dirty.markPristine();
+    }
+    setState(() {});
   }
 
   @override
@@ -218,57 +243,59 @@ class _PersonalProfileFactSheetState
   }
 
   Future<void> _save() async {
-    if (_saving || !(_formKey.currentState?.validate() ?? false)) return;
-    setState(() {
-      _saving = true;
-      _error = null;
-    });
-    try {
-      final now = DateTime.now().toUtc();
-      final ownerUserId = await ref.read(currentUserIdProvider)();
-      final store = await ref.read(personalProfileStoreProvider.future);
-      final initial = widget.initial;
-      final domain = _domain.text.trim();
-      final fact = PersonalProfileFact(
-        id: 'profile_fact:${_profileUuid.v4()}',
-        ownerUserId: ownerUserId,
-        kind: _kind,
-        key: _key.text.trim(),
-        value: _parseValue(_value.text),
-        summary: _summary.text.trim(),
-        domainScope: domain.isEmpty ? null : domain,
-        authority: EvidenceAuthority.userConfirmed,
-        provenance: EvidenceProvenance(
-          source: 'settings_profile',
-          sourceId: initial?.id,
-          observedAt: now,
-        ),
-        confidence: 1,
-        confirmedAt: now,
-        validFrom: now,
-        supersedesFactId: initial?.id,
-        createdAt: now,
-        updatedAt: now,
-      );
-      if (initial == null) {
-        await store.create(fact);
-      } else {
-        await store.supersede(
-          ownerUserId: ownerUserId,
-          priorId: initial.id,
-          replacement: fact,
-          at: now,
-        );
-      }
-      if (mounted) Navigator.of(context).pop(true);
-    } on Object catch (error) {
-      if (mounted) {
-        setState(() {
-          _saving = false;
-          _error = '$error';
-        });
-      }
+    if (_saving ||
+        !_hasChanges ||
+        !(_formKey.currentState?.validate() ?? false)) {
+      return;
     }
+    final l10n = AppLocalizations.of(context);
+    await submitForm<void>(
+      dirty: widget.dirty,
+      onBusyChanged: (busy) => setState(() => _saving = busy),
+      commit: () async {
+        final now = DateTime.now().toUtc();
+        final ownerUserId = await ref.read(currentUserIdProvider)();
+        final store = await ref.read(personalProfileStoreProvider.future);
+        final initial = widget.initial;
+        final domain = _domain.text.trim();
+        final fact = PersonalProfileFact(
+          id: 'profile_fact:${_profileUuid.v4()}',
+          ownerUserId: ownerUserId,
+          kind: _kind,
+          key: _key.text.trim(),
+          value: _parseValue(_value.text),
+          summary: _summary.text.trim(),
+          domainScope: domain.isEmpty ? null : domain,
+          authority: EvidenceAuthority.userConfirmed,
+          provenance: EvidenceProvenance(
+            source: 'settings_profile',
+            sourceId: initial?.id,
+            observedAt: now,
+          ),
+          confidence: 1,
+          confirmedAt: now,
+          validFrom: now,
+          supersedesFactId: initial?.id,
+          createdAt: now,
+          updatedAt: now,
+        );
+        if (initial == null) {
+          await store.create(fact);
+        } else {
+          await store.supersede(
+            ownerUserId: ownerUserId,
+            priorId: initial.id,
+            replacement: fact,
+            at: now,
+          );
+        }
+      },
+      leave: () => Navigator.of(context).pop(true),
+      failureMessage: (_) => l10n.commonSaveFailed,
+      successMessage: l10n.commonSaved,
+      showFailureToast: false,
+      tag: 'personal-profile-fact',
+    );
   }
 
   @override
@@ -278,15 +305,21 @@ class _PersonalProfileFactSheetState
       title: widget.initial == null
           ? l10n.personalMemoryCreateTitle
           : l10n.personalMemoryEditTitle,
-      footer: _ProfileSheetFooter(saving: _saving, onSave: _save),
+      footer: AppSheetFooter(
+        submitLabel: l10n.commonSave,
+        cancelLabel: l10n.commonCancel,
+        onSubmit: _save,
+        busy: _saving,
+        enabled: _hasChanges,
+      ),
       child: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            if (_error != null) ...<Widget>[
-              AppStatusBanner(kind: AppStatusKind.error, message: _error!),
+            if (submissionFailureMessage case final message?) ...<Widget>[
+              AppStatusBanner(kind: AppStatusKind.error, message: message),
               const SizedBox(height: AppSpacing.s12),
             ],
             Text(l10n.personalMemoryKind, style: context.captionLabelStyle),
@@ -299,7 +332,10 @@ class _PersonalProfileFactSheetState
               iconOf: _kindIcon,
               onChanged: _saving
                   ? null
-                  : (kind) => setState(() => _kind = kind),
+                  : (kind) {
+                      _kind = kind;
+                      _onEdited();
+                    },
             ),
             const SizedBox(height: AppSpacing.s12),
             FTextFormField(
@@ -323,6 +359,7 @@ class _PersonalProfileFactSheetState
             const SizedBox(height: AppSpacing.s12),
             FTextFormField(
               control: FTextFieldControl.managed(controller: _summary),
+              enabled: !_saving,
               label: Text(l10n.personalMemorySummary),
               hint: l10n.personalMemorySummaryHint,
               minLines: 2,
@@ -334,6 +371,7 @@ class _PersonalProfileFactSheetState
             const SizedBox(height: AppSpacing.s12),
             FTextFormField(
               control: FTextFieldControl.managed(controller: _domain),
+              enabled: !_saving,
               label: Text(l10n.personalMemoryDomain),
               hint: l10n.personalMemoryDomainHint,
               maxLines: 1,
@@ -341,36 +379,6 @@ class _PersonalProfileFactSheetState
           ],
         ),
       ),
-    );
-  }
-}
-
-class _ProfileSheetFooter extends StatelessWidget {
-  const _ProfileSheetFooter({required this.saving, required this.onSave});
-
-  final bool saving;
-  final VoidCallback onSave;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Row(
-      children: <Widget>[
-        Expanded(
-          child: FButton(
-            variant: FButtonVariant.outline,
-            onPress: saving ? null : () => Navigator.of(context).maybePop(),
-            child: Text(l10n.commonCancel),
-          ),
-        ),
-        const SizedBox(width: AppSpacing.s8),
-        Expanded(
-          child: FButton(
-            onPress: saving ? null : onSave,
-            child: Text(l10n.commonSave),
-          ),
-        ),
-      ],
     );
   }
 }
