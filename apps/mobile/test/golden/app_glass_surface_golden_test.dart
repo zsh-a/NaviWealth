@@ -41,7 +41,7 @@ void main() {
       ),
     );
     final gesture = await tester.startGesture(
-      tester.getCenter(find.text('Wealth')),
+      tester.getCenter(find.text('Ready for review')),
     );
     await gesture.moveBy(const Offset(44, 0));
     await tester.pump(const Duration(milliseconds: 40));
@@ -155,27 +155,26 @@ class _GlassShowcase extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.s16),
-                AppGlassSurface(
-                  softLight: softLight,
-                  frosted: !softLight,
-                  borderRadius: BorderRadius.circular(AppRadius.full),
-                  boxShadow: AppShadow.nav,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.s20,
-                    vertical: AppSpacing.s12,
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _NavItem(
-                        icon: FLucideIcons.house,
-                        label: 'Today',
-                        selected: true,
-                      ),
-                      _NavItem(icon: FLucideIcons.wallet, label: 'Wealth'),
-                      _NavItem(icon: FLucideIcons.brain, label: 'Knowledge'),
-                    ],
-                  ),
+                FloatingGlassNavBar(
+                  items: const [
+                    FloatingNavTab(
+                      icon: FLucideIcons.house,
+                      selectedIcon: FLucideIcons.house,
+                      label: 'Today',
+                    ),
+                    FloatingNavTab(
+                      icon: FLucideIcons.wallet,
+                      selectedIcon: FLucideIcons.wallet,
+                      label: 'Wealth',
+                    ),
+                    FloatingNavTab(
+                      icon: FLucideIcons.brain,
+                      selectedIcon: FLucideIcons.brain,
+                      label: 'Knowledge',
+                    ),
+                  ],
+                  selectedIndex: 0,
+                  onIndexChanged: (_) {},
                 ),
                 const SizedBox(height: AppSpacing.s24),
               ],
@@ -199,48 +198,6 @@ class _GlowOrb extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-    );
-  }
-}
-
-class _NavItem extends StatelessWidget {
-  const _NavItem({
-    required this.icon,
-    required this.label,
-    this.selected = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool selected;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final foreground = selected ? colors.primary : colors.mutedForeground;
-
-    return Semantics(
-      selected: selected,
-      button: true,
-      label: label,
-      child: SizedBox(
-        width: 72,
-        height: 48,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: foreground, size: 19),
-            const SizedBox(height: AppSpacing.s4),
-            Text(
-              label,
-              style: context.theme.typography.body.xs.copyWith(
-                color: foreground,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

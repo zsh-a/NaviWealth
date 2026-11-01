@@ -231,10 +231,6 @@ class _NavTabButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
     final selectedColor = accentColor ?? colors.primary;
-    final selectedSurface = Color.alphaBlend(
-      selectedColor.withValues(alpha: AppOpacity.softTint),
-      colors.card,
-    );
     final iconColor = selected ? selectedColor : colors.mutedForeground;
     final labelColor = selected ? selectedColor : colors.mutedForeground;
     return AppActionTappable(
@@ -252,13 +248,8 @@ class _NavTabButton extends StatelessWidget {
         return DecoratedBox(
           decoration: context.appTheme.visual.decoration(
             radius: BorderRadius.circular(AppRadius.md),
-            color: Color.alphaBlend(
-              (selected ? selectedColor : colors.foreground).withValues(
-                alpha: feedbackAlpha,
-              ),
-              selected
-                  ? selectedSurface
-                  : selectedSurface.withValues(alpha: AppOpacity.transparent),
+            color: (selected ? selectedColor : colors.foreground).withValues(
+              alpha: feedbackAlpha,
             ),
           ),
           child: child,

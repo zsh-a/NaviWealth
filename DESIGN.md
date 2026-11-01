@@ -301,6 +301,8 @@ tonal feedback. Focus and high-contrast boundaries remain explicit.
 
 - **Card hover** is the close contact shadow from `AppShadow.cardHover`.
 - **Floating navigation** uses the single quiet layer from `AppShadow.nav`.
+  Destinations have no resting fill or shadow; accent icons, labels and a
+  short underline mark selection. Flat tint appears only on hover or press.
 - **Desktop sheet** uses the two-layer `AppShadow.desktopSheet` vocabulary.
   Exact Flutter shadow values and CSS translations are in the sidecar.
 
