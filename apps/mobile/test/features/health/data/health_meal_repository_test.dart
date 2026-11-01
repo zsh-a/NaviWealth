@@ -65,6 +65,72 @@ void main() {
   );
 
   test(
+    'calendar counts are month-bounded, owner-scoped and exclude tombstones',
+    () async {
+      await save();
+      final removed = await save();
+      await save(day: DateTime(2026, 10, 27));
+      await save(day: DateTime(2026, 9, 30));
+      await HealthMealRepository(
+        db: db,
+        outbox: InMemoryOutboxStore(),
+        stamper: makeStubStamper(userId: 'other'),
+        clock: () => now,
+      ).save(
+        expectedOwnerUserId: 'other',
+        capturedAt: now,
+        day: now,
+        type: HealthMealType.lunch,
+        foods: foods,
+      );
+      await repo.delete(removed);
+      expect(
+        await repo
+            .watchRecordedDayCounts(
+              ownerUserId: 'user',
+              from: DateTime(2026, 10, 1, 23),
+              to: DateTime(2026, 11),
+            )
+            .first,
+        {DateTime.utc(2026, 10, 27): 1, DateTime.utc(2026, 10, 28): 1},
+      );
+    },
+  );
+
+  test(
+    'calendar counts follow creates, day corrections and deletion live',
+    () async {
+      final updates = StreamIterator(
+        repo.watchRecordedDayCounts(
+          ownerUserId: 'user',
+          from: DateTime.utc(2026, 10),
+          to: DateTime.utc(2026, 11),
+        ),
+      );
+      addTearDown(updates.cancel);
+      expect(await updates.moveNext(), isTrue);
+      expect(updates.current, isEmpty);
+      final first = await save();
+      await updates.moveNext();
+      expect(updates.current, {DateTime.utc(2026, 10, 28): 1});
+      final corrected = await repo.save(
+        id: first.id,
+        expectedOwnerUserId: 'user',
+        expectedRevision: first.sync.hlc,
+        capturedAt: now,
+        day: DateTime(2026, 10, 27),
+        type: first.type,
+        foods: first.foods,
+      );
+      await updates.moveNext();
+      expect(updates.current, {DateTime.utc(2026, 10, 27): 1});
+      await repo.delete(corrected);
+      await updates.moveNext();
+      expect(updates.current, isEmpty);
+    },
+  );
+
+  test(
     'meal views retain order, roles and times and replace atomically',
     () async {
       final entry = await save(

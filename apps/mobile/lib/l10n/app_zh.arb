@@ -5858,5 +5858,11 @@
   "healthMealDateNext": "后一天",
   "healthMealDateReturnToday": "回到今天",
   "healthMealDateSelectLabel": "选择餐食日期：{date}",
-  "@healthMealDateSelectLabel": {"placeholders": {"date": {"type": "String"}}}
+  "@healthMealDateSelectLabel": {"placeholders": {"date": {"type": "String"}}},
+  "healthMealDateRecordedLegend": "有餐食记录",
+  "healthMealDateMonthRecordedDays": "本月 {count} 天有记录",
+  "@healthMealDateMonthRecordedDays": {"placeholders": {"count": {"type": "int"}}},
+  "healthMealDateRecordCount": "{date}：{count} 条餐食记录",
+  "@healthMealDateRecordCount": {"placeholders": {"date": {"type": "String"}, "count": {"type": "int"}}},
+  "healthMealDateRecordsUnavailable": "记录标记暂时无法加载，仍可选择日期。"
 }

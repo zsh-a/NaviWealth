@@ -18828,4 +18828,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String healthMealDateSelectLabel(String date) {
     return 'Choose meal date: $date';
   }
+
+  @override
+  String get healthMealDateRecordedLegend => 'Meals recorded';
+
+  @override
+  String healthMealDateMonthRecordedDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count recorded days this month',
+      one: '1 recorded day this month',
+      zero: 'No recorded days this month',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String healthMealDateRecordCount(String date, int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count saved meals',
+      one: '1 saved meal',
+    );
+    return '$date: $_temp0';
+  }
+
+  @override
+  String get healthMealDateRecordsUnavailable =>
+      'Record markers couldn\'t load. You can still choose a date.';
 }

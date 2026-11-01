@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../design_system/design_system.dart';
 import '../../../l10n/gen/app_localizations.dart';
 import '../data/health_calendar_providers.dart';
+import '../data/health_meal_providers.dart';
 import '../data/health_series.dart' show healthDay;
 
 /// Date-only presentation: the stored meal day must never shift with timezone.
@@ -262,7 +263,7 @@ class _MealDatePicker extends ConsumerWidget {
               final textHeight =
                   MediaQuery.textScalerOf(context).scale(text.fontSize!) *
                       (text.height ?? 1.4) +
-                  AppSpacing.s8;
+                  AppSpacing.s20;
               final height = textHeight < size.height
                   ? size.height
                   : textHeight.ceilToDouble();
@@ -274,23 +275,11 @@ class _MealDatePicker extends ConsumerWidget {
                     ),
                   ),
                   dayBuilder: (context, styles, localizations, date, variants) {
-                    final dayStyle = styles.resolve(variants);
-                    return DecoratedBox(
-                      key: ValueKey(
-                        'meal-date-cell-${date.year}-${date.month}-${date.day}',
-                      ),
-                      decoration: dayStyle.background,
-                      child: DecoratedBox(
-                        decoration: dayStyle.foreground,
-                        child: Center(
-                          child: Text(
-                            NumberFormat.decimalPattern(
-                              localizations.localeName,
-                            ).format(date.day),
-                            style: dayStyle.textStyle,
-                          ),
-                        ),
-                      ),
+                    return _MealCalendarDay(
+                      date: date,
+                      style: styles.resolve(variants),
+                      selected: variants.contains(FCalendarDayVariant.single),
+                      localeName: localizations.localeName,
                     );
                   },
                   key: ValueKey(today),
@@ -317,6 +306,160 @@ class _MealDatePicker extends ConsumerWidget {
         ],
       ),
     );
+  }
+}
+
+class _MealCalendarDay extends ConsumerWidget {
+  const _MealCalendarDay({
+    required this.date,
+    required this.style,
+    required this.selected,
+    required this.localeName,
+  });
+
+  final DateTime date;
+  final FCalendarDayStyle style;
+  final bool selected;
+  final String localeName;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final counts = ref.watch(
+      healthMealRecordedDayCountsProvider(DateTime.utc(date.year, date.month)),
+    );
+    final recorded = counts.when(
+      skipLoadingOnRefresh: false,
+      skipLoadingOnReload: false,
+      data: (value) => (value[healthDay(date)] ?? 0) > 0,
+      loading: () => false,
+      error: (_, _) => false,
+    );
+    return DecoratedBox(
+      key: ValueKey('meal-date-cell-${date.year}-${date.month}-${date.day}'),
+      decoration: style.background,
+      child: DecoratedBox(
+        decoration: style.foreground,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              NumberFormat.decimalPattern(localeName).format(date.day),
+              maxLines: 1,
+              softWrap: false,
+              style: recorded
+                  ? style.textStyle.copyWith(
+                      fontWeight: context.appTheme.type.label.fontWeight,
+                    )
+                  : style.textStyle,
+            ),
+            const SizedBox(height: AppSpacing.s4),
+            SizedBox.square(
+              dimension: AppSpacing.s6,
+              child: recorded
+                  ? _MealRecordedDot(
+                      key: ValueKey(
+                        'meal-date-recorded-${date.year}-${date.month}-${date.day}',
+                      ),
+                      color: selected ? style.textStyle.color : null,
+                    )
+                  : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MealRecordedDot extends StatelessWidget {
+  const _MealRecordedDot({super.key, this.color});
+
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) => SizedBox.square(
+    dimension: AppSpacing.s6,
+    child: DecoratedBox(
+      decoration: BoxDecoration(
+        color: color ?? context.theme.colors.primary,
+        shape: BoxShape.circle,
+      ),
+    ),
+  );
+}
+
+class _MealCalendarCoverage extends ConsumerWidget {
+  const _MealCalendarCoverage({required this.month});
+
+  final DateTime month;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
+    final provider = healthMealRecordedDayCountsProvider(
+      DateTime.utc(month.year, month.month),
+    );
+    return ref
+        .watch(provider)
+        .when(
+          skipLoadingOnRefresh: false,
+          skipLoadingOnReload: false,
+          loading: () => Text(l.commonLoading, style: context.captionStyle),
+          error: (_, _) => Semantics(
+            liveRegion: true,
+            child: Wrap(
+              spacing: AppSpacing.s8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  l.healthMealDateRecordsUnavailable,
+                  style: context.captionStyle,
+                ),
+                AppQuietButton(
+                  label: l.commonRetry,
+                  onPress: () => ref.invalidate(provider),
+                ),
+              ],
+            ),
+          ),
+          data: (counts) {
+            final days = counts.keys.toList()..sort();
+            final language = Localizations.localeOf(context).toLanguageTag();
+            final summary = l.healthMealDateMonthRecordedDays(days.length);
+            // Forui owns each day's date/selection semantics and excludes the
+            // custom cell subtree. Supply the marker data as a calendar summary.
+            final details = days.map(
+              (day) => l.healthMealDateRecordCount(
+                DateFormat.yMMMd(language).format(day),
+                counts[day]!,
+              ),
+            );
+            return Semantics(
+              key: const Key('meal-calendar-record-summary'),
+              label: [summary, ...details].join('; '),
+              excludeSemantics: true,
+              child: Wrap(
+                spacing: AppSpacing.s12,
+                runSpacing: AppSpacing.s4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const _MealRecordedDot(),
+                      const SizedBox(width: AppSpacing.s6),
+                      Text(
+                        l.healthMealDateRecordedLegend,
+                        style: context.captionStyle,
+                      ),
+                    ],
+                  ),
+                  Text(summary, style: context.captionStyle),
+                ],
+              ),
+            );
+          },
+        );
   }
 }
 
@@ -372,19 +515,29 @@ class _MealCalendarHeader extends StatelessWidget {
         ),
       ],
     );
-    if (MediaQuery.textScalerOf(context).scale(14) > 21) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          title,
-          Align(alignment: AlignmentDirectional.centerEnd, child: navigation),
-        ],
-      );
-    }
-    return Row(
+    final header = MediaQuery.textScalerOf(context).scale(14) > 21
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              title,
+              Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: navigation,
+              ),
+            ],
+          )
+        : Row(
+            children: [
+              Expanded(child: title),
+              navigation,
+            ],
+          );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(child: title),
-        navigation,
+        header,
+        const SizedBox(height: AppSpacing.s8),
+        _MealCalendarCoverage(month: controller.currentMonth),
       ],
     );
   }

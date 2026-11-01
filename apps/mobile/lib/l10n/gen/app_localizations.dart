@@ -31622,6 +31622,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Choose meal date: {date}'**
   String healthMealDateSelectLabel(String date);
+
+  /// No description provided for @healthMealDateRecordedLegend.
+  ///
+  /// In en, this message translates to:
+  /// **'Meals recorded'**
+  String get healthMealDateRecordedLegend;
+
+  /// No description provided for @healthMealDateMonthRecordedDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No recorded days this month} =1{1 recorded day this month} other{{count} recorded days this month}}'**
+  String healthMealDateMonthRecordedDays(int count);
+
+  /// No description provided for @healthMealDateRecordCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{date}: {count, plural, =1{1 saved meal} other{{count} saved meals}}'**
+  String healthMealDateRecordCount(String date, int count);
+
+  /// No description provided for @healthMealDateRecordsUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Record markers couldn\'t load. You can still choose a date.'**
+  String get healthMealDateRecordsUnavailable;
 }
 
 class _AppLocalizationsDelegate

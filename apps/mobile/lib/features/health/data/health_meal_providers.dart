@@ -51,6 +51,37 @@ final healthMealsProvider = StreamProvider.autoDispose
       );
     });
 
+/// Shared by all calendar cells in a month, scoped to the active Health owner.
+final healthMealRecordedDayCountsProvider = StreamProvider.autoDispose
+    .family<Map<DateTime, int>, DateTime>((ref, month) async* {
+      final owner = ref.watch(activeUserIdProvider);
+      final enabled =
+          ref
+              .watch(auth.domainOptInsProvider)
+              .value
+              ?.contains(DomainScope.health) ??
+          false;
+      if (owner == null || !enabled) {
+        yield const {};
+        return;
+      }
+      final today = ref.watch(healthCalendarDayProvider);
+      final from = DateTime.utc(month.year, month.month);
+      final nextMonth = DateTime.utc(month.year, month.month + 1);
+      final tomorrow = today.add(const Duration(days: 1));
+      final to = nextMonth.isBefore(tomorrow) ? nextMonth : tomorrow;
+      if (!from.isBefore(to)) {
+        yield const {};
+        return;
+      }
+      final repo = await ref.watch(healthMealRepositoryProvider.future);
+      yield* repo.watchRecordedDayCounts(
+        ownerUserId: owner,
+        from: from,
+        to: to,
+      );
+    });
+
 /// Photos are device-local. A synced meal may legitimately have no thumbnail.
 /// Revision is part of the key so photo edits reload after the meal is saved.
 final healthMealPhotoProvider = FutureProvider.autoDispose

@@ -31,6 +31,31 @@ class HealthMealRepository {
   static const table = 'health_meals';
   static const maxPhotoBytes = MealPhoto.maxBytes;
 
+  /// Calendar coverage without loading food snapshots or device-local photos.
+  Stream<Map<DateTime, int>> watchRecordedDayCounts({
+    required String ownerUserId,
+    required DateTime from,
+    required DateTime to,
+  }) {
+    final meals = _db.healthMeals;
+    final count = meals.id.count();
+    final query = _db.selectOnly(meals)
+      ..addColumns([meals.day, count])
+      ..where(
+        meals.ownerUserId.equals(ownerUserId) &
+            meals.deletedAt.isNull() &
+            meals.day.isBiggerOrEqualValue(healthDay(from)) &
+            meals.day.isSmallerThanValue(healthDay(to)),
+      )
+      ..groupBy([meals.day]);
+    return query.watch().map(
+      (rows) => {
+        for (final row in rows)
+          healthDay(row.read(meals.day)!): row.read(count)!,
+      },
+    );
+  }
+
   Stream<List<HealthMeal>> watchInRange({
     required String ownerUserId,
     required DateTime from,

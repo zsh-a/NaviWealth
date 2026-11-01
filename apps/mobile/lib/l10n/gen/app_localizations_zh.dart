@@ -17789,4 +17789,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String healthMealDateSelectLabel(String date) {
     return '选择餐食日期：$date';
   }
+
+  @override
+  String get healthMealDateRecordedLegend => '有餐食记录';
+
+  @override
+  String healthMealDateMonthRecordedDays(int count) {
+    return '本月 $count 天有记录';
+  }
+
+  @override
+  String healthMealDateRecordCount(String date, int count) {
+    return '$date：$count 条餐食记录';
+  }
+
+  @override
+  String get healthMealDateRecordsUnavailable => '记录标记暂时无法加载，仍可选择日期。';
 }

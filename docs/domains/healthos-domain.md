@@ -217,6 +217,11 @@ date sheet with Today/Yesterday shortcuts and no future dates. History also has
 previous/next-day controls and Return to Today; its selected day carries into a
 new meal. Cancelling or reselecting the same day leaves the form unchanged.
 Date-only values retain the authored calendar day across timezones.
+The shared date sheet marks saved-meal days with a dot and stronger date text,
+separate from today and the selected day. Its month summary includes recorded
+day counts and accessible per-day meal counts. Coverage streams are month-bounded,
+owner-scoped, opt-in gated, and exclude deleted meals; loading or failed coverage
+never prevents date selection.
 
 Capture is photo-first, with library and manual entry available alongside the
 camera. Supplemental notes and video capture use progressive disclosure.
