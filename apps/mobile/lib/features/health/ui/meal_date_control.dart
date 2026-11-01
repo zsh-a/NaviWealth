@@ -401,7 +401,8 @@ class _MealCalendarCoverage extends ConsumerWidget {
     );
     return ref
         .watch(provider)
-        .when(
+        .whenOrLoading(
+          context: context,
           skipLoadingOnRefresh: false,
           skipLoadingOnReload: false,
           loading: () => Text(l.commonLoading, style: context.captionStyle),
