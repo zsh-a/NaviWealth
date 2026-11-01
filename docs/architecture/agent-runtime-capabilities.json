@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "runtime_commit": "7f87f69df768325048acabb0011d3ff6fac213fb",
+  "runtime_commit": "7d0a904768a7e63dd80fc1caf6f23d2455b1c9a3",
   "protocol": {
     "wire": "agent.v1",
     "embedded_snapshot": 1,

@@ -41,12 +41,17 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "futures",
+ "getrandom 0.3.4",
+ "gloo-timers",
  "schemars",
  "serde",
  "serde_json",
  "thiserror",
  "time",
+ "tokio",
  "uuid",
+ "wasm-bindgen-futures",
+ "web-sys",
 ]
 
 [[package]]
@@ -64,7 +69,6 @@ dependencies = [
  "serde_json",
  "thiserror",
  "time",
- "tokio",
  "tracing",
 ]
 
@@ -1056,22 +1060,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e629b9b98ef3dd8afe6ca2bd0f89306cec16d43d907889945bc5d6687f2f13c7"
 
 [[package]]
-name = "h2"
-version = "0.4.15"
+name = "gloo-timers"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6cb093c84e8bd9b188d4c4a8cb6579fc016968d14c99882163cd3ff402a4f155"
+checksum = "482ce8a491a501da4cd806bd190275363d674f2845005c6ddbd5d3e1dd54495d"
 dependencies = [
- "atomic-waker",
- "bytes",
- "fnv",
+ "futures-channel",
  "futures-core",
- "futures-sink",
- "http",
- "indexmap",
- "slab",
- "tokio",
- "tokio-util",
- "tracing",
+ "js-sys",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -1160,7 +1157,6 @@ dependencies = [
  "bytes",
  "futures-channel",
  "futures-core",
- "h2",
  "http",
  "http-body",
  "httparse",
@@ -1464,8 +1460,6 @@ dependencies = [
  "percent-encoding",
  "referencing",
  "regex",
- "reqwest",
- "rustls",
  "serde",
  "serde_json",
  "unicode-general-category",
@@ -2281,10 +2275,8 @@ dependencies = [
  "bytes",
  "cookie",
  "cookie_store",
- "futures-channel",
  "futures-core",
  "futures-util",
- "h2",
  "http",
  "http-body",
  "http-body-util",
@@ -2813,6 +2805,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "85c17d80feb7334b40c484e45ed1a5273dfd8bfda537c3be2e74a06a6686f327"
 dependencies = [
  "deranged",
+ "js-sys",
  "num-conv",
  "powerfmt",
  "serde_core",
