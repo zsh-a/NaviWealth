@@ -123,9 +123,8 @@ class _DecisionCardState extends State<DecisionCard> {
       );
     }
 
-    return SoftCard.raised(
+    return SoftCard(
       padding: const EdgeInsets.all(AppSpacing.s12),
-      borderRadius: AppRadius.md,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -225,91 +224,61 @@ class _OptionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.theme.colors;
-    final borderColor = selected
-        ? colors.primary
-        : (option.recommended
-              ? colors.primary.withValues(alpha: AppOpacity.scrim)
-              : colors.border);
     final opacity = dimmed ? AppOpacity.disabled : 1.0;
 
     return Opacity(
       opacity: opacity,
-      child: AppTappable(
+      child: AppChoiceTile(
+        selected: selected,
         onPress: onTap,
-        child: AnimatedContainer(
-          duration: AppMotionPolicy.duration(context, Motion.fast),
-          curve: Motion.standardDecelerate,
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s12,
-            vertical: AppSpacing.s10,
-          ),
-          decoration: BoxDecoration(
-            color: selected
-                ? colors.primary.withValues(alpha: AppOpacity.subtle)
-                : colors.background,
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(
-              color: borderColor,
-              width: selected ? AppStroke.medium : AppStroke.hairline,
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  if (option.recommended)
-                    Container(
-                      width: 3,
-                      height: 16,
-                      margin: const EdgeInsets.only(right: AppSpacing.s8),
-                      decoration: BoxDecoration(
-                        color: colors.primary,
-                        borderRadius: BorderRadius.circular(AppRadius.full),
-                      ),
-                    ),
-                  Expanded(
-                    child: Text(
-                      option.label,
-                      style: context.labelStyle.copyWith(
-                        color: colors.foreground,
-                      ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.s12,
+          vertical: AppSpacing.s10,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    option.label,
+                    style: context.labelStyle.copyWith(
+                      color: colors.foreground,
                     ),
                   ),
-                  if (option.recommended)
-                    AppBadge(
-                      label: AppLocalizations.of(context)
-                          .aiChatRecommendedBadge,
-                      tone: AppBadgeTone.accent,
-                      size: AppBadgeSize.compact,
-                    ),
-                  if (selected) ...[
-                    const SizedBox(width: AppSpacing.s4),
-                    Icon(
-                      FLucideIcons.check,
-                      size: AppIconSizes.xs,
-                      color: colors.primary,
-                    ),
-                  ] else if (enabled) ...[
-                    const SizedBox(width: AppSpacing.s4),
-                    Icon(
-                      FLucideIcons.arrowRight,
-                      size: AppIconSizes.xs,
-                      color: colors.mutedForeground,
-                    ),
-                  ],
+                ),
+                if (option.recommended)
+                  AppBadge(
+                    label: AppLocalizations.of(context).aiChatRecommendedBadge,
+                    tone: AppBadgeTone.accent,
+                    size: AppBadgeSize.compact,
+                  ),
+                if (selected) ...[
+                  const SizedBox(width: AppSpacing.s4),
+                  Icon(
+                    FLucideIcons.check,
+                    size: AppIconSizes.xs,
+                    color: colors.primary,
+                  ),
+                ] else if (enabled) ...[
+                  const SizedBox(width: AppSpacing.s4),
+                  Icon(
+                    FLucideIcons.arrowRight,
+                    size: AppIconSizes.xs,
+                    color: colors.mutedForeground,
+                  ),
                 ],
-              ),
-              if (option.description.isNotEmpty) ...[
-                const SizedBox(height: AppSpacing.s4),
-                Text(option.description, style: context.captionStyle),
               ],
-              for (final pro in option.pros)
-                _Tradeoff(text: pro, positive: true),
-              for (final con in option.cons)
-                _Tradeoff(text: con, positive: false),
+            ),
+            if (option.description.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.s4),
+              Text(option.description, style: context.captionStyle),
             ],
-          ),
+            for (final pro in option.pros) _Tradeoff(text: pro, positive: true),
+            for (final con in option.cons)
+              _Tradeoff(text: con, positive: false),
+          ],
         ),
       ),
     );

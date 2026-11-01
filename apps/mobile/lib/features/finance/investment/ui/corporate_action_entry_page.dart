@@ -257,7 +257,7 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
           action: Row(
             children: [
               Expanded(
-                child: FButton(
+                child: AppActionButton(
                   key: const Key('corp-action-preview'),
                   variant: FButtonVariant.outline,
                   onPress: asset == null ? null : _runPreview,
@@ -266,9 +266,10 @@ class _CorporateActionEntryPageState extends State<CorporateActionEntryPage> {
               ),
               const SizedBox(width: AppSpacing.s12),
               Expanded(
-                child: FButton(
+                child: AppActionButton(
                   key: const Key('corp-action-submit'),
                   variant: FButtonVariant.primary,
+                  emphasis: AppButtonEmphasis.filled,
                   onPress: _preview == null ? null : _submit,
                   child: Text(l10n.corpActionSubmitAction),
                 ),

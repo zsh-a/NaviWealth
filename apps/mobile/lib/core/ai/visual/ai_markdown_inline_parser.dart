@@ -450,7 +450,8 @@ InlineSpan _codeSpan(String text, TextStyle base, BuildContext context) {
         style: base.copyWith(
           fontFamily: 'monospace',
           fontFamilyFallback: const ['Menlo', 'Consolas', 'monospace'],
-          fontSize: (base.fontSize ?? TypographyTokens.bodySmall.fontSize!) - 1,
+          fontSize:
+              (base.fontSize ?? context.appTheme.type.bodySmall.fontSize!) - 1,
           color: AiTone.onSurface(context),
         ),
       ),

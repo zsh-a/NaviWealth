@@ -201,8 +201,11 @@ repository's deterministic harness. Comparison remains Linux-pinned (other
 hosts still pump the surfaces). Golden comparison is a manual check and does
 not run in CI.
 Golden test files and their PNG baselines live under `test/golden/`;
-theme-matrix pages run light, dark, and dark-colorblind variants, while AI primitive goldens use
-component-scoped light surfaces. Keep new Task primary surfaces and
+theme-matrix pages run light, dark, and dark-colorblind variants with the
+production refined preset by default. Classic compatibility is explicit.
+AI primitive goldens use the production Material, Forui and semantic themes
+in both light and dark appearances; choice/AI surface fixtures also cover
+system high contrast. Keep new Task primary surfaces and
 responsive breakpoints (phone/tablet/web) covered as layout refactors land.
 
 ### Browser business smoke

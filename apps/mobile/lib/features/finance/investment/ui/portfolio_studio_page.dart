@@ -220,22 +220,15 @@ class _StudioSectionNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SegmentedRow<PortfolioStudioSection>(
+    return SegmentedRow<PortfolioStudioSection>.inline(
       options: PortfolioStudioSection.values,
       value: value,
       minSegmentWidth: 76,
-      glass: true,
       labelOf: (section) => switch (section) {
         PortfolioStudioSection.overview => l10n.portfolioStudioOverviewTab,
         PortfolioStudioSection.structure => l10n.portfolioStudioStructureTab,
         PortfolioStudioSection.assets => l10n.portfolioStudioAssetsTab,
         PortfolioStudioSection.rules => l10n.portfolioStudioRulesTab,
-      },
-      iconOf: (section) => switch (section) {
-        PortfolioStudioSection.overview => FLucideIcons.layoutDashboard,
-        PortfolioStudioSection.structure => FLucideIcons.layers3,
-        PortfolioStudioSection.assets => FLucideIcons.walletCards,
-        PortfolioStudioSection.rules => FLucideIcons.listChecks,
       },
       onChanged: onChanged,
     );

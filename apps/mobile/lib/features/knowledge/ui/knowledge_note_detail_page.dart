@@ -245,7 +245,12 @@ class _NoteEditorState extends ConsumerState<_NoteEditor>
           if (note.bodyMd.trim().isEmpty)
             Text(l10n.knowledgeNoteEmptyBody, style: context.bodyCaptionStyle)
           else
-            AiMarkdown(text: note.bodyMd),
+            AiMarkdown(
+              text: note.bodyMd,
+              baseStyle: context.appTheme.type.body.copyWith(
+                color: context.appTheme.content.body,
+              ),
+            ),
           if (sourceUrl != null) ...[
             const SizedBox(height: AppSpacing.s12),
             KnowledgeSourceLink(sourceUrl: sourceUrl),

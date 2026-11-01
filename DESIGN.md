@@ -358,6 +358,11 @@ selection boundaries. Wrapped choices retain the selected fill and complete
 labels at large text sizes. `AppAdaptiveChoice` uses the same neutral surface
 and geometry for its compact picker trigger.
 
+`AppChoiceTile` owns independent account, decision and profile choices. It
+uses the same opaque tonal selection, theme geometry and contrast boundaries;
+the content retains a check or active badge. Choice labels and descriptions
+wrap with system text size rather than relying on fixed-height grids.
+
 `SegmentedRow.inline` remains the content-sized, unframed variant for chart
 ranges and display dimensions. Use the form variant for record input; changing
 the visual theme must not change selection, fields or navigation.
@@ -370,6 +375,9 @@ inset tokens, and apply the hover/focus behavior through the component.
 `AppGroupedSurface` collects related settings, actions or business rows into
 one opaque group with s10 horizontal inset. Its quiet divider is indented
 from the leading icon; rows remain flat.
+
+`SkeletonCard` uses `SoftCard` with the same explicit inset. Loading and loaded
+content share their surface, border policy and active visual geometry.
 
 ### Inputs / Fields
 

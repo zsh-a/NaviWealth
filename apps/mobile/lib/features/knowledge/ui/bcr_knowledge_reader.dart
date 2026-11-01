@@ -113,7 +113,13 @@ class _BcrKnowledgeReaderState extends ConsumerState<BcrKnowledgeReader> {
                   KnowledgeSourceLink(sourceUrl: url.toString()),
                 ],
                 const SizedBox(height: AppSpacing.s16),
-                AiMarkdown(key: ValueKey(page.offset), text: page.text),
+                AiMarkdown(
+                  key: ValueKey(page.offset),
+                  text: page.text,
+                  baseStyle: context.appTheme.type.body.copyWith(
+                    color: context.appTheme.content.body,
+                  ),
+                ),
                 const SizedBox(height: AppSpacing.s16),
                 if (_offsets.length > 1)
                   AppQuietButton(

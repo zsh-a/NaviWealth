@@ -69,6 +69,7 @@ Navigator、ProviderScope 或表单。外观预览复用正式 theme 和 SoftCar
   使用 `showAppFormSheet` / `showGuardedFormSheet` 和 `dirtyGuard`。
 - AsyncValue 展示复用 `app_async_helpers.dart`；空态、错误与重试使用共享状态组件。
   状态必须有具体动作，错误不能被空态吞掉。
+  `SkeletonCard` 复用 `SoftCard` 的表面和形状，不再使用另一套有描边的加载卡片。
 - 用户操作反馈走共享 `AppMessenger`、busy/action button 和提交协议。成功仅在
   操作完成后呈现；已有 wrapper 提供 haptic 时，调用方不重复触发。
 - 按钮外观由 `theme/app_button_styles.dart` 统一提供给 Forui 和共享封装。
@@ -90,6 +91,11 @@ Navigator、ProviderScope 或表单。外观预览复用正式 theme 和 SoftCar
   不透明中性底槽、与 tonal button 相同的浅色调选中面、共享连续圆角和选中短线；
   高对比度补充明确边界。换行后仍保留选中填充与完整标签。`AppAdaptiveChoice`
   的窄屏入口复用同样的表面和形状规则，不能保留独立的旧式描边与半透明底色。
+  独立的账户类型、AI 决策选项和模型配置选择使用 `AppChoiceTile`，统一不透明
+  选中面、主题圆角、焦点反馈和选中语义；可见内容保留对勾或当前状态标记。
+  长标签、说明和大字体按内容撑高，不依赖固定宽高比网格截断文案。
+  自适应筛选使用 `AppAdaptiveChoice.inline`：宽屏或少量选项显示轻量行内样式，
+  选项较多的窄屏继续使用同一个选择弹层；持久化表单字段保留默认表单变体。
   财富范围、资产分布的类别 / 币种、投资趋势的指标 / 范围、现金流趋势与汇率历史
   共用此变体；健康趋势的分组与时间范围、知识库内容类型、执行任务视图及搜索类型
   也遵循相同契约。多选标签、数据录入与持久化偏好继续使用各自的表单和筛选组件。
@@ -100,6 +106,9 @@ Navigator、ProviderScope 或表单。外观预览复用正式 theme 和 SoftCar
 Display 使用自托管 Inter 的 `display` / `displaySmall` / `displayCompact`
 （48 / 32 / 26），页面级金额为 48dp medium；`numericDisplay` 是 32dp 的次级金额。
 精致预设保留字号、字重和 tabular figures，行高在底表上乘以 0.96，26dp 以下字距归零。
+AI 的 `AiType` 也读取解析后的语义字体，不维护独立的原始 token 样式；知识正文
+使用阅读用的 body 角色。Markdown 自定义标题和代码字号仍可相对于调用方的正文
+推导，保留文档语义和自定义阅读尺度。
 金额与图表使用对应 `numeric*` / `chartCaption`。`TypographyTokens` 是主题底表，
 业务 UI 不直接读取 display、headline 或 numeric 样式，避免绕过精致预设的字体、
 字距和行高；`lint-typography.sh` 守护此边界。
@@ -154,10 +163,14 @@ motion policy lint；脚本清单由 CI 维护。主题变更运行对比度测�
 测试。组件或布局变更运行对应 widget/golden 测试，检查窄屏、宽屏、text scaling、
 深浅主题与 reduced motion。代表性的 Wealth、Today、导入审核另覆盖精致预设；
 截图 harness 同时传递 Material / Forui / AppThemeScope 的 visual style。
-视觉基线使用 CI 指定的 Linux Flutter 版本生成。
+视觉基线使用 CI 指定的 Linux Flutter 版本生成，默认跟随正式应用的精致预设；
+经典外观的兼容检查显式指定预设。AI 组件也使用正式 Material、Forui 和语义主题，
+覆盖深浅模式，不能使用空主题或固定白底替代应用外观。
 表单选择组件的经典 / 精致、深浅主题基线由 `segmented_row_golden_test.dart` 覆盖；
 交易录入在 `task_flow_responsive_golden_test.dart` 中额外覆盖精致预设的中文深浅主题，
 避免仅检查经典外观而漏掉默认预设。
+`choice_surfaces_golden_test.dart` 覆盖独立选择、加载表面、AI 卡片与输入区的深浅
+主题、经典兼容及系统高对比度；选择组件和 Markdown 另有键盘、语义与字体回归。
 跨域 Shell 变更额外检查启用状态、路由和键盘导航。
 
 本次澄白更新的视觉证据位于 `.impeccable/review/goldens/`，来自 Flutter widget

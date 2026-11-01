@@ -31,25 +31,33 @@ class AccountCategoryPicker extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return LayoutBuilder(
       builder: (context, constraints) {
-        // 2 columns under 480, 4 columns at tablet width.
-        final cols = constraints.maxWidth >= Breakpoints.mobile ? 4 : 2;
-        final aspectRatio = cols == 2 ? 2.65 : 2.35;
-        return GridView.count(
-          crossAxisCount: cols,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
-          childAspectRatio: aspectRatio,
+        final nominalColumns = constraints.maxWidth >= Breakpoints.mobile
+            ? 4
+            : 2;
+        final labelSize = context.appTheme.type.label.fontSize!;
+        final textScale =
+            MediaQuery.textScalerOf(context).scale(labelSize) / labelSize;
+        final maxColumns = (nominalColumns / textScale.clamp(1, 4))
+            .floor()
+            .clamp(1, nominalColumns);
+        final rows = (kCustodyAccountCategories.length / maxColumns).ceil();
+        final columns = (kCustodyAccountCategories.length / rows).ceil();
+        final width =
+            (constraints.maxWidth - AppSpacing.s10 * (columns - 1)) / columns;
+        return Wrap(
+          spacing: AppSpacing.s10,
+          runSpacing: AppSpacing.s10,
           children: [
             for (final c in kCustodyAccountCategories)
-              _CategoryCard(
-                category: c,
-                selected: c == value,
-                onTap: () => onChanged(c),
-                label: accountCategoryLabel(l10n, c),
-                hint: _hintFor(l10n, c),
-                icon: _iconFor(c),
+              SizedBox(
+                width: width,
+                child: _CategoryCard(
+                  selected: c == value,
+                  onTap: () => onChanged(c),
+                  label: accountCategoryLabel(l10n, c),
+                  hint: _hintFor(l10n, c),
+                  icon: _iconFor(c),
+                ),
               ),
           ],
         );
@@ -86,7 +94,6 @@ class AccountCategoryPicker extends StatelessWidget {
 
 class _CategoryCard extends StatelessWidget {
   const _CategoryCard({
-    required this.category,
     required this.selected,
     required this.onTap,
     required this.label,
@@ -94,7 +101,6 @@ class _CategoryCard extends StatelessWidget {
     required this.icon,
   });
 
-  final AccountCategory category;
   final bool selected;
   final VoidCallback onTap;
   final String label;
@@ -103,68 +109,56 @@ class _CategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.theme.colors;
-    final border = selected
-        ? colors.primary.withValues(alpha: AppOpacity.strong)
-        : colors.foreground.withValues(alpha: AppOpacity.faint);
-    final fill = selected
-        ? colors.primary.withValues(alpha: AppOpacity.subtle)
-        : colors.foreground.withValues(alpha: AppOpacity.whisper);
-    final iconColor = selected ? colors.primary : colors.mutedForeground;
-    return AnimatedContainer(
-      duration: AppMotionPolicy.duration(context, Motion.fast),
-      curve: Motion.standardDecelerate,
-      decoration: BoxDecoration(
-        color: fill,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: border, width: selected ? 1.5 : 1),
+    final theme = context.appTheme;
+    final foreground = selected ? theme.accent.fg : theme.content.body;
+    return AppChoiceTile(
+      selected: selected,
+      onPress: onTap,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.s10,
+        vertical: AppSpacing.s12,
       ),
-      child: AppTappable(
-        onPress: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.s10,
-            vertical: AppSpacing.s8,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          AppIconTile(
+            icon: icon,
+            color: selected ? theme.accent.fg : theme.content.muted,
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: 30,
-                height: 30,
-                decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: AppOpacity.medium),
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                alignment: Alignment.center,
-                child: Icon(icon, size: AppIconSizes.h18, color: iconColor),
-              ),
-              const SizedBox(width: AppSpacing.s8),
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(width: AppSpacing.s8),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Text(
-                      label,
-                      style: context.labelStyle.copyWith(
-                        color: selected ? colors.primary : colors.foreground,
+                    Flexible(
+                      child: Text(
+                        label,
+                        style: theme.type.label.copyWith(color: foreground),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    Text(
-                      hint,
-                      style: context.microCaptionStyle.copyWith(height: 1.15),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    if (selected) ...[
+                      const SizedBox(width: AppSpacing.s4),
+                      Icon(
+                        FLucideIcons.check,
+                        size: AppIconSizes.xs,
+                        color: foreground,
+                      ),
+                    ],
                   ],
                 ),
-              ),
-            ],
+                Text(
+                  hint,
+                  style: theme.type.caption.copyWith(
+                    color: theme.content.muted,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

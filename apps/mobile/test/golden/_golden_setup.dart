@@ -43,14 +43,26 @@ extension GoldenThemeData on GoldenTheme {
     }
   }
 
-  ThemeData buildTheme({AppVisualStyle visualStyle = AppVisualStyle.classic}) {
+  ThemeData buildTheme({
+    AppVisualStyle visualStyle = AppVisualStyle.refined,
+    bool highContrast = false,
+  }) {
     switch (this) {
       case GoldenTheme.light:
-        return AppTheme.light(visualStyle: visualStyle);
+        return AppTheme.light(
+          visualStyle: visualStyle,
+          highContrast: highContrast,
+        );
       case GoldenTheme.dark:
-        return AppTheme.dark(visualStyle: visualStyle);
+        return AppTheme.dark(
+          visualStyle: visualStyle,
+          highContrast: highContrast,
+        );
       case GoldenTheme.colorblind:
-        return AppTheme.dark(visualStyle: visualStyle);
+        return AppTheme.dark(
+          visualStyle: visualStyle,
+          highContrast: highContrast,
+        );
     }
   }
 
@@ -62,12 +74,14 @@ extension GoldenThemeData on GoldenTheme {
   AppThemeData get appThemeData => resolveTheme();
 
   AppThemeData resolveTheme({
-    AppVisualStyle visualStyle = AppVisualStyle.classic,
+    AppVisualStyle visualStyle = AppVisualStyle.refined,
+    bool highContrast = false,
   }) => resolveAppTheme(
     ThemeInputs(
       brightness: brightness,
       marketMode: marketMode,
       visualStyle: visualStyle,
+      highContrast: highContrast,
     ),
   );
 
@@ -206,16 +220,21 @@ Future<void> pumpAndSnapshotMobile(
   List<Override> overrides = const [],
   Locale locale = const Locale('en'),
   String routePath = '/',
-  AppVisualStyle visualStyle = AppVisualStyle.classic,
+  AppVisualStyle visualStyle = AppVisualStyle.refined,
+  Size logicalSize = kGoldenLogicalSize,
+  double devicePixelRatio = kGoldenDpr,
+  TextScaler textScaler = TextScaler.noScaling,
+  bool highContrast = false,
 }) async {
   await loadGoldenFonts();
-  await tester.binding.setSurfaceSize(kGoldenLogicalSize);
+  await tester.binding.setSurfaceSize(logicalSize);
   tester.view.physicalSize = Size(
-    kGoldenLogicalSize.width * kGoldenDpr,
-    kGoldenLogicalSize.height * kGoldenDpr,
+    logicalSize.width * devicePixelRatio,
+    logicalSize.height * devicePixelRatio,
   );
-  tester.view.devicePixelRatio = kGoldenDpr;
-  addTearDown(() {
+  tester.view.devicePixelRatio = devicePixelRatio;
+  addTearDown(() async {
+    await tester.binding.setSurfaceSize(null);
     tester.view.resetPhysicalSize();
     tester.view.resetDevicePixelRatio();
   });
@@ -250,21 +269,35 @@ Future<void> pumpAndSnapshotMobile(
       child: ProviderScope(
         overrides: overrides,
         child: AppThemeScope(
-          data: variant.resolveTheme(visualStyle: visualStyle),
+          data: variant.resolveTheme(
+            visualStyle: visualStyle,
+            highContrast: highContrast,
+          ),
           child: MaterialApp.router(
             debugShowCheckedModeBanner: false,
-            theme: variant.buildTheme(visualStyle: visualStyle),
+            theme: variant.buildTheme(
+              visualStyle: visualStyle,
+              highContrast: highContrast,
+            ),
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             locale: locale,
             routerConfig: router,
-            builder: (context, routedChild) => FTheme(
-              data: buildAppForuiTheme(
-                brightness: variant.brightness,
-                visualStyle: visualStyle,
-                touch: true,
+            builder: (context, routedChild) => MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                disableAnimations: true,
+                highContrast: highContrast,
+                textScaler: textScaler,
               ),
-              child: routedChild!,
+              child: FTheme(
+                data: buildAppForuiTheme(
+                  brightness: variant.brightness,
+                  visualStyle: visualStyle,
+                  highContrast: highContrast,
+                  touch: true,
+                ),
+                child: routedChild!,
+              ),
             ),
           ),
         ),
@@ -367,7 +400,7 @@ Future<void> pumpAndSnapshotResponsive(
   TargetPlatform? targetPlatformOverride,
   bool? touchOverride,
   bool? compactOverride,
-  AppVisualStyle visualStyle = AppVisualStyle.classic,
+  AppVisualStyle visualStyle = AppVisualStyle.refined,
   String routePath = '/',
 }) async {
   final logicalSize = logicalSizeOverride ?? profile.logicalSize;

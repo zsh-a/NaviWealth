@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
@@ -19,6 +20,35 @@ Widget _wrap(Widget child, {double width = 390}) {
 }
 
 void main() {
+  testWidgets('inline filters support arrow selection and compact picking', (
+    tester,
+  ) async {
+    var selected = 0;
+    Widget choices(double width) => _wrap(
+      StatefulBuilder(
+        builder: (context, setState) => AppAdaptiveChoice<int>.inline(
+          title: 'Choose scope',
+          options: const [0, 1, 2, 3],
+          value: selected,
+          wideInlineBreakpoint: 600,
+          labelOf: (value) => 'Scope $value',
+          onChanged: (value) => setState(() => selected = value),
+        ),
+      ),
+      width: width,
+    );
+    await tester.pumpWidget(choices(700));
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+    await tester.pumpAndSettle();
+    expect(selected, 1);
+    await tester.pumpWidget(choices(390));
+    await tester.tap(find.text('Scope 1'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Scope 3').last);
+    await tester.pumpAndSettle();
+    expect(selected, 3);
+  });
   testWidgets('uses one compact trigger for four mobile choices', (
     tester,
   ) async {

@@ -51,7 +51,7 @@ class _RangeChips extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final selected = ref.watch(expenseReportRangePresetProvider);
-    return AppAdaptiveChoice<ExpenseReportRangePreset>(
+    return AppAdaptiveChoice<ExpenseReportRangePreset>.inline(
       title: l10n.expenseReportRangeCustom,
       options: ExpenseReportRangePreset.values,
       value: selected,

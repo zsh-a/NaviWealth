@@ -248,7 +248,12 @@ class _DecisionEditorState extends ConsumerState<_DecisionEditor>
               style: context.captionLabelStyle,
             ),
             const SizedBox(height: AppSpacing.s8),
-            AiMarkdown(text: decision.rationaleMd),
+            AiMarkdown(
+              text: decision.rationaleMd,
+              baseStyle: context.appTheme.type.body.copyWith(
+                color: context.appTheme.content.body,
+              ),
+            ),
           ],
           if (expected != null && expected.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.s16),

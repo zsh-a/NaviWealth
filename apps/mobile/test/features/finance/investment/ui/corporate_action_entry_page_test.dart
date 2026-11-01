@@ -1,7 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:forui/forui.dart';
+import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/investment/domain/corporate_action_preview.dart';
 import 'package:naviwealth/features/finance/investment/domain/cost_basis/fifo_strategy.dart';
 import 'package:naviwealth/features/finance/investment/domain/cost_basis_engine.dart';
@@ -62,8 +62,22 @@ Future<void> _pump(
 }
 
 Future<void> _selectType(WidgetTester tester, String typeName) async {
-  await tester.ensureVisible(find.byKey(Key('corp-action-type-$typeName')));
-  await tester.tap(find.byKey(Key('corp-action-type-$typeName')));
+  final finder = find.byKey(const Key('corp-action-type'));
+  await tester.ensureVisible(finder);
+  final choice = tester.widget<AppAdaptiveChoice<CorporateActionType>>(finder);
+  final type = CorporateActionType.values.firstWhere(
+    (type) => type.name == typeName,
+  );
+  final label = choice.labelOf(type);
+  if (find
+      .descendant(of: finder, matching: find.text(label))
+      .evaluate()
+      .isEmpty) {
+    await tester.tap(finder);
+    await tester.pumpAndSettle();
+  }
+  await tester.ensureVisible(find.text(label).last);
+  await tester.tap(find.text(label).last);
   await tester.pumpAndSettle();
 }
 
@@ -92,10 +106,14 @@ void main() {
       CorporateActionPreview? captured;
       await _pump(tester, onSubmit: (p) => captured = p);
 
-      // Default selection is cashDividend; verify chip selected.
+      // Cash dividend is the visible default in the shared picker.
       expect(
-        find.byKey(const Key('corp-action-type-cashDividend')),
-        findsOneWidget,
+        tester
+            .widget<AppAdaptiveChoice<CorporateActionType>>(
+              find.byKey(const Key('corp-action-type')),
+            )
+            .value,
+        CorporateActionType.cashDividend,
       );
 
       await _enter(tester, 'amount-per-share', '0.50');
@@ -220,7 +238,7 @@ void main() {
       expect(find.byKey(const Key('corp-action-preview-card')), findsNothing);
 
       // Submit button disabled while preview is null.
-      final submit = tester.widget<FButton>(
+      final submit = tester.widget<AppActionButton>(
         find.byKey(const Key('corp-action-submit')),
       );
       expect(submit.onPress, isNull);

@@ -416,15 +416,16 @@ class _ChatComposerState extends ConsumerState<ChatComposer> {
                       : () => unawaited(_retryVoice()),
                 ),
               DecoratedBox(
-                decoration: BoxDecoration(
-                  color: colors.muted.withValues(alpha: AppOpacity.prominent),
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  border: Border.all(
-                    color: editing
-                        ? colors.primary.withValues(alpha: AppOpacity.scrim)
-                        : colors.border.withValues(alpha: AppOpacity.scrim),
-                    width: AppStroke.hairline,
+                decoration: context.appTheme.visual.decoration(
+                  color: context.appTheme.surfaces.card,
+                  radius: BorderRadius.circular(
+                    context.appTheme.visual.controlRadius,
                   ),
+                  side: editing
+                      ? BorderSide(color: context.appTheme.accent.fg)
+                      : MediaQuery.highContrastOf(context)
+                      ? BorderSide(color: context.appTheme.surfaces.border)
+                      : BorderSide.none,
                 ),
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(

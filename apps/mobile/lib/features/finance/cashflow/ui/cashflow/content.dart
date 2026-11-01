@@ -157,7 +157,7 @@ class _PeriodSelector extends StatelessWidget {
         ),
       ],
     );
-    final periodControl = AppAdaptiveChoice<CashFlowPeriod>(
+    final periodControl = AppAdaptiveChoice<CashFlowPeriod>.inline(
       title: l10n.cashFlowTitle,
       options: CashFlowPeriod.values,
       value: period,

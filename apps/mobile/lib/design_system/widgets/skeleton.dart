@@ -5,6 +5,7 @@ import '../tokens/app_motion_policy.dart';
 import '../tokens/dimens_tokens.dart';
 import '../tokens/motion_tokens.dart';
 import 'app_grouped_action_list.dart';
+import 'soft_card.dart';
 
 /// Pulsing placeholder rectangle for skeleton screens.
 ///
@@ -185,7 +186,7 @@ class _ShimmerPainter extends CustomPainter {
   }
 }
 
-/// Card-shaped placeholder. Pairs visually with the production [Card] used
+/// Card-shaped placeholder. Pairs visually with the production [SoftCard] used
 /// across the app (same radius, surface tone, and padding) so swapping in
 /// real data does not jolt the layout.
 class SkeletonCard extends StatelessWidget {
@@ -206,9 +207,7 @@ class SkeletonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FCard(
-      child: Padding(padding: padding, child: child),
-    );
+    return SoftCard(padding: padding, child: child);
   }
 }
 

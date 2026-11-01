@@ -39,7 +39,7 @@ class _TradeJournalSectionState extends ConsumerState<_TradeJournalSection> {
           ),
         ),
         const SizedBox(height: AppSpacing.s12),
-        SegmentedRow<_JournalFilter>(
+        SegmentedRow<_JournalFilter>.inline(
           options: _JournalFilter.values,
           value: _filter,
           labelOf: (filter) => switch (filter) {

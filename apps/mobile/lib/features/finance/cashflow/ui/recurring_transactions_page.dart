@@ -76,7 +76,7 @@ class _RecurringTransactionsPageState
                     AppSpacing.s16,
                     AppSpacing.s4,
                   ),
-                  child: SegmentedRow<_RecurringFilter>(
+                  child: SegmentedRow<_RecurringFilter>.inline(
                     options: _RecurringFilter.values,
                     value: _filter,
                     minSegmentWidth: 80,

@@ -105,7 +105,7 @@ void main() {
     handle.dispose();
   });
 
-  testWidgets('SkeletonCard wraps child in an FCard with padding', (
+  testWidgets('SkeletonCard shares the production content surface', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -118,7 +118,7 @@ void main() {
     expect(
       find.descendant(
         of: find.byType(SkeletonCard),
-        matching: find.byType(FCard),
+        matching: find.byType(SoftCard),
       ),
       findsOneWidget,
     );

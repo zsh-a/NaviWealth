@@ -7,13 +7,13 @@ mixin _AiLlmCredentialsProfileCardsMixin on _AiLlmCredentialsPageStateBase {
     required bool isActive,
   }) {
     final l10n = AppLocalizations.of(context);
-    final colors = context.theme.colors;
     final meta = <String>[
       p.provider.label,
       _hostOf(p),
       if (p.model != null && p.model!.isNotEmpty) p.model!,
     ].join(' \u00b7 ');
-    final card = SoftCard.flat(
+    return AppChoiceTile(
+      selected: isActive,
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.s16,
         AppSpacing.s12,
@@ -40,7 +40,11 @@ mixin _AiLlmCredentialsProfileCardsMixin on _AiLlmCredentialsPageStateBase {
                     ),
                     const SizedBox(width: AppSpacing.s8),
                     if (isActive)
-                      _tag(context, l10n.aiLlmActiveTag, colors.primary)
+                      AppBadge(
+                        label: l10n.aiLlmActiveTag,
+                        tone: AppBadgeTone.accent,
+                        size: AppBadgeSize.compact,
+                      )
                     else
                       Text(l10n.aiLlmTapToSwitch, style: context.captionStyle),
                   ],
@@ -59,22 +63,17 @@ mixin _AiLlmCredentialsProfileCardsMixin on _AiLlmCredentialsPageStateBase {
           _iconAction(
             context,
             FLucideIcons.pencil,
+            l10n.aiLlmEditProvider,
             () => _openEditor(profile: p),
           ),
-          _iconAction(context, FLucideIcons.trash2, () => _delete(p)),
+          _iconAction(
+            context,
+            FLucideIcons.trash2,
+            l10n.commonDelete,
+            () => _delete(p),
+          ),
         ],
       ),
-    );
-    if (!isActive) return card;
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(
-          color: colors.primary.withValues(alpha: AppOpacity.disabled),
-          width: 1.5,
-        ),
-      ),
-      child: card,
     );
   }
 
@@ -130,32 +129,15 @@ mixin _AiLlmCredentialsProfileCardsMixin on _AiLlmCredentialsPageStateBase {
     ),
   );
 
-  Widget _tag(BuildContext context, String text, Color color) => Container(
-    padding: const EdgeInsets.symmetric(
-      horizontal: AppSpacing.s8,
-      vertical: AppSpacing.s2,
-    ),
-    decoration: BoxDecoration(
-      color: color.withValues(alpha: AppOpacity.medium),
-      borderRadius: BorderRadius.circular(AppRadius.sm),
-    ),
-    child: Text(text, style: context.captionLabelStyle.copyWith(color: color)),
-  );
-
   Widget _iconAction(
     BuildContext context,
     IconData icon,
+    String tooltip,
     VoidCallback onPress,
-  ) => AppTappable(
+  ) => AppIconButton(
+    icon: icon,
+    tooltip: tooltip,
     onPress: _saving ? null : onPress,
-    child: Padding(
-      padding: const EdgeInsets.all(AppSpacing.s8),
-      child: Icon(
-        icon,
-        size: AppIconSizes.h18,
-        color: context.theme.colors.mutedForeground,
-      ),
-    ),
   );
 
   String _hostOf(LlmProfile profile) {

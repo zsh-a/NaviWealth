@@ -18,7 +18,8 @@ class _MdCode extends _MdBlock {
     final mono = base.copyWith(
       fontFamily: 'monospace',
       fontFamilyFallback: const ['Menlo', 'Consolas', 'monospace'],
-      fontSize: (base.fontSize ?? TypographyTokens.bodySmall.fontSize!) - 1,
+      fontSize:
+          (base.fontSize ?? context.appTheme.type.bodySmall.fontSize!) - 1,
       height: 1.5,
       color: AiTone.onSurface(context),
     );

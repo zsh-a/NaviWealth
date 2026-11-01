@@ -52,6 +52,7 @@ export 'widgets/app_async_helpers.dart';
 export 'widgets/app_badge.dart';
 export 'widgets/app_busy_button.dart';
 export 'widgets/app_canvas_scaffold.dart';
+export 'widgets/app_choice_tile.dart';
 export 'widgets/app_collapsing_stage.dart';
 export 'widgets/app_container_transform.dart';
 export 'widgets/app_dialog_route.dart';

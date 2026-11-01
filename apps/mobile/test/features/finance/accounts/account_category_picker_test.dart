@@ -20,6 +20,31 @@ Widget _wrap(Widget child) {
 }
 
 void main() {
+  testWidgets('large text keeps all category labels and hints readable', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(320, 1200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      _wrap(
+        MediaQuery(
+          data: const MediaQueryData(textScaler: TextScaler.linear(2)),
+          child: AccountCategoryPicker(
+            value: AccountCategory.bank,
+            onChanged: (_) {},
+          ),
+        ),
+      ),
+    );
+    expect(tester.takeException(), isNull);
+    for (final text in tester.widgetList<Text>(find.byType(Text))) {
+      expect(text.overflow, isNot(TextOverflow.ellipsis));
+    }
+    expect(
+      tester.getTopLeft(find.text('银行')).dy,
+      greaterThan(tester.getTopLeft(find.text('现金')).dy),
+    );
+  });
   testWidgets('account category picker does not overflow at 4-column width', (
     tester,
   ) async {

@@ -11,18 +11,10 @@ class _CodeBlock extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.s12),
-      decoration: BoxDecoration(
-        color: colors.muted,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: colors.border, width: AppStroke.hairline),
-      ),
       child: SelectableText(
         text,
-        style: TextStyle(
-          fontFamily: 'monospace',
+        style: context.appTheme.type.numericMono.copyWith(
           fontFamilyFallback: const ['Menlo', 'Consolas', 'Courier'],
-          fontSize: TypographyTokens.labelMedium.fontSize,
-          height: 1.45,
           color: colors.foreground,
         ),
       ),

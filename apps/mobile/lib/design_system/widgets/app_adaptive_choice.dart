@@ -32,7 +32,29 @@ class AppAdaptiveChoice<T> extends StatelessWidget {
     this.inlineMaxOptions = 3,
     this.wideInlineBreakpoint = Breakpoints.readingColumn,
     this.minSegmentWidth = 96,
-  }) : assert(options.length > 0),
+  }) : _inline = false,
+       assert(options.length > 0),
+       assert(inlineMaxOptions > 0);
+
+  /// Page filters and display dimensions use quiet labels when inline;
+  /// larger option sets retain the same compact picker interaction.
+  const AppAdaptiveChoice.inline({
+    super.key,
+    required this.title,
+    required this.options,
+    required this.value,
+    required this.labelOf,
+    required this.onChanged,
+    this.subtitle,
+    this.descriptionOf,
+    this.iconOf,
+    this.semanticLabelOf,
+    this.triggerSubtitle,
+    this.inlineMaxOptions = 3,
+    this.wideInlineBreakpoint = Breakpoints.readingColumn,
+    this.minSegmentWidth = AppControlHeights.touchTarget,
+  }) : _inline = true,
+       assert(options.length > 0),
        assert(inlineMaxOptions > 0);
 
   final String title;
@@ -54,6 +76,7 @@ class AppAdaptiveChoice<T> extends StatelessWidget {
   /// Four-or-more option sets return inline once this width is available.
   final double wideInlineBreakpoint;
   final double minSegmentWidth;
+  final bool _inline;
 
   @override
   Widget build(BuildContext context) {
@@ -63,6 +86,16 @@ class AppAdaptiveChoice<T> extends StatelessWidget {
             options.length <= inlineMaxOptions ||
             constraints.maxWidth >= wideInlineBreakpoint;
         if (inline) {
+          if (_inline) {
+            return SegmentedRow<T>.inline(
+              options: options,
+              value: value,
+              labelOf: labelOf,
+              semanticLabelOf: semanticLabelOf,
+              minSegmentWidth: minSegmentWidth,
+              onChanged: onChanged,
+            );
+          }
           return SegmentedRow<T>(
             options: options,
             value: value,

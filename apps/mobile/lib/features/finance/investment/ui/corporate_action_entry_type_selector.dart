@@ -20,20 +20,13 @@ class _TypeSelector extends StatelessWidget {
       (CorporateActionType.rightsIssue, l10n.corpActionTypeRightsIssue),
       (CorporateActionType.drip, l10n.corpActionTypeDrip),
     ];
-    return Wrap(
-      spacing: AppSpacing.s8,
-      runSpacing: AppSpacing.s8,
-      children: [
-        for (final (type, label) in entries)
-          FButton(
-            key: Key('corp-action-type-${type.name}'),
-            variant: (selected == type)
-                ? FButtonVariant.primary
-                : FButtonVariant.outline,
-            onPress: () => onChanged(type),
-            child: Text(label),
-          ),
-      ],
+    return AppAdaptiveChoice<CorporateActionType>(
+      key: const Key('corp-action-type'),
+      title: l10n.corpActionEventTypeTitle,
+      options: [for (final (type, _) in entries) type],
+      value: selected,
+      labelOf: (type) => entries.firstWhere((entry) => entry.$1 == type).$2,
+      onChanged: onChanged,
     );
   }
 }

@@ -142,7 +142,7 @@ class _OpportunitiesBodyState extends State<_OpportunitiesBody> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            AppAdaptiveChoice<_OpportunityFilter>(
+            AppAdaptiveChoice<_OpportunityFilter>.inline(
               title: l10n.incomePlannerOpportunitiesSectionTitle,
               options: _OpportunityFilter.values,
               value: _filter,

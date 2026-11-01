@@ -53,17 +53,13 @@ class _ConfiguredBodyState extends ConsumerState<_ConfiguredBody> {
           }),
         ),
         const SizedBox(height: AppSpacing.s16),
-        SegmentedRow<_PlannerTab>(
+        SegmentedRow<_PlannerTab>.inline(
           options: _PlannerTab.values,
           value: _tab,
           labelOf: (tab) => switch (tab) {
             _PlannerTab.opportunities =>
               l10n.incomePlannerWorkspaceOpportunities,
             _PlannerTab.journal => l10n.incomePlannerWorkspaceJournal,
-          },
-          iconOf: (tab) => switch (tab) {
-            _PlannerTab.opportunities => FLucideIcons.scanSearch,
-            _PlannerTab.journal => FLucideIcons.notebookPen,
           },
           onChanged: (tab) => setState(() => _tab = tab),
         ),

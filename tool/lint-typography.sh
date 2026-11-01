@@ -14,15 +14,15 @@ LIB="$ROOT/apps/mobile/lib"
 # and numeric styles bypass refined fonts and line heights even when colors
 # and surfaces have switched correctly. Token definitions and measurements
 # remain design-system-owned.
-raw_styles="$(rg -n 'TypographyTokens\.(display[A-Z][A-Za-z]*|numeric[A-Z][A-Za-z]*|headline[A-Z][A-Za-z]*)\b' \
-  "$LIB/features" "$LIB/app" --glob '*.dart' || true)"
+raw_styles="$(rg -n 'TypographyTokens\.(display[A-Z][A-Za-z]*|numeric[A-Z][A-Za-z]*|headline[A-Z][A-Za-z]*|body[A-Z][A-Za-z]*|title[A-Z][A-Za-z]*|label[A-Z][A-Za-z]*|chartCaption)\b' \
+  "$LIB/features" "$LIB/app" "$LIB/core" --glob '*.dart' || true)"
 if [[ -n "$raw_styles" ]]; then
   echo "✖ UI typography bypasses context.appTheme.type:" >&2
   echo "$raw_styles" >&2
   exit 1
 fi
 
-BASELINE=31
+BASELINE=24
 count="$({ grep -RhoE --include='*.dart' \
   'copyWith\([^)]*(fontSize:|fontWeight:|height:)' \
   "$LIB/app" "$LIB/core" "$LIB/features" || true; } | wc -l | tr -d ' ')"

@@ -201,37 +201,6 @@ class _ConcentrationAlertRow extends StatelessWidget {
   }
 }
 
-class PortfolioHubViewSegment extends StatelessWidget {
-  const PortfolioHubViewSegment({
-    super.key,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final PortfolioHubView value;
-  final ValueChanged<PortfolioHubView> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return SegmentedRow<PortfolioHubView>(
-      options: PortfolioHubView.values,
-      value: value,
-      labelOf: (view) => switch (view) {
-        PortfolioHubView.account => l10n.portfolioHubViewAccount,
-        PortfolioHubView.currency => l10n.portfolioHubViewCurrency,
-        PortfolioHubView.assetClass => l10n.portfolioHubViewAssetClass,
-      },
-      iconOf: (view) => switch (view) {
-        PortfolioHubView.account => FLucideIcons.wallet,
-        PortfolioHubView.currency => FLucideIcons.banknote,
-        PortfolioHubView.assetClass => FLucideIcons.layoutGrid,
-      },
-      onChanged: onChanged,
-    );
-  }
-}
-
 bool _usePortfolioTable(BuildContext context, double width) =>
     width >= 1000 * MediaQuery.textScalerOf(context).scale(1);
 

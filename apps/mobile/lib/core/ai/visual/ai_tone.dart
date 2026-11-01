@@ -15,6 +15,9 @@ library;
 import 'package:flutter/widgets.dart';
 import 'package:forui/forui.dart';
 
+import '../../../design_system/theme/app_theme_scope.dart';
+import '../../../design_system/tokens/dimens_tokens.dart';
+
 class AiTone {
   AiTone._();
 
@@ -40,5 +43,8 @@ class AiTone {
 
   /// Surface used for AI pill / capsule backgrounds. Sits 4% above
   /// the page surface, no shadow.
-  static Color surfaceTint(BuildContext c) => c.theme.colors.secondary;
+  static Color surfaceTint(BuildContext c) => Color.alphaBlend(
+    c.appTheme.content.strong.withValues(alpha: AppOpacity.whisper),
+    c.appTheme.surfaces.card,
+  );
 }

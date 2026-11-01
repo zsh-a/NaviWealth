@@ -53,12 +53,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
     final colors = context.theme.colors;
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.s8),
-      child: Container(
-        decoration: BoxDecoration(
-          color: colors.muted,
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          border: Border.all(color: colors.border, width: AppStroke.hairline),
-        ),
+      child: SoftCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -249,20 +244,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
         ),
         const SizedBox(height: AppSpacing.s4),
         if (body != null)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(AppSpacing.s8),
-            decoration: BoxDecoration(
-              color: context.theme.colors.background,
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              border: Border.all(
-                color: context.theme.colors.border.withValues(
-                  alpha: AppOpacity.disabled,
-                ),
-              ),
-            ),
-            child: body,
-          )
+          Padding(padding: const EdgeInsets.all(AppSpacing.s8), child: body)
         else
           _rawJsonView(context, invocation.output),
       ],
@@ -280,8 +262,7 @@ class _ToolInvocationCardState extends State<ToolInvocationCard> {
       children: [
         Text(
           label,
-          style: TypographyTokens.labelSmallMedium.copyWith(
-            height: 1.2,
+          style: context.appTheme.type.caption.copyWith(
             color: colors.mutedForeground,
           ),
         ),
