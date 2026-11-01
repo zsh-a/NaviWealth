@@ -1,4 +1,7 @@
+import 'dart:ui' show SemanticsAction, Tristate;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:naviwealth/design_system/design_system.dart';
@@ -14,6 +17,44 @@ Widget _wrap(Widget child) {
 }
 
 void main() {
+  testWidgets(
+    'keyboard and semantic actions keep selection and clear distinct',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      var presses = 0;
+      var clears = 0;
+      await tester.pumpWidget(
+        _wrap(
+          AppFilterChip(
+            label: 'Meals',
+            active: true,
+            onPress: () => presses++,
+            onClear: () => clears++,
+            clearSemanticLabel: 'Clear meals',
+          ),
+        ),
+      );
+      final choice = tester.getSemantics(find.bySemanticsLabel('Meals'));
+      expect(
+        choice.getSemanticsData().flagsCollection.isSelected,
+        Tristate.isTrue,
+      );
+      choice.owner!.performAction(choice.id, SemanticsAction.tap);
+      await tester.pump();
+      expect(presses, 1);
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(presses, 2);
+      final clear = tester.getSemantics(find.bySemanticsLabel('Clear meals'));
+      clear.owner!.performAction(clear.id, SemanticsAction.tap);
+      await tester.pump();
+      expect(clears, 1);
+      expect(presses, 2);
+      semantics.dispose();
+    },
+  );
+
   testWidgets('invokes press and clear actions', (tester) async {
     var pressed = false;
     var cleared = false;

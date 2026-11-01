@@ -165,9 +165,7 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
   late final FocusNode _searchFocus;
   Timer? _searchDebounce;
   String? _pendingSearchText;
-  bool _searchHydrated = false;
   bool _suppressSearchChange = false;
-  bool _searchOpen = false;
 
   @override
   void initState() {
@@ -212,24 +210,6 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
     controller.mutateQuery((q) => q.copyWith(searchText: ''));
   }
 
-  void _openSearch() {
-    setState(() => _searchOpen = true);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _searchFocus.requestFocus();
-    });
-  }
-
-  void _closeSearch(ActivityFeedQueryController controller) {
-    final pending = _pendingSearchText;
-    if (pending != null) {
-      _searchDebounce?.cancel();
-      _pendingSearchText = null;
-      controller.mutateQuery((q) => q.copyWith(searchText: pending));
-    }
-    _searchFocus.unfocus();
-    setState(() => _searchOpen = false);
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -237,43 +217,24 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
     final controller = ref.read(activityFeedQueryProvider.notifier);
     final feed = ref.watch(activityFeedProvider);
     final page = feed.value;
-    final filterLabel = query.hasFilters
-        ? page != null && !feed.isLoading && !feed.hasError
-              ? '${l10n.activityFeedFilterTitle} · ${l10n.activityFeedSummaryCountValue(page.totalCount)}'
-              : l10n.activityFeedFilterTitle
-        : '${l10n.activityFeedFilterAllDates} · ${l10n.activityFeedFilterAllKinds}';
+    if (_pendingSearchText == null) _syncSearchText(query.searchText);
 
-    // Hydrate the initial deep-linked query once. Afterwards panel visibility
-    // remains a user choice, even while a search filter stays active.
-    if (!_searchHydrated) {
-      _syncSearchText(query.searchText);
-      _searchOpen = query.searchText.isNotEmpty;
-      _searchHydrated = true;
-    } else if (_pendingSearchText == null) {
-      _syncSearchText(query.searchText);
-    }
-
-    Widget searchField() => AppSearchField(
-      controller: _searchController,
-      onChanged: (text) => text.isEmpty
-          ? _clearSearch(controller)
-          : _scheduleSearch(controller, text),
-      focusNode: _searchFocus,
-      hint: l10n.activityFeedSearchHint,
-      clearLabel: l10n.aiChatSessionsSearchClear,
-    );
-
-    Widget filterButton() => ConstrainedBox(
-      constraints: const BoxConstraints(
-        minHeight: AppControlHeights.touchTarget,
-      ),
-      child: AppQuietButton(
-        label: filterLabel,
-        expanded: true,
-        prefix: const Icon(FLucideIcons.listFilter),
-        onPress: () => ActivityFeedFilterSheet.show(context),
+    void clearFilters() => controller.mutateQuery(
+      (q) => q.copyWith(
+        dateRange: null,
+        kinds: const <ActivityKind>{},
+        accountIds: const <String>{},
       ),
     );
+
+    Widget facet(ActivityFilterSection section, String label, bool active) =>
+        AppFilterChip.trigger(
+          key: ValueKey('activity-filter-${section.name}'),
+          label: label,
+          active: active,
+          onPress: () =>
+              ActivityFeedFilterSheet.show(context, section: section),
+        );
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -286,64 +247,70 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          LayoutBuilder(
-            builder: (context, constraints) {
-              if (constraints.maxWidth >= Breakpoints.mobile) {
-                return Row(
-                  key: const ValueKey<String>('activity-wide-toolbar'),
-                  children: [
-                    Expanded(flex: 3, child: searchField()),
-                    const SizedBox(width: AppSpacing.s8),
-                    Expanded(flex: 2, child: filterButton()),
-                  ],
-                );
-              }
-              if (_searchOpen) {
-                return Column(
-                  key: const ValueKey<String>('activity-search'),
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(child: searchField()),
-                        AppIconButton(
-                          icon: FLucideIcons.chevronUp,
-                          tooltip: l10n.activitySearchCollapse,
-                          onPress: () => _closeSearch(controller),
-                        ),
-                      ],
-                    ),
-                    filterButton(),
-                  ],
-                );
-              }
-              return Row(
-                key: const ValueKey<String>('activity-toolbar'),
-                children: [
-                  Expanded(child: filterButton()),
-                  const SizedBox(width: AppSpacing.s8),
-                  AppIconButton(
-                    icon: FLucideIcons.search,
-                    tooltip: l10n.activityFeedSearchAction,
-                    surface: _searchController.text.isEmpty
-                        ? AppIconButtonSurface.plain
-                        : AppIconButtonSurface.softSelected,
-                    onPress: _openSearch,
-                  ),
-                ],
-              );
-            },
+          Row(
+            children: [
+              Expanded(
+                child: AppSearchField(
+                  controller: _searchController,
+                  onChanged: (text) => text.isEmpty
+                      ? _clearSearch(controller)
+                      : _scheduleSearch(controller, text),
+                  focusNode: _searchFocus,
+                  hint: l10n.activityFeedSearchHint,
+                  clearLabel: l10n.aiChatSessionsSearchClear,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.s8),
+              AppIconButton(
+                key: const ValueKey('activity-filter-all'),
+                icon: FLucideIcons.listFilter,
+                tooltip: l10n.activityFeedFilterTitle,
+                surface: query.hasSheetFilters
+                    ? AppIconButtonSurface.softSelected
+                    : AppIconButtonSurface.plain,
+                onPress: () => ActivityFeedFilterSheet.show(context),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.s8),
+          Wrap(
+            spacing: AppSpacing.s6,
+            runSpacing: AppSpacing.s6,
+            children: [
+              facet(
+                ActivityFilterSection.date,
+                l10n.activityFeedFilterDateRange,
+                query.dateRange != null,
+              ),
+              facet(
+                ActivityFilterSection.kind,
+                query.kinds.length <= 1
+                    ? l10n.activityFeedFilterKind
+                    : l10n.activityFeedFilterKindCount(query.kinds.length),
+                query.kinds.isNotEmpty,
+              ),
+              facet(
+                ActivityFilterSection.account,
+                query.accountIds.length <= 1
+                    ? l10n.activityFeedFilterAccount
+                    : l10n.activityFeedFilterAccountCount(
+                        query.accountIds.length,
+                      ),
+                query.accountIds.isNotEmpty,
+              ),
+            ],
           ),
           if (query.hasSheetFilters) ...[
             const SizedBox(height: AppSpacing.s4),
             // Keep the toolbar bounded even with many selected accounts.
-            SizedBox(
-              height: AppControlHeights.touchTarget,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
                 children: [
                   if (query.dateRange != null)
                     _filterChip(
                       l10n,
+                      ActivityFilterSection.date,
                       activityFeedDateRangeLabel(l10n, query.dateRange),
                       () => controller.mutateQuery(
                         (q) => q.copyWith(dateRange: null),
@@ -352,6 +319,7 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
                   for (final kind in query.kinds)
                     _filterChip(
                       l10n,
+                      ActivityFilterSection.kind,
                       _labelForKind(l10n, kind),
                       () => controller.mutateQuery(
                         (q) => q.copyWith(kinds: {...q.kinds}..remove(kind)),
@@ -360,6 +328,7 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
                   for (final id in query.accountIds)
                     _filterChip(
                       l10n,
+                      ActivityFilterSection.account,
                       page?.accountsById[id]?.name ??
                           l10n.activityFeedFilterAccount,
                       () => controller.mutateQuery(
@@ -372,6 +341,25 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
               ),
             ),
           ],
+          if (query.hasSheetFilters)
+            Wrap(
+              spacing: AppSpacing.s8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                if (page != null && !feed.isLoading && !feed.hasError)
+                  Text(
+                    l10n.commonSearchResultsCount(page.totalCount),
+                    style: context.captionStyle,
+                  ),
+                AppQuietButton(
+                  label: l10n.activityFeedFilterClear,
+                  onPress: AppInteraction.wrap(
+                    clearFilters,
+                    intent: AppInteractionIntent.select,
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );
@@ -379,6 +367,7 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
 
   Widget _filterChip(
     AppLocalizations l10n,
+    ActivityFilterSection section,
     String label,
     VoidCallback onClear,
   ) => Padding(
@@ -388,7 +377,7 @@ class _ActivityFilterBarState extends ConsumerState<_ActivityFilterBar> {
       child: AppFilterChip(
         label: label,
         active: true,
-        onPress: () => ActivityFeedFilterSheet.show(context),
+        onPress: () => ActivityFeedFilterSheet.show(context, section: section),
         onClear: onClear,
         clearSemanticLabel: '${l10n.activityFeedFilterClear}: $label',
       ),

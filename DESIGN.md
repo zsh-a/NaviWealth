@@ -289,6 +289,14 @@ Touch swipes select one adjacent category on release without wrapping, keeping
 route filters and selection markers synchronized. Child horizontal controls,
 vertical scrolling, mouse text selection and system back edges retain priority.
 
+Multi-facet lists keep search visible and expose common filter dimensions as
+separate disclosure controls. Records offers date, kind and account pickers,
+plus the complete filter sheet. Drafts apply together; a focused picker clears
+only its own dimension. `AppFilterChip` uses opaque tonal fills and shared
+corners, with checks for selected options and chevrons for picker triggers.
+Applied conditions have separate clear actions; result counts and reset stay
+quiet. High contrast adds explicit boundaries.
+
 The dock's normal height is s64. It grows by the scaled 11px navigation label
 height, including a second line above 150% text scale, minus the normal
 single-line height; line height is 1.15 and the result rounds upward. The shell

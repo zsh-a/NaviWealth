@@ -105,7 +105,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('mobile search retains filters and collapsing preserves query', (
+  testWidgets('mobile search is direct and clearing it preserves filters', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
@@ -114,21 +114,25 @@ void main() {
     addTearDown(container.dispose);
     await tester.pumpWidget(_wrap(container: container));
     await tester.pumpAndSettle();
-    await tester.tap(find.byIcon(FLucideIcons.search));
+    container
+        .read(activityFeedQueryProvider.notifier)
+        .setQuery(const ActivityFeedQuery(kinds: {ActivityKind.expense}));
     await tester.pumpAndSettle();
+    expect(find.byType(FTextField), findsOneWidget);
     await tester.enterText(find.byType(FTextField), 'coffee');
-    await tester.pump();
-    expect(find.byIcon(FLucideIcons.listFilter), findsOneWidget);
-    await tester.tap(find.byIcon(FLucideIcons.chevronUp));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 250));
     expect(container.read(activityFeedQueryProvider).searchText, 'coffee');
-    expect(find.byType(FTextField), findsNothing);
-    await tester.tap(find.byIcon(FLucideIcons.search));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AppSearchField),
+        matching: find.byIcon(FLucideIcons.x),
+      ),
+    );
     await tester.pumpAndSettle();
-    expect(find.text('coffee'), findsOneWidget);
-    await tester.tap(find.byIcon(FLucideIcons.x));
-    await tester.pumpAndSettle();
-    expect(container.read(activityFeedQueryProvider).searchText, isEmpty);
+    final query = container.read(activityFeedQueryProvider);
+    expect(query.searchText, isEmpty);
+    expect(query.kinds, {ActivityKind.expense});
+    expect(find.byType(FTextField), findsOneWidget);
   });
 
   setUp(() async {
@@ -148,11 +152,13 @@ void main() {
     await tester.pumpWidget(_wrap(container: container));
     await tester.pumpAndSettle();
 
-    expect(find.text('All dates · All kinds'), findsOneWidget);
+    expect(find.text('Date range'), findsOneWidget);
+    expect(find.text('Kind'), findsOneWidget);
+    expect(find.text('Account'), findsOneWidget);
     expect(find.text('Expense'), findsNothing);
     expect(find.byIcon(FLucideIcons.plus), findsWidgets);
 
-    await tester.tap(find.text('All dates · All kinds'));
+    await tester.tap(find.byKey(const ValueKey('activity-filter-all')));
     await tester.pumpAndSettle();
     expect(find.text('All'), findsOneWidget);
     expect(find.text('Expense'), findsOneWidget);
@@ -189,7 +195,7 @@ void main() {
 
     expect(container.read(activityFeedQueryProvider).kinds, isEmpty);
 
-    await tester.tap(find.text('All dates · All kinds'));
+    await tester.tap(find.byKey(const ValueKey('activity-filter-all')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Expense'));
     await tester.pumpAndSettle();
@@ -237,6 +243,54 @@ void main() {
     expect(container.read(activityFeedQueryProvider).kinds, isEmpty);
   });
 
+  testWidgets('focused kind picker clears only that facet after applying', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final container = _container();
+    addTearDown(container.dispose);
+    await tester.pumpWidget(_wrap(container: container));
+    await tester.pumpAndSettle();
+    final range = DateTimeRange(start: DateTime(2026), end: DateTime(2027));
+    container
+        .read(activityFeedQueryProvider.notifier)
+        .setQuery(
+          ActivityFeedQuery(
+            dateRange: range,
+            kinds: const {ActivityKind.expense},
+            accountIds: const {'wallet'},
+            searchText: 'coffee',
+          ),
+        );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('activity-filter-kind')));
+    await tester.pumpAndSettle();
+    expect(find.text('This month'), findsNothing);
+    expect(
+      find.text('No accounts yet — add one from the Accounts tab.'),
+      findsNothing,
+    );
+    await tester.tap(find.text('Clear').last);
+    await tester.pumpAndSettle();
+    expect(container.read(activityFeedQueryProvider).kinds, {
+      ActivityKind.expense,
+    });
+    // A focused draft must not overwrite another dimension changed meanwhile.
+    container
+        .read(activityFeedQueryProvider.notifier)
+        .mutateQuery(
+          (query) => query.copyWith(accountIds: const {'updated-wallet'}),
+        );
+    await tester.tap(find.text('Apply filters'));
+    await tester.pumpAndSettle();
+    final query = container.read(activityFeedQueryProvider);
+    expect(query.kinds, isEmpty);
+    expect(query.dateRange, range);
+    expect(query.accountIds, {'updated-wallet'});
+    expect(query.searchText, 'coffee');
+  });
+
   testWidgets('wide search debounces query updates', (tester) async {
     await tester.binding.setSurfaceSize(const Size(760, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -270,6 +324,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(FTextField), findsOneWidget);
-    expect(find.text('All dates · All kinds'), findsOneWidget);
+    expect(find.text('Date range'), findsOneWidget);
+    expect(find.text('Kind'), findsOneWidget);
+    expect(find.text('Account'), findsOneWidget);
   });
 }

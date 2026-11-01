@@ -11,16 +11,22 @@ import '../../shared/l10n/entry_kind_labels.dart';
 import '../data/activity_feed_provider.dart';
 import '../data/activity_feed_query.dart';
 
+enum ActivityFilterSection { date, kind, account }
+
 /// Activity timeline filter sheet with draft-based edits.
 ///
 /// The feed only changes when the user applies the draft, avoiding repeated
 /// refreshes behind the sheet while chips are being selected.
 class ActivityFeedFilterSheet extends ConsumerWidget {
-  const ActivityFeedFilterSheet({super.key, required this.draft});
+  const ActivityFeedFilterSheet({super.key, required this.draft, this.section});
 
   final ValueNotifier<ActivityFeedQuery> draft;
+  final ActivityFilterSection? section;
 
-  static Future<void> show(BuildContext context) async {
+  static Future<void> show(
+    BuildContext context, {
+    ActivityFilterSection? section,
+  }) async {
     final l10n = AppLocalizations.of(context);
     final container = ProviderScope.containerOf(context);
     final draft = ValueNotifier<ActivityFeedQuery>(
@@ -29,17 +35,30 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
     try {
       await showAppSheet<void>(
         context: context,
-        title: l10n.activityFeedFilterTitle,
+        title: switch (section) {
+          ActivityFilterSection.date => l10n.activityFeedFilterDateRange,
+          ActivityFilterSection.kind => l10n.activityFeedFilterKind,
+          ActivityFilterSection.account => l10n.activityFeedFilterAccount,
+          null => l10n.activityFeedFilterTitle,
+        },
         maxHeightFactor: 0.9,
-        builder: (_) => ActivityFeedFilterSheet(draft: draft),
+        builder: (_) => ActivityFeedFilterSheet(draft: draft, section: section),
         actions: [
           _HeaderTextAction(
             label: l10n.activityFeedFilterClear,
             onPress: () {
               draft.value = draft.value.copyWith(
-                kinds: const <ActivityKind>{},
-                dateRange: null,
-                accountIds: const <String>{},
+                kinds: section == null || section == ActivityFilterSection.kind
+                    ? const <ActivityKind>{}
+                    : draft.value.kinds,
+                dateRange:
+                    section == null || section == ActivityFilterSection.date
+                    ? null
+                    : draft.value.dateRange,
+                accountIds:
+                    section == null || section == ActivityFilterSection.account
+                    ? const <String>{}
+                    : draft.value.accountIds,
               );
             },
           ),
@@ -51,9 +70,19 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
                 .read(activityFeedQueryProvider.notifier)
                 .mutateQuery(
                   (current) => current.copyWith(
-                    dateRange: next.dateRange,
-                    kinds: Set<ActivityKind>.unmodifiable(next.kinds),
-                    accountIds: Set<String>.unmodifiable(next.accountIds),
+                    dateRange:
+                        section == null || section == ActivityFilterSection.date
+                        ? next.dateRange
+                        : current.dateRange,
+                    kinds:
+                        section == null || section == ActivityFilterSection.kind
+                        ? Set<ActivityKind>.unmodifiable(next.kinds)
+                        : current.kinds,
+                    accountIds:
+                        section == null ||
+                            section == ActivityFilterSection.account
+                        ? Set<String>.unmodifiable(next.accountIds)
+                        : current.accountIds,
                   ),
                 );
             Navigator.of(sheetContext).pop();
@@ -76,74 +105,83 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AppSheetSectionLabel(l10n.activityFeedFilterDateRange),
-          _DateRangeRow(
-            active: _activeRangeOf(query.dateRange),
-            current: query.dateRange,
-            onChanged: (range) =>
-                draft.value = query.copyWith(dateRange: range),
-          ),
-          if (query.dateRange != null)
-            Padding(
-              padding: const EdgeInsets.only(
-                top: AppSpacing.s6,
-                left: AppSpacing.s4,
-              ),
-              child: Text(
-                _formatRange(l10n, query.dateRange!),
-                style: context.captionStyle,
-              ),
+          if (section == null || section == ActivityFilterSection.date) ...[
+            if (section == null)
+              AppSheetSectionLabel(l10n.activityFeedFilterDateRange),
+            _DateRangeRow(
+              active: _activeRangeOf(query.dateRange),
+              current: query.dateRange,
+              onChanged: (range) =>
+                  draft.value = query.copyWith(dateRange: range),
             ),
-          const SizedBox(height: AppSpacing.s20),
-          AppSheetSectionLabel(l10n.activityFeedFilterKind),
-          _KindFilterRow(
-            selected: query.kinds,
-            onChanged: (kinds) => draft.value = query.copyWith(kinds: kinds),
-          ),
-          const SizedBox(height: AppSpacing.s20),
-          AppSheetSectionLabel(l10n.activityFeedFilterAccount),
-          if (accountsAsync.hasError)
-            AppStatusBanner(
-              kind: AppStatusKind.error,
-              compact: true,
-              message: l10n.activityAccountsUnavailable,
-              action: FButton(
-                variant: FButtonVariant.ghost,
-                onPress: () => ref.invalidate(accountsStreamProvider),
-                child: Text(l10n.commonRetry),
+            if (query.dateRange != null)
+              Padding(
+                padding: const EdgeInsets.only(
+                  top: AppSpacing.s6,
+                  left: AppSpacing.s4,
+                ),
+                child: Text(
+                  _formatRange(l10n, query.dateRange!),
+                  style: context.captionStyle,
+                ),
               ),
-            )
-          else if (!accountsAsync.hasValue)
-            Text(l10n.commonLoading, style: context.captionStyle)
-          else if (accounts.isEmpty)
-            Padding(
-              padding: const EdgeInsets.only(
-                top: AppSpacing.s4,
-                bottom: AppSpacing.s8,
-              ),
-              child: Text(
-                l10n.activityFeedFilterAccountEmpty,
-                style: context.captionStyle,
-              ),
-            )
-          else
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (final account in accounts)
-                  _AccountFilterRow(
-                    account: account,
-                    selected: query.accountIds.contains(account.id),
-                    onToggle: () {
-                      final ids = {...query.accountIds};
-                      ids.contains(account.id)
-                          ? ids.remove(account.id)
-                          : ids.add(account.id);
-                      draft.value = query.copyWith(accountIds: ids);
-                    },
-                  ),
-              ],
+          ],
+          if (section == null) const SizedBox(height: AppSpacing.s20),
+          if (section == null || section == ActivityFilterSection.kind) ...[
+            if (section == null)
+              AppSheetSectionLabel(l10n.activityFeedFilterKind),
+            _KindFilterRow(
+              selected: query.kinds,
+              onChanged: (kinds) => draft.value = query.copyWith(kinds: kinds),
             ),
+          ],
+          if (section == null) const SizedBox(height: AppSpacing.s20),
+          if (section == null || section == ActivityFilterSection.account) ...[
+            if (section == null)
+              AppSheetSectionLabel(l10n.activityFeedFilterAccount),
+            if (accountsAsync.hasError)
+              AppStatusBanner(
+                kind: AppStatusKind.error,
+                compact: true,
+                message: l10n.activityAccountsUnavailable,
+                action: FButton(
+                  variant: FButtonVariant.ghost,
+                  onPress: () => ref.invalidate(accountsStreamProvider),
+                  child: Text(l10n.commonRetry),
+                ),
+              )
+            else if (!accountsAsync.hasValue)
+              Text(l10n.commonLoading, style: context.captionStyle)
+            else if (accounts.isEmpty)
+              Padding(
+                padding: const EdgeInsets.only(
+                  top: AppSpacing.s4,
+                  bottom: AppSpacing.s8,
+                ),
+                child: Text(
+                  l10n.activityFeedFilterAccountEmpty,
+                  style: context.captionStyle,
+                ),
+              )
+            else
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final account in accounts)
+                    _AccountFilterRow(
+                      account: account,
+                      selected: query.accountIds.contains(account.id),
+                      onToggle: () {
+                        final ids = {...query.accountIds};
+                        ids.contains(account.id)
+                            ? ids.remove(account.id)
+                            : ids.add(account.id);
+                        draft.value = query.copyWith(accountIds: ids);
+                      },
+                    ),
+                ],
+              ),
+          ],
         ],
       ),
     );
@@ -316,7 +354,6 @@ class _DateRangeRow extends StatelessWidget {
             label: label,
             active: active == range,
             onPress: () {
-              AppInteraction.signal(AppInteractionIntent.select);
               onChanged(_rangeFor(range));
             },
           ),

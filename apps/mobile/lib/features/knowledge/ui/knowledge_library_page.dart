@@ -435,7 +435,7 @@ class _LibraryTagFilter extends StatelessWidget {
   final ValueChanged<String?> onChanged;
 
   @override
-  Widget build(BuildContext context) => AppFilterChip(
+  Widget build(BuildContext context) => AppFilterChip.trigger(
     key: const Key('knowledge-library-tag-filter'),
     label: semanticLabel,
     icon: FLucideIcons.tags,

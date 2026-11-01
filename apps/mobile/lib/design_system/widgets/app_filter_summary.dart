@@ -1,12 +1,12 @@
 import 'package:flutter/widgets.dart';
-import 'package:forui/forui.dart';
 
 import '../../l10n/gen/app_localizations.dart';
+import '../theme/app_theme_scope.dart';
 import '../tokens/dimens_tokens.dart';
-import 'app_actions.dart';
 import 'app_badge.dart';
 import 'app_filter_chip.dart';
 import 'app_interaction.dart';
+import 'app_quiet_button.dart';
 
 /// Applied filters stay visible regardless of their picker presentation.
 class AppFilterSummary extends StatelessWidget {
@@ -44,14 +44,15 @@ class AppFilterSummary extends StatelessWidget {
       if (resultCount != null)
         Text(
           AppLocalizations.of(context).commonSearchResultsCount(resultCount!),
+          style: context.appTheme.type.numericCaption.copyWith(
+            color: context.appTheme.content.muted,
+          ),
         ),
-      AppActionButton(
-        variant: FButtonVariant.ghost,
-        mainAxisSize: MainAxisSize.min,
-        hapticIntent: AppInteractionIntent.select,
-        onPress: onClear,
-        child: Flexible(
-          child: Text(AppLocalizations.of(context).commonClearFilters),
+      AppQuietButton(
+        label: AppLocalizations.of(context).commonClearFilters,
+        onPress: AppInteraction.wrap(
+          onClear,
+          intent: AppInteractionIntent.select,
         ),
       ),
     ],
