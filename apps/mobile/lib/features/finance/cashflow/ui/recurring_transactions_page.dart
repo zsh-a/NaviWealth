@@ -67,50 +67,55 @@ class _RecurringTransactionsPageState
                   },
                 )
                 .toList(growable: false);
-            return Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.s16,
-                    AppSpacing.s12,
-                    AppSpacing.s16,
-                    AppSpacing.s4,
+            return AppSwipeSwitcher<_RecurringFilter>(
+              options: _RecurringFilter.values,
+              value: _filter,
+              onChanged: (filter) => setState(() => _filter = filter),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.s16,
+                      AppSpacing.s12,
+                      AppSpacing.s16,
+                      AppSpacing.s4,
+                    ),
+                    child: SegmentedRow<_RecurringFilter>.inline(
+                      options: _RecurringFilter.values,
+                      value: _filter,
+                      minSegmentWidth: 80,
+                      labelOf: (filter) => switch (filter) {
+                        _RecurringFilter.active => l10n.recurringFilterActive,
+                        _RecurringFilter.paused => l10n.recurringFilterPaused,
+                      },
+                      onChanged: (filter) => setState(() => _filter = filter),
+                    ),
                   ),
-                  child: SegmentedRow<_RecurringFilter>.inline(
-                    options: _RecurringFilter.values,
-                    value: _filter,
-                    minSegmentWidth: 80,
-                    labelOf: (filter) => switch (filter) {
-                      _RecurringFilter.active => l10n.recurringFilterActive,
-                      _RecurringFilter.paused => l10n.recurringFilterPaused,
-                    },
-                    onChanged: (filter) => setState(() => _filter = filter),
+                  Expanded(
+                    child: visible.isEmpty
+                        ? AppEmptyState(
+                            icon: FLucideIcons.calendarClock,
+                            iconSize: 56,
+                            title: _filter == _RecurringFilter.active
+                                ? l10n.recurringEmptyTitle
+                                : l10n.recurringPausedEmptyTitle,
+                            message: _filter == _RecurringFilter.active
+                                ? l10n.recurringEmptyBody
+                                : l10n.recurringPausedEmptyBody,
+                            action: _filter == _RecurringFilter.active
+                                ? FButton(
+                                    onPress: () => showRecurringTransactionForm(
+                                      context,
+                                      ref,
+                                    ),
+                                    child: Text(l10n.recurringEmptyCta),
+                                  )
+                                : null,
+                          )
+                        : _RecurringList(rules: visible),
                   ),
-                ),
-                Expanded(
-                  child: visible.isEmpty
-                      ? AppEmptyState(
-                          icon: FLucideIcons.calendarClock,
-                          iconSize: 56,
-                          title: _filter == _RecurringFilter.active
-                              ? l10n.recurringEmptyTitle
-                              : l10n.recurringPausedEmptyTitle,
-                          message: _filter == _RecurringFilter.active
-                              ? l10n.recurringEmptyBody
-                              : l10n.recurringPausedEmptyBody,
-                          action: _filter == _RecurringFilter.active
-                              ? FButton(
-                                  onPress: () => showRecurringTransactionForm(
-                                    context,
-                                    ref,
-                                  ),
-                                  child: Text(l10n.recurringEmptyCta),
-                                )
-                              : null,
-                        )
-                      : _RecurringList(rules: visible),
-                ),
-              ],
+                ],
+              ),
             );
           },
         ),

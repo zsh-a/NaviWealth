@@ -167,184 +167,194 @@ class _HealthTrendPageState extends ConsumerState<HealthTrendPage> {
       child: ShellTabPause(
         routePath: HealthRoutes.trend,
         child: GarminForegroundRefreshScope(
-          child: AppRefreshIndicator(
-            onRefresh: _refresh,
-            child: ListView(
-              // Category changes keep the toolbar mounted and focused.
-              key: PageStorageKey(
-                'health-trends-${metric?.wire ?? 'overview'}',
-              ),
-              padding: shellTabContentPadding(context),
-              children: [
-                const HealthSourceAttention(),
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final scale = MediaQuery.textScalerOf(context).scale(1);
-                    var segmentWidth = AppControlHeights.touchTarget;
-                    for (final option in TrendGroup.values) {
-                      final painter = TextPainter(
-                        text: TextSpan(
-                          text: healthGroupLabel(l, option),
-                          style: context.appTheme.type.numericCaptionStrong,
-                        ),
-                        textDirection: Directionality.of(context),
-                        textScaler: MediaQuery.textScalerOf(context),
-                      )..layout();
-                      final width =
-                          painter.width.ceilToDouble() + AppSpacing.s24;
-                      if (width > segmentWidth) segmentWidth = width;
-                      painter.dispose();
-                    }
-                    final minimumNavigationWidth = metric == null
-                        ? segmentWidth * TrendGroup.values.length +
-                              AppSpacing.s8
-                        : 200 * scale;
-                    final minimumRangeWidth = 128 * scale;
-                    final sideBySide =
-                        constraints.maxWidth >=
-                        minimumNavigationWidth +
-                            minimumRangeWidth +
-                            AppSpacing.s12;
-                    final rangeWidth = sideBySide
-                        ? minimumRangeWidth
-                        : constraints.maxWidth;
-                    final navigationWidth = sideBySide
-                        ? constraints.maxWidth - rangeWidth - AppSpacing.s12
-                        : constraints.maxWidth;
-                    // Keep both controls in stable slots as they wrap so
-                    // resizing and route updates preserve keyboard focus.
-                    return Wrap(
-                      spacing: AppSpacing.s12,
-                      runSpacing: AppSpacing.s8,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        SizedBox(width: navigationWidth, child: navigation),
-                        SizedBox(
-                          width: rangeWidth,
-                          child: Align(
-                            alignment: AlignmentDirectional.centerEnd,
-                            child: range,
-                          ),
-                        ),
-                      ],
-                    );
-                  },
+          child: AppSwipeSwitcher<TrendGroup>(
+            options: TrendGroup.values,
+            value: group,
+            onChanged: metric == null ? (next) => _go(group: next) : null,
+            child: AppRefreshIndicator(
+              onRefresh: _refresh,
+              child: ListView(
+                // Category changes keep the toolbar mounted and focused.
+                key: PageStorageKey(
+                  'health-trends-${metric?.wire ?? 'overview'}',
                 ),
-                const SizedBox(height: AppSpacing.s16),
-                Semantics(
-                  container: true,
-                  child: data.when(
-                    skipLoadingOnRefresh: true,
-                    skipLoadingOnReload: true,
-                    loading: () => const SkeletonCard(
-                      child: Column(
-                        children: [
-                          SkeletonBox(height: 22),
-                          SizedBox(height: AppSpacing.s16),
-                          SkeletonBox(height: 120),
-                        ],
-                      ),
-                    ),
-                    error: (error, stack) => kDefaultError(
-                      context,
-                      error,
-                      stack,
-                      onRetry: () => ref.invalidate(
-                        healthTrendSeriesProvider((
-                          group: group,
-                          windowDays: days,
-                        )),
-                      ),
-                    ),
-                    data: (series) {
-                      if (metric != null && series[metric] != null) {
-                        return HealthMetricDetail(series: series[metric]!);
+                padding: shellTabContentPadding(context),
+                children: [
+                  const HealthSourceAttention(),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final scale = MediaQuery.textScalerOf(context).scale(1);
+                      var segmentWidth = AppControlHeights.touchTarget;
+                      for (final option in TrendGroup.values) {
+                        final painter = TextPainter(
+                          text: TextSpan(
+                            text: healthGroupLabel(l, option),
+                            style: context.appTheme.type.numericCaptionStrong,
+                          ),
+                          textDirection: Directionality.of(context),
+                          textScaler: MediaQuery.textScalerOf(context),
+                        )..layout();
+                        final width =
+                            painter.width.ceilToDouble() + AppSpacing.s24;
+                        if (width > segmentWidth) segmentWidth = width;
+                        painter.dispose();
                       }
-                      final kinds = healthGroupKinds(group);
-                      final recorded = kinds
-                          .where((k) => series[k]?.samples.isNotEmpty == true)
-                          .toList();
-                      final missing = kinds
-                          .where((k) => !recorded.contains(k))
-                          .toList();
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                      final minimumNavigationWidth = metric == null
+                          ? segmentWidth * TrendGroup.values.length +
+                                AppSpacing.s8
+                          : 200 * scale;
+                      final minimumRangeWidth = 128 * scale;
+                      final sideBySide =
+                          constraints.maxWidth >=
+                          minimumNavigationWidth +
+                              minimumRangeWidth +
+                              AppSpacing.s12;
+                      final rangeWidth = sideBySide
+                          ? minimumRangeWidth
+                          : constraints.maxWidth;
+                      final navigationWidth = sideBySide
+                          ? constraints.maxWidth - rangeWidth - AppSpacing.s12
+                          : constraints.maxWidth;
+                      // Keep both controls in stable slots as they wrap so
+                      // resizing and route updates preserve keyboard focus.
+                      return Wrap(
+                        spacing: AppSpacing.s12,
+                        runSpacing: AppSpacing.s8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
-                          if (recorded.isEmpty)
-                            AppEmptyState(
-                              icon: group == TrendGroup.body
-                                  ? FLucideIcons.scale
-                                  : FLucideIcons.activity,
-                              title: l.healthNoData,
-                              message: l.healthNoRecordsInWindow,
-                              compact: true,
-                              action: AppActionButton(
-                                variant: FButtonVariant.outline,
-                                size: FButtonSizeVariant.md,
-                                hapticIntent: AppInteractionIntent.select,
-                                onPress: () => group == TrendGroup.body
-                                    ? showBodyMeasurementEntrySheet(
-                                        context: context,
-                                        initialKind: HealthMetricKind.weight,
-                                      )
-                                    : context.go(HealthRoutes.today),
-                                child: Text(
-                                  group == TrendGroup.body
-                                      ? l.healthRecordBodyMetricAction
-                                      : l.healthTodayTitle,
-                                ),
-                              ),
-                            )
-                          else ...[
-                            AppGroupedSurface(
-                              padding: EdgeInsets.zero,
-                              child: Column(
-                                children: [
-                                  for (var i = 0; i < recorded.length; i++) ...[
-                                    if (i > 0)
-                                      const AppGroupedDivider(
-                                        indent: AppSpacing.s16,
-                                        endIndent: AppSpacing.s16,
-                                      ),
-                                    _TrendOverviewRow(
-                                      series: series[recorded[i]]!,
-                                      onPress: () => _go(metric: recorded[i]),
-                                    ),
-                                  ],
-                                ],
-                              ),
+                          SizedBox(width: navigationWidth, child: navigation),
+                          SizedBox(
+                            width: rangeWidth,
+                            child: Align(
+                              alignment: AlignmentDirectional.centerEnd,
+                              child: range,
                             ),
-                            const SizedBox(height: AppSpacing.s12),
-                            _TrendPeriodSummary(
-                              series: [for (final k in recorded) series[k]!],
-                            ),
-                          ],
-                          if (missing.isNotEmpty) ...[
-                            const SizedBox(height: AppSpacing.s12),
-                            AppRevealControl(
-                              expanded: _showMissing,
-                              collapsedLabel: l.healthMissingMetrics(
-                                missing.length,
-                              ),
-                              expandedLabel: l.commonRevealLess,
-                              onToggle: () =>
-                                  setState(() => _showMissing = !_showMissing),
-                            ),
-                            if (_showMissing)
-                              for (final k in missing)
-                                _MissingMetricRow(
-                                  kind: k,
-                                  onPress: () => _go(metric: k),
-                                ),
-                          ],
+                          ),
                         ],
                       );
                     },
                   ),
-                ),
-                const SizedBox(height: AppSpacing.s24),
-                HealthCheckInHistory(days: days),
-              ],
+                  const SizedBox(height: AppSpacing.s16),
+                  Semantics(
+                    container: true,
+                    child: data.when(
+                      skipLoadingOnRefresh: true,
+                      skipLoadingOnReload: true,
+                      loading: () => const SkeletonCard(
+                        child: Column(
+                          children: [
+                            SkeletonBox(height: 22),
+                            SizedBox(height: AppSpacing.s16),
+                            SkeletonBox(height: 120),
+                          ],
+                        ),
+                      ),
+                      error: (error, stack) => kDefaultError(
+                        context,
+                        error,
+                        stack,
+                        onRetry: () => ref.invalidate(
+                          healthTrendSeriesProvider((
+                            group: group,
+                            windowDays: days,
+                          )),
+                        ),
+                      ),
+                      data: (series) {
+                        if (metric != null && series[metric] != null) {
+                          return HealthMetricDetail(series: series[metric]!);
+                        }
+                        final kinds = healthGroupKinds(group);
+                        final recorded = kinds
+                            .where((k) => series[k]?.samples.isNotEmpty == true)
+                            .toList();
+                        final missing = kinds
+                            .where((k) => !recorded.contains(k))
+                            .toList();
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (recorded.isEmpty)
+                              AppEmptyState(
+                                icon: group == TrendGroup.body
+                                    ? FLucideIcons.scale
+                                    : FLucideIcons.activity,
+                                title: l.healthNoData,
+                                message: l.healthNoRecordsInWindow,
+                                compact: true,
+                                action: AppActionButton(
+                                  variant: FButtonVariant.outline,
+                                  size: FButtonSizeVariant.md,
+                                  hapticIntent: AppInteractionIntent.select,
+                                  onPress: () => group == TrendGroup.body
+                                      ? showBodyMeasurementEntrySheet(
+                                          context: context,
+                                          initialKind: HealthMetricKind.weight,
+                                        )
+                                      : context.go(HealthRoutes.today),
+                                  child: Text(
+                                    group == TrendGroup.body
+                                        ? l.healthRecordBodyMetricAction
+                                        : l.healthTodayTitle,
+                                  ),
+                                ),
+                              )
+                            else ...[
+                              AppGroupedSurface(
+                                padding: EdgeInsets.zero,
+                                child: Column(
+                                  children: [
+                                    for (
+                                      var i = 0;
+                                      i < recorded.length;
+                                      i++
+                                    ) ...[
+                                      if (i > 0)
+                                        const AppGroupedDivider(
+                                          indent: AppSpacing.s16,
+                                          endIndent: AppSpacing.s16,
+                                        ),
+                                      _TrendOverviewRow(
+                                        series: series[recorded[i]]!,
+                                        onPress: () => _go(metric: recorded[i]),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.s12),
+                              _TrendPeriodSummary(
+                                series: [for (final k in recorded) series[k]!],
+                              ),
+                            ],
+                            if (missing.isNotEmpty) ...[
+                              const SizedBox(height: AppSpacing.s12),
+                              AppRevealControl(
+                                expanded: _showMissing,
+                                collapsedLabel: l.healthMissingMetrics(
+                                  missing.length,
+                                ),
+                                expandedLabel: l.commonRevealLess,
+                                onToggle: () => setState(
+                                  () => _showMissing = !_showMissing,
+                                ),
+                              ),
+                              if (_showMissing)
+                                for (final k in missing)
+                                  _MissingMetricRow(
+                                    kind: k,
+                                    onPress: () => _go(metric: k),
+                                  ),
+                            ],
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.s24),
+                  HealthCheckInHistory(days: days),
+                ],
+              ),
             ),
           ),
         ),

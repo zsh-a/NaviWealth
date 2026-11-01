@@ -284,6 +284,11 @@ Finance's established Today and Wealth views use the page-width cap, with
 Today pairing actions beside the amount when the supporting-pane composition fits.
 Narrow and large-text layouts stack in reading order.
 
+Page category selectors share their value and callback with `AppSwipeSwitcher`.
+Touch swipes select one adjacent category on release without wrapping, keeping
+route filters and selection markers synchronized. Child horizontal controls,
+vertical scrolling, mouse text selection and system back edges retain priority.
+
 The dock's normal height is s64. It grows by the scaled 11px navigation label
 height, including a second line above 150% text scale, minus the normal
 single-line height; line height is 1.15 and the result rounds upward. The shell

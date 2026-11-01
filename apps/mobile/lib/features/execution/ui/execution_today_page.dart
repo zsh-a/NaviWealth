@@ -165,159 +165,167 @@ class _TodayListState extends ConsumerState<_TodayList> {
     // Scope above the loading/data branches: the entrance watermark survives
     // pull-to-refresh and filter switches, so recycled rows never replay the
     // entrance when they scroll back into view.
-    return AppEntranceScope(
-      child: viewAsync.when(
-        loading: () =>
-            AppListPageSkeleton(padding: shellTabContentPadding(context)),
-        error: (error, stackTrace) => kDefaultError(
-          context,
-          error,
-          stackTrace,
-          onRetry: () => ref.invalidate(executionTodayActionsProvider),
-        ),
-        data: (view) {
-          final openActions = view.openActions;
-          final plans = view.plans;
-          final relations = view.relations;
-          final focusIds = view.focusIds;
-          final visibleActions = view.visibleActions;
-          final snapshot = view.snapshot;
-          final suggestedFocus = view.suggestedFocus;
+    return AppSwipeSwitcher<ExecutionTodayFilter>(
+      options: ExecutionTodayFilter.values,
+      value: _filter,
+      onChanged: (filter) => setState(() => _filter = filter),
+      child: AppEntranceScope(
+        child: viewAsync.when(
+          loading: () =>
+              AppListPageSkeleton(padding: shellTabContentPadding(context)),
+          error: (error, stackTrace) => kDefaultError(
+            context,
+            error,
+            stackTrace,
+            onRetry: () => ref.invalidate(executionTodayActionsProvider),
+          ),
+          data: (view) {
+            final openActions = view.openActions;
+            final plans = view.plans;
+            final relations = view.relations;
+            final focusIds = view.focusIds;
+            final visibleActions = view.visibleActions;
+            final snapshot = view.snapshot;
+            final suggestedFocus = view.suggestedFocus;
 
-          final inventory = view.openActionsStatus;
-          final actionModules = <Widget>[
-            if (inventory.hasError || !inventory.hasValue)
-              AppStatusBanner(
-                compact: true,
-                kind: inventory.hasError
-                    ? AppStatusKind.error
-                    : AppStatusKind.info,
-                message: inventory.hasError
-                    ? l10n.executionOpenActionsUnavailable
-                    : l10n.commonLoading,
-                action: inventory.hasError
-                    ? AppQuietButton(
-                        label: l10n.commonRetry,
-                        onPress: () =>
-                            ref.invalidate(executionOpenActionsProvider),
-                      )
-                    : null,
-              ),
-            if (_filter == ExecutionTodayFilter.today && openActions.isNotEmpty)
-              _DailyFocusPanel(
-                actions: openActions,
-                selectedIds: focusIds,
-                suggestedActions: suggestedFocus,
-                onAdoptSuggestions: suggestedFocus.isEmpty
-                    ? null
-                    : () => ref
-                          .read(executionDailyFocusProvider.notifier)
-                          .set(suggestedFocus.map((action) => action.id)),
-                onOpen: (action) =>
-                    context.push(ExecutionRoutes.action(action.id)),
-              ),
-            if (visibleActions.isEmpty && inventory.hasValue) ...[
-              if (!(_filter == ExecutionTodayFilter.today &&
-                  focusIds.isNotEmpty))
-                AppEmptyState(
-                  icon: _filter == ExecutionTodayFilter.today
-                      ? FLucideIcons.checkCheck
-                      : executionTodayFilterIcon(_filter),
-                  title: _filter == ExecutionTodayFilter.today
-                      ? l10n.executionTodayEmptyTitle
-                      : l10n.executionTodayFilteredEmptyTitle,
-                  message: _filter == ExecutionTodayFilter.today
-                      ? l10n.executionTodayEmptyBody
-                      : l10n.executionTodayFilteredEmptyBody,
-                  action: _filter == ExecutionTodayFilter.today
-                      ? AppActionButton(
-                          hapticIntent: AppInteractionIntent.select,
+            final inventory = view.openActionsStatus;
+            final actionModules = <Widget>[
+              if (inventory.hasError || !inventory.hasValue)
+                AppStatusBanner(
+                  compact: true,
+                  kind: inventory.hasError
+                      ? AppStatusKind.error
+                      : AppStatusKind.info,
+                  message: inventory.hasError
+                      ? l10n.executionOpenActionsUnavailable
+                      : l10n.commonLoading,
+                  action: inventory.hasError
+                      ? AppQuietButton(
+                          label: l10n.commonRetry,
                           onPress: () =>
-                              showExecutionActionSheet(context: context),
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(l10n.executionCreateActionTitle),
-                          ),
+                              ref.invalidate(executionOpenActionsProvider),
                         )
                       : null,
                 ),
-            ],
-          ];
+              if (_filter == ExecutionTodayFilter.today &&
+                  openActions.isNotEmpty)
+                _DailyFocusPanel(
+                  actions: openActions,
+                  selectedIds: focusIds,
+                  suggestedActions: suggestedFocus,
+                  onAdoptSuggestions: suggestedFocus.isEmpty
+                      ? null
+                      : () => ref
+                            .read(executionDailyFocusProvider.notifier)
+                            .set(suggestedFocus.map((action) => action.id)),
+                  onOpen: (action) =>
+                      context.push(ExecutionRoutes.action(action.id)),
+                ),
+              if (visibleActions.isEmpty && inventory.hasValue) ...[
+                if (!(_filter == ExecutionTodayFilter.today &&
+                    focusIds.isNotEmpty))
+                  AppEmptyState(
+                    icon: _filter == ExecutionTodayFilter.today
+                        ? FLucideIcons.checkCheck
+                        : executionTodayFilterIcon(_filter),
+                    title: _filter == ExecutionTodayFilter.today
+                        ? l10n.executionTodayEmptyTitle
+                        : l10n.executionTodayFilteredEmptyTitle,
+                    message: _filter == ExecutionTodayFilter.today
+                        ? l10n.executionTodayEmptyBody
+                        : l10n.executionTodayFilteredEmptyBody,
+                    action: _filter == ExecutionTodayFilter.today
+                        ? AppActionButton(
+                            hapticIntent: AppInteractionIntent.select,
+                            onPress: () =>
+                                showExecutionActionSheet(context: context),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(l10n.executionCreateActionTitle),
+                            ),
+                          )
+                        : null,
+                  ),
+              ],
+            ];
 
-          return BriefLazyListScaffold(
-            padding: shellTabContentPadding(context),
-            onRefresh: _refresh,
-            greeting: const ExecutionGreetingHeader(),
-            stage: AppCollapsingStage(
-              child: ExecutionOverviewStrip(
-                snapshot: snapshot,
-                inventoryAvailable: inventory.hasValue,
-                selectedFilter: _filter,
-                onFilterChanged: (filter) => setState(() => _filter = filter),
-              ),
-            ),
-            stickyBuilder: (context, progress) {
-              return AppCollapsedSummaryBar(
-                progress: progress,
+            return BriefLazyListScaffold(
+              padding: shellTabContentPadding(context),
+              onRefresh: _refresh,
+              greeting: const ExecutionGreetingHeader(),
+              stage: AppCollapsingStage(
                 child: ExecutionOverviewStrip(
-                  key: const ValueKey('execution-sticky-filter'),
                   snapshot: snapshot,
                   inventoryAvailable: inventory.hasValue,
                   selectedFilter: _filter,
                   onFilterChanged: (filter) => setState(() => _filter = filter),
                 ),
-              );
-            },
-            modules: [
-              for (var i = 0; i < actionModules.length; i++)
-                FadeSlideIn(
-                  delay: Motion.staggerDelayFor(i, actionModules.length),
-                  child: actionModules[i],
-                ),
-            ],
-            listHeader: visibleActions.isEmpty
-                ? null
-                : ExecutionSectionHeader(
-                    title: _filter == ExecutionTodayFilter.today
-                        ? l10n.executionTodayNextActions
-                        : executionTodayFilterLabel(l10n, _filter),
-                    count: visibleActions.length,
-                    icon: executionTodayFilterIcon(_filter),
+              ),
+              stickyBuilder: (context, progress) {
+                return AppCollapsedSummaryBar(
+                  progress: progress,
+                  child: ExecutionOverviewStrip(
+                    key: const ValueKey('execution-sticky-filter'),
+                    snapshot: snapshot,
+                    inventoryAvailable: inventory.hasValue,
+                    selectedFilter: _filter,
+                    onFilterChanged: (filter) =>
+                        setState(() => _filter = filter),
                   ),
-            itemCount: visibleActions.length,
-            itemBuilder: (context, index) {
-              final action = visibleActions[index];
-              return AppOnceEntrance(
-                index: index,
-                child: ExecutionActionCardController(
-                  action: action,
-                  planLabel:
-                      relations?.planLabel(action.planId) ??
-                      executionPlanRelationLabel(plans, action.planId),
-                  onOpen: () => context.push(ExecutionRoutes.action(action.id)),
-                  compact: true,
-                  onSourceOpen: executionSourceOpen(
-                    context,
-                    ref,
-                    action.source,
+                );
+              },
+              modules: [
+                for (var i = 0; i < actionModules.length; i++)
+                  FadeSlideIn(
+                    delay: Motion.staggerDelayFor(i, actionModules.length),
+                    child: actionModules[i],
                   ),
-                  onEdit: () => showExecutionActionSheet(
-                    context: context,
+              ],
+              listHeader: visibleActions.isEmpty
+                  ? null
+                  : ExecutionSectionHeader(
+                      title: _filter == ExecutionTodayFilter.today
+                          ? l10n.executionTodayNextActions
+                          : executionTodayFilterLabel(l10n, _filter),
+                      count: visibleActions.length,
+                      icon: executionTodayFilterIcon(_filter),
+                    ),
+              itemCount: visibleActions.length,
+              itemBuilder: (context, index) {
+                final action = visibleActions[index];
+                return AppOnceEntrance(
+                  index: index,
+                  child: ExecutionActionCardController(
                     action: action,
+                    planLabel:
+                        relations?.planLabel(action.planId) ??
+                        executionPlanRelationLabel(plans, action.planId),
+                    onOpen: () =>
+                        context.push(ExecutionRoutes.action(action.id)),
+                    compact: true,
+                    onSourceOpen: executionSourceOpen(
+                      context,
+                      ref,
+                      action.source,
+                    ),
+                    onEdit: () => showExecutionActionSheet(
+                      context: context,
+                      action: action,
+                    ),
+                    onRecordProgress: () => showExecutionProgressSheet(
+                      context: context,
+                      action: action,
+                    ),
+                    doneProgressNote: l10n.executionProgressDoneDefault,
+                    droppedProgressNote: l10n.executionProgressDroppedDefault,
+                    focusSelected: focusIds.contains(action.id),
+                    onToggleFocus: () => _toggleFocus(action, openActions),
                   ),
-                  onRecordProgress: () => showExecutionProgressSheet(
-                    context: context,
-                    action: action,
-                  ),
-                  doneProgressNote: l10n.executionProgressDoneDefault,
-                  droppedProgressNote: l10n.executionProgressDroppedDefault,
-                  focusSelected: focusIds.contains(action.id),
-                  onToggleFocus: () => _toggleFocus(action, openActions),
-                ),
-              );
-            },
-          );
-        },
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }

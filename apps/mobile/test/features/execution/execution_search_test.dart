@@ -85,6 +85,22 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Current result'), findsOneWidget);
     expect(find.text('Showing 1 result'), findsOneWidget);
+    final scopes = find.byWidgetPredicate(
+      (widget) => widget is AppSwipeSwitcher<Object?>,
+    );
+    await tester.drag(scopes, const Offset(-120, 0));
+    await tester.pumpAndSettle();
+    expect(find.text('Current result'), findsOneWidget);
+    await tester.drag(scopes, const Offset(-120, 0));
+    await tester.pumpAndSettle();
+    expect(find.text('Current result'), findsNothing);
+    expect(
+      tester.widget<EditableText>(find.byType(EditableText)).controller.text,
+      'second',
+    );
+    await tester.drag(scopes, const Offset(120, 0));
+    await tester.pumpAndSettle();
+    expect(find.text('Current result'), findsOneWidget);
     Navigator.of(tester.element(find.byType(AppSearchField))).pop();
     await tester.pumpAndSettle();
     await tester.tap(find.text('Open'));

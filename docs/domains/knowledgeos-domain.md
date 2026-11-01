@@ -61,8 +61,11 @@ query.
 
 Library preserves query (`q`), object kind (`scope`), and tag (`tag`) in the
 route alongside `selected`. Reloading restores those filters; clearing them
-keeps the selected object and unrelated route parameters. Applied filters and
-the displayed search-result count use the shared filter summary. Each applied
+keeps the selected object and unrelated route parameters. The All / Notes /
+Decisions selector stays in sync with touch swipes across the Library list.
+Swipes select adjacent scopes without wrapping and use the same filter
+transition as a click, retaining the query and selected detail. Applied filters
+and the displayed search-result count use the shared filter summary. Each applied
 filter can be removed independently; the tag picker opens on demand. Search
 excerpts show the matching passage when the query occurs in the document.
 Note and Decision deletion live in the detail header's More actions menu and

@@ -31,50 +31,55 @@ class _ConfiguredBodyState extends ConsumerState<_ConfiguredBody> {
             .length ??
         0;
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.s16,
-        AppSpacing.s12,
-        AppSpacing.s16,
-        AppSpacing.s32,
-      ),
-      children: [
-        _PlannerOverviewCard(
-          profile: widget.profile,
-          approvedCount: approvedCount,
-          opportunityCount: opportunityCount,
-          openCount: openCount,
-          scanState: scanState,
-          cacheState: cacheState.value,
-          onRefresh: () => _runScan(context),
-          onManageUnderlyings: () => setState(() {
-            _tab = _PlannerTab.opportunities;
-            _approvedOpen = true;
-          }),
+    return AppSwipeSwitcher<_PlannerTab>(
+      options: _PlannerTab.values,
+      value: _tab,
+      onChanged: (tab) => setState(() => _tab = tab),
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.s16,
+          AppSpacing.s12,
+          AppSpacing.s16,
+          AppSpacing.s32,
         ),
-        const SizedBox(height: AppSpacing.s16),
-        SegmentedRow<_PlannerTab>.inline(
-          options: _PlannerTab.values,
-          value: _tab,
-          labelOf: (tab) => switch (tab) {
-            _PlannerTab.opportunities =>
-              l10n.incomePlannerWorkspaceOpportunities,
-            _PlannerTab.journal => l10n.incomePlannerWorkspaceJournal,
-          },
-          onChanged: (tab) => setState(() => _tab = tab),
-        ),
-        const SizedBox(height: AppSpacing.s16),
-        switch (_tab) {
-          _PlannerTab.opportunities => _opportunitiesTab(
-            context,
-            approvedAsync: approvedAsync,
+        children: [
+          _PlannerOverviewCard(
+            profile: widget.profile,
+            approvedCount: approvedCount,
+            opportunityCount: opportunityCount,
+            openCount: openCount,
             scanState: scanState,
             cacheState: cacheState.value,
-            opportunitiesAsync: opportunitiesAsync,
+            onRefresh: () => _runScan(context),
+            onManageUnderlyings: () => setState(() {
+              _tab = _PlannerTab.opportunities;
+              _approvedOpen = true;
+            }),
           ),
-          _PlannerTab.journal => const _TradeJournalSection(),
-        },
-      ],
+          const SizedBox(height: AppSpacing.s16),
+          SegmentedRow<_PlannerTab>.inline(
+            options: _PlannerTab.values,
+            value: _tab,
+            labelOf: (tab) => switch (tab) {
+              _PlannerTab.opportunities =>
+                l10n.incomePlannerWorkspaceOpportunities,
+              _PlannerTab.journal => l10n.incomePlannerWorkspaceJournal,
+            },
+            onChanged: (tab) => setState(() => _tab = tab),
+          ),
+          const SizedBox(height: AppSpacing.s16),
+          switch (_tab) {
+            _PlannerTab.opportunities => _opportunitiesTab(
+              context,
+              approvedAsync: approvedAsync,
+              scanState: scanState,
+              cacheState: cacheState.value,
+              opportunitiesAsync: opportunitiesAsync,
+            ),
+            _PlannerTab.journal => const _TradeJournalSection(),
+          },
+        ],
+      ),
     );
   }
 

@@ -150,6 +150,19 @@ void main() {
       '90',
     );
     expect(tester.takeException(), isNull);
+    await tester.drag(
+      find.byType(AppSwipeSwitcher<TrendGroup>),
+      const Offset(150, 0),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      router.routeInformationProvider.value.uri.queryParameters['group'],
+      TrendGroup.values[TrendGroup.body.index - 1].name,
+    );
+    expect(
+      router.routeInformationProvider.value.uri.queryParameters['window'],
+      '90',
+    );
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();
   });

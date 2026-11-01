@@ -166,43 +166,57 @@ class _PortfolioStudioBody extends StatelessWidget {
         tree: tree,
       ),
     };
-    return AdaptiveContentFrame(
-      maxWidth: AdaptiveMaxWidth.page,
-      expandSinglePrimary: true,
-      padding: shellTabContentPadding(
-        context,
-        left: AppSpacing.s16,
-        top: AppSpacing.s8,
-        right: AppSpacing.s16,
-        bottom: AppSpacing.s24,
-      ),
-      primary: ListView(
-        children: [
-          if (transferIntent != null) ...[
-            _StudioTransferTask(
-              intent: transferIntent!,
-              tree: tree,
-              portfolioNames: portfolioNames,
+    return AppSwipeSwitcher<PortfolioStudioSection>(
+      options: PortfolioStudioSection.values,
+      value: section,
+      onChanged: onSectionChanged,
+      child: AdaptiveContentFrame(
+        maxWidth: AdaptiveMaxWidth.page,
+        expandSinglePrimary: true,
+        padding: shellTabContentPadding(
+          context,
+          left: AppSpacing.s16,
+          top: AppSpacing.s8,
+          right: AppSpacing.s16,
+          bottom: AppSpacing.s24,
+        ),
+        primary: ListView(
+          children: [
+            if (transferIntent != null) ...[
+              _StudioTransferTask(
+                intent: transferIntent!,
+                tree: tree,
+                portfolioNames: portfolioNames,
+              ),
+              const SizedBox(height: AppSpacing.s16),
+            ],
+            _StudioSectionNavigation(
+              value: section,
+              onChanged: onSectionChanged,
             ),
             const SizedBox(height: AppSpacing.s16),
-          ],
-          _StudioSectionNavigation(value: section, onChanged: onSectionChanged),
-          const SizedBox(height: AppSpacing.s16),
-          AnimatedSwitcher(
-            duration: AppMotionPolicy.duration(context, Motion.componentChange),
-            switchInCurve: Motion.standardDecelerate,
-            switchOutCurve: Motion.standardAccelerate,
-            transitionBuilder: (child, animation) => FadeTransition(
-              opacity: animation,
-              child: SizeTransition(
-                sizeFactor: animation,
-                alignment: Alignment.topCenter,
-                child: child,
+            AnimatedSwitcher(
+              duration: AppMotionPolicy.duration(
+                context,
+                Motion.componentChange,
+              ),
+              switchInCurve: Motion.standardDecelerate,
+              switchOutCurve: Motion.standardAccelerate,
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: animation,
+                child: SizeTransition(
+                  sizeFactor: animation,
+                  alignment: Alignment.topCenter,
+                  child: child,
+                ),
+              ),
+              child: KeyedSubtree(
+                key: ValueKey(section),
+                child: sectionContent,
               ),
             ),
-            child: KeyedSubtree(key: ValueKey(section), child: sectionContent),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

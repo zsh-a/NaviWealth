@@ -101,133 +101,140 @@ class _ExecutionSearchBodyState extends ConsumerState<_ExecutionSearchBody> {
     super.dispose();
   }
 
+  void _changeScope(_ExecutionSearchScope scope) {
+    setState(() => _scope = scope);
+    ref.read(_searchFiltersProvider.notifier).scope(scope);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return SizedBox(
-      height: AppControlHeights.searchSheet,
-      child: Column(
-        children: [
-          AppSearchField(
-            controller: _controller,
-            focusNode: _searchFocus,
-            autofocus: true,
-            hint: l10n.executionSearchHint,
-            clearLabel: l10n.aiChatSessionsSearchClear,
-          ),
-          const SizedBox(height: AppSpacing.s8),
-          SegmentedRow<_ExecutionSearchScope>.inline(
-            options: _ExecutionSearchScope.values,
-            value: _scope,
-            labelOf: (scope) => switch (scope) {
-              _ExecutionSearchScope.all => l10n.executionSearchFilterAll,
-              _ExecutionSearchScope.action => l10n.executionSearchKindAction,
-              _ExecutionSearchScope.plan => l10n.executionSearchKindPlan,
-            },
-            onChanged: (scope) {
-              setState(() => _scope = scope);
-              ref.read(_searchFiltersProvider.notifier).scope(scope);
-            },
-          ),
-          if (_query.isNotEmpty || _scope != _ExecutionSearchScope.all) ...[
+    return AppSwipeSwitcher<_ExecutionSearchScope>(
+      options: _ExecutionSearchScope.values,
+      value: _scope,
+      onChanged: _changeScope,
+      child: SizedBox(
+        height: AppControlHeights.searchSheet,
+        child: Column(
+          children: [
+            AppSearchField(
+              controller: _controller,
+              focusNode: _searchFocus,
+              autofocus: true,
+              hint: l10n.executionSearchHint,
+              clearLabel: l10n.aiChatSessionsSearchClear,
+            ),
             const SizedBox(height: AppSpacing.s8),
-            AppFilterSummary(
-              labels: [
-                if (_query.isNotEmpty) _query,
-                if (_scope != _ExecutionSearchScope.all)
-                  _scope == _ExecutionSearchScope.action
-                      ? l10n.executionSearchKindAction
-                      : l10n.executionSearchKindPlan,
-              ],
-              resultCount: _query.isNotEmpty && !_loading && _error == null
-                  ? _visibleHits.length
-                  : null,
-              onClear: () {
-                setState(() => _scope = _ExecutionSearchScope.all);
-                ref.read(_searchFiltersProvider.notifier).scope(_scope);
-                _controller.clear();
-                _searchFocus.requestFocus();
+            SegmentedRow<_ExecutionSearchScope>.inline(
+              options: _ExecutionSearchScope.values,
+              value: _scope,
+              labelOf: (scope) => switch (scope) {
+                _ExecutionSearchScope.all => l10n.executionSearchFilterAll,
+                _ExecutionSearchScope.action => l10n.executionSearchKindAction,
+                _ExecutionSearchScope.plan => l10n.executionSearchKindPlan,
               },
+              onChanged: _changeScope,
+            ),
+            if (_query.isNotEmpty || _scope != _ExecutionSearchScope.all) ...[
+              const SizedBox(height: AppSpacing.s8),
+              AppFilterSummary(
+                labels: [
+                  if (_query.isNotEmpty) _query,
+                  if (_scope != _ExecutionSearchScope.all)
+                    _scope == _ExecutionSearchScope.action
+                        ? l10n.executionSearchKindAction
+                        : l10n.executionSearchKindPlan,
+                ],
+                resultCount: _query.isNotEmpty && !_loading && _error == null
+                    ? _visibleHits.length
+                    : null,
+                onClear: () {
+                  setState(() => _scope = _ExecutionSearchScope.all);
+                  ref.read(_searchFiltersProvider.notifier).scope(_scope);
+                  _controller.clear();
+                  _searchFocus.requestFocus();
+                },
+              ),
+            ],
+            const SizedBox(height: AppSpacing.s12),
+            Expanded(
+              child: _query.isEmpty
+                  ? AppEmptyState(
+                      icon: FLucideIcons.search,
+                      title: l10n.executionSearchEmptyTitle,
+                      message: l10n.executionSearchEmptyBody,
+                      action: AppActionButton(
+                        onPress: _searchFocus.requestFocus,
+                        child: Text(l10n.executionSearchStartAction),
+                      ),
+                      compact: true,
+                    )
+                  : _loading
+                  ? kDefaultLoading
+                  : _error != null
+                  ? AppEmptyState.error(
+                      title: l10n.commonLoadFailed,
+                      message: userSafeErrorMessage(context, _error!),
+                      retryLabel: l10n.commonRetry,
+                      onRetry: _runSearch,
+                    )
+                  : _visibleHits.isEmpty
+                  ? AppEmptyState(
+                      icon: FLucideIcons.searchX,
+                      title: l10n.executionSearchNoResults,
+                      message: l10n.executionSearchTryAgain,
+                      action: AppActionButton(
+                        onPress: () {
+                          _controller.clear();
+                          _searchFocus.requestFocus();
+                        },
+                        child: Text(l10n.executionSearchClearAction),
+                      ),
+                      compact: true,
+                    )
+                  : ListView.separated(
+                      itemCount: _visibleHits.length,
+                      separatorBuilder: (_, _) =>
+                          const SizedBox(height: AppSpacing.s6),
+                      itemBuilder: (context, index) {
+                        final hit = _visibleHits[index];
+                        return SoftCard(
+                          level: SoftCardLevel.raised,
+                          onPress: () => _open(hit),
+                          padding: const EdgeInsets.all(AppSpacing.s12),
+                          child: Row(
+                            children: [
+                              Icon(_icon(hit.kind), size: AppIconSizes.sm),
+                              const SizedBox(width: AppSpacing.s10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      hit.title,
+                                      style: context.labelStyle,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    Text(
+                                      '${_kindLabel(l10n, hit.kind)} · ${_statusLabel(l10n, hit)}',
+                                      style: context.captionStyle,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const Icon(
+                                FLucideIcons.chevronRight,
+                                size: AppIconSizes.xs,
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
             ),
           ],
-          const SizedBox(height: AppSpacing.s12),
-          Expanded(
-            child: _query.isEmpty
-                ? AppEmptyState(
-                    icon: FLucideIcons.search,
-                    title: l10n.executionSearchEmptyTitle,
-                    message: l10n.executionSearchEmptyBody,
-                    action: AppActionButton(
-                      onPress: _searchFocus.requestFocus,
-                      child: Text(l10n.executionSearchStartAction),
-                    ),
-                    compact: true,
-                  )
-                : _loading
-                ? kDefaultLoading
-                : _error != null
-                ? AppEmptyState.error(
-                    title: l10n.commonLoadFailed,
-                    message: userSafeErrorMessage(context, _error!),
-                    retryLabel: l10n.commonRetry,
-                    onRetry: _runSearch,
-                  )
-                : _visibleHits.isEmpty
-                ? AppEmptyState(
-                    icon: FLucideIcons.searchX,
-                    title: l10n.executionSearchNoResults,
-                    message: l10n.executionSearchTryAgain,
-                    action: AppActionButton(
-                      onPress: () {
-                        _controller.clear();
-                        _searchFocus.requestFocus();
-                      },
-                      child: Text(l10n.executionSearchClearAction),
-                    ),
-                    compact: true,
-                  )
-                : ListView.separated(
-                    itemCount: _visibleHits.length,
-                    separatorBuilder: (_, _) =>
-                        const SizedBox(height: AppSpacing.s6),
-                    itemBuilder: (context, index) {
-                      final hit = _visibleHits[index];
-                      return SoftCard(
-                        level: SoftCardLevel.raised,
-                        onPress: () => _open(hit),
-                        padding: const EdgeInsets.all(AppSpacing.s12),
-                        child: Row(
-                          children: [
-                            Icon(_icon(hit.kind), size: AppIconSizes.sm),
-                            const SizedBox(width: AppSpacing.s10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    hit.title,
-                                    style: context.labelStyle,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  Text(
-                                    '${_kindLabel(l10n, hit.kind)} · ${_statusLabel(l10n, hit)}',
-                                    style: context.captionStyle,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const Icon(
-                              FLucideIcons.chevronRight,
-                              size: AppIconSizes.xs,
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-          ),
-        ],
+        ),
       ),
     );
   }

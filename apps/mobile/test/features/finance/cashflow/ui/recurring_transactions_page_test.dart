@@ -58,6 +58,19 @@ void main() {
     expect(find.text('Monthly rent'), findsNothing);
     expect(find.text('No recurring rules'), findsOneWidget);
 
+    await tester.drag(
+      find.byWidgetPredicate((widget) => widget is AppSwipeSwitcher<Object?>),
+      const Offset(-120, 0),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Monthly rent'), findsOneWidget);
+    await tester.drag(
+      find.byWidgetPredicate((widget) => widget is AppSwipeSwitcher<Object?>),
+      const Offset(120, 0),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Monthly rent'), findsNothing);
+
     await tester.tap(find.text('Undo'));
     await tester.pumpAndSettle();
 

@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
 import 'package:go_router/go_router.dart';
+import 'package:naviwealth/core/ai/local/memory/memory_runtime.dart';
 import 'package:naviwealth/core/shell/master_detail_layout.dart';
 import 'package:naviwealth/core/shell/selection_query.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
@@ -16,6 +17,7 @@ import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/knowledge/composition/knowledge_route_guard.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_repository.dart';
+import 'package:naviwealth/features/knowledge/data/knowledge_search_service.dart';
 import 'package:naviwealth/features/knowledge/data/providers.dart';
 import 'package:naviwealth/features/knowledge/domain/knowledge_models.dart';
 import 'package:naviwealth/features/knowledge/ui/knowledge_library_page.dart';
@@ -30,6 +32,8 @@ import '../../finance/data/repositories/_stub_stamper.dart';
 
 late SharedPreferences _prefs;
 late KnowledgeRepository _repository;
+
+class _UnavailableMemory extends Fake implements MemoryRuntime {}
 
 final _note = KnowledgeNote(
   id: 'note-1',
@@ -102,6 +106,12 @@ Widget _wrap({
       ),
       sharedPreferencesProvider.overrideWithValue(_prefs),
       knowledgeRepositoryProvider.overrideWith((_) async => _repository),
+      knowledgeSearchServiceProvider.overrideWith(
+        (_) async => KnowledgeSearchService(
+          repository: _repository,
+          memoryRuntime: _UnavailableMemory(),
+        ),
+      ),
       knowledgeOwnerUserIdProvider.overrideWith(
         (_) async => _note.sync.ownerUserId,
       ),
@@ -199,6 +209,113 @@ void main() {
     expect(router.routeInformationProvider.value.uri.hasQuery, isFalse);
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('library swipes sync categories and preserve the active search', (
+    tester,
+  ) async {
+    await _setSurface(tester, 390);
+    await tester.pumpWidget(
+      _wrap(
+        contentWidth: 390,
+        initialLocation: '/knowledge/library?q=Body&tag=work&keep=value',
+      ),
+    );
+    await _settlePaint(tester);
+    final router = GoRouter.of(
+      tester.element(find.byType(KnowledgeLibraryPage)),
+    );
+    final region = find.byWidgetPredicate(
+      (widget) => widget is AppSwipeSwitcher<Object?>,
+    );
+    await tester.drag(region, const Offset(-140, 0));
+    await _settlePaint(tester);
+    expect(router.routeInformationProvider.value.uri.queryParameters, {
+      'scope': 'notes',
+      'q': 'Body',
+      'tag': 'work',
+      'keep': 'value',
+    });
+    expect(find.text('Library note'), findsOneWidget);
+    await tester.drag(region, const Offset(-140, 0));
+    await _settlePaint(tester);
+    expect(router.routeInformationProvider.value.uri.queryParameters, {
+      'scope': 'decisions',
+      'q': 'Body',
+      'keep': 'value',
+    });
+    expect(find.text('Library note'), findsNothing);
+    expect(
+      tester
+          .widget<AppSearchField>(find.byType(AppSearchField))
+          .controller
+          .text,
+      'Body',
+    );
+    await tester.drag(region, const Offset(-140, 0));
+    await _settlePaint(tester);
+    expect(
+      router.routeInformationProvider.value.uri.queryParameters['scope'],
+      'decisions',
+    );
+    await tester.drag(region, const Offset(140, 0));
+    await _settlePaint(tester);
+    expect(
+      router.routeInformationProvider.value.uri.queryParameters['scope'],
+      'notes',
+    );
+    await tester.drag(region, const Offset(140, 0));
+    await _settlePaint(tester);
+    expect(router.routeInformationProvider.value.uri.queryParameters, {
+      'q': 'Body',
+      'keep': 'value',
+    });
+    await _disposeWidget(tester);
+  });
+
+  testWidgets('swiping a library row changes scope without opening the row', (
+    tester,
+  ) async {
+    await _setSurface(tester, 390);
+    await tester.pumpWidget(_wrap(contentWidth: 390));
+    await _settlePaint(tester);
+    await tester.drag(find.byType(KnowledgeEntryTile), const Offset(-120, 0));
+    await _settlePaint(tester);
+    final uri = GoRouter.of(tester.element(find.byType(KnowledgeLibraryPage)))
+        .routeInformationProvider
+        .value
+        .uri;
+    expect(uri.path, '/knowledge/library');
+    expect(uri.queryParameters['scope'], 'notes');
+    expect(find.text('pushed-note-detail'), findsNothing);
+    await _disposeWidget(tester);
+  });
+
+  testWidgets('master category swipes retain the selected detail pane', (
+    tester,
+  ) async {
+    await _setSurface(tester, 1280);
+    await tester.pumpWidget(
+      _wrap(
+        contentWidth: 1100,
+        initialLocation: '/knowledge/library?selected=note:note-1',
+      ),
+    );
+    await _settlePaint(tester);
+    final detail = tester.state(find.byType(KnowledgeNoteDetailPage));
+    await tester.drag(
+      find.byWidgetPredicate((widget) => widget is AppSwipeSwitcher<Object?>),
+      const Offset(-140, 0),
+    );
+    await _settlePaint(tester);
+    expect(tester.state(find.byType(KnowledgeNoteDetailPage)), same(detail));
+    final uri = GoRouter.of(tester.element(find.byType(KnowledgeLibraryPage)))
+        .routeInformationProvider
+        .value
+        .uri;
+    expect(uri.queryParameters['scope'], 'notes');
+    expect(uri.queryParameters['selected'], 'note:note-1');
+    await _disposeWidget(tester);
   });
 
   testWidgets('wide layout opens the note detail in the side pane', (

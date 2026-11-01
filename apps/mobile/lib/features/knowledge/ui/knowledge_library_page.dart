@@ -109,6 +109,15 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
     if (next != uri) router.replace<void>(next.toString());
   }
 
+  void _changeScope(_LibraryScope scope) {
+    setState(() {
+      _scope = scope;
+      _limit = _pageSize;
+      if (scope == _LibraryScope.decisions) _selectedTag = null;
+    });
+    _writeFilters();
+  }
+
   void _clearFilters() {
     _debounce?.cancel();
     setState(() {
@@ -238,176 +247,174 @@ class _KnowledgeLibraryPageState extends ConsumerState<KnowledgeLibraryPage> {
               tag: _selectedTag,
             )),
           );
-    return Column(
-      // Retain filter focus when the list moves into or out of a detail pane.
-      key: _bodyKey,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSpacing.s16,
-            AppSpacing.s12,
-            AppSpacing.s16,
-            AppSpacing.s4,
-          ),
-          child: Column(
-            children: [
-              AppSearchField(
-                key: const Key('knowledge-library-search'),
-                controller: _searchController,
-                onChanged: (text) =>
-                    _scheduleSearch(TextEditingValue(text: text)),
-                focusNode: _searchFocus,
-                hint: l10n.knowledgeLibrarySearchHint,
-                clearLabel: l10n.aiChatSessionsSearchClear,
-              ),
-              const SizedBox(height: AppSpacing.s10),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final scopeFilter = SegmentedRow<_LibraryScope>.inline(
-                    options: _LibraryScope.values,
-                    value: _scope,
-                    labelOf: (scope) => switch (scope) {
-                      _LibraryScope.all => l10n.knowledgeSegmentAll,
-                      _LibraryScope.notes => l10n.knowledgeSegmentNotes,
-                      _LibraryScope.decisions => l10n.knowledgeSegmentDecisions,
-                    },
-                    onChanged: (scope) {
+    return AppSwipeSwitcher<_LibraryScope>(
+      options: _LibraryScope.values,
+      value: _scope,
+      onChanged: _changeScope,
+      child: Column(
+        // Retain filter focus when the list moves into or out of a detail pane.
+        key: _bodyKey,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.s16,
+              AppSpacing.s12,
+              AppSpacing.s16,
+              AppSpacing.s4,
+            ),
+            child: Column(
+              children: [
+                AppSearchField(
+                  key: const Key('knowledge-library-search'),
+                  controller: _searchController,
+                  onChanged: (text) =>
+                      _scheduleSearch(TextEditingValue(text: text)),
+                  focusNode: _searchFocus,
+                  hint: l10n.knowledgeLibrarySearchHint,
+                  clearLabel: l10n.aiChatSessionsSearchClear,
+                ),
+                const SizedBox(height: AppSpacing.s10),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final scopeFilter = SegmentedRow<_LibraryScope>.inline(
+                      options: _LibraryScope.values,
+                      value: _scope,
+                      labelOf: (scope) => switch (scope) {
+                        _LibraryScope.all => l10n.knowledgeSegmentAll,
+                        _LibraryScope.notes => l10n.knowledgeSegmentNotes,
+                        _LibraryScope.decisions =>
+                          l10n.knowledgeSegmentDecisions,
+                      },
+                      onChanged: _changeScope,
+                    );
+                    final tagFilter =
+                        tagFacets.isNotEmpty &&
+                            _scope != _LibraryScope.decisions
+                        ? _LibraryTagFilter(
+                            tags: tagFacets,
+                            selectedTag: _selectedTag,
+                            allLabel: l10n.knowledgeLibraryAllTags,
+                            semanticLabel: l10n.knowledgeLibraryTagFilterLabel,
+                            onChanged: (tag) {
+                              setState(() {
+                                _selectedTag = tag;
+                                _limit = _pageSize;
+                                if (tag != null) _scope = _LibraryScope.notes;
+                              });
+                              _writeFilters();
+                            },
+                          )
+                        : null;
+                    final textScale = MediaQuery.textScalerOf(context).scale(1);
+                    final stacked =
+                        constraints.maxWidth < Breakpoints.mobile * textScale;
+                    final tagWidth = stacked
+                        ? constraints.maxWidth
+                        : constraints.maxWidth / 3;
+                    // Keep the scope control in the same slot across widths.
+                    return Wrap(
+                      spacing: AppSpacing.s8,
+                      runSpacing: AppSpacing.s8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: stacked || tagFilter == null
+                              ? constraints.maxWidth
+                              : constraints.maxWidth - tagWidth - AppSpacing.s8,
+                          child: scopeFilter,
+                        ),
+                        if (tagFilter != null)
+                          SizedBox(
+                            width: tagWidth,
+                            child: Align(
+                              alignment: AlignmentDirectional.centerStart,
+                              child: tagFilter,
+                            ),
+                          ),
+                      ],
+                    );
+                  },
+                ),
+                if (_query.isNotEmpty ||
+                    _scope != _LibraryScope.all ||
+                    _selectedTag != null) ...[
+                  const SizedBox(height: AppSpacing.s8),
+                  AppFilterSummary(
+                    labels: [
+                      if (_query.isNotEmpty) _query,
+                      if (_scope != _LibraryScope.all)
+                        _scope == _LibraryScope.notes
+                            ? l10n.knowledgeSegmentNotes
+                            : l10n.knowledgeSegmentDecisions,
+                      ?_selectedTag,
+                    ],
+                    onRemove: (index) {
+                      final filters = [
+                        if (_query.isNotEmpty) 'query',
+                        if (_scope != _LibraryScope.all) 'scope',
+                        if (_selectedTag != null) 'tag',
+                      ];
                       setState(() {
-                        _scope = scope;
-                        _limit = _pageSize;
-                        if (scope == _LibraryScope.decisions) {
-                          _selectedTag = null;
+                        switch (filters[index]) {
+                          case 'query':
+                            _debounce?.cancel();
+                            _query = '';
+                            _searchController.clear();
+                          case 'scope':
+                            _scope = _LibraryScope.all;
+                          case 'tag':
+                            _selectedTag = null;
                         }
+                        _limit = _pageSize;
                       });
                       _writeFilters();
                     },
-                  );
-                  final tagFilter =
-                      tagFacets.isNotEmpty && _scope != _LibraryScope.decisions
-                      ? _LibraryTagFilter(
-                          tags: tagFacets,
-                          selectedTag: _selectedTag,
-                          allLabel: l10n.knowledgeLibraryAllTags,
-                          semanticLabel: l10n.knowledgeLibraryTagFilterLabel,
-                          onChanged: (tag) {
-                            setState(() {
-                              _selectedTag = tag;
-                              _limit = _pageSize;
-                              if (tag != null) _scope = _LibraryScope.notes;
-                            });
-                            _writeFilters();
-                          },
-                        )
-                      : null;
-                  final textScale = MediaQuery.textScalerOf(context).scale(1);
-                  final stacked =
-                      constraints.maxWidth < Breakpoints.mobile * textScale;
-                  final tagWidth = stacked
-                      ? constraints.maxWidth
-                      : constraints.maxWidth / 3;
-                  // Keep the scope control in the same slot across widths.
-                  return Wrap(
-                    spacing: AppSpacing.s8,
-                    runSpacing: AppSpacing.s8,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      SizedBox(
-                        width: stacked || tagFilter == null
-                            ? constraints.maxWidth
-                            : constraints.maxWidth - tagWidth - AppSpacing.s8,
-                        child: scopeFilter,
-                      ),
-                      if (tagFilter != null)
-                        SizedBox(
-                          width: tagWidth,
-                          child: Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: tagFilter,
-                          ),
-                        ),
-                    ],
-                  );
-                },
-              ),
-              if (_query.isNotEmpty ||
-                  _scope != _LibraryScope.all ||
-                  _selectedTag != null) ...[
-                const SizedBox(height: AppSpacing.s8),
-                AppFilterSummary(
-                  labels: [
-                    if (_query.isNotEmpty) _query,
-                    if (_scope != _LibraryScope.all)
-                      _scope == _LibraryScope.notes
-                          ? l10n.knowledgeSegmentNotes
-                          : l10n.knowledgeSegmentDecisions,
-                    ?_selectedTag,
-                  ],
-                  onRemove: (index) {
-                    final filters = [
-                      if (_query.isNotEmpty) 'query',
-                      if (_scope != _LibraryScope.all) 'scope',
-                      if (_selectedTag != null) 'tag',
-                    ];
-                    setState(() {
-                      switch (filters[index]) {
-                        case 'query':
-                          _debounce?.cancel();
-                          _query = '';
-                          _searchController.clear();
-                        case 'scope':
-                          _scope = _LibraryScope.all;
-                        case 'tag':
-                          _selectedTag = null;
-                      }
-                      _limit = _pageSize;
-                    });
-                    _writeFilters();
-                  },
-                  onClear: _clearFilters,
-                  resultCount: searchResults?.value?.length,
-                ),
-              ],
-            ],
-          ),
-        ),
-        Expanded(
-          child: Semantics(
-            container: true,
-            child: searchResults == null
-                ? _LibraryBrowse(
-                    limit: loadingMore ? _previousLimit : _limit,
-                    onLoadMore: loadingMore
-                        ? null
-                        : () => setState(() {
-                            _previousNotes = notes.value;
-                            _previousDecisions = decisions.value;
-                            _previousLimit = _limit;
-                            _limit += _pageSize;
-                          }),
-                    onRetry: retryBrowse,
-                    scope: _scope,
-                    selectedTag: _selectedTag,
-                    notes: notes,
-                    decisions: decisions,
-                    inMasterDetail: inMasterDetail,
-                  )
-                : _LibrarySearchResults(
-                    value: searchResults,
-                    query: _query,
-                    showKind:
-                        _scope == _LibraryScope.all && _selectedTag == null,
-                    inMasterDetail: inMasterDetail,
-                    onRetry: () => ref.invalidate(
-                      knowledgeLibrarySearchProvider((
-                        query: _query,
-                        kind: _scope.kind,
-                        tag: _selectedTag,
-                      )),
-                    ),
+                    onClear: _clearFilters,
+                    resultCount: searchResults?.value?.length,
                   ),
+                ],
+              ],
+            ),
           ),
-        ),
-      ],
+          Expanded(
+            child: Semantics(
+              container: true,
+              child: searchResults == null
+                  ? _LibraryBrowse(
+                      limit: loadingMore ? _previousLimit : _limit,
+                      onLoadMore: loadingMore
+                          ? null
+                          : () => setState(() {
+                              _previousNotes = notes.value;
+                              _previousDecisions = decisions.value;
+                              _previousLimit = _limit;
+                              _limit += _pageSize;
+                            }),
+                      onRetry: retryBrowse,
+                      scope: _scope,
+                      selectedTag: _selectedTag,
+                      notes: notes,
+                      decisions: decisions,
+                      inMasterDetail: inMasterDetail,
+                    )
+                  : _LibrarySearchResults(
+                      value: searchResults,
+                      query: _query,
+                      showKind:
+                          _scope == _LibraryScope.all && _selectedTag == null,
+                      inMasterDetail: inMasterDetail,
+                      onRetry: () => ref.invalidate(
+                        knowledgeLibrarySearchProvider((
+                          query: _query,
+                          kind: _scope.kind,
+                          tag: _selectedTag,
+                        )),
+                      ),
+                    ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
