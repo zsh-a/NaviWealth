@@ -226,7 +226,8 @@ sessions so an open form cannot repersist erased input. Cross-page form Undo
 offers expire after 60 seconds and clear when the active owner changes, including
 transitions into or out of local-only mode.
 
-`FormDraftBinding` connects the shared store to Execution plan/progress capture
+`FormDraftBinding` connects the shared store to Finance trade and Health meal
+capture, Execution plan/progress capture
 and Knowledge note/decision capture and editing. Restored Knowledge edits retain
 the original row revision so newer records require conflict resolution before a
 save. Hosts offer explicit restore/discard rather than silently applying input.

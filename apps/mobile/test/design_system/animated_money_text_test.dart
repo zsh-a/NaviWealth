@@ -135,13 +135,31 @@ void main() {
     );
     await tester.pumpWidget(
       _wrap(
-        const AnimatedMoneyText(amount: 1000, currencyCode: 'CNY', symbol: '¥'),
+        const AnimatedMoneyText(amount: 7000, currencyCode: 'CNY', symbol: '¥'),
       ),
     );
+    expect(_renderedText(tester), contains('7,000'));
     await tester.pumpAndSettle();
     final settled = _renderedText(tester);
     expect(settled, contains('¥'));
-    expect(settled, contains('1,000'));
+    expect(settled, contains('7,000'));
+  });
+
+  testWidgets('interrupted live updates continue from the displayed amount', (
+    tester,
+  ) async {
+    Widget amount(num value) => _wrap(
+      AnimatedMoneyText(amount: value, currencyCode: 'USD', symbol: r'$'),
+    );
+    await tester.pumpWidget(amount(1000));
+    await tester.pumpWidget(amount(2000));
+    await tester.pump(const Duration(milliseconds: 150));
+    final current = _renderedText(tester);
+    expect(current, isNot(contains('2,000')));
+    await tester.pumpWidget(amount(3000));
+    expect(_renderedText(tester), current);
+    await tester.pumpAndSettle();
+    expect(_renderedText(tester), contains('3,000'));
   });
 
   testWidgets('null amount falls back to the MoneyText placeholder', (

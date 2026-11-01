@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:forui/forui.dart';
@@ -17,7 +18,7 @@ enum ActivityFilterSection { date, kind, account }
 ///
 /// The feed only changes when the user applies the draft, avoiding repeated
 /// refreshes behind the sheet while chips are being selected.
-class ActivityFeedFilterSheet extends ConsumerWidget {
+class ActivityFeedFilterSheet extends ConsumerStatefulWidget {
   const ActivityFeedFilterSheet({super.key, required this.draft, this.section});
 
   final ValueNotifier<ActivityFeedQuery> draft;
@@ -64,6 +65,7 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
           ),
         ],
         footer: _FilterFooter(
+          draft: draft,
           onApply: (sheetContext) {
             final next = draft.value;
             container
@@ -95,10 +97,36 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ActivityFeedFilterSheet> createState() =>
+      _ActivityFeedFilterSheetState();
+}
+
+class _ActivityFeedFilterSheetState
+    extends ConsumerState<ActivityFeedFilterSheet> {
+  final _accountSearch = TextEditingController();
+  String _accountQuery = '';
+  ValueNotifier<ActivityFeedQuery> get draft => widget.draft;
+  ActivityFilterSection? get section => widget.section;
+
+  @override
+  void dispose() {
+    _accountSearch.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final accountsAsync = ref.watch(accountsStreamProvider);
     final accounts = accountsAsync.value ?? const <Account>[];
+    final visibleAccounts = accounts
+        .where(
+          (account) =>
+              '${localizedAccountName(l10n, account)} ${account.currency}'
+                  .toLowerCase()
+                  .contains(_accountQuery.trim().toLowerCase()),
+        )
+        .toList(growable: false);
     return ValueListenableBuilder<ActivityFeedQuery>(
       valueListenable: draft,
       builder: (context, query, _) => Column(
@@ -163,11 +191,26 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
                   style: context.captionStyle,
                 ),
               )
-            else
+            else ...[
+              if (accounts.length >= 8 || _accountQuery.isNotEmpty) ...[
+                AppSearchField(
+                  key: const Key('activity-filter-account-search'),
+                  controller: _accountSearch,
+                  hint: l10n.formAccountPickerSearch,
+                  clearLabel: l10n.aiChatSessionsSearchClear,
+                  onChanged: (value) => setState(() => _accountQuery = value),
+                ),
+                const SizedBox(height: AppSpacing.s8),
+              ],
+              if (visibleAccounts.isEmpty)
+                Text(
+                  l10n.formAccountPickerNoResults,
+                  style: context.captionStyle,
+                ),
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  for (final account in accounts)
+                  for (final account in visibleAccounts)
                     _AccountFilterRow(
                       account: account,
                       selected: query.accountIds.contains(account.id),
@@ -181,6 +224,7 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
                     ),
                 ],
               ),
+            ],
           ],
         ],
       ),
@@ -189,17 +233,28 @@ class ActivityFeedFilterSheet extends ConsumerWidget {
 }
 
 class _FilterFooter extends StatelessWidget {
-  const _FilterFooter({required this.onApply});
+  const _FilterFooter({required this.onApply, required this.draft});
 
   final ValueChanged<BuildContext> onApply;
+  final ValueListenable<ActivityFeedQuery> draft;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return AppSheetFooter(
-      submitLabel: l10n.activityFeedFilterApply,
-      onSubmit: () => onApply(context),
-      cancelLabel: l10n.commonCancel,
+    return ValueListenableBuilder<ActivityFeedQuery>(
+      valueListenable: draft,
+      builder: (context, query, _) => Consumer(
+        builder: (context, ref, _) {
+          final count = ref.watch(activityFeedCountProvider(query));
+          return AppSheetFooter(
+            submitLabel: count.value == null || count.hasError
+                ? l10n.activityFeedFilterApply
+                : l10n.activityFeedFilterShowResults(count.value!),
+            onSubmit: () => onApply(context),
+            cancelLabel: l10n.commonCancel,
+          );
+        },
+      ),
     );
   }
 }

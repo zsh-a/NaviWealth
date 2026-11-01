@@ -211,6 +211,128 @@ Future<void> _pressControlEnter(WidgetTester tester) async {
 }
 
 void main() {
+  for (final save in [false, true]) {
+    testWidgets(
+      'trade draft restores inputs and clears on ${save ? 'save' : 'discard'}',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(900, 1600));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+        final store = LocalFormDraftStore(prefs, owner: 'u-test');
+        await store.write('finance.trade.new', {
+          'quantity': '2',
+          'price': '100',
+          'fee': '1',
+          'tax': '0.5',
+          'note': 'Pending trade',
+          'type': 'buy',
+          'account': 'broker',
+          'currency': 'USD',
+          'date': '2026-01-15T12:00:00.000',
+          'advanced': true,
+          'security': {
+            'symbol': 'AAPL',
+            'market': 'usStock',
+            'type': 'stock',
+            'currency': 'USD',
+            'fromCatalog': true,
+            'name': 'Apple',
+          },
+        });
+        final db = makeTestDatabase();
+        addTearDown(db.close);
+        await _seedBrokerAccount(db);
+        final service = _submissionService(
+          db,
+          tradeService: DefaultTradeEntryService(
+            marketLoader: () async =>
+                throw StateError('Explicit price stays offline'),
+            fx: FxRateCurrencyConverter(InMemoryFxRateLookup([])),
+          ),
+        );
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              sharedPreferencesProvider.overrideWithValue(prefs),
+              localFormDraftStoreProvider.overrideWithValue(store),
+              appDatabaseProvider.overrideWith((_) async => db),
+              accountsStreamProvider.overrideWith(
+                (_) => Stream.value([
+                  _account(
+                    id: 'broker',
+                    name: 'Broker',
+                    type: AccountCategory.broker,
+                    currency: 'USD',
+                  ),
+                ]),
+              ),
+              securitiesSearchServiceProvider.overrideWith(
+                (_) async => _FakeSearch(db: db),
+              ),
+              tradeEntrySubmissionServiceProvider.overrideWith(
+                (_) async => service,
+              ),
+            ],
+            child: _wrap(
+              Builder(
+                builder: (context) => TextButton(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const TradeEntryFormPage(),
+                    ),
+                  ),
+                  child: const Text('Open trade'),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.tap(find.text('Open trade'));
+        await tester.pumpAndSettle();
+        expect(find.text('Restore draft'), findsOneWidget);
+        await tester.tap(find.text('Restore draft'));
+        await tester.pumpAndSettle();
+        expect(find.text('Pending trade'), findsOneWidget);
+        final quantity = tester.widget<EditableText>(
+          find.descendant(
+            of: find.byKey(const Key('trade-entry-quantity')),
+            matching: find.byType(EditableText),
+          ),
+        );
+        expect(quantity.controller.text, '2');
+        if (save) {
+          await tester.tap(find.byKey(const Key('trade-entry-submit')));
+          for (var i = 0; i < 10; i++) {
+            await tester.pump(const Duration(milliseconds: 100));
+          }
+          await tester.tap(find.text('Proceed'));
+          await tester.pumpAndSettle();
+          expect(find.text('Open trade'), findsOneWidget);
+        } else {
+          await tester.tap(find.text('Sell'));
+          await tester.pumpAndSettle();
+          tester.binding.handleAppLifecycleStateChanged(
+            AppLifecycleState.inactive,
+          );
+          await tester.pumpAndSettle();
+          expect(store.read('finance.trade.new')!['type'], 'sell');
+          tester.binding.handleAppLifecycleStateChanged(
+            AppLifecycleState.resumed,
+          );
+          await tester.binding.handlePopRoute();
+          await tester.pumpAndSettle();
+          final l = lookupAppLocalizations(const Locale('en'));
+          await tester.tap(find.text(l.unsavedChangesDiscard));
+          await tester.pumpAndSettle();
+        }
+        expect(store.read('finance.trade.new'), isNull);
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pumpAndSettle();
+      },
+    );
+  }
+
   for (final invalidFee in [false, true]) {
     testWidgets(
       invalidFee
@@ -297,6 +419,13 @@ void main() {
             findsOneWidget,
           );
           expect(await db.select(db.journalEntries).get(), isEmpty);
+          final feeInput = tester.widget<EditableText>(
+            find.descendant(
+              of: find.byKey(const Key('trade-entry-fee')),
+              matching: find.byType(EditableText),
+            ),
+          );
+          expect(feeInput.focusNode.hasFocus, isTrue);
           return;
         }
         expect(find.text('Cash balance will go negative'), findsOneWidget);

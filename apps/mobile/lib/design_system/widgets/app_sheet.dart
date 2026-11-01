@@ -558,6 +558,7 @@ class AppSheet extends StatelessWidget {
     final body = scrollable
         ? SingleChildScrollView(padding: kBodyPadding, child: child)
         : Padding(padding: kBodyPadding, child: child);
+    final resizeDuration = AppMotionPolicy.duration(context, Motion.fast);
 
     final content = Column(
       mainAxisSize: MainAxisSize.min,
@@ -566,12 +567,16 @@ class AppSheet extends StatelessWidget {
         if (!dialog) _dragHandle(colors),
         _header(context),
         Flexible(
-          child: AnimatedSize(
-            duration: AppMotionPolicy.duration(context, Motion.fast),
-            curve: Motion.standardDecelerate,
-            alignment: Alignment.topCenter,
-            child: body,
-          ),
+          // AnimatedSize with zero duration can notify layout listeners during
+          // its own layout. Removing animations should resize immediately.
+          child: resizeDuration == Duration.zero
+              ? body
+              : AnimatedSize(
+                  duration: resizeDuration,
+                  curve: Motion.standardDecelerate,
+                  alignment: Alignment.topCenter,
+                  child: body,
+                ),
         ),
       ],
     );

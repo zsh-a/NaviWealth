@@ -716,6 +716,108 @@ void main() {
   });
 
   group('queryActivityFeed', () {
+    test('searches older matches before limiting the result page', () async {
+      for (var i = 0; i < 65; i++) {
+        await repo.create(
+          entry: JournalEntryDraft(
+            id: 'search-$i',
+            date: DateTime.utc(2026, 1, 1).add(Duration(days: i)),
+            narration: i < 2 ? '北京 Bookstore 100%_off' : 'Other purchase',
+            payee: i == 0 ? 'Older Seller' : null,
+          ),
+          postings: [cashLeg('cash', '-1'), cashLeg('food', '1')],
+        );
+      }
+      final page = await repo.queryActivityFeed(
+        searchText: ' BOOKSTORE ',
+        accountCategories: const {},
+        pageSize: 1,
+      );
+      expect(page.entries.map((entry) => entry.entry.id), ['search-1']);
+      expect(page.hasMore, isTrue);
+      final older = await repo.queryActivityFeed(
+        searchText: 'older seller',
+        accountCategories: const {},
+      );
+      expect(older.entries.single.entry.id, 'search-0');
+      final literal = await repo.queryActivityFeed(
+        searchText: '100%_',
+        accountCategories: const {},
+      );
+      expect(literal.entries, hasLength(2));
+      final chinese = await repo.queryActivityFeedCount(
+        searchText: '北京',
+        accountCategories: const {},
+      );
+      expect(chinese, 2);
+      final filtered = await repo.queryActivityFeedCount(
+        searchText: '北京',
+        accountIds: {'missing'},
+        accountCategories: const {},
+      );
+      expect(filtered, 0);
+    });
+
+    test('search matches account names and ignores deleted accounts', () async {
+      await _insertAccount(
+        db,
+        id: 'Savings_Bank%',
+        side: AccountSide.asset,
+        type: AccountCategory.bank,
+      );
+      await repo.create(
+        entry: JournalEntryDraft(
+          date: DateTime.utc(2026),
+          narration: 'Payment',
+        ),
+        postings: [cashLeg('Savings_Bank%', '-1'), cashLeg('food', '1')],
+      );
+      final page = await repo.queryActivityFeed(
+        searchText: 'savings_bank%',
+        accountCategories: const {},
+      );
+      expect(page.entries, hasLength(1));
+      await (db.update(db.accounts)..where((a) => a.id.equals('Savings_Bank%')))
+          .write(AccountsCompanion(deletedAt: Value(DateTime.utc(2026))));
+      expect(
+        await repo.queryActivityFeedCount(
+          searchText: 'savings_bank%',
+          accountCategories: const {},
+        ),
+        0,
+      );
+    });
+
+    test(
+      'preview counts derived kinds beyond the first bounded batch',
+      () async {
+        for (var i = 0; i < 205; i++) {
+          await repo.create(
+            entry: JournalEntryDraft(
+              id: 'count-$i',
+              date: DateTime.utc(2026).add(Duration(minutes: i)),
+              narration: 'Match',
+            ),
+            postings: i.isEven
+                ? [cashLeg('cash', '-1'), cashLeg('food', '1')]
+                : [cashLeg('cash', '-1'), cashLeg('bank', '1')],
+          );
+        }
+        expect(
+          await repo.queryActivityFeedCount(
+            searchText: 'match',
+            kinds: {EntryKind.expense},
+            accountCategories: const {
+              'cash': AccountSide.asset,
+              'food': AccountSide.expense,
+              'bank': AccountSide.asset,
+            },
+          ),
+          103,
+        );
+      },
+    );
+
     test('empty source reports no additional pages', () async {
       final page = await repo.queryActivityFeed(
         accountCategories: const {},

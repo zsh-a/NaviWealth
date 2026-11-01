@@ -106,6 +106,8 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
   bool _cashAccountClearedForCurrency = false;
   bool _showSettlementDetails = false;
   bool _showAdvancedDetails = false;
+  FormDraftBinding? _draft;
+  bool _restoredDraft = false;
 
   // transferIn / transferOut are deliberately absent from this form —
   // they can never be created as a single user-entered leg.
@@ -173,6 +175,107 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       _taxController,
       _noteController,
     ]);
+    // Workflow-supplied and staged-import prefills retain their source state.
+    // Manual capture keeps a separate draft for each entry context.
+    if (widget.ingestDraft == null && widget.prefill == null) {
+      final contextual =
+          widget.assetId != null ||
+          widget.accountId != null ||
+          widget.initialType != null;
+      _draft = FormDraftBinding(
+        store: ref.read(localFormDraftStoreProvider),
+        form: contextual
+            ? 'finance.trade.new:${widget.assetId ?? ''}:${widget.accountId ?? ''}:${widget.initialType?.name ?? ''}'
+            : 'finance.trade.new',
+        dirty: dirty,
+        inputs: [
+          _quantityController,
+          _priceController,
+          _feeController,
+          _taxController,
+          _noteController,
+        ],
+        payload: () => {
+          'quantity': _quantityController.text,
+          'price': _priceController.text,
+          'fee': _feeController.text,
+          'tax': _taxController.text,
+          'note': _noteController.text,
+          'type': _type.name,
+          'account': _accountId,
+          'cashAccount': _cashAccountId,
+          'currency': _currency,
+          'date': _tradeDate.toIso8601String(),
+          'settlement': _showSettlementDetails,
+          'advanced': _showAdvancedDetails,
+          if (_selected case final choice?)
+            'security': {
+              'symbol': choice.symbol,
+              'market': choice.market.name,
+              'type': choice.type.name,
+              'currency': choice.currency,
+              'fromCatalog': choice.fromCatalog,
+              'name': choice.name,
+              'isin': choice.isin,
+            },
+        },
+      );
+    }
+  }
+
+  void _markChanged() {
+    dirty.markDirty();
+    _draft?.capture();
+  }
+
+  void _restoreDraft() {
+    setState(
+      () => _draft?.restore((value) {
+        _quantityController.text = value['quantity'] as String? ?? '';
+        _priceController.text = value['price'] as String? ?? '';
+        _feeController.text = value['fee'] as String? ?? '0';
+        _taxController.text = value['tax'] as String? ?? '0';
+        _noteController.text = value['note'] as String? ?? '';
+        _type =
+            TradeType.values
+                .where((type) => type.name == value['type'])
+                .firstOrNull ??
+            TradeType.buy;
+        _accountId = value['account'] as String?;
+        _cashAccountId = value['cashAccount'] as String?;
+        _currency = value['currency'] as String? ?? _currency;
+        _tradeDate =
+            DateTime.tryParse(value['date'] as String? ?? '') ?? _tradeDate;
+        _showSettlementDetails = value['settlement'] == true;
+        _showAdvancedDetails = value['advanced'] == true;
+        final security = value['security'];
+        if (security is Map<String, Object?> &&
+            security['symbol'] is String &&
+            security['currency'] is String) {
+          _selected = LocalSecurityChoice(
+            symbol: security['symbol']! as String,
+            market:
+                AssetMarket.values
+                    .where((market) => market.name == security['market'])
+                    .firstOrNull ??
+                AssetMarket.unknown,
+            type:
+                AssetType.values
+                    .where((type) => type.name == security['type'])
+                    .firstOrNull ??
+                AssetType.stock,
+            currency: security['currency']! as String,
+            fromCatalog: security['fromCatalog'] == true,
+            name: security['name'] as String?,
+            isin: security['isin'] as String?,
+          );
+        }
+        _restoredDraft = true;
+        _hydratedDefaults = false;
+        _cashCurrencyResolved = true;
+        _currencyExplicitlySelected = true;
+      }),
+    );
   }
 
   Future<void> _hydrateInitialAsset() async {
@@ -181,7 +284,9 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     try {
       final repo = await ref.read(securitiesAssetRepositoryProvider.future);
       final asset = await repo.findById(assetId);
-      if (!mounted || asset == null) return;
+      if (!mounted || asset == null || _restoredDraft || _selected != null) {
+        return;
+      }
       final choice = LocalSecurityChoice(
         symbol: asset.symbol,
         market: assetMarketFromWire(asset.market) ?? AssetMarket.unknown,
@@ -204,6 +309,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
 
   @override
   void dispose() {
+    _draft?.dispose();
     _quantityController.dispose();
     _priceController.dispose();
     _feeController.dispose();
@@ -234,13 +340,26 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
 
   Future<void> _submit() async {
     if (_busy) return;
-    if (!_formKey.currentState!.validate()) {
-      // Offstage fields still validate. Reveal their errors instead of
-      // silently rejecting a submission from the compact form.
-      setState(() {
-        _showSettlementDetails = true;
-        _showAdvancedDetails = true;
-      });
+    if (!validateAndRevealForm(
+      _formKey,
+      onInvalid: (fields) {
+        setState(() {
+          for (final field in fields) {
+            field.context.visitAncestorElements((element) {
+              if (element.widget.key ==
+                  const Key('trade-entry-advanced-details')) {
+                _showAdvancedDetails = true;
+              }
+              if (element.widget.key ==
+                  const Key('trade-entry-settlement-details')) {
+                _showSettlementDetails = true;
+              }
+              return true;
+            });
+          }
+        });
+      },
+    )) {
       return;
     }
     final l10n = AppLocalizations.of(context);
@@ -526,6 +645,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       // instead of a generic "save failed".
       failureMessage: failureMessage,
       successMessage: l10n.commonSaved,
+      onCommitted: (_) => _draft?.complete(),
       undo: FormUndoPresentation<TradeMutationReceipt>(
         buildAction: (receipt) =>
             FormUndoAction(() => submissionService.undoMutation(receipt)),
@@ -579,6 +699,15 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
 
   Widget _buildForm(List<Account> accounts) {
     final l10n = AppLocalizations.of(context);
+    if (_draft?.hasPending ?? false) {
+      return Padding(
+        padding: const EdgeInsets.all(AppSpacing.s16),
+        child: AppDraftRestoreBanner(
+          onRestore: _restoreDraft,
+          onDiscard: () => setState(() => _draft?.discardPending()),
+        ),
+      );
+    }
     final onSubmit = _busy ? null : _submit;
     final eligible = accounts
         .where(
@@ -607,10 +736,10 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
     // clear the picker without us re-imposing a default.
     if (!_hydratedDefaults) {
       final pool = eligible;
-      if (_accountId == null && pool.isNotEmpty) {
+      if (!_restoredDraft && _accountId == null && pool.isNotEmpty) {
         _accountId = pool.first.id;
       } else if (_accountId != null && !pool.any((a) => a.id == _accountId)) {
-        _accountId = pool.isEmpty ? null : pool.first.id;
+        _accountId = _restoredDraft || pool.isEmpty ? null : pool.first.id;
       }
       if (_cashCurrencyResolved &&
           _cashAccountId != null &&
@@ -657,7 +786,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
             value: _accountId,
             onChanged: (v) => setState(() {
               _accountId = v;
-              dirty.markDirty();
+              _markChanged();
             }),
           ),
           const SizedBox(height: AppSpacing.s12),
@@ -726,7 +855,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
             if (date == null) return;
             setState(() {
               _tradeDate = date;
-              dirty.markDirty();
+              _markChanged();
             });
           },
         ),
@@ -873,7 +1002,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
                       onChanged: (v) => setState(() {
                         _cashAccountId = v;
                         _cashAccountClearedForCurrency = false;
-                        dirty.markDirty();
+                        _markChanged();
                       }),
                     ),
                     const SizedBox(height: AppSpacing.s8),
@@ -938,7 +1067,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
         _cashAccountId = null;
         _cashAccountClearedForCurrency = true;
       }
-      dirty.markDirty();
+      _markChanged();
     });
   }
 
@@ -949,7 +1078,6 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       onChanged: (choice) {
         setState(() {
           _selected = choice;
-          dirty.markDirty();
           if (choice != null) _cashCurrencyResolved = true;
           if (choice != null && !_currencyExplicitlySelected) {
             _currency = choice.currency;
@@ -966,6 +1094,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
             // back up the form.
             _quantityFocus.requestFocus();
           }
+          _markChanged();
         });
       },
     );
@@ -980,7 +1109,7 @@ class _TradeEntryFormPageState extends ConsumerState<TradeEntryFormPage>
       semanticLabelOf: (type) => _typeLabel(l10n, type),
       onChanged: (type) => setState(() {
         _type = type;
-        dirty.markDirty();
+        _markChanged();
       }),
     );
   }

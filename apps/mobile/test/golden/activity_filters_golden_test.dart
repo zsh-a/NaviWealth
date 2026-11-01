@@ -2,20 +2,25 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/design_system/design_system.dart';
 import 'package:naviwealth/features/finance/activity/data/activity_feed_provider.dart';
 import 'package:naviwealth/features/finance/activity/data/activity_feed_query.dart';
 import 'package:naviwealth/features/finance/activity/ui/activity_page.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
 import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/domain/models/invariants.dart';
 import 'package:naviwealth/features/finance/domain/models/journal_entry.dart';
 import 'package:naviwealth/features/finance/domain/models/posting.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/persistence/test_database.dart';
+import '../features/finance/data/repositories/_stub_stamper.dart';
 import '_golden_setup.dart';
 
 final _meta = SyncMeta(
@@ -25,6 +30,15 @@ final _meta = SyncMeta(
   hlc: Hlc.zero('filters-device'),
 );
 final _accounts = [
+  for (var i = 0; i < 8; i++)
+    Account(
+      id: 'backup-$i',
+      type: AccountCategory.bank,
+      name: '备用账户 ${i + 1}',
+      currency: 'CNY',
+      category: AccountSide.asset,
+      sync: _meta,
+    ),
   Account(
     id: 'bank',
     type: AccountCategory.bank,
@@ -97,6 +111,32 @@ Future<void> _capture(
   final prefs = await SharedPreferences.getInstance();
   final name = scaled ? 'activity_filters_scaled' : 'activity_filters';
   final accounts = {for (final account in _accounts) account.id: account};
+  final db = makeTestDatabase();
+  addTearDown(db.close);
+  final repo = JournalEntryRepository(
+    db: db,
+    outbox: InMemoryOutboxStore(),
+    stamper: makeStubStamper(),
+    fxRateSource: const IdentityFxRateSource(),
+    baseCurrency: 'CNY',
+  );
+  for (final entry in _entries) {
+    await repo.create(
+      entry: JournalEntryDraft(
+        id: entry.entry.id,
+        date: entry.entry.date,
+        narration: entry.entry.narration,
+      ),
+      postings: [
+        for (final posting in entry.postings)
+          PostingDraft(
+            accountId: posting.accountId,
+            units: posting.units,
+            unit: posting.unit,
+          ),
+      ],
+    );
+  }
   await pumpAndSnapshotMobile(
     tester,
     name: name,
@@ -108,6 +148,8 @@ Future<void> _capture(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
       accountsStreamProvider.overrideWith((_) => Stream.value(_accounts)),
+      allAccountsStreamProvider.overrideWith((_) => Stream.value(_accounts)),
+      journalEntryRepositoryProvider.overrideWith((_) async => repo),
       activityFeedProvider.overrideWith((ref) {
         final query = ref.watch(activityFeedQueryProvider);
         final entries = filterActivityEntries(
@@ -145,6 +187,15 @@ Future<void> _capture(
   await tester.pumpAndSettle();
   await expectGoldenSurface(
     'goldens/${name}_picker_${theme.filenameSuffix}.png',
+  );
+  await tester.tap(find.text('取消'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.byKey(const ValueKey('activity-filter-account')));
+  await tester.pumpAndSettle();
+  await tester.enterText(find.byType(EditableText).last, '日常');
+  await tester.pumpAndSettle();
+  await expectGoldenSurface(
+    'goldens/${name}_accounts_${theme.filenameSuffix}.png',
   );
   expect(tester.takeException(), isNull);
 }

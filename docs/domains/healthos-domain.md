@@ -250,6 +250,11 @@ Domain reset clears both resources, while ordinary cache cleanup preserves
 them. A storage trigger also removes photo bytes when a meal tombstone arrives
 through Sync.
 
+New meal capture recovers an owner-scoped local form draft with explicit
+restore/discard. Food snapshots, consumed grams, date, meal type and notes flush
+on backgrounding/disposal and clear on save or explicit discard. Photos remain
+memory-only; recovery explicitly asks users to reselect any missing images.
+
 On iOS and Android, each image preview offers an explicit Save to photos
 action, including images loaded from an existing meal and stills extracted
 from video. It exports the selected normalized JPEG to the system photo

@@ -53,8 +53,6 @@ class NwBarChart extends StatefulWidget {
 }
 
 class _NwBarChartState extends State<NwBarChart> {
-  // First-paint entrance reveal has completed (or was skipped).
-  bool _revealDone = false;
   bool _focused = false;
   int _keyboardIndex = -1;
 
@@ -251,31 +249,30 @@ class _NwBarChartState extends State<NwBarChart> {
     // NwLineChart (decorative role, so reduce-motion skips the motion; value
     // updates still morph through fl_chart's own tween). A ShaderMask (not a
     // clip) keeps layout AND hit testing intact.
-    if (!_revealDone) {
-      chartWidget = TweenAnimationBuilder<double>(
-        tween: Tween<double>(begin: 0, end: 1),
-        duration: AppMotionPolicy.duration(
-          context,
-          Motion.chartEnter,
-          role: AppMotionRole.decorative,
-        ),
-        curve: Motion.emphasizedDecelerate,
-        onEnd: () => _revealDone = true,
-        builder: (context, t, child) => ShaderMask(
-          blendMode: BlendMode.dstIn,
-          shaderCallback: (bounds) => LinearGradient(
-            colors: [
-              ColorPalette.neutral0,
-              ColorPalette.neutral0,
-              ColorPalette.neutral0.withValues(alpha: AppOpacity.transparent),
-            ],
-            stops: [0, t, (t + 0.08).clamp(0.0, 1.0)],
-          ).createShader(bounds),
-          child: child,
-        ),
-        child: chartWidget,
-      );
-    }
+    // Keep the wrapper mounted: removing it on a scrub-induced rebuild would
+    // dispose the chart's gesture recognizers before the pointer is released.
+    chartWidget = TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: AppMotionPolicy.duration(
+        context,
+        Motion.chartEnter,
+        role: AppMotionRole.decorative,
+      ),
+      curve: Motion.emphasizedDecelerate,
+      builder: (context, t, child) => ShaderMask(
+        blendMode: BlendMode.dstIn,
+        shaderCallback: (bounds) => LinearGradient(
+          colors: [
+            ColorPalette.neutral0,
+            ColorPalette.neutral0,
+            ColorPalette.neutral0.withValues(alpha: AppOpacity.transparent),
+          ],
+          stops: [0, t, (t + 0.08).clamp(0.0, 1.0)],
+        ).createShader(bounds),
+        child: child,
+      ),
+      child: chartWidget,
+    );
 
     final samples = _samples;
     final selected = _keyboardIndex >= 0 && _keyboardIndex < samples.length

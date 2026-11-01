@@ -11,6 +11,7 @@ import 'package:naviwealth/core/auth/auth_state.dart';
 import 'package:naviwealth/core/auth/domain_opt_in_store.dart';
 import 'package:naviwealth/core/auth/domain_scope.dart';
 import 'package:naviwealth/core/auth/providers.dart' as auth;
+import 'package:naviwealth/core/forms/forms.dart';
 import 'package:naviwealth/core/persistence/app_database.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 import 'package:naviwealth/core/sync/drift_sync_storage.dart';
@@ -32,6 +33,7 @@ import 'package:naviwealth/features/health/ui/health_meal_entry_page.dart';
 import 'package:naviwealth/features/health/ui/health_meals_page.dart';
 import 'package:naviwealth/features/health/ui/meal_date_control.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/persistence/test_database.dart';
 import '../../../support/test_app_theme.dart';
@@ -156,12 +158,16 @@ Future<GoRouter> _pump(
   _Capture? capture,
   MealPhotoSaver? photoSaver,
   HealthMealRepository? repository,
+  LocalFormDraftStore? draftStore,
   bool openEntry = true,
   double width = 800,
   double height = 1400,
   double scale = 1,
   Locale locale = const Locale('en'),
 }) async {
+  if (draftStore == null) SharedPreferences.setMockInitialValues({});
+  final preferences =
+      draftStore?.preferences ?? await SharedPreferences.getInstance();
   tester.view.physicalSize = Size(width, height);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
@@ -198,6 +204,7 @@ Future<GoRouter> _pump(
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        sharedPreferencesProvider.overrideWithValue(preferences),
         appDatabaseProvider.overrideWith((_) async => db),
         auth.authStateProvider.overrideWithValue(const AuthLocalOnly()),
         outboxStoreProvider.overrideWith((_) async => DriftOutboxStore(db)),
@@ -251,6 +258,78 @@ Future<void> _identify(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets(
+    'new meal restores food edits and details, then clears draft on save',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final preferences = await SharedPreferences.getInstance();
+      final store = LocalFormDraftStore(preferences, owner: kLocalOnlyUserId);
+      await store.write('health.meal.new', {
+        'note': 'Recovered meal',
+        'day': '2026-10-24T00:00:00.000Z',
+        'capturedAt': '2026-10-24T12:00:00.000',
+        'type': 'breakfast',
+        'foods': [
+          mealFoodCatalog.first.portion(175, name: 'Recovered rice').toJson(),
+        ],
+        'hadPhotos': true,
+      });
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      await _pump(tester, db, draftStore: store);
+      expect(find.text('Restore draft'), findsOneWidget);
+      expect(find.text('Recovered rice'), findsNothing);
+      await tester.tap(find.text('Restore draft'));
+      await tester.pumpAndSettle();
+      expect(find.text('Recovered rice'), findsOneWidget);
+      expect(find.text('Recovered meal'), findsOneWidget);
+      expect(
+        find.textContaining('Photos are not kept in drafts'),
+        findsOneWidget,
+      );
+      expect(
+        tester.widget<MealDateControl>(find.byType(MealDateControl)).day,
+        DateTime.utc(2026, 10, 24),
+      );
+      await tester.ensureVisible(find.text('Dinner'));
+      await tester.tap(find.text('Dinner'));
+      await tester.pumpAndSettle();
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      await tester.pumpAndSettle();
+      expect(store.read('health.meal.new')!['type'], 'dinner');
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.tap(find.byKey(const Key('meal-save')));
+      await tester.pumpAndSettle();
+      expect(store.read('health.meal.new'), isNull);
+      final saved = await db.select(db.healthMeals).getSingle();
+      expect(HealthMeal.decodeFoods(saved.foodsJson).single.grams, 175);
+      expect(saved.note, 'Recovered meal');
+      expect(saved.mealType, 'dinner');
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets('discarding a pending meal draft starts a clean capture', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    final preferences = await SharedPreferences.getInstance();
+    final store = LocalFormDraftStore(preferences, owner: kLocalOnlyUserId);
+    await store.write('health.meal.new', {'note': 'Discard this'});
+    final db = makeTestDatabase();
+    addTearDown(db.close);
+    await _pump(tester, db, draftStore: store);
+    final l = lookupAppLocalizations(const Locale('en'));
+    await tester.tap(find.text(l.formDraftDiscard));
+    await tester.pumpAndSettle();
+    expect(store.read('health.meal.new'), isNull);
+    expect(find.text('Discard this'), findsNothing);
+    expect(find.byKey(const Key('meal-camera')), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+  });
+
   testWidgets(
     'multiple views and context are reviewed once and persist on edit',
     (tester) async {

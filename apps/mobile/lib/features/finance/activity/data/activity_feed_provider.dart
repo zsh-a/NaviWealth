@@ -20,6 +20,29 @@ final activityFeedProvider = StreamProvider.autoDispose<ActivityFeedPage>((
   return _watchActivityFeedPage(ref, query);
 });
 
+final activityFeedCountProvider = StreamProvider.autoDispose
+    .family<int, ActivityFeedQuery>((ref, query) {
+      final accounts = ref.watch(allAccountsStreamProvider);
+      if (accounts.hasError) {
+        return Stream.error(accounts.error!, accounts.stackTrace);
+      }
+      if (!accounts.hasValue) return const Stream.empty();
+      return Stream.fromFuture(
+        ref.watch(journalEntryRepositoryProvider.future),
+      ).asyncExpand(
+        (repo) => repo.watchActivityFeedCount(
+          from: query.dateRange?.start,
+          to: query.dateRange?.end,
+          accountIds: query.accountIds,
+          kinds: query.kinds.map(entryKindFromActivityKind).toSet(),
+          searchText: query.searchText,
+          accountCategories: {
+            for (final account in accounts.value!) account.id: account.category,
+          },
+        ),
+      );
+    });
+
 /// Lightweight unfiltered feed for Home's recent-activity strip.
 ///
 /// Independent of [activityFeedQueryProvider] so filter / load-more on the
@@ -65,31 +88,13 @@ Stream<ActivityFeedPage> _watchActivityFeedPage(
           kinds: query.kinds.map(entryKindFromActivityKind).toSet(),
           accountCategories: accountCategories,
           pageSize: query.pageSize,
+          searchText: query.searchText,
         ),
       )
       .map((page) {
-        final needle = query.searchText.trim().toLowerCase();
-        final entries = needle.isEmpty
-            ? page.entries
-            : page.entries
-                  .where((entry) {
-                    final narration = entry.entry.narration.toLowerCase();
-                    final payee = (entry.entry.payee ?? '').toLowerCase();
-                    final account = entry.postings.any(
-                      (posting) =>
-                          accountsById[posting.accountId]?.name
-                              .toLowerCase()
-                              .contains(needle) ??
-                          false,
-                    );
-                    return narration.contains(needle) ||
-                        payee.contains(needle) ||
-                        account;
-                  })
-                  .toList(growable: false);
         return ActivityFeedPage(
-          entries: entries,
-          totalCount: entries.length,
+          entries: page.entries,
+          totalCount: page.entries.length,
           hasMore: page.hasMore,
           isFiltered: query.hasFilters,
           accountsById: accountsById,

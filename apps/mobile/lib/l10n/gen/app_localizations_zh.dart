@@ -9932,6 +9932,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get activityFeedFilterApply => '应用筛选';
 
   @override
+  String activityFeedFilterShowResults(int count) {
+    return '查看 $count 条结果';
+  }
+
+  @override
   String get activityFeedFilterAllDates => '全部日期';
 
   @override
@@ -17616,6 +17621,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get healthMealNeedFood => '请至少添加一种食物后保存。';
+
+  @override
+  String get healthMealDraftPhotosNotice =>
+      '已恢复食物清单和餐食信息。照片不保存在草稿中，请重新选择需要附上的照片。';
 
   @override
   String get healthMealNotFound => '这条餐食记录不可用，或属于其他用户。';

@@ -171,24 +171,27 @@ class _DomainTabScaffoldState extends State<DomainTabScaffold> {
     final header = ValueListenableBuilder<bool>(
       valueListenable: _headerVisible,
       builder: (context, headerVisible, _) {
+        final content = headerVisible
+            ? FHeader.nested(
+                prefixes: prefixes,
+                title: _DomainHeaderTitle(widget.title),
+                suffixes: widget.actions,
+              )
+            // Keep shell controls reachable while the title collapses away.
+            // Pages with no controls still collapse to zero height.
+            : hasControls
+            ? _CompactHeaderControls(
+                prefixes: prefixes,
+                actions: widget.actions,
+              )
+            : const SizedBox(width: double.infinity);
+        final duration = AppMotionPolicy.duration(context, Motion.medium);
+        if (duration == Duration.zero) return content;
         return AnimatedSize(
-          duration: AppMotionPolicy.duration(context, Motion.medium),
+          duration: duration,
           curve: Motion.standard,
           alignment: Alignment.topCenter,
-          child: headerVisible
-              ? FHeader.nested(
-                  prefixes: prefixes,
-                  title: _DomainHeaderTitle(widget.title),
-                  suffixes: widget.actions,
-                )
-              // Keep shell controls reachable while the title collapses away.
-              // Pages with no controls still collapse to zero height.
-              : hasControls
-              ? _CompactHeaderControls(
-                  prefixes: prefixes,
-                  actions: widget.actions,
-                )
-              : const SizedBox(width: double.infinity),
+          child: content,
         );
       },
     );

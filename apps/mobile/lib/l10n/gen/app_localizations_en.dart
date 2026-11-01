@@ -10477,6 +10477,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activityFeedFilterApply => 'Apply filters';
 
   @override
+  String activityFeedFilterShowResults(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Show $count results',
+      one: 'Show 1 result',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get activityFeedFilterAllDates => 'All dates';
 
   @override
@@ -18641,6 +18652,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get healthMealNeedFood => 'Add at least one food before saving.';
+
+  @override
+  String get healthMealDraftPhotosNotice =>
+      'Your food list and meal details were restored. Photos are not kept in drafts; select them again to include them.';
 
   @override
   String get healthMealNotFound =>

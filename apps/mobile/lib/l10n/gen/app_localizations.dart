@@ -17735,6 +17735,12 @@ abstract class AppLocalizations {
   /// **'Apply filters'**
   String get activityFeedFilterApply;
 
+  /// Apply filters with an exact preview of matching records
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Show 1 result} other{Show {count} results}}'**
+  String activityFeedFilterShowResults(int count);
+
   /// Activity toolbar and filter option for no date restriction
   ///
   /// In en, this message translates to:
@@ -31298,6 +31304,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add at least one food before saving.'**
   String get healthMealNeedFood;
+
+  /// No description provided for @healthMealDraftPhotosNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Your food list and meal details were restored. Photos are not kept in drafts; select them again to include them.'**
+  String get healthMealDraftPhotosNotice;
 
   /// No description provided for @healthMealNotFound.
   ///

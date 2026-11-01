@@ -411,6 +411,12 @@ with 10px vertical and 12px horizontal content inset and a 44px minimum height.
 Retain labels, descriptions and inline errors; the preview is not a replacement
 for the app's form scaffolds or dirty guards.
 
+Shared search fields wait for IME composition to finish before emitting a query.
+Invalid form submission brings the first error into view and focuses its input;
+collapsed groups open only when needed to reveal an error. Recoverable capture
+uses the shared explicit restore/discard treatment. Filter sheets keep edits
+local until Apply and preview matching results without blocking on preview errors.
+
 ### Navigation
 
 The floating dock uses the xl continuous radius, s8 horizontal and s6 vertical

@@ -70,9 +70,6 @@ class _NwPieChartState extends State<NwPieChart> {
   int _highlightedIndex = -1;
   bool _focused = false;
 
-  // First-paint entrance reveal has completed (or was skipped).
-  bool _revealDone = false;
-
   // Cache NumberFormat — constructing it is expensive and unnecessary
   // on every frame during touch drag.
   static final NumberFormat _compactFormat = NumberFormat.compact();
@@ -156,33 +153,29 @@ class _NwPieChartState extends State<NwPieChart> {
     // (decorative role, so reduce-motion skips the motion; value updates
     // still morph through fl_chart's own tween). A ShaderMask (not a clip)
     // keeps layout AND hit testing intact.
-    final revealedChart = _revealDone
-        ? chartWidget
-        : TweenAnimationBuilder<double>(
-            tween: Tween<double>(begin: 0, end: 1),
-            duration: AppMotionPolicy.duration(
-              context,
-              Motion.chartEnter,
-              role: AppMotionRole.decorative,
-            ),
-            curve: Motion.emphasizedDecelerate,
-            onEnd: () => _revealDone = true,
-            builder: (context, t, child) => ShaderMask(
-              blendMode: BlendMode.dstIn,
-              shaderCallback: (bounds) => RadialGradient(
-                colors: [
-                  ColorPalette.neutral0,
-                  ColorPalette.neutral0,
-                  ColorPalette.neutral0.withValues(
-                    alpha: AppOpacity.transparent,
-                  ),
-                ],
-                stops: [0, t, (t + 0.08).clamp(0.0, 1.0)],
-              ).createShader(bounds),
-              child: child,
-            ),
-            child: chartWidget,
-          );
+    // Preserve the chart and its recognizers across selection rebuilds.
+    final revealedChart = TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: 1),
+      duration: AppMotionPolicy.duration(
+        context,
+        Motion.chartEnter,
+        role: AppMotionRole.decorative,
+      ),
+      curve: Motion.emphasizedDecelerate,
+      builder: (context, t, child) => ShaderMask(
+        blendMode: BlendMode.dstIn,
+        shaderCallback: (bounds) => RadialGradient(
+          colors: [
+            ColorPalette.neutral0,
+            ColorPalette.neutral0,
+            ColorPalette.neutral0.withValues(alpha: AppOpacity.transparent),
+          ],
+          stops: [0, t, (t + 0.08).clamp(0.0, 1.0)],
+        ).createShader(bounds),
+        child: child,
+      ),
+      child: chartWidget,
+    );
 
     final legend = widget.legendBuilder?.call(
       context,

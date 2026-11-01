@@ -53,6 +53,8 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
   bool _working = false;
   bool _confirming = false;
   bool _saving = false;
+  FormDraftBinding? _draft;
+  bool _draftPhotosNeedReselect = false;
   String? _error;
   bool get _busy => _working || _saving || _confirming;
 
@@ -84,7 +86,68 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
     if (widget.mealId != null) {
       _loading = true;
       _load();
+    } else {
+      _draft = FormDraftBinding(
+        store: ref.read(localFormDraftStoreProvider),
+        form: 'health.meal.new',
+        dirty: dirty,
+        inputs: [_note],
+        payload: () => {
+          'note': _note.text,
+          'day': _day.toIso8601String(),
+          'capturedAt': _capturedAt.toIso8601String(),
+          'type': _type.name,
+          'foods': _foods.map((food) => food.toJson()).toList(),
+          'model': _recognitionModel,
+          'details': _showDetails,
+          // Photos remain memory-only until Save. Never put binary images in
+          // the shared preferences snapshot or upload them during recovery.
+          'hadPhotos': _photos.isNotEmpty || _draftPhotosNeedReselect,
+        },
+      );
     }
+  }
+
+  void _markChanged() {
+    dirty.markDirty();
+    _draft?.capture();
+  }
+
+  void _restoreDraft() {
+    if (!_sessionValid) return;
+    setState(
+      () => _draft?.restore((value) {
+        _note.text = value['note'] as String? ?? '';
+        final day = DateTime.tryParse(value['day'] as String? ?? '');
+        final today = ref.read(healthCalendarDayProvider);
+        if (day != null && day.year >= 1970 && !day.isAfter(today)) {
+          _day = DateTime.utc(day.year, day.month, day.day);
+        }
+        _capturedAt =
+            DateTime.tryParse(value['capturedAt'] as String? ?? '') ??
+            _capturedAt;
+        _setCaptureDay(_day);
+        _type =
+            HealthMealType.values
+                .where((type) => type.name == value['type'])
+                .firstOrNull ??
+            _type;
+        _foods.clear();
+        if (value['foods'] case final List<Object?> foods) {
+          for (final food in foods.take(30)) {
+            if (food is! Map<String, Object?>) continue;
+            try {
+              _foods.add(MealFood.fromJson(food));
+            } on FormatException {
+              // Keep valid recovered rows editable if an old row is invalid.
+            }
+          }
+        }
+        _recognitionModel = value['model'] as String?;
+        _showDetails = value['details'] == true || _note.text.isNotEmpty;
+        _draftPhotosNeedReselect = value['hadPhotos'] == true;
+      }),
+    );
   }
 
   Future<void> _load() async {
@@ -136,6 +199,7 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
 
   @override
   void dispose() {
+    _draft?.dispose();
     _note.dispose();
     super.dispose();
   }
@@ -168,7 +232,7 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
       _day = DateTime.utc(day.year, day.month, day.day);
       _setCaptureDay(_day);
     });
-    dirty.markDirty();
+    _markChanged();
   }
 
   @override
@@ -177,11 +241,12 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
     ref.watch(activeUserIdProvider);
     ref.watch(auth.domainOptInsProvider);
     final valid = _sessionValid;
+    final hasDraft = _draft?.hasPending ?? false;
     final today = ref.watch(healthCalendarDayProvider);
     final client = ref.watch(mealRecognitionClientProvider);
     final editable =
         valid && !_loading && (widget.mealId == null || _initial != null);
-    final canSave = editable && !_busy && _foods.isNotEmpty;
+    final canSave = editable && !hasDraft && !_busy && _foods.isNotEmpty;
     final canCapture = !_busy && _photos.length < MealPhoto.maxCount;
     final total = _foods.fold(
       MealNutrients.zero,
@@ -194,45 +259,58 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
         confirmLeave: handleBackIntent,
         child: AppFormScaffoldBody(
           onSubmit: canSave ? _save : null,
-          action: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (editable) ...[
-                if (failure != null) ...[
-                  AppStatusBanner(kind: AppStatusKind.error, message: failure),
-                  const SizedBox(height: AppSpacing.s8),
-                ],
-                if (_foods.isEmpty)
-                  Text(l.healthMealNeedFood, style: context.captionStyle)
-                else
-                  Wrap(
-                    alignment: WrapAlignment.spaceBetween,
-                    spacing: AppSpacing.s12,
-                    runSpacing: AppSpacing.s4,
-                    children: [
-                      Text(l.healthMealTotal, style: context.captionStyle),
-                      Text(
-                        l.healthMealKcal(total.kcal.round().toString()),
-                        style: context.labelStyle,
-                      ),
+          action: hasDraft
+              ? const SizedBox.shrink()
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (editable) ...[
+                      if (failure != null) ...[
+                        AppStatusBanner(
+                          kind: AppStatusKind.error,
+                          message: failure,
+                        ),
+                        const SizedBox(height: AppSpacing.s8),
+                      ],
+                      if (_foods.isEmpty)
+                        Text(l.healthMealNeedFood, style: context.captionStyle)
+                      else
+                        Wrap(
+                          alignment: WrapAlignment.spaceBetween,
+                          spacing: AppSpacing.s12,
+                          runSpacing: AppSpacing.s4,
+                          children: [
+                            Text(
+                              l.healthMealTotal,
+                              style: context.captionStyle,
+                            ),
+                            Text(
+                              l.healthMealKcal(total.kcal.round().toString()),
+                              style: context.labelStyle,
+                            ),
+                          ],
+                        ),
+                      const SizedBox(height: AppSpacing.s8),
                     ],
-                  ),
-                const SizedBox(height: AppSpacing.s8),
-              ],
-              AppBusyButton(
-                buttonKey: const Key('meal-save'),
-                label: l.healthMealSave,
-                busy: _saving,
-                onPress: canSave ? _save : null,
-              ),
-            ],
-          ),
+                    AppBusyButton(
+                      buttonKey: const Key('meal-save'),
+                      label: l.healthMealSave,
+                      busy: _saving,
+                      onPress: canSave ? _save : null,
+                    ),
+                  ],
+                ),
           children: [
             if (!valid)
               AppStatusBanner(
                 kind: AppStatusKind.error,
                 message: l.healthMealSessionChanged,
+              )
+            else if (hasDraft)
+              AppDraftRestoreBanner(
+                onRestore: _restoreDraft,
+                onDiscard: () => setState(() => _draft?.discardPending()),
               )
             else if (_loading)
               const SkeletonBox(height: 200)
@@ -247,6 +325,13 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
                 child: Text(l.commonRetry),
               ),
             ] else ...[
+              if (_draftPhotosNeedReselect && _photos.isEmpty) ...[
+                AppStatusBanner(
+                  kind: AppStatusKind.info,
+                  message: l.healthMealDraftPhotosNotice,
+                ),
+                const SizedBox(height: AppSpacing.s12),
+              ],
               MealDateControl(
                 day: _day,
                 today: today,
@@ -261,7 +346,7 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
                     ? null
                     : (type) {
                         setState(() => _type = type);
-                        dirty.markDirty();
+                        _markChanged();
                       },
               ),
               const SizedBox(height: AppSpacing.s20),
@@ -288,7 +373,7 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
                             _photos[index] = _photos[index].withRole(role);
                             _photosChanged = true;
                           });
-                          dirty.markDirty();
+                          _markChanged();
                         },
                   onRemove: _busy
                       ? null
@@ -298,7 +383,7 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
                             _photos.removeAt(index);
                             _photosChanged = true;
                           });
-                          dirty.markDirty();
+                          _markChanged();
                         },
                 ),
                 const SizedBox(height: AppSpacing.s8),
@@ -498,7 +583,7 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
       await _editFood(index);
     } else if (action == 'remove') {
       setState(() => _foods.removeAt(index));
-      dirty.markDirty();
+      _markChanged();
     }
   }
 
@@ -539,7 +624,7 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
         _photos.addAll(images.map((bytes) => MealPhoto(bytes: bytes)));
         _photosChanged = true;
       });
-      dirty.markDirty();
+      _markChanged();
     } catch (_) {
       if (mounted) {
         setState(
@@ -601,7 +686,7 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
         _photos.addAll(frames);
         _photosChanged = true;
       });
-      dirty.markDirty();
+      _markChanged();
     } on Object catch (error) {
       if (mounted) {
         setState(
@@ -672,7 +757,7 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
           ..addAll(result.foods);
         _recognitionModel = result.model;
       });
-      dirty.markDirty();
+      _markChanged();
       _revealFoods();
     } catch (_) {
       if (mounted) setState(() => _error = l.healthMealRecognitionFailed);
@@ -703,7 +788,7 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
       }
       _error = null;
     });
-    dirty.markDirty();
+    _markChanged();
     _revealFoods();
   }
 
@@ -738,6 +823,7 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
       },
       failureMessage: (_) => l.commonSaveFailed,
       successMessage: l.commonSaved,
+      onCommitted: (_) => _draft?.complete(),
       tag: 'health-meal',
     );
   }

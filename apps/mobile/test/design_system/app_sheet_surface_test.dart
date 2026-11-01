@@ -17,6 +17,34 @@ Widget _wrap(Widget child, {MediaQueryData? mediaQueryData}) {
 }
 
 void main() {
+  testWidgets('disabled motion resizes changing sheet content immediately', (
+    tester,
+  ) async {
+    var expanded = false;
+    late StateSetter rebuild;
+    await tester.pumpWidget(
+      _wrap(
+        StatefulBuilder(
+          builder: (context, setState) {
+            rebuild = setState;
+            return AppSheet(
+              title: 'Details',
+              child: SizedBox(
+                key: const Key('sheet-content'),
+                height: expanded ? 240 : 60,
+              ),
+            );
+          },
+        ),
+        mediaQueryData: const MediaQueryData(disableAnimations: true),
+      ),
+    );
+    rebuild(() => expanded = true);
+    await tester.pump();
+    expect(tester.getSize(find.byKey(const Key('sheet-content'))).height, 240);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('ordinary sheet surfaces default to solid material', (
     tester,
   ) async {

@@ -1,4 +1,5 @@
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
@@ -51,6 +52,52 @@ const _slices = [Slice(label: 'a', value: 1), Slice(label: 'b', value: 2)];
 
 void main() {
   group('NwBarChart entrance', () {
+    testWidgets('first long-press scrub survives parent readout rebuilds', (
+      tester,
+    ) async {
+      final samples = <String?>[];
+      await tester.pumpWidget(
+        _wrap(
+          StatefulBuilder(
+            builder: (context, setState) => NwBarChart(
+              onScrub: (value) => setState(() => samples.add(value?.label)),
+              series: const [
+                CategorySeries(
+                  name: 'daily',
+                  data: [
+                    CategoryDatum(label: 'Mon', value: 10),
+                    CategoryDatum(label: 'Tue', value: 20),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final rect = tester.getRect(find.byType(BarChart));
+      final state = tester.state(find.byType(BarChart));
+      final data = tester.widget<BarChart>(find.byType(BarChart)).data;
+      final left = data.titlesData.leftTitles.sideTitles.reservedSize;
+      final bottom = data.titlesData.bottomTitles.sideTitles.reservedSize;
+      final gap = (rect.width - left - 32) / 3;
+      final gesture = await tester.startGesture(
+        Offset(rect.left + left + gap + 8, rect.bottom - bottom - 10),
+      );
+      await tester.pump(kLongPressTimeout + const Duration(milliseconds: 1));
+      await tester.pump();
+      expect(samples.last, 'Mon');
+      expect(tester.state(find.byType(BarChart)), same(state));
+      await gesture.moveTo(
+        Offset(rect.left + left + gap * 2 + 24, rect.bottom - bottom - 10),
+      );
+      await tester.pump();
+      expect(samples.last, 'Tue');
+      await gesture.up();
+      await tester.pumpAndSettle();
+      expect(samples.last, isNull);
+    });
+
     testWidgets('plays a one-shot draw-in on first paint', (tester) async {
       await tester.pumpWidget(_wrap(const NwBarChart(series: _barSeries)));
 
@@ -68,9 +115,12 @@ void main() {
       await tester.pumpWidget(_wrap(const NwBarChart(series: _barSeries)));
       await tester.pumpAndSettle();
 
+      final chartState = tester.state(find.byType(BarChart));
+
       // Same State, new widget instance — the reveal must not restart.
       await tester.pumpWidget(_wrap(const NwBarChart(series: _barSeries)));
-      expect(find.byType(ShaderMask), findsNothing);
+      expect(find.byType(ShaderMask), findsOneWidget);
+      expect(tester.state(find.byType(BarChart)), same(chartState));
       expect(find.byType(BarChart), findsOneWidget);
     });
 
@@ -103,8 +153,11 @@ void main() {
       await tester.pumpWidget(_wrap(const NwPieChart(slices: _slices)));
       await tester.pumpAndSettle();
 
+      final chartState = tester.state(find.byType(PieChart));
+
       await tester.pumpWidget(_wrap(const NwPieChart(slices: _slices)));
-      expect(find.byType(ShaderMask), findsNothing);
+      expect(find.byType(ShaderMask), findsOneWidget);
+      expect(tester.state(find.byType(PieChart)), same(chartState));
       expect(find.byType(PieChart), findsOneWidget);
     });
 

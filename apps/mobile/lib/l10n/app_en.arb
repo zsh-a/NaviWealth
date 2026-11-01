@@ -5371,6 +5371,11 @@
   "activityFeedFilterClear": "Clear",
   "@activityFeedFilterClear": { "description": "Activity feed filter clear action" },
   "activityFeedFilterApply": "Apply filters",
+  "activityFeedFilterShowResults": "{count, plural, =1{Show 1 result} other{Show {count} results}}",
+  "@activityFeedFilterShowResults": {
+    "description": "Apply filters with an exact preview of matching records",
+    "placeholders": { "count": { "type": "int" } }
+  },
   "@activityFeedFilterApply": { "description": "Apply the activity filter draft" },
   "activityFeedFilterAllDates": "All dates",
   "@activityFeedFilterAllDates": { "description": "Activity toolbar and filter option for no date restriction" },
@@ -9030,6 +9035,7 @@
   "healthMealCatalogHint": "Match the cooked/raw preparation. For mixed dishes, edit the recipe nutrition instead of choosing an unrelated ingredient.",
   "healthMealInvalidFood": "Enter a food name, 0–1,000 kcal per 100 g, nutrients from 0–100 g (combined at most 105 g), and an eaten weight above 0 and at most 10,000 g.",
   "healthMealNeedFood": "Add at least one food before saving.",
+  "healthMealDraftPhotosNotice": "Your food list and meal details were restored. Photos are not kept in drafts; select them again to include them.",
   "healthMealNotFound": "This meal is unavailable or belongs to another user.",
   "healthMealSessionChanged": "The user or HealthOS setting changed. Reopen this meal to continue.",
   "healthMealDeleteConfirm": "Delete this meal and its images from this device? The meal deletion will also sync to your other devices.",

@@ -1,16 +1,24 @@
+import 'package:decimal/decimal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:forui/forui.dart';
+import 'package:naviwealth/core/sync/drift_sync_storage.dart';
 import 'package:naviwealth/core/sync/hlc.dart';
 import 'package:naviwealth/core/sync/sync_meta.dart';
 import 'package:naviwealth/features/finance/activity/data/activity_feed_provider.dart';
 import 'package:naviwealth/features/finance/activity/data/activity_feed_query.dart';
 import 'package:naviwealth/features/finance/activity/ui/activity_feed_filter_sheet.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_providers.dart';
+import 'package:naviwealth/features/finance/data/repositories/journal_entry_repository.dart';
 import 'package:naviwealth/features/finance/data/repositories/providers.dart';
 import 'package:naviwealth/features/finance/domain/models/account.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
+import 'package:naviwealth/features/finance/domain/models/invariants.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+
+import '../../../core/persistence/test_database.dart';
+import '../data/repositories/_stub_stamper.dart';
 
 const _hlc = Hlc(wallMillis: 1700000000000, counter: 0, nodeId: 'dev');
 final _sync = SyncMeta(
@@ -20,13 +28,17 @@ final _sync = SyncMeta(
   hlc: _hlc,
 );
 
-Account _account(String id, String name) {
+Account _account(
+  String id,
+  String name, {
+  AccountSide side = AccountSide.asset,
+}) {
   return Account(
     id: id,
     type: AccountCategory.bank,
     name: name,
     currency: 'CNY',
-    category: AccountSide.asset,
+    category: side,
     sync: _sync,
   );
 }
@@ -35,12 +47,16 @@ Widget _wrap({
   required List<Account> accounts,
   Stream<List<Account>> Function()? accountStream,
   Widget? home,
+  JournalEntryRepository? repository,
 }) {
   return ProviderScope(
     overrides: [
       accountsStreamProvider.overrideWith(
         (_) => accountStream?.call() ?? Stream.value(accounts),
       ),
+      allAccountsStreamProvider.overrideWith((_) => Stream.value(accounts)),
+      if (repository != null)
+        journalEntryRepositoryProvider.overrideWith((_) async => repository),
     ],
     child: MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -71,6 +87,94 @@ class _OpenSheetHost extends StatelessWidget {
 }
 
 void main() {
+  testWidgets(
+    'preview counts draft filters without changing the feed before Apply',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(420, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final db = makeTestDatabase();
+      addTearDown(db.close);
+      final repo = JournalEntryRepository(
+        db: db,
+        outbox: InMemoryOutboxStore(),
+        stamper: makeStubStamper(),
+        fxRateSource: const IdentityFxRateSource(),
+        baseCurrency: 'CNY',
+      );
+      for (final account in ['wallet', 'bank']) {
+        await repo.create(
+          entry: JournalEntryDraft(
+            date: DateTime.utc(2026),
+            narration: account,
+          ),
+          postings: [
+            PostingDraft(accountId: account, units: -Decimal.one, unit: 'CNY'),
+            PostingDraft(accountId: 'food', units: Decimal.one, unit: 'CNY'),
+          ],
+        );
+      }
+      await tester.pumpWidget(
+        _wrap(
+          repository: repo,
+          accounts: [
+            _account('wallet', 'Wallet'),
+            _account('bank', 'Bank'),
+            _account('food', 'Food', side: AccountSide.expense),
+          ],
+        ),
+      );
+      await tester.tap(find.text('open-filter'));
+      await tester.pumpAndSettle();
+      expect(find.text('Show 2 results'), findsOneWidget);
+      await tester.ensureVisible(find.text('Wallet'));
+      await tester.tap(find.text('Wallet'));
+      await tester.pumpAndSettle();
+      expect(find.text('Show 1 result'), findsOneWidget);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(ActivityFeedFilterSheet)),
+      );
+      expect(container.read(activityFeedQueryProvider).accountIds, isEmpty);
+      await tester.tap(find.text('Show 1 result'));
+      await tester.pumpAndSettle();
+      expect(container.read(activityFeedQueryProvider).accountIds, {'wallet'});
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets(
+    'account search preserves selected accounts outside the result list',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(420, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      final draft = ValueNotifier(const ActivityFeedQuery(accountIds: {'a0'}));
+      await tester.pumpWidget(
+        _wrap(
+          accounts: [
+            for (var i = 0; i < 10; i++) _account('a$i', 'Account $i'),
+          ],
+          home: Scaffold(
+            body: ActivityFeedFilterSheet(
+              draft: draft,
+              section: ActivityFilterSection.account,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(EditableText), 'Account 9');
+      await tester.pumpAndSettle();
+      expect(find.text('Account 0'), findsNothing);
+      expect(find.text('Account 9'), findsNWidgets(2));
+      await tester.tap(find.text('Account 9').last);
+      await tester.pumpAndSettle();
+      expect(draft.value.accountIds, {'a0', 'a9'});
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+      draft.dispose();
+    },
+  );
+
   testWidgets('failed account load offers retry instead of an empty state', (
     tester,
   ) async {

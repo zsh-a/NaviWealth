@@ -40,18 +40,9 @@ mixin JournalEntryRepositoryActivityFeedMixin {
     Set<EntryKind> kinds = const <EntryKind>{},
     required Map<String, AccountSide> accountCategories,
     int pageSize = 50,
+    String searchText = '',
   }) {
-    final trigger = _db
-        .customSelect(
-          '''
-      SELECT
-        (SELECT COUNT(*) FROM journal_entries WHERE deleted_at IS NULL) AS je_count,
-        (SELECT COUNT(*) FROM postings WHERE deleted_at IS NULL) AS posting_count
-      ''',
-          readsFrom: {_db.journalEntries, _db.postings, _db.accounts},
-        )
-        .watch();
-    return trigger.asyncMap(
+    return _watchActivitySource().asyncMap(
       (_) => queryActivityFeed(
         from: from,
         to: to,
@@ -59,9 +50,39 @@ mixin JournalEntryRepositoryActivityFeedMixin {
         kinds: kinds,
         accountCategories: accountCategories,
         pageSize: pageSize,
+        searchText: searchText,
       ),
     );
   }
+
+  Stream<int> watchActivityFeedCount({
+    DateTime? from,
+    DateTime? to,
+    Set<String> accountIds = const <String>{},
+    Set<EntryKind> kinds = const <EntryKind>{},
+    required Map<String, AccountSide> accountCategories,
+    String searchText = '',
+  }) => _watchActivitySource().asyncMap(
+    (_) => queryActivityFeedCount(
+      from: from,
+      to: to,
+      accountIds: accountIds,
+      kinds: kinds,
+      accountCategories: accountCategories,
+      searchText: searchText,
+    ),
+  );
+
+  Stream<List<QueryRow>> _watchActivitySource() => _db
+      .customSelect(
+        '''
+      SELECT
+        (SELECT COUNT(*) FROM journal_entries WHERE deleted_at IS NULL) AS je_count,
+        (SELECT COUNT(*) FROM postings WHERE deleted_at IS NULL) AS posting_count
+      ''',
+        readsFrom: {_db.journalEntries, _db.postings, _db.accounts},
+      )
+      .watch();
 
   Future<ActivityFeedReadPage> queryActivityFeed({
     DateTime? from,
@@ -70,6 +91,7 @@ mixin JournalEntryRepositoryActivityFeedMixin {
     Set<EntryKind> kinds = const <EntryKind>{},
     required Map<String, AccountSide> accountCategories,
     int pageSize = 50,
+    String searchText = '',
   }) async {
     final limit = pageSize.clamp(1, 500).toInt();
     final batchSize = kinds.isEmpty ? limit + 1 : limit.clamp(50, 200);
@@ -82,6 +104,7 @@ mixin JournalEntryRepositoryActivityFeedMixin {
         from: from,
         to: to,
         accountIds: accountIds,
+        searchText: searchText,
         after: cursor,
         limit: batchSize,
       );
@@ -121,6 +144,63 @@ mixin JournalEntryRepositoryActivityFeedMixin {
     );
   }
 
+  /// Exact preview of the same predicates used by the paged feed. Kind is a
+  /// domain-derived classification, so count it in bounded keyset batches.
+  Future<int> queryActivityFeedCount({
+    DateTime? from,
+    DateTime? to,
+    Set<String> accountIds = const <String>{},
+    Set<EntryKind> kinds = const <EntryKind>{},
+    required Map<String, AccountSide> accountCategories,
+    String searchText = '',
+  }) async {
+    if (kinds.isEmpty) {
+      final predicate = _activityFeedPredicate(
+        from: from,
+        to: to,
+        accountIds: accountIds,
+        searchText: searchText,
+      );
+      final row = await _db
+          .customSelect(
+            'SELECT COUNT(*) AS count FROM journal_entries je WHERE ${predicate.sql}',
+            variables: predicate.variables,
+            readsFrom: {_db.journalEntries, _db.postings, _db.accounts},
+          )
+          .getSingle();
+      return row.read<int>('count');
+    }
+    var count = 0;
+    ActivityFeedCursor? cursor;
+    const batchSize = 200;
+    while (true) {
+      final rows = await _queryActivityEntryRows(
+        from: from,
+        to: to,
+        accountIds: accountIds,
+        searchText: searchText,
+        after: cursor,
+        limit: batchSize,
+      );
+      final entries = await _entriesWithPostings(
+        rows.map(_journalToDomain).toList(growable: false),
+      );
+      count += entries
+          .where(
+            (item) => kinds.contains(
+              classifyEntryKind(
+                postings: item.postings,
+                resolveCategory: (id) => accountCategories[id],
+              ).kind,
+            ),
+          )
+          .length;
+      if (rows.length < batchSize) return count;
+      final last = rows.last;
+      cursor = ActivityFeedCursor(date: last.date, id: last.id);
+    }
+  }
+
   Future<List<JournalEntryWithPostings>> _entriesWithPostings(
     List<JournalEntry> entries,
   ) async {
@@ -154,7 +234,36 @@ mixin JournalEntryRepositoryActivityFeedMixin {
     Set<String> accountIds = const <String>{},
     ActivityFeedCursor? after,
     required int limit,
+    String searchText = '',
   }) async {
+    final predicate = _activityFeedPredicate(
+      from: from,
+      to: to,
+      accountIds: accountIds,
+      after: after,
+      searchText: searchText,
+    );
+    final rows = await _db
+        .customSelect(
+          '''
+      SELECT je.* FROM journal_entries je
+      WHERE ${predicate.sql}
+      ORDER BY je.date DESC, je.id ASC LIMIT ?
+      ''',
+          variables: [...predicate.variables, Variable<int>(limit)],
+          readsFrom: {_db.journalEntries, _db.postings, _db.accounts},
+        )
+        .get();
+    return rows.map((row) => _db.journalEntries.map(row.data)).toList();
+  }
+
+  ({String sql, List<Variable> variables}) _activityFeedPredicate({
+    DateTime? from,
+    DateTime? to,
+    Set<String> accountIds = const <String>{},
+    ActivityFeedCursor? after,
+    String searchText = '',
+  }) {
     final where = <String>['je.deleted_at IS NULL'];
     final variables = <Variable>[];
     if (from != null) {
@@ -184,20 +293,20 @@ mixin JournalEntryRepositoryActivityFeedMixin {
       ''');
       variables.addAll(accountIds.map((id) => Variable<String>(id)));
     }
-    variables.add(Variable<int>(limit));
-    final rows = await _db
-        .customSelect(
-          '''
-          SELECT je.*
-          FROM journal_entries je
-          WHERE ${where.join(' AND ')}
-          ORDER BY je.date DESC, je.id ASC
-          LIMIT ?
-          ''',
-          variables: variables,
-          readsFrom: {_db.journalEntries, _db.postings},
+    final needle = searchText.trim().toLowerCase();
+    if (needle.isNotEmpty) {
+      // instr treats %, _ and backslashes literally, matching the search UI.
+      where.add('''(
+        instr(lower(je.narration), ?) > 0 OR
+        instr(lower(coalesce(je.payee, '')), ?) > 0 OR
+        EXISTS (
+          SELECT 1 FROM postings p JOIN accounts a ON a.id = p.account_id
+          WHERE p.journal_entry_id = je.id AND p.deleted_at IS NULL
+            AND a.deleted_at IS NULL AND instr(lower(a.name), ?) > 0
         )
-        .get();
-    return rows.map((row) => _db.journalEntries.map(row.data)).toList();
+      )''');
+      variables.addAll(List.generate(3, (_) => Variable<String>(needle)));
+    }
+    return (sql: where.join(' AND '), variables: variables);
   }
 }

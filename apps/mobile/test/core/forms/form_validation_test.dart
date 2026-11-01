@@ -5,6 +5,57 @@ import 'package:naviwealth/core/forms/form_validation.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
 
 void main() {
+  testWidgets('first error follows reading order after async fields appear', (
+    tester,
+  ) async {
+    final key = GlobalKey<FormState>();
+    final first = FocusNode();
+    final second = FocusNode();
+    var ready = false;
+    late StateSetter rebuild;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: FTheme(
+          data: FTheme.neutral.light.desktop,
+          child: Scaffold(
+            body: StatefulBuilder(
+              builder: (context, setState) {
+                rebuild = setState;
+                return Form(
+                  key: key,
+                  child: Column(
+                    children: [
+                      if (ready)
+                        FTextFormField(
+                          key: const ValueKey('first'),
+                          focusNode: first,
+                          validator: (_) => 'First error',
+                        ),
+                      FTextFormField(
+                        key: const ValueKey('second'),
+                        focusNode: second,
+                        validator: (_) => 'Second error',
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+    rebuild(() => ready = true);
+    await tester.pumpAndSettle();
+    expect(validateAndRevealForm(key), isFalse);
+    await tester.pumpAndSettle();
+    expect(first.hasFocus, isTrue);
+    expect(second.hasFocus, isFalse);
+    await tester.pumpWidget(const SizedBox.shrink());
+    first.dispose();
+    second.dispose();
+  });
+
   testWidgets('reveals and focuses the first error without losing input', (
     tester,
   ) async {

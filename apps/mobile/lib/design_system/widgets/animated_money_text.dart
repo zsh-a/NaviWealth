@@ -106,6 +106,13 @@ class _AnimatedMoneyTextState extends State<AnimatedMoneyText> {
   @override
   void didUpdateWidget(covariant AnimatedMoneyText oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.currencyCode != widget.currencyCode) {
+      // Amounts in different units have no meaningful interpolation or delta.
+      _previous = widget.amount;
+      _pulseDirection = 0;
+      _pulseSeq = 0;
+      return;
+    }
     if (oldWidget.amount != widget.amount) {
       _previous = oldWidget.amount;
       final from = oldWidget.amount;
@@ -144,20 +151,20 @@ class _AnimatedMoneyTextState extends State<AnimatedMoneyText> {
 
     final duration = _pickDuration(from, to);
 
-    return _withChangePulse(
-      TweenAnimationBuilder<double>(
-        key: ValueKey<String>(
-          '${widget.currencyCode}|${widget.compact}|${widget.symbolStyle.index}',
-        ),
-        tween: Tween<double>(begin: from, end: to),
-        duration: AppMotionPolicy.duration(
-          context,
-          duration,
-          role: AppMotionRole.status,
-        ),
-        curve: widget.curve,
-        builder: (context, value, _) => _staticMoneyText(value),
+    return TweenAnimationBuilder<double>(
+      key: ValueKey<String>(
+        '${widget.currencyCode}|${widget.compact}|${widget.symbolStyle.index}',
       ),
+      tween: Tween<double>(begin: from, end: to),
+      duration: AppMotionPolicy.duration(
+        context,
+        duration,
+        role: AppMotionRole.status,
+      ),
+      curve: widget.curve,
+      // Keep the number's tween mounted when a new pulse starts. Its current
+      // displayed value then becomes the start of an interrupted update.
+      builder: (context, value, _) => _withChangePulse(_staticMoneyText(value)),
     );
   }
 

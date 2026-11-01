@@ -147,6 +147,10 @@ retries only unfinished continuations.
 
 New expense input uses the shared local form draft session, with explicit restore
 or discard on reopening. Successful saves and explicit discard clear the draft.
+Manual trade capture uses the same recovery flow, scoped by contextual asset,
+account and side. Staged imports and workflow-supplied trade prefills retain their
+own source state. Recovery preserves authored fields; missing accounts require
+an explicit replacement rather than silently selecting another account.
 Edit-load failures replace the spinner with actionable retry. Category and account
 loading/failure states retain their labels and provide local retry without
 discarding input. Save remains disabled until both selections are available and
@@ -154,7 +158,12 @@ the selected account matches the form currency.
 
 Shared account pickers search account names and currencies without conflating
 identical labels or clearing the selection when search has no results. Expense,
-income and transfer forms reveal and focus the first invalid field on submission.
+income, transfer and trade forms reveal and focus the first invalid field on
+submission. Trade only expands disclosure groups containing invalid fields.
+Activity keyword search runs before pagination, matching narration, payee and
+non-deleted account names. Filter drafts preview an exact matching-record count
+without changing the feed until applied; count failures keep Apply available.
+Long account filter lists offer search without dropping hidden selections.
 Activity deletion from the list and detail page uses the shared 60-second
 cross-page Undo offer, including retry after a failed restore.
 
