@@ -725,7 +725,9 @@ Map<String, Object> _motionGroup() => {
     'tapFeedback': _duration(Motion.tapFeedback, 'Alias of fast'),
     'componentChange': _duration(Motion.componentChange, 'Alias of medium'),
     'contentTransition': _duration(Motion.contentTransition, 'Alias of medium'),
-    'pageTransition': _duration(Motion.pageTransition, 'Alias of slow'),
+    'navigationSwitch': _duration(Motion.navigationSwitch),
+    'pageTransition': _duration(Motion.pageTransition, 'Alias of medium'),
+    'pageReturn': _duration(Motion.pageReturn, 'Alias of navigationSwitch'),
   },
   'easing': {
     r'$description': 'Easing curves — Motion.',
