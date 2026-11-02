@@ -38,4 +38,4 @@ codegen-units = 1
 strip = true
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
-rusqlite = { version = "0.40.2", features = ["bundled"] }
+rusqlite = { version = "0.41.1", features = ["bundled"] }
