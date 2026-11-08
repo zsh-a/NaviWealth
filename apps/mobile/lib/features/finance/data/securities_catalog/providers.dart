@@ -1,8 +1,14 @@
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:naviwealth/core/config/providers.dart';
+import 'package:naviwealth/core/logging/providers.dart';
 import 'package:naviwealth/core/persistence/providers.dart';
 
+import 'securities_catalog_cache_store.dart';
 import 'securities_catalog_loader.dart';
+import 'securities_catalog_remote.dart';
 import 'securities_search_service.dart';
 
 /// Loader bound to the live [AppDatabase]. The first read fires the
@@ -11,9 +17,54 @@ import 'securities_search_service.dart';
 final securitiesCatalogLoaderProvider = FutureProvider<SecuritiesCatalogLoader>(
   (ref) async {
     final db = await ref.watch(appDatabaseProvider.future);
-    return SecuritiesCatalogLoader(db: db);
+    return SecuritiesCatalogLoader(
+      db: db,
+      cacheStore: ref.watch(securitiesCatalogCacheStoreProvider),
+      logger: ref.watch(loggerProvider),
+    );
   },
 );
+
+/// Holds catalogs downloaded from the `securities-catalog` GitHub Release.
+final securitiesCatalogCacheStoreProvider =
+    Provider<SecuritiesCatalogCacheStore>(
+      (ref) => createSecuritiesCatalogCacheStore(),
+    );
+
+/// Best-effort out-of-band catalog refresh, mounted by the Finance background
+/// bootstrap. No-op on Web and in builds without a manifest URL; otherwise it
+/// waits for the bundled catalog, then checks the manifest at most daily.
+final securitiesCatalogRemoteRefreshProvider =
+    FutureProvider<SecuritiesCatalogRemoteResult>((ref) async {
+      final url = ref.watch(appConfigProvider).securitiesCatalogManifestUrl;
+      final manifestUrl = Uri.tryParse(url.trim());
+      if (kIsWeb || manifestUrl == null || !manifestUrl.hasScheme) {
+        return const SecuritiesCatalogRemoteResult(
+          SecuritiesCatalogRemoteStatus.disabled,
+        );
+      }
+      // Stay out of cold-start I/O; the catalog is not needed for first paint.
+      await Future<void>.delayed(const Duration(seconds: 20));
+      await ref.read(securitiesCatalogReadyProvider.future);
+      final loader = await ref.read(securitiesCatalogLoaderProvider.future);
+      final dio = Dio(
+        BaseOptions(
+          connectTimeout: const Duration(seconds: 15),
+          receiveTimeout: const Duration(seconds: 60),
+        ),
+      );
+      try {
+        return await SecuritiesCatalogRemoteUpdater(
+          manifestUrl: manifestUrl,
+          dio: dio,
+          store: ref.read(securitiesCatalogCacheStoreProvider),
+          loader: loader,
+          logger: ref.read(loggerProvider),
+        ).refresh();
+      } finally {
+        dio.close(force: true);
+      }
+    });
 
 /// One-shot, fire-and-forget catalog ensure. Watch this from any feature
 /// that needs the catalog to be present before its first interaction

@@ -8,6 +8,8 @@ import 'package:naviwealth/features/finance/domain/models/asset.dart';
 import 'package:naviwealth/features/finance/domain/models/enums.dart';
 import 'package:naviwealth/features/finance/market/domain/asset_market.dart';
 
+import 'securities_catalog_cache_store_base.dart';
+
 part 'securities_catalog_loader_models.dart';
 part 'securities_catalog_loader_parser.dart';
 part 'securities_catalog_loader_store.dart';
@@ -26,9 +28,11 @@ const String kBundledSecuritiesCatalogAsset =
 ///
 /// Lifecycle:
 ///   1. App boot calls [load] (typically right after the first DB open).
-///   2. The loader reads the bundled file once via [bundleReader],
-///      parses the header to extract `(version, checksum)`, and compares
-///      against the singleton `securities_catalog_meta` row.
+///   2. The loader reads the bundled file once via [bundleReader], plus
+///      the out-of-band download in [cacheStore] when present, and keeps
+///      whichever has the newer version (ties favour the download). The
+///      winner's `(version, checksum)` is compared against the singleton
+///      `securities_catalog_meta` row.
 ///   3. On match, returns a `reloaded=false` result without touching the
 ///      catalog table — the common steady-state path is essentially free.
 ///   4. On miss (fresh install or bundle bump), wipes the catalog +
@@ -43,14 +47,25 @@ class SecuritiesCatalogLoader {
   SecuritiesCatalogLoader({
     required AppDatabase db,
     Future<String> Function() bundleReader = _defaultBundleReader,
+    SecuritiesCatalogCacheStore? cacheStore,
     AppLogger? logger,
   }) : _db = db,
        _bundleReader = bundleReader,
+       _cacheStore = cacheStore,
        _logger = logger;
 
   final AppDatabase _db;
   final Future<String> Function() _bundleReader;
+  final SecuritiesCatalogCacheStore? _cacheStore;
   final AppLogger? _logger;
+
+  /// Version + checksum of the catalog currently materialised in the DB,
+  /// or null before the first successful load.
+  Future<SecuritiesCatalogHeader?> currentHeader() async {
+    final meta = await _readCatalogMeta(this);
+    if (meta == null) return null;
+    return (version: meta.version, checksum: meta.checksum);
+  }
 
   /// Read the bundle, decide whether a reload is needed, and apply it.
   ///
@@ -58,22 +73,42 @@ class SecuritiesCatalogLoader {
   /// [SecuritiesCatalogLoadResult.error] so a corrupt bundle never
   /// blocks app boot. The previous catalog (if any) stays intact.
   Future<SecuritiesCatalogLoadResult> load() async {
-    String raw;
+    final cached = await _readCached();
+    String? bundled;
+    Object? bundleError;
     try {
-      raw = await _bundleReader();
+      bundled = await _bundleReader();
     } catch (e) {
+      bundleError = e;
       _logger?.w('securities_catalog: failed to read bundle: $e');
+    }
+
+    if (cached != null && _preferCached(cached, bundled)) {
+      SecuritiesCatalogBundle? downloaded;
+      try {
+        downloaded = parseBundle(cached);
+      } catch (e) {
+        // Validated before it was written, so this means on-disk damage.
+        _logger?.w('securities_catalog: dropping corrupt download: $e');
+        await _deleteCached();
+      }
+      if (downloaded != null) return _apply(downloaded);
+    } else if (cached != null) {
+      // The app update shipped a catalog at least as new as the download.
+      await _deleteCached();
+    }
+
+    if (bundled == null) {
       return SecuritiesCatalogLoadResult(
         version: 'unknown',
         rowCount: 0,
         reloaded: false,
-        error: e,
+        error: bundleError ?? StateError('catalog bundle unavailable'),
       );
     }
-
     SecuritiesCatalogBundle bundle;
     try {
-      bundle = parseBundle(raw);
+      bundle = parseBundle(bundled);
     } catch (e) {
       _logger?.w('securities_catalog: failed to parse bundle: $e');
       return SecuritiesCatalogLoadResult(
@@ -83,7 +118,51 @@ class SecuritiesCatalogLoader {
         error: e,
       );
     }
+    return _apply(bundle);
+  }
 
+  bool _preferCached(String cached, String? bundled) {
+    final SecuritiesCatalogHeader cachedHeader;
+    try {
+      cachedHeader = parseBundleHeader(cached);
+    } catch (_) {
+      return true; // Let the full parse fail and drop the file.
+    }
+    if (bundled == null) return true;
+    try {
+      final bundledHeader = parseBundleHeader(bundled);
+      return compareCatalogVersions(
+            cachedHeader.version,
+            bundledHeader.version,
+          ) >=
+          0;
+    } catch (_) {
+      return true;
+    }
+  }
+
+  Future<String?> _readCached() async {
+    final store = _cacheStore;
+    if (store == null) return null;
+    try {
+      return await store.read();
+    } catch (e) {
+      _logger?.w('securities_catalog: failed to read download: $e');
+      return null;
+    }
+  }
+
+  Future<void> _deleteCached() async {
+    try {
+      await _cacheStore?.delete();
+    } catch (e) {
+      _logger?.w('securities_catalog: failed to delete download: $e');
+    }
+  }
+
+  Future<SecuritiesCatalogLoadResult> _apply(
+    SecuritiesCatalogBundle bundle,
+  ) async {
     final existing = await _readCatalogMeta(this);
     if (existing != null &&
         existing.version == bundle.version &&

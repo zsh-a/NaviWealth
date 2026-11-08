@@ -97,8 +97,10 @@ python3 -m tool.asset_catalog.validate_release
 ```
 
 It verifies the NDJSON count, canonical order, uniqueness and checksum; rejects
-catalogs older than 45 days; and requires conservative minimum populations for
-every production market. The current release floors are:
+malformed or future-dated versions; and requires conservative minimum
+populations for every production market. There is no age limit: installed apps
+receive newer catalogs out of band (see below), so the bundled copy is only a
+fallback. The current release floors are:
 
 | Market | Minimum rows |
 |---|---:|
@@ -109,8 +111,8 @@ every production market. The current release floors are:
 
 After building, the same command compares the committed file byte-for-byte
 with the copy in the APK, AAB, and Flutter web output. A release therefore
-fails both when a full refresh was forgotten and when Flutter stopped packaging
-the declared asset.
+fails both when the committed catalog is degraded and when Flutter stopped
+packaging the declared asset.
 
 Catalog refresh remains separate from release creation so rebuilding the same
 tag is deterministic and upstream outages cannot mutate or partially degrade a
@@ -120,6 +122,38 @@ Catalog refresh runs manually with `./tool/build-asset-catalog.sh --full`.
 Run the catalog tests and release validator, then review and commit the source
 CSV and generated NDJSON changes. There is no scheduled refresh workflow or
 automatic catalog PR.
+
+## Out-of-band distribution (no APK rebuild)
+
+Installed Android/iOS apps pick up a refreshed catalog without a new app
+release:
+
+1. Refresh, validate, and commit the NDJSON as above, then push to `main`.
+2. `.github/workflows/securities-catalog.yml` runs on any push that changes
+   `securities.v1.ndjson` (or manually via `workflow_dispatch`). It runs
+   `python3 -m tool.asset_catalog.publish`, which applies the same release
+   validator and writes a deterministic
+   `securities-<version>-<checksum8>.ndjson.gz` plus `catalog-manifest.json`
+   (schema, version, checksum, count, SHA-256 of the gzip and the NDJSON).
+3. Both files go to the rolling `securities-catalog` GitHub Release. It is a
+   prerelease that is never marked latest, so it does not affect the APK
+   self-update manifest at `releases/latest`. The workflow keeps the newest
+   three gzip assets.
+4. Release builds receive `SECURITIES_CATALOG_MANIFEST_URL` from
+   `tool/build-android-release.sh`. About 20 seconds after startup, the app
+   fetches the manifest (at most once per 24 hours). When it is newer, the
+   app downloads the asset, checks both SHA-256 values and the header against
+   the manifest, and stores it under app support. `SecuritiesCatalogLoader`
+   then keeps the newer of the bundled and downloaded catalogs and replaces
+   the table atomically.
+
+Builds without the define (debug and local builds) and Web use only the
+bundled catalog. GitHub Release assets do not send CORS headers, and Web
+deploys already ship the committed file. A later app release whose bundled
+catalog is at least as new deletes the stale download. Bump
+`MANIFEST_SCHEMA` in `publish.py` together with
+`kSecuritiesCatalogManifestSchema` in the app if the bundle format changes.
+Apps that do not recognise the schema keep the catalog they already have.
 
 ## Output
 

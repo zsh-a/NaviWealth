@@ -49,7 +49,6 @@ def _write_catalog(
 
 def _fixture_policy() -> ReleasePolicy:
     return ReleasePolicy(
-        max_age_days=45,
         min_market_counts=(
             ("crypto", 1),
             ("hk_stock", 1),
@@ -82,10 +81,10 @@ def test_valid_catalog_reports_market_counts(tmp_path):
     [
         ({"count": 99}, "header.count=99"),
         ({"checksum": "0000000000000000"}, "does not match calculated"),
-        ({"version": "v1.20260101"}, "207 days old"),
+        ({"version": "v1.20261231"}, "is in the future"),
     ],
 )
-def test_rejects_invalid_header_or_stale_catalog(tmp_path, overrides, message):
+def test_rejects_invalid_header_or_future_catalog(tmp_path, overrides, message):
     path = tmp_path / "catalog.ndjson"
     _write_catalog(path, **overrides)
 
@@ -106,7 +105,6 @@ def test_rejects_duplicate_unsorted_and_too_small_markets(tmp_path):
     ]
     _write_catalog(path, entries=rows)
     policy = ReleasePolicy(
-        max_age_days=45,
         min_market_counts=(("us_stock", 4),),
     )
 

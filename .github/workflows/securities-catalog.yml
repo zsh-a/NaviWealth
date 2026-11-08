@@ -1,0 +1,74 @@
+name: securities-catalog
+
+# Publishes the committed securities catalog to the rolling
+# `securities-catalog` GitHub Release. Installed apps poll its
+# catalog-manifest.json, so listing refreshes ship without a new APK.
+# The tag does not match the app release trigger (v*) and the release is a
+# prerelease that is never marked latest, so the APK self-update manifest at
+# releases/latest is unaffected.
+on:
+  push:
+    branches: [main]
+    paths:
+      - apps/mobile/assets/catalog/securities.v1.ndjson
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: securities-catalog
+  cancel-in-progress: false
+
+env:
+  CATALOG_TAG: securities-catalog
+
+jobs:
+  publish:
+    name: publish catalog
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - name: Validate and package committed catalog
+        run: python3 -m tool.asset_catalog.publish --output "$RUNNER_TEMP/catalog"
+      - name: Upload to rolling release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/catalog"
+          asset="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["asset"])' "$out/catalog-manifest.json")"
+          version="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["version"])' "$out/catalog-manifest.json")"
+          notes="Securities catalog ${version} (commit ${GITHUB_SHA::12}). Consumed in-app via catalog-manifest.json; not an app release."
+
+          if ! gh release view "$CATALOG_TAG" >/dev/null 2>&1; then
+            gh release create "$CATALOG_TAG" \
+              --target "$GITHUB_SHA" \
+              --title "Securities catalog" \
+              --notes "$notes" \
+              --prerelease \
+              --latest=false
+          fi
+
+          # Data first, manifest last: a client never sees a manifest whose
+          # asset is missing. Asset names are content-addressed, so clients
+          # holding the previous manifest still download matching bytes.
+          gh release upload "$CATALOG_TAG" "$out/$asset" --clobber
+          gh release upload "$CATALOG_TAG" "$out/catalog-manifest.json" --clobber
+          gh release edit "$CATALOG_TAG" --notes "$notes" --prerelease --latest=false
+
+          # Keep the current asset plus the two most recent predecessors.
+          gh release view "$CATALOG_TAG" --json assets \
+            --jq '.assets | map(select(.name | test("^securities-.*\\.ndjson\\.gz$"))) | sort_by(.createdAt) | reverse | .[3:] | .[].name' |
+            while read -r stale; do
+              if [[ -n "$stale" && "$stale" != "$asset" ]]; then
+                gh release delete-asset "$CATALOG_TAG" "$stale" --yes
+              fi
+            done
+          echo "Published $asset"

@@ -115,3 +115,42 @@ String? _normalisePinyin(String? raw) {
   final trimmed = raw.trim();
   return trimmed.isEmpty ? null : trimmed.toLowerCase();
 }
+
+/// Version + checksum of a catalog bundle.
+typedef SecuritiesCatalogHeader = ({String version, String checksum});
+
+/// Reads only the header line, so the loader can pick between the bundled
+/// and downloaded catalogs without decoding every entry twice.
+SecuritiesCatalogHeader parseBundleHeader(String raw) {
+  for (final line in const LineSplitter().convert(raw)) {
+    final trimmed = line.trim();
+    if (trimmed.isEmpty || trimmed.startsWith('#')) continue;
+    final decoded = jsonDecode(trimmed);
+    if (decoded is! Map<String, Object?>) break;
+    final version = decoded['version'];
+    final checksum = decoded['checksum'];
+    if (version is String && checksum is String) {
+      return (version: version, checksum: checksum);
+    }
+    break;
+  }
+  throw const FormatException('catalog bundle header missing');
+}
+
+final RegExp _catalogVersionPattern = RegExp(r'^v(\d+)\.(\d{8})$');
+
+/// Orders catalog versions (`v<schema>.<YYYYMMDD>`, as emitted by
+/// `tool/build-asset-catalog.sh`). Well-formed versions rank above malformed
+/// ones; two malformed versions fall back to lexical order.
+int compareCatalogVersions(String a, String b) {
+  final ma = _catalogVersionPattern.firstMatch(a);
+  final mb = _catalogVersionPattern.firstMatch(b);
+  if (ma != null && mb != null) {
+    final schema = int.parse(ma.group(1)!).compareTo(int.parse(mb.group(1)!));
+    if (schema != 0) return schema;
+    return int.parse(ma.group(2)!).compareTo(int.parse(mb.group(2)!));
+  }
+  if (ma != null) return 1;
+  if (mb != null) return -1;
+  return a.compareTo(b);
+}

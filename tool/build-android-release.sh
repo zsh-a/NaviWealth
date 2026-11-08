@@ -23,6 +23,7 @@ args=(
   --dart-define="API_BASE_URL=$api_url"
   --dart-define="GIT_SHA=$GITHUB_SHA"
   --dart-define="NATIVE_UPDATE_MANIFEST_URL=${GITHUB_SERVER_URL:-https://github.com}/$GITHUB_REPOSITORY/releases/latest/download/latest.json"
+  --dart-define="SECURITIES_CATALOG_MANIFEST_URL=${GITHUB_SERVER_URL:-https://github.com}/$GITHUB_REPOSITORY/releases/download/securities-catalog/catalog-manifest.json"
 )
 
 for artifact in apk appbundle; do

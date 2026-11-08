@@ -8,6 +8,7 @@ class AppConfig {
     this.rustEmbedderLibraryPath = '',
     this.rustEmbedderOrtDylibPath = '',
     this.nativeUpdateManifestUrl = '',
+    this.securitiesCatalogManifestUrl = '',
   });
 
   final String apiBaseUrl;
@@ -69,6 +70,17 @@ class AppConfig {
 
   bool get hasNativeUpdateTarget => nativeUpdateManifestUrl.trim().isNotEmpty;
 
+  /// Manifest for out-of-band securities catalog refreshes.
+  ///
+  /// Release builds point at the rolling `securities-catalog` GitHub Release so
+  /// listing updates reach installed apps without a new APK. Empty keeps the
+  /// app on the catalog bundled at build time (local/debug builds, Web).
+  /// Override with `--dart-define=SECURITIES_CATALOG_MANIFEST_URL=https://...`.
+  final String securitiesCatalogManifestUrl;
+
+  bool get hasSecuritiesCatalogTarget =>
+      securitiesCatalogManifestUrl.trim().isNotEmpty;
+
   static const AppConfig dev = AppConfig(
     apiBaseUrl: String.fromEnvironment(
       'API_BASE_URL',
@@ -91,6 +103,10 @@ class AppConfig {
     ),
     nativeUpdateManifestUrl: String.fromEnvironment(
       'NATIVE_UPDATE_MANIFEST_URL',
+      defaultValue: '',
+    ),
+    securitiesCatalogManifestUrl: String.fromEnvironment(
+      'SECURITIES_CATALOG_MANIFEST_URL',
       defaultValue: '',
     ),
   );

@@ -20,6 +20,7 @@ import '../../../core/auth/providers.dart' as auth;
 import '../../../core/command_palette/local_query_result_pane_provider.dart';
 import '../ai_tools/drift_query_plan_executor.dart';
 import '../data/market/sync/price_sync_providers.dart';
+import '../data/securities_catalog/providers.dart';
 import '../inbox/data/financial_inbox_providers.dart';
 import '../investment/notifications/watchlist_alerts.dart';
 import '../ui/command_palette/finance_ask_ai_result_pane.dart';
@@ -83,4 +84,6 @@ void financeBackgroundBootstrap(Ref ref) {
   // notification channel. The monitor subscribes to quotes only when at least
   // one rule is configured.
   ref.watch(watchlistAlertMonitorProvider);
+  // Listing refreshes ship via GitHub Releases, independent of app releases.
+  ref.watch(securitiesCatalogRemoteRefreshProvider);
 }

@@ -5,7 +5,7 @@ mutable upstream listings while building a tag. This validator is the release
 gate that makes that policy safe:
 
 * verify NDJSON structure, row count, uniqueness, ordering, and FNV checksum;
-* reject stale or suspiciously small per-market catalogs;
+* reject future-dated or suspiciously small per-market catalogs;
 * confirm Flutter still declares the asset; and
 * compare the committed bytes with APK, AAB, and web build outputs.
 
@@ -43,7 +43,6 @@ DEFAULT_MIN_MARKET_COUNTS: tuple[tuple[str, int], ...] = (
     ("us_stock", 5_000),
     ("crypto", 400),
 )
-DEFAULT_MAX_AGE_DAYS = 45
 
 
 class CatalogValidationError(RuntimeError):
@@ -52,7 +51,6 @@ class CatalogValidationError(RuntimeError):
 
 @dataclasses.dataclass(frozen=True)
 class ReleasePolicy:
-    max_age_days: int = DEFAULT_MAX_AGE_DAYS
     min_market_counts: tuple[tuple[str, int], ...] = DEFAULT_MIN_MARKET_COUNTS
 
 
@@ -168,11 +166,6 @@ def validate_catalog(
         if age < -1:
             errors.append(
                 f"catalog version date {catalog_date.isoformat()} is in the future"
-            )
-        elif age > policy.max_age_days:
-            errors.append(
-                f"catalog is {age} days old; release limit is "
-                f"{policy.max_age_days} days"
             )
 
     for market, minimum in policy.min_market_counts:
@@ -308,7 +301,6 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--pubspec", type=pathlib.Path, default=DEFAULT_PUBSPEC_PATH)
     parser.add_argument("--archive", type=pathlib.Path, action="append", default=[])
     parser.add_argument("--web-root", type=pathlib.Path)
-    parser.add_argument("--max-age-days", type=int, default=DEFAULT_MAX_AGE_DAYS)
     parser.add_argument(
         "--min-market",
         action="append",
@@ -319,10 +311,7 @@ def main(argv: list[str]) -> int:
 
     try:
         minimums = _parse_minimums(args.min_market)
-        policy = ReleasePolicy(
-            max_age_days=args.max_age_days,
-            min_market_counts=minimums,
-        )
+        policy = ReleasePolicy(min_market_counts=minimums)
         report = validate_catalog(args.catalog, policy=policy)
         validate_pubspec(args.pubspec)
         validate_archives(args.archive, expected=report)
