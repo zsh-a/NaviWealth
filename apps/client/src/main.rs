@@ -8,7 +8,7 @@
 fn main() -> impl std::process::Termination {
     use nsh_core::prelude::*;
 
-    #[cfg(target_os = "linux")]
+    #[cfg(all(target_os = "linux", not(target_os = "android")))]
     use nsh_platform_linux as platform;
     #[cfg(target_os = "macos")]
     use nsh_platform_macos as platform;

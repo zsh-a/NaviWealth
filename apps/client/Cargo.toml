@@ -44,7 +44,7 @@ agent-runtime = { path = "../../third_party/agent-runtime/crates/agent-runtime" 
 agent-store = { path = "../../third_party/agent-runtime/crates/agent-store" }
 futures = "0.3"
 
-[target.'cfg(target_os = "linux")'.dependencies]
+[target.'cfg(all(target_os = "linux", not(target_os = "android")))'.dependencies]
 nsh-platform-linux = { version = "0.4.0", default-features = false, optional = true }
 
 [target.'cfg(target_os = "macos")'.dependencies]
