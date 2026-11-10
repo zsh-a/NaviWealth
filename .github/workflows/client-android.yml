@@ -71,6 +71,13 @@ jobs:
           curl -fsSL https://nsh.dev/install.sh | sh
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
+      # `nsh package --target android` also builds a host-side runner
+      # (target/debug), and the desktop feature pulls GTK there.
+      - name: Install host GTK development libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-4-dev
+
       - name: Configure NDK toolchain for cargo
         env:
           ANDROID_NDK_HOME: ${{ steps.ndk.outputs.ndk-root }}
