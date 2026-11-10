@@ -27,6 +27,7 @@ nav:
   - Agent Task Map: agent-map.md
   - Architecture:
       - Northstar: architecture/lifeos-architecture-northstar.md
+      - NSH Rust Rewrite: architecture/nsh-rust-rewrite.md
       - LifeOS Shell: architecture/lifeos-shell.md
       - Agent Runtime: architecture/agent-runtime-current.md
   - Domains:

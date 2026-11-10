@@ -1,0 +1,42 @@
+[package]
+name = "lifeos"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Domain-neutral contracts, storage, sync and backup for the NaviWealth Rust client"
+
+[features]
+default = ["sqlite-bundled", "sync-http"]
+sqlite-bundled = ["rusqlite/bundled"]
+sqlcipher = [
+    "rusqlite/bundled-sqlcipher",
+    "rusqlite/bundled-sqlcipher-vendored-openssl",
+]
+sync-http = ["dep:reqwest"]
+dev-logs = ["dep:tracing-subscriber"]
+
+[dependencies]
+argon2 = "0.5"
+async-trait.workspace = true
+base64.workspace = true
+chacha20poly1305 = "0.10"
+chrono.workspace = true
+reqwest = { version = "0.12", default-features = false, features = [
+    "rustls-tls",
+    "json",
+], optional = true }
+rusqlite.workspace = true
+rust_decimal.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["rt", "sync", "macros"] }
+tracing-subscriber = { version = "0.3", default-features = false, features = [
+    "env-filter",
+    "fmt",
+], optional = true }
+tracing.workspace = true
+uuid.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }

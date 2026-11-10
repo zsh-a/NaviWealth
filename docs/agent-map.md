@@ -10,6 +10,7 @@ router, not a second source of product or architecture truth.
 | Task | Read first | Code authority | Minimum verification |
 |---|---|---|---|
 | Change architecture or cross-domain ownership | [Architecture Northstar](architecture/lifeos-architecture-northstar.md), [LifeOS Shell](architecture/lifeos-shell.md) | `apps/mobile/lib/core/lifeos/domain_pack.dart`, `apps/mobile/lib/app/domain_packs.dart` | Architecture lint scripts in the Shell SSOT |
+| Implement the new NSH/Rust client | [NSH and Rust Rewrite](architecture/nsh-rust-rewrite.md) | Target layout defined in the rewrite plan | Stage acceptance in the rewrite plan |
 | Add or change a domain | [LifeOS Shell](architecture/lifeos-shell.md), owning domain SSOT | Owning `apps/mobile/lib/app/domain_packs/*_pack.dart`, `apps/mobile/lib/features/<domain>/` | Domain composition, router, and opt-in tests |
 | Change FinanceOS behavior | [FinanceOS](domains/financeos-domain.md), then the relevant Finance topic SSOT | `apps/mobile/lib/features/finance/` | Focused repository/tool/widget tests |
 | Change a domain Agent | [Agent Experience](ai/agent-experience.md), owning domain SSOT | Owning `apps/mobile/lib/features/<domain>/agents/`, `DomainPack.ai.agentBuilder` | Agent unit tests, outcome corpus, composition test |

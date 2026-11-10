@@ -5,6 +5,11 @@ NaviWealth is a local-first Personal LifeOS. FinanceOS is the seed domain; Healt
 Start with `docs/agent-map.md`, which routes each task to the smallest
 authoritative context. Before changing architecture or cross-domain code, read:
 
+- `docs/architecture/nsh-rust-rewrite.md`: the nsh/Rust rewrite plan and its
+  phase status. The new pure-Rust client lives in `apps/client/` (nsh app) and
+  `crates/` (`lifeos`, `finance`, `platform`) under the root Cargo workspace;
+  `apps/mobile` (Flutter) stays untouched until the rewrite completes.
+
 - `docs/architecture/lifeos-architecture-northstar.md`: boundaries and non-goals.
 - `docs/architecture/lifeos-shell.md`: cross-domain shell, domain registration, AI, sync, memory, persistence.
 - Roadmaps and domain SSOTs as needed: `docs/index.md`,

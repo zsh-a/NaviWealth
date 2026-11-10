@@ -1,0 +1,18 @@
+[package]
+name = "naviwealth-finance"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Finance domain: models, use cases, repositories and sync tables"
+
+[dependencies]
+chrono.workspace = true
+lifeos.workspace = true
+rusqlite.workspace = true
+rust_decimal.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }

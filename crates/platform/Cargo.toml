@@ -1,0 +1,8 @@
+[package]
+name = "lifeos-platform"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "iOS and Android system adaptation seams (health, secure storage, paths)"
+
+[dependencies]

@@ -25,6 +25,7 @@ This documentation uses a docs-as-code structure:
 | Work on device AI | [Device AI Architecture](ai/ai-architecture.md), [Runtime Event Contract](ai/ai-protocol.md), [Agent Experience](ai/agent-experience.md) |
 | Work on personal memory beyond V1 | [AI Architecture](ai/ai-architecture.md) for current Memory behavior; the [Personal Memory Implementation Plan](ai/personal-memory-implementation-plan.md) retains only the deferred Phases 4–5 |
 | Work on Rust agent runtime | [Agent Runtime Current Architecture](architecture/agent-runtime-current.md) |
+| Build the new native client | [NSH and Rust Rewrite](architecture/nsh-rust-rewrite.md) |
 | Work on sync | [Sync v3 Protocol](sync/sync-v3.md), [Protocol Test Catalogue](sync/sync-protocol-tests.md) |
 | Add business diagnostics | [Structured Logging](development/logging.md) |
 | Run or test locally | [Local Development](development/local-development.md), [Testing Strategy](development/testing-strategy.md) |

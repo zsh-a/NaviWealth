@@ -2,6 +2,12 @@
 
 This document defines hard architecture boundaries for new work. It is not a roadmap and does not track completed migration history. When code and this document disagree, treat this document as the target boundary and update the stale source.
 
+The new client follows the [NSH and Rust rewrite plan](nsh-rust-rewrite.md).
+Flutter, Dart, Drift, and FRB constraints below apply to the existing Flutter
+client. The rewrite owns domain logic and persistence in Rust, starts with a
+new data model and contract, and may use WASM for its later Web target.
+Domain isolation, local-first behavior, and AI confirmation boundaries remain.
+
 ## Document Contract
 
 Owns cross-domain layering, hard boundaries, and non-goals. It does not own
