@@ -9,7 +9,7 @@ members = [
     "crates/health",
     "crates/platform",
 ]
-exclude = ["apps/backend", "third_party/agent-runtime", "third_party/market-data-rs"]
+exclude = ["apps/backend", "third_party/agent-runtime", "third_party/market-data-rs", "third_party/nsh-platform-android"]
 
 [workspace.package]
 version = "0.1.0"

@@ -15,36 +15,7 @@ use crate::ui;
 /// yyyy-mm-dd for the date field (civil-from-days; no chrono formatting in
 /// the UI layer).
 fn today_text() -> String {
-    let secs = lifeos::ids::now_secs();
-    let days = secs.div_euclid(86_400);
-    let z = days + 719_468;
-    let era = z.div_euclid(146_097);
-    let doe = z.rem_euclid(146_097);
-    let yoe = (doe - doe / 1460 + doe / 36_524 - doe / 146_096) / 365;
-    let y = yoe + era * 400;
-    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
-    let mp = (5 * doy + 2) / 153;
-    let d = doy - (153 * mp + 2) / 5 + 1;
-    let m = if mp < 10 { mp + 3 } else { mp - 9 };
-    let y = if m <= 2 { y + 1 } else { y };
-    format!("{y:04}-{m:02}-{d:02}")
-}
-
-fn date_to_secs(text: &str) -> Option<i64> {
-    let mut parts = text.split('-');
-    let year: i64 = parts.next()?.parse().ok()?;
-    let month: i64 = parts.next()?.parse().ok()?;
-    let day: i64 = parts.next()?.parse().ok()?;
-    if !(1..=12).contains(&month) || !(1..=31).contains(&day) {
-        return None;
-    }
-    let y = if month <= 2 { year - 1 } else { year };
-    let era = y.div_euclid(400);
-    let yoe = y.rem_euclid(400);
-    let mp = if month > 2 { month - 3 } else { month + 9 };
-    let doy = (153 * mp + 2) / 5 + day - 1;
-    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
-    Some((era * 146_097 + doe - 719_468) * 86_400)
+    ui::ymd(lifeos::ids::now_secs())
 }
 
 #[derive(Clone, PartialEq)]
@@ -166,7 +137,7 @@ impl RecordState {
                 return;
             }
         };
-        let date_secs = match date_to_secs(self.date.get().trim()) {
+        let date_secs = match ui::date_to_secs(self.date.get().trim()) {
             Some(secs) => secs,
             None => {
                 self.save_error.set("日期格式应为 yyyy-mm-dd".to_owned());

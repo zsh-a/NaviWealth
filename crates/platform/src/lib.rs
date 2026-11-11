@@ -6,15 +6,17 @@
 use std::path::PathBuf;
 
 /// Where the app keeps its database and key files, per platform.
-pub fn app_data_dir(app_id: &str) -> PathBuf {
+/// Android must be called on the nsh engine thread after host setup.
+pub fn app_data_dir(app_id: &str) -> std::io::Result<PathBuf> {
     #[cfg(target_os = "macos")]
     {
         let home = std::env::var_os("HOME")
             .map(PathBuf::from)
             .unwrap_or_default();
-        home.join("Library")
+        Ok(home
+            .join("Library")
             .join("Application Support")
-            .join(app_id)
+            .join(app_id))
     }
     #[cfg(target_os = "linux")]
     {
@@ -22,25 +24,37 @@ pub fn app_data_dir(app_id: &str) -> PathBuf {
             .map(PathBuf::from)
             .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".local/share")))
             .unwrap_or_else(|| PathBuf::from("."));
-        base.join(app_id)
+        Ok(base.join(app_id))
     }
     #[cfg(target_os = "windows")]
     {
         let base = std::env::var_os("APPDATA")
             .map(PathBuf::from)
             .unwrap_or_default();
-        base.join(app_id)
+        Ok(base.join(app_id))
     }
     #[cfg(target_os = "ios")]
     {
         // Provided by the platform runner at launch; deterministic default
         // for early bring-up.
-        PathBuf::from("nsh").join(app_id)
+        Ok(PathBuf::from("nsh").join(app_id))
     }
     #[cfg(target_os = "android")]
     {
-        PathBuf::from("files").join("nsh").join(app_id)
+        android_app_data_dir(nsh::app_data_root(), app_id)
     }
+}
+
+// The host root already includes `nsh`; never resolve mobile storage against cwd.
+#[cfg(any(target_os = "android", test))]
+fn android_app_data_dir(root: Option<PathBuf>, app_id: &str) -> std::io::Result<PathBuf> {
+    let root = root.filter(|root| root.is_absolute()).ok_or_else(|| {
+        std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "Android private data directory is unavailable",
+        )
+    })?;
+    Ok(root.join(app_id))
 }
 
 /// Health platform integration seam (HealthKit / Health Connect). Web has
@@ -68,6 +82,22 @@ impl HealthPlatform for StubHealthPlatform {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn android_storage_uses_host_absolute_path() {
+        let root = PathBuf::from("/data/user/10/com.naviwealth.client/files/nsh");
+        assert_eq!(
+            android_app_data_dir(Some(root.clone()), "com.naviwealth.client").unwrap(),
+            root.join("com.naviwealth.client"),
+        );
+    }
+
+    #[test]
+    fn android_storage_refuses_missing_or_relative_host_root() {
+        for root in [None, Some(PathBuf::from("files/nsh"))] {
+            assert!(android_app_data_dir(root, "com.naviwealth.client").is_err());
+        }
+    }
 
     #[test]
     fn stub_health_is_unavailable() {

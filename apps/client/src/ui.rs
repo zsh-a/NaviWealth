@@ -21,31 +21,30 @@ pub fn primary_button(
     test_id: &'static str,
     disabled: Option<Signal<bool>>,
 ) -> impl Element {
-    let b = view()
-        .role(AccessibilityRole::Button)
-        .on_press(on_press)
-        .items_center()
-        .justify_center()
-        .rounded(move || theme().radius)
-        .bg(move || theme().primary)
-        .px(px(16.0))
-        .h(px(44.0))
-        .active(|s| s.opacity(0.75))
-        .child(
-            text(label.into())
-                .text_base()
-                .font_weight(FontWeight::SEMIBOLD)
-                .text_color(move || theme().primary_foreground),
-        );
-    let b = if test_id.is_empty() {
-        b
-    } else {
-        b.test_id(test_id)
-    };
-    match disabled {
-        Some(signal) => b.disabled(move || signal.get()),
-        None => b,
-    }
+    action_button(
+        label,
+        on_press,
+        (!test_id.is_empty()).then(|| test_id.to_owned()),
+        disabled,
+        ButtonKind::Primary,
+    )
+}
+
+/// [`primary_button`] with a runtime-built test id (per-index rows such as
+/// confirm cards).
+pub fn primary_button_dyn(
+    label: impl Into<String>,
+    on_press: impl Fn() + 'static,
+    test_id: String,
+    disabled: Option<Signal<bool>>,
+) -> impl Element {
+    action_button(
+        label,
+        on_press,
+        Some(test_id),
+        disabled,
+        ButtonKind::Primary,
+    )
 }
 
 /// Quiet secondary action.
@@ -55,25 +54,80 @@ pub fn secondary_button(
     test_id: &'static str,
     disabled: Option<Signal<bool>>,
 ) -> impl Element {
+    action_button(
+        label,
+        on_press,
+        (!test_id.is_empty()).then(|| test_id.to_owned()),
+        disabled,
+        ButtonKind::Secondary,
+    )
+}
+
+/// [`secondary_button`] with a runtime-built test id.
+pub fn secondary_button_dyn(
+    label: impl Into<String>,
+    on_press: impl Fn() + 'static,
+    test_id: String,
+    disabled: Option<Signal<bool>>,
+) -> impl Element {
+    action_button(
+        label,
+        on_press,
+        Some(test_id),
+        disabled,
+        ButtonKind::Secondary,
+    )
+}
+
+enum ButtonKind {
+    Primary,
+    Secondary,
+}
+
+fn action_button(
+    label: impl Into<String>,
+    on_press: impl Fn() + 'static,
+    test_id: Option<String>,
+    disabled: Option<Signal<bool>>,
+    kind: ButtonKind,
+) -> impl Element {
+    let label = label.into();
+    let primary = matches!(kind, ButtonKind::Primary);
     let b = view()
         .role(AccessibilityRole::Button)
         .on_press(on_press)
         .items_center()
         .justify_center()
         .rounded(move || theme().radius)
-        .bg(move || theme().secondary)
+        .bg(move || {
+            if primary {
+                theme().primary
+            } else {
+                theme().secondary
+            }
+        })
         .px(px(16.0))
         .h(px(44.0))
         .active(|s| s.opacity(0.75))
         .child(
-            text(label.into())
+            text(label)
                 .text_base()
-                .text_color(move || theme().secondary_foreground),
+                .font_weight(if primary {
+                    FontWeight::SEMIBOLD
+                } else {
+                    FontWeight::NORMAL
+                })
+                .text_color(move || {
+                    if primary {
+                        theme().primary_foreground
+                    } else {
+                        theme().secondary_foreground
+                    }
+                }),
         );
-    let b = if test_id.is_empty() {
-        b
-    } else {
-        b.test_id(test_id)
+    let b = match test_id {
+        Some(id) => b.test_id(&id),
+        None => b,
     };
     match disabled {
         Some(signal) => b.disabled(move || signal.get()),
@@ -223,6 +277,28 @@ pub fn error_line(message: Signal<String>) -> impl IntoElement {
                 .text_color(move || theme().destructive)
         },
     )
+}
+
+/// Parse `yyyy-mm-dd` into epoch seconds at UTC midnight (days-from-civil;
+/// the inverse of [`ymd`]). Rejects impossible months/days.
+pub fn date_to_secs(text: &str) -> Option<i64> {
+    let mut parts = text.trim().split('-');
+    let year: i64 = parts.next()?.parse().ok()?;
+    let month: i64 = parts.next()?.parse().ok()?;
+    let day: i64 = parts.next()?.parse().ok()?;
+    if parts.next().is_some() {
+        return None;
+    }
+    if !(1..=12).contains(&month) || !(1..=31).contains(&day) {
+        return None;
+    }
+    let y = if month <= 2 { year - 1 } else { year };
+    let era = y.div_euclid(400);
+    let yoe = y.rem_euclid(400);
+    let mp = if month > 2 { month - 3 } else { month + 9 };
+    let doy = (153 * mp + 2) / 5 + day - 1;
+    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    Some((era * 146_097 + doe - 719_468) * 86_400)
 }
 
 /// yyyy-mm-dd for a timestamp in epoch seconds (civil-from-days; the same

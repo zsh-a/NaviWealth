@@ -22,7 +22,54 @@ fn native(registry: &mut Registry) {
 /// 智能 / 设置) plus one tab per enabled opt-in domain.
 #[component]
 pub fn App() -> impl IntoElement {
-    let services = state::Services::shared();
+    startup(state::Services::try_shared)
+}
+
+fn startup(
+    initialize: impl Fn() -> Result<std::sync::Arc<Services>, String> + 'static,
+) -> impl IntoElement {
+    let attempt = signal(0_u64);
+    view()
+        .flex_1()
+        .bg(move || theme().background)
+        .text_color(move || theme().foreground)
+        .child(dynamic(move || {
+            attempt.get();
+            match initialize() {
+                Ok(services) => app_shell(services).into_element(),
+                Err(_) => view()
+                    .flex_1()
+                    .p_safe_area()
+                    .child(
+                        view()
+                            .p_6()
+                            .gap_4()
+                            .child(text("无法打开本地数据").text_xl())
+                            .child(
+                                text(
+                                    "请检查设备可用空间，然后重试。若仍无法启动，请重新打开应用。",
+                                )
+                                .text_base()
+                                .text_color(move || theme().muted_foreground),
+                            )
+                            .child(
+                                ui::primary_button(
+                                    "重试",
+                                    move || attempt.update(|n| *n += 1),
+                                    "startup-retry",
+                                    None,
+                                )
+                                .min_h(px(48.0)),
+                            ),
+                    )
+                    .test_id("startup-error")
+                    .into_element(),
+            }
+        }))
+}
+
+fn app_shell(services: std::sync::Arc<Services>) -> impl IntoElement {
+    let enabled_domains = services.enabled_domain_keys();
     provide_context(services);
 
     let data_version: Signal<u64> = signal(0);
@@ -30,8 +77,7 @@ pub fn App() -> impl IntoElement {
 
     // The enabled opt-in domains, seeded from Services (which loaded the
     // settings KV at init).
-    let domains_signal: Signal<Vec<&'static str>> =
-        signal(state::Services::shared().enabled_domain_keys());
+    let domains_signal: Signal<Vec<&'static str>> = signal(enabled_domains);
     provide_context(DomainsState(domains_signal));
 
     let tab: Signal<u8> = signal(0);
@@ -165,4 +211,37 @@ fn tab_bar(selected: Signal<u8>, domains: Signal<Vec<&'static str>>) -> impl Int
                 ))
                 .child(tab_item(3, "设置", "tab-settings", selected)),
         )
+}
+
+#[cfg(test)]
+mod startup_tests {
+    use super::*;
+    use nsh_engine::{EngineConfig, Root};
+    use nsh_testing::Headless;
+    use std::cell::Cell;
+
+    #[component]
+    fn RecoverableStartup() -> impl IntoElement {
+        enable_test_mode();
+        let attempts = Cell::new(0);
+        startup(move || {
+            attempts.set(attempts.get() + 1);
+            if attempts.get() == 1 {
+                Err("private initialization detail".to_owned())
+            } else {
+                Services::try_shared()
+            }
+        })
+    }
+
+    #[test]
+    fn startup_failure_renders_and_retry_mounts_shell() {
+        let mut app = Headless::start(EngineConfig::new(Root::of::<RecoverableStartup>())).unwrap();
+        app.wait_for("id:startup-error").unwrap();
+        app.wait_for("text:无法打开本地数据").unwrap();
+        app.press("id:startup-retry").unwrap();
+        app.wait_for("id:tab-accounts").unwrap();
+        app.wait_for_gone("id:startup-error", std::time::Duration::from_secs(2))
+            .unwrap();
+    }
 }

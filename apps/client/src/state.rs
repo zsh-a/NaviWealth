@@ -5,7 +5,7 @@
 use std::collections::BTreeSet;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, OnceLock, RwLock};
+use std::sync::{Arc, Mutex, RwLock};
 
 use lifeos::Result as LifeosResult;
 use lifeos::backup::{self, RestoreReport};
@@ -44,7 +44,7 @@ const BASE_URL_KEY: &str = "sync.base_url";
 const LOCAL_OWNER: &str = "local";
 
 static TEST_MODE: AtomicBool = AtomicBool::new(false);
-static SERVICES: OnceLock<Arc<Services>> = OnceLock::new();
+static SERVICES: Mutex<Option<Arc<Services>>> = Mutex::new(None);
 
 /// Headless UI tests run the whole app with an in-memory database, no
 /// encryption and the mock AI provider. Must be called before
@@ -86,30 +86,46 @@ fn write_entry(
 impl Services {
     /// Process-wide services, initialized once.
     pub fn shared() -> Arc<Self> {
-        SERVICES
-            .get_or_init(|| Self::init().expect("services init"))
-            .clone()
+        Self::try_shared().expect("services init")
+    }
+
+    /// Cache only successful initialization so the startup screen can retry.
+    pub fn try_shared() -> Result<Arc<Self>, String> {
+        let mut services = SERVICES.lock().map_err(|_| "startup lock poisoned")?;
+        if let Some(services) = services.as_ref() {
+            return Ok(services.clone());
+        }
+        log::info!("startup: initializing local services");
+        match Self::init() {
+            Ok(initialized) => {
+                log::info!("startup: local services ready");
+                *services = Some(initialized.clone());
+                Ok(initialized)
+            }
+            Err(error) => {
+                log::error!("startup: local services failed: {error}");
+                Err(error.to_string())
+            }
+        }
     }
 
     fn init() -> LifeosResult<Arc<Self>> {
-        let test = is_test_mode();
+        let dir = if is_test_mode() {
+            None
+        } else {
+            Some(lifeos_platform::app_data_dir(APP_ID)?)
+        };
+        Self::init_at(dir)
+    }
+
+    fn init_at(dir: Option<PathBuf>) -> LifeosResult<Arc<Self>> {
         let migrations = domains::domain_migrations();
 
-        let (db, encrypted, app_dir) = if test {
-            (
-                Db::open(lifeos::db::DbOpenOptions {
-                    path: PathBuf::from(":memory:"),
-                    encryption_key: None,
-                    migrations,
-                })?,
-                false,
-                None,
-            )
-        } else {
-            let dir = lifeos_platform::app_data_dir(APP_ID);
+        let (db, encrypted, app_dir) = if let Some(dir) = dir {
             std::fs::create_dir_all(&dir)?;
             // SQLCipher master key lives in the platform key store
             // (desktop fallback: file key store under the app dir).
+            log::info!("startup: private data directory ready");
             let key_store = FileKeyStore::new(dir.join("keys"));
             let key = match key_store.get_key(backup::DATABASE_KEY_ID)? {
                 Some(key) => key,
@@ -119,6 +135,7 @@ impl Services {
                     key
                 }
             };
+            log::info!("startup: opening encrypted database");
             (
                 Db::open(lifeos::db::DbOpenOptions {
                     path: dir.join("naviwealth.db"),
@@ -128,8 +145,19 @@ impl Services {
                 true,
                 Some(dir),
             )
+        } else {
+            (
+                Db::open(lifeos::db::DbOpenOptions {
+                    path: PathBuf::from(":memory:"),
+                    encryption_key: None,
+                    migrations,
+                })?,
+                false,
+                None,
+            )
         };
 
+        log::info!("startup: database and migrations ready");
         let device_id = {
             let stored = db
                 .call_sync(|conn| settings::get_setting(conn, DEVICE_KEY))?
@@ -577,6 +605,93 @@ impl Services {
             .map_err(|e| e.to_string())
     }
 
+    // ---- Domain lookups for the AI write tools ----
+
+    /// The user-facing expense category for a preset key (`dining`):
+    /// (ledger account id, display name).
+    pub async fn expense_category_by_key(
+        &self,
+        key: &str,
+    ) -> Result<Option<(String, String)>, String> {
+        let key = key.to_owned();
+        self.db
+            .call(move |conn| {
+                let mut stmt = conn.prepare_cached(
+                    r#"SELECT c.ledger_account_id, c.name, c.name_override FROM "fin:categories" c
+                     WHERE c.system_key = ?1 AND c.deleted_at IS NULL AND c.archived = 0"#,
+                )?;
+                use rusqlite::OptionalExtension as _;
+                let row = stmt
+                    .query_row(rusqlite::params![key], |row| {
+                        Ok((
+                            row.get::<_, String>(0)?,
+                            row.get::<_, String>(1)?,
+                            row.get::<_, Option<String>>(2)?,
+                        ))
+                    })
+                    .optional()?;
+                Ok(row.map(|(id, name, override_name)| {
+                    let display = naviwealth_finance::system_accounts::category_display_name(
+                        name.as_str(),
+                        override_name.as_deref(),
+                        true,
+                    );
+                    (id, display.to_owned())
+                }))
+            })
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    /// Resolve an account by id first, then by exact name (active accounts
+    /// only). Used by the AI write tool (`from_account_id 或账户名`).
+    pub async fn account_by_id_or_name(&self, value: &str) -> Result<Option<Account>, String> {
+        let value = value.trim().to_owned();
+        if value.is_empty() {
+            return Ok(None);
+        }
+        self.db
+            .call(move |conn| {
+                let accounts =
+                    account_repository::list(conn, false).map_err(lifeos::LifeosError::from)?;
+                Ok(accounts
+                    .into_iter()
+                    .find(|a| a.id == value || a.name == value))
+            })
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    /// Resolve a plan by id, exact title, then unique title prefix.
+    pub async fn plan_by_id_or_title(
+        &self,
+        value: &str,
+    ) -> Result<Option<naviwealth_execution::models::Plan>, String> {
+        let value = value.trim().to_owned();
+        if value.is_empty() {
+            return Ok(None);
+        }
+        self.db
+            .call(move |conn| {
+                let plans = naviwealth_execution::repos::plan_repository::list(conn)
+                    .map_err(lifeos::LifeosError::from)?;
+                Ok(plans
+                    .iter()
+                    .find(|p| p.id == value)
+                    .or_else(|| plans.iter().find(|p| p.title == value))
+                    .or_else(|| {
+                        let hits: Vec<_> = plans
+                            .iter()
+                            .filter(|p| p.title.starts_with(&value))
+                            .collect();
+                        (hits.len() == 1).then(|| hits[0])
+                    })
+                    .cloned())
+            })
+            .await
+            .map_err(|e| e.to_string())
+    }
+
     // ---- Knowledge reads/writes ----
 
     pub async fn notes(
@@ -684,6 +799,7 @@ impl Services {
         &self,
         plan_id: String,
         title: String,
+        due: Option<i64>,
     ) -> Result<naviwealth_execution::models::Action, String> {
         let stamper = self.stamper();
         self.db
@@ -691,7 +807,7 @@ impl Services {
                 let new = naviwealth_execution::models::NewAction {
                     plan_id,
                     title,
-                    due: None,
+                    due,
                     created_at: lifeos::ids::now_secs(),
                 };
                 naviwealth_execution::repos::action_repository::create(conn, &stamper, new)
@@ -811,6 +927,102 @@ impl Services {
             .map_err(|e| e.to_string())
     }
 
+    // ---- Knowledge / Execution / Health AI tool reads ----
+
+    /// Notes whose title or content contains the keyword (case-insensitive),
+    /// as `《title》content` lines.
+    pub async fn note_search_lines(&self, query: &str, limit: i64) -> Result<Vec<String>, String> {
+        let needle = query.trim().to_lowercase();
+        self.db
+            .call(move |conn| {
+                let notes = naviwealth_knowledge::repos::note_repository::list_recent(conn, 500)
+                    .map_err(lifeos::LifeosError::from)?;
+                Ok(notes
+                    .into_iter()
+                    .filter(|note| {
+                        let haystack = format!("{} {}", note.title, note.content).to_lowercase();
+                        haystack.contains(&needle)
+                    })
+                    .take(limit.max(1) as usize)
+                    .map(|note| {
+                        let content: String = note.content.chars().take(80).collect();
+                        format!("《{}》{}", note.title, content)
+                    })
+                    .collect())
+            })
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    /// Per-plan open (non-deleted, non-done) actions as display lines.
+    pub async fn open_action_lines(&self) -> Result<Vec<String>, String> {
+        use naviwealth_execution::models::ActionStatus;
+        self.db
+            .call(|conn| {
+                let plans = naviwealth_execution::repos::plan_repository::list(conn)
+                    .map_err(lifeos::LifeosError::from)?;
+                let mut out = Vec::new();
+                for plan in plans {
+                    let actions = naviwealth_execution::repos::action_repository::list_by_plan(
+                        conn, &plan.id,
+                    )
+                    .map_err(lifeos::LifeosError::from)?;
+                    let open: Vec<String> = actions
+                        .into_iter()
+                        .filter(|a| {
+                            a.status != ActionStatus::Done && a.status != ActionStatus::Dropped
+                        })
+                        .map(|a| match a.status {
+                            ActionStatus::Doing => format!("{}（进行中）", a.title),
+                            ActionStatus::Blocked => format!("{}（受阻）", a.title),
+                            _ => a.title,
+                        })
+                        .collect();
+                    if open.is_empty() {
+                        continue;
+                    }
+                    out.push(format!("《{}》：{}", plan.title, open.join("；")));
+                }
+                Ok(out)
+            })
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    /// Recent metrics as `步数 8000 count（2026-01-01）` lines, optionally
+    /// filtered by kind.
+    pub async fn recent_metric_lines(
+        &self,
+        limit: i64,
+        kind: Option<naviwealth_health::models::MetricKind>,
+    ) -> Result<Vec<String>, String> {
+        self.db
+            .call(move |conn| {
+                let metrics = match kind {
+                    Some(kind) => {
+                        naviwealth_health::repos::metric_repository::list_by_kind(conn, kind, limit)
+                            .map_err(lifeos::LifeosError::from)?
+                    }
+                    None => naviwealth_health::repos::metric_repository::list_recent(conn, limit)
+                        .map_err(lifeos::LifeosError::from)?,
+                };
+                Ok(metrics
+                    .into_iter()
+                    .map(|m| {
+                        format!(
+                            "{} {} {}（{}）",
+                            metric_kind_label(m.kind),
+                            m.quantity,
+                            m.unit,
+                            crate::ui::ymd(m.recorded_at)
+                        )
+                    })
+                    .collect())
+            })
+            .await
+            .map_err(|e| e.to_string())
+    }
+
     // ---- AI profile ----
 
     pub async fn llm_profile(&self) -> Option<LlmProfile> {
@@ -824,6 +1036,16 @@ impl Services {
     }
 }
 
+/// Chinese display label for a health metric kind (matches the health
+/// screen's wording).
+fn metric_kind_label(kind: naviwealth_health::models::MetricKind) -> &'static str {
+    match kind {
+        naviwealth_health::models::MetricKind::Steps => "步数",
+        naviwealth_health::models::MetricKind::Sleep => "睡眠",
+        naviwealth_health::models::MetricKind::Weight => "体重",
+    }
+}
+
 /// 32 random bytes for the database master key (two UUIDv4s = 244 random
 /// bits from the OS CSPRNG via the uuid crate).
 fn new_database_key() -> Vec<u8> {
@@ -831,4 +1053,48 @@ fn new_database_key() -> Vec<u8> {
     bytes.extend_from_slice(uuid::Uuid::new_v4().as_bytes());
     bytes.extend_from_slice(uuid::Uuid::new_v4().as_bytes());
     bytes
+}
+
+#[cfg(test)]
+mod startup_tests {
+    use super::*;
+
+    fn temp_dir() -> PathBuf {
+        std::env::temp_dir().join(format!("naviwealth-startup-{}", uuid::Uuid::new_v4()))
+    }
+
+    #[test]
+    fn encrypted_startup_reopens_with_same_key_and_identity() {
+        let dir = temp_dir();
+        let first = Services::init_at(Some(dir.clone())).unwrap();
+        assert!(first.encrypted);
+        assert!(dir.join("naviwealth.db").is_file());
+        // Verify SQLCipher actually encrypted the file, rather than trusting
+        // the service's flag or silently opening a plaintext SQLite database.
+        let without_key = rusqlite::Connection::open(dir.join("naviwealth.db")).unwrap();
+        assert!(
+            without_key
+                .query_row("SELECT count(*) FROM sqlite_master", [], |row| row
+                    .get::<_, i64>(0))
+                .is_err()
+        );
+        drop(without_key);
+        let device_id = first.device_id.clone();
+        drop(first);
+        let reopened = Services::init_at(Some(dir)).unwrap();
+        assert!(reopened.encrypted);
+        assert_eq!(reopened.device_id, device_id);
+    }
+
+    #[test]
+    fn directory_failure_returns_error_and_can_retry() {
+        let dir = temp_dir();
+        std::fs::write(&dir, b"blocked").unwrap();
+        assert!(matches!(
+            Services::init_at(Some(dir.clone())),
+            Err(lifeos::LifeosError::Io(_))
+        ));
+        std::fs::remove_file(&dir).unwrap();
+        assert!(Services::init_at(Some(dir)).is_ok());
+    }
 }

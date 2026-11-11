@@ -6,3 +6,6 @@ license.workspace = true
 description = "iOS and Android system adaptation seams (health, secure storage, paths)"
 
 [dependencies]
+
+[target.'cfg(target_os = "android")'.dependencies]
+nsh-platform-android = { version = "=0.4.0", default-features = false }

@@ -405,7 +405,10 @@ fn action_form_sheet(
                         let reload = reload;
                         let title = title;
                         spawn(async move {
-                            match services.create_action(plan_id_value, title_text).await {
+                            match services
+                                .create_action(plan_id_value, title_text, None)
+                                .await
+                            {
                                 Ok(_) => {
                                     saving.set(false);
                                     plan_id.set(String::new());
