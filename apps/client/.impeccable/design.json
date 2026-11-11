@@ -1,0 +1,465 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-11T05:02:57.138497+00:00",
+  "title": "Design System: NaviWealth Rust Client",
+  "extensions": {
+    "colorMeta": {
+      "light-background": {
+        "role": "neutral",
+        "displayName": "Light Background",
+        "tonalRamp": [
+          "oklch(15% 0.0010 271.4)",
+          "oklch(26% 0.0018 271.4)",
+          "oklch(37% 0.0025 271.4)",
+          "oklch(48% 0.0033 271.4)",
+          "oklch(60% 0.0041 271.4)",
+          "oklch(72% 0.0029 271.4)",
+          "oklch(84% 0.0016 271.4)",
+          "oklch(95% 0.0005 271.4)"
+        ]
+      },
+      "light-foreground": {
+        "role": "neutral",
+        "displayName": "Light Foreground",
+        "tonalRamp": [
+          "oklch(15% 0.0072 267.6)",
+          "oklch(26% 0.0125 267.6)",
+          "oklch(37% 0.0178 267.6)",
+          "oklch(48% 0.0231 267.6)",
+          "oklch(60% 0.0288 267.6)",
+          "oklch(72% 0.0202 267.6)",
+          "oklch(84% 0.0115 267.6)",
+          "oklch(95% 0.0036 267.6)"
+        ]
+      },
+      "light-card": {
+        "role": "neutral",
+        "displayName": "Light Card",
+        "tonalRamp": [
+          "oklch(15% 0.0000 89.9)",
+          "oklch(26% 0.0000 89.9)",
+          "oklch(37% 0.0000 89.9)",
+          "oklch(48% 0.0000 89.9)",
+          "oklch(60% 0.0000 89.9)",
+          "oklch(72% 0.0000 89.9)",
+          "oklch(84% 0.0000 89.9)",
+          "oklch(95% 0.0000 89.9)"
+        ]
+      },
+      "light-primary": {
+        "role": "primary",
+        "displayName": "Light Primary",
+        "tonalRamp": [
+          "oklch(15% 0.0394 274.6)",
+          "oklch(26% 0.0683 274.6)",
+          "oklch(37% 0.0972 274.6)",
+          "oklch(48% 0.1261 274.6)",
+          "oklch(60% 0.1576 274.6)",
+          "oklch(72% 0.1103 274.6)",
+          "oklch(84% 0.0631 274.6)",
+          "oklch(95% 0.0197 274.6)"
+        ]
+      },
+      "light-primary-foreground": {
+        "role": "primary",
+        "displayName": "Light Primary Foreground",
+        "tonalRamp": [
+          "oklch(15% 0.0000 89.9)",
+          "oklch(26% 0.0000 89.9)",
+          "oklch(37% 0.0000 89.9)",
+          "oklch(48% 0.0000 89.9)",
+          "oklch(60% 0.0000 89.9)",
+          "oklch(72% 0.0000 89.9)",
+          "oklch(84% 0.0000 89.9)",
+          "oklch(95% 0.0000 89.9)"
+        ]
+      },
+      "light-secondary": {
+        "role": "secondary",
+        "displayName": "Light Secondary",
+        "tonalRamp": [
+          "oklch(15% 0.0044 279.1)",
+          "oklch(26% 0.0076 279.1)",
+          "oklch(37% 0.0108 279.1)",
+          "oklch(48% 0.0141 279.1)",
+          "oklch(60% 0.0176 279.1)",
+          "oklch(72% 0.0123 279.1)",
+          "oklch(84% 0.0070 279.1)",
+          "oklch(95% 0.0022 279.1)"
+        ]
+      },
+      "light-secondary-foreground": {
+        "role": "secondary",
+        "displayName": "Light Secondary Foreground",
+        "tonalRamp": [
+          "oklch(15% 0.0334 274.1)",
+          "oklch(26% 0.0580 274.1)",
+          "oklch(37% 0.0825 274.1)",
+          "oklch(48% 0.1070 274.1)",
+          "oklch(60% 0.1338 274.1)",
+          "oklch(72% 0.0936 274.1)",
+          "oklch(84% 0.0535 274.1)",
+          "oklch(95% 0.0167 274.1)"
+        ]
+      },
+      "light-muted": {
+        "role": "neutral",
+        "displayName": "Light Muted",
+        "tonalRamp": [
+          "oklch(15% 0.0021 271.3)",
+          "oklch(26% 0.0036 271.3)",
+          "oklch(37% 0.0051 271.3)",
+          "oklch(48% 0.0066 271.3)",
+          "oklch(60% 0.0083 271.3)",
+          "oklch(72% 0.0058 271.3)",
+          "oklch(84% 0.0033 271.3)",
+          "oklch(95% 0.0010 271.3)"
+        ]
+      },
+      "light-muted-foreground": {
+        "role": "neutral",
+        "displayName": "Light Muted Foreground",
+        "tonalRamp": [
+          "oklch(15% 0.0068 264.3)",
+          "oklch(26% 0.0117 264.3)",
+          "oklch(37% 0.0167 264.3)",
+          "oklch(48% 0.0216 264.3)",
+          "oklch(60% 0.0270 264.3)",
+          "oklch(72% 0.0189 264.3)",
+          "oklch(84% 0.0108 264.3)",
+          "oklch(95% 0.0034 264.3)"
+        ]
+      },
+      "light-destructive": {
+        "role": "neutral",
+        "displayName": "Light Destructive",
+        "tonalRamp": [
+          "oklch(15% 0.0538 27.3)",
+          "oklch(26% 0.0932 27.3)",
+          "oklch(37% 0.1327 27.3)",
+          "oklch(48% 0.1721 27.3)",
+          "oklch(60% 0.2152 27.3)",
+          "oklch(72% 0.1506 27.3)",
+          "oklch(84% 0.0861 27.3)",
+          "oklch(95% 0.0269 27.3)"
+        ]
+      },
+      "light-destructive-foreground": {
+        "role": "neutral",
+        "displayName": "Light Destructive Foreground",
+        "tonalRamp": [
+          "oklch(15% 0.0000 89.9)",
+          "oklch(26% 0.0000 89.9)",
+          "oklch(37% 0.0000 89.9)",
+          "oklch(48% 0.0000 89.9)",
+          "oklch(60% 0.0000 89.9)",
+          "oklch(72% 0.0000 89.9)",
+          "oklch(84% 0.0000 89.9)",
+          "oklch(95% 0.0000 89.9)"
+        ]
+      },
+      "light-border": {
+        "role": "neutral",
+        "displayName": "Light Border",
+        "tonalRamp": [
+          "oklch(15% 0.0028 269.5)",
+          "oklch(26% 0.0049 269.5)",
+          "oklch(37% 0.0070 269.5)",
+          "oklch(48% 0.0090 269.5)",
+          "oklch(60% 0.0113 269.5)",
+          "oklch(72% 0.0079 269.5)",
+          "oklch(84% 0.0045 269.5)",
+          "oklch(95% 0.0014 269.5)"
+        ]
+      },
+      "dark-background": {
+        "role": "neutral",
+        "displayName": "Dark Background",
+        "tonalRamp": [
+          "oklch(15% 0.0037 272.5)",
+          "oklch(26% 0.0063 272.5)",
+          "oklch(37% 0.0090 272.5)",
+          "oklch(48% 0.0117 272.5)",
+          "oklch(60% 0.0146 272.5)",
+          "oklch(72% 0.0102 272.5)",
+          "oklch(84% 0.0058 272.5)",
+          "oklch(95% 0.0018 272.5)"
+        ]
+      },
+      "dark-foreground": {
+        "role": "neutral",
+        "displayName": "Dark Foreground",
+        "tonalRamp": [
+          "oklch(15% 0.0028 269.5)",
+          "oklch(26% 0.0049 269.5)",
+          "oklch(37% 0.0069 269.5)",
+          "oklch(48% 0.0090 269.5)",
+          "oklch(60% 0.0112 269.5)",
+          "oklch(72% 0.0079 269.5)",
+          "oklch(84% 0.0045 269.5)",
+          "oklch(95% 0.0014 269.5)"
+        ]
+      },
+      "dark-card": {
+        "role": "neutral",
+        "displayName": "Dark Card",
+        "tonalRamp": [
+          "oklch(15% 0.0049 271.8)",
+          "oklch(26% 0.0086 271.8)",
+          "oklch(37% 0.0122 271.8)",
+          "oklch(48% 0.0158 271.8)",
+          "oklch(60% 0.0198 271.8)",
+          "oklch(72% 0.0139 271.8)",
+          "oklch(84% 0.0079 271.8)",
+          "oklch(95% 0.0025 271.8)"
+        ]
+      },
+      "dark-primary": {
+        "role": "primary",
+        "displayName": "Dark Primary",
+        "tonalRamp": [
+          "oklch(15% 0.0273 276.4)",
+          "oklch(26% 0.0474 276.4)",
+          "oklch(37% 0.0674 276.4)",
+          "oklch(48% 0.0875 276.4)",
+          "oklch(60% 0.1094 276.4)",
+          "oklch(72% 0.0766 276.4)",
+          "oklch(84% 0.0437 276.4)",
+          "oklch(95% 0.0137 276.4)"
+        ]
+      },
+      "dark-primary-foreground": {
+        "role": "primary",
+        "displayName": "Dark Primary Foreground",
+        "tonalRamp": [
+          "oklch(15% 0.0120 277.4)",
+          "oklch(26% 0.0207 277.4)",
+          "oklch(37% 0.0295 277.4)",
+          "oklch(48% 0.0383 277.4)",
+          "oklch(60% 0.0479 277.4)",
+          "oklch(72% 0.0335 277.4)",
+          "oklch(84% 0.0191 277.4)",
+          "oklch(95% 0.0060 277.4)"
+        ]
+      },
+      "dark-secondary": {
+        "role": "secondary",
+        "displayName": "Dark Secondary",
+        "tonalRamp": [
+          "oklch(15% 0.0147 276.1)",
+          "oklch(26% 0.0255 276.1)",
+          "oklch(37% 0.0363 276.1)",
+          "oklch(48% 0.0471 276.1)",
+          "oklch(60% 0.0589 276.1)",
+          "oklch(72% 0.0412 276.1)",
+          "oklch(84% 0.0236 276.1)",
+          "oklch(95% 0.0074 276.1)"
+        ]
+      },
+      "dark-secondary-foreground": {
+        "role": "secondary",
+        "displayName": "Dark Secondary Foreground",
+        "tonalRamp": [
+          "oklch(15% 0.0075 279.6)",
+          "oklch(26% 0.0130 279.6)",
+          "oklch(37% 0.0184 279.6)",
+          "oklch(48% 0.0239 279.6)",
+          "oklch(60% 0.0299 279.6)",
+          "oklch(72% 0.0209 279.6)",
+          "oklch(84% 0.0120 279.6)",
+          "oklch(95% 0.0037 279.6)"
+        ]
+      },
+      "dark-muted": {
+        "role": "neutral",
+        "displayName": "Dark Muted",
+        "tonalRamp": [
+          "oklch(15% 0.0062 271.4)",
+          "oklch(26% 0.0108 271.4)",
+          "oklch(37% 0.0154 271.4)",
+          "oklch(48% 0.0199 271.4)",
+          "oklch(60% 0.0249 271.4)",
+          "oklch(72% 0.0175 271.4)",
+          "oklch(84% 0.0100 271.4)",
+          "oklch(95% 0.0031 271.4)"
+        ]
+      },
+      "dark-muted-foreground": {
+        "role": "neutral",
+        "displayName": "Dark Muted Foreground",
+        "tonalRamp": [
+          "oklch(15% 0.0063 267.9)",
+          "oklch(26% 0.0110 267.9)",
+          "oklch(37% 0.0157 267.9)",
+          "oklch(48% 0.0203 267.9)",
+          "oklch(60% 0.0254 267.9)",
+          "oklch(72% 0.0178 267.9)",
+          "oklch(84% 0.0102 267.9)",
+          "oklch(95% 0.0032 267.9)"
+        ]
+      },
+      "dark-destructive": {
+        "role": "neutral",
+        "displayName": "Dark Destructive",
+        "tonalRamp": [
+          "oklch(15% 0.0415 22.2)",
+          "oklch(26% 0.0720 22.2)",
+          "oklch(37% 0.1025 22.2)",
+          "oklch(48% 0.1329 22.2)",
+          "oklch(60% 0.1661 22.2)",
+          "oklch(72% 0.1163 22.2)",
+          "oklch(84% 0.0665 22.2)",
+          "oklch(95% 0.0208 22.2)"
+        ]
+      },
+      "dark-destructive-foreground": {
+        "role": "neutral",
+        "displayName": "Dark Destructive Foreground",
+        "tonalRamp": [
+          "oklch(15% 0.0066 20.1)",
+          "oklch(26% 0.0114 20.1)",
+          "oklch(37% 0.0163 20.1)",
+          "oklch(48% 0.0211 20.1)",
+          "oklch(60% 0.0264 20.1)",
+          "oklch(72% 0.0185 20.1)",
+          "oklch(84% 0.0105 20.1)",
+          "oklch(95% 0.0033 20.1)"
+        ]
+      },
+      "dark-border": {
+        "role": "neutral",
+        "displayName": "Dark Border",
+        "tonalRamp": [
+          "oklch(15% 0.0078 267.3)",
+          "oklch(26% 0.0135 267.3)",
+          "oklch(37% 0.0192 267.3)",
+          "oklch(48% 0.0249 267.3)",
+          "oklch(60% 0.0312 267.3)",
+          "oklch(72% 0.0218 267.3)",
+          "oklch(84% 0.0125 267.3)",
+          "oklch(95% 0.0039 267.3)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "page": {
+        "displayName": "Page heading",
+        "purpose": "Native page names."
+      },
+      "amount-input": {
+        "displayName": "Editable amount",
+        "purpose": "Leading monetary field in the full record editor."
+      }
+    },
+    "shadows": [],
+    "motion": [],
+    "breakpoints": [],
+    "nativeNotes": {
+      "authority": "theme.json and Rust source. HTML/CSS snippets are documentation previews, not native source.",
+      "tonalRamps": "Synthesized OKLCH display ramps, not extra runtime tokens.",
+      "previewFocus": "HTML hover and keyboard focus treatments are preview affordances; they do not establish native acceptance.",
+      "sheetScrim": "rgba(0,0,0,0.32)",
+      "pressedOpacity": 0.75,
+      "inputRoles": "Foreground text, muted-foreground placeholder, primary caret, secondary selection are explicitly bound by ui::themed_input()."
+    }
+  },
+  "components": [
+    {
+      "name": "Primary action",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Native minimum-height action translated for the documentation preview.",
+      "html": "<button class=\"ds-primary\">保存记录</button>",
+      "css": ".ds-primary{font-family:system-ui,sans-serif;font-size:16px;min-height:48px;padding:0 16px;border:0;border-radius:12px;background:#535FC5;color:#FFFFFF;font-weight:600}.ds-primary:hover{filter:brightness(.98)}.ds-primary:focus-visible{outline:2px solid #535FC5;outline-offset:2px}.ds-primary:active{opacity:.75}.ds-primary:disabled{opacity:.5}"
+    },
+    {
+      "name": "Secondary action",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Native minimum-height action translated for the documentation preview.",
+      "html": "<button class=\"ds-secondary\">保存记录</button>",
+      "css": ".ds-secondary{font-family:system-ui,sans-serif;font-size:16px;min-height:48px;padding:0 16px;border:0;border-radius:12px;background:#EAECF9;color:#414C9F;font-weight:400}.ds-secondary:hover{filter:brightness(.98)}.ds-secondary:focus-visible{outline:2px solid #535FC5;outline-offset:2px}.ds-secondary:active{opacity:.75}.ds-secondary:disabled{opacity:.5}"
+    },
+    {
+      "name": "Labeled field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "Visible label and native bordered input.",
+      "html": "<label class=\"ds-field\">账户名称<input placeholder=\"例如：工资卡\" /></label>",
+      "css": ".ds-field{display:grid;gap:4px;color:#636B7B;font:14px/20px system-ui}.ds-field input{font-family:system-ui,sans-serif;font-size:16px;min-height:48px;padding:0 16px;border:0;border-radius:12px;padding:0 12px;border:1px solid #E3E6EE;background:#FFFFFF;color:#252B3A}.ds-field input:hover{border-color:#636B7B}.ds-field input:focus-visible{outline:2px solid #535FC5;outline-offset:2px}.ds-field input{caret-color:#535FC5}.ds-field input::placeholder{color:#636B7B}.ds-field input::selection{background:#EAECF9;color:#252B3A}"
+    },
+    {
+      "name": "Selected choice",
+      "kind": "chip",
+      "refersTo": "choice-selected",
+      "description": "Rounded selection used in filter and picker sheets.",
+      "html": "<button class=\"ds-choice\" aria-pressed=\"true\">支出</button>",
+      "css": ".ds-choice{font-family:system-ui,sans-serif;font-size:16px;min-height:48px;padding:0 16px;border:0;border-radius:12px;padding:8px 12px;font-size:14px;background:#EAECF9;color:#414C9F}.ds-choice:hover{filter:brightness(.98)}.ds-choice:focus-visible{outline:2px solid #535FC5;outline-offset:2px}.ds-choice:active{opacity:.75}"
+    },
+    {
+      "name": "Dated activity group",
+      "kind": "card",
+      "refersTo": "group",
+      "description": "Flat rows share a single tonal group.",
+      "html": "<section class=\"ds-group\"><div><span>午餐<small>现金 · CNY</small></span><strong>−68.50</strong></div><div><span>工资<small>工资卡 · CNY</small></span><strong>+8500.00</strong></div></section>",
+      "css": ".ds-group{border-radius:16px;background:#FFFFFF;color:#252B3A;font:16px/24px system-ui;overflow:hidden}.ds-group div{padding:16px;display:flex;gap:12px;justify-content:space-between;align-items:center}.ds-group small{display:block;font-size:14px;color:#636B7B}.ds-group strong{font-variant-numeric:tabular-nums;font-size:18px;font-weight:500}"
+    },
+    {
+      "name": "Bottom navigation",
+      "kind": "nav",
+      "refersTo": "group",
+      "description": "Native labeled tabs; this compact preview shows the selected ledger tab.",
+      "html": "<nav class=\"ds-nav\"><button aria-current=\"page\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"5\" y=\"3\" width=\"14\" height=\"18\" rx=\"3\"/><path d=\"M9 8h6M9 12h6M9 16h3\"/></svg>流水</button><button>账户</button><button>智能</button><button>设置</button></nav>",
+      "css": ".ds-nav{display:flex;background:#FFFFFF;border-top:1px solid #E3E6EE;padding:4px 4px 10px}.ds-nav button{flex:1;min-height:64px;border:0;background:transparent;font:14px/20px system-ui;color:#636B7B;display:grid;place-content:center;gap:4px}.ds-nav svg{width:22px;height:22px;margin:auto}.ds-nav [aria-current]{color:#535FC5}.ds-nav button:hover{background:#EEF0F6}.ds-nav button:focus-visible{outline:2px solid #535FC5;outline-offset:-2px}.ds-nav button:active{opacity:.75}"
+    },
+    {
+      "name": "Destructive confirmation",
+      "kind": "button",
+      "refersTo": "button-destructive",
+      "description": "The final delete action uses the destructive role pair.",
+      "html": "<button class=\"ds-danger\">确认删除</button>",
+      "css": ".ds-danger{font:500 16px/24px system-ui;min-height:48px;padding:12px 16px;border:0;border-radius:12px;background:#DC2626;color:#FFFFFF}.ds-danger:hover{filter:brightness(.98)}.ds-danger:focus-visible{outline:2px solid #DC2626;outline-offset:2px}.ds-danger:disabled{opacity:.5}"
+    },
+    {
+      "name": "Actionable error line",
+      "kind": "custom",
+      "refersTo": "error-line",
+      "description": "A restore failure preserves data and gives a concrete next step.",
+      "html": "<p class=\"ds-error\">恢复未完成，现有数据已保留。请检查口令；若仍失败，请重新选择有效的备份文件。</p>",
+      "css": ".ds-error{font:14px/20px system-ui;color:#DC2626;margin:0}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Porcelain Ledger",
+    "overview": "A quiet porcelain-and-graphite workspace for inspecting money and recording daily activity. Iris identifies the next useful action; exact amounts and dated rows carry the hierarchy. The Rust client extends the established 澄白 identity with native controls and restrained tonal grouping.\n\nThis system is scoped to `apps/client`. `theme.json` and the Rust implementation are the source of truth; the repository-root Flutter design system remains separate. This records daily-finance patterns, not release or platform acceptance.",
+    "keyCharacteristics": [
+      "Flat dated activity with right-aligned, explicit-currency amounts.",
+      "Clear capture actions, grouped fields, and restrained iris emphasis.",
+      "Native safe-area handling and guarded changes."
+    ],
+    "rules": [
+      {
+        "name": "The Currency Rule",
+        "body": "Currency labels and signs carry financial meaning; color is supplementary.",
+        "section": "colors"
+      },
+      {
+        "name": "The Exact Amount Rule",
+        "body": "Use tabular digits for displayed monetary values and exact Decimal text; never round a small nonzero amount to zero for presentation.",
+        "section": "typography"
+      }
+    ],
+    "dos": [
+      "Do keep currencies explicit and totals separate by currency.",
+      "Do use exact Decimal text with at least two fractional places; retain smaller nonzero values.",
+      "Do use shared buttons, fields, sheets, icons, and theme roles.",
+      "Do preserve dirty drafts and show errors beside the operation that failed."
+    ],
+    "donts": [
+      "Don't combine unlike currencies without a real conversion.",
+      "Don't put a card around each row inside an already grouped surface.",
+      "Don't rely on color alone for income, expense, transfer, or destructive intent.",
+      "Don't turn the daily workspace into a marketing page."
+    ]
+  }
+}

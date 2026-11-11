@@ -1,8 +1,8 @@
 {
   "cssVars": {
     "theme": {
-      "radius": "10px",
-      "radius-card": "14px"
+      "radius": "12px",
+      "radius-card": "16px"
     },
     "light": {
       "background": "#F7F8FB",

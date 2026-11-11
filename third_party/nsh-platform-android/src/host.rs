@@ -203,6 +203,7 @@ impl Host {
         };
         let density = self.density.clone();
         let data_root = self.data_dir.clone();
+        let document_view = self.view.clone();
         let sink = Sink(self.clone());
         // A test session's app: the test's storage, network and trace.
         #[cfg(feature = "dev")]
@@ -220,6 +221,7 @@ impl Host {
             config,
             move || {
                 crate::APP_DATA_ROOT.with(|root| *root.borrow_mut() = data_root);
+                crate::APP_DOCUMENT_VIEW.with(|view| *view.borrow_mut() = Some(document_view));
                 AndroidTextEngine {
                     density: density.clone(),
                 }

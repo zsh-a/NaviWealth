@@ -659,7 +659,7 @@ pub fn ChatScreen() -> impl IntoElement {
                 let send_submit = send.clone();
                 view()
                     .flex_1()
-                    .child(scroll().flex_1().px_4().child(each(
+                    .child(ui::interactive_scroll().flex_1().px_4().child(each(
                         move || state_list.messages.get(),
                         |message: &Msg| message.id.to_string(),
                         move |message: ReadSignal<Msg>, _index: ReadSignal<usize>| {

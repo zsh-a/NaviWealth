@@ -229,7 +229,13 @@ pub fn balances(conn: &Connection) -> LifeosResult<Vec<AccountBalance>> {
             .iter_mut()
             .find(|(a, u, _)| a == &account_id && u == &unit)
         {
-            Some((_, _, sum)) => *sum += units,
+            Some((_, _, sum)) => {
+                *sum = sum.checked_add(units).ok_or_else(|| {
+                    lifeos::LifeosError::InvalidData(
+                        "account balance exceeds supported decimal range".to_owned(),
+                    )
+                })?;
+            }
             None => sums.push((account_id, unit, units)),
         }
     }

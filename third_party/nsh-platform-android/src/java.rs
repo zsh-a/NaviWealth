@@ -14,6 +14,7 @@ use jni::{
 /// Everything Rust calls in Java.
 pub(crate) struct Java {
     pub(crate) vm: JavaVM,
+    pub(crate) backup_files: Option<GlobalRef>,
     /// `com.longbridge.nsh.TextLayouts`: text typesetting (engine thread).
     pub(crate) text: GlobalRef,
     pub(crate) text_prepare: JStaticMethodID,
@@ -74,7 +75,15 @@ pub(crate) fn init(vm: JavaVM) -> jni::errors::Result<()> {
     let text_class: &JClass<'_> = text.as_obj().into();
     let net_class: &JClass<'_> = net.as_obj().into();
     let view_class: &JClass<'_> = view.as_obj().into();
+    let backup_files = match class(&mut env, "com/longbridge/nsh/BackupFiles") {
+        Ok(class) => Some(class),
+        Err(_) => {
+            let _ = env.exception_clear();
+            None
+        }
+    };
     let java = Java {
+        backup_files,
         text_prepare: env.get_static_method_id(
             text_class,
             "prepare",

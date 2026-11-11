@@ -22,6 +22,8 @@ mod agent;
 mod animation;
 #[cfg(feature = "dev")]
 mod dev;
+/// Android Storage Access Framework document import/export.
+pub mod documents;
 mod encode;
 mod host;
 mod java;
@@ -44,6 +46,7 @@ pub use nsh_core::element::Registry;
 pub use nsh_engine::Root;
 
 thread_local! {
+    pub(crate) static APP_DOCUMENT_VIEW: std::cell::RefCell<Option<jni::objects::GlobalRef>> = const { std::cell::RefCell::new(None) };
     pub(crate) static APP_DATA_ROOT: std::cell::RefCell<Option<std::path::PathBuf>> = const { std::cell::RefCell::new(None) };
 }
 

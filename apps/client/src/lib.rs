@@ -3,6 +3,8 @@
 mod ai;
 mod bridge;
 mod domains;
+pub mod finance;
+mod native_files;
 mod screens;
 mod state;
 mod ui;
@@ -12,6 +14,15 @@ use nsh_base::{tab, tabs, theme};
 use nsh_core::prelude::*;
 
 pub use state::{Services, enable_test_mode, is_test_mode};
+
+#[derive(Clone, Copy)]
+pub(crate) struct ShellTab(pub Signal<u8>);
+
+#[derive(Clone, Copy)]
+pub(crate) struct FinanceNavigation {
+    pub account: Signal<String>,
+    pub all_dates: Signal<bool>,
+}
 
 #[native_module("naviwealth/native")]
 fn native(registry: &mut Registry) {
@@ -80,7 +91,12 @@ fn app_shell(services: std::sync::Arc<Services>) -> impl IntoElement {
     let domains_signal: Signal<Vec<&'static str>> = signal(enabled_domains);
     provide_context(DomainsState(domains_signal));
 
-    let tab: Signal<u8> = signal(0);
+    let tab: Signal<u8> = signal(1);
+    provide_context(ShellTab(tab));
+    provide_context(FinanceNavigation {
+        account: signal(String::new()),
+        all_dates: signal(false),
+    });
     // The closures stay: the screen fns' return types satisfy IntoElement,
     // not IntoElements, so the fn items cannot be passed directly.
     #[allow(clippy::redundant_closure)]
@@ -91,7 +107,7 @@ fn app_shell(services: std::sync::Arc<Services>) -> impl IntoElement {
         .child(
             view()
                 .flex_1()
-                .p_safe_area()
+                .pt_safe_area()
                 .child(when(
                     move || tab.get() == 0,
                     move || screens::accounts::AccountsScreen(),
@@ -144,6 +160,7 @@ fn tab_item(
         .selected(is_selected)
         .on_press(move |_: &()| selected.set(index))
         .flex_1()
+        .min_h(px(64.0))
         .py_2()
         .items_center()
         .justify_center()
@@ -151,6 +168,22 @@ fn tab_item(
             view()
                 .test_id(test_id)
                 .items_center()
+                .gap_1()
+                .child(
+                    ui::icon(match index {
+                        0 => ui::Icon::Wallet,
+                        1 | 4 | 5 => ui::Icon::Ledger,
+                        2 => ui::Icon::Chat,
+                        _ => ui::Icon::Settings,
+                    })
+                    .text_color(move || {
+                        if is_selected() {
+                            theme().primary
+                        } else {
+                            theme().muted_foreground
+                        }
+                    }),
+                )
                 .child(text(label).text_sm().text_color(move || {
                     if is_selected() {
                         theme().primary
@@ -166,6 +199,7 @@ fn tab_bar(selected: Signal<u8>, domains: Signal<Vec<&'static str>>) -> impl Int
     // for tests and shortcuts. Each is a reactive region so the tab list
     // follows the settings switches.
     view()
+        .pb_safe_area_plus(px(6.0))
         .border_t_1()
         .border_color(move || theme().border)
         .bg(move || theme().card)
@@ -173,8 +207,8 @@ fn tab_bar(selected: Signal<u8>, domains: Signal<Vec<&'static str>>) -> impl Int
             tabs()
                 .flex_row()
                 .p_1()
+                .child(tab_item(1, "流水", "tab-ledger", selected))
                 .child(tab_item(0, "账户", "tab-accounts", selected))
-                .child(tab_item(1, "账本", "tab-ledger", selected))
                 .child(tab_item(2, "智能", "tab-chat", selected))
                 .child(when(
                     move || domains.get().contains(&"knowledge"),

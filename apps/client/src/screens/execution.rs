@@ -96,7 +96,7 @@ pub fn ExecutionScreen() -> impl IntoElement {
                 )),
         )
         .child(
-            scroll()
+            ui::interactive_scroll()
                 .flex_1()
                 .px_4()
                 .pb_4()

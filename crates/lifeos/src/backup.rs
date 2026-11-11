@@ -65,6 +65,9 @@ pub struct BackupPayload {
     /// Declared table → declared row count (validated against `data`).
     pub tables: BTreeMap<String, usize>,
     pub data: BTreeMap<String, Vec<serde_json::Value>>,
+    /// Non-secret application preferences, explicitly allow-listed by the host.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub preferences: BTreeMap<String, String>,
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -96,7 +99,18 @@ fn derive_key(passphrase: &str, params: &KdfParams) -> Result<[u8; 32]> {
             params.alg
         )));
     }
+    // File headers are untrusted before authentication. Bound KDF work before
+    // allocating memory so selecting a hostile file cannot exhaust the device.
+    if !(8..=65_536).contains(&params.m_cost_kib)
+        || !(1..=10).contains(&params.t_cost)
+        || !(1..=4).contains(&params.p_cost)
+    {
+        return Err(LifeosError::Backup("unsupported kdf cost".to_owned()));
+    }
     let salt = b64_decode(&params.salt)?;
+    if !(8..=64).contains(&salt.len()) {
+        return Err(LifeosError::Backup("invalid backup salt".to_owned()));
+    }
     let mut key = [0u8; 32];
     argon2::Argon2::new(
         argon2::Algorithm::Argon2id,
@@ -163,9 +177,16 @@ pub fn decrypt_payload(envelope_json: &str, passphrase: &str) -> Result<BackupPa
             "backup was written by a newer schema".into(),
         ));
     }
+    if envelope.schema_version != BACKUP_SCHEMA_VERSION || envelope.cipher.alg != "chacha20poly1305"
+    {
+        return Err(LifeosError::Backup("unsupported backup format".to_owned()));
+    }
     let key = derive_key(passphrase, &envelope.kdf)?;
     let cipher = ChaCha20Poly1305::new(Key::from_slice(&key));
     let nonce = b64_decode(&envelope.cipher.nonce)?;
+    if nonce.len() != 12 {
+        return Err(LifeosError::Backup("invalid backup nonce".to_owned()));
+    }
     let ciphertext = b64_decode(&envelope.ciphertext)?;
     let plaintext = cipher
         .decrypt(Nonce::from_slice(&nonce), ciphertext.as_ref())
@@ -207,6 +228,7 @@ pub fn export_payload(
         domain: domain.map(|d| d.as_str().to_owned()),
         tables,
         data,
+        preferences: BTreeMap::new(),
     })
 }
 
@@ -247,6 +269,15 @@ pub fn restore_payload(
                     "table {table:?} row {index} has no id"
                 )));
             }
+            let hlc = row
+                .get("hlc")
+                .and_then(|value| value.as_str())
+                .ok_or_else(|| {
+                    LifeosError::Backup(format!("table {table:?} row {index} has no clock"))
+                })?;
+            crate::hlc::Hlc::parse(hlc).map_err(|_| {
+                LifeosError::Backup(format!("table {table:?} row {index} has an invalid clock"))
+            })?;
         }
         let _ = adapter; // table known
     }
@@ -259,7 +290,7 @@ pub fn restore_payload(
     }
 
     // ---- Replace ----
-    let tx = conn.transaction()?;
+    let tx = conn.savepoint()?;
     let mut rows_restored = 0usize;
     let mut max_hlc: Option<String> = None;
     for (table, rows) in &payload.data {
@@ -329,6 +360,7 @@ mod tests {
             magic: BACKUP_PAYLOAD_MAGIC.into(),
             created_at: "2026-01-01T00:00:00Z".into(),
             domain: None,
+            preferences: BTreeMap::new(),
             tables: BTreeMap::from([("fin:notes".into(), 1)]),
             data: BTreeMap::from([(
                 "fin:notes".into(),
@@ -340,6 +372,20 @@ mod tests {
         assert_eq!(decrypted.data["fin:notes"][0]["note"], "hello");
         assert!(decrypt_payload(&envelope, "wrong").is_err());
         assert!(decrypt_payload(&envelope[..envelope.len() - 2], "correct horse").is_err());
+    }
+
+    #[test]
+    fn malformed_crypto_headers_return_errors_instead_of_panicking_or_allocating_unbounded_memory()
+    {
+        let envelope = serde_json::json!({
+            "magic": BACKUP_MAGIC, "created_at": "2026-11-11T00:00:00Z", "schema_version": BACKUP_SCHEMA_VERSION,
+            "kdf": {"alg":"argon2id","m_cost_kib":19456,"t_cost":2,"p_cost":1,"salt": b64_encode(&[0;16])},
+            "cipher": {"alg":"chacha20poly1305","nonce":b64_encode(&[0])}, "ciphertext": b64_encode(&[0;16]),
+        });
+        assert!(decrypt_payload(&envelope.to_string(), "pass").is_err());
+        let mut excessive = envelope;
+        excessive["kdf"]["m_cost_kib"] = serde_json::json!(u32::MAX);
+        assert!(decrypt_payload(&excessive.to_string(), "pass").is_err());
     }
 
     #[tokio::test]

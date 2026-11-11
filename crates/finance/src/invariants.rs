@@ -93,6 +93,14 @@ fn looks_like_fiat_code(unit: &str) -> bool {
     (3..=8).contains(&bytes.len()) && bytes.iter().all(u8::is_ascii_uppercase)
 }
 
+fn arithmetic_problem(posting_id: Option<String>) -> BalanceProblem {
+    BalanceProblem {
+        kind: BalanceProblemKind::Unbalanced,
+        message: "Posting weights exceed the supported decimal range; reduce the amount or rate precision.".to_owned(),
+        posting_id,
+    }
+}
+
 /// Compute the balance status of a journal entry given its postings.
 /// `is_balanced()` on the report is the canonical "is this writeable"
 /// answer.
@@ -139,28 +147,37 @@ pub fn evaluate_entry_balance(
 
     for posting in postings {
         let (weight, weight_ccy) = if let Some(cost) = &posting.cost {
-            (posting.units * cost.per_unit, cost.currency.clone())
+            (
+                posting.units.checked_mul(cost.per_unit),
+                cost.currency.clone(),
+            )
         } else if let Some(price) = &posting.price {
-            (posting.units * price.per_unit, price.currency.clone())
+            (
+                posting.units.checked_mul(price.per_unit),
+                price.currency.clone(),
+            )
         } else if looks_like_fiat_code(&posting.unit) {
-            (posting.units, posting.unit.clone())
+            (Some(posting.units), posting.unit.clone())
         } else {
             problems.push(BalanceProblem {
                 kind: BalanceProblemKind::RawCommodityWithoutCostOrPrice,
-                message: format!(
-                    "Posting {} carries non-fiat unit {:?} but no cost or price annotation; cannot fold to base currency.",
-                    posting.id, posting.unit
-                ),
+                message: format!("Posting {} carries non-fiat unit {:?} but no cost or price annotation; cannot fold to base currency.", posting.id, posting.unit),
                 posting_id: Some(posting.id.clone()),
             });
             continue;
         };
-
+        let Some(weight) = weight else {
+            problems.push(arithmetic_problem(Some(posting.id.clone())));
+            continue;
+        };
         match weights_by_currency
             .iter_mut()
             .find(|(c, _)| *c == weight_ccy)
         {
-            Some((_, sum)) => *sum += weight,
+            Some((_, sum)) => match sum.checked_add(weight) {
+                Some(next) => *sum = next,
+                None => problems.push(arithmetic_problem(Some(posting.id.clone()))),
+            },
             None => {
                 weights_by_currency.push((weight_ccy.clone(), weight));
                 first_posting_by_currency.push((weight_ccy, posting.id.clone()));
@@ -170,32 +187,35 @@ pub fn evaluate_entry_balance(
 
     let mut total = Decimal::ZERO;
     for (weight_ccy, weight) in &weights_by_currency {
-        // Exact native-currency cancellation is already balanced; do not
-        // require a historical FX observation just to convert zero into
-        // another zero.
+        // Exact native-currency cancellation needs no market FX quote.
         if *weight == Decimal::ZERO {
             continue;
         }
-        if weight_ccy == base_currency {
-            total += weight;
-            continue;
-        }
-        match fx.rate(conn, weight_ccy, base_currency, entry.date) {
-            Some(rate) => total += weight * rate,
-            None => {
-                let posting_id = first_posting_by_currency
-                    .iter()
-                    .find(|(c, _)| c == weight_ccy)
-                    .map(|(_, p)| p.clone());
-                problems.push(BalanceProblem {
-                    kind: BalanceProblemKind::MissingFxRate,
-                    message: format!(
-                        "Missing FX rate {weight_ccy} → {base_currency} for currency bucket starting at posting {}.",
-                        posting_id.as_deref().unwrap_or("?")
-                    ),
-                    posting_id,
-                });
+        let posting_id = first_posting_by_currency
+            .iter()
+            .find(|(c, _)| c == weight_ccy)
+            .map(|(_, p)| p.clone());
+        let converted = if weight_ccy == base_currency {
+            Some(*weight)
+        } else {
+            match fx
+                .rate(conn, weight_ccy, base_currency, entry.date)
+                .filter(|rate| *rate > Decimal::ZERO)
+            {
+                Some(rate) => weight.checked_mul(rate),
+                None => {
+                    problems.push(BalanceProblem {
+                        kind: BalanceProblemKind::MissingFxRate,
+                        message: format!("Missing FX rate {weight_ccy} → {base_currency} for currency bucket starting at posting {}.", posting_id.as_deref().unwrap_or("?")),
+                        posting_id,
+                    });
+                    continue;
+                }
             }
+        };
+        match converted.and_then(|converted| total.checked_add(converted)) {
+            Some(next) => total = next,
+            None => problems.push(arithmetic_problem(posting_id)),
         }
     }
 
@@ -444,5 +464,50 @@ mod tests {
     fn side_naming_matches_the_flutter_enums() {
         assert_eq!(AccountSide::Asset.as_str(), "asset");
         assert_eq!(AccountCategory::Crypto.as_str(), "crypto");
+    }
+
+    #[test]
+    fn decimal_weight_overflow_is_reported_without_panicking() {
+        let conn = Connection::open_in_memory().unwrap();
+        let entry = entry(EntryFlag::Confirmed);
+        let mut multiplied = posting(0, "broker", &Decimal::MAX.to_string(), "us_stock:AAPL");
+        multiplied.price = Some(Price {
+            per_unit: Decimal::from(2),
+            currency: "USD".to_owned(),
+        });
+        let cases = vec![
+            (vec![multiplied], "USD"),
+            (
+                vec![
+                    posting(0, "cash", &Decimal::MAX.to_string(), "USD"),
+                    posting(1, "other", &Decimal::MAX.to_string(), "USD"),
+                ],
+                "USD",
+            ),
+            (
+                vec![posting(0, "cash", &Decimal::MAX.to_string(), "USD")],
+                "CNY",
+            ),
+            (
+                vec![
+                    posting(0, "cash", &Decimal::MAX.to_string(), "CNY"),
+                    posting(1, "other", "1", "USD"),
+                ],
+                "CNY",
+            ),
+        ];
+        for (postings, base) in cases {
+            let rate = if postings.len() == 1 { "2" } else { "1" };
+            let report =
+                evaluate_entry_balance(&conn, &entry, &postings, &usd_to_cny(rate), base, None);
+            assert!(!report.is_balanced());
+            assert!(
+                report
+                    .problems
+                    .iter()
+                    .any(|problem| problem.message.contains("supported decimal range")),
+                "{report:?}"
+            );
+        }
     }
 }

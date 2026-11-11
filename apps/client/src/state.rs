@@ -123,8 +123,8 @@ impl Services {
 
         let (db, encrypted, app_dir) = if let Some(dir) = dir {
             std::fs::create_dir_all(&dir)?;
-            // SQLCipher master key lives in the platform key store
-            // (desktop fallback: file key store under the app dir).
+            // The current adapter keeps the SQLCipher key in an app-private
+            // file. Keychain/Keystore wrapping remains a separate platform task.
             log::info!("startup: private data directory ready");
             let key_store = FileKeyStore::new(dir.join("keys"));
             let key = match key_store.get_key(backup::DATABASE_KEY_ID)? {
@@ -274,22 +274,21 @@ impl Services {
         MutationStamper::new(self.owner(), self.device_id.clone())
     }
 
-    /// Bind the local data space to a backend user. Seeds the new owner's
-    /// system tree when it does not exist yet.
+    /// Bind a first local data space to an account without hiding its records.
     pub fn bind_owner(&self, user_id: &str) -> LifeosResult<()> {
-        *self.owner.write().unwrap() = user_id.to_owned();
+        let previous = self.owner();
         let owner = user_id.to_owned();
+        let registry = self.full_registry();
         let device_id = self.device_id.clone();
         self.db.call_sync(move |conn| {
-            ensure_identity(conn, &owner, &device_id)?;
-            if account_repository::find_system_account(conn, &owner, "equity:openingBalance")?
-                .is_none()
-            {
-                let stamper = MutationStamper::new(&owner, &device_id);
-                system_accounts::seed_system_accounts(conn, &stamper)?;
-            }
+            let tx = conn.savepoint()?;
+            adopt_local_owner(&tx, &registry, &previous, &owner, &device_id)?;
+            ensure_identity(&tx, &owner, &device_id)?;
+            tx.commit()?;
             Ok(())
-        })
+        })?;
+        *self.owner.write().unwrap() = user_id.to_owned();
+        Ok(())
     }
 
     // ---- Settings ----
@@ -424,34 +423,41 @@ impl Services {
         let stamper = self.stamper();
         self.db
             .call(move |conn| {
-                let account = account_repository::create(conn, &stamper, new)?;
-                if let Some(amount) = opening_amount
-                    && amount != Decimal::ZERO
-                {
-                    let owner = stamper.owner_user_id.clone();
-                    let equity = account_repository::find_system_account(
-                        conn,
-                        &owner,
-                        "equity:openingBalance",
-                    )?
-                    .ok_or_else(|| {
-                        naviwealth_finance::FinanceError::InvalidData(
-                            "equity:openingBalance seed missing".into(),
-                        )
-                    })?;
-                    let build = naviwealth_finance::builders::opening_balance(
-                        lifeos::ids::now_secs(),
-                        account.id.clone(),
-                        equity.id,
-                        amount,
-                        &account.currency,
-                        None,
-                        None,
-                        vec![],
-                    )?;
-                    write_entry(conn, &stamper, build)?;
-                }
-                Ok(account)
+                in_savepoint(conn, |conn| {
+                    let account = account_repository::create(conn, &stamper, new)?;
+                    if let Some(amount) = opening_amount
+                        && amount != Decimal::ZERO
+                    {
+                        let owner = stamper.owner_user_id.clone();
+                        let equity = account_repository::find_system_account(
+                            conn,
+                            &owner,
+                            "equity:openingBalance",
+                        )?
+                        .ok_or_else(|| {
+                            naviwealth_finance::FinanceError::InvalidData(
+                                "equity:openingBalance seed missing".into(),
+                            )
+                        })?;
+                        let build = naviwealth_finance::builders::opening_balance(
+                            chrono::Local::now()
+                                .date_naive()
+                                .and_hms_opt(0, 0, 0)
+                                .expect("midnight")
+                                .and_utc()
+                                .timestamp(),
+                            account.id.clone(),
+                            equity.id,
+                            amount,
+                            &account.currency,
+                            None,
+                            None,
+                            vec![],
+                        )?;
+                        write_entry(conn, &stamper, build)?;
+                    }
+                    Ok(account)
+                })
             })
             .await
             .map_err(|e| e.to_string())
@@ -469,26 +475,28 @@ impl Services {
         let stamper = self.stamper();
         self.db
             .call(move |conn| {
-                let from = account_repository::get_required(conn, &from_account_id)?;
-                let build = naviwealth_finance::builders::expense(
-                    date,
-                    expense_account_id,
-                    from.id,
-                    amount,
-                    &from.currency,
-                    payee,
-                    narration.as_deref(),
+                naviwealth_finance::daily::save(
+                    conn,
+                    &stamper,
                     None,
-                    vec![],
-                )?;
-                write_entry(conn, &stamper, build)?;
+                    &naviwealth_finance::daily::RecordDraft {
+                        kind: naviwealth_finance::daily::RecordKind::Expense,
+                        date,
+                        amount,
+                        account_id: from_account_id,
+                        category_id: Some(expense_account_id),
+                        destination_account_id: None,
+                        destination_amount: None,
+                        payee,
+                        note: narration,
+                    },
+                )
+                .map_err(lifeos::LifeosError::from)?;
                 Ok(())
             })
             .await
             .map_err(|e| e.to_string())
     }
-
-    // ---- Sync ----
 
     pub async fn outbox_count(&self) -> LifeosResult<i64> {
         self.db.call(|conn| outbox::count(conn)).await
@@ -497,6 +505,46 @@ impl Services {
     /// Run one sync cycle with the current settings.
     pub async fn sync_now(&self) -> LifeosResult<SyncOutcome> {
         let base_url = self.base_url().await;
+        let token = self
+            .settings_get("sync.access_token")
+            .await
+            .filter(|token| !token.is_empty())
+            .ok_or_else(|| lifeos::LifeosError::Auth("请先登录后再同步".to_owned()))?;
+        let expires_at = self
+            .settings_get("sync.expires_at")
+            .await
+            .and_then(|value| value.parse::<i64>().ok())
+            .unwrap_or(0);
+        let now = lifeos::ids::now_secs();
+        if expires_at <= now {
+            return Err(lifeos::LifeosError::Auth(
+                "登录已过期，请重新登录".to_owned(),
+            ));
+        }
+        let domains = self.auth_domains();
+        let domains_json = serde_json::to_string(&domains)?;
+        if expires_at <= now + 300
+            || self.settings_get("sync.domains").await.as_deref() != Some(&domains_json)
+        {
+            let refreshed = AuthClient::new(&base_url)?
+                .refresh(&token, &lifeos::sync::auth::RefreshRequest { domains })
+                .await?;
+            let domains_json = domains_json.clone();
+            self.db
+                .call(move |conn| {
+                    let tx = conn.savepoint()?;
+                    settings::set_setting(&tx, "sync.access_token", &refreshed.access_token)?;
+                    settings::set_setting(
+                        &tx,
+                        "sync.expires_at",
+                        &refreshed.expires_at.to_string(),
+                    )?;
+                    settings::set_setting(&tx, "sync.domains", &domains_json)?;
+                    tx.commit()?;
+                    Ok(())
+                })
+                .await?;
+        }
         let transport: Arc<dyn lifeos::sync::SyncTransport> =
             Arc::new(lifeos::sync::transport::HttpSyncTransport::new(base_url)?);
         let auth = Arc::new(SettingsTokenProvider::new(self.db.clone()));
@@ -523,13 +571,13 @@ impl Services {
             .register(&lifeos::sync::auth::RegisterRequest {
                 email: email.to_owned(),
                 password: password.to_owned(),
-                domains: vec!["finance".to_owned()],
+                domains: self.auth_domains(),
                 device_name: Some("naviwealth-client".to_owned()),
                 device_id: Some(self.device_id.clone()),
             })
             .await
             .map_err(|e| e.to_string())?;
-        self.store_session(session).await
+        self.store_session(session, base_url).await
     }
 
     pub async fn login(&self, base_url: &str, email: &str, password: &str) -> Result<(), String> {
@@ -538,26 +586,56 @@ impl Services {
             .login(&lifeos::sync::auth::LoginRequest {
                 email: email.to_owned(),
                 password: password.to_owned(),
-                domains: vec!["finance".to_owned()],
+                domains: self.auth_domains(),
+                device_name: Some("NaviWealth".to_owned()),
+                device_id: Some(self.device_id.clone()),
             })
             .await
             .map_err(|e| e.to_string())?;
-        self.store_session(session).await
+        self.store_session(session, base_url).await
     }
 
-    async fn store_session(&self, session: AuthSession) -> Result<(), String> {
+    fn auth_domains(&self) -> Vec<String> {
+        std::iter::once("finance".to_owned())
+            .chain(self.enabled_domain_keys().into_iter().map(str::to_owned))
+            .collect()
+    }
+
+    async fn store_session(&self, session: AuthSession, base_url: &str) -> Result<(), String> {
+        if session.device_id != self.device_id {
+            return Err("服务器返回的设备身份不匹配，请重新登录".to_owned());
+        }
+        if session.user_id.trim().is_empty()
+            || session.access_token.is_empty()
+            || !session.token_type.eq_ignore_ascii_case("bearer")
+            || session.expires_at <= lifeos::ids::now_secs()
+        {
+            return Err("服务器返回的登录信息无效".to_owned());
+        }
+        let previous = self.owner();
         let user_id = session.user_id.clone();
+        let owner = user_id.clone();
+        let registry = self.full_registry();
+        let base_url = base_url.trim().trim_end_matches('/').to_owned();
+        let device_id = self.device_id.clone();
+        let domains_json =
+            serde_json::to_string(&self.auth_domains()).map_err(|e| e.to_string())?;
         self.db
             .call(move |conn| {
-                settings::set_setting(conn, "sync.access_token", &session.access_token)?;
-                settings::set_setting(conn, "sync.user_id", &user_id)?;
-                settings::set_setting(conn, "sync.expires_at", &session.expires_at.to_string())?;
+                let tx = conn.savepoint()?;
+                adopt_local_owner(&tx, &registry, &previous, &user_id, &device_id)?;
+                ensure_identity(&tx, &user_id, &device_id)?;
+                settings::set_setting(&tx, "sync.access_token", &session.access_token)?;
+                settings::set_setting(&tx, "sync.user_id", &user_id)?;
+                settings::set_setting(&tx, "sync.expires_at", &session.expires_at.to_string())?;
+                settings::set_setting(&tx, BASE_URL_KEY, &base_url)?;
+                settings::set_setting(&tx, "sync.domains", &domains_json)?;
+                tx.commit()?;
                 Ok(())
             })
             .await
             .map_err(|e| e.to_string())?;
-        self.bind_owner(&session.user_id)
-            .map_err(|e| e.to_string())?;
+        *self.owner.write().unwrap() = owner;
         Ok(())
     }
 
@@ -569,22 +647,80 @@ impl Services {
     // ---- Backup ----
 
     pub async fn backup_export(&self, path: PathBuf, passphrase: String) -> Result<String, String> {
+        if passphrase.trim().is_empty() {
+            return Err("请输入备份口令".to_owned());
+        }
         let registry = self.full_registry();
         let payload = self
             .db
             .call(move |conn| {
-                backup::export_payload(&registry, conn, None, chrono::Utc::now().to_rfc3339())
+                let mut payload =
+                    backup::export_payload(&registry, conn, None, chrono::Utc::now().to_rfc3339())?;
+                for key in backup_preference_keys() {
+                    let value = settings::get_setting(conn, key)?.unwrap_or_else(|| {
+                        if key == settings_repository::BASE_CURRENCY_KEY {
+                            "CNY"
+                        } else {
+                            "0"
+                        }
+                        .to_owned()
+                    });
+                    payload.preferences.insert(key.to_owned(), value);
+                }
+                Ok(payload)
             })
             .await
             .map_err(|e| e.to_string())?;
-        let json =
-            lifeos::backup::encrypt_payload(&payload, &passphrase).map_err(|e| e.to_string())?;
         let written = path.to_string_lossy().into_owned();
-        tokio::task::spawn_blocking(move || std::fs::write(&path, json))
+        self.runtime
+            .spawn_blocking(move || -> Result<(), String> {
+                let json =
+                    backup::encrypt_payload(&payload, &passphrase).map_err(|e| e.to_string())?;
+                if let Some(parent) = path
+                    .parent()
+                    .filter(|parent| !parent.as_os_str().is_empty())
+                {
+                    std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+                }
+                // A failed write never truncates a previous good backup.
+                let temp = path.with_extension(format!("{}.partial", uuid::Uuid::new_v4()));
+                let result = (|| {
+                    std::fs::write(&temp, json)?;
+                    std::fs::File::open(&temp)?.sync_all()?;
+                    std::fs::rename(&temp, &path)
+                })();
+                if result.is_err() {
+                    let _ = std::fs::remove_file(&temp);
+                }
+                result.map_err(|e| e.to_string())
+            })
+            .await
+            .map_err(|e| e.to_string())??;
+        Ok(written)
+    }
+
+    /// Backups kept inside this installation, newest name first.
+    pub async fn local_backups(&self) -> Result<Vec<PathBuf>, String> {
+        let Some(dir) = self.app_dir.as_ref().map(|dir| dir.join("backups")) else {
+            return Ok(Vec::new());
+        };
+        self.runtime
+            .spawn_blocking(move || {
+                if !dir.exists() {
+                    return Ok(Vec::new());
+                }
+                let mut paths = std::fs::read_dir(dir)
+                    .map_err(|e| e.to_string())?
+                    .filter_map(|entry| entry.ok().map(|entry| entry.path()))
+                    .filter(|path| {
+                        path.is_file() && path.extension().is_some_and(|ext| ext == "bak")
+                    })
+                    .collect::<Vec<_>>();
+                paths.sort_by(|a, b| b.file_name().cmp(&a.file_name()));
+                Ok(paths)
+            })
             .await
             .map_err(|e| e.to_string())?
-            .map_err(|e| e.to_string())?;
-        Ok(written)
     }
 
     pub async fn backup_import(
@@ -592,17 +728,124 @@ impl Services {
         path: PathBuf,
         passphrase: String,
     ) -> Result<RestoreReport, String> {
-        let json = tokio::task::spawn_blocking(move || std::fs::read_to_string(&path))
+        let mut payload = self
+            .runtime
+            .spawn_blocking(move || {
+                if std::fs::metadata(&path).map_err(|e| e.to_string())?.len() > 128 * 1024 * 1024 {
+                    return Err("请选择不超过 128 MB 的备份文件".to_owned());
+                }
+                let json = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
+                backup::decrypt_payload(&json, &passphrase).map_err(|e| e.to_string())
+            })
             .await
-            .map_err(|e| e.to_string())?
-            .map_err(|e| e.to_string())?;
-        let payload =
-            lifeos::backup::decrypt_payload(&json, &passphrase).map_err(|e| e.to_string())?;
+            .map_err(|e| e.to_string())??;
         let registry = self.full_registry();
-        self.db
-            .call(move |conn| backup::restore_payload(&registry, conn, &payload))
+        let expected: BTreeSet<_> = registry
+            .adapters()
+            .iter()
+            .map(|adapter| adapter.table().to_owned())
+            .collect();
+        if payload.domain.is_some()
+            || payload.tables.keys().cloned().collect::<BTreeSet<_>>() != expected
+        {
+            return Err("请选择此客户端导出的完整备份文件".to_owned());
+        }
+        let owners: BTreeSet<String> = payload
+            .data
+            .values()
+            .flatten()
+            .filter_map(|row| {
+                row.get("owner_user_id")
+                    .and_then(|v| v.as_str())
+                    .map(str::to_owned)
+            })
+            .collect();
+        if owners.len() > 1 {
+            return Err("备份包含多个数据空间，无法安全恢复".to_owned());
+        }
+        let current_owner = self.owner();
+        let backup_owner = owners
+            .into_iter()
+            .next()
+            .unwrap_or_else(|| current_owner.clone());
+        if current_owner != LOCAL_OWNER
+            && backup_owner != LOCAL_OWNER
+            && current_owner != backup_owner
+        {
+            return Err("此备份属于另一账户，当前数据未更改".to_owned());
+        }
+        let target_owner = if current_owner == LOCAL_OWNER {
+            backup_owner.clone()
+        } else {
+            current_owner.clone()
+        };
+        if backup_owner != target_owner {
+            remap_backup_owner(&mut payload, &backup_owner, &target_owner);
+        }
+        // Early v2 snapshots omitted disabled switches. Missing preferences must
+        // restore their default instead of retaining the device's later state.
+        for key in backup_preference_keys() {
+            payload
+                .preferences
+                .entry(key.to_owned())
+                .or_insert_with(|| {
+                    if key == settings_repository::BASE_CURRENCY_KEY {
+                        "CNY"
+                    } else {
+                        "0"
+                    }
+                    .to_owned()
+                });
+        }
+        for (key, value) in &payload.preferences {
+            if backup_preference_keys().contains(&key.as_str()) {
+                if key == settings_repository::BASE_CURRENCY_KEY {
+                    Currency::new(value).map_err(|e| e.to_string())?;
+                } else if value != "0" && value != "1" {
+                    return Err("备份中的领域设置无效".to_owned());
+                }
+            }
+        }
+        let device_id = self.device_id.clone();
+        let owner = target_owner.clone();
+        let report = self
+            .db
+            .call(move |conn| {
+                in_savepoint(conn, |conn| {
+                    let report = backup::restore_payload(&registry, conn, &payload)?;
+                    for (key, value) in &payload.preferences {
+                        if backup_preference_keys().contains(&key.as_str()) {
+                            settings::set_setting(conn, key, value)?;
+                        }
+                    }
+                    if current_owner != owner {
+                        for key in ["sync.access_token", "sync.user_id", "sync.expires_at"] {
+                            settings::delete_setting(conn, key)?;
+                        }
+                    }
+                    ensure_identity(conn, &owner, &device_id)?;
+                    settings::set_setting(conn, "sync.cursor", "0")?;
+                    Ok(report)
+                })
+            })
             .await
-            .map_err(|e| e.to_string())
+            .map_err(|e| e.to_string())?;
+        *self.owner.write().unwrap() = target_owner;
+        let enabled = self
+            .db
+            .call(|conn| {
+                let mut enabled = BTreeSet::new();
+                for spec in domains::OPTIONAL_DOMAINS {
+                    if settings::get_setting(conn, spec.enabled_key)?.as_deref() == Some("1") {
+                        enabled.insert(spec.key);
+                    }
+                }
+                Ok(enabled)
+            })
+            .await
+            .map_err(|e| e.to_string())?;
+        *self.enabled_domains.write().unwrap() = enabled;
+        Ok(report)
     }
 
     // ---- Domain lookups for the AI write tools ----
@@ -1036,6 +1279,119 @@ impl Services {
     }
 }
 
+/// Keep multi-repository mutations atomic, including APIs creating nested savepoints.
+fn in_savepoint<T>(
+    conn: &mut rusqlite::Connection,
+    work: impl FnOnce(&mut rusqlite::Connection) -> LifeosResult<T>,
+) -> LifeosResult<T> {
+    conn.execute_batch("SAVEPOINT naviwealth_app_operation")?;
+    match work(conn) {
+        Ok(value) => {
+            if let Err(error) = conn.execute_batch("RELEASE naviwealth_app_operation") {
+                let _ = conn.execute_batch(
+                    "ROLLBACK TO naviwealth_app_operation; RELEASE naviwealth_app_operation",
+                );
+                return Err(error.into());
+            }
+            Ok(value)
+        }
+        Err(error) => {
+            conn.execute_batch(
+                "ROLLBACK TO naviwealth_app_operation; RELEASE naviwealth_app_operation",
+            )?;
+            Err(error)
+        }
+    }
+}
+
+fn backup_preference_keys() -> Vec<&'static str> {
+    std::iter::once(settings_repository::BASE_CURRENCY_KEY)
+        .chain(
+            domains::OPTIONAL_DOMAINS
+                .iter()
+                .map(|spec| spec.enabled_key),
+        )
+        .collect()
+}
+
+fn remap_backup_owner(payload: &mut backup::BackupPayload, previous: &str, owner: &str) {
+    for row in payload.data.values_mut().flatten() {
+        if let Some(object) = row.as_object_mut() {
+            for (key, value) in object.iter_mut() {
+                if key == "owner_user_id" {
+                    *value = serde_json::Value::String(owner.to_owned());
+                } else if (key == "id" || key.ends_with("_id"))
+                    && let Some(id) = value.as_str()
+                {
+                    for prefix in ["system-account", "system-category"] {
+                        if let Some(rest) = id.strip_prefix(&format!("{prefix}:{previous}:")) {
+                            *value = serde_json::Value::String(format!("{prefix}:{owner}:{rest}"));
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// First sign-in adopts offline records and their references in one savepoint.
+fn adopt_local_owner(
+    conn: &rusqlite::Connection,
+    registry: &SyncRegistry,
+    previous: &str,
+    owner: &str,
+    device: &str,
+) -> LifeosResult<()> {
+    if previous == owner {
+        return Ok(());
+    }
+    if previous != LOCAL_OWNER {
+        return Err(lifeos::LifeosError::Auth(
+            "当前设备已有另一账户的数据，请先备份后使用独立数据空间".to_owned(),
+        ));
+    }
+    let mut payload =
+        backup::export_payload(registry, conn, None, chrono::Utc::now().to_rfc3339())?;
+    if payload.data.values().flatten().any(|row| {
+        row.get("owner_user_id")
+            .and_then(|value| value.as_str())
+            .is_some_and(|value| value != previous)
+    }) {
+        return Err(lifeos::LifeosError::Auth(
+            "本地包含多个数据空间，请先备份".to_owned(),
+        ));
+    }
+    remap_backup_owner(&mut payload, previous, owner);
+    let stamp = MutationStamper::new(owner, device).stamp(conn)?;
+    for adapter in registry.adapters() {
+        adapter.delete_all(conn)?;
+        outbox::clear_table(conn, adapter.table())?;
+        if let Some(rows) = payload.data.get_mut(adapter.table()) {
+            for row in rows {
+                let object = row.as_object_mut().ok_or_else(|| {
+                    lifeos::LifeosError::InvalidData("backup row must be an object".into())
+                })?;
+                object.insert("hlc".into(), serde_json::Value::String(stamp.hlc.clone()));
+                object.insert(
+                    "updated_by_device".into(),
+                    serde_json::Value::String(device.to_owned()),
+                );
+                object.insert(
+                    "updated_at".into(),
+                    serde_json::json!(stamp.now.div_euclid(1000)),
+                );
+                adapter.apply_upsert(conn, row)?;
+                if let Some(id) = row.get("id").and_then(|id| id.as_str()) {
+                    outbox::enqueue(conn, adapter.table(), id)?;
+                }
+            }
+        }
+    }
+    settings::set_setting(conn, "sync.cursor", "0")?;
+    Ok(())
+}
+
 /// Chinese display label for a health metric kind (matches the health
 /// screen's wording).
 fn metric_kind_label(kind: naviwealth_health::models::MetricKind) -> &'static str {
@@ -1087,6 +1443,202 @@ mod startup_tests {
     }
 
     #[test]
+    fn account_and_opening_balance_roll_back_together() {
+        let services = Services::init_at(None).unwrap();
+        services
+            .db
+            .call_sync(|conn| {
+                conn.execute(
+                    r#"DELETE FROM "fin:accounts" WHERE id=?1"#,
+                    [account_repository::system_account_id(
+                        LOCAL_OWNER,
+                        "equity:openingBalance",
+                    )],
+                )?;
+                Ok(())
+            })
+            .unwrap();
+        let before = services.db.call_sync(|conn| outbox::count(conn)).unwrap();
+        let result = services.runtime.block_on(services.create_account(
+            NewAccount::custody(
+                naviwealth_finance::models::AccountCategory::Cash,
+                "Must roll back",
+                "CNY",
+            ),
+            Some(Decimal::from(100)),
+        ));
+        assert!(result.is_err());
+        services
+            .db
+            .call_sync(move |conn| {
+                assert!(
+                    !account_repository::list(conn, true)?
+                        .iter()
+                        .any(|account| account.name == "Must roll back")
+                );
+                assert_eq!(outbox::count(conn)?, before);
+                Ok(())
+            })
+            .unwrap();
+    }
+
+    #[test]
+    fn backup_creates_parent_and_bad_password_preserves_current_records() {
+        let mut services = Services::init_at(None).unwrap();
+        let directory = temp_dir();
+        Arc::get_mut(&mut services).unwrap().app_dir = Some(directory.clone());
+        let path = directory.join("backups").join("first.bak");
+        services.runtime.block_on(async {
+            services
+                .create_account(
+                    NewAccount::custody(
+                        naviwealth_finance::models::AccountCategory::Cash,
+                        "Original",
+                        "CNY",
+                    ),
+                    Some(Decimal::from(100)),
+                )
+                .await
+                .unwrap();
+            services
+                .settings_set(domains::KNOWLEDGE.enabled_key, "1")
+                .await;
+            services
+                .backup_export(path.clone(), "passphrase".to_owned())
+                .await
+                .unwrap();
+            assert!(path.is_file());
+            assert_eq!(services.local_backups().await.unwrap(), vec![path.clone()]);
+            services
+                .create_account(
+                    NewAccount::custody(
+                        naviwealth_finance::models::AccountCategory::Bank,
+                        "Later",
+                        "CNY",
+                    ),
+                    None,
+                )
+                .await
+                .unwrap();
+            assert!(
+                services
+                    .backup_import(path.clone(), "wrong".to_owned())
+                    .await
+                    .is_err()
+            );
+            assert!(
+                services
+                    .account_names()
+                    .await
+                    .unwrap()
+                    .iter()
+                    .any(|(_, name)| name == "Later")
+            );
+            services
+                .settings_set(domains::KNOWLEDGE.enabled_key, "0")
+                .await;
+            services
+                .backup_import(path, "passphrase".to_owned())
+                .await
+                .unwrap();
+            assert!(
+                !services
+                    .account_names()
+                    .await
+                    .unwrap()
+                    .iter()
+                    .any(|(_, name)| name == "Later")
+            );
+            assert!(
+                services
+                    .account_names()
+                    .await
+                    .unwrap()
+                    .iter()
+                    .any(|(_, name)| name == "Original")
+            );
+            assert!(services.domain_enabled("knowledge"));
+        });
+    }
+
+    #[test]
+    fn first_sign_in_keeps_local_records_and_rejects_identity_mismatch() {
+        let services = Services::init_at(None).unwrap();
+        services.runtime.block_on(async {
+            let account = services
+                .create_account(
+                    NewAccount::custody(
+                        naviwealth_finance::models::AccountCategory::Cash,
+                        "Offline cash",
+                        "CNY",
+                    ),
+                    Some(Decimal::from(100)),
+                )
+                .await
+                .unwrap();
+            let session = |device_id: String, owner: &str| AuthSession {
+                access_token: "token".to_owned(),
+                token_type: "Bearer".to_owned(),
+                expires_at: lifeos::ids::now_secs() + 3600,
+                user_id: owner.to_owned(),
+                device_id,
+            };
+            assert!(
+                services
+                    .store_session(
+                        session("wrong-device".to_owned(), "owner"),
+                        "https://example.com"
+                    )
+                    .await
+                    .is_err()
+            );
+            assert_eq!(services.owner(), LOCAL_OWNER);
+            assert!(services.settings_get("sync.access_token").await.is_none());
+            services
+                .store_session(
+                    session(services.device_id.clone(), "owner"),
+                    "https://example.com/",
+                )
+                .await
+                .unwrap();
+            assert_eq!(services.owner(), "owner");
+            assert_eq!(services.base_url().await, "https://example.com");
+            services
+                .db
+                .call_sync(move |conn| {
+                    let account = account_repository::get_required(conn, &account.id)?;
+                    assert_eq!(account.sync.owner_user_id, "owner");
+                    let rows = journal_repository::list_recent(conn, 10)?;
+                    assert_eq!(rows.len(), 1);
+                    assert_eq!(rows[0].entry.sync.owner_user_id, "owner");
+                    assert!(
+                        rows[0]
+                            .postings
+                            .iter()
+                            .all(|posting| posting.sync.owner_user_id == "owner")
+                    );
+                    assert!(rows[0].postings.iter().any(|posting| posting.account_id
+                        == account_repository::system_account_id(
+                            "owner",
+                            "equity:openingBalance"
+                        )));
+                    Ok(())
+                })
+                .unwrap();
+            assert!(
+                services
+                    .store_session(
+                        session(services.device_id.clone(), "another-owner"),
+                        "https://example.com"
+                    )
+                    .await
+                    .is_err()
+            );
+            assert_eq!(services.owner(), "owner");
+        });
+    }
+
+    #[test]
     fn directory_failure_returns_error_and_can_retry() {
         let dir = temp_dir();
         std::fs::write(&dir, b"blocked").unwrap();
@@ -1096,5 +1648,50 @@ mod startup_tests {
         ));
         std::fs::remove_file(&dir).unwrap();
         assert!(Services::init_at(Some(dir)).is_ok());
+    }
+    #[test]
+    fn disabled_domain_preferences_survive_backup_and_missing_early_v2_keys() {
+        let dir = temp_dir();
+        let services = Services::init_at(Some(dir.clone())).unwrap();
+        services.runtime.block_on(async {
+            let path = dir.join("backups/defaults.bak");
+            services
+                .backup_export(path.clone(), "test passphrase".to_owned())
+                .await
+                .unwrap();
+            let json = std::fs::read_to_string(&path).unwrap();
+            let mut payload = backup::decrypt_payload(&json, "test passphrase").unwrap();
+            for spec in domains::OPTIONAL_DOMAINS {
+                assert_eq!(
+                    payload
+                        .preferences
+                        .get(spec.enabled_key)
+                        .map(String::as_str),
+                    Some("0")
+                );
+            }
+            payload.preferences.clear();
+            std::fs::write(
+                &path,
+                backup::encrypt_payload(&payload, "test passphrase").unwrap(),
+            )
+            .unwrap();
+            services
+                .settings_set(domains::KNOWLEDGE.enabled_key, "1")
+                .await;
+            services.set_domain_enabled("knowledge", true);
+            services
+                .backup_import(path, "test passphrase".to_owned())
+                .await
+                .unwrap();
+            assert!(!services.domain_enabled("knowledge"));
+            assert_eq!(
+                services
+                    .settings_get(domains::KNOWLEDGE.enabled_key)
+                    .await
+                    .as_deref(),
+                Some("0")
+            );
+        });
     }
 }

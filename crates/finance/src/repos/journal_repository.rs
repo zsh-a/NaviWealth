@@ -162,10 +162,28 @@ pub fn create(
     base_currency: &str,
     build: EntryBuild,
 ) -> Result<EntryWithPostings> {
+    let savepoint = conn.savepoint()?;
+    let result = create_in_transaction(&savepoint, stamper, fx, base_currency, build, None)?;
+    savepoint.commit()?;
+    Ok(result)
+}
+
+/// Writes under the caller's transaction, preserving an entry id on edit.
+/// Replaced posting rows are tombstoned so sync removes their old balance legs.
+pub(crate) fn create_in_transaction(
+    conn: &Connection,
+    stamper: &MutationStamper,
+    fx: &dyn FxRateSource,
+    base_currency: &str,
+    build: EntryBuild,
+    existing_id: Option<&str>,
+) -> Result<EntryWithPostings> {
     let stamp = stamper.stamp(conn)?;
     let sync = SyncMeta::from_stamp(&stamp);
     let entry = JournalEntry {
-        id: lifeos::ids::new_id(),
+        id: existing_id
+            .map(str::to_owned)
+            .unwrap_or_else(lifeos::ids::new_id),
         date: build.entry.date,
         settled_on: build.entry.settled_on,
         narration: build.entry.narration.clone(),
@@ -196,14 +214,15 @@ pub fn create(
         return Err(FinanceError::Unbalanced(report));
     }
 
-    let tx = conn.transaction()?;
-    insert_entry(&tx, &entry)?;
-    for posting in &postings {
-        insert_posting(&tx, posting)?;
-        outbox::enqueue(&tx, POSTINGS_TABLE, &posting.id)?;
+    if existing_id.is_some() {
+        tombstone_postings(conn, stamper, &entry.id, &stamp)?;
     }
-    outbox::enqueue(&tx, JOURNAL_ENTRIES_TABLE, &entry.id)?;
-    tx.commit()?;
+    insert_entry(conn, &entry)?;
+    for posting in &postings {
+        insert_posting(conn, posting)?;
+        outbox::enqueue(conn, POSTINGS_TABLE, &posting.id)?;
+    }
+    outbox::enqueue(conn, JOURNAL_ENTRIES_TABLE, &entry.id)?;
 
     Ok(EntryWithPostings { entry, postings })
 }
@@ -237,35 +256,63 @@ pub fn get(conn: &Connection, entry_id: &str) -> Result<Option<EntryWithPostings
 
 /// Tombstone the entry and its postings (sync carries the deletion).
 pub fn soft_delete(conn: &mut Connection, stamper: &MutationStamper, entry_id: &str) -> Result<()> {
-    let stamp = stamper.stamp(conn)?;
+    let tx = conn.savepoint()?;
+    let stamp = stamper.stamp(&tx)?;
     let deleted_at = stamp.now.div_euclid(1000);
-    let tx = conn.transaction()?;
     tx.execute(
-        &format!(
-            r#"UPDATE "{JOURNAL_ENTRIES_TABLE}" SET deleted_at = ?2, hlc = ?3, updated_by_device = ?4, updated_at = ?5 WHERE id = ?1"#
-        ),
-        params![entry_id, deleted_at, stamp.hlc, stamp.device_id, deleted_at],
+        &format!(r#"UPDATE "{JOURNAL_ENTRIES_TABLE}" SET deleted_at = ?2, hlc = ?3, updated_by_device = ?4, updated_at = ?5 WHERE id = ?1 AND owner_user_id = ?6"#),
+        params![entry_id, deleted_at, stamp.hlc, stamp.device_id, deleted_at, stamper.owner_user_id],
     )?;
-    tx.execute(
-        &format!(
-            r#"UPDATE "{POSTINGS_TABLE}" SET deleted_at = ?2, hlc = ?3, updated_by_device = ?4, updated_at = ?5 WHERE journal_entry_id = ?1 AND deleted_at IS NULL"#
-        ),
-        params![entry_id, deleted_at, stamp.hlc, stamp.device_id, deleted_at],
-    )?;
+    tombstone_postings(&tx, stamper, entry_id, &stamp)?;
     outbox::enqueue(&tx, JOURNAL_ENTRIES_TABLE, entry_id)?;
-    // Re-enqueue every posting of the entry so the tombstones fan out.
-    let ids: Vec<String> = {
-        let mut stmt = tx.prepare_cached(&format!(
-            r#"SELECT id FROM "{POSTINGS_TABLE}" WHERE journal_entry_id = ?1"#
-        ))?;
-        stmt.query_map(params![entry_id], |row| row.get::<_, String>(0))?
-            .collect::<std::result::Result<Vec<_>, _>>()?
-    };
-    for id in ids {
-        outbox::enqueue(&tx, POSTINGS_TABLE, &id)?;
-    }
     tx.commit()?;
     Ok(())
+}
+
+fn tombstone_postings(
+    conn: &Connection,
+    stamper: &MutationStamper,
+    entry_id: &str,
+    stamp: &lifeos::sync::Stamp,
+) -> Result<()> {
+    let deleted_at = stamp.now.div_euclid(1000);
+    conn.execute(
+        &format!(r#"UPDATE "{POSTINGS_TABLE}" SET deleted_at = ?2, hlc = ?3, updated_by_device = ?4, updated_at = ?5 WHERE journal_entry_id = ?1 AND deleted_at IS NULL AND owner_user_id = ?6"#),
+        params![entry_id, deleted_at, stamp.hlc, stamp.device_id, deleted_at, stamper.owner_user_id],
+    )?;
+    let ids: Vec<String> = {
+        let mut stmt = conn.prepare_cached(&format!(r#"SELECT id FROM "{POSTINGS_TABLE}" WHERE journal_entry_id = ?1 AND owner_user_id = ?2"#))?;
+        stmt.query_map(params![entry_id, stamper.owner_user_id], |row| {
+            row.get::<_, String>(0)
+        })?
+        .collect::<std::result::Result<Vec<_>, _>>()?
+    };
+    for id in ids {
+        outbox::enqueue(conn, POSTINGS_TABLE, &id)?;
+    }
+    Ok(())
+}
+
+/// Owner-scoped journal entries in a half-open date range.
+pub(crate) fn list_owned(
+    conn: &Connection,
+    owner: &str,
+    from: Option<i64>,
+    until: Option<i64>,
+) -> Result<Vec<EntryWithPostings>> {
+    let mut stmt = conn.prepare_cached(&format!(
+        "{ENTRY_SELECT} WHERE owner_user_id = ?1 AND deleted_at IS NULL AND (?2 IS NULL OR date >= ?2) AND (?3 IS NULL OR date < ?3) ORDER BY date DESC, hlc DESC, id DESC"
+    ))?;
+    let entries = stmt
+        .query_map(params![owner, from, until], row_to_entry)?
+        .collect::<std::result::Result<Vec<_>, _>>()?;
+    entries
+        .into_iter()
+        .map(|entry| {
+            let postings = postings_for_entry(conn, &entry.id)?;
+            Ok(EntryWithPostings { entry, postings })
+        })
+        .collect()
 }
 
 #[cfg(test)]

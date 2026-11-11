@@ -4,7 +4,7 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use nsh_base::theme;
+use nsh_base::{SheetEvent, theme};
 use nsh_core::prelude::*;
 
 use crate::ai::LlmProfile;
@@ -52,10 +52,15 @@ pub fn SettingsScreen() -> impl IntoElement {
             let url = services.base_url().await;
             base_url.set(url);
             let (user, owner) = services.auth_status().await;
-            auth_status.set(match user {
-                Some(user) => format!("已登录 {user}（数据空间 {owner}）"),
-                None => format!("本地模式（数据空间 {owner}）"),
-            });
+            let _ = owner;
+            auth_status.set(
+                if user.is_some() {
+                    "已登录 · 可以同步此设备的数据"
+                } else {
+                    "本地使用中 · 记账无需登录"
+                }
+                .to_owned(),
+            );
         });
     }
 
@@ -82,193 +87,307 @@ pub fn SettingsScreen() -> impl IntoElement {
 
     // Backup + sync.
     let backup_passphrase: Signal<String> = signal(String::new());
-    let import_path: Signal<String> = signal(String::new());
+    let data_version = use_context::<crate::state::DataVersion>().expect("data version");
+    let backup_busy: Signal<bool> = signal(false);
+    let backups: Signal<Vec<PathBuf>> = signal(Vec::new());
+    let restore_path: Signal<Option<PathBuf>> = signal(None);
+    let restore_staged: Signal<bool> = signal(false);
+    let restore_open: Signal<bool> = signal(false);
+    let auth_busy: Signal<bool> = signal(false);
     let backup_status: Signal<String> = signal(String::new());
+    let backup_error: Signal<String> = signal(String::new());
     let sync_status: Signal<String> = signal(String::new());
     let sync_busy: Signal<bool> = signal(false);
 
-    // Pipes: created under the screen's owner so their callbacks may set
-    // signals; background jobs report through them.
-    let _register_pipe = crate::bridge::EventPipe::new({
-        move |result: Result<(), String>| match result {
-            Ok(()) => auth_status.set("注册成功，已绑定数据空间".to_owned()),
-            Err(e) => auth_status.set(format!("注册失败：{e}")),
-        }
-    });
-    let _login_pipe = crate::bridge::EventPipe::new({
-        move |result: Result<(), String>| match result {
-            Ok(()) => auth_status.set("登录成功，已绑定数据空间".to_owned()),
-            Err(e) => auth_status.set(format!("登录失败：{e}")),
+    // Component-owned pumps survive individual event handlers. Network and
+    // encryption jobs never update engine signals from a background thread.
+    let auth_pipe = crate::bridge::EventPipe::new({
+        move |result: Result<(), String>| {
+            auth_busy.set(false);
+            match result {
+                Ok(()) => {
+                    auth_status.set("已登录 · 可以同步此设备的数据".to_owned());
+                    data_version.0.update(|v| *v += 1);
+                }
+                Err(error) => auth_status.set(format!("登录未完成：{error}")),
+            }
         }
     });
     let sync_pipe = crate::bridge::EventPipe::new({
         move |result: Result<lifeos::sync::SyncOutcome, String>| {
             sync_busy.set(false);
             match result {
-                Ok(outcome) => sync_status.set(format!(
-                    "推送 {} 行，应用 {} 行，游标 {}",
-                    outcome.pushed, outcome.applied, outcome.cursor
-                )),
-                Err(e) => sync_status.set(format!("同步失败：{e}")),
+                Ok(outcome) => {
+                    sync_status.set(format!(
+                        "同步完成 · 上传 {} 条，接收 {} 条",
+                        outcome.pushed, outcome.applied
+                    ));
+                    data_version.0.update(|v| *v += 1);
+                }
+                Err(error) => sync_status.set(format!("同步未完成：{error}")),
             }
         }
     });
-    let _export_pipe = crate::bridge::EventPipe::new({
-        move |result: Result<String, String>| match result {
-            Ok(p) => backup_status.set(format!("已导出：{p}")),
-            Err(e) => backup_status.set(format!("导出失败：{e}")),
-        }
-    });
-    let import_pipe = crate::bridge::EventPipe::new({
-        move |result: Result<lifeos::backup::RestoreReport, String>| match result {
-            Ok(report) => backup_status.set(format!(
-                "已恢复 {} 张表 {} 行（时钟推进到 {}）",
-                report.tables,
-                report.rows,
-                report.max_hlc.as_deref().unwrap_or("-")
-            )),
-            Err(e) => backup_status.set(format!("恢复失败：{e}")),
-        }
-    });
 
-    // ---- Children built up front (locals keep the sections readable). ----
+    let (backup_commands, mut backup_rx) = tokio::sync::mpsc::unbounded_channel::<BackupCommand>();
+    {
+        let services = services.clone();
+        spawn(async move {
+            if let Ok(paths) = services.local_backups().await {
+                backups.set(paths);
+            }
+            while let Some(command) = backup_rx.recv().await {
+                backup_error.set(String::new());
+                let passphrase = backup_passphrase.get();
+                if passphrase.trim().is_empty() {
+                    backup_status.set(String::new());
+                    backup_error.set("请输入备份口令".to_owned());
+                    continue;
+                }
+                backup_busy.set(true);
+                match command {
+                    BackupCommand::Export => {
+                        backup_status.set("正在生成加密备份…".to_owned());
+                        let dir = services.app_dir.clone().unwrap_or_else(std::env::temp_dir);
+                        let path = dir.join("backups").join(format!(
+                            "NaviWealth-{}.bak",
+                            chrono::Utc::now().format("%Y%m%d-%H%M%S-%3f")
+                        ));
+                        match services.backup_export(path.clone(), passphrase).await {
+                            Ok(_) => {
+                                if let Ok(paths) = services.local_backups().await {
+                                    backups.set(paths);
+                                }
+                                match crate::native_files::export_backup(&services, path).await {
+                                    Ok(true) => {
+                                        backup_status.set("加密备份已保存到你选择的位置".to_owned())
+                                    }
+                                    Ok(false) => backup_status
+                                        .set("已取消导出；此设备保留了一份加密副本".to_owned()),
+                                    Err(error) => backup_status
+                                        .set(format!("已生成本机副本；导出未完成：{error}")),
+                                }
+                            }
+                            Err(error) => backup_status.set(format!("备份未完成：{error}")),
+                        }
+                    }
+                    BackupCommand::ChooseImport => {
+                        match crate::native_files::import_backup().await {
+                            Ok(Some(path)) => {
+                                restore_path.set(Some(path));
+                                restore_staged.set(true);
+                                restore_open.set(true);
+                                backup_status.set(String::new());
+                                backup_error.set(String::new());
+                            }
+                            Ok(None) => backup_status.set("已取消选择备份".to_owned()),
+                            Err(error) => backup_status.set(format!("无法选择备份：{error}")),
+                        }
+                    }
+                    BackupCommand::Restore => {
+                        if let Some(path) = restore_path.get() {
+                            backup_status.set("正在验证并恢复备份…".to_owned());
+                            match services.backup_import(path.clone(), passphrase).await {
+                                Ok(_report) => {
+                                    if restore_staged.get() {
+                                        crate::native_files::cleanup_import(&path);
+                                    }
+                                    restore_path.set(None);
+                                    restore_staged.set(false);
+                                    restore_open.set(false);
+                                    domains_state.0.set(services.enabled_domain_keys());
+                                    data_version.0.update(|v| *v += 1);
+                                    let (user, _) = services.auth_status().await;
+                                    auth_status.set(
+                                        if user.is_some() {
+                                            "已登录 · 可以同步此设备的数据"
+                                        } else {
+                                            "本地使用中 · 记账无需登录"
+                                        }
+                                        .to_owned(),
+                                    );
+                                    backup_status.set("恢复完成 · 账户与记录已刷新".to_owned());
+                                }
+                                Err(error) => {
+                                    log::debug!("encrypted backup restore failed: {error}");
+                                    backup_status.set(String::new());
+                                    backup_error.set("恢复未完成，现有数据已保留。请检查口令；若仍失败，请重新选择有效的备份文件。".to_owned());
+                                }
+                            }
+                        }
+                    }
+                }
+                backup_busy.set(false);
+            }
+        });
+    }
 
     let auth_row = view()
         .flex_row()
         .gap_3()
         .child(
             ui::primary_button(
-                "注册",
+                "登录",
                 {
                     let services = services.clone();
+                    let tx = auth_pipe.sender();
                     move || {
-                        let services = services.clone();
-                        let url = base_url.get().trim().to_owned();
-                        let email_text = email.get().trim().to_owned();
-                        let password_text = password.get().to_owned();
-                        spawn(async move {
-                            match services.register(&url, &email_text, &password_text).await {
-                                Ok(()) => auth_status.set("注册成功，已绑定数据空间".to_owned()),
-                                Err(e) => auth_status.set(format!("注册失败：{e}")),
-                            }
+                        if auth_busy.get() {
+                            return;
+                        }
+                        auth_busy.set(true);
+                        auth_status.set("正在登录…".to_owned());
+                        let job = services.clone();
+                        let url = base_url.get();
+                        let mail = email.get();
+                        let pass = password.get();
+                        crate::bridge::spawn_job(&services, tx.clone(), move |tx| async move {
+                            let _ = tx.send(job.login(&url, &mail, &pass).await);
                         });
                     }
                 },
-                "auth-register",
-                None,
+                "auth-login",
+                Some(auth_busy),
             )
             .flex_1(),
         )
         .child(
             ui::secondary_button(
-                "登录",
+                "注册",
                 {
                     let services = services.clone();
+                    let tx = auth_pipe.sender();
                     move || {
-                        let services = services.clone();
-                        let url = base_url.get().trim().to_owned();
-                        let email_text = email.get().trim().to_owned();
-                        let password_text = password.get().to_owned();
-                        spawn(async move {
-                            match services.login(&url, &email_text, &password_text).await {
-                                Ok(()) => auth_status.set("登录成功，已绑定数据空间".to_owned()),
-                                Err(e) => auth_status.set(format!("登录失败：{e}")),
-                            }
+                        if auth_busy.get() {
+                            return;
+                        }
+                        if password.get().len() < 8 {
+                            auth_status.set("密码至少需要 8 个字符".to_owned());
+                            return;
+                        }
+                        auth_busy.set(true);
+                        auth_status.set("正在注册…".to_owned());
+                        let job = services.clone();
+                        let url = base_url.get();
+                        let mail = email.get();
+                        let pass = password.get();
+                        crate::bridge::spawn_job(&services, tx.clone(), move |tx| async move {
+                            let _ = tx.send(job.register(&url, &mail, &pass).await);
                         });
                     }
                 },
-                "auth-login",
-                None,
+                "auth-register",
+                Some(auth_busy),
             )
             .flex_1(),
         );
 
-    let sync_row = view().flex_row().gap_3().child(
-        ui::secondary_button(
-            "立即同步",
-            {
-                let services = services.clone();
-                move || {
-                    if sync_busy.get() {
-                        return;
-                    }
-                    sync_busy.set(true);
-                    let _sync_status = sync_status;
-                    let _sync_busy = sync_busy;
-                    let job_services = services.clone();
-                    crate::bridge::spawn_job(
-                        &services,
-                        sync_pipe.sender(),
-                        move |tx: tokio::sync::mpsc::UnboundedSender<
-                            Result<lifeos::sync::SyncOutcome, String>,
-                        >| async move {
-                            let result = job_services.sync_now().await.map_err(|e| e.to_string());
-                            let _ = tx.send(result);
-                        },
-                    );
-                }
-            },
-            "sync-now",
-            Some(sync_busy),
-        )
-        .flex_1(),
-    );
-
-    let export_row = view().flex_row().gap_3().child(
-        ui::secondary_button(
-            "导出备份",
-            {
-                let services = services.clone();
-                move || {
-                    let services = services.clone();
-                    let passphrase = backup_passphrase.get();
-                    spawn(async move {
-                        if passphrase.is_empty() {
-                            backup_status.set("请先输入备份口令".to_owned());
-                            return;
-                        }
-                        let dir = services.app_dir.clone().unwrap_or_else(std::env::temp_dir);
-                        let path = dir.join("backups").join(format!(
-                            "naviwealth-{}.bak",
-                            chrono::Utc::now().format("%Y%m%d-%H%M%S")
-                        ));
-                        match services.backup_export(path, passphrase).await {
-                            Ok(p) => backup_status.set(format!("已导出：{p}")),
-                            Err(e) => backup_status.set(format!("导出失败：{e}")),
-                        }
-                    });
-                }
-            },
-            "backup-export",
-            None,
-        )
-        .flex_1(),
-    );
-
-    let import_row = ui::secondary_button(
-        "从备份恢复",
+    let sync_row = ui::secondary_button(
+        "立即同步",
         {
             let services = services.clone();
+            let tx = sync_pipe.sender();
             move || {
-                let path = PathBuf::from(import_path.get().trim());
-                let passphrase = backup_passphrase.get();
-                let _backup_status = backup_status;
-                let job_services = services.clone();
-                crate::bridge::spawn_job(
-                    &services,
-                    import_pipe.sender(),
-                    move |tx: tokio::sync::mpsc::UnboundedSender<
-                        Result<lifeos::backup::RestoreReport, String>,
-                    >| async move {
-                        let result = job_services.backup_import(path, passphrase).await;
-                        let _ = tx.send(result);
-                    },
-                );
+                if sync_busy.get() {
+                    return;
+                }
+                sync_busy.set(true);
+                sync_status.set("正在同步…".to_owned());
+                let job = services.clone();
+                crate::bridge::spawn_job(&services, tx.clone(), move |tx| async move {
+                    let _ = tx.send(job.sync_now().await.map_err(|e| e.to_string()));
+                });
+            }
+        },
+        "sync-now",
+        Some(sync_busy),
+    );
+    let export_row = ui::primary_button(
+        "导出加密备份",
+        {
+            let tx = backup_commands.clone();
+            move || {
+                let _ = tx.send(BackupCommand::Export);
+            }
+        },
+        "backup-export",
+        Some(backup_busy),
+    );
+    let import_row = ui::secondary_button(
+        "选择文件恢复",
+        {
+            let tx = backup_commands.clone();
+            move || {
+                let _ = tx.send(BackupCommand::ChooseImport);
             }
         },
         "backup-import",
-        None,
+        Some(backup_busy),
     );
+    let local_backups = when(
+        move || !backups.get().is_empty(),
+        move || {
+            view()
+                .gap_2()
+                .child(
+                    text("此设备的备份副本")
+                        .text_sm()
+                        .font_weight(FontWeight::MEDIUM),
+                )
+                .child(
+                    text("卸载应用或设备损坏会丢失这些副本，请将重要备份导出到其他位置。")
+                        .text_sm()
+                        .text_color(move || theme().muted_foreground),
+                )
+                .child(each(
+                    move || backups.get(),
+                    |path: &PathBuf| path.clone(),
+                    move |path: ReadSignal<PathBuf>, _| {
+                        let value = path.get();
+                        let label = value
+                            .file_name()
+                            .and_then(|name| name.to_str())
+                            .unwrap_or("加密备份")
+                            .to_owned();
+                        ui::secondary_button_dyn(
+                            label.clone(),
+                            move || {
+                                restore_path.set(Some(value.clone()));
+                                restore_staged.set(false);
+                                restore_open.set(true);
+                                backup_status.set(String::new());
+                                backup_error.set(String::new());
+                            },
+                            format!("backup-local-{label}"),
+                            Some(backup_busy),
+                        )
+                    },
+                ))
+        },
+    );
+    let restore_confirmation = ui::app_sheet()
+        .open(move || Some(restore_open.get()))
+        .on_open_change(move |event: &SheetEvent| {
+            if let SheetEvent::OpenChange(next, _) = event
+                && !*next && !backup_busy.get() {
+                    if restore_staged.get() && let Some(path) = restore_path.get() { crate::native_files::cleanup_import(&path); }
+                    restore_path.set(None); restore_staged.set(false); restore_open.set(false);
+            }
+        })
+        .child(ui::interactive_scroll().child(view().p_5().pb_safe_area_plus(px(20.0)).gap_4().bg(move || theme().background)
+            .child(text("恢复这份备份？").text_xl().font_weight(FontWeight::SEMIBOLD))
+            .child(text("恢复会替换此设备的现有记录。请先导出当前数据；口令错误或文件损坏时，现有数据会保留。")
+                .text_base().text_color(move || theme().muted_foreground))
+            .child(ui::secret_field("备份口令", "输入创建备份时的口令", backup_passphrase, "restore-passphrase"))
+            .child(reactive_text(backup_status))
+            .child(ui::error_line(backup_error))
+            .child(ui::primary_button("确认恢复", {
+                let tx = backup_commands.clone(); move || { let _ = tx.send(BackupCommand::Restore); }
+            }, "backup-restore-confirm", Some(backup_busy)))
+            .child(ui::secondary_button("取消", move || {
+                if restore_staged.get() && let Some(path) = restore_path.get() { crate::native_files::cleanup_import(&path); }
+                restore_path.set(None); restore_staged.set(false); restore_open.set(false);
+            }, "backup-restore-cancel", Some(backup_busy)))));
 
     let ai_save_button = ui::primary_button(
         "保存 AI 配置",
@@ -297,11 +416,10 @@ pub fn SettingsScreen() -> impl IntoElement {
     );
 
     let encryption = if services.encrypted {
-        "数据库已加密（SQLCipher，密钥在系统钥匙串/密钥库）"
+        "本机数据库已加密，密钥文件保存在应用私有目录"
     } else {
         "开发模式：数据库未加密"
     };
-    let device = services.device_id.clone();
 
     // Opt-in domains: one toggle row each (finance is always on and not
     // listed here).
@@ -319,7 +437,7 @@ pub fn SettingsScreen() -> impl IntoElement {
                 .child(text("设置").text_xl().font_weight(FontWeight::BOLD)),
         )
         .child(
-            scroll().flex_1().px_4().pb_6().child(
+            ui::interactive_scroll().flex_1().px_4().pb_6().child(
                 view()
                     .gap_4()
                     .child(section!(
@@ -362,23 +480,26 @@ pub fn SettingsScreen() -> impl IntoElement {
                             "backup-passphrase"
                         ),
                         export_row,
-                        ui::text_field(
-                            "备份文件路径",
-                            "…/naviwealth-….bak",
-                            import_path,
-                            "backup-import-path"
-                        ),
                         import_row,
+                        local_backups,
                         reactive_text(backup_status),
+                        ui::error_line(backup_error),
                     ))
                     .child(section!(
                         "关于",
-                        text("NaviWealth 客户端 0.1.0（nsh Rust 重写 · 阶段 1+2）"),
+                        text("NaviWealth · 日常财务"),
                         text(encryption.to_owned()),
-                        text(format!("设备 {device}")),
                     )),
             ),
         )
+        .child(restore_confirmation)
+}
+
+#[derive(Clone, Copy)]
+enum BackupCommand {
+    Export,
+    ChooseImport,
+    Restore,
 }
 
 fn provider_picker(selected: Signal<String>) -> impl IntoElement {

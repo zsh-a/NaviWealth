@@ -107,7 +107,7 @@ fn action_button(
             }
         })
         .px(px(16.0))
-        .h(px(44.0))
+        .min_h(px(48.0))
         .active(|s| s.opacity(0.75))
         .child(
             text(label)
@@ -165,7 +165,7 @@ pub fn state_button(
         .rounded(move || theme().radius)
         .bg(bg)
         .px(px(12.0))
-        .h(px(32.0))
+        .min_h(px(48.0))
         .active(|s| s.opacity(0.75))
         .child(text(label).text_sm().text_color(fg));
     if test_id.is_empty() {
@@ -207,6 +207,15 @@ pub fn chip(
         }))
 }
 
+/// Native inputs do not reliably inherit the surrounding text or hint color.
+pub fn themed_input() -> nsh_core::element::Input {
+    input()
+        .text_color(move || theme().foreground)
+        .placeholder_color(move || color(theme().muted_foreground))
+        .caret_color(move || color(theme().primary))
+        .selection_color(move || color(theme().secondary))
+}
+
 /// Labeled single-line field.
 pub fn text_field(
     label: &'static str,
@@ -216,11 +225,12 @@ pub fn text_field(
 ) -> impl IntoElement {
     labeled(
         label,
-        input()
+        themed_input()
+            .label(label)
             .value(value)
             .on_change(move |text: &str| value.set(text.to_owned()))
             .placeholder(placeholder)
-            .h(px(44.0))
+            .min_h(px(48.0))
             .px(px(12.0))
             .rounded(move || theme().radius)
             .bg(move || theme().card)
@@ -240,12 +250,13 @@ pub fn secret_field(
 ) -> impl IntoElement {
     labeled(
         label,
-        input()
+        themed_input()
+            .label(label)
             .value(value)
             .on_change(move |text: &str| value.set(text.to_owned()))
             .placeholder(placeholder)
             .masked(true)
-            .h(px(44.0))
+            .min_h(px(48.0))
             .px(px(12.0))
             .rounded(move || theme().radius)
             .bg(move || theme().card)
@@ -282,23 +293,16 @@ pub fn error_line(message: Signal<String>) -> impl IntoElement {
 /// Parse `yyyy-mm-dd` into epoch seconds at UTC midnight (days-from-civil;
 /// the inverse of [`ymd`]). Rejects impossible months/days.
 pub fn date_to_secs(text: &str) -> Option<i64> {
-    let mut parts = text.trim().split('-');
-    let year: i64 = parts.next()?.parse().ok()?;
-    let month: i64 = parts.next()?.parse().ok()?;
-    let day: i64 = parts.next()?.parse().ok()?;
-    if parts.next().is_some() {
-        return None;
-    }
-    if !(1..=12).contains(&month) || !(1..=31).contains(&day) {
-        return None;
-    }
-    let y = if month <= 2 { year - 1 } else { year };
-    let era = y.div_euclid(400);
-    let yoe = y.rem_euclid(400);
-    let mp = if month > 2 { month - 3 } else { month + 9 };
-    let doy = (153 * mp + 2) / 5 + day - 1;
-    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
-    Some((era * 146_097 + doe - 719_468) * 86_400)
+    let date = chrono::NaiveDate::parse_from_str(text.trim(), "%Y-%m-%d").ok()?;
+    Some(date.and_hms_opt(0, 0, 0)?.and_utc().timestamp())
+}
+
+/// Local calendar date for capture defaults; stored record dates remain civil UTC labels.
+pub fn today_text() -> String {
+    chrono::Local::now()
+        .date_naive()
+        .format("%Y-%m-%d")
+        .to_string()
 }
 
 /// yyyy-mm-dd for a timestamp in epoch seconds (civil-from-days; the same
@@ -316,4 +320,378 @@ pub fn ymd(secs: i64) -> String {
     let m = if mp < 10 { mp + 3 } else { mp - 9 };
     let y = if m <= 2 { y + 1 } else { y };
     format!("{y:04}-{m:02}-{d:02}")
+}
+
+/// Exact decimal display, with at least two places and no floating-point conversion.
+pub fn money(value: rust_decimal::Decimal) -> String {
+    let normalized = value.normalize().to_string();
+    let (whole, fraction) = normalized.split_once('.').unwrap_or((&normalized, ""));
+    let fraction = match fraction.len() {
+        0 => "00".to_owned(),
+        1 => format!("{fraction}0"),
+        _ => fraction.to_owned(),
+    };
+    format!("{whole}.{fraction}")
+}
+
+#[derive(Clone, Copy)]
+pub enum Icon {
+    Ledger,
+    Wallet,
+    Chat,
+    Settings,
+    Arrow,
+    Back,
+    Search,
+    Transfer,
+    Income,
+    Expense,
+}
+
+pub fn icon(kind: Icon) -> impl Element {
+    let path = match kind {
+        Icon::Ledger => {
+            "<rect x='5' y='3' width='14' height='18' rx='3'/><path d='M9 8h6M9 12h6M9 16h3'/>"
+        }
+        Icon::Wallet => {
+            "<path d='M20 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-2'/><path d='M21 8h-7v8h7zM16 12h1'/>"
+        }
+        Icon::Chat => {
+            "<path d='M21 11a8 8 0 0 1-8 8H6l-4 3V11a8 8 0 0 1 8-8h3a8 8 0 0 1 8 8Z'/><path d='M7 10h9M7 14h6'/>"
+        }
+        Icon::Settings => {
+            "<path d='M4 7h16M4 17h16'/><circle cx='9' cy='7' r='3'/><circle cx='16' cy='17' r='3'/>"
+        }
+        Icon::Back => "<path d='m15 6-6 6 6 6'/>",
+        Icon::Arrow => "<path d='m9 6 6 6-6 6'/>",
+        Icon::Search => "<circle cx='10.5' cy='10.5' r='6.5'/><path d='m16 16 5 5'/>",
+        Icon::Transfer => "<path d='M4 8h16m-4-4 4 4-4 4M20 16H4m4-4-4 4 4 4'/>",
+        Icon::Income => "<path d='M12 4v16m-6-6 6 6 6-6'/>",
+        Icon::Expense => "<path d='M12 20V4m-6 6 6-6 6 6'/>",
+    };
+    svg(nsh_core::element::ImageSrc::svg_markup(&format!(
+        "<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'>{path}</svg>"
+    ))).w(px(22.0)).h(px(22.0))
+}
+
+pub fn page_title(title: &'static str, subtitle: &'static str) -> impl Element {
+    view()
+        .gap_1()
+        .child(
+            text(title)
+                .text_size(px(26.0))
+                .font_weight(FontWeight::SEMIBOLD),
+        )
+        .child(
+            text(subtitle)
+                .text_sm()
+                .text_color(move || theme().muted_foreground),
+        )
+}
+
+pub fn empty_state(title: &'static str, description: &'static str) -> impl Element {
+    view()
+        .gap_2()
+        .py_6()
+        .child(text(title).text_lg().font_weight(FontWeight::SEMIBOLD))
+        .child(
+            text(description)
+                .text_base()
+                .text_color(move || theme().muted_foreground),
+        )
+}
+
+pub fn choice_button(
+    label: impl Into<String>,
+    selected: impl Fn() -> bool + Clone + 'static,
+    on_press: impl Fn() + 'static,
+    id: impl Into<String>,
+) -> impl Element {
+    let bg = selected.clone();
+    view()
+        .role(AccessibilityRole::Button)
+        .on_press(on_press)
+        .test_id(&id.into())
+        .min_h(px(48.0))
+        .px_3()
+        .py_2()
+        .rounded(px(12.0))
+        .items_center()
+        .justify_center()
+        .bg(move || {
+            if bg() {
+                theme().secondary
+            } else {
+                theme().card
+            }
+        })
+        .child(
+            text(label.into())
+                .text_sm()
+                .font_weight(FontWeight::MEDIUM)
+                .text_color(move || {
+                    if selected() {
+                        theme().secondary_foreground
+                    } else {
+                        theme().muted_foreground
+                    }
+                }),
+        )
+}
+
+/// Scroll content contains real actions, even while an input keeps focus.
+/// Android's default `Never` swallows non-input taps based on focus, including
+/// after the IME hides in a dialog. `Handled` delivers buttons/pickers normally
+/// and still dismisses the keyboard when unhandled background is tapped.
+pub fn interactive_scroll() -> nsh_core::element::Scroll {
+    scroll().keyboard_taps(KeyboardTaps::Handled)
+}
+
+/// Shared native sheet: dim the underlying task and reserve system navigation space
+/// in each content footer. nsh-base sheets are deliberately unstyled.
+pub fn app_sheet() -> nsh_base::SheetElement {
+    nsh_base::sheet().backdrop_style(|s| s.bg(hsla(0.0, 0.0, 0.0, 0.32)))
+}
+
+/// Compact field which opens a scrollable choice sheet on touch screens.
+pub fn select_field(
+    label: &'static str,
+    options: Signal<Vec<(String, String)>>,
+    selected: Signal<String>,
+    id: &'static str,
+) -> impl IntoElement {
+    use nsh_base::SheetEvent;
+    let open = signal(false);
+    let selected_label = move || {
+        options.with(|items| {
+            items
+                .iter()
+                .find(|(value, _)| *value == selected.get())
+                .map(|(_, label)| label.clone())
+                .unwrap_or_else(|| "请选择".to_owned())
+        })
+    };
+    view()
+        .child(
+            view()
+                .role(AccessibilityRole::Button)
+                .test_id(id)
+                .on_press(move || {
+                    dismiss_keyboard();
+                    open.set(true);
+                })
+                .min_h(px(56.0))
+                .flex_row()
+                .items_center()
+                .gap_3()
+                .px_4()
+                .py_3()
+                .child(text(label).text_base())
+                .child(
+                    text(selected_label)
+                        .flex_1()
+                        .min_w(px(0.0))
+                        .truncate()
+                        .text_right()
+                        .text_base()
+                        .text_color(move || theme().muted_foreground),
+                )
+                .child(icon(Icon::Arrow).text_color(move || theme().muted_foreground)),
+        )
+        .child(
+            app_sheet()
+                .open(move || Some(open.get()))
+                .on_open_change(move |event: &SheetEvent| {
+                    if let SheetEvent::OpenChange(next, _) = event {
+                        open.set(*next);
+                    }
+                })
+                .child(
+                    view()
+                        .p_5()
+                        .pb_safe_area_plus(px(20.0))
+                        .gap_3()
+                        .h(move || px((window().height.0 * 0.75).clamp(240.0, 480.0)))
+                        .max_h(px(560.0))
+                        .bg(move || theme().background)
+                        .child(text(label).text_lg().font_weight(FontWeight::SEMIBOLD))
+                        .child(interactive_scroll().flex_1().child(each(
+                            move || options.get(),
+                            |v: &(String, String)| v.0.clone(),
+                            move |item: ReadSignal<(String, String)>, _| {
+                                let (value, label) = item.get();
+                                let flag = value.clone();
+                                choice_button(
+                                    label,
+                                    move || selected.get() == flag,
+                                    move || {
+                                        selected.set(value.clone());
+                                        open.set(false);
+                                    },
+                                    format!("{id}-{}", item.get().0),
+                                )
+                            },
+                        )))
+                        .child(secondary_button("取消", move || open.set(false), "", None)),
+                ),
+        )
+}
+
+pub fn divider() -> impl Element {
+    view().h(px(1.0)).bg(move || theme().border)
+}
+
+pub fn danger_button(
+    label: &'static str,
+    on_press: impl Fn() + 'static,
+    id: &'static str,
+    busy: Signal<bool>,
+) -> impl Element {
+    view()
+        .role(AccessibilityRole::Button)
+        .test_id(id)
+        .on_press(on_press)
+        .disabled(move || busy.get())
+        .min_h(px(48.0))
+        .px_4()
+        .py_3()
+        .rounded(move || theme().radius)
+        .items_center()
+        .justify_center()
+        .bg(move || theme().destructive)
+        .child(
+            text(label)
+                .text_base()
+                .font_weight(FontWeight::MEDIUM)
+                .text_color(move || {
+                    color(
+                        theme()
+                            .color("destructive-foreground")
+                            .unwrap_or_else(|| theme().primary_foreground),
+                    )
+                }),
+        )
+}
+
+pub fn icon_button(
+    kind: Icon,
+    label: &'static str,
+    id: &'static str,
+    on_press: impl Fn() + 'static,
+) -> impl Element {
+    view()
+        .role(AccessibilityRole::Button)
+        .label(label)
+        .test_id(id)
+        .on_press(on_press)
+        .w(px(48.0))
+        .h(px(48.0))
+        .items_center()
+        .justify_center()
+        .rounded(px(12.0))
+        .bg(move || theme().card)
+        .child(icon(kind).text_color(move || theme().muted_foreground))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn dates_reject_impossible_days() {
+        assert!(date_to_secs("2026-02-29").is_none());
+        assert!(date_to_secs("2026-04-31").is_none());
+        assert_eq!(ymd(date_to_secs("2024-02-29").unwrap()), "2024-02-29");
+    }
+    #[test]
+    fn amounts_keep_small_values_exact() {
+        assert_eq!(money("0.000001".parse().unwrap()), "0.000001");
+        assert_eq!(money("42.5".parse().unwrap()), "42.50");
+    }
+
+    #[component]
+    fn KeyboardTapProbe() -> impl IntoElement {
+        let open = signal(false);
+        let value = signal(String::new());
+        let kind = signal("支出".to_owned());
+        view()
+            .child(primary_button(
+                "打开",
+                move || {
+                    kind.set("支出".to_owned());
+                    open.set(true);
+                },
+                "tap-open",
+                None,
+            ))
+            .child(when(
+                move || open.get(),
+                move || {
+                    nsh_base::dialog()
+                        .on_cancel(move || open.set(false))
+                        .child(
+                            interactive_scroll()
+                                .flex_1()
+                                .test_id("tap-scroll")
+                                .child(
+                                    input()
+                                        .value(value)
+                                        .on_change(move |v: &str| value.set(v.to_owned()))
+                                        .test_id("tap-input"),
+                                )
+                                .child(choice_button(
+                                    "收入",
+                                    move || kind.get() == "收入",
+                                    move || kind.set("收入".to_owned()),
+                                    "tap-income",
+                                ))
+                                .child(choice_button(
+                                    "转账",
+                                    move || kind.get() == "转账",
+                                    move || kind.set("转账".to_owned()),
+                                    "tap-transfer",
+                                ))
+                                .child(text(move || format!("当前类型：{}", kind.get()))),
+                        )
+                        .child(secondary_button(
+                            "关闭",
+                            move || open.set(false),
+                            "tap-close",
+                            None,
+                        ))
+                },
+            ))
+    }
+
+    #[test]
+    fn interactive_scroll_keeps_handled_taps_with_focused_input_across_reopens() {
+        use nsh_engine::{EngineConfig, Root};
+        use nsh_testing::Headless;
+        use std::sync::{Arc, Mutex};
+        let observed = Arc::new(Mutex::new(Vec::new()));
+        let capture = observed.clone();
+        let mut app = Headless::start(EngineConfig::new(Root::of::<KeyboardTapProbe>())).unwrap();
+        app.observe(move |_, batch| {
+            for item in &batch.items {
+                if let nsh_core::MountItem::ScrollBehavior { behavior, .. } = item {
+                    capture.lock().unwrap().push(behavior.keyboard_taps);
+                }
+            }
+        });
+        app.wait_for("id:tap-open").unwrap();
+        for _ in 0..4 {
+            app.press("id:tap-open").unwrap();
+            app.type_text("id:tap-input", "1").unwrap();
+            app.press("id:tap-income").unwrap();
+            app.wait_for("text:当前类型：收入").unwrap();
+            app.press("id:tap-transfer").unwrap();
+            app.wait_for("text:当前类型：转账").unwrap();
+            app.press("id:tap-close").unwrap();
+        }
+        let taps = observed.lock().unwrap();
+        assert!(
+            taps.len() >= 4,
+            "each newly mounted native scroll receives its tap policy"
+        );
+        assert!(taps.iter().all(|taps| *taps == KeyboardTaps::Handled));
+    }
 }

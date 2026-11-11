@@ -3,6 +3,7 @@
 //! reaches the database only through repositories over `&mut Connection`.
 
 pub mod builders;
+pub use repos::daily_repository as daily;
 pub mod error;
 pub mod fx;
 pub mod invariants;

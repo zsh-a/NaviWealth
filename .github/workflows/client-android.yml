@@ -97,8 +97,7 @@ jobs:
           } >> "$GITHUB_ENV"
 
       - name: Build APK
-        working-directory: apps/client
-        run: nsh package --target android
+        run: bash tool/build-client-android.sh
 
       - name: Locate APK
         id: apk

@@ -212,7 +212,15 @@ pub fn transfer(
 
     let dest_price = if dest_currency != currency {
         Some(Price {
-            per_unit: (amount / dest_amount).round_dp(12),
+            per_unit: amount
+                .checked_div(dest_amount)
+                .filter(|rate| *rate > Decimal::ZERO)
+                .ok_or_else(|| {
+                    FinanceError::InvalidData(
+                        "transfer exchange rate exceeds supported decimal precision or range"
+                            .to_owned(),
+                    )
+                })?,
             currency: currency.clone(),
         })
     } else {
@@ -495,7 +503,10 @@ mod tests {
         // worth `amount / dest_amount` of the source currency.
         let price = build.postings[1].price.as_ref().unwrap();
         assert_eq!(price.currency, "USD");
-        assert_eq!(price.per_unit, Decimal::from_str("0.139860139860").unwrap());
+        assert_eq!(
+            price.per_unit,
+            Decimal::from(100).checked_div(Decimal::from(715)).unwrap()
+        );
     }
 
     #[test]

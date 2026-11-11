@@ -17,7 +17,7 @@ desktop = [
 ]
 
 [dependencies]
-nsh-core = "0.4.0"
+nsh-core = { version = "0.4.0", features = ["svg"] }
 nsh-base = "0.4.0"
 env_logger = { version = "0.11", optional = true }
 lifeos = { workspace = true, default-features = false, features = [

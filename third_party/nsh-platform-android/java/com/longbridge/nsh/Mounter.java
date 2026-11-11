@@ -2006,8 +2006,18 @@ final class Mounter {
                     // Keyboard.dismiss(): hide the keyboard even when the field that showed it is gone (a page that
                     // closed with it), which leaves no focused view in the host but the keyboard still up. Not when
                     // an editor outside the host has it (the embedding app's, another NshView's): they share the window.
-                    View f = host.findFocus();
                     InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+                    // A modal has its own window, so the host's token cannot
+                    // dismiss the IME of its focused field. Use only this
+                    // mounter's tracked input and let its focus listener clear
+                    // the tracked state when focus leaves it.
+                    InputBox current = focused;
+                    if (current != null && current.edit.hasFocus()) {
+                        imm.hideSoftInputFromWindow(current.edit.getWindowToken(), 0);
+                        current.edit.clearFocus();
+                        break;
+                    }
+                    View f = host.findFocus();
                     if (f != null) {
                         imm.hideSoftInputFromWindow(f.getWindowToken(), 0);
                         if (f != host) host.requestFocus();

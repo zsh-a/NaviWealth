@@ -29,7 +29,10 @@ impl HttpSyncTransport {
     pub fn new(base_url: impl Into<String>) -> Result<Self> {
         Ok(Self {
             base_url: base_url.into().trim_end_matches('/').to_owned(),
-            client: reqwest::Client::new(),
+            client: reqwest::Client::builder()
+                .timeout(std::time::Duration::from_secs(30))
+                .build()
+                .map_err(|error| LifeosError::Http(error.to_string()))?,
         })
     }
 

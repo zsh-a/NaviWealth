@@ -106,3 +106,7 @@ mod tests {
         assert!(health.request_authorization().is_err());
     }
 }
+
+/// Android document import/export backed by the system file picker.
+#[cfg(target_os = "android")]
+pub use nsh::documents;
