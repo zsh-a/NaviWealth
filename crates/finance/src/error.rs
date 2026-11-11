@@ -16,6 +16,8 @@ pub enum FinanceError {
     AccountNotFound(String),
     #[error("category not found: {0}")]
     CategoryNotFound(String),
+    #[error("asset not found: {0}")]
+    AssetNotFound(String),
 }
 
 pub type Result<T> = std::result::Result<T, FinanceError>;
@@ -34,6 +36,7 @@ impl From<FinanceError> for lifeos::LifeosError {
             FinanceError::CategoryNotFound(id) => {
                 lifeos::LifeosError::NotFound(format!("category {id}"))
             }
+            FinanceError::AssetNotFound(id) => lifeos::LifeosError::NotFound(format!("asset {id}")),
             FinanceError::Unbalanced(report) => lifeos::LifeosError::InvalidData(format!(
                 "journal entry unbalanced: {}",
                 report

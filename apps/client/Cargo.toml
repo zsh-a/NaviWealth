@@ -25,6 +25,9 @@ lifeos = { workspace = true, default-features = false, features = [
     "sync-http",
 ] }
 naviwealth-finance.workspace = true
+naviwealth-knowledge.workspace = true
+naviwealth-execution.workspace = true
+naviwealth-health.workspace = true
 lifeos-platform.workspace = true
 tokio = { workspace = true, features = ["rt-multi-thread", "macros", "time"] }
 tracing.workspace = true

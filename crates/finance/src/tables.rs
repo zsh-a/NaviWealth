@@ -9,11 +9,17 @@ use lifeos::error::Domain;
 use lifeos::sync::{SqlTableAdapter, SyncRegistry};
 
 pub const FINANCE_SCHEMA_VERSION: i64 = 2;
+/// Assets and price history arrive in a later step; migration versions are
+/// shared across the whole database (1 = core, 2 = finance, 3..5 = other
+/// domains), so this step claims the next free number.
+pub const FINANCE_ASSETS_VERSION: i64 = 6;
 
 pub const ACCOUNTS_TABLE: &str = "fin:accounts";
 pub const JOURNAL_ENTRIES_TABLE: &str = "fin:journal_entries";
 pub const POSTINGS_TABLE: &str = "fin:postings";
 pub const CATEGORIES_TABLE: &str = "fin:categories";
+pub const ASSETS_TABLE: &str = "fin:assets";
+pub const PRICES_TABLE: &str = "fin:prices";
 
 pub const ACCOUNT_COLUMNS: &[&str] = &[
     "id",
@@ -89,6 +95,32 @@ pub const CATEGORY_COLUMNS: &[&str] = &[
     "deleted_at",
 ];
 
+pub const ASSET_COLUMNS: &[&str] = &[
+    "id",
+    "kind",
+    "name",
+    "note",
+    "owner_user_id",
+    "updated_at",
+    "updated_by_device",
+    "hlc",
+    "deleted_at",
+];
+
+pub const PRICE_COLUMNS: &[&str] = &[
+    "id",
+    "unit",
+    "quote_currency",
+    "observed_on",
+    "per_unit",
+    "source",
+    "owner_user_id",
+    "updated_at",
+    "updated_by_device",
+    "hlc",
+    "deleted_at",
+];
+
 pub fn migration() -> Migration {
     Migration {
         version: FINANCE_SCHEMA_VERSION,
@@ -96,6 +128,45 @@ pub fn migration() -> Migration {
         sql: FINANCE_V1,
     }
 }
+
+/// The assets + price-history step (schema phase 3). A separate migration
+/// so databases created at version 2 upgrade in place.
+pub fn assets_migration() -> Migration {
+    Migration {
+        version: FINANCE_ASSETS_VERSION,
+        name: "finance-assets",
+        sql: FINANCE_ASSETS_V1,
+    }
+}
+
+const FINANCE_ASSETS_V1: &str = r#"
+CREATE TABLE "fin:assets" (
+    id TEXT PRIMARY KEY NOT NULL,
+    kind TEXT NOT NULL,
+    name TEXT NOT NULL,
+    note TEXT,
+    owner_user_id TEXT NOT NULL,
+    updated_at INTEGER NOT NULL,
+    updated_by_device TEXT NOT NULL,
+    hlc TEXT NOT NULL,
+    deleted_at INTEGER
+);
+
+CREATE TABLE "fin:prices" (
+    id TEXT PRIMARY KEY NOT NULL,
+    unit TEXT NOT NULL,
+    quote_currency TEXT NOT NULL,
+    observed_on INTEGER NOT NULL,
+    per_unit TEXT NOT NULL,
+    source TEXT,
+    owner_user_id TEXT NOT NULL,
+    updated_at INTEGER NOT NULL,
+    updated_by_device TEXT NOT NULL,
+    hlc TEXT NOT NULL,
+    deleted_at INTEGER
+);
+CREATE INDEX idx_prices_unit_observed ON "fin:prices" (unit, observed_on DESC);
+"#;
 
 const FINANCE_V1: &str = r#"
 CREATE TABLE "fin:accounts" (
@@ -217,6 +288,16 @@ pub fn sync_registry() -> SyncRegistry {
         CATEGORIES_TABLE,
         Domain::Finance,
         CATEGORY_COLUMNS,
+    )));
+    registry.add(Arc::new(SqlTableAdapter::new(
+        ASSETS_TABLE,
+        Domain::Finance,
+        ASSET_COLUMNS,
+    )));
+    registry.add(Arc::new(SqlTableAdapter::new(
+        PRICES_TABLE,
+        Domain::Finance,
+        PRICE_COLUMNS,
     )));
     registry
 }

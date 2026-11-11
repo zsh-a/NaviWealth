@@ -104,6 +104,7 @@ impl ChatState {
         // The turn runs on the app-level tokio runtime; events cross to
         // the engine thread through the pipe (signals are
         // engine-thread-only).
+        let job_services = services.clone();
         crate::bridge::spawn_job(
             services,
             self.pipe.sender(),
@@ -112,7 +113,7 @@ impl ChatState {
                               event: ChatEvent| {
                     let _ = tx.send(event);
                 };
-                let runner = match ai::runner(&profile_value) {
+                let runner = match ai::runner(&job_services, &profile_value) {
                     Ok(runner) => runner,
                     Err(e) => {
                         report(&tx, ChatEvent::Failed(e));

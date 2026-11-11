@@ -298,6 +298,89 @@ pub fn opening_balance(
     })
 }
 
+/// Revalues a holding in place (no cash movement): the holding leg is
+/// re-priced and the difference is booked against `Equity:Adjustments`
+/// (the caller passes that seeded account).
+///
+/// Port of the Flutter `_buildValuationAdjustJournalEntry`:
+///
+/// - cash-class holdings (`quantity == 0`, valued as one lump) book
+///   `units = 1` with `price = new_valuation` as the **absolute** value;
+/// - physical/security holdings book `units = quantity` with
+///   `price = new_valuation` **per unit**;
+/// - the equity hedge carries `-leg_units × price` in `currency`;
+/// - the entry is tagged `asset:<unit>` so valuation entries are
+///   filterable per holding.
+///
+/// `asset_unit` is the ledger unit of the holding (an asset id or a
+/// currency code); `new_valuation` must be positive.
+#[allow(clippy::too_many_arguments)]
+pub fn valuation_adjust(
+    date: i64,
+    account_id: impl Into<String>,
+    equity_adjustments_account_id: impl Into<String>,
+    asset_unit: impl Into<String>,
+    quantity: Decimal,
+    new_valuation: Decimal,
+    currency: &str,
+    narration: Option<&str>,
+    settled_on: Option<i64>,
+    tag_ids: Vec<String>,
+) -> Result<EntryBuild> {
+    if new_valuation <= Decimal::ZERO {
+        return Err(FinanceError::InvalidData(
+            "new_valuation must be positive".into(),
+        ));
+    }
+    let currency = currency_code(currency)?;
+    let asset_unit = asset_unit.into();
+    // Cash-class: units=1 with price=new_valuation (absolute value).
+    // Physical/security: units=quantity with price=new_valuation (per-unit).
+    let leg_units = if quantity == Decimal::ZERO {
+        Decimal::ONE
+    } else {
+        quantity
+    };
+    let total_value = leg_units * new_valuation;
+
+    let mut tags = tag_ids;
+    let asset_tag = format!("asset:{asset_unit}");
+    if !tags.contains(&asset_tag) {
+        tags.push(asset_tag);
+    }
+
+    Ok(EntryBuild {
+        entry: draft(
+            date,
+            narration.unwrap_or("Valuation adjust"),
+            None,
+            settled_on,
+            tags,
+        ),
+        postings: vec![
+            PostingDraft {
+                position: 0,
+                account_id: account_id.into(),
+                units: leg_units,
+                unit: asset_unit,
+                cost: None,
+                price: Some(Price {
+                    per_unit: new_valuation,
+                    currency: currency.clone(),
+                }),
+            },
+            PostingDraft {
+                position: 1,
+                account_id: equity_adjustments_account_id.into(),
+                units: -total_value,
+                unit: currency,
+                cost: None,
+                price: None,
+            },
+        ],
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

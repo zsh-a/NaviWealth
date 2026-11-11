@@ -8,6 +8,7 @@ use nsh_base::theme;
 use nsh_core::prelude::*;
 
 use crate::ai::LlmProfile;
+use crate::domains::{self, DomainsState};
 use crate::state::Services;
 use crate::ui;
 
@@ -38,6 +39,7 @@ fn reactive_text(signal: Signal<String>) -> impl IntoElement {
 #[allow(non_snake_case)]
 pub fn SettingsScreen() -> impl IntoElement {
     let services: Arc<Services> = use_context::<Arc<Services>>().expect("services context");
+    let domains_state: DomainsState = use_context::<DomainsState>().expect("domains state context");
 
     // Backend / account.
     let base_url: Signal<String> = signal(String::new());
@@ -301,6 +303,13 @@ pub fn SettingsScreen() -> impl IntoElement {
     };
     let device = services.device_id.clone();
 
+    // Opt-in domains: one toggle row each (finance is always on and not
+    // listed here).
+    let domain_rows = view().gap_2().children(
+        domains::OPTIONAL_DOMAINS
+            .map(|spec| domain_toggle_row(spec, domains_state, services.clone())),
+    );
+
     view()
         .flex_1()
         .child(
@@ -325,6 +334,13 @@ pub fn SettingsScreen() -> impl IntoElement {
                         ui::text_field("邮箱", "you@example.com", email, "auth-email"),
                         ui::secret_field("密码", "至少 8 位", password, "auth-password"),
                         auth_row,
+                    ))
+                    .child(section!(
+                        "领域",
+                        text("Finance（财务）恒开；其余领域按需启用，启用后出现对应标签页。")
+                            .text_sm()
+                            .text_color(move || theme().muted_foreground),
+                        domain_rows,
                     ))
                     .child(section!(
                         "智能",
@@ -379,4 +395,53 @@ fn provider_picker(selected: Signal<String>) -> impl IntoElement {
             })
             .collect::<Vec<_>>(),
     )
+}
+
+/// One opt-in domain: label + reactive enable/disable button. The switch
+/// updates the shared signal immediately (tabs follow at once) and
+/// persists to the settings KV, mirroring onto `Services` so sync and the
+/// AI tools pick it up.
+fn domain_toggle_row(
+    spec: &'static domains::DomainSpec,
+    domains: DomainsState,
+    services: Arc<Services>,
+) -> impl IntoElement {
+    let is_on = move || domains.is_enabled(spec.key);
+    let label = move || {
+        if is_on() {
+            "已启用".to_owned()
+        } else {
+            "已停用".to_owned()
+        }
+    };
+    view()
+        .flex_row()
+        .items_center()
+        .gap_3()
+        .child(
+            view()
+                .flex_1()
+                .child(text(spec.label).text_base().font_weight(FontWeight::MEDIUM)),
+        )
+        .child(ui::state_button(
+            label,
+            move || {
+                let next = !is_on();
+                domains.0.update(|list| {
+                    if next {
+                        if !list.contains(&spec.key) {
+                            list.push(spec.key);
+                        }
+                    } else {
+                        list.retain(|key| *key != spec.key);
+                    }
+                });
+                let services = services.clone();
+                spawn(async move {
+                    domains::set_enabled(&services, spec, next).await;
+                });
+            },
+            spec.toggle_test_id,
+            true,
+        ))
 }

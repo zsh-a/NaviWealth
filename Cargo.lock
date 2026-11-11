@@ -3070,7 +3070,10 @@ dependencies = [
  "futures",
  "lifeos",
  "lifeos-platform",
+ "naviwealth-execution",
  "naviwealth-finance",
+ "naviwealth-health",
+ "naviwealth-knowledge",
  "nsh-base",
  "nsh-core",
  "nsh-engine",
@@ -3088,6 +3091,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "naviwealth-execution"
+version = "0.1.0"
+dependencies = [
+ "lifeos",
+ "rusqlite",
+ "thiserror 2.0.21",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "naviwealth-finance"
 version = "0.1.0"
 dependencies = [
@@ -3096,6 +3110,29 @@ dependencies = [
  "rusqlite",
  "rust_decimal",
  "serde_json",
+ "thiserror 2.0.21",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "naviwealth-health"
+version = "0.1.0"
+dependencies = [
+ "lifeos",
+ "rusqlite",
+ "rust_decimal",
+ "thiserror 2.0.21",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "naviwealth-knowledge"
+version = "0.1.0"
+dependencies = [
+ "lifeos",
+ "rusqlite",
  "thiserror 2.0.21",
  "tokio",
  "tracing",

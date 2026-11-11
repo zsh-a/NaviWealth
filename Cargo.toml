@@ -4,6 +4,9 @@ members = [
     "apps/client",
     "crates/lifeos",
     "crates/finance",
+    "crates/knowledge",
+    "crates/execution",
+    "crates/health",
     "crates/platform",
 ]
 exclude = ["apps/backend", "third_party/agent-runtime", "third_party/market-data-rs"]
@@ -16,6 +19,9 @@ license = "UNLICENSED"
 [workspace.dependencies]
 lifeos = { path = "crates/lifeos" }
 naviwealth-finance = { path = "crates/finance" }
+naviwealth-knowledge = { path = "crates/knowledge" }
+naviwealth-execution = { path = "crates/execution" }
+naviwealth-health = { path = "crates/health" }
 lifeos-platform = { path = "crates/platform" }
 async-trait = "0.1"
 base64 = "0.22"

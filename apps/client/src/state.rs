@@ -2,6 +2,7 @@
 //! composition root for the client — it may import multiple domains and
 //! infrastructure, everything below it stays layered.
 
+use std::collections::BTreeSet;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, OnceLock, RwLock};
@@ -23,11 +24,11 @@ use naviwealth_finance::repos::account_repository::{self, AccountBalance};
 use naviwealth_finance::repos::journal_repository::{self, EntryWithPostings};
 use naviwealth_finance::repos::settings_repository;
 use naviwealth_finance::system_accounts;
-use naviwealth_finance::tables;
 use nsh_core::prelude::*;
 use rust_decimal::Decimal;
 
 use crate::ai::LlmProfile;
+use crate::domains;
 
 pub const APP_ID: &str = "com.naviwealth.client";
 
@@ -59,11 +60,12 @@ pub fn is_test_mode() -> bool {
 pub struct Services {
     pub db: Db,
     pub runtime: tokio::runtime::Runtime,
-    pub registry: SyncRegistry,
     pub device_id: String,
     pub encrypted: bool,
     pub app_dir: Option<PathBuf>,
     owner: RwLock<String>,
+    /// The opt-in domains currently switched on (mirrors the settings KV).
+    enabled_domains: RwLock<BTreeSet<&'static str>>,
 }
 
 /// The shared write path: validate the balance invariant, then commit the
@@ -91,7 +93,7 @@ impl Services {
 
     fn init() -> LifeosResult<Arc<Self>> {
         let test = is_test_mode();
-        let migrations = lifeos::db::migrations::core_migrations().push(tables::migration());
+        let migrations = domains::domain_migrations();
 
         let (db, encrypted, app_dir) = if test {
             (
@@ -128,7 +130,6 @@ impl Services {
             )
         };
 
-        let registry = tables::sync_registry();
         let device_id = {
             let stored = db
                 .call_sync(|conn| settings::get_setting(conn, DEVICE_KEY))?
@@ -139,6 +140,19 @@ impl Services {
             .call_sync(|conn| settings::get_setting(conn, OWNER_KEY))?
             .filter(|v| !v.is_empty())
             .unwrap_or_else(|| LOCAL_OWNER.to_owned());
+
+        // Opt-in domains: read the switches once (finance is not here — it
+        // is always on and never in this set).
+        let mut enabled_domains = BTreeSet::new();
+        for spec in domains::OPTIONAL_DOMAINS {
+            let on = db
+                .call_sync(|conn| settings::get_setting(conn, spec.enabled_key))?
+                .as_deref()
+                == Some("1");
+            if on {
+                enabled_domains.insert(spec.key);
+            }
+        }
 
         // First-run bootstrap: identity, system account tree, base
         // currency. Idempotent.
@@ -175,16 +189,55 @@ impl Services {
         Ok(Arc::new(Self {
             db,
             runtime,
-            registry,
             device_id,
             encrypted,
             app_dir,
             owner: RwLock::new(owner),
+            enabled_domains: RwLock::new(enabled_domains),
         }))
     }
 
     pub fn owner(&self) -> String {
         self.owner.read().unwrap().clone()
+    }
+
+    // ---- Opt-in domains ----
+
+    /// The enabled domain keys (finance is not in the set — always on).
+    pub fn enabled_domain_keys(&self) -> Vec<&'static str> {
+        self.enabled_domains
+            .read()
+            .unwrap()
+            .iter()
+            .copied()
+            .collect()
+    }
+
+    pub fn domain_enabled(&self, key: &str) -> bool {
+        self.enabled_domains.read().unwrap().contains(key)
+    }
+
+    /// Flip the in-memory switch (the settings KV write happens next to it
+    /// via [`crate::domains::set_enabled`]).
+    pub fn set_domain_enabled(&self, key: &'static str, on: bool) {
+        let mut domains = self.enabled_domains.write().unwrap();
+        if on {
+            domains.insert(key);
+        } else {
+            domains.remove(key);
+        }
+    }
+
+    /// The registry matching the current domain switches (sync + AI use
+    /// only the active domains' row families).
+    pub fn sync_registry(&self) -> SyncRegistry {
+        domains::sync_registry_for(&self.enabled_domain_keys())
+    }
+
+    /// Every registered row family (backup/restore must round-trip data of
+    /// disabled domains too).
+    pub fn full_registry(&self) -> SyncRegistry {
+        domains::full_sync_registry()
     }
 
     /// The stamper for local mutations; built per call so an owner change
@@ -421,7 +474,7 @@ impl Services {
         let auth = Arc::new(SettingsTokenProvider::new(self.db.clone()));
         let engine = SyncEngine::new(
             self.db.clone(),
-            self.registry.clone(),
+            self.sync_registry(),
             transport,
             auth,
             self.stamper(),
@@ -488,7 +541,7 @@ impl Services {
     // ---- Backup ----
 
     pub async fn backup_export(&self, path: PathBuf, passphrase: String) -> Result<String, String> {
-        let registry = self.registry.clone();
+        let registry = self.full_registry();
         let payload = self
             .db
             .call(move |conn| {
@@ -517,9 +570,243 @@ impl Services {
             .map_err(|e| e.to_string())?;
         let payload =
             lifeos::backup::decrypt_payload(&json, &passphrase).map_err(|e| e.to_string())?;
-        let registry = self.registry.clone();
+        let registry = self.full_registry();
         self.db
             .call(move |conn| backup::restore_payload(&registry, conn, &payload))
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    // ---- Knowledge reads/writes ----
+
+    pub async fn notes(
+        &self,
+        limit: i64,
+    ) -> Result<Vec<naviwealth_knowledge::models::Note>, String> {
+        self.db
+            .call(move |conn| {
+                naviwealth_knowledge::repos::note_repository::list_recent(conn, limit)
+                    .map_err(lifeos::LifeosError::from)
+            })
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    pub async fn create_note(
+        &self,
+        title: String,
+        content: String,
+        source: Option<String>,
+    ) -> Result<naviwealth_knowledge::models::Note, String> {
+        let stamper = self.stamper();
+        self.db
+            .call(move |conn| {
+                let new = naviwealth_knowledge::models::NewNote {
+                    title,
+                    content,
+                    source,
+                    created_at: lifeos::ids::now_secs(),
+                };
+                naviwealth_knowledge::repos::note_repository::create(conn, &stamper, new)
+                    .map_err(lifeos::LifeosError::from)
+            })
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    pub async fn decisions(
+        &self,
+        limit: i64,
+    ) -> Result<Vec<naviwealth_knowledge::models::Decision>, String> {
+        self.db
+            .call(move |conn| {
+                naviwealth_knowledge::repos::decision_repository::list_recent(conn, limit)
+                    .map_err(lifeos::LifeosError::from)
+            })
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    // ---- Execution reads/writes ----
+
+    /// Every plan with its non-deleted actions, open plans first.
+    pub async fn plans_with_actions(
+        &self,
+    ) -> Result<
+        Vec<(
+            naviwealth_execution::models::Plan,
+            Vec<naviwealth_execution::models::Action>,
+        )>,
+        String,
+    > {
+        self.db
+            .call(|conn| {
+                let plans = naviwealth_execution::repos::plan_repository::list(conn)
+                    .map_err(lifeos::LifeosError::from)?;
+                let mut out = Vec::with_capacity(plans.len());
+                for plan in plans {
+                    let actions = naviwealth_execution::repos::action_repository::list_by_plan(
+                        conn, &plan.id,
+                    )
+                    .map_err(lifeos::LifeosError::from)?;
+                    out.push((plan, actions));
+                }
+                Ok(out)
+            })
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    pub async fn create_plan(
+        &self,
+        title: String,
+        kind: naviwealth_execution::models::PlanKind,
+        period: naviwealth_execution::models::PlanPeriod,
+    ) -> Result<naviwealth_execution::models::Plan, String> {
+        let stamper = self.stamper();
+        self.db
+            .call(move |conn| {
+                let new = naviwealth_execution::models::NewPlan {
+                    title,
+                    kind,
+                    period,
+                    status: naviwealth_execution::models::PlanStatus::Active,
+                    created_at: lifeos::ids::now_secs(),
+                };
+                naviwealth_execution::repos::plan_repository::create(conn, &stamper, new)
+                    .map_err(lifeos::LifeosError::from)
+            })
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    pub async fn create_action(
+        &self,
+        plan_id: String,
+        title: String,
+    ) -> Result<naviwealth_execution::models::Action, String> {
+        let stamper = self.stamper();
+        self.db
+            .call(move |conn| {
+                let new = naviwealth_execution::models::NewAction {
+                    plan_id,
+                    title,
+                    due: None,
+                    created_at: lifeos::ids::now_secs(),
+                };
+                naviwealth_execution::repos::action_repository::create(conn, &stamper, new)
+                    .map_err(lifeos::LifeosError::from)
+            })
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    /// Flip an action's status (the progress record): `done` completes it,
+    /// `todo` reopens it.
+    pub async fn set_action_status(
+        &self,
+        action_id: String,
+        status: naviwealth_execution::models::ActionStatus,
+    ) -> Result<(), String> {
+        let stamper = self.stamper();
+        self.db
+            .call(move |conn| {
+                naviwealth_execution::repos::action_repository::set_status(
+                    conn, &stamper, &action_id, status,
+                )
+                .map_err(lifeos::LifeosError::from)
+            })
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    // ---- Health reads/writes ----
+
+    pub async fn recent_metrics(
+        &self,
+        limit: i64,
+    ) -> Result<Vec<naviwealth_health::models::Metric>, String> {
+        self.db
+            .call(move |conn| {
+                naviwealth_health::repos::metric_repository::list_recent(conn, limit)
+                    .map_err(lifeos::LifeosError::from)
+            })
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    pub async fn record_metric(
+        &self,
+        kind: naviwealth_health::models::MetricKind,
+        quantity: Decimal,
+    ) -> Result<naviwealth_health::models::Metric, String> {
+        let stamper = self.stamper();
+        self.db
+            .call(move |conn| {
+                let new = naviwealth_health::models::NewMetric::now(kind, quantity);
+                naviwealth_health::repos::metric_repository::create(conn, &stamper, new)
+                    .map_err(lifeos::LifeosError::from)
+            })
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    // ---- Finance AI tool reads ----
+
+    /// Account balances as (name, "100.00 CNY") display strings.
+    pub async fn account_balance_lines(&self) -> Result<Vec<String>, String> {
+        self.db
+            .call(|conn| {
+                let accounts =
+                    account_repository::list(conn, false).map_err(lifeos::LifeosError::from)?;
+                let balances = account_repository::balances(conn)?;
+                Ok(accounts
+                    .into_iter()
+                    .filter_map(|account| {
+                        let balance = balances.iter().find(|b| b.account_id == account.id)?;
+                        let legs = balance
+                            .legs
+                            .iter()
+                            .map(|(unit, amount)| format!("{amount} {unit}"))
+                            .collect::<Vec<_>>()
+                            .join("、");
+                        Some(format!("{}：{}", account.name, legs))
+                    })
+                    .collect())
+            })
+            .await
+            .map_err(|e| e.to_string())
+    }
+
+    /// Recent entries as human-readable summary lines (account names
+    /// resolved in the same DB pass).
+    pub async fn recent_entry_lines(&self, limit: i64) -> Result<Vec<String>, String> {
+        self.db
+            .call(move |conn| {
+                let entries = journal_repository::list_recent(conn, limit)
+                    .map_err(lifeos::LifeosError::from)?;
+                let accounts =
+                    account_repository::list(conn, true).map_err(lifeos::LifeosError::from)?;
+                let name = |id: &str| {
+                    accounts
+                        .iter()
+                        .find(|a| a.id == id)
+                        .map(|a| a.name.clone())
+                        .unwrap_or_else(|| id.to_owned())
+                };
+                Ok(entries
+                    .into_iter()
+                    .map(|with| {
+                        let legs = with
+                            .postings
+                            .iter()
+                            .map(|p| format!("{} {} {}", name(&p.account_id), p.units, p.unit))
+                            .collect::<Vec<_>>()
+                            .join("；");
+                        format!("{}：{}", with.entry.narration, legs)
+                    })
+                    .collect())
+            })
             .await
             .map_err(|e| e.to_string())
     }

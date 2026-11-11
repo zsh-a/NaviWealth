@@ -4,6 +4,9 @@
 
 pub mod accounts;
 pub mod chat;
+pub mod execution;
+pub mod health;
+pub mod knowledge;
 pub mod ledger;
 pub mod record;
 pub mod settings;

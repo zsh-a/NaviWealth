@@ -1,0 +1,15 @@
+[package]
+name = "naviwealth-knowledge"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Knowledge domain: notes, decisions and sync tables"
+
+[dependencies]
+lifeos.workspace = true
+rusqlite.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
