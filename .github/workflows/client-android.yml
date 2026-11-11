@@ -2,12 +2,12 @@ name: client-android
 
 # Build and release the nsh/Rust client's Android APK.
 #
-#   - push a tag `client-vX.Y.Z` to publish a GitHub Release with the APK;
+#   - push a tag `client-vX.Y.Z` to stage a draft GitHub Release with the APK;
 #   - or run manually from the Actions tab (workflow_dispatch) to build an
 #     artifact without publishing.
 #
-# The APK is debug-signed for now (no client release keystore yet); when a
-# keystore lands, add the signing step like release.yml does for Flutter.
+# Builds use the repository's fixed Android release signing secrets. Publish
+# the staged draft after verifying its source, metadata, signer and checksums.
 #
 # The nsh CLI builds the APK with the SDK build tools (aapt2/zipalign/
 # apksigner, no Gradle) and drives cargo for `libnsh.so`. The vendored
@@ -30,6 +30,8 @@ concurrency:
 env:
   NSH_VERSION: v0.4.0
   ANDROID_API_LEVEL: '28'
+  CARGO_PROFILE_DEV_DEBUG: '0'
+  CARGO_INCREMENTAL: '0'
 
 jobs:
   apk:
@@ -40,6 +42,18 @@ jobs:
       - uses: actions/checkout@v7
         with:
           submodules: recursive
+
+      - name: Validate client release metadata
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib
+          config = json.loads(pathlib.Path('apps/client/nsh.json').read_text())
+          assert isinstance(config['build'], int) and config['build'] > 0
+          if os.environ['GITHUB_REF_TYPE'] == 'tag':
+              tag = os.environ['GITHUB_REF_NAME']
+              assert tag == 'client-v' + config['version'], 'Tag and client version differ'
+              assert pathlib.Path(f'docs/releases/{tag}.md').is_file(), 'Release notes required'
+          PY
 
       - uses: actions/setup-java@v4
         with:
@@ -59,6 +73,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-linux-android,armv7-linux-androideabi
+          components: rustfmt,clippy
 
       - uses: Swatinem/rust-cache@v2
 
@@ -74,15 +89,22 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgtk-4-dev
 
+      - name: Verify Rust workspace
+        run: |
+          cargo fmt --all -- --check
+          cargo test --workspace --no-default-features
+          cargo clippy --workspace --all-targets --no-default-features -- -D warnings
+
       - name: Configure NDK toolchain for cargo
         run: |
           # Pinned by the SDK install step above; openssl-sys (vendored)
           # derives its cross-compile prefix from ANDROID_NDK_HOME/ROOT in
           # later steps, so re-export it there.
-          NDK_ROOT="${ANDROID_NDK_HOME:?ANDROID_NDK_HOME not set}"
+          NDK_ROOT="$ANDROID_HOME/ndk/27.0.12077973"
+          test -d "$NDK_ROOT"
           echo "ANDROID_NDK_HOME=$NDK_ROOT" >> "$GITHUB_ENV"
           echo "ANDROID_NDK_ROOT=$NDK_ROOT" >> "$GITHUB_ENV"
-          NDK_BIN="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          NDK_BIN="$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin"
           API="$ANDROID_API_LEVEL"
           {
             echo "NDK_BIN=$NDK_BIN"
@@ -96,13 +118,39 @@ jobs:
             echo "CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER=$NDK_BIN/armv7a-linux-androideabi${API}-clang"
           } >> "$GITHUB_ENV"
 
-      - name: Build APK
-        run: bash tool/build-client-android.sh
+      - name: Build signed APK
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          umask 077
+          for name in KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            if [[ -z "${!name:-}" ]]; then
+              echo "::error::$name is required for a signed client build"
+              exit 1
+            fi
+          done
+          signing_file="$(mktemp "$RUNNER_TEMP/client-signing.XXXXXX")"
+          trap 'rm -f "$signing_file"' EXIT
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$signing_file"
+          NAVIWEALTH_ANDROID_KEYSTORE="$signing_file" \
+          NAVIWEALTH_ANDROID_KEY_ALIAS="$KEY_ALIAS" \
+          NSH_KEYSTORE_PASSWORD="$KEYSTORE_PASSWORD" \
+          NSH_KEY_PASSWORD="$KEY_PASSWORD" \
+            bash tool/build-client-android.sh
 
       - name: Locate APK
         id: apk
         run: |
-          apk_path="$(find apps/client/.nsh/out -name '*.apk' | head -n1)"
+          apk_path="apps/client/.nsh/out/$(python3 -c 'import json; print(json.load(open("apps/client/nsh.json"))["name"] + ".apk")')"
+          test -f "$apk_path"
+          apksigner verify --verbose --print-certs "$apk_path"
+          zipalign -c -P 16 4 "$apk_path"
+          aapt dump badging "$apk_path"
+          (cd "$(dirname "$apk_path")" && sha256sum "$(basename "$apk_path")" > SHA256SUMS)
           echo "path=$apk_path" >> "$GITHUB_OUTPUT"
           echo "name=$(basename "$apk_path")" >> "$GITHUB_OUTPUT"
 
@@ -110,7 +158,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: naviwealth-android-apk
-          path: ${{ steps.apk.outputs.path }}
+          path: |
+            ${{ steps.apk.outputs.path }}
+            apps/client/.nsh/out/SHA256SUMS
           if-no-files-found: error
 
       - name: Create GitHub Release
@@ -118,8 +168,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: NaviWealth client ${{ github.ref_name }}
-          draft: false
+          draft: true
           prerelease: false
-          generate_release_notes: true
+          body_path: docs/releases/${{ github.ref_name }}.md
           fail_on_unmatched_files: true
-          files: ${{ steps.apk.outputs.path }}
+          files: |
+            ${{ steps.apk.outputs.path }}
+            apps/client/.nsh/out/SHA256SUMS

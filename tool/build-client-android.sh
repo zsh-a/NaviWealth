@@ -3,7 +3,8 @@
 # Prerequisites: Android SDK platform 35, build-tools 35+, JDK 17+, nsh 0.4.0,
 # Rust Android targets and the NDK toolchain environment used by client-android CI.
 # Optional: NAVIWEALTH_ANDROID_KEYSTORE / NAVIWEALTH_ANDROID_KEY_ALIAS and
-# NSH_KEYSTORE_PASSWORD select a release signing key. Otherwise this is debug signed.
+# NSH_KEYSTORE_PASSWORD select a release signing key. NSH_KEY_PASSWORD optionally
+# supplies a distinct private-key password. Otherwise this is debug signed.
 set -euo pipefail
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 sdk_dir="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
@@ -37,6 +38,7 @@ jar cf "$work_dir/classes.jar" -C "$work_dir/classes" .
 keystore="${NAVIWEALTH_ANDROID_KEYSTORE:-$repo_dir/apps/client/.nsh/signing/debug.keystore}"
 key_alias="${NAVIWEALTH_ANDROID_KEY_ALIAS:-androiddebugkey}"
 export NSH_KEYSTORE_PASSWORD="${NSH_KEYSTORE_PASSWORD:-android}"
+export NSH_KEY_PASSWORD="${NSH_KEY_PASSWORD:-$NSH_KEYSTORE_PASSWORD}"
 if [[ ! -f "$keystore" ]]; then
     if [[ -n "${NAVIWEALTH_ANDROID_KEYSTORE:-}" ]]; then echo "Signing keystore does not exist" >&2; exit 1; fi
     mkdir -p "$(dirname "$keystore")"
@@ -45,8 +47,16 @@ if [[ ! -f "$keystore" ]]; then
         -validity 10000 -dname "CN=Android Debug,O=Android,C=US" >/dev/null 2>&1
 fi
 out_dir="${NAVIWEALTH_APK_DIR:-$repo_dir/apps/client/.nsh/out}"
+# nsh 0.4 only accepts a store password. Its intermediate APK is re-signed below,
+# so keep the real release key out of that stage and support distinct key passwords.
+packaging_keystore="$work_dir/packaging.keystore"
+keytool -genkeypair -noprompt -keystore "$packaging_keystore" -storepass android \
+    -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 \
+    -validity 1 -dname "CN=Build Intermediate" >/dev/null 2>&1
 cd "$repo_dir/apps/client"
-nsh package --target android --out "$out_dir" --keystore "$keystore" --key-alias "$key_alias" "$@"
+NSH_KEYSTORE_PASSWORD=android NSH_KEY_PASSWORD=android \
+    nsh package --target android --out "$out_dir" --keystore "$packaging_keystore" \
+    --key-alias androiddebugkey "$@"
 apk_name="$(python3 -c 'import json;print(json.load(open("nsh.json"))["name"]+".apk")')"
 apk_path="$out_dir/$apk_name"
 python3 - "$apk_path" "$work_dir/unsigned.apk" "$work_dir/dex" <<'PY_APK'
@@ -62,7 +72,7 @@ with zipfile.ZipFile(sys.argv[1]) as source,zipfile.ZipFile(sys.argv[2],'w') as 
 PY_APK
 "$build_tools/zipalign" -P 16 -f 4 "$work_dir/unsigned.apk" "$work_dir/aligned.apk"
 "$build_tools/apksigner" sign --ks "$keystore" --ks-key-alias "$key_alias" \
-    --ks-pass env:NSH_KEYSTORE_PASSWORD --key-pass env:NSH_KEYSTORE_PASSWORD \
+    --ks-pass env:NSH_KEYSTORE_PASSWORD --key-pass env:NSH_KEY_PASSWORD \
     --out "$apk_path" "$work_dir/aligned.apk"
 "$build_tools/apksigner" verify "$apk_path"
 echo "Android APK with system backup document picker: $apk_path"

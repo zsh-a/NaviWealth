@@ -1,8 +1,8 @@
 {
   "name": "NaviWealth",
   "id": "com.naviwealth.client",
-  "version": "0.2.0",
-  "build": 3,
+  "version": "0.3.0",
+  "build": 4,
   "rust": ".",
   "root": "App",
   "theme": "theme.json",
