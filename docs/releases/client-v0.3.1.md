@@ -8,10 +8,10 @@
 
 验证：202 项 Rust 工作区测试、22 个套件及严格 Clippy 通过。Android 15 / API 35 x86_64 模拟器验证了连续记账、转账、编辑删除、重启持久化，以及预算、估值、CSV 复核撤销、对账和月结；浅色／深色、360dp／1.3 字号及关闭动画状态已检查。
 
-包信息：`com.naviwealth.client`，版本 `0.3.0`，build `4`，支持 `arm64-v8a` / `armeabi-v7a`。
+包信息：`com.naviwealth.client`，版本 `0.3.1`，build `5`，支持 `arm64-v8a` / `armeabi-v7a`。
 
 本版开始使用固定发布签名。此前客户端调试版的证书不同，无法直接覆盖安装；请保留旧应用并先导出加密备份，勿在未备份时卸载旧版，以免清除本地数据。后续版本将沿用固定签名。
 
 本轮不含期权、Wheel／LEAPS、纸面模拟、旧 Flutter 数据迁移或券商执行。ARM 实体机、iOS、Web、TalkBack、predictive Back 和真实云端往返尚未完成验收。
 
-[完整变更](https://github.com/zsh-a/NaviWealth/compare/client-v0.2.0...client-v0.3.0)
+[完整变更](https://github.com/zsh-a/NaviWealth/compare/client-v0.2.0...client-v0.3.1)

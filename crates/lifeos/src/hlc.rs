@@ -110,11 +110,11 @@ impl Hlc {
     /// Malformed input is a non-recoverable corruption signal.
     pub fn parse(packed: &str) -> Result<Self, HlcError> {
         let malformed = || HlcError(packed.to_owned());
-        let dot = packed.find('.').ok_or_else(&malformed)?;
+        let dot = packed.find('.').ok_or_else(malformed)?;
         let dash = packed[dot + 1..]
             .find('-')
             .map(|i| i + dot + 1)
-            .ok_or_else(&malformed)?;
+            .ok_or_else(malformed)?;
         if dot < 1 {
             return Err(malformed());
         }
