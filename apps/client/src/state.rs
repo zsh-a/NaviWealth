@@ -189,6 +189,7 @@ impl Services {
             let owner_for_init = owner.clone();
             db.call_sync(move |conn| {
                 ensure_identity(conn, &owner_for_init, &device_id)?;
+                naviwealth_finance::wealth::rebuild_manual_fx(conn, &owner_for_init)?;
                 let stamper = MutationStamper::new(&owner_for_init, &device_id);
                 if account_repository::find_system_account(
                     conn,
@@ -284,6 +285,7 @@ impl Services {
             let tx = conn.savepoint()?;
             adopt_local_owner(&tx, &registry, &previous, &owner, &device_id)?;
             ensure_identity(&tx, &owner, &device_id)?;
+            naviwealth_finance::wealth::rebuild_manual_fx(&tx, &owner)?;
             tx.commit()?;
             Ok(())
         })?;
@@ -555,7 +557,15 @@ impl Services {
             auth,
             self.stamper(),
         );
-        engine.sync_once().await
+        let result = engine.sync_once().await?;
+        let owner = self.owner();
+        self.db
+            .call(move |conn| {
+                naviwealth_finance::wealth::rebuild_manual_fx(conn, &owner)?;
+                Ok(())
+            })
+            .await?;
+        Ok(result)
     }
 
     // ---- Auth ----
@@ -625,6 +635,7 @@ impl Services {
                 let tx = conn.savepoint()?;
                 adopt_local_owner(&tx, &registry, &previous, &user_id, &device_id)?;
                 ensure_identity(&tx, &user_id, &device_id)?;
+                naviwealth_finance::wealth::rebuild_manual_fx(&tx, &user_id)?;
                 settings::set_setting(&tx, "sync.access_token", &session.access_token)?;
                 settings::set_setting(&tx, "sync.user_id", &user_id)?;
                 settings::set_setting(&tx, "sync.expires_at", &session.expires_at.to_string())?;
@@ -780,7 +791,8 @@ impl Services {
             current_owner.clone()
         };
         if backup_owner != target_owner {
-            remap_backup_owner(&mut payload, &backup_owner, &target_owner);
+            remap_backup_owner(&mut payload, &backup_owner, &target_owner)
+                .map_err(|e| e.to_string())?;
         }
         // Early v2 snapshots omitted disabled switches. Missing preferences must
         // restore their default instead of retaining the device's later state.
@@ -824,6 +836,7 @@ impl Services {
                         }
                     }
                     ensure_identity(conn, &owner, &device_id)?;
+                    naviwealth_finance::wealth::rebuild_manual_fx(conn, &owner)?;
                     settings::set_setting(conn, "sync.cursor", "0")?;
                     Ok(report)
                 })
@@ -1314,23 +1327,148 @@ fn backup_preference_keys() -> Vec<&'static str> {
         .collect()
 }
 
-fn remap_backup_owner(payload: &mut backup::BackupPayload, previous: &str, owner: &str) {
-    for row in payload.data.values_mut().flatten() {
-        if let Some(object) = row.as_object_mut() {
-            for (key, value) in object.iter_mut() {
-                if key == "owner_user_id" {
-                    *value = serde_json::Value::String(owner.to_owned());
-                } else if (key == "id" || key.ends_with("_id"))
-                    && let Some(id) = value.as_str()
-                {
-                    for prefix in ["system-account", "system-category"] {
-                        if let Some(rest) = id.strip_prefix(&format!("{prefix}:{previous}:")) {
-                            *value = serde_json::Value::String(format!("{prefix}:{owner}:{rest}"));
-                            break;
+fn remap_backup_owner(
+    payload: &mut backup::BackupPayload,
+    previous: &str,
+    owner: &str,
+) -> LifeosResult<()> {
+    fn remap_id(id: &str, previous: &str, owner: &str) -> String {
+        for prefix in ["system-account", "system-category"] {
+            if let Some(rest) = id.strip_prefix(&format!("{prefix}:{previous}:")) {
+                return format!("{prefix}:{owner}:{rest}");
+            }
+        }
+        let (prefix, json) = if let Some(json) = id.strip_prefix("planning:") {
+            ("planning:", json)
+        } else {
+            ("", id)
+        };
+        if let Ok(mut parts) = serde_json::from_str::<Vec<String>>(json)
+            && parts.first().is_some_and(|v| v == previous)
+            && parts.get(1).is_some_and(|v| {
+                matches!(
+                    v.as_str(),
+                    "budget"
+                        | "recurring-occurrence"
+                        | "installment"
+                        | "dca-occurrence"
+                        | "contribution"
+                        | "rebalance"
+                )
+            })
+        {
+            parts[0] = owner.into();
+            for part in parts.iter_mut().skip(2) {
+                *part = remap_id(part, previous, owner);
+            }
+            return format!(
+                "{prefix}{}",
+                serde_json::to_string(&parts).expect("string list")
+            );
+        }
+        id.into()
+    }
+    fn remap(value: &mut serde_json::Value, field: &str, previous: &str, owner: &str) {
+        match value {
+            serde_json::Value::Object(object) => {
+                for (key, value) in object {
+                    remap(value, key, previous, owner);
+                }
+            }
+            serde_json::Value::Array(values) => {
+                for value in values {
+                    remap(value, field, previous, owner);
+                }
+            }
+            serde_json::Value::String(text) if field == "payload" || field == "payload_json" => {
+                if let Ok(mut nested) = serde_json::from_str::<serde_json::Value>(text) {
+                    remap(&mut nested, "", previous, owner);
+                    *text = nested.to_string();
+                }
+            }
+            serde_json::Value::String(text) if field == "owner_user_id" => *text = owner.into(),
+            serde_json::Value::String(text)
+                if field == "id" || field.ends_with("_id") || field.ends_with("_ids") =>
+            {
+                *text = remap_id(text, previous, owner)
+            }
+            _ => {}
+        }
+    }
+    for rows in payload.data.values_mut() {
+        for row in rows {
+            remap(row, "", previous, owner);
+        }
+    }
+    if let Some(rows) = payload.data.get_mut("fin:operations") {
+        for row in rows {
+            naviwealth_finance::operations::remap_owner_row(row, previous, owner)?;
+        }
+    }
+    Ok(())
+}
+
+/// Move only evidence which still matches its recorded journal revision. A stale
+/// receipt must remain stale after adoption; re-stamping must not validate it.
+fn restamp_backup_evidence(
+    payload: &mut backup::BackupPayload,
+    revisions: &std::collections::BTreeMap<String, (String, i64)>,
+) {
+    let journals = payload
+        .data
+        .get("fin:journal_entries")
+        .into_iter()
+        .flatten()
+        .filter_map(|row| {
+            Some((
+                row.get("id")?.as_str()?.to_owned(),
+                row.get("hlc")?.as_str()?.to_owned(),
+            ))
+        })
+        .collect::<std::collections::BTreeMap<_, _>>();
+    fn update(
+        value: &mut serde_json::Value,
+        journals: &std::collections::BTreeMap<String, String>,
+        revisions: &std::collections::BTreeMap<String, (String, i64)>,
+    ) {
+        match value {
+            serde_json::Value::Object(object) => {
+                let new_hlc = object
+                    .get("journal_id")
+                    .and_then(|v| v.as_str())
+                    .and_then(|id| journals.get(id))
+                    .filter(|old| {
+                        object.get("journal_hlc").and_then(|v| v.as_str()) == Some(old.as_str())
+                    })
+                    .and_then(|old| revisions.get(old))
+                    .map(|(hlc, _)| hlc.clone());
+                if let Some(new_hlc) = new_hlc {
+                    object.insert("journal_hlc".into(), serde_json::Value::String(new_hlc));
+                }
+                for (key, value) in object {
+                    if (key == "payload" || key == "payload_json") && value.is_string() {
+                        if let Ok(mut nested) = serde_json::from_str::<serde_json::Value>(
+                            value.as_str().unwrap_or_default(),
+                        ) {
+                            update(&mut nested, journals, revisions);
+                            *value = serde_json::Value::String(nested.to_string());
                         }
+                    } else {
+                        update(value, journals, revisions);
                     }
                 }
             }
+            serde_json::Value::Array(values) => {
+                for value in values {
+                    update(value, journals, revisions);
+                }
+            }
+            _ => {}
+        }
+    }
+    for rows in payload.data.values_mut() {
+        for row in rows {
+            update(row, &journals, revisions);
         }
     }
 }
@@ -1362,8 +1500,23 @@ fn adopt_local_owner(
             "本地包含多个数据空间，请先备份".to_owned(),
         ));
     }
-    remap_backup_owner(&mut payload, previous, owner);
-    let stamp = MutationStamper::new(owner, device).stamp(conn)?;
+    remap_backup_owner(&mut payload, previous, owner)?;
+    // Preserve revision equivalence: a partially received edit must remain
+    // incomplete after sign-in, while each complete journal and its postings
+    // continue to share a revision. Fresh stamps still publish the adopted rows.
+    let original = payload
+        .data
+        .values()
+        .flatten()
+        .filter_map(|row| row.get("hlc").and_then(|v| v.as_str()).map(str::to_owned))
+        .collect::<BTreeSet<_>>();
+    let stamper = MutationStamper::new(owner, device);
+    let mut revisions = std::collections::BTreeMap::new();
+    for old in original {
+        let stamp = stamper.stamp(conn)?;
+        revisions.insert(old, (stamp.hlc, stamp.now.div_euclid(1000)));
+    }
+    restamp_backup_evidence(&mut payload, &revisions);
     for adapter in registry.adapters() {
         adapter.delete_all(conn)?;
         outbox::clear_table(conn, adapter.table())?;
@@ -1372,15 +1525,20 @@ fn adopt_local_owner(
                 let object = row.as_object_mut().ok_or_else(|| {
                     lifeos::LifeosError::InvalidData("backup row must be an object".into())
                 })?;
-                object.insert("hlc".into(), serde_json::Value::String(stamp.hlc.clone()));
+                let (hlc, updated_at) = object
+                    .get("hlc")
+                    .and_then(|v| v.as_str())
+                    .and_then(|old| revisions.get(old))
+                    .ok_or_else(|| {
+                        lifeos::LifeosError::InvalidData("adoption row revision is missing".into())
+                    })?
+                    .clone();
+                object.insert("hlc".into(), serde_json::Value::String(hlc));
                 object.insert(
                     "updated_by_device".into(),
                     serde_json::Value::String(device.to_owned()),
                 );
-                object.insert(
-                    "updated_at".into(),
-                    serde_json::json!(stamp.now.div_euclid(1000)),
-                );
+                object.insert("updated_at".into(), serde_json::json!(updated_at));
                 adapter.apply_upsert(conn, row)?;
                 if let Some(id) = row.get("id").and_then(|id| id.as_str()) {
                     outbox::enqueue(conn, adapter.table(), id)?;
@@ -1410,6 +1568,10 @@ fn new_database_key() -> Vec<u8> {
     bytes.extend_from_slice(uuid::Uuid::new_v4().as_bytes());
     bytes
 }
+
+#[cfg(test)]
+#[path = "state_finance_tests.rs"]
+mod finance_recovery_tests;
 
 #[cfg(test)]
 mod startup_tests {

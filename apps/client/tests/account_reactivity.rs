@@ -11,6 +11,9 @@ fn account_row_and_currency_totals_refresh_without_switching_tabs() {
     let mut app = Headless::start(EngineConfig::new(Root::of::<naviwealth_client::App>())).unwrap();
     app.wait_for("id:tab-accounts").unwrap();
     app.press("id:tab-accounts").unwrap();
+    app.wait_for("id:wealth-accounts").unwrap();
+    app.press("id:wealth-accounts").unwrap();
+    app.wait_for("id:open-account-form").unwrap();
     app.press("id:open-account-form").unwrap();
     app.type_text("id:account-name", "响应式账户").unwrap();
     app.type_text("id:account-opening", "1000").unwrap();

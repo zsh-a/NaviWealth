@@ -299,5 +299,8 @@ pub fn sync_registry() -> SyncRegistry {
         Domain::Finance,
         PRICE_COLUMNS,
     )));
+    crate::wealth::register(&mut registry);
+    crate::planning::register(&mut registry);
+    crate::operations::register(&mut registry);
     registry
 }

@@ -59,6 +59,8 @@ fn ledger_load_more_crosses_two_hundred_records() {
     let mut app = Headless::start(EngineConfig::new(Root::of::<naviwealth_client::App>())).unwrap();
     for _ in 0..4 {
         app.wait_for("id:ledger-load-more").unwrap();
+        app.wait_for_gone("text:正在读取流水…", std::time::Duration::from_secs(5))
+            .unwrap();
         app.press("id:ledger-load-more").unwrap();
     }
     app.wait_for(&format!("id:record-{oldest}")).unwrap();

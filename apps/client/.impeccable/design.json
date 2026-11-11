@@ -1,301 +1,315 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-11T05:02:57.138497+00:00",
-  "title": "Design System: NaviWealth Rust Client",
+  "generatedAt": "2026-11-11T08:49:08.115645+00:00",
+  "title": "Design System: NaviWealth Native FinanceOS",
   "extensions": {
     "colorMeta": {
       "light-background": {
         "role": "neutral",
         "displayName": "Light Background",
         "tonalRamp": [
-          "oklch(15% 0.0010 271.4)",
-          "oklch(26% 0.0018 271.4)",
-          "oklch(37% 0.0025 271.4)",
-          "oklch(48% 0.0033 271.4)",
-          "oklch(60% 0.0041 271.4)",
-          "oklch(72% 0.0029 271.4)",
-          "oklch(84% 0.0016 271.4)",
-          "oklch(95% 0.0005 271.4)"
+          "oklch(15% 0.0011 179.7)",
+          "oklch(26% 0.0019 179.7)",
+          "oklch(37% 0.0028 179.7)",
+          "oklch(48% 0.0036 179.7)",
+          "oklch(60% 0.0044 179.7)",
+          "oklch(72% 0.0031 179.7)",
+          "oklch(84% 0.0018 179.7)",
+          "oklch(95% 0.0006 179.7)"
         ]
       },
       "light-foreground": {
         "role": "neutral",
         "displayName": "Light Foreground",
         "tonalRamp": [
-          "oklch(15% 0.0072 267.6)",
-          "oklch(26% 0.0125 267.6)",
-          "oklch(37% 0.0178 267.6)",
-          "oklch(48% 0.0231 267.6)",
-          "oklch(60% 0.0288 267.6)",
-          "oklch(72% 0.0202 267.6)",
-          "oklch(84% 0.0115 267.6)",
-          "oklch(95% 0.0036 267.6)"
+          "oklch(15% 0.0081 222.6)",
+          "oklch(26% 0.0140 222.6)",
+          "oklch(37% 0.0201 222.6)",
+          "oklch(48% 0.0260 222.6)",
+          "oklch(60% 0.0325 222.6)",
+          "oklch(72% 0.0227 222.6)",
+          "oklch(84% 0.0130 222.6)",
+          "oklch(95% 0.0041 222.6)"
         ]
       },
       "light-card": {
         "role": "neutral",
         "displayName": "Light Card",
         "tonalRamp": [
-          "oklch(15% 0.0000 89.9)",
-          "oklch(26% 0.0000 89.9)",
-          "oklch(37% 0.0000 89.9)",
-          "oklch(48% 0.0000 89.9)",
-          "oklch(60% 0.0000 89.9)",
-          "oklch(72% 0.0000 89.9)",
-          "oklch(84% 0.0000 89.9)",
-          "oklch(95% 0.0000 89.9)"
+          "oklch(15% 0.0000 0.0)",
+          "oklch(26% 0.0000 0.0)",
+          "oklch(37% 0.0000 0.0)",
+          "oklch(48% 0.0000 0.0)",
+          "oklch(60% 0.0000 0.0)",
+          "oklch(72% 0.0000 0.0)",
+          "oklch(84% 0.0000 0.0)",
+          "oklch(95% 0.0000 0.0)"
         ]
       },
       "light-primary": {
         "role": "primary",
         "displayName": "Light Primary",
         "tonalRamp": [
-          "oklch(15% 0.0394 274.6)",
-          "oklch(26% 0.0683 274.6)",
-          "oklch(37% 0.0972 274.6)",
-          "oklch(48% 0.1261 274.6)",
-          "oklch(60% 0.1576 274.6)",
-          "oklch(72% 0.1103 274.6)",
-          "oklch(84% 0.0631 274.6)",
-          "oklch(95% 0.0197 274.6)"
+          "oklch(15% 0.0144 235.0)",
+          "oklch(26% 0.0247 235.0)",
+          "oklch(37% 0.0357 235.0)",
+          "oklch(48% 0.0460 235.0)",
+          "oklch(60% 0.0575 235.0)",
+          "oklch(72% 0.0403 235.0)",
+          "oklch(84% 0.0230 235.0)",
+          "oklch(95% 0.0072 235.0)"
         ]
       },
       "light-primary-foreground": {
         "role": "primary",
         "displayName": "Light Primary Foreground",
         "tonalRamp": [
-          "oklch(15% 0.0000 89.9)",
-          "oklch(26% 0.0000 89.9)",
-          "oklch(37% 0.0000 89.9)",
-          "oklch(48% 0.0000 89.9)",
-          "oklch(60% 0.0000 89.9)",
-          "oklch(72% 0.0000 89.9)",
-          "oklch(84% 0.0000 89.9)",
-          "oklch(95% 0.0000 89.9)"
+          "oklch(15% 0.0000 0.0)",
+          "oklch(26% 0.0000 0.0)",
+          "oklch(37% 0.0000 0.0)",
+          "oklch(48% 0.0000 0.0)",
+          "oklch(60% 0.0000 0.0)",
+          "oklch(72% 0.0000 0.0)",
+          "oklch(84% 0.0000 0.0)",
+          "oklch(95% 0.0000 0.0)"
         ]
       },
       "light-secondary": {
         "role": "secondary",
         "displayName": "Light Secondary",
         "tonalRamp": [
-          "oklch(15% 0.0044 279.1)",
-          "oklch(26% 0.0076 279.1)",
-          "oklch(37% 0.0108 279.1)",
-          "oklch(48% 0.0141 279.1)",
-          "oklch(60% 0.0176 279.1)",
-          "oklch(72% 0.0123 279.1)",
-          "oklch(84% 0.0070 279.1)",
-          "oklch(95% 0.0022 279.1)"
+          "oklch(15% 0.0041 182.7)",
+          "oklch(26% 0.0070 182.7)",
+          "oklch(37% 0.0102 182.7)",
+          "oklch(48% 0.0131 182.7)",
+          "oklch(60% 0.0164 182.7)",
+          "oklch(72% 0.0115 182.7)",
+          "oklch(84% 0.0066 182.7)",
+          "oklch(95% 0.0020 182.7)"
         ]
       },
       "light-secondary-foreground": {
         "role": "secondary",
         "displayName": "Light Secondary Foreground",
         "tonalRamp": [
-          "oklch(15% 0.0334 274.1)",
-          "oklch(26% 0.0580 274.1)",
-          "oklch(37% 0.0825 274.1)",
-          "oklch(48% 0.1070 274.1)",
-          "oklch(60% 0.1338 274.1)",
-          "oklch(72% 0.0936 274.1)",
-          "oklch(84% 0.0535 274.1)",
-          "oklch(95% 0.0167 274.1)"
+          "oklch(15% 0.0140 198.6)",
+          "oklch(26% 0.0241 198.6)",
+          "oklch(37% 0.0348 198.6)",
+          "oklch(48% 0.0449 198.6)",
+          "oklch(60% 0.0561 198.6)",
+          "oklch(72% 0.0393 198.6)",
+          "oklch(84% 0.0224 198.6)",
+          "oklch(95% 0.0070 198.6)"
         ]
       },
       "light-muted": {
         "role": "neutral",
         "displayName": "Light Muted",
         "tonalRamp": [
-          "oklch(15% 0.0021 271.3)",
-          "oklch(26% 0.0036 271.3)",
-          "oklch(37% 0.0051 271.3)",
-          "oklch(48% 0.0066 271.3)",
-          "oklch(60% 0.0083 271.3)",
-          "oklch(72% 0.0058 271.3)",
-          "oklch(84% 0.0033 271.3)",
-          "oklch(95% 0.0010 271.3)"
+          "oklch(15% 0.0022 179.6)",
+          "oklch(26% 0.0038 179.6)",
+          "oklch(37% 0.0055 179.6)",
+          "oklch(48% 0.0071 179.6)",
+          "oklch(60% 0.0089 179.6)",
+          "oklch(72% 0.0062 179.6)",
+          "oklch(84% 0.0036 179.6)",
+          "oklch(95% 0.0011 179.6)"
         ]
       },
       "light-muted-foreground": {
         "role": "neutral",
         "displayName": "Light Muted Foreground",
         "tonalRamp": [
-          "oklch(15% 0.0068 264.3)",
-          "oklch(26% 0.0117 264.3)",
-          "oklch(37% 0.0167 264.3)",
-          "oklch(48% 0.0216 264.3)",
-          "oklch(60% 0.0270 264.3)",
-          "oklch(72% 0.0189 264.3)",
-          "oklch(84% 0.0108 264.3)",
-          "oklch(95% 0.0034 264.3)"
+          "oklch(15% 0.0075 214.7)",
+          "oklch(26% 0.0129 214.7)",
+          "oklch(37% 0.0186 214.7)",
+          "oklch(48% 0.0240 214.7)",
+          "oklch(60% 0.0300 214.7)",
+          "oklch(72% 0.0210 214.7)",
+          "oklch(84% 0.0120 214.7)",
+          "oklch(95% 0.0037 214.7)"
         ]
       },
       "light-destructive": {
         "role": "neutral",
         "displayName": "Light Destructive",
         "tonalRamp": [
-          "oklch(15% 0.0538 27.3)",
-          "oklch(26% 0.0932 27.3)",
-          "oklch(37% 0.1327 27.3)",
-          "oklch(48% 0.1721 27.3)",
-          "oklch(60% 0.2152 27.3)",
-          "oklch(72% 0.1506 27.3)",
-          "oklch(84% 0.0861 27.3)",
-          "oklch(95% 0.0269 27.3)"
+          "oklch(15% 0.0476 27.5)",
+          "oklch(26% 0.0819 27.5)",
+          "oklch(37% 0.1181 27.5)",
+          "oklch(48% 0.1524 27.5)",
+          "oklch(60% 0.1905 27.5)",
+          "oklch(72% 0.1333 27.5)",
+          "oklch(84% 0.0762 27.5)",
+          "oklch(95% 0.0238 27.5)"
         ]
       },
       "light-destructive-foreground": {
         "role": "neutral",
         "displayName": "Light Destructive Foreground",
         "tonalRamp": [
-          "oklch(15% 0.0000 89.9)",
-          "oklch(26% 0.0000 89.9)",
-          "oklch(37% 0.0000 89.9)",
-          "oklch(48% 0.0000 89.9)",
-          "oklch(60% 0.0000 89.9)",
-          "oklch(72% 0.0000 89.9)",
-          "oklch(84% 0.0000 89.9)",
-          "oklch(95% 0.0000 89.9)"
+          "oklch(15% 0.0000 0.0)",
+          "oklch(26% 0.0000 0.0)",
+          "oklch(37% 0.0000 0.0)",
+          "oklch(48% 0.0000 0.0)",
+          "oklch(60% 0.0000 0.0)",
+          "oklch(72% 0.0000 0.0)",
+          "oklch(84% 0.0000 0.0)",
+          "oklch(95% 0.0000 0.0)"
         ]
       },
       "light-border": {
         "role": "neutral",
         "displayName": "Light Border",
         "tonalRamp": [
-          "oklch(15% 0.0028 269.5)",
-          "oklch(26% 0.0049 269.5)",
-          "oklch(37% 0.0070 269.5)",
-          "oklch(48% 0.0090 269.5)",
-          "oklch(60% 0.0113 269.5)",
-          "oklch(72% 0.0079 269.5)",
-          "oklch(84% 0.0045 269.5)",
-          "oklch(95% 0.0014 269.5)"
+          "oklch(15% 0.0034 179.4)",
+          "oklch(26% 0.0058 179.4)",
+          "oklch(37% 0.0083 179.4)",
+          "oklch(48% 0.0108 179.4)",
+          "oklch(60% 0.0135 179.4)",
+          "oklch(72% 0.0094 179.4)",
+          "oklch(84% 0.0054 179.4)",
+          "oklch(95% 0.0017 179.4)"
+        ]
+      },
+      "light-ring": {
+        "role": "primary",
+        "displayName": "Light Ring",
+        "tonalRamp": [
+          "oklch(15% 0.0244 188.6)",
+          "oklch(26% 0.0420 188.6)",
+          "oklch(37% 0.0606 188.6)",
+          "oklch(48% 0.0782 188.6)",
+          "oklch(60% 0.0978 188.6)",
+          "oklch(72% 0.0684 188.6)",
+          "oklch(84% 0.0391 188.6)",
+          "oklch(95% 0.0122 188.6)"
         ]
       },
       "dark-background": {
         "role": "neutral",
         "displayName": "Dark Background",
         "tonalRamp": [
-          "oklch(15% 0.0037 272.5)",
-          "oklch(26% 0.0063 272.5)",
-          "oklch(37% 0.0090 272.5)",
-          "oklch(48% 0.0117 272.5)",
-          "oklch(60% 0.0146 272.5)",
-          "oklch(72% 0.0102 272.5)",
-          "oklch(84% 0.0058 272.5)",
-          "oklch(95% 0.0018 272.5)"
+          "oklch(15% 0.0062 229.5)",
+          "oklch(26% 0.0106 229.5)",
+          "oklch(37% 0.0153 229.5)",
+          "oklch(48% 0.0198 229.5)",
+          "oklch(60% 0.0247 229.5)",
+          "oklch(72% 0.0173 229.5)",
+          "oklch(84% 0.0099 229.5)",
+          "oklch(95% 0.0031 229.5)"
         ]
       },
       "dark-foreground": {
         "role": "neutral",
         "displayName": "Dark Foreground",
         "tonalRamp": [
-          "oklch(15% 0.0028 269.5)",
-          "oklch(26% 0.0049 269.5)",
-          "oklch(37% 0.0069 269.5)",
-          "oklch(48% 0.0090 269.5)",
-          "oklch(60% 0.0112 269.5)",
-          "oklch(72% 0.0079 269.5)",
-          "oklch(84% 0.0045 269.5)",
-          "oklch(95% 0.0014 269.5)"
+          "oklch(15% 0.0028 176.3)",
+          "oklch(26% 0.0049 176.3)",
+          "oklch(37% 0.0070 176.3)",
+          "oklch(48% 0.0091 176.3)",
+          "oklch(60% 0.0113 176.3)",
+          "oklch(72% 0.0079 176.3)",
+          "oklch(84% 0.0045 176.3)",
+          "oklch(95% 0.0014 176.3)"
         ]
       },
       "dark-card": {
         "role": "neutral",
         "displayName": "Dark Card",
         "tonalRamp": [
-          "oklch(15% 0.0049 271.8)",
-          "oklch(26% 0.0086 271.8)",
-          "oklch(37% 0.0122 271.8)",
-          "oklch(48% 0.0158 271.8)",
-          "oklch(60% 0.0198 271.8)",
-          "oklch(72% 0.0139 271.8)",
-          "oklch(84% 0.0079 271.8)",
-          "oklch(95% 0.0025 271.8)"
+          "oklch(15% 0.0079 227.5)",
+          "oklch(26% 0.0136 227.5)",
+          "oklch(37% 0.0196 227.5)",
+          "oklch(48% 0.0254 227.5)",
+          "oklch(60% 0.0317 227.5)",
+          "oklch(72% 0.0222 227.5)",
+          "oklch(84% 0.0127 227.5)",
+          "oklch(95% 0.0040 227.5)"
         ]
       },
       "dark-primary": {
         "role": "primary",
         "displayName": "Dark Primary",
         "tonalRamp": [
-          "oklch(15% 0.0273 276.4)",
-          "oklch(26% 0.0474 276.4)",
-          "oklch(37% 0.0674 276.4)",
-          "oklch(48% 0.0875 276.4)",
-          "oklch(60% 0.1094 276.4)",
-          "oklch(72% 0.0766 276.4)",
-          "oklch(84% 0.0437 276.4)",
-          "oklch(95% 0.0137 276.4)"
+          "oklch(15% 0.0187 187.2)",
+          "oklch(26% 0.0321 187.2)",
+          "oklch(37% 0.0463 187.2)",
+          "oklch(48% 0.0597 187.2)",
+          "oklch(60% 0.0746 187.2)",
+          "oklch(72% 0.0522 187.2)",
+          "oklch(84% 0.0298 187.2)",
+          "oklch(95% 0.0093 187.2)"
         ]
       },
       "dark-primary-foreground": {
         "role": "primary",
         "displayName": "Dark Primary Foreground",
         "tonalRamp": [
-          "oklch(15% 0.0120 277.4)",
-          "oklch(26% 0.0207 277.4)",
-          "oklch(37% 0.0295 277.4)",
-          "oklch(48% 0.0383 277.4)",
-          "oklch(60% 0.0479 277.4)",
-          "oklch(72% 0.0335 277.4)",
-          "oklch(84% 0.0191 277.4)",
-          "oklch(95% 0.0060 277.4)"
+          "oklch(15% 0.0101 205.6)",
+          "oklch(26% 0.0173 205.6)",
+          "oklch(37% 0.0250 205.6)",
+          "oklch(48% 0.0322 205.6)",
+          "oklch(60% 0.0403 205.6)",
+          "oklch(72% 0.0282 205.6)",
+          "oklch(84% 0.0161 205.6)",
+          "oklch(95% 0.0050 205.6)"
         ]
       },
       "dark-secondary": {
         "role": "secondary",
         "displayName": "Dark Secondary",
         "tonalRamp": [
-          "oklch(15% 0.0147 276.1)",
-          "oklch(26% 0.0255 276.1)",
-          "oklch(37% 0.0363 276.1)",
-          "oklch(48% 0.0471 276.1)",
-          "oklch(60% 0.0589 276.1)",
-          "oklch(72% 0.0412 276.1)",
-          "oklch(84% 0.0236 276.1)",
-          "oklch(95% 0.0074 276.1)"
+          "oklch(15% 0.0102 218.0)",
+          "oklch(26% 0.0175 218.0)",
+          "oklch(37% 0.0253 218.0)",
+          "oklch(48% 0.0326 218.0)",
+          "oklch(60% 0.0407 218.0)",
+          "oklch(72% 0.0285 218.0)",
+          "oklch(84% 0.0163 218.0)",
+          "oklch(95% 0.0051 218.0)"
         ]
       },
       "dark-secondary-foreground": {
         "role": "secondary",
         "displayName": "Dark Secondary Foreground",
         "tonalRamp": [
-          "oklch(15% 0.0075 279.6)",
-          "oklch(26% 0.0130 279.6)",
-          "oklch(37% 0.0184 279.6)",
-          "oklch(48% 0.0239 279.6)",
-          "oklch(60% 0.0299 279.6)",
-          "oklch(72% 0.0209 279.6)",
-          "oklch(84% 0.0120 279.6)",
-          "oklch(95% 0.0037 279.6)"
+          "oklch(15% 0.0104 183.3)",
+          "oklch(26% 0.0179 183.3)",
+          "oklch(37% 0.0258 183.3)",
+          "oklch(48% 0.0333 183.3)",
+          "oklch(60% 0.0417 183.3)",
+          "oklch(72% 0.0292 183.3)",
+          "oklch(84% 0.0167 183.3)",
+          "oklch(95% 0.0052 183.3)"
         ]
       },
       "dark-muted": {
         "role": "neutral",
         "displayName": "Dark Muted",
         "tonalRamp": [
-          "oklch(15% 0.0062 271.4)",
-          "oklch(26% 0.0108 271.4)",
-          "oklch(37% 0.0154 271.4)",
-          "oklch(48% 0.0199 271.4)",
-          "oklch(60% 0.0249 271.4)",
-          "oklch(72% 0.0175 271.4)",
-          "oklch(84% 0.0100 271.4)",
-          "oklch(95% 0.0031 271.4)"
+          "oklch(15% 0.0087 226.7)",
+          "oklch(26% 0.0150 226.7)",
+          "oklch(37% 0.0217 226.7)",
+          "oklch(48% 0.0280 226.7)",
+          "oklch(60% 0.0350 226.7)",
+          "oklch(72% 0.0245 226.7)",
+          "oklch(84% 0.0140 226.7)",
+          "oklch(95% 0.0044 226.7)"
         ]
       },
       "dark-muted-foreground": {
         "role": "neutral",
         "displayName": "Dark Muted Foreground",
         "tonalRamp": [
-          "oklch(15% 0.0063 267.9)",
-          "oklch(26% 0.0110 267.9)",
-          "oklch(37% 0.0157 267.9)",
-          "oklch(48% 0.0203 267.9)",
-          "oklch(60% 0.0254 267.9)",
-          "oklch(72% 0.0178 267.9)",
-          "oklch(84% 0.0102 267.9)",
-          "oklch(95% 0.0032 267.9)"
+          "oklch(15% 0.0066 199.7)",
+          "oklch(26% 0.0113 199.7)",
+          "oklch(37% 0.0163 199.7)",
+          "oklch(48% 0.0210 199.7)",
+          "oklch(60% 0.0263 199.7)",
+          "oklch(72% 0.0184 199.7)",
+          "oklch(84% 0.0105 199.7)",
+          "oklch(95% 0.0033 199.7)"
         ]
       },
       "dark-destructive": {
@@ -303,8 +317,8 @@
         "displayName": "Dark Destructive",
         "tonalRamp": [
           "oklch(15% 0.0415 22.2)",
-          "oklch(26% 0.0720 22.2)",
-          "oklch(37% 0.1025 22.2)",
+          "oklch(26% 0.0714 22.2)",
+          "oklch(37% 0.1030 22.2)",
           "oklch(48% 0.1329 22.2)",
           "oklch(60% 0.1661 22.2)",
           "oklch(72% 0.1163 22.2)",
@@ -317,7 +331,7 @@
         "displayName": "Dark Destructive Foreground",
         "tonalRamp": [
           "oklch(15% 0.0066 20.1)",
-          "oklch(26% 0.0114 20.1)",
+          "oklch(26% 0.0113 20.1)",
           "oklch(37% 0.0163 20.1)",
           "oklch(48% 0.0211 20.1)",
           "oklch(60% 0.0264 20.1)",
@@ -330,37 +344,142 @@
         "role": "neutral",
         "displayName": "Dark Border",
         "tonalRamp": [
-          "oklch(15% 0.0078 267.3)",
-          "oklch(26% 0.0135 267.3)",
-          "oklch(37% 0.0192 267.3)",
-          "oklch(48% 0.0249 267.3)",
-          "oklch(60% 0.0312 267.3)",
-          "oklch(72% 0.0218 267.3)",
-          "oklch(84% 0.0125 267.3)",
-          "oklch(95% 0.0039 267.3)"
+          "oklch(15% 0.0090 224.2)",
+          "oklch(26% 0.0155 224.2)",
+          "oklch(37% 0.0223 224.2)",
+          "oklch(48% 0.0288 224.2)",
+          "oklch(60% 0.0360 224.2)",
+          "oklch(72% 0.0252 224.2)",
+          "oklch(84% 0.0144 224.2)",
+          "oklch(95% 0.0045 224.2)"
+        ]
+      },
+      "dark-ring": {
+        "role": "primary",
+        "displayName": "Dark Ring",
+        "tonalRamp": [
+          "oklch(15% 0.0187 187.2)",
+          "oklch(26% 0.0321 187.2)",
+          "oklch(37% 0.0463 187.2)",
+          "oklch(48% 0.0597 187.2)",
+          "oklch(60% 0.0746 187.2)",
+          "oklch(72% 0.0522 187.2)",
+          "oklch(84% 0.0298 187.2)",
+          "oklch(95% 0.0093 187.2)"
         ]
       }
     },
     "typographyMeta": {
       "page": {
-        "displayName": "Page heading",
-        "purpose": "Native page names."
+        "displayName": "Page",
+        "purpose": "Compact native page names."
+      },
+      "section": {
+        "displayName": "Section",
+        "purpose": "Shared compact section titles."
+      },
+      "row-title": {
+        "displayName": "Row Title",
+        "purpose": "Shared financial row identity."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Native text-base preset and standard shared fields."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Native text-sm preset, labels and secondary actions."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Native text-xs preset, dates, currency and receipts."
+      },
+      "action": {
+        "displayName": "Action",
+        "purpose": "Compact primary action labels."
+      },
+      "finance-field": {
+        "displayName": "Finance Field",
+        "purpose": "Shared Finance form input text."
+      },
+      "amount-compact": {
+        "displayName": "Amount Compact",
+        "purpose": "Today cash summary."
+      },
+      "amount-summary": {
+        "displayName": "Amount Summary",
+        "purpose": "Activity monthly income and expense."
+      },
+      "amount-metric": {
+        "displayName": "Amount Metric",
+        "purpose": "Standalone financial metric."
+      },
+      "amount-detail": {
+        "displayName": "Amount Detail",
+        "purpose": "Record detail monetary value."
       },
       "amount-input": {
-        "displayName": "Editable amount",
-        "purpose": "Leading monetary field in the full record editor."
+        "displayName": "Amount Input",
+        "purpose": "Editable record amount."
+      },
+      "action-quiet": {
+        "displayName": "Quiet Action",
+        "purpose": "Medium-weight quiet actions and rectangular choices."
       }
     },
     "shadows": [],
-    "motion": [],
+    "motion": [
+      {
+        "name": "shared-press",
+        "value": "100ms ease-out; primary/secondary scale .985, quiet action .98, icon action .96",
+        "purpose": "Transform feedback only; reduced motion uses scale 1 and duration 0, retaining immediate opacity feedback."
+      },
+      {
+        "name": "changed-fact-wash",
+        "value": "opacity .75 to 0; 1800ms cubic-bezier(.16,1,.3,1)",
+        "purpose": "Emphasizes the affected financial facts; reduced motion retains static .75 wash and receipt."
+      },
+      {
+        "name": "notice-entry",
+        "value": "translateY 6px to 0; 180ms cubic-bezier(.16,1,.3,1)",
+        "purpose": "Supplementary bottom notice; no movement under reduced motion."
+      },
+      {
+        "name": "native-route",
+        "value": "ScreenAnimation::Default; ScreenAnimation::None with reduce_motion()",
+        "purpose": "Native push/pop depth; no custom duration inferred."
+      }
+    ],
     "breakpoints": [],
     "nativeNotes": {
-      "authority": "theme.json and Rust source. HTML/CSS snippets are documentation previews, not native source.",
-      "tonalRamps": "Synthesized OKLCH display ramps, not extra runtime tokens.",
-      "previewFocus": "HTML hover and keyboard focus treatments are preview affordances; they do not establish native acceptance.",
+      "authority": [
+        "theme.json",
+        "src/ui.rs",
+        "src/finance_ui.rs",
+        "src/lib.rs",
+        "src/screens/ledger.rs",
+        "src/screens/today.rs",
+        "src/screens/wealth.rs",
+        "src/screens/plan.rs"
+      ],
+      "scope": "Rust/nsh apps/client only. Root DESIGN.md and .impeccable/design.json remain Flutter-scoped.",
+      "previews": "Self-contained HTML/CSS illustrates native tokens. Hover, focus-visible, browser rendering, CSS pixel units, and samples are not native runtime or accessibility proof.",
+      "tonalRamps": "Synthesized OKLCH swatch strips; not additional runtime palette tokens.",
+      "colors": "Repeated shared roles are extracted; duplicate/unused theme aliases remain owned by theme.json.",
       "sheetScrim": "rgba(0,0,0,0.32)",
-      "pressedOpacity": 0.75,
-      "inputRoles": "Foreground text, muted-foreground placeholder, primary caret, secondary selection are explicitly bound by ui::themed_input()."
+      "textScaling": "Native system text behavior remains authoritative; no fixed screenshot row count is a typography requirement.",
+      "inputRoles": "Explicit foreground text, muted-foreground hint, primary caret and secondary selection.",
+      "captureEvidence": {
+        "directory": ".impeccable/review/finance-core",
+        "device": "Android 15 / API 35 x86_64 emulator",
+        "normal": "411 dp width, font scale 1.0, light and dark",
+        "narrow": "360 dp width, font scale 1.3",
+        "data": "Synthetic local financial fixtures.",
+        "status": "Captures are acceptance evidence only when checked against the current build and finish-review verdict; this source extraction does not grant visual approval.",
+        "limits": "ARM64 compiled only. No physical ARM64, iOS, Web, tablet, device-performance, IME, predictive-Back or motion-quality acceptance is implied by static captures."
+      },
+      "shippingRasters": "None introduced by this design system. Icons and charts use native vector markup; sample HTML introduces no image dependency.",
+      "financialRowSemantics": "Investment titles name the actual operation; subtitles name settlement and holding roles. Transfer arrows are reserved for actual transfers. Opening positions label cost; splits label cash; positive investment cash uses +. Complete operation/roles/value/currency are included in native row accessibility labels."
     }
   },
   "components": [
@@ -368,98 +487,133 @@
       "name": "Primary action",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Native minimum-height action translated for the documentation preview.",
-      "html": "<button class=\"ds-primary\">保存记录</button>",
-      "css": ".ds-primary{font-family:system-ui,sans-serif;font-size:16px;min-height:48px;padding:0 16px;border:0;border-radius:12px;background:#535FC5;color:#FFFFFF;font-weight:600}.ds-primary:hover{filter:brightness(.98)}.ds-primary:focus-visible{outline:2px solid #535FC5;outline-offset:2px}.ds-primary:active{opacity:.75}.ds-primary:disabled{opacity:.5}"
+      "description": "Native minimum-height role pairing, illustrated in HTML; preview hover/focus do not prove native behavior.",
+      "html": "<button class=\"ds-primary\">保存</button>",
+      "css": ".ds-primary{font:600 14px/normal system-ui,sans-serif;min-height:48px;padding:0 16px;border:0;border-radius:12px;background:#153D52;color:#FFFFFF;transition:transform 100ms ease-out}.ds-primary:hover{filter:brightness(.98)}.ds-primary:focus-visible{outline:2px solid #153D52;outline-offset:2px}.ds-primary:disabled{opacity:.5}.ds-primary:active{opacity:.82;transform:scale(.985)}@media(prefers-reduced-motion:reduce){.ds-primary{transition:none}.ds-primary:active{transform:none}}"
     },
     {
       "name": "Secondary action",
       "kind": "button",
       "refersTo": "button-secondary",
-      "description": "Native minimum-height action translated for the documentation preview.",
-      "html": "<button class=\"ds-secondary\">保存记录</button>",
-      "css": ".ds-secondary{font-family:system-ui,sans-serif;font-size:16px;min-height:48px;padding:0 16px;border:0;border-radius:12px;background:#EAECF9;color:#414C9F;font-weight:400}.ds-secondary:hover{filter:brightness(.98)}.ds-secondary:focus-visible{outline:2px solid #535FC5;outline-offset:2px}.ds-secondary:active{opacity:.75}.ds-secondary:disabled{opacity:.5}"
+      "description": "Native minimum-height role pairing, illustrated in HTML; preview hover/focus do not prove native behavior.",
+      "html": "<button class=\"ds-secondary\">取消</button>",
+      "css": ".ds-secondary{font:400 14px/normal system-ui,sans-serif;min-height:48px;padding:0 16px;border:0;border-radius:12px;background:#DFEEEB;color:#174E50;transition:transform 100ms ease-out}.ds-secondary:hover{filter:brightness(.98)}.ds-secondary:focus-visible{outline:2px solid #DFEEEB;outline-offset:2px}.ds-secondary:disabled{opacity:.5}.ds-secondary:active{opacity:.82;transform:scale(.985)}@media(prefers-reduced-motion:reduce){.ds-secondary{transition:none}.ds-secondary:active{transform:none}}"
     },
     {
-      "name": "Labeled field",
-      "kind": "input",
-      "refersTo": "field",
-      "description": "Visible label and native bordered input.",
-      "html": "<label class=\"ds-field\">账户名称<input placeholder=\"例如：工资卡\" /></label>",
-      "css": ".ds-field{display:grid;gap:4px;color:#636B7B;font:14px/20px system-ui}.ds-field input{font-family:system-ui,sans-serif;font-size:16px;min-height:48px;padding:0 16px;border:0;border-radius:12px;padding:0 12px;border:1px solid #E3E6EE;background:#FFFFFF;color:#252B3A}.ds-field input:hover{border-color:#636B7B}.ds-field input:focus-visible{outline:2px solid #535FC5;outline-offset:2px}.ds-field input{caret-color:#535FC5}.ds-field input::placeholder{color:#636B7B}.ds-field input::selection{background:#EAECF9;color:#252B3A}"
-    },
-    {
-      "name": "Selected choice",
-      "kind": "chip",
-      "refersTo": "choice-selected",
-      "description": "Rounded selection used in filter and picker sheets.",
-      "html": "<button class=\"ds-choice\" aria-pressed=\"true\">支出</button>",
-      "css": ".ds-choice{font-family:system-ui,sans-serif;font-size:16px;min-height:48px;padding:0 16px;border:0;border-radius:12px;padding:8px 12px;font-size:14px;background:#EAECF9;color:#414C9F}.ds-choice:hover{filter:brightness(.98)}.ds-choice:focus-visible{outline:2px solid #535FC5;outline-offset:2px}.ds-choice:active{opacity:.75}"
-    },
-    {
-      "name": "Dated activity group",
-      "kind": "card",
-      "refersTo": "group",
-      "description": "Flat rows share a single tonal group.",
-      "html": "<section class=\"ds-group\"><div><span>午餐<small>现金 · CNY</small></span><strong>−68.50</strong></div><div><span>工资<small>工资卡 · CNY</small></span><strong>+8500.00</strong></div></section>",
-      "css": ".ds-group{border-radius:16px;background:#FFFFFF;color:#252B3A;font:16px/24px system-ui;overflow:hidden}.ds-group div{padding:16px;display:flex;gap:12px;justify-content:space-between;align-items:center}.ds-group small{display:block;font-size:14px;color:#636B7B}.ds-group strong{font-variant-numeric:tabular-nums;font-size:18px;font-weight:500}"
-    },
-    {
-      "name": "Bottom navigation",
-      "kind": "nav",
-      "refersTo": "group",
-      "description": "Native labeled tabs; this compact preview shows the selected ledger tab.",
-      "html": "<nav class=\"ds-nav\"><button aria-current=\"page\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"5\" y=\"3\" width=\"14\" height=\"18\" rx=\"3\"/><path d=\"M9 8h6M9 12h6M9 16h3\"/></svg>流水</button><button>账户</button><button>智能</button><button>设置</button></nav>",
-      "css": ".ds-nav{display:flex;background:#FFFFFF;border-top:1px solid #E3E6EE;padding:4px 4px 10px}.ds-nav button{flex:1;min-height:64px;border:0;background:transparent;font:14px/20px system-ui;color:#636B7B;display:grid;place-content:center;gap:4px}.ds-nav svg{width:22px;height:22px;margin:auto}.ds-nav [aria-current]{color:#535FC5}.ds-nav button:hover{background:#EEF0F6}.ds-nav button:focus-visible{outline:2px solid #535FC5;outline-offset:-2px}.ds-nav button:active{opacity:.75}"
-    },
-    {
-      "name": "Destructive confirmation",
+      "name": "Destructive commit",
       "kind": "button",
       "refersTo": "button-destructive",
-      "description": "The final delete action uses the destructive role pair.",
+      "description": "Native minimum-height role pairing, illustrated in HTML; preview hover/focus do not prove native behavior.",
       "html": "<button class=\"ds-danger\">确认删除</button>",
-      "css": ".ds-danger{font:500 16px/24px system-ui;min-height:48px;padding:12px 16px;border:0;border-radius:12px;background:#DC2626;color:#FFFFFF}.ds-danger:hover{filter:brightness(.98)}.ds-danger:focus-visible{outline:2px solid #DC2626;outline-offset:2px}.ds-danger:disabled{opacity:.5}"
+      "css": ".ds-danger{font:500 16px/24px system-ui,sans-serif;min-height:48px;padding:12px 16px;border:0;border-radius:12px;background:#B91C1C;color:#FFFFFF;}.ds-danger:hover{filter:brightness(.98)}.ds-danger:focus-visible{outline:2px solid #B91C1C;outline-offset:2px}.ds-danger:disabled{opacity:.5}"
     },
     {
-      "name": "Actionable error line",
+      "name": "Quiet action",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "Compact native action with medium marine text and a full minimum-height target.",
+      "html": "<button class=\"ds-quiet\">更新估值</button>",
+      "css": ".ds-quiet{font:500 14px/normal system-ui,sans-serif;min-height:48px;padding:0 12px;border:0;border-radius:8px;background:transparent;color:#153D52;transition:transform 100ms ease-out}.ds-quiet:hover{background:#E8F0EE}.ds-quiet:focus-visible{outline:2px solid #168F88;outline-offset:2px}.ds-quiet:active{opacity:.65;transform:scale(.98)}@media(prefers-reduced-motion:reduce){.ds-quiet{transition:none}.ds-quiet:active{transform:none}}"
+    },
+    {
+      "name": "Selected pill chip",
+      "kind": "chip",
+      "refersTo": "chip-selected",
+      "description": "Compact shared pill used in settings selections; its visual height is not a 48-unit target guarantee.",
+      "html": "<button class=\"ds-chip\" aria-pressed=\"true\">CNY</button>",
+      "css": ".ds-chip{font:14px/20px system-ui,sans-serif;padding:6px 12px;border:0;border-radius:999px;background:#153D52;color:#FFFFFF}.ds-chip:hover{filter:brightness(.98)}.ds-chip:focus-visible{outline:2px solid #153D52;outline-offset:2px}.ds-chip:active{opacity:.75}"
+    },
+    {
+      "name": "Labeled Finance field",
+      "kind": "input",
+      "refersTo": "field-finance",
+      "description": "Visible label and explicitly themed input, with the Finance form radius and type size.",
+      "html": "<label class=\"ds-field\">预算金额<input inputmode=\"decimal\" placeholder=\"请输入金额\" value=\"1500.00\" /></label>",
+      "css": ".ds-field{display:grid;gap:4px;font:14px/20px system-ui,sans-serif;color:#526A70}.ds-field input{font:15px/normal system-ui,sans-serif;min-height:48px;padding:8px 12px;border:1px solid #D8E4E1;border-radius:10px;background:#FFFFFF;color:#162D35;caret-color:#153D52}.ds-field input::placeholder{color:#526A70}.ds-field input::selection{background:#DFEEEB;color:#162D35}.ds-field input:hover{border-color:#526A70}.ds-field input:focus-visible{outline:2px solid #168F88;outline-offset:2px}"
+    },
+    {
+      "name": "Dated Activity group",
+      "kind": "card",
+      "refersTo": "group",
+      "description": "One dated surface for compact activity; synthetic rows distinguish daily spending from investment operations and account roles.",
+      "html": "<section class=\"ds-activity\"><p>2026-11-11</p><div class=\"ds-activity-group\"><button aria-label=\"午餐，现金，-68.50 CNY\"><span class=\"ds-activity-icon\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 20V4m-6 6 6-6 6 6\"/></svg></span><span class=\"ds-activity-title\">午餐<small>现金</small></span><span class=\"ds-activity-amount\">−68.50<small>CNY</small></span></button><button aria-label=\"买入 · CoreStock，结算 CoreBank · 持仓 CoreBroker，-101.00 CNY\"><span class=\"ds-activity-icon\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-2\"/><path d=\"M21 8h-7v8h7zM16 12h1\"/></svg></span><span class=\"ds-activity-title\">买入 · CoreStock<small>结算 CoreBank · 持仓 CoreBroker</small></span><span class=\"ds-activity-amount\">-101.00<small>CNY</small></span></button></div></section>",
+      "css": ".ds-activity{font:14px/20px system-ui,sans-serif;color:#162D35}.ds-activity>p{margin:0 0 8px;color:#526A70;font-weight:500}.ds-activity-group{background:#FFFFFF;border-radius:16px}.ds-activity button{width:100%;display:flex;align-items:center;gap:12px;min-height:64px;padding:12px 8px;border:0;background:transparent;color:inherit;text-align:left}.ds-activity-icon{width:30px;height:30px;flex-shrink:0;display:grid;place-items:center;background:#E8F0EE;border-radius:12px}.ds-activity-icon svg{width:22px;height:22px}.ds-activity-title{flex:1;min-width:0;font-size:15px;font-weight:500}.ds-activity small{display:block;color:#526A70;font-weight:400}.ds-activity-title small{font-size:14px}.ds-activity-amount{font-size:16px;font-weight:500;text-align:right;font-variant-numeric:tabular-nums}.ds-activity-amount small{font-size:12px;line-height:16px}.ds-activity button:hover{background:#E8F0EE}.ds-activity button:focus-visible{outline:2px solid #168F88;outline-offset:-2px}"
+    },
+    {
+      "name": "Four-tab navigation",
+      "kind": "nav",
+      "refersTo": "navigation",
+      "description": "Stable native business tabs; preview omits device-specific system safe-area insets.",
+      "html": "<nav class=\"ds-nav\"><button><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3\" y=\"5\" width=\"18\" height=\"16\" rx=\"3\"/><path d=\"M7 3v4M17 3v4M3 11h18M8 16h3\"/></svg><span>今日</span></button><button aria-current=\"page\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"5\" y=\"3\" width=\"14\" height=\"18\" rx=\"3\"/><path d=\"M9 8h6M9 12h6M9 16h3\"/></svg><span>流水</span></button><button><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-2\"/><path d=\"M21 8h-7v8h7zM16 12h1\"/></svg><span>财富</span></button><button><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.7\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 20V10m7 10V4m7 16v-7M3 4h3M17 7h4\"/></svg><span>规划</span></button></nav>",
+      "css": ".ds-nav{display:flex;background:#FFFFFF;border-top:1px solid #D8E4E1;padding-bottom:4px}.ds-nav button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:58px;padding:0;border:0;background:transparent;color:#526A70;font:500 12px/normal system-ui,sans-serif}.ds-nav svg{width:22px;height:22px}.ds-nav [aria-current]{color:#153D52}.ds-nav button:hover{background:#E8F0EE}.ds-nav button:focus-visible{outline:2px solid #168F88;outline-offset:-2px}"
+    },
+    {
+      "name": "Changed budget fact",
       "kind": "custom",
-      "refersTo": "error-line",
-      "description": "A restore failure preserves data and gives a concrete next step.",
-      "html": "<p class=\"ds-error\">恢复未完成，现有数据已保留。请检查口令；若仍失败，请重新选择有效的备份文件。</p>",
-      "css": ".ds-error{font:14px/20px system-ui;color:#DC2626;margin:0}"
+      "refersTo": "changed-fact",
+      "description": "Synthetic affected value and persistent receipt; the secondary wash illustrates the implemented fade, with a static reduced-motion highlight.",
+      "html": "<div class=\"ds-fact\"><div class=\"ds-fact-wash\"></div><div class=\"ds-fact-content\"><span>餐饮 · CNY</span><strong>已用 68.50 / 1500.00</strong><small>预算已保存，额度与结余已更新</small></div></div>",
+      "css": ".ds-fact{position:relative;color:#162D35;font:14px/20px system-ui,sans-serif}.ds-fact-wash{position:absolute;inset:0;background:#DFEEEB;border-radius:12px;opacity:0;pointer-events:none;animation:ds-fact-fade 1800ms cubic-bezier(.16,1,.3,1)}.ds-fact-content{position:relative;display:grid;gap:4px}.ds-fact strong{font-weight:500;font-variant-numeric:tabular-nums}.ds-fact small{font:12px/16px system-ui,sans-serif;color:#153D52}@keyframes ds-fact-fade{from{opacity:.75}to{opacity:0}}@media(prefers-reduced-motion:reduce){.ds-fact-wash{animation:none;opacity:.75}}"
+    },
+    {
+      "name": "Sparse dated observation",
+      "kind": "custom",
+      "refersTo": "chart",
+      "description": "The shared chart's compact fallback when fewer than two known values exist; this is synthetic data, not a rendered native acceptance capture.",
+      "html": "<section class=\"ds-observation\"><strong>净资产 · CNY · 记录时点</strong><p>2026-11-11 · 10161.50</p><small>累计两个完整记录时点后显示曲线；缺失时点不连线。</small></section>",
+      "css": ".ds-observation{display:grid;gap:4px;color:#162D35;font:14px/20px system-ui,sans-serif}.ds-observation strong{font-weight:500}.ds-observation p{margin:0;font-variant-numeric:tabular-nums}.ds-observation small{font:12px/16px system-ui,sans-serif;color:#526A70}"
     }
   ],
   "narrative": {
-    "northStar": "The Porcelain Ledger",
-    "overview": "A quiet porcelain-and-graphite workspace for inspecting money and recording daily activity. Iris identifies the next useful action; exact amounts and dated rows carry the hierarchy. The Rust client extends the established 澄白 identity with native controls and restrained tonal grouping.\n\nThis system is scoped to `apps/client`. `theme.json` and the Rust implementation are the source of truth; the repository-root Flutter design system remains separate. This records daily-finance patterns, not release or platform acceptance.",
+    "northStar": "Contemporary Atlas Precision",
+    "overview": "Marine, mist, and restrained teal-family tones frame a precise native financial workspace. Compact system typography, quiet dated lists, thin line icons, and aligned tabular amounts make recorded facts easy to inspect. The recurring signature is an acknowledgment beside the fact an action changed.\n\nThis system is scoped to the Rust/nsh client in `apps/client`. `theme.json`, `src/ui.rs`, and `src/finance_ui.rs` own the implemented roles and shared primitives; repository-root design artifacts describe Flutter separately. Product terminology, explicit financial meaning, native navigation, and readable scaled text take priority over decorative expression. Surface composition belongs in `.impeccable/surfaces/apps-client-finance-core.md`.",
     "keyCharacteristics": [
-      "Flat dated activity with right-aligned, explicit-currency amounts.",
-      "Clear capture actions, grouped fields, and restrained iris emphasis.",
-      "Native safe-area handling and guarded changes."
+      "Marine actions and mist surfaces, with paired light and dark roles.",
+      "Compact flat rows, explicit currencies, and exact tabular financial values.",
+      "Native controls, guarded drafts, and in-place changed-fact receipts."
     ],
     "rules": [
       {
         "name": "The Currency Rule",
-        "body": "Currency labels and signs carry financial meaning; color is supplementary.",
+        "body": "Currency, signs, labels, and unavailable states carry meaning; color is supplementary.",
         "section": "colors"
       },
       {
         "name": "The Exact Amount Rule",
-        "body": "Use tabular digits for displayed monetary values and exact Decimal text; never round a small nonzero amount to zero for presentation.",
+        "body": "Display monetary values as exact Decimal text with tabular digits, preserving small nonzero values and at least two fractional places.",
         "section": "typography"
+      },
+      {
+        "name": "The Account Role Rule",
+        "body": "Name investment operations and holding/settlement roles explicitly; reserve arrows for actual account transfers.",
+        "section": "components"
+      },
+      {
+        "name": "The Local Receipt Rule",
+        "body": "A changed-fact receipt stays beside the affected financial facts until the next task; a bottom notice is supplementary.",
+        "section": "components"
+      },
+      {
+        "name": "The Evidence Rule",
+        "body": "Plot recorded observations and break the line at missing evidence; insufficient history becomes a dated textual observation.",
+        "section": "components"
       }
     ],
     "dos": [
-      "Do keep currencies explicit and totals separate by currency.",
-      "Do use exact Decimal text with at least two fractional places; retain smaller nonzero values.",
-      "Do use shared buttons, fields, sheets, icons, and theme roles.",
-      "Do preserve dirty drafts and show errors beside the operation that failed."
+      "Do pair each surface with its own appearance's foreground role.",
+      "Do keep amounts aligned and distinguish quantity, cost, price, cash, and gain.",
+      "Do reuse native shared fields, buttons, sheets, icons, and guarded navigation.",
+      "Do retain invalid drafts and give the user a concrete correction or retry.",
+      "Do show changed facts and missing valuation evidence in native text.",
+      "Do preserve complete operation, account-role, amount, and currency semantics in row accessibility labels."
     ],
     "donts": [
-      "Don't combine unlike currencies without a real conversion.",
-      "Don't put a card around each row inside an already grouped surface.",
-      "Don't rely on color alone for income, expense, transfer, or destructive intent.",
-      "Don't turn the daily workspace into a marketing page."
+      "Don't combine currencies without recorded conversion evidence.",
+      "Don't add a card around each row inside an existing group.",
+      "Don't rely on color alone for financial direction or destructive intent.",
+      "Don't use a transfer arrow for an investment's holding and settlement relationship.",
+      "Don't fabricate chart history or connect a line across missing prices or exchange rates.",
+      "Don't add decorative atlas graphics, raster ornament, or marketing hierarchy to the task workspace."
     ]
   }
 }

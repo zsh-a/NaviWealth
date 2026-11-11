@@ -8,9 +8,12 @@ pub mod error;
 pub mod fx;
 pub mod invariants;
 pub mod models;
+pub mod operations;
+pub mod planning;
 pub mod repos;
 pub mod system_accounts;
 pub mod tables;
+pub mod wealth;
 
 pub use error::{FinanceError, Result};
 pub use tables::FINANCE_SCHEMA_VERSION;

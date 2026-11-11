@@ -278,8 +278,13 @@ impl Form {
             match services.save_finance_record(edit, draft).await {
                 Ok(()) => {
                     state.saving.set(false);
-                    open.set(false);
+                    crate::finance_ui::notice("记录已保存，账户余额和预算已更新");
+                    crate::finance_ui::acknowledge(
+                        "/activity",
+                        "这笔记录已计入本月收支；余额与分类预算已更新。",
+                    );
                     reload.update(|v| *v += 1);
+                    open.set(false);
                 }
                 Err(e) => {
                     state.saving.set(false);
@@ -538,11 +543,10 @@ fn form_fields(state: Form, services: Arc<Services>) -> impl IntoElement {
                 )
             },
         ))
-        .child(ui::text_field(
+        .child(crate::finance_ui::date_field(
             "日期",
-            "yyyy-mm-dd",
-            state.date,
             "record-date",
+            state.date,
         ))
         .child(ui::text_field(
             "对方",

@@ -42,7 +42,13 @@ fn balance_text(row: &AccountRow) -> String {
         Some(balance) if !balance.legs.is_empty() => balance
             .legs
             .iter()
-            .map(|(unit, amount)| format!("{} {unit}", ui::money(*amount)))
+            .map(|(unit, amount)| {
+                if lifeos::money::Currency::new(unit).is_ok() {
+                    format!("{} {unit}", ui::money(*amount))
+                } else {
+                    format!("{} 单位持仓", amount.normalize())
+                }
+            })
             .collect::<Vec<_>>()
             .join("  ·  "),
         _ => format!("0.00 {}", row.account.currency),
@@ -53,6 +59,9 @@ fn totals(rows: &[AccountRow]) -> Result<Vec<(String, Decimal)>, String> {
     for row in rows.iter().filter(|r| !r.account.archived) {
         if let Some(balance) = &row.balance {
             for (currency, amount) in &balance.legs {
+                if lifeos::money::Currency::new(currency).is_err() {
+                    continue;
+                }
                 let value = totals.entry(currency.clone()).or_default();
                 *value = value
                     .checked_add(*amount)
@@ -67,6 +76,19 @@ fn totals(rows: &[AccountRow]) -> Result<Vec<(String, Decimal)>, String> {
 
 #[allow(non_snake_case)]
 pub fn AccountsScreen() -> impl IntoElement {
+    accounts_screen(None, false)
+}
+
+pub fn account_route(path: String) -> AnyElement {
+    let target = path.strip_prefix("/wealth/accounts/").map(str::to_owned);
+    if target.is_none() {
+        return AccountsScreen().into_element();
+    }
+    let create = target.as_deref() == Some("new");
+    accounts_screen(target.filter(|_| !create), create).into_element()
+}
+
+fn accounts_screen(initial_account: Option<String>, create: bool) -> impl IntoElement {
     let services = use_context::<Arc<Services>>().expect("services context");
     let version = use_context::<crate::state::DataVersion>()
         .expect("data version")
@@ -74,14 +96,16 @@ pub fn AccountsScreen() -> impl IntoElement {
     let rows = signal(Vec::<AccountRow>::new());
     let loading = signal(true);
     let error = signal(String::new());
-    let archived = signal(false);
+    let archived = signal(initial_account.is_some());
     let retry = signal(0_u64);
     let notice = signal(String::new());
     let serial = signal(0_u64);
     let selected = signal(None::<AccountRow>);
-    let form_open = signal(false);
+    let form_open = signal(create);
+    let route_pending = signal(initial_account);
     let edit = signal(None::<Account>);
     let record_open = signal(false);
+    let route_navigation = use_context::<crate::finance_ui::Navigation>();
     {
         let services = services.clone();
         effect(move || {
@@ -95,16 +119,25 @@ pub fn AccountsScreen() -> impl IntoElement {
             let services = services.clone();
             spawn(async move {
                 let result = services.finance_accounts(include_archived).await;
-                if serial.get_untracked() != request {
+                if serial.try_get() != Some(request) {
                     return;
                 }
                 match result {
-                    Ok(accounts) => rows.set(
-                        accounts
+                    Ok(accounts) => {
+                        let accounts: Vec<_> = accounts
                             .into_iter()
                             .map(|(account, balance)| AccountRow { account, balance })
-                            .collect(),
-                    ),
+                            .collect();
+                        if let Some(id) = route_pending.get_untracked() {
+                            route_pending.set(None);
+                            if let Some(account) = accounts.iter().find(|a| a.account.id == id) {
+                                selected.set(Some(account.clone()));
+                            } else {
+                                error.set("账户不存在或当前不可用，请重新选择账户".into());
+                            }
+                        }
+                        rows.set(accounts);
+                    }
                     Err(e) => error.set(e),
                 }
                 loading.set(false);
@@ -112,14 +145,15 @@ pub fn AccountsScreen() -> impl IntoElement {
         });
     }
     view().flex_1()
-        .child(view().px_5().pt_5().pb_4().gap_4()
+        .child(view().px_4().pt_3().pb_2().gap_2()
             .child(view().flex_row().items_center().gap_3()
-                .child(ui::page_title("账户","余额、流水与账户状态").flex_1())
-                .child(ui::primary_button("添加账户",move ||{edit.set(None);form_open.set(true);},"open-account-form",None)))
+                .child(when(move || route_navigation.is_some_and(|n| !n.0.get().is_empty()), ||ui::icon_button(ui::Icon::Back,"返回财富","account-list-back",crate::finance_ui::back)))
+                .child(view().gap_1().flex_1().child(text("账户").text_lg().font_weight(FontWeight::SEMIBOLD)).child(text("现金、负债与持仓账户").text_sm().text_color(move || theme().muted_foreground)))
+                .child(ui::primary_button("添加",move ||{edit.set(None);form_open.set(true);},"open-account-form",None)))
             .child(view().flex_row().gap_3()
                 .child(ui::secondary_button("记一笔",move ||record_open.set(true),"open-record",None).flex_1())
                 .child(ui::choice_button("显示已归档",move ||archived.get(),move ||archived.update(|v|*v = !*v),"accounts-show-archived").flex_1())))
-        .child(ui::interactive_scroll().flex_1().child(view().px_5().pb_6().gap_4()
+        .child(ui::interactive_scroll().flex_1().child(view().px_4().pb_6().gap_3()
             .child(when(move ||!notice.get().is_empty(),move ||text(move ||notice.get()).text_sm().text_color(move ||theme().primary)))
             .child(when(move ||loading.get(),||text("正在读取账户…").text_sm().text_color(move ||theme().muted_foreground)))
             .child(when(move ||!error.get().is_empty(),move ||view().gap_3().child(ui::error_line(error))
@@ -128,15 +162,15 @@ pub fn AccountsScreen() -> impl IntoElement {
                 .child(ui::empty_state("从一个账户开始","添加常用的银行卡、现金或信用卡，并设置当前余额。之后就可以记录收入、支出和转账。"))
                 .child(ui::primary_button("添加第一个账户",move ||{edit.set(None);form_open.set(true);},"accounts-empty-add",None))))
             .child(when(move ||rows.with(|items|items.iter().any(|row|!row.account.archived)),move ||view().gap_3()
-                .child(text("未归档账户 · 按币种合计").text_sm().text_color(move ||theme().muted_foreground))
+                .child(text("使用中账户 · 原币现金净额").text_sm().text_color(move ||theme().muted_foreground))
                 .child(dynamic(move ||match totals(&rows.get()) {
                     Ok(totals)=>view().gap_2().children(totals.into_iter().map(|(currency,amount)|view().flex_row().items_center().gap_3()
                         .child(text(currency).text_sm().text_color(move ||theme().muted_foreground).flex_1())
-                        .child(text(ui::money(amount)).text_size(px(26.0)).tabular_nums().font_weight(FontWeight::MEDIUM)))).into_element(),
+                        .child(text(ui::money(amount)).text_size(px(22.0)).tabular_nums().font_weight(FontWeight::MEDIUM)))).into_element(),
                     Err(message)=>text(message).text_sm().text_color(move ||theme().destructive).into_element(),
                 }))
                 .child(ui::divider())))
-            .child(view().bg(move ||theme().card).rounded(px(16.0)).child(each(move ||rows.get(),|row:&AccountRow|row.account.id.clone(),
+            .child(view().child(each(move ||rows.get(),|row:&AccountRow|row.account.id.clone(),
                 move |row:ReadSignal<AccountRow>,_|account_row(row,selected))))))
         .child(account_details(services.clone(),selected,edit,form_open,version,notice))
         .child(account_form(services.clone(),form_open,edit,selected,version))
@@ -158,8 +192,8 @@ fn account_row(
                 .items_center()
                 .gap_3()
                 .px_4()
-                .py_4()
-                .min_h(px(80.0))
+                .py_3()
+                .min_h(px(64.0))
                 .active(|s| s.opacity(0.7))
                 .child(ui::icon(ui::Icon::Wallet).text_color(move || theme().primary))
                 .child(
@@ -182,12 +216,14 @@ fn account_row(
                             })
                             .text_sm()
                             .text_color(move || theme().muted_foreground),
-                        )
-                        .child(
-                            text(move || balance_text(&row.get()))
-                                .text_base()
-                                .tabular_nums(),
                         ),
+                )
+                .child(
+                    text(move || balance_text(&row.get()))
+                        .text_base()
+                        .text_right()
+                        .tabular_nums()
+                        .font_weight(FontWeight::MEDIUM),
                 )
                 .child(ui::icon(ui::Icon::Arrow).text_color(move || theme().muted_foreground)),
         )
@@ -217,6 +253,7 @@ fn account_details(
 ) -> impl IntoElement {
     let navigation = use_context::<crate::FinanceNavigation>();
     let shell = use_context::<crate::ShellTab>();
+    let routes = use_context::<crate::finance_ui::Navigation>();
     when(
         move || selected.get().is_some(),
         move || {
@@ -235,13 +272,14 @@ fn account_details(
             dialog().test_id("account-details").on_cancel(move ||{if !busy.get(){selected.set(None);}}).flex_1().bg(move ||theme().background)
             .child(view().flex_row().items_center().gap_3().px_5().pt_safe_area_plus(px(12.0)).pb_3()
                 .child(ui::secondary_button("返回",move ||selected.set(None),"account-detail-back",Some(busy)))
-                .child(text("账户详情").text_lg().font_weight(FontWeight::SEMIBOLD).flex_1()))
-            .child(ui::interactive_scroll().flex_1().child(view().p_5().gap_5()
+                .child(text("账户详情").text_lg().font_weight(FontWeight::SEMIBOLD).flex_1())
+                .child(ui::secondary_button("编辑",move ||{edit.set(Some(edit_account.clone()));selected.set(None);form_open.set(true);},"account-edit",Some(busy))))
+            .child(ui::interactive_scroll().flex_1().child(view().p_4().gap_3()
                 .child(view().gap_2()
-                    .child(text(account.name.clone()).text_size(px(26.0)).font_weight(FontWeight::SEMIBOLD))
+                    .child(text(account.name.clone()).text_size(px(22.0)).font_weight(FontWeight::SEMIBOLD))
                     .child(text(if account.side==AccountSide::Liability {"账户余额 · 负数表示待还"} else {"账户余额"}).text_sm().text_color(move ||theme().muted_foreground))
-                    .child(text(balance_text(&row)).text_size(px(30.0)).tabular_nums().font_weight(FontWeight::MEDIUM)))
-                .child(view().bg(move ||theme().card).rounded(px(16.0)).px_4()
+                    .child(text(balance_text(&row)).text_size(px(24.0)).tabular_nums().font_weight(FontWeight::MEDIUM)))
+                .child(view().px_1()
                     .child(detail_line("账户类型",kind_label(account.kind))).child(ui::divider())
                     .child(detail_line("币种",account.currency)).child(ui::divider())
                     .child(detail_line("机构",account.institution.unwrap_or_else(||"未填写".to_owned()))).child(ui::divider())
@@ -251,14 +289,10 @@ fn account_details(
                     if let Some(nav)=navigation {nav.account.set(list_id.clone());nav.all_dates.set(true);}
                     if let Some(tab)=shell {tab.0.set(1);}
                     selected.set(None);
+                    if let Some(routes)=routes {routes.0.update(Vec::clear);}
                 },"account-records",Some(busy)))
-                .child(ui::secondary_button("编辑账户",move ||{
-                    edit.set(Some(edit_account.clone()));
-                    // The editor is a root sheet; release the native detail
-                    // window first so it cannot cover the edit form.
-                    selected.set(None);
-                    form_open.set(true);
-                },"account-edit",Some(busy)))
+
+                .child(text("账户管理").text_sm().font_weight(FontWeight::SEMIBOLD).text_color(move ||theme().muted_foreground))
                 .child(ui::secondary_button(if archived {"恢复账户"}else{"归档账户"},move ||{
                     busy.set(true);error.set(String::new());let services=archive_services.clone();let id=archive_id.clone();
                     spawn(async move {match services.archive_finance_account(&id,!archived).await {

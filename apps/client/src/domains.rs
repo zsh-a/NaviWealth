@@ -1,5 +1,5 @@
 //! The lightweight domain registry: each opt-in domain declares its
-//! settings key, tab and screen wiring in one place (the spirit of the
+//! settings key and workspace wiring in one place (the spirit of the
 //! Flutter `domain_packs.dart`). Finance is always on; knowledge,
 //! execution and health default to off and are enabled from settings.
 //! The enabled set lives in the settings KV and is mirrored in-memory on
@@ -20,12 +20,8 @@ pub struct DomainSpec {
     pub label: &'static str,
     /// Tab label shown when enabled.
     pub tab_label: &'static str,
-    /// Tab bar test id.
-    pub tab_test_id: &'static str,
     /// Settings toggle test id.
     pub toggle_test_id: &'static str,
-    /// Tab index in the shell (after the four base tabs).
-    pub tab_index: u8,
     /// Settings KV key holding `1`/`0`.
     pub enabled_key: &'static str,
 }
@@ -34,9 +30,7 @@ pub const KNOWLEDGE: DomainSpec = DomainSpec {
     key: "knowledge",
     label: "知识",
     tab_label: "笔记",
-    tab_test_id: "tab-knowledge",
     toggle_test_id: "domain-toggle-knowledge",
-    tab_index: 4,
     enabled_key: "domain.knowledge.enabled",
 };
 
@@ -44,9 +38,7 @@ pub const EXECUTION: DomainSpec = DomainSpec {
     key: "execution",
     label: "执行",
     tab_label: "执行",
-    tab_test_id: "tab-execution",
     toggle_test_id: "domain-toggle-execution",
-    tab_index: 5,
     enabled_key: "domain.execution.enabled",
 };
 
@@ -54,16 +46,14 @@ pub const HEALTH: DomainSpec = DomainSpec {
     key: "health",
     label: "健康",
     tab_label: "健康",
-    tab_test_id: "tab-health",
     toggle_test_id: "domain-toggle-health",
-    tab_index: 6,
     enabled_key: "domain.health.enabled",
 };
 
-/// The opt-in domains, in tab order.
+/// The opt-in domains, in workspace order.
 pub const OPTIONAL_DOMAINS: [&DomainSpec; 3] = [&KNOWLEDGE, &EXECUTION, &HEALTH];
 
-/// Shared UI state: the enabled domain keys (reactive so tabs and screens
+/// Shared UI state: the enabled domain keys (reactive so workspaces and screens
 /// appear the moment the switch flips).
 #[derive(Clone, Copy)]
 pub struct DomainsState(pub Signal<Vec<&'static str>>);
@@ -111,7 +101,7 @@ pub fn full_sync_registry() -> SyncRegistry {
 }
 
 /// The domain migrations in shared-counter order (1 core, 2 finance,
-/// 3 knowledge, 4 execution, 5 health, 6 finance assets).
+/// 3 knowledge, 4 execution, 5 health, 6 assets, 7 wealth, 8 planning, 9 operations).
 pub fn domain_migrations() -> lifeos::db::Migrations {
     lifeos::db::migrations::core_migrations()
         .push(naviwealth_finance::tables::migration())
@@ -119,6 +109,9 @@ pub fn domain_migrations() -> lifeos::db::Migrations {
         .push(naviwealth_execution::tables::migration())
         .push(naviwealth_health::tables::migration())
         .push(naviwealth_finance::tables::assets_migration())
+        .push(naviwealth_finance::wealth::migration())
+        .push(naviwealth_finance::planning::migration())
+        .push(naviwealth_finance::operations::migration())
 }
 
 /// Persist a switch and mirror it on `Services` so sync/AI follow at once.
@@ -135,14 +128,14 @@ mod tests {
 
     #[test]
     fn registry_merges_only_enabled_domains() {
-        // Finance alone carries its six row families.
+        // Finance includes ledger, wealth, planning and operations aggregates.
         let finance_only = sync_registry_for(&[]);
-        assert_eq!(finance_only.adapters().len(), 6);
+        assert_eq!(finance_only.adapters().len(), 10);
         assert!(finance_only.adapter("fin:assets").is_some());
         assert!(finance_only.adapter("know:notes").is_none());
 
         let all = sync_registry_for(&["knowledge", "execution", "health"]);
-        assert_eq!(all.adapters().len(), 6 + 2 + 2 + 1);
+        assert_eq!(all.adapters().len(), 10 + 2 + 2 + 1);
         assert!(all.adapter("know:decisions").is_some());
         assert!(all.adapter("exec:actions").is_some());
         assert!(all.adapter("health:metrics").is_some());
@@ -161,6 +154,10 @@ mod tests {
             "fin:accounts",
             "fin:assets",
             "fin:prices",
+            "fin:wealth_assets",
+            "fin:wealth_operations",
+            "fin:planning",
+            "fin:operations",
             "know:notes",
             "know:decisions",
             "exec:plans",
@@ -182,6 +179,6 @@ mod tests {
             deduped.len()
         };
         assert_eq!(unique_len, steps.steps().len(), "versions must be unique");
-        assert_eq!(versions, vec![1, 2, 3, 4, 5, 6]);
+        assert_eq!(versions, vec![1, 2, 3, 4, 5, 6, 7, 8, 9]);
     }
 }

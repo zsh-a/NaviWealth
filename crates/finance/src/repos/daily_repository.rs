@@ -18,6 +18,7 @@ pub enum RecordKind {
     Income,
     Transfer,
     OpeningBalance,
+    Investment,
     Other,
 }
 impl RecordKind {
@@ -27,9 +28,21 @@ impl RecordKind {
             Self::Income => "收入",
             Self::Transfer => "转账",
             Self::OpeningBalance => "期初余额",
+            Self::Investment => "投资交易",
             Self::Other => "其他记录",
         }
     }
+}
+
+/// Owning workflow for corrections. Structured records must be changed through
+/// their original use case so linked receipts and the ledger remain consistent.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RecordSource {
+    Daily,
+    Wealth,
+    Planning,
+    Reconciliation,
+    Other,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -48,6 +61,9 @@ pub struct RecordDraft {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct FinanceRecord {
+    pub source: RecordSource,
+    /// Typed investment intent for display; account arrows and signs cannot infer it.
+    pub investment_kind: Option<crate::wealth::OperationKind>,
     /// Only standard two-leg daily records can be rewritten by the simple form.
     pub editable: bool,
     pub id: String,
@@ -261,6 +277,80 @@ fn project(
     owner: &str,
     row: journal::EntryWithPostings,
 ) -> Result<FinanceRecord> {
+    if row
+        .entry
+        .tag_ids
+        .iter()
+        .any(|tag| tag.starts_with("wealth:"))
+    {
+        let op = crate::wealth::operation(conn, owner, &row.entry.id)?;
+        let asset = crate::wealth::asset(conn, owner, &op.details.asset_id)?;
+        let account = owned_account(conn, owner, &op.details.account_id, false)?;
+        let cash = op
+            .details
+            .cash_account_id
+            .as_deref()
+            .map(|id| owned_account(conn, owner, id, false))
+            .transpose()?;
+        let amount = match op.details.kind {
+            crate::wealth::OperationKind::Opening => op
+                .details
+                .quantity
+                .checked_mul(op.details.unit_price)
+                .ok_or_else(|| invalid("持仓成本超出支持范围"))?,
+            _ => op.cash_amount,
+        };
+        return Ok(FinanceRecord {
+            source: RecordSource::Wealth,
+            investment_kind: Some(op.details.kind),
+            editable: false,
+            id: op.id,
+            kind: RecordKind::Investment,
+            date: op.details.date,
+            amount,
+            currency: op.currency,
+            account_id: account.id,
+            account_name: account.name,
+            category_id: None,
+            category_name: Some(op.details.kind.label().to_owned()),
+            destination_account_id: cash.as_ref().map(|a| a.id.clone()),
+            destination_account_name: cash.map(|a| a.name),
+            destination_amount: None,
+            destination_currency: None,
+            payee: Some(asset.details.name),
+            note: op.details.note,
+        });
+    }
+    let source = if row
+        .entry
+        .tag_ids
+        .iter()
+        .any(|tag| tag.starts_with("recurring:") || tag.starts_with("liability:"))
+    {
+        RecordSource::Planning
+    } else if row
+        .entry
+        .tag_ids
+        .iter()
+        .any(|tag| tag.starts_with("reconciliation:"))
+    {
+        RecordSource::Reconciliation
+    } else {
+        RecordSource::Daily
+    };
+    let mut record = project_ledger(conn, owner, row)?;
+    if source != RecordSource::Daily {
+        record.source = source;
+        record.editable = false;
+    }
+    Ok(record)
+}
+
+fn project_ledger(
+    conn: &Connection,
+    owner: &str,
+    row: journal::EntryWithPostings,
+) -> Result<FinanceRecord> {
     let legs = row
         .postings
         .iter()
@@ -391,6 +481,8 @@ fn project(
         }
     };
     Ok(FinanceRecord {
+        source: RecordSource::Other,
+        investment_kind: None,
         editable: false,
         id: row.entry.id,
         kind,
@@ -471,6 +563,8 @@ fn project_daily(
         )
     });
     Ok(FinanceRecord {
+        source: RecordSource::Daily,
+        investment_kind: None,
         editable: true,
         id: row.entry.id,
         kind,
@@ -705,6 +799,7 @@ fn build(
             )
         }
         RecordKind::OpeningBalance => unreachable!(),
+        RecordKind::Investment => Err(invalid("请从投资交易录入或更正此记录")),
         RecordKind::Other => Err(invalid("此记录包含复杂分录，仅支持查看和删除")),
     }
 }
@@ -758,7 +853,10 @@ pub fn save(
 }
 
 pub fn delete_record(conn: &mut Connection, stamper: &MutationStamper, id: &str) -> Result<()> {
-    owned_entry(conn, &stamper.owner_user_id, id)?;
+    let record = record(conn, &stamper.owner_user_id, id)?;
+    if !matches!(record.source, RecordSource::Daily | RecordSource::Other) {
+        return Err(invalid("请从原始交易、计划或对账详情撤销此记录"));
+    }
     journal::soft_delete(conn, stamper, id)
 }
 

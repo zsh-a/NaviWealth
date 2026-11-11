@@ -1,10 +1,12 @@
 //! Finance workspace: dated activity, exact monthly totals, filtering and record management.
 use crate::{
-    finance::{FinanceRecord, RecordFilter, RecordKind},
+    finance::{FinanceRecord, RecordFilter, RecordKind, RecordSource},
+    finance_ui as fui,
     state::Services,
     ui,
 };
 use chrono::{Datelike, Local, NaiveDate};
+use naviwealth_finance::wealth::OperationKind;
 use nsh_base::{SheetEvent, dialog, theme};
 use nsh_core::prelude::*;
 use rust_decimal::Decimal;
@@ -92,6 +94,7 @@ pub fn LedgerScreen() -> impl IntoElement {
     let limit = signal(50_i64);
     let days: Signal<Vec<Day>> = signal(Vec::new());
     let totals: Signal<Vec<(String, Decimal, Decimal)>> = signal(Vec::new());
+    let budget_summary = signal(Vec::<String>::new());
     let account_options = signal(Vec::<(String, String)>::new());
     let account_count = signal(0_usize);
     let loading = signal(true);
@@ -124,15 +127,50 @@ pub fn LedgerScreen() -> impl IntoElement {
             loading.set(true);
             let services = services.clone();
             spawn(async move {
-                let result = tokio::join!(
+                let (records, monthly, accounts, budgets) = tokio::join!(
                     visible_records(&services, filter, count + 1),
                     services.finance_monthly_totals(from, until),
-                    services.finance_accounts(false)
+                    services.finance_accounts(false),
+                    services.finance_budgets(ui::ymd(from)[..7].to_owned())
                 );
                 if sequence.get() != generation {
                     return;
                 }
-                match result {
+                budget_summary.set(match budgets {
+                    Ok(budgets) => {
+                        let mut currencies =
+                            std::collections::BTreeMap::<String, (Decimal, Decimal)>::new();
+                        let mut overflow = false;
+                        for budget in budgets {
+                            let row = currencies.entry(budget.budget.currency).or_default();
+                            if let (Some(spent), Some(limit)) = (
+                                row.0.checked_add(budget.spent),
+                                row.1.checked_add(budget.budget.limit),
+                            ) {
+                                *row = (spent, limit);
+                            } else {
+                                overflow = true;
+                                break;
+                            }
+                        }
+                        if overflow {
+                            vec!["预算合计超出范围，请查看分类明细".into()]
+                        } else {
+                            currencies
+                                .into_iter()
+                                .map(|(currency, (spent, limit))| {
+                                    format!(
+                                        "分类预算 · {currency}  已用 {} / {}",
+                                        ui::money(spent),
+                                        ui::money(limit)
+                                    )
+                                })
+                                .collect()
+                        }
+                    }
+                    Err(_) => vec!["预算暂不可用，点此重新查看".into()],
+                });
+                match (records, monthly, accounts) {
                     (Ok(mut records), Ok(monthly), Ok(accounts)) => {
                         has_more.set(records.len() > count as usize);
                         records.truncate(count as usize);
@@ -156,6 +194,7 @@ pub fn LedgerScreen() -> impl IntoElement {
             (Some(RecordKind::Expense), "支出"),
             (Some(RecordKind::Income), "收入"),
             (Some(RecordKind::Transfer), "转账"),
+            (Some(RecordKind::Investment), "投资"),
         ]
         .map(|(value, label)| {
             ui::choice_button(
@@ -171,6 +210,7 @@ pub fn LedgerScreen() -> impl IntoElement {
         }),
     );
     let filters_open = signal(false);
+    let tools_open = signal(false);
     let add = move || {
         edit_id.set(None);
         editor.set(true);
@@ -179,21 +219,28 @@ pub fn LedgerScreen() -> impl IntoElement {
         .flex_1()
         .child(
             view()
-                .px_5()
-                .pt_5()
-                .pb_4()
+                .px_4()
+                .min_h(px(52.0))
                 .flex_row()
                 .items_center()
                 .gap_3()
-                .child(ui::page_title("流水", "收入 · 支出 · 转账").flex_1())
-                .child(ui::primary_button("记一笔", add, "open-record", None)),
+                .child(
+                    text("流水")
+                        .text_size(px(21.0))
+                        .font_weight(FontWeight::SEMIBOLD)
+                        .flex_1(),
+                )
+                .child(ui::primary_button("记一笔", add, "open-record", None))
+                .child(fui::action("管理", "activity-tools", move || {
+                    tools_open.set(true)
+                })),
         )
         .child(
             ui::interactive_scroll().flex_1().child(
                 view()
-                    .px_5()
+                    .px_4()
                     .pb_5()
-                    .gap_4()
+                    .gap_2()
                     .child(
                         view()
                             .flex_row()
@@ -233,13 +280,9 @@ pub fn LedgerScreen() -> impl IntoElement {
                     .child(when(
                         move || !totals.get().is_empty(),
                         move || {
-                            view()
-                                .bg(move || theme().card)
-                                .rounded(px(16.0))
-                                .px_4()
-                                .py_3()
-                                .gap_3()
-                                .child(each(
+                            fui::changed_fact(
+                                "/activity".into(),
+                                view().py_1().gap_2().child(each(
                                     move || totals.get(),
                                     |t: &(String, Decimal, Decimal)| t.0.clone(),
                                     move |row: ReadSignal<(String, Decimal, Decimal)>, _| {
@@ -284,7 +327,24 @@ pub fn LedgerScreen() -> impl IntoElement {
                                                     ),
                                             )
                                     },
-                                ))
+                                )),
+                            )
+                        },
+                    ))
+                    .child(when(
+                        move || !budget_summary.get().is_empty(),
+                        move || {
+                            view()
+                                .role(AccessibilityRole::Button)
+                                .min_h(px(48.0))
+                                .on_press(|| fui::navigate("/plan/budgets"))
+                                .test_id("ledger-budget-context")
+                                .children(budget_summary.get().into_iter().map(|line| {
+                                    text(line)
+                                        .text_size(px(12.0))
+                                        .tabular_nums()
+                                        .text_color(move || theme().primary)
+                                }))
                         },
                     ))
                     .child(
@@ -412,9 +472,7 @@ pub fn LedgerScreen() -> impl IntoElement {
                                     ui::primary_button(
                                         "添加账户",
                                         move || {
-                                            if let Some(tab) = use_context::<crate::ShellTab>() {
-                                                tab.0.set(0);
-                                            }
+                                            fui::navigate("/wealth/accounts/new");
                                         },
                                         "ledger-add-account",
                                         None,
@@ -458,6 +516,39 @@ pub fn LedgerScreen() -> impl IntoElement {
                         },
                     )),
             ),
+        )
+        .child(
+            ui::app_sheet()
+                .open(move || Some(tools_open.get()))
+                .on_open_change(move |e: &SheetEvent| {
+                    if let SheetEvent::OpenChange(next, _) = e {
+                        tools_open.set(*next);
+                    }
+                })
+                .child(
+                    view()
+                        .p_5()
+                        .pb_safe_area_plus(px(20.0))
+                        .gap_2()
+                        .bg(move || theme().background)
+                        .child(text("流水管理").text_lg().font_weight(FontWeight::SEMIBOLD))
+                        .children(
+                            [
+                                ("导入账单", "/activity/import", "activity-import"),
+                                ("账户对账", "/activity/reconcile", "activity-reconcile"),
+                                ("月结复核", "/activity/close", "activity-close"),
+                            ]
+                            .map(move |(label, path, id)| {
+                                fui::action(label, id, move || {
+                                    tools_open.set(false);
+                                    fui::navigate(path);
+                                })
+                            }),
+                        )
+                        .child(fui::action("取消", "activity-tools-cancel", move || {
+                            tools_open.set(false)
+                        })),
+                ),
         )
         .child(
             ui::app_sheet()
@@ -538,35 +629,30 @@ fn record_row_content(
         RecordKind::Transfer => ui::Icon::Transfer,
         _ => ui::Icon::Wallet,
     };
-    let title = item
-        .payee
-        .clone()
-        .or(item.category_name.clone())
-        .unwrap_or_else(|| item.kind.label().to_owned());
-    let detail = if let Some(destination) = &item.destination_account_name {
-        format!("{} → {destination}", item.account_name)
-    } else {
-        item.account_name.clone()
-    };
-    let signed = match item.kind {
-        RecordKind::Expense => format!("-{}", ui::money(item.amount)),
-        RecordKind::Income => format!("+{}", ui::money(item.amount)),
-        _ => ui::money(item.amount),
-    };
+    let title = record_title(&item);
+    let detail = record_accounts(&item);
+    let signed = record_value(&item);
     view()
         .role(AccessibilityRole::Button)
+        .label(format!("{title}，{detail}，{signed} {}", item.currency))
         .test_id(&id)
-        .on_press(move || selected.set(Some(pressed.clone())))
-        .min_h(px(80.0))
-        .px_4()
+        .on_press(move || {
+            if pressed.source != RecordSource::Daily && pressed.source != RecordSource::Other {
+                fui::navigate(format!("/activity/entry/{}", pressed.id));
+            } else {
+                selected.set(Some(pressed.clone()));
+            }
+        })
+        .min_h(px(64.0))
+        .px_2()
         .py_3()
         .flex_row()
         .items_center()
         .gap_3()
         .child(
             view()
-                .w(px(40.0))
-                .h(px(40.0))
+                .w(px(30.0))
+                .h(px(30.0))
                 .flex_shrink_0()
                 .items_center()
                 .justify_center()
@@ -581,7 +667,7 @@ fn record_row_content(
                 .gap_1()
                 .child(
                     text(title)
-                        .text_base()
+                        .text_size(px(15.0))
                         .truncate()
                         .font_weight(FontWeight::MEDIUM),
                 )
@@ -599,7 +685,7 @@ fn record_row_content(
                 .items_end()
                 .child(
                     text(signed)
-                        .text_lg()
+                        .text_size(px(16.0))
                         .tabular_nums()
                         .font_weight(FontWeight::MEDIUM),
                 )
@@ -609,6 +695,41 @@ fn record_row_content(
                         .text_color(move || theme().muted_foreground),
                 ),
         )
+}
+fn record_title(record: &FinanceRecord) -> String {
+    let identity = record
+        .payee
+        .clone()
+        .or(record.category_name.clone())
+        .unwrap_or_else(|| record.kind.label().to_owned());
+    match record.investment_kind {
+        Some(kind) => format!("{} · {identity}", kind.label()),
+        None => identity,
+    }
+}
+fn record_accounts(record: &FinanceRecord) -> String {
+    match (record.kind, record.destination_account_name.as_deref()) {
+        (RecordKind::Investment, Some(cash)) => {
+            format!("结算 {cash} · 持仓 {}", record.account_name)
+        }
+        (RecordKind::Investment, None) => format!("持仓 {}", record.account_name),
+        (RecordKind::Transfer, Some(destination)) => {
+            format!("{} → {destination}", record.account_name)
+        }
+        _ => record.account_name.clone(),
+    }
+}
+fn record_value(record: &FinanceRecord) -> String {
+    match (record.kind, record.investment_kind) {
+        (_, Some(OperationKind::Opening)) => format!("成本 {}", ui::money(record.amount)),
+        (_, Some(OperationKind::Split)) => format!("现金 {}", ui::money(record.amount)),
+        (RecordKind::Expense, _) => format!("-{}", ui::money(record.amount)),
+        (RecordKind::Income, _) => format!("+{}", ui::money(record.amount)),
+        (RecordKind::Investment, _) if record.amount > Decimal::ZERO => {
+            format!("+{}", ui::money(record.amount))
+        }
+        _ => ui::money(record.amount),
+    }
 }
 fn detail_line(label: &'static str, value: String) -> impl Element {
     view()
@@ -621,6 +742,129 @@ fn detail_line(label: &'static str, value: String) -> impl Element {
                 .text_color(move || theme().muted_foreground),
         )
         .child(text(value).text_base().flex_1())
+}
+
+pub fn capture_route() -> AnyElement {
+    let open = signal(true);
+    let version = use_context::<crate::state::DataVersion>()
+        .expect("version")
+        .0;
+    effect(move || {
+        if !open.get() {
+            fui::back();
+        }
+    });
+    view()
+        .flex_1()
+        .child(super::record::record_dialog(fui::services(), open, version))
+        .into_element()
+}
+pub fn entry_route(id: String) -> AnyElement {
+    let record = signal(None::<FinanceRecord>);
+    let source = signal(None::<String>);
+    let error = signal(String::new());
+    let version = use_context::<crate::state::DataVersion>()
+        .expect("version")
+        .0;
+    let editor = signal(false);
+    let edit_id = signal(Some(id.clone()));
+    let services = fui::services();
+    let s = services.clone();
+    effect(move || {
+        version.get();
+        let s = s.clone();
+        let id = id.clone();
+        spawn(async move {
+            match s.finance_record(&id).await {
+                Ok(v) => {
+                    record.set(Some(v));
+                    error.set(String::new());
+                }
+                Err(e) => error.set(e),
+            }
+            match s.finance_record_source_route(id).await {
+                Ok(path) => source.set(path),
+                Err(e) => error.set(e),
+            }
+        });
+    });
+    fui::page(
+        "流水详情",
+        view()
+            .gap_4()
+            .child(ui::error_line(error))
+            .child(dynamic(move || {
+                let Some(r) = record.get() else {
+                    return text("正在读取记录…").text_sm().into_element();
+                };
+                let mut body = view().gap_3().child(fui::metric(
+                    r.investment_kind
+                        .map_or(r.kind.label(), OperationKind::label)
+                        .into(),
+                    format!("{} {}", record_value(&r), r.currency),
+                    ui::ymd(r.date),
+                ));
+                if r.investment_kind.is_some() {
+                    body = body
+                        .child(detail_line("资产", r.payee.unwrap_or_default()))
+                        .child(detail_line("持仓账户", r.account_name))
+                        .child(detail_line(
+                            "结算账户",
+                            r.destination_account_name
+                                .unwrap_or_else(|| "无现金结算".into()),
+                        ));
+                } else {
+                    body = body
+                        .child(detail_line("账户", r.account_name))
+                        .child(detail_line(
+                            "分类 / 去向",
+                            r.category_name
+                                .or(r.destination_account_name)
+                                .unwrap_or_default(),
+                        ))
+                        .child(detail_line("对方", r.payee.unwrap_or_default()));
+                }
+                body = body.child(detail_line("备注", r.note.unwrap_or_default()));
+                if let Some(path) = source.get() {
+                    body = body
+                        .child(
+                            text("这笔流水由专属流程生成，请在来源中修改或撤销。")
+                                .text_sm()
+                                .text_color(move || theme().muted_foreground),
+                        )
+                        .child(fui::action(
+                            "查看来源与处理记录",
+                            "entry-source",
+                            move || fui::navigate(path.clone()),
+                        ));
+                }
+                if r.editable {
+                    let id = r.id.clone();
+                    body = body
+                        .child(fui::action("编辑记录", "entry-edit", move || {
+                            editor.set(true)
+                        }))
+                        .child(fui::confirm(
+                            "删除这笔记录？".into(),
+                            "确认后会重新计算账户余额与分类预算。".into(),
+                            "删除记录".into(),
+                            "entry-delete",
+                            move || {
+                                let s = fui::services();
+                                let id = id.clone();
+                                Box::pin(async move {
+                                    s.delete_finance_record(&id).await?;
+                                    Ok(Some("/activity".into()))
+                                })
+                            },
+                        ));
+                }
+                body.into_element()
+            }))
+            .child(super::record::record_editor(
+                services, editor, version, edit_id,
+            )),
+    )
 }
 fn record_detail(
     services: Arc<Services>,

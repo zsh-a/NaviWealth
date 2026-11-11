@@ -108,10 +108,16 @@ fn action_button(
         })
         .px(px(16.0))
         .min_h(px(48.0))
-        .active(|s| s.opacity(0.75))
+        .active(|s| {
+            s.opacity(0.82)
+                .scale(if reduce_motion() { 1.0 } else { 0.985 })
+        })
+        .transition_transform()
+        .duration(if reduce_motion() { 0.0 } else { 100.0 })
+        .ease_out()
         .child(
             text(label)
-                .text_base()
+                .text_size(px(14.0))
                 .font_weight(if primary {
                     FontWeight::SEMIBOLD
                 } else {
@@ -336,12 +342,15 @@ pub fn money(value: rust_decimal::Decimal) -> String {
 
 #[derive(Clone, Copy)]
 pub enum Icon {
+    Today,
+    Plan,
     Ledger,
     Wallet,
     Chat,
     Settings,
     Arrow,
     Back,
+    Close,
     Search,
     Transfer,
     Income,
@@ -350,6 +359,10 @@ pub enum Icon {
 
 pub fn icon(kind: Icon) -> impl Element {
     let path = match kind {
+        Icon::Today => {
+            "<rect x='3' y='5' width='18' height='16' rx='3'/><path d='M7 3v4M17 3v4M3 11h18M8 16h3'/>"
+        }
+        Icon::Plan => "<path d='M4 20V10m7 10V4m7 16v-7M3 4h3M17 7h4'/>",
         Icon::Ledger => {
             "<rect x='5' y='3' width='14' height='18' rx='3'/><path d='M9 8h6M9 12h6M9 16h3'/>"
         }
@@ -363,6 +376,7 @@ pub fn icon(kind: Icon) -> impl Element {
             "<path d='M4 7h16M4 17h16'/><circle cx='9' cy='7' r='3'/><circle cx='16' cy='17' r='3'/>"
         }
         Icon::Back => "<path d='m15 6-6 6 6 6'/>",
+        Icon::Close => "<path d='m6 6 12 12M18 6 6 18'/>",
         Icon::Arrow => "<path d='m9 6 6 6-6 6'/>",
         Icon::Search => "<circle cx='10.5' cy='10.5' r='6.5'/><path d='m16 16 5 5'/>",
         Icon::Transfer => "<path d='M4 8h16m-4-4 4 4-4 4M20 16H4m4-4-4 4 4 4'/>",
@@ -372,21 +386,6 @@ pub fn icon(kind: Icon) -> impl Element {
     svg(nsh_core::element::ImageSrc::svg_markup(&format!(
         "<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'>{path}</svg>"
     ))).w(px(22.0)).h(px(22.0))
-}
-
-pub fn page_title(title: &'static str, subtitle: &'static str) -> impl Element {
-    view()
-        .gap_1()
-        .child(
-            text(title)
-                .text_size(px(26.0))
-                .font_weight(FontWeight::SEMIBOLD),
-        )
-        .child(
-            text(subtitle)
-                .text_sm()
-                .text_color(move || theme().muted_foreground),
-        )
 }
 
 pub fn empty_state(title: &'static str, description: &'static str) -> impl Element {
@@ -542,7 +541,7 @@ pub fn divider() -> impl Element {
 }
 
 pub fn danger_button(
-    label: &'static str,
+    label: impl Into<String>,
     on_press: impl Fn() + 'static,
     id: &'static str,
     busy: Signal<bool>,
@@ -560,7 +559,7 @@ pub fn danger_button(
         .justify_center()
         .bg(move || theme().destructive)
         .child(
-            text(label)
+            text(label.into())
                 .text_base()
                 .font_weight(FontWeight::MEDIUM)
                 .text_color(move || {
@@ -589,7 +588,13 @@ pub fn icon_button(
         .items_center()
         .justify_center()
         .rounded(px(12.0))
-        .bg(move || theme().card)
+        .active(|s| {
+            s.opacity(0.65)
+                .scale(if reduce_motion() { 1.0 } else { 0.96 })
+        })
+        .transition_transform()
+        .duration(if reduce_motion() { 0.0 } else { 100.0 })
+        .ease_out()
         .child(icon(kind).text_color(move || theme().muted_foreground))
 }
 

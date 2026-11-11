@@ -63,7 +63,8 @@ pub fn upsert_rate(
     conn.execute(
         "INSERT INTO fx_rates (base, quote, as_of, rate, source, fetched_at)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6)
-         ON CONFLICT(base, quote, as_of) DO UPDATE SET rate = excluded.rate, source = excluded.source, fetched_at = excluded.fetched_at",
+         ON CONFLICT(base, quote, as_of) DO UPDATE SET rate = excluded.rate, source = excluded.source, fetched_at = excluded.fetched_at
+         WHERE fx_rates.source IS NOT 'manual_fx' OR excluded.source = 'manual_fx'",
         params![
             base,
             quote,

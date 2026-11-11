@@ -1,41 +1,46 @@
 ---
-name: NaviWealth Rust Client
-description: A calm, precise daily finance workspace.
+name: "NaviWealth Native FinanceOS"
+description: "A precise marine-and-mist native financial workspace."
 colors:
-  light-background: "#F7F8FB"
-  light-foreground: "#252B3A"
+  light-background: "#F3F7F6"
+  light-foreground: "#162D35"
   light-card: "#FFFFFF"
-  light-primary: "#535FC5"
+  light-primary: "#153D52"
   light-primary-foreground: "#FFFFFF"
-  light-secondary: "#EAECF9"
-  light-secondary-foreground: "#414C9F"
-  light-muted: "#EEF0F6"
-  light-muted-foreground: "#636B7B"
-  light-destructive: "#DC2626"
+  light-secondary: "#DFEEEB"
+  light-secondary-foreground: "#174E50"
+  light-muted: "#E8F0EE"
+  light-muted-foreground: "#526A70"
+  light-destructive: "#B91C1C"
   light-destructive-foreground: "#FFFFFF"
-  light-border: "#E3E6EE"
-  dark-background: "#11131A"
-  dark-foreground: "#E7EAF2"
-  dark-card: "#1B1E28"
-  dark-primary: "#98A4EF"
-  dark-primary-foreground: "#10122A"
-  dark-secondary: "#2C3152"
-  dark-secondary-foreground: "#E4E7FD"
-  dark-muted: "#222633"
-  dark-muted-foreground: "#B0B7C8"
+  light-border: "#D8E4E1"
+  light-ring: "#168F88"
+  dark-background: "#0D1C23"
+  dark-foreground: "#E6F0ED"
+  dark-card: "#152A33"
+  dark-primary: "#8DD7CF"
+  dark-primary-foreground: "#103337"
+  dark-secondary: "#23434C"
+  dark-secondary-foreground: "#C2E9E2"
+  dark-muted: "#1B333D"
+  dark-muted-foreground: "#A5BDBE"
   dark-destructive: "#F87171"
   dark-destructive-foreground: "#1A0B0B"
-  dark-border: "#343B4C"
+  dark-border: "#2C4650"
+  dark-ring: "#8DD7CF"
 typography:
   page:
     fontFamily: "system-ui, sans-serif"
-    fontSize: "26px"
+    fontSize: "21px"
     fontWeight: 600
   section:
     fontFamily: "system-ui, sans-serif"
-    fontSize: "18px"
+    fontSize: "15px"
     fontWeight: 600
-    lineHeight: "28px"
+  row-title:
+    fontFamily: "system-ui, sans-serif"
+    fontSize: "15px"
+    fontWeight: 500
   body:
     fontFamily: "system-ui, sans-serif"
     fontSize: "16px"
@@ -48,10 +53,29 @@ typography:
     fontFamily: "system-ui, sans-serif"
     fontSize: "12px"
     lineHeight: "16px"
+  action:
+    fontFamily: "system-ui, sans-serif"
+    fontSize: "14px"
+    fontWeight: 600
+  action-quiet:
+    fontFamily: "system-ui, sans-serif"
+    fontSize: "14px"
+    fontWeight: 500
+  finance-field:
+    fontFamily: "system-ui, sans-serif"
+    fontSize: "15px"
+  amount-compact:
+    fontFamily: "system-ui, sans-serif"
+    fontSize: "19px"
+    fontWeight: 600
   amount-summary:
     fontFamily: "system-ui, sans-serif"
     fontSize: "22px"
     fontWeight: 500
+  amount-metric:
+    fontFamily: "system-ui, sans-serif"
+    fontSize: "29px"
+    fontWeight: 600
   amount-detail:
     fontFamily: "system-ui, sans-serif"
     fontSize: "34px"
@@ -60,161 +84,212 @@ typography:
     fontSize: "40px"
     fontWeight: 500
 rounded:
+  quiet-action: "8px"
+  finance-field: "10px"
   control: "12px"
   group: "16px"
+  pill: "999px"
 spacing:
   related: "4px"
   compact: "8px"
   row: "12px"
-  group: "16px"
-  page: "20px"
+  page: "16px"
+  sheet: "20px"
   generous: "24px"
 components:
   button-primary:
     backgroundColor: "{colors.light-primary}"
     textColor: "{colors.light-primary-foreground}"
-    typography: "{typography.body}"
+    typography: "{typography.action}"
     rounded: "{rounded.control}"
     padding: "0px 16px"
   button-secondary:
     backgroundColor: "{colors.light-secondary}"
     textColor: "{colors.light-secondary-foreground}"
-    typography: "{typography.body}"
+    typography: "{typography.label}"
     rounded: "{rounded.control}"
     padding: "0px 16px"
+  button-quiet:
+    textColor: "{colors.light-primary}"
+    typography: "{typography.action-quiet}"
+    rounded: "{rounded.quiet-action}"
+    padding: "0px 12px"
   button-destructive:
     backgroundColor: "{colors.light-destructive}"
     textColor: "{colors.light-destructive-foreground}"
     typography: "{typography.body}"
     rounded: "{rounded.control}"
     padding: "12px 16px"
-  error-line:
-    textColor: "{colors.light-destructive}"
-    typography: "{typography.label}"
-  field:
+  field-finance:
     backgroundColor: "{colors.light-card}"
     textColor: "{colors.light-foreground}"
-    typography: "{typography.body}"
-    rounded: "{rounded.control}"
-    padding: "0px 12px"
-  group:
-    backgroundColor: "{colors.light-card}"
-    rounded: "{rounded.group}"
+    typography: "{typography.finance-field}"
+    rounded: "{rounded.finance-field}"
+    padding: "8px 12px"
   choice-selected:
     backgroundColor: "{colors.light-secondary}"
     textColor: "{colors.light-secondary-foreground}"
-    typography: "{typography.label}"
+    typography: "{typography.action-quiet}"
     rounded: "{rounded.control}"
     padding: "8px 12px"
+  chip-selected:
+    backgroundColor: "{colors.light-primary}"
+    textColor: "{colors.light-primary-foreground}"
+    typography: "{typography.label}"
+    rounded: "{rounded.pill}"
+    padding: "6px 12px"
+  group:
+    backgroundColor: "{colors.light-card}"
+    rounded: "{rounded.group}"
+  navigation:
+    backgroundColor: "{colors.light-card}"
+    textColor: "{colors.light-muted-foreground}"
+    typography: "{typography.caption}"
+  changed-fact:
+    textColor: "{colors.light-primary}"
+    typography: "{typography.caption}"
+    rounded: "{rounded.control}"
+  chart:
+    textColor: "{colors.light-primary}"
+    height: "112px"
 ---
 
-# Design System: NaviWealth Rust Client
+# Design System: NaviWealth Native FinanceOS
 
 ## Overview
 
-**Creative North Star: "The Porcelain Ledger"**
+**Creative North Star: "Contemporary Atlas Precision"**
 
-A quiet porcelain-and-graphite workspace for inspecting money and recording daily activity. Iris identifies the next useful action; exact amounts and dated rows carry the hierarchy. The Rust client extends the established 澄白 identity with native controls and restrained tonal grouping.
+Marine, mist, and restrained teal-family tones frame a precise native financial workspace. Compact system typography, quiet dated lists, thin line icons, and aligned tabular amounts make recorded facts easy to inspect. The recurring signature is an acknowledgment beside the fact an action changed.
 
-This system is scoped to `apps/client`. `theme.json` and the Rust implementation are the source of truth; the repository-root Flutter design system remains separate. This records daily-finance patterns, not release or platform acceptance.
+This system is scoped to the Rust/nsh client in `apps/client`. `theme.json`, `src/ui.rs`, and `src/finance_ui.rs` own the implemented roles and shared primitives; repository-root design artifacts describe Flutter separately. Product terminology, explicit financial meaning, native navigation, and readable scaled text take priority over decorative expression. Surface composition belongs in `.impeccable/surfaces/apps-client-finance-core.md`.
 
 **Key Characteristics:**
 
-- Flat dated activity with right-aligned, explicit-currency amounts.
-- Clear capture actions, grouped fields, and restrained iris emphasis.
-- Native safe-area handling and guarded changes.
+- Marine actions and mist surfaces, with paired light and dark roles.
+- Compact flat rows, explicit currencies, and exact tabular financial values.
+- Native controls, guarded drafts, and in-place changed-fact receipts.
 
 ## Colors
 
-The palette uses cool porcelain surfaces, graphite text, and a measured iris accent. Frontmatter records the reused light and dark roles from `theme.json`; runtime theme selection remains authoritative.
+Deep marine anchors actions; mist and sea-glass tones separate surfaces and choices. Frontmatter extracts the shared roles from `theme.json`, including their dark counterparts. It is the portable token record; runtime theme resolution remains authoritative.
 
 ### Primary
 
-Iris marks primary commits, active navigation, and selected emphasis. Primary foreground is paired with its own mode's primary surface.
+Marine identifies primary commits, quiet links, selected business tabs, and chart marks. The dark primary becomes pale sea glass, paired with a dark primary foreground. The ring role is teal in light appearance and sea glass in dark appearance; it is a theme role, not evidence of a custom focus treatment on every native control. Shared input carets explicitly use primary.
 
 ### Secondary
 
-Pale iris supports quiet actions and selected choices, leaving the main commit prominent.
+Sea-glass selection surfaces support secondary actions, selected rectangular choices, and local changed-fact emphasis. Their text uses the matching secondary foreground. The selected pill chip uses primary, while an unselected pill uses muted.
 
 ### Neutral
 
-Background is the workspace canvas; card is the grouped content and input surface. Foreground carries values; muted foreground carries supporting labels. Border separates fields and persistent navigation. Dark appearance uses the matching ink/slate roles.
+Mist background frames card-white grouped content and fields. Ink foreground carries facts; muted foreground carries dates, field labels, and supporting text. Fine border tone separates fields, rows, and persistent navigation. Dark appearance uses deep marine canvas and lifted marine content tones, with pale ink text.
 
-Destructive is reserved for errors and destructive actions, accompanied by explicit text and confirmation.
+Destructive and destructive foreground form a dedicated pair for final destructive commits; destructive text also identifies errors and the explicit discard action. Pair it with wording and the operation's stated effect.
 
-**The Currency Rule.** Currency labels and signs carry financial meaning; color is supplementary.
+**The Currency Rule.** Currency, signs, labels, and unavailable states carry meaning; color is supplementary.
 
 ## Typography
 
-Native text uses the platform's default sans-serif and system text behavior. `system-ui` in the portable tokens and previews describes that role, not an external font dependency. The body and label line heights follow nsh 0.4 text presets; custom amount sizes do not declare a separate line height.
+**Body and label font:** platform system sans-serif. There is no external font dependency or authored display family. `system-ui` in the portable tokens is an HTML illustration of the native role. Monetary text uses tabular figures rather than a separate monospace family.
 
-- **Page:** semibold page names.
-- **Section:** semibold sheet headings and grouped section titles.
-- **Body:** inputs, actions, and principal row text.
-- **Label:** descriptions, field labels, and dates.
-- **Caption:** compact currency labels beneath ledger amounts.
-- **Amounts:** monthly summaries, record detail, and the larger editable amount use the corresponding amount roles. Account totals use the page-size scale with medium weight.
+Core page titles use the compact page role; shared section titles and row titles stay close to body size, with weight establishing hierarchy. The body, label, and caption presets inherit nsh's explicit line heights. Roles set with `text_size` do not invent a separate line height in the token record.
 
-**The Exact Amount Rule.** Use tabular digits for displayed monetary values and exact Decimal text; never round a small nonzero amount to zero for presentation.
+- **Page and section:** compact semibold titles; sheet titles may use nsh's larger native title preset (18 logical units, 28-unit lines).
+- **Row title and fields:** medium row identities and readable financial inputs.
+- **Body, label, caption:** principal explanatory text, supporting labels, and compact dates/currencies respectively.
+- **Amounts:** compact cash summaries, monthly paired totals, and standalone metrics use separate roles. Record detail and editable record amount use the two larger roles. Supporting amounts remain aligned with their owning row.
+- **Actions:** primary labels are semibold; secondary labels are normal weight; quiet actions are medium weight at the same compact size.
+
+**The Exact Amount Rule.** Display monetary values as exact Decimal text with tabular digits, preserving small nonzero values and at least two fractional places.
 
 ## Layout
 
-The native shell opens on 流水 and keeps existing tab identities. A page inset frames a fixed title/action row above scrolling content; related text is tighter than fields and groups. Dated records share a flat white/slate group, separated by spacing. Account rows use the same structure with dividers; both row types have a minimum height of 80 logical pixels.
+Use the native safe-area-aware shell and route depth. Shared root and detail content follows a narrow phone column, with a page inset and a four-unit spacing rhythm. Related labels use the smallest gap; rows and fields use the middle steps; sheets use the larger inset. Native `px(...)` values are logical lengths; the portable CSS units illustrate them and do not establish physical pixel equivalence.
 
-Interactive scrolling content uses shared `ui::interactive_scroll()` with `KeyboardTaps::Handled`. Buttons and pickers remain eligible for taps while an input retains focus; an unhandled background tap can dismiss the keyboard. Use this helper for editable or actionable scroll content, including sheets and reopened editors.
+Shared financial rows have a minimum height (62 logical units) and vertical row padding. Activity rows have a minimum height (64), with a compact icon well, flexible identity, and a fixed trailing amount/currency stack. Titles may truncate within the flexible identity; trailing facts must remain readable. Shared action targets have a minimum height (48), and icon actions reserve a square of that size. Grow content for text scaling rather than shrinking text to preserve a screenshot's row count.
 
-The ledger keeps search visible and moves account/type/time controls into a compact filter sheet. Monthly totals are paired within each currency. Detail and record editing occupy a full page. The record editor keeps a scrolling body between its header and safe-area-padded save footer; the amount field leads the form.
+The shared page has a compact header (minimum 52), scrollable body, and bottom safe-area reserve plus 96 logical units. The four-tab bar reserves the system bottom inset plus 4; its tab targets have a minimum height (58). Root panes remain mounted and use visibility to retain their state, including Activity filters, while switching tabs. There is no authored desktop breakpoint system or verified tablet composition to inherit.
 
-Choice sheets scroll and use 75% of window height, clamped between 240 and 480 logical pixels; account editing uses available height minus 80, clamped between 320 and 680. Shared sheet footers reserve the system bottom inset plus normal content padding. The tab bar reserves the bottom inset plus 6 logical pixels. No separate breakpoint-based desktop layout is implemented.
+Editable and actionable scrolling content uses `ui::interactive_scroll()` with `KeyboardTaps::Handled`. Selection controls dismiss the keyboard before showing a sheet. Shared choice sheets use 75% of the window height, clamped between 240 and 480 logical units; sheet footers reserve the system bottom inset plus 20. Full record editing uses a scrolling form and safe-area-padded commit footer. Complex Finance forms use the shared guarded page flow.
 
 ## Elevation & Depth
 
-Surfaces are flat at rest; grouping comes from tone, spacing, borders, and dividers. Shared native sheets dim the underlying task with a black scrim at 32% opacity. There is no authored shadow vocabulary. Press feedback reduces shared action opacity to 75%; no custom motion timing is established.
+Surfaces are flat at rest. Tone, spacing, borders, and dividers establish grouping; there is no authored shadow vocabulary. Native sheets and calendar popups dim the underlying task with a black scrim (32% opacity). Keep modal depth attached to a concrete choice, confirmation, or form task.
 
 ## Shapes
 
-Controls have gently rounded corners; content groups have a broader radius. Shared line icons use a 24-unit viewbox, a 1.7-unit round stroke, and a 22-pixel rendered box. Icon buttons reserve a 48-pixel square. Repeated rows stay flat inside a group.
+Quiet text actions and calendar cells use the smallest corner treatment; Finance fields use the intermediate treatment; shared controls, icon actions, and local acknowledgments use the control treatment. Groups and calendar popup top corners use the broader treatment. Pill chips are fully rounded. Frontmatter owns the exact radius values.
+
+Icons are consistent inline vector linework: a 24-unit viewbox, round caps and joins, a thin stroke (1.7), and a usual rendered box (22 logical units). Row chevrons are smaller (16). Activity icon wells are compact (30), and repeated rows share a surface rather than becoming individual cards.
 
 ## Components
 
 ### Buttons
 
-Primary and secondary actions share a minimum 48-pixel height and horizontal group padding. Primary labels are semibold; secondary labels use normal weight. Saving disables duplicate commits; pressed actions use opacity feedback. Destructive buttons use their dedicated foreground/surface pair for the final delete confirmation, including empty-account deletion.
+Primary and secondary buttons share a minimum target height (48) and horizontal padding (16). Primary uses its foreground/surface pair and semibold compact text; secondary uses its own pair and normal text. Quiet actions have a smaller corner treatment and medium primary-colored text. Final destructive buttons use the dedicated destructive pair with normal body-size medium text. Busy state gates repeated commits.
 
-### Choices and filters
+Shared primary/secondary presses reduce opacity (0.82) and scale slightly (0.985); quiet actions use opacity (0.65), scale (0.98); icon actions use opacity (0.65), scale (0.96). Their transform transitions last 100 ms with ease-out. Reduced motion removes scale and transform duration while retaining immediate opacity feedback. State buttons, chips, and flat rows have immediate opacity feedback without an authored transform. HTML hover and keyboard-focus rules in the sidecar are documentation affordances, not proof of corresponding native states.
 
-The main choice control is a rounded, minimum 48-pixel selection button. Selected state uses secondary iris; unselected state uses card with muted text. Account/category selection dismisses the keyboard before opening a scrolling sheet. The compact filter sheet contains type, account, and time options with a Done action.
+### Choices and chips
+
+Rectangular choices use a minimum target height (48), control radius, and label-size medium text. Selected choices use secondary roles; unselected choices use card and muted text. Shared pill chips use compact horizontal/vertical padding (12/6), primary when selected and muted otherwise. Use the existing native choice sheet for long account or asset lists.
 
 ### Cards / Containers
 
-Grouped surfaces hold repeated rows, paired summaries, or linked form choices. Ledger rows use spacing; account rows and linked form choices use dividers. Neither needs another card. Background remains visible between groups.
+A group is a broad-corner card surface for a related set of rows or fields. Row content owns its padding; the container adds no universal padding. Flat financial lists use fine separators where the shared row defines them. Avoid nesting another card around every item.
+
+### Activity rows and account roles
+
+Investment rows name the actual operation before the asset identity, such as **买入 · CoreStock**. Their subtitle names each account's role explicitly: **结算 CoreBank · 持仓 CoreBroker** when a cash account exists, or the holding account alone when it does not. An arrow denotes an actual account transfer; it does not describe an investment's settlement relationship.
+
+The trailing value preserves its economic meaning: opening positions label the amount **成本**, splits label their zero cash effect **现金**, and positive investment cash movements carry a plus sign. Investment entry details label **资产**, **持仓账户**, and **结算账户** separately, with **无现金结算** when appropriate. A row's accessibility label contains the complete operation, account roles, signed/labeled amount, and currency even when visible identity text truncates.
+
+**The Account Role Rule.** Name investment operations and holding/settlement roles explicitly; reserve arrows for actual account transfers.
 
 ### Inputs / Fields
 
-Fields have a visible label, minimum 48-pixel height, card surface, fine border, and control radius. Shared `ui::themed_input()` explicitly sets foreground text, muted hints, an iris caret, and secondary selection in the current appearance; native inputs must not depend on inherited text or hint color. Errors preserve the draft and use destructive text. Secrets use native masking. The amount input has a larger type role and an explicit currency annotation.
+All native inputs explicitly bind foreground text, muted hints, primary caret, and secondary selection through `ui::themed_input()`. Shared standard fields use control radius, a fine border, card background, a minimum height (48), and body text. Finance form fields use the intermediate radius, compact financial-field text, and row/compact padding. Multiline Finance fields have a taller minimum (112). Labels remain visible above fields. Secret fields use native masking; dates use the native calendar grid with labeled navigation and selectable day targets (minimum 48 by 48).
+
+Write failures preserve the draft and display a destructive error line. Draft guards prioritize the filled primary **继续填写** action; **放弃修改** is explicit destructive text with a full touch target. Saving blocks duplicate submissions and exit during the commit. Background read refreshes must not recreate an authored draft.
 
 ### Navigation
 
-The persistent bottom tab bar pairs line icons and labels; iris marks the selected tab. 流水 comes first and is the default. Account detail can open that account's ledger history. Shared shell, header, and footer patterns handle safe-area padding.
+The native shell pairs line icons with compact labels in four stable business tabs: 今日, 流水, 财富, 规划. 流水 is the default. Primary identifies selection; muted foreground identifies other tabs. FinanceOS, assistant, and settings remain workspace-level actions. Details use native push/pop depth with a visible return affordance; guarded forms own exit decisions. Reduced motion selects no authored screen transition.
 
-### Guarded editors and confirmations
+### Changed-fact acknowledgment
 
-Income, expense, transfer, and opening-balance correction use the full record editor. Switching record kind preserves the draft and revalidates choices. Account creation and metadata editing use a focused sheet. Both guard unsaved changes and retain failed writes for correction. Record deletion explains its balance effect; account deletion is limited to accounts without history. Archive removes an account from new-entry pickers while preserving history and a restore action.
+`finance_ui::changed_fact` places a caption-size primary receipt beside the affected facts. Its secondary palette wash fades from opacity 0.75 to 0 over 1800 ms using `cubic-bezier(0.16,1,0.3,1)`. The receipt remains until the next task. Reduced motion shows a static secondary highlight and the receipt immediately. Budget, asset valuation, and Activity summary owners use this primitive.
 
-Backup export and import use the Android system document picker, followed by explicit restore confirmation. The UI does not request arbitrary filesystem paths. Restore failures use the shared error line with Chinese recovery guidance and confirm that existing data remains; technical diagnostics belong in debug logs.
+The supplementary bottom notice enters from a small vertical offset (6 logical units) over 180 ms with the same easing, without movement under reduced motion. It can be dismissed; the shell clears it after 8 seconds. It must not replace the affected fact's receipt.
+
+**The Local Receipt Rule.** A changed-fact receipt stays beside the affected financial facts until the next task; a bottom notice is supplementary.
+
+### Analytical chart and sparse observations
+
+The shared line chart uses a thin primary line (2.2), a quiet baseline, and a visible dot for each known sample (radius 3) in a shallow plot (112 logical units). Native text provides the chart name, boundary dates, latest dated exact value, and any missing-evidence explanation; the vector is supplementary. Chart coordinates may use presentation-only floating point, while financial values remain Decimal text.
+
+With fewer than two known values, show the latest dated observation and the insufficient-history explanation instead of a blank plot. Missing samples break the line. A known observation beside missing history must remain visible and must not imply a continuous trend.
+
+**The Evidence Rule.** Plot recorded observations and break the line at missing evidence; insufficient history becomes a dated textual observation.
 
 ## Do's and Don'ts
 
 ### Do:
 
-- **Do** keep currencies explicit and totals separate by currency.
-- **Do** use exact Decimal text with at least two fractional places; retain smaller nonzero values.
-- **Do** use shared buttons, fields, sheets, icons, and theme roles.
-- **Do** preserve dirty drafts and show errors beside the operation that failed.
+- Do pair each surface with its own appearance's foreground role.
+- Do keep amounts aligned and distinguish quantity, cost, price, cash, and gain.
+- Do reuse native shared fields, buttons, sheets, icons, and guarded navigation.
+- Do retain invalid drafts and give the user a concrete correction or retry.
+- Do show changed facts and missing valuation evidence in native text.
+- Do preserve complete operation, account-role, amount, and currency semantics in row accessibility labels.
 
 ### Don't:
 
-- **Don't** combine unlike currencies without a real conversion.
-- **Don't** put a card around each row inside an already grouped surface.
-- **Don't** rely on color alone for income, expense, transfer, or destructive intent.
-- **Don't** turn the daily workspace into a marketing page.
+- Don't combine currencies without recorded conversion evidence.
+- Don't add a card around each row inside an existing group.
+- Don't rely on color alone for financial direction or destructive intent.
+- Don't use a transfer arrow for an investment's holding and settlement relationship.
+- Don't fabricate chart history or connect a line across missing prices or exchange rates.
+- Don't add decorative atlas graphics, raster ornament, or marketing hierarchy to the task workspace.

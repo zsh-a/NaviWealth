@@ -1,11 +1,35 @@
 //! Application adapter for the FinanceOS daily ledger use cases.
 
 use crate::state::Services;
-pub use naviwealth_finance::daily::{FinanceRecord, RecordDraft, RecordFilter, RecordKind};
+pub use naviwealth_finance::daily::{
+    FinanceRecord, RecordDraft, RecordFilter, RecordKind, RecordSource,
+};
 use naviwealth_finance::{daily, models::Account, repos::account_repository::AccountBalance};
 use rust_decimal::Decimal;
 
 impl Services {
+    pub async fn finance_record_source_route(&self, id: String) -> Result<Option<String>, String> {
+        let owner = self.owner();
+        self.db
+            .call(move |conn| {
+                if daily::record(conn, &owner, &id)?.source == RecordSource::Wealth {
+                    return Ok(Some(format!("/wealth/operations/{id}")));
+                }
+                if let Some(source) =
+                    naviwealth_finance::planning::source_for_entry(conn, &owner, &id)?
+                {
+                    return Ok(Some(crate::screens::today::planning_route(&source)));
+                }
+                if let Some(source) =
+                    naviwealth_finance::operations::source_for_entry(conn, &owner, &id)?
+                {
+                    return Ok(Some(format!("/activity/reconcile/{source}")));
+                }
+                Ok(None)
+            })
+            .await
+            .map_err(|e| e.to_string())
+    }
     pub async fn finance_accounts(
         &self,
         include_archived: bool,
