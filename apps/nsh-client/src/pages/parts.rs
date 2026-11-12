@@ -69,6 +69,16 @@ pub fn bottom_bar(content: impl IntoElement) -> View {
         )
 }
 
+/// The status bar's icons for the page under them: dark on the light canvas,
+/// light on the dark one (the pages draw their own header under it).
+pub fn status_bar() -> StatusBarSetting {
+    StatusBarSetting::from(if dark() {
+        StatusBarStyle::Light
+    } else {
+        StatusBarStyle::Dark
+    })
+}
+
 /// The space a page's scrolling content leaves under its last item so it
 /// clears the [`bottom_bar`].
 pub fn bottom_clearance() -> f32 {

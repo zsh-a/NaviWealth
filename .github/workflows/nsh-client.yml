@@ -25,6 +25,8 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   NSH_VERSION: v0.5.0
+  # What nsh-platform-linux links (as nsh's own CI installs them).
+  LINUX_PACKAGES: clang libclang-dev libgtk-4-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
 
 jobs:
   checks:
@@ -36,10 +38,10 @@ jobs:
         working-directory: apps/nsh-client
     steps:
       - uses: actions/checkout@v7
-      - name: GTK 4 for the desktop runner
+      - name: Linux backend libraries (GTK 4, GStreamer)
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libgtk-4-dev
+          sudo apt-get install -y --no-install-recommends ${{ env.LINUX_PACKAGES }}
       - name: Rust from rust-toolchain.toml
         run: |
           rustup toolchain install
@@ -62,10 +64,10 @@ jobs:
       CARGO_TARGET_DIR: ${{ github.workspace }}/apps/nsh-client/target
     steps:
       - uses: actions/checkout@v7
-      - name: GTK 4 (nsh reads the crate on the host first)
+      - name: Linux backend libraries (nsh builds the crate on the host first)
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libgtk-4-dev
+          sudo apt-get install -y --no-install-recommends ${{ env.LINUX_PACKAGES }}
       - uses: actions/setup-java@v6
         with:
           distribution: temurin

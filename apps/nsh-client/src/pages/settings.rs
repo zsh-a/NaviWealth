@@ -8,7 +8,7 @@ use nsh_core::{
     prelude::*,
 };
 
-use super::parts::{bottom_bar, bottom_clearance, top_bar};
+use super::parts::{bottom_bar, bottom_clearance, status_bar, top_bar};
 use crate::{
     data::{settings, vision},
     domain::{
@@ -182,6 +182,7 @@ pub fn settings_page() -> Screen {
     nav_page()
         .title(|| SharedString::from(s().settings))
         .header_visible(false)
+        .status_bar(status_bar)
         .pop_on_back({
             let dirty = dirty.clone();
             move || !dirty()
