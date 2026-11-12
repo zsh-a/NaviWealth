@@ -41,6 +41,8 @@ pub(super) static STRINGS: Strings = Strings {
     still_working: "仍在分析，最长可能需要一分钟。",
     estimate_hint: "AI 估算 · 保存前请核对份量",
     foods: "食物",
+    no_foods_title: "还没有食物",
+    no_foods_body: "逐个添加食物和食用量。",
     add_food: "添加食物",
     badge_estimate: "估算",
     badge_check: "核对份量",

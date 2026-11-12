@@ -271,3 +271,20 @@ fn the_api_key_is_kept_apart_from_the_settings() -> Result<(), String> {
     );
     Ok(())
 }
+
+#[test]
+fn a_food_without_nutrition_is_not_saved_as_zero() -> Result<(), String> {
+    let (mut app, _) = start(Vec::new(), None);
+    app.press("label:Add manually")?;
+    app.wait_for("text:e.g. Beef noodle soup")?;
+    app.type_text("text:e.g. Beef noodle soup", "Tea")?;
+    app.type_text("label:Amount eaten", "300")?;
+    app.press("Done")?;
+    app.wait_for("Check the values per 100 g.")?;
+    assert!(app.shows("Add food"), "the editor stays open");
+    app.type_text("label:Energy", "1")?;
+    app.press("Done")?;
+    app.wait_for("text:Tea")?;
+    assert!(app.screen().enabled("Save meal")?);
+    Ok(())
+}

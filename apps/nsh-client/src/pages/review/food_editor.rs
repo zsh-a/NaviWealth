@@ -85,7 +85,14 @@ pub fn FoodEditor() -> impl IntoElement {
     };
     let name_error = move || attempted.get() && name.with(|n| n.trim().is_empty());
     let grams_error = move || attempted.get() && !parsed_grams().is_some_and(valid_grams);
-    let nutrients_error = move || attempted.get() && !per_100g().is_valid_per_100g();
+    // A food needs its nutrition: an empty form is not a 0 kcal food.
+    let nutrients_given = move || {
+        fields
+            .iter()
+            .any(|field| field.with(|f| !f.trim().is_empty()))
+    };
+    let nutrients_ok = move || nutrients_given() && per_100g().is_valid_per_100g();
+    let nutrients_error = move || attempted.get() && !nutrients_ok();
 
     let base_for_done = base.clone();
     let done = move || {
@@ -93,11 +100,11 @@ pub fn FoodEditor() -> impl IntoElement {
         let clean = clean_name(&name.get_untracked());
         let grams_value = untracked(parsed_grams).filter(|g| valid_grams(*g));
         let nutrients = untracked(per_100g);
-        if !nutrients.is_valid_per_100g() {
+        let nutrients_valid = untracked(nutrients_ok);
+        if !nutrients_valid {
             details_open.set(true);
         }
-        let (Some(grams_value), false, true) =
-            (grams_value, clean.is_empty(), nutrients.is_valid_per_100g())
+        let (Some(grams_value), false, true) = (grams_value, clean.is_empty(), nutrients_valid)
         else {
             return;
         };

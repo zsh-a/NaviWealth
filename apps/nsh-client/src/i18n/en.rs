@@ -45,6 +45,8 @@ pub(super) static STRINGS: Strings = Strings {
     still_working: "Still working. This can take up to a minute.",
     estimate_hint: "AI estimate · check the amounts before saving",
     foods: "Foods",
+    no_foods_title: "No foods yet",
+    no_foods_body: "Add each food with the amount you ate.",
     add_food: "Add food",
     badge_estimate: "Estimate",
     badge_check: "Check amount",

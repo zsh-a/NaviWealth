@@ -355,9 +355,9 @@ fn state_card_for(draft: Draft, phase: Phase) -> AnyElement {
         Phase::Ready | Phase::Preparing | Phase::Analyzing => (
             Icon::Utensils,
             Tone::Accent,
-            strings.add_food.into(),
-            strings.empty_body.into(),
-            None,
+            strings.no_foods_title.into(),
+            strings.no_foods_body.into(),
+            Some((strings.add_food, manual.clone())),
         ),
     };
     let (fill, ink) = match tone {
@@ -398,14 +398,14 @@ fn state_card_for(draft: Draft, phase: Phase) -> AnyElement {
                     .flex_wrap()
                     .justify_end()
                     .gap_2()
-                    .child({
+                    .child((phase != Phase::Ready).then(|| {
                         let manual = manual.clone();
                         Btn::ghost()
                             .size(Size::Small)
                             .icon(Icon::Pencil)
                             .label(|| s().add_manually.into())
                             .on_press(move || manual())
-                    })
+                    }))
                     .child(primary.map(|(label, run)| {
                         let label: SharedString = label.into();
                         Btn::tonal()
