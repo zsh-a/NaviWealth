@@ -95,6 +95,13 @@ jobs:
           nsh --version
           nsh package --target android --abi arm64-v8a -o "$RUNNER_TEMP/apk"
           ls -la "$RUNNER_TEMP/apk"
+      - name: Verify the APK (debug signature, package, ABI)
+        run: |
+          apk=$(ls "$RUNNER_TEMP"/apk/*.apk | head -n 1)
+          tools="$ANDROID_HOME/build-tools/35.0.1"
+          "$tools/apksigner" verify --verbose --print-certs "$apk"
+          "$tools/aapt2" dump badging "$apk" | grep -E "^(package|sdkVersion|targetSdkVersion|native-code|application-label):"
+          unzip -l "$apk" | grep -E "lib/|classes" || true
       - uses: actions/upload-artifact@v4
         with:
           name: naviwealth-health-nsh-debug-arm64-v8a
