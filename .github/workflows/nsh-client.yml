@@ -1,0 +1,93 @@
+name: nsh client
+
+# The native (NSH, Rust) client in apps/nsh-client. Run by hand: checks the
+# crate and builds a debug-signed arm64-v8a APK, uploaded as an artifact.
+# It never uses the release signing secrets.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nsh-client-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  NSH_VERSION: v0.5.0
+
+jobs:
+  checks:
+    name: Format, Clippy, tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: apps/nsh-client
+    steps:
+      - uses: actions/checkout@v7
+      - name: GTK 4 for the desktop runner
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libgtk-4-dev
+      - name: Rust from rust-toolchain.toml
+        run: |
+          rustup toolchain install
+          rustc --version
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/nsh-client
+      - run: cargo fmt --check
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo test
+
+  apk:
+    name: Debug APK (arm64-v8a)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    defaults:
+      run:
+        working-directory: apps/nsh-client
+    env:
+      CARGO_TARGET_DIR: ${{ github.workspace }}/apps/nsh-client/target
+    steps:
+      - uses: actions/checkout@v7
+      - name: GTK 4 (nsh reads the crate on the host first)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libgtk-4-dev
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Rust from rust-toolchain.toml (with aarch64-linux-android)
+        run: |
+          rustup toolchain install
+          rustup target list --installed
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/nsh-client
+          key: android
+      - name: Android SDK platform, build tools and NDK
+        run: |
+          sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$sdkmanager" --licenses > /dev/null || true
+          "$sdkmanager" --install "platforms;android-35" "build-tools;35.0.1" "ndk;27.2.12479018" > /dev/null
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> "$GITHUB_ENV"
+      - name: nsh CLI ${{ env.NSH_VERSION }}
+        run: |
+          curl -fsSL "https://github.com/longbridge/nsh/releases/download/${NSH_VERSION}/install.sh" | sh
+          echo "$HOME/.nsh/bin" >> "$GITHUB_PATH"
+      - name: Package with the debug key
+        run: |
+          nsh --version
+          nsh package --target android --abi arm64-v8a -o "$RUNNER_TEMP/apk"
+          ls -la "$RUNNER_TEMP/apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: naviwealth-health-nsh-debug-arm64-v8a
+          path: ${{ runner.temp }}/apk/*.apk
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,48 @@
+{
+  "name": "NaviWealth Porcelain",
+  "cssVars": {
+    "theme": {
+      "radius": "14px"
+    },
+    "light": {
+      "background": "#F5F6F9",
+      "foreground": "#161922",
+      "card": "#FFFFFF",
+      "card-foreground": "#161922",
+      "popover": "#FFFFFF",
+      "popover-foreground": "#161922",
+      "primary": "#4F5BD5",
+      "primary-foreground": "#FFFFFF",
+      "secondary": "#EEF0F4",
+      "secondary-foreground": "#161922",
+      "muted": "#EEF0F4",
+      "muted-foreground": "#646B7A",
+      "accent": "#ECEEFD",
+      "accent-foreground": "#4F5BD5",
+      "destructive": "#C9364A",
+      "border": "#E4E7EE",
+      "input": "#E4E7EE",
+      "ring": "#4F5BD5"
+    },
+    "dark": {
+      "background": "#0E1015",
+      "foreground": "#F3F4F8",
+      "card": "#181B22",
+      "card-foreground": "#F3F4F8",
+      "popover": "#181B22",
+      "popover-foreground": "#F3F4F8",
+      "primary": "#8F9AF2",
+      "primary-foreground": "#0F1230",
+      "secondary": "#242833",
+      "secondary-foreground": "#F3F4F8",
+      "muted": "#242833",
+      "muted-foreground": "#A2A9B9",
+      "accent": "#262B4F",
+      "accent-foreground": "#9AA4F7",
+      "destructive": "#FF7A86",
+      "border": "#2C313D",
+      "input": "#2C313D",
+      "ring": "#9AA4F7"
+    }
+  }
+}
