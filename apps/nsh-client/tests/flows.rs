@@ -1,0 +1,273 @@
+//! The user's flows on the real engine, headless: a stub network stands in
+//! for the model provider and a stub picker for the photo library.
+
+use std::{io::Cursor, sync::Arc, time::Duration};
+
+use image::{ImageFormat, RgbImage};
+use nsh_app_naviwealth_health::{
+    App,
+    domain::{
+        meal::{Day, Meal, MealSlot, encode_meals},
+        nutrition::{Food, FoodSource, Nutrients},
+    },
+};
+use nsh_core::{ImageData, picker::PickedFile};
+use nsh_engine::{EngineConfig, Root};
+use nsh_testing::{Headless, MemoryStorage, StubNetwork, StubResponse};
+use serde_json::{Value, json};
+
+const MESSAGES: &str = "POST https://api.anthropic.com/v1/messages";
+const GONE: Duration = Duration::from_secs(5);
+
+fn start(
+    entries: Vec<(String, String)>,
+    network: Option<Arc<StubNetwork>>,
+) -> (Headless, Arc<MemoryStorage>) {
+    let storage = MemoryStorage::new(entries);
+    let mut config = EngineConfig::new(Root::of::<App>());
+    config.storage = Some(storage.clone());
+    if let Some(network) = network {
+        config.network = Some(network);
+    }
+    let mut app = Headless::start(config).expect("the app starts");
+    app.wait_for("Log a meal").expect("Today shows");
+    (app, storage)
+}
+
+fn account(trusted: bool) -> Vec<(String, String)> {
+    let fingerprint = "anthropic|https://api.anthropic.com/v1|claude-opus-5-5";
+    let settings = json!({
+        "account": {
+            "provider": "anthropic",
+            "base_url": "https://api.anthropic.com/v1",
+            "model": "claude-opus-5-5"
+        },
+        "trusted": if trusted { vec![fingerprint] } else { vec![] },
+    });
+    vec![
+        ("settings.v1".to_owned(), settings.to_string()),
+        ("secret.model-key.v1".to_owned(), "sk-test-key".to_owned()),
+    ]
+}
+
+fn response(status: u16, body: Value) -> StubResponse {
+    let mut response = StubResponse::default();
+    response.status = status;
+    response.body = body.to_string().into_bytes();
+    response.delay = Duration::from_millis(40);
+    response
+}
+
+fn estimate() -> Value {
+    let answer = json!({
+        "title": "Beef noodle soup",
+        "foods": [
+            { "name": "Beef noodle soup", "grams": 480, "catalog_id": null, "confidence": "medium",
+              "per_100g": { "kcal": 92, "protein": 5.6, "carbs": 11.8, "fat": 2.6 } },
+            { "name": "White rice", "grams": 150, "catalog_id": "168878", "confidence": "high",
+              "per_100g": { "kcal": 1, "protein": 1, "carbs": 1, "fat": 1 } }
+        ]
+    });
+    json!({
+        "model": "claude-opus-5-5",
+        "stop_reason": "end_turn",
+        "content": [{ "type": "text", "text": answer.to_string() }]
+    })
+}
+
+fn network(status: u16, body: Value) -> Arc<StubNetwork> {
+    Arc::new(StubNetwork::new([(
+        MESSAGES.to_owned(),
+        response(status, body),
+    )]))
+}
+
+fn photo() -> Vec<u8> {
+    let image = RgbImage::from_fn(96, 72, |x, y| {
+        image::Rgb([(x * 2) as u8, (y * 3) as u8, 120])
+    });
+    let mut bytes = Cursor::new(Vec::new());
+    image.write_to(&mut bytes, ImageFormat::Png).expect("a PNG");
+    bytes.into_inner()
+}
+
+fn picks_a_photo(app: &mut Headless) {
+    let bytes = photo();
+    app.on_pick(move |_| {
+        vec![PickedFile::new(
+            "meal.png",
+            "image/png",
+            ImageData::new(bytes.clone()),
+        )]
+    });
+}
+
+fn today() -> Day {
+    Day(jiff::Timestamp::now()
+        .to_zoned(jiff::tz::TimeZone::UTC)
+        .date())
+}
+
+#[test]
+fn an_empty_day_explains_what_to_do() -> Result<(), String> {
+    let (app, _) = start(Vec::new(), None);
+    assert!(app.shows("No meals logged today"));
+    assert!(app.shows("Connect a vision model"));
+    assert!(app.shows("Nothing logged yet"));
+    Ok(())
+}
+
+#[test]
+fn logging_without_an_account_explains_the_setup() -> Result<(), String> {
+    let (mut app, _) = start(Vec::new(), None);
+    app.press("Log a meal")?;
+    app.wait_until("the setup sheet", GONE, |screen| {
+        screen.count("text:Set up…").unwrap_or(0) == 2
+    })?;
+    assert!(app.picks().is_empty(), "no picker without an account");
+    Ok(())
+}
+
+#[test]
+fn a_meal_added_by_hand_counts_toward_today() -> Result<(), String> {
+    let (mut app, storage) = start(Vec::new(), None);
+    app.press("label:Add manually")?;
+    app.wait_for("text:e.g. Beef noodle soup")?;
+    app.type_text("text:e.g. Beef noodle soup", "Rice")?;
+    app.type_text("label:Amount eaten", "250")?;
+    app.type_text("label:Energy", "130")?;
+    app.press("Done")?;
+    app.wait_for("text:Rice")?;
+    app.press("Save meal")?;
+    app.wait_for("text:325")?;
+    assert!(app.shows("Rice"));
+    let kept = storage
+        .entries()
+        .get("meals.v1")
+        .cloned()
+        .unwrap_or_default();
+    assert!(kept.contains("\"Rice\""), "the meal is kept: {kept}");
+    Ok(())
+}
+
+#[test]
+fn a_photo_is_sent_only_after_consent_and_becomes_editable_foods() -> Result<(), String> {
+    let stub = network(200, estimate());
+    let (mut app, _) = start(account(false), Some(stub.clone()));
+    picks_a_photo(&mut app);
+    app.press("Log a meal")?;
+    app.wait_for("Send this photo for analysis?")?;
+    assert!(app.shows("api.anthropic.com"));
+    assert!(stub.requests().is_empty(), "nothing is sent before consent");
+
+    app.press("Send photo")?;
+    app.wait_for("text:White rice")?;
+    let requests = stub.requests();
+    assert_eq!(requests.len(), 1);
+    let request = &requests[0];
+    let header = |name: &str| {
+        request
+            .headers
+            .iter()
+            .find(|(n, _)| n.eq_ignore_ascii_case(name))
+            .map(|(_, v)| v.clone())
+    };
+    assert_eq!(header("x-api-key").as_deref(), Some("sk-test-key"));
+    let body: Value = match &request.body {
+        nsh_core::platform::HttpBody::Bytes(bytes) => serde_json::from_slice(bytes).expect("JSON"),
+        _ => panic!("a JSON body"),
+    };
+    assert_eq!(
+        body["messages"][0]["content"][0]["source"]["media_type"],
+        "image/jpeg"
+    );
+
+    // 480 g × 92 + 150 g × 130 (the catalog's rice, not the model's 1) per 100 g.
+    assert!(app.shows("637"));
+    app.press("Save meal")?;
+    app.wait_for("text:Beef noodle soup")?;
+    app.wait_for("text:637")?;
+    Ok(())
+}
+
+#[test]
+fn declining_consent_sends_nothing() -> Result<(), String> {
+    let stub = network(200, estimate());
+    let (mut app, _) = start(account(false), Some(stub.clone()));
+    picks_a_photo(&mut app);
+    app.press("Log a meal")?;
+    app.wait_for("Send this photo for analysis?")?;
+    app.press("Cancel")?;
+    app.wait_for("Photo not sent")?;
+    assert!(stub.requests().is_empty());
+    assert!(app.shows("Send photo…"));
+    Ok(())
+}
+
+#[test]
+fn a_rejected_key_points_to_settings() -> Result<(), String> {
+    let stub = network(401, json!({ "error": { "message": "invalid x-api-key" } }));
+    let (mut app, _) = start(account(true), Some(stub));
+    picks_a_photo(&mut app);
+    app.press("Log a meal")?;
+    app.wait_for("The API key was rejected")?;
+    assert!(app.shows("Open settings…"));
+    assert!(app.shows("Add manually"));
+    Ok(())
+}
+
+#[test]
+fn deleting_a_meal_can_be_undone() -> Result<(), String> {
+    let meal = Meal {
+        id: "m1".into(),
+        day: today(),
+        logged_at_ms: jiff::Timestamp::now().as_millisecond(),
+        slot: MealSlot::Lunch,
+        title: Some("Tomato pasta".into()),
+        foods: vec![Food {
+            id: 7,
+            name: "Pasta".into(),
+            grams: 200.0,
+            per_100g: Nutrients::new(150.0, 5.0, 30.0, 1.0),
+            source: FoodSource::Manual,
+            confidence: None,
+            estimated_grams: None,
+        }],
+        photo: None,
+        model: None,
+    };
+    let (mut app, _) = start(vec![("meals.v1".to_owned(), encode_meals(&[meal]))], None);
+    app.wait_for("text:300")?;
+    app.press("Tomato pasta")?;
+    app.wait_for("Edit meal")?;
+    app.press("label:Delete meal")?;
+    app.wait_for("Meal deleted")?;
+    app.wait_for("No meals logged today")?;
+    app.press("Undo")?;
+    app.wait_for("Tomato pasta")?;
+    app.wait_for_gone("Meal deleted", GONE)?;
+    Ok(())
+}
+
+#[test]
+fn the_api_key_is_kept_apart_from_the_settings() -> Result<(), String> {
+    let (mut app, storage) = start(Vec::new(), None);
+    app.press("label:Settings")?;
+    app.wait_for("Vision model")?;
+    app.type_text("text:Paste your key", "sk-ant-secret")?;
+    app.press("Save")?;
+    app.wait_for("Log a meal")?;
+    app.wait_for_gone("Connect a vision model", GONE)?;
+    let entries = storage.entries();
+    assert_eq!(
+        entries.get("secret.model-key.v1").map(String::as_str),
+        Some("sk-ant-secret")
+    );
+    let settings = entries.get("settings.v1").cloned().unwrap_or_default();
+    assert!(settings.contains("claude-opus-5-5"));
+    assert!(
+        !settings.contains("sk-ant-secret"),
+        "the key never sits with the settings"
+    );
+    Ok(())
+}
