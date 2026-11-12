@@ -14,7 +14,7 @@ use nsh_core::{
     prelude::*,
 };
 
-use super::parts::{BOTTOM_BAR, bottom_bar, bottom_clearance};
+use super::parts::{BOTTOM_BAR, bottom_bar, bottom_clearance, status_bar};
 use crate::{
     data::{clock, photos, settings},
     i18n::s,
@@ -60,6 +60,7 @@ pub fn today_page() -> Screen {
     nav_page()
         .title(move || SharedString::from(s().today))
         .header_visible(false)
+        .status_bar(status_bar)
         .child(
             view()
                 .flex_1()

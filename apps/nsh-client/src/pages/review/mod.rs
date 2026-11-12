@@ -22,7 +22,7 @@ use self::{
     food_editor::food_editor,
 };
 use super::{
-    parts::{bottom_bar, bottom_clearance, top_bar},
+    parts::{bottom_bar, bottom_clearance, status_bar, top_bar},
     today::slot_name,
 };
 use crate::{
@@ -98,6 +98,7 @@ fn page(draft: Draft) -> Screen {
     nav_page()
         .title(move || SharedString::from(title(draft)))
         .header_visible(false)
+        .status_bar(status_bar)
         .pop_on_back(move || !draft.has_unsaved_work())
         .on_back_press(back)
         .child(
