@@ -14,6 +14,7 @@ use crate::{
     domain::{
         account::{AccountError, ModelAccount, Provider},
         format::{field_number, parse_number},
+        recognition::Lang,
     },
     i18n::s,
     nav,
@@ -132,7 +133,8 @@ pub fn settings_page() -> Screen {
                 Ok((model, seconds)) => Test::Passed(s().connected(&model, seconds)),
                 Err(failure) => {
                     let (title, body) = review_failure_copy(s(), &failure);
-                    Test::Failed(format!("{title}. {body}"))
+                    let stop = if s().lang == Lang::Zh { "。" } else { ". " };
+                    Test::Failed(format!("{title}{stop}{body}"))
                 }
             });
         })));
