@@ -415,3 +415,102 @@ fn dirty_record_can_be_kept_or_discarded_with_calendar_and_amount_validation() {
         .unwrap();
     assert_eq!(exact_balance(&source), rust_decimal::Decimal::ZERO);
 }
+
+#[test]
+fn undo_created_record_survives_tab_switch_and_updates_balance() {
+    let mut app = app();
+    let source = make_account(&mut app, "跨页撤销账户", "100");
+    go_tab(&mut app, "tab-ledger");
+    capture(&mut app, "支出", "12", &source, None, "撤销测试");
+    assert_eq!(exact_balance(&source), "88".parse().unwrap());
+    go_tab(&mut app, "tab-accounts");
+    root(&mut app);
+    app.wait_for("id:finance-undo-action").unwrap();
+    app.press("id:finance-undo-action").unwrap();
+    app.wait_for_gone("id:finance-undo-action", std::time::Duration::from_secs(5))
+        .unwrap();
+    assert_eq!(exact_balance(&source), "100".parse().unwrap());
+    let services = service();
+    assert!(
+        services
+            .runtime
+            .block_on(services.finance_records(
+                naviwealth_client::finance::RecordFilter {
+                    query: "撤销测试".into(),
+                    account_id: Some(source),
+                    ..Default::default()
+                },
+                10,
+                0
+            ))
+            .unwrap()
+            .is_empty()
+    );
+}
+
+#[test]
+fn today_capture_stays_in_place_with_receipt_and_delete_undo() {
+    let mut app = app();
+    let source = make_account(&mut app, "今日就地账户", "100");
+    go_tab(&mut app, "tab-today");
+    capture(&mut app, "支出", "13", &source, None, "今日就地回执");
+    let services = service();
+    let record = services
+        .runtime
+        .block_on(services.finance_records(
+            naviwealth_client::finance::RecordFilter {
+                query: "今日就地回执".into(),
+                ..Default::default()
+            },
+            10,
+            0,
+        ))
+        .unwrap()
+        .remove(0);
+    app.wait_for(&format!("id:today-record-{}", record.id))
+        .unwrap();
+    app.wait_for("id:finance-changed-fact").unwrap();
+    app.wait_for(&format!("id:record-highlight-{}", record.id))
+        .unwrap();
+    app.press(&format!("id:today-record-{}", record.id))
+        .unwrap();
+    app.wait_for("id:entry-delete").unwrap();
+    app.press("id:entry-delete").unwrap();
+    app.wait_for("id:finance-confirm-submit").unwrap();
+    app.press("id:finance-confirm-submit").unwrap();
+    app.wait_for("id:finance-undo-action").unwrap();
+    assert_eq!(exact_balance(&source), "100".parse().unwrap());
+    app.press("id:finance-undo-action").unwrap();
+    app.wait_for_gone("id:finance-undo-action", std::time::Duration::from_secs(5))
+        .unwrap();
+    assert_eq!(exact_balance(&source), "87".parse().unwrap());
+    assert!(
+        services
+            .runtime
+            .block_on(services.finance_record(&record.id))
+            .is_ok()
+    );
+}
+
+#[test]
+fn category_selection_is_announced_and_enter_submits() {
+    let mut app = app();
+    let source = make_account(&mut app, "键盘分类账户", "100");
+    go_tab(&mut app, "tab-ledger");
+    app.press("id:open-record").unwrap();
+    app.wait_for("id:record-ready").unwrap();
+    pick_account(&mut app, "record-account", &source);
+    let services = service();
+    let categories = services
+        .runtime
+        .block_on(services.finance_categories(naviwealth_client::finance::RecordKind::Expense))
+        .unwrap();
+    let selector = format!("id:record-category-{}", categories[1].0);
+    app.press(&selector).unwrap();
+    assert!(app.screen().selected(&selector).unwrap());
+    app.type_text("id:record-amount", "7").unwrap();
+    app.submit("id:record-amount").unwrap();
+    app.wait_for_gone("id:record-save", std::time::Duration::from_secs(5))
+        .unwrap();
+    assert_eq!(exact_balance(&source), "93".parse().unwrap());
+}

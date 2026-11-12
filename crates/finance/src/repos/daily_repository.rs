@@ -809,7 +809,7 @@ pub fn save(
     stamper: &MutationStamper,
     id: Option<&str>,
     draft: &RecordDraft,
-) -> Result<()> {
+) -> Result<String> {
     let tx = conn.savepoint()?;
     let previous = id
         .map(|id| record(&tx, &stamper.owner_user_id, id))
@@ -847,9 +847,9 @@ pub fn save(
     let fx = |conn: &Connection, from: &str, to: &str, as_of: i64| {
         crate::fx::rate_at(conn, from, to, as_of)
     };
-    journal::create_in_transaction(&tx, stamper, &fx, &base, entry, id)?;
+    let saved = journal::create_in_transaction(&tx, stamper, &fx, &base, entry, id)?;
     tx.commit()?;
-    Ok(())
+    Ok(saved.entry.id)
 }
 
 pub fn delete_record(conn: &mut Connection, stamper: &MutationStamper, id: &str) -> Result<()> {
@@ -858,6 +858,52 @@ pub fn delete_record(conn: &mut Connection, stamper: &MutationStamper, id: &str)
         return Err(invalid("请从原始交易、计划或对账详情撤销此记录"));
     }
     journal::soft_delete(conn, stamper, id)
+}
+
+/// Undo a deletion inside the undo window. Mirrors [`delete_record`]'s guard:
+/// structured records must still be corrected through their own workflow, and
+/// every referenced account must have survived the window.
+pub fn restore_record(conn: &mut Connection, stamper: &MutationStamper, id: &str) -> Result<()> {
+    let entry = journal::get(conn, id)?.ok_or_else(|| invalid("记录不存在或无法访问"))?;
+    if entry.entry.sync.owner_user_id != stamper.owner_user_id {
+        return Err(invalid("记录不存在或无法访问"));
+    }
+    if entry.entry.sync.deleted_at.is_none() {
+        return Ok(());
+    }
+    let structured = entry.entry.tag_ids.iter().any(|tag| {
+        tag.starts_with("wealth:")
+            || tag.starts_with("recurring:")
+            || tag.starts_with("liability:")
+            || tag.starts_with("reconciliation:")
+    });
+    if structured {
+        return Err(invalid("请从原始交易、计划或对账详情撤销此记录"));
+    }
+    // get() intentionally excludes tombstoned postings. Only this deletion's
+    // version may be restored; older versions belong to superseded edits.
+    let account_ids = {
+        let mut stmt = conn.prepare_cached(
+            r#"SELECT account_id FROM "fin:postings" WHERE journal_entry_id = ?1
+               AND owner_user_id = ?2 AND hlc = ?3 AND deleted_at IS NOT NULL"#,
+        )?;
+        stmt.query_map(
+            params![id, stamper.owner_user_id, entry.entry.sync.hlc],
+            |row| row.get::<_, String>(0),
+        )?
+        .collect::<std::result::Result<Vec<_>, _>>()?
+    };
+    if account_ids.len() != 2 {
+        return Err(invalid("记录分录尚未同步完整，请刷新后重试"));
+    }
+    for account_id in &account_ids {
+        if !accounts::get(conn, account_id)?.is_some_and(|account| {
+            account.sync.owner_user_id == stamper.owner_user_id && account.sync.deleted_at.is_none()
+        }) {
+            return Err(invalid("记录引用的账户已被删除，无法恢复"));
+        }
+    }
+    journal::restore(conn, stamper, id)
 }
 
 pub fn update_account(

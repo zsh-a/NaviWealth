@@ -22,6 +22,11 @@ pub use state::{Services, enable_test_mode, is_test_mode};
 #[derive(Clone, Copy)]
 pub(crate) struct ShellTab(pub Signal<u8>);
 
+/// Bumped by the workspace capture button; the Today and Ledger panes open
+/// their own editor in place when their tab is the selected one.
+#[derive(Clone, Copy)]
+pub(crate) struct CaptureIntent(pub Signal<u64>);
+
 #[derive(Clone, Copy)]
 pub(crate) struct FinanceNavigation {
     pub account: Signal<String>,
@@ -100,6 +105,12 @@ fn app_shell(services: std::sync::Arc<Services>) -> impl IntoElement {
     let feedback = signal(String::new());
     provide_context(finance_ui::Feedback(feedback));
     provide_context(finance_ui::ChangedFact(signal(None)));
+    provide_context(finance_ui::UndoOffer {
+        pending: signal(None),
+        busy: signal(false),
+        error: signal(String::new()),
+    });
+    provide_context(CaptureIntent(signal(0)));
     effect(move || {
         let current = feedback.get();
         if !current.is_empty() {
@@ -121,7 +132,7 @@ fn app_shell(services: std::sync::Arc<Services>) -> impl IntoElement {
                         .flex_1()
                         .pt_safe_area()
                         .bg(move || theme().background)
-                        .child(workspace_header())
+                        .child(workspace_header(selected))
                         .child(
                             view()
                                 .flex_1()
@@ -151,10 +162,8 @@ fn app_shell(services: std::sync::Arc<Services>) -> impl IntoElement {
                                 ),
                         )
                         .child(tab_bar(selected))
-                        .child(when(
-                            move || selected.get() == 1,
-                            || finance_ui::feedback_overlay(74.0),
-                        )),
+                        .child(finance_ui::feedback_overlay(62.0))
+                        .child(finance_ui::undo_pill(62.0)),
                 ),
         )
         .child(each(
@@ -192,18 +201,27 @@ fn app_shell(services: std::sync::Arc<Services>) -> impl IntoElement {
                             .flex_1()
                             .pt_safe_area()
                             .bg(move || theme().background)
-                            .child(render_route(route.get())),
+                            .child(render_route(route.get()))
+                            .child(finance_ui::undo_pill(16.0)),
                     )
             },
         ))
 }
-fn workspace_header() -> AnyElement {
+/// The top workspace: one full-width quiet bar owning capture. The dock rule
+/// keeps 记一笔 on the two capture surfaces (Today / Ledger) and out of the
+/// way on Wealth / Plan.
+fn workspace_header(selected: Signal<u8>) -> AnyElement {
+    let intent = use_context::<CaptureIntent>().expect("capture intent");
     view()
         .flex_row()
         .items_center()
         .px_4()
-        .min_h(px(44.0))
+        .pt_1()
+        .min_h(px(64.0))
         .gap_1()
+        .bg(move || theme().card)
+        .border_b_1()
+        .border_color(move || theme().border)
         .child(
             view()
                 .role(AccessibilityRole::Button)
@@ -213,11 +231,21 @@ fn workspace_header() -> AnyElement {
                 .on_press(|| finance_ui::navigate("/domains"))
                 .child(
                     text("FinanceOS")
-                        .text_size(px(14.0))
-                        .font_weight(FontWeight::SEMIBOLD)
-                        .text_color(move || theme().primary),
+                        .text_size(px(15.0))
+                        .font_weight(FontWeight::MEDIUM),
                 ),
         )
+        .child(when(
+            move || selected.get() == 0 || selected.get() == 1,
+            move || {
+                ui::primary_button(
+                    "记一笔",
+                    move || intent.0.update(|v| *v += 1),
+                    "open-record",
+                    None,
+                )
+            },
+        ))
         .child(ui::icon_button(
             ui::Icon::Chat,
             "财务助手",
@@ -246,7 +274,7 @@ fn tab_item(
             selected.set(index);
         })
         .flex_1()
-        .min_h(px(58.0))
+        .min_h(px(52.0))
         .items_center()
         .justify_center()
         .child(
@@ -254,6 +282,21 @@ fn tab_item(
                 .test_id(id)
                 .items_center()
                 .gap_1()
+                .child(
+                    // The short selection line replaces a filled pill.
+                    view()
+                        .w(px(18.0))
+                        .h(px(2.0))
+                        .rounded(px(1.0))
+                        .bg(move || theme().foreground)
+                        .opacity(move || {
+                            if selected.get() == index {
+                                1.0_f32
+                            } else {
+                                0.0_f32
+                            }
+                        }),
+                )
                 .child(
                     ui::icon(match index {
                         0 => ui::Icon::Today,
@@ -263,7 +306,7 @@ fn tab_item(
                     })
                     .text_color(move || {
                         if selected.get() == index {
-                            theme().primary
+                            theme().foreground
                         } else {
                             theme().muted_foreground
                         }
@@ -275,7 +318,7 @@ fn tab_item(
                         .font_weight(FontWeight::MEDIUM)
                         .text_color(move || {
                             if selected.get() == index {
-                                theme().primary
+                                theme().foreground
                             } else {
                                 theme().muted_foreground
                             }
@@ -285,7 +328,7 @@ fn tab_item(
 }
 fn tab_bar(selected: Signal<u8>) -> impl IntoElement {
     view()
-        .pb_safe_area_plus(px(4.0))
+        .pb_safe_area_plus(px(2.0))
         .border_t_1()
         .border_color(move || theme().border)
         .bg(move || theme().card)

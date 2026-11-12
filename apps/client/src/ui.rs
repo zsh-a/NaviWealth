@@ -10,7 +10,21 @@ use nsh_core::prelude::*;
 
 /// Radius token accessor (`radius-card` with a safe fallback).
 pub fn card_radius() -> f32 {
-    theme().number("radius-card").unwrap_or(14.0)
+    theme().number("radius-card").unwrap_or(18.0)
+}
+/// Field corner radius (`radius-field`).
+pub fn field_radius() -> f32 {
+    theme().number("radius-field").unwrap_or(9.0)
+}
+/// Row highlight corner radius (`radius-row`).
+pub fn row_radius() -> f32 {
+    theme().number("radius-row").unwrap_or(7.0)
+}
+
+/// Keyboard focus ring: a 2px steel outline outside the border, taking no
+/// space. Shared so every press target rings the same way.
+pub fn focus_ring(s: nsh_core::element::StyleRefinement) -> nsh_core::element::StyleRefinement {
+    s.outline(px(2.0)).outline_color(move || theme().ring)
 }
 
 /// Primary action button (commit intent). `test_id` may be empty; pass a
@@ -112,17 +126,14 @@ fn action_button(
             s.opacity(0.82)
                 .scale(if reduce_motion() { 1.0 } else { 0.985 })
         })
+        .focus(focus_ring)
         .transition_transform()
         .duration(if reduce_motion() { 0.0 } else { 100.0 })
         .ease_out()
         .child(
             text(label)
-                .text_size(px(14.0))
-                .font_weight(if primary {
-                    FontWeight::SEMIBOLD
-                } else {
-                    FontWeight::NORMAL
-                })
+                .text_size(px(13.0))
+                .font_weight(FontWeight::MEDIUM)
                 .text_color(move || {
                     if primary {
                         theme().primary_foreground
@@ -173,6 +184,7 @@ pub fn state_button(
         .px(px(12.0))
         .min_h(px(48.0))
         .active(|s| s.opacity(0.75))
+        .focus(focus_ring)
         .child(text(label).text_sm().text_color(fg));
     if test_id.is_empty() {
         b
@@ -181,8 +193,8 @@ pub fn state_button(
     }
 }
 
-/// A small selectable chip (category/account pickers). `selected` is read
-/// reactively so the highlight follows the pick.
+/// A small selectable chip. Selected reads as the quiet wash + ink; no
+/// shared track behind the group.
 pub fn chip(
     label: String,
     selected: impl Fn() -> bool + Clone + 'static,
@@ -198,15 +210,16 @@ pub fn chip(
         .py(px(6.0))
         .bg(move || {
             if selected_bg() {
-                theme().primary
+                crate::finance_ui::wash()
             } else {
                 theme().muted
             }
         })
         .active(|s| s.opacity(0.75))
+        .focus(focus_ring)
         .child(text(label).text_sm().text_color(move || {
             if selected_text() {
-                theme().primary_foreground
+                theme().foreground
             } else {
                 theme().muted_foreground
             }
@@ -218,8 +231,21 @@ pub fn themed_input() -> nsh_core::element::Input {
     input()
         .text_color(move || theme().foreground)
         .placeholder_color(move || color(theme().muted_foreground))
-        .caret_color(move || color(theme().primary))
-        .selection_color(move || color(theme().secondary))
+        .caret_color(move || color(theme().ring))
+        .selection_color(move || color(theme().accent))
+        .focus(focus_ring)
+}
+
+/// Shared geometry for form fields: canvas fill, field radius, visible focus.
+fn field_input(input: nsh_core::element::Input) -> nsh_core::element::Input {
+    input
+        .min_h(px(48.0))
+        .px(px(12.0))
+        .rounded(move || px(field_radius()))
+        .bg(move || theme().background)
+        .border_1()
+        .border_color(move || theme().border)
+        .text_base()
 }
 
 /// Labeled single-line field.
@@ -231,19 +257,37 @@ pub fn text_field(
 ) -> impl IntoElement {
     labeled(
         label,
-        themed_input()
-            .label(label)
-            .value(value)
-            .on_change(move |text: &str| value.set(text.to_owned()))
-            .placeholder(placeholder)
-            .min_h(px(48.0))
-            .px(px(12.0))
-            .rounded(move || theme().radius)
-            .bg(move || theme().card)
-            .border_1()
-            .border_color(move || theme().border)
-            .text_base()
-            .test_id(test_id),
+        field_input(
+            themed_input()
+                .label(label)
+                .value(value)
+                .on_change(move |text: &str| value.set(text.to_owned()))
+                .placeholder(placeholder),
+        )
+        .test_id(test_id),
+    )
+}
+
+/// [`text_field`] where Enter runs the form's primary action, so the last
+/// step stays on the keyboard.
+pub fn text_field_submit(
+    label: &'static str,
+    placeholder: &'static str,
+    value: Signal<String>,
+    test_id: &'static str,
+    on_submit: impl Fn() + 'static,
+) -> impl IntoElement {
+    labeled(
+        label,
+        field_input(
+            themed_input()
+                .label(label)
+                .value(value)
+                .on_change(move |text: &str| value.set(text.to_owned()))
+                .placeholder(placeholder)
+                .on_submit(move |_: &str| on_submit()),
+        )
+        .test_id(test_id),
     )
 }
 
@@ -256,20 +300,15 @@ pub fn secret_field(
 ) -> impl IntoElement {
     labeled(
         label,
-        themed_input()
-            .label(label)
-            .value(value)
-            .on_change(move |text: &str| value.set(text.to_owned()))
-            .placeholder(placeholder)
-            .masked(true)
-            .min_h(px(48.0))
-            .px(px(12.0))
-            .rounded(move || theme().radius)
-            .bg(move || theme().card)
-            .border_1()
-            .border_color(move || theme().border)
-            .text_base()
-            .test_id(test_id),
+        field_input(
+            themed_input()
+                .label(label)
+                .value(value)
+                .on_change(move |text: &str| value.set(text.to_owned()))
+                .placeholder(placeholder)
+                .masked(true),
+        )
+        .test_id(test_id),
     )
 }
 
@@ -355,6 +394,7 @@ pub enum Icon {
     Transfer,
     Income,
     Expense,
+    Check,
 }
 
 pub fn icon(kind: Icon) -> impl Element {
@@ -382,6 +422,7 @@ pub fn icon(kind: Icon) -> impl Element {
         Icon::Transfer => "<path d='M4 8h16m-4-4 4 4-4 4M20 16H4m4-4-4 4 4 4'/>",
         Icon::Income => "<path d='M12 4v16m-6-6 6 6 6-6'/>",
         Icon::Expense => "<path d='M12 20V4m-6 6 6-6 6 6'/>",
+        Icon::Check => "<path d='m5 13 4.5 4.5L19 7'/>",
     };
     svg(nsh_core::element::ImageSrc::svg_markup(&format!(
         "<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'>{path}</svg>"
@@ -414,23 +455,25 @@ pub fn choice_button(
         .min_h(px(48.0))
         .px_3()
         .py_2()
-        .rounded(px(12.0))
+        .rounded(move || px(theme().number("radius").unwrap_or(10.0)))
         .items_center()
         .justify_center()
         .bg(move || {
             if bg() {
-                theme().secondary
+                crate::finance_ui::wash()
             } else {
                 theme().card
             }
         })
+        .active(|s| s.opacity(0.8))
+        .focus(focus_ring)
         .child(
             text(label.into())
                 .text_sm()
                 .font_weight(FontWeight::MEDIUM)
                 .text_color(move || {
                     if selected() {
-                        theme().secondary_foreground
+                        theme().foreground
                     } else {
                         theme().muted_foreground
                     }
@@ -449,7 +492,7 @@ pub fn interactive_scroll() -> nsh_core::element::Scroll {
 /// Shared native sheet: dim the underlying task and reserve system navigation space
 /// in each content footer. nsh-base sheets are deliberately unstyled.
 pub fn app_sheet() -> nsh_base::SheetElement {
-    nsh_base::sheet().backdrop_style(|s| s.bg(hsla(0.0, 0.0, 0.0, 0.32)))
+    nsh_base::sheet().backdrop_style(|s| s.bg(hsla(0.0, 0.0, 0.0, 0.36)))
 }
 
 /// Compact field which opens a scrollable choice sheet on touch screens.
@@ -485,6 +528,7 @@ pub fn select_field(
                 .gap_3()
                 .px_4()
                 .py_3()
+                .focus(focus_ring)
                 .child(text(label).text_base())
                 .child(
                     text(selected_label)
@@ -557,6 +601,7 @@ pub fn danger_button(
         .rounded(move || theme().radius)
         .items_center()
         .justify_center()
+        .focus(focus_ring)
         .bg(move || theme().destructive)
         .child(
             text(label.into())
@@ -587,11 +632,12 @@ pub fn icon_button(
         .h(px(48.0))
         .items_center()
         .justify_center()
-        .rounded(px(12.0))
+        .rounded(move || px(theme().number("radius").unwrap_or(10.0)))
         .active(|s| {
             s.opacity(0.65)
                 .scale(if reduce_motion() { 1.0 } else { 0.96 })
         })
+        .focus(focus_ring)
         .transition_transform()
         .duration(if reduce_motion() { 0.0 } else { 100.0 })
         .ease_out()

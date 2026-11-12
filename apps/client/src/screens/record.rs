@@ -221,6 +221,7 @@ impl Form {
         edit: Option<String>,
         open: Signal<bool>,
         reload: Signal<u64>,
+        source: &'static str,
     ) {
         if self.saving.get() || self.loading.get() {
             return;
@@ -273,15 +274,26 @@ impl Form {
         };
         self.saving.set(true);
         self.error.set(String::new());
+        let created = edit.is_none();
         let state = self.clone();
         spawn(async move {
             match services.save_finance_record(edit, draft).await {
-                Ok(()) => {
+                Ok(id) => {
                     state.saving.set(false);
-                    crate::finance_ui::notice("记录已保存，账户余额和预算已更新");
-                    crate::finance_ui::acknowledge(
-                        "/activity",
-                        "这笔记录已计入本月收支；余额与分类预算已更新。",
+                    if created {
+                        // The undo pill owns the bottom slot for the window.
+                        crate::finance_ui::offer_undo(
+                            id.clone(),
+                            "记录已保存，余额与预算已更新",
+                            crate::finance_ui::UndoAction::Remove,
+                        );
+                    } else {
+                        crate::finance_ui::notice("记录已保存，账户余额和预算已更新");
+                    }
+                    crate::finance_ui::acknowledge_fact(
+                        source,
+                        "记录已保存；余额与分类预算已更新。若列表未显示，请检查日期和筛选。",
+                        Some(id),
                     );
                     reload.update(|v| *v += 1);
                     open.set(false);
@@ -299,14 +311,16 @@ pub fn record_dialog(
     services: Arc<Services>,
     open: Signal<bool>,
     reload: Signal<u64>,
+    source: &'static str,
 ) -> impl IntoElement {
-    record_editor(services, open, reload, signal(None))
+    record_editor(services, open, reload, signal(None), source)
 }
 pub fn record_editor(
     services: Arc<Services>,
     open: Signal<bool>,
     reload: Signal<u64>,
     edit: Signal<Option<String>>,
+    source: &'static str,
 ) -> impl IntoElement {
     let state = Form::new();
     when(
@@ -323,110 +337,147 @@ pub fn record_editor(
             let fields_services = services.clone();
             let submit = state.clone();
             let save_services = services.clone();
+            let submit_edit = edit;
+            let submit_open = open;
+            let submit_reload = reload;
+            let submit_source = source;
+            let submit_action = move || {
+                submit.submit(
+                    save_services.clone(),
+                    submit_edit.get(),
+                    submit_open,
+                    submit_reload,
+                    submit_source,
+                )
+            };
+            let fields_submit = submit_action.clone();
             let cancel_button = state.clone();
             let guard = state.clone();
             let close = state.clone();
             dialog()
                 .on_cancel(move || cancel.cancel(open))
                 .flex_1()
-                .bg(move || theme().background)
+                .bg(hsla(0.0, 0.0, 0.0, 0.36))
+                .pt_safe_area_plus(px(12.0))
                 .child(
                     view()
-                        .flex_row()
-                        .items_center()
-                        .gap_3()
-                        .px_5()
-                        .pt_safe_area_plus(px(12.0))
-                        .pb_3()
-                        .child(ui::secondary_button(
-                            "取消",
-                            move || cancel_button.cancel(open),
-                            "record-cancel",
-                            None,
-                        ))
-                        .child(
-                            text(title)
-                                .text_lg()
-                                .font_weight(FontWeight::SEMIBOLD)
-                                .flex_1(),
-                        ),
-                )
-                .child(
-                    ui::interactive_scroll().flex_1().child(
-                        view()
-                            .p_5()
-                            .gap_5()
-                            .child(when(
-                                move || state.loading.get(),
-                                || {
-                                    text("正在读取账户…")
-                                        .text_color(move || theme().muted_foreground)
-                                },
-                            ))
-                            .child(when(
-                                move || !state.loading.get(),
-                                move || form_fields(fields_state.clone(), fields_services.clone()),
-                            )),
-                    ),
-                )
-                .child(
-                    view()
-                        .px_5()
-                        .pt_3()
-                        .pb_safe_area_plus(px(16.0))
-                        .child(ui::primary_button(
-                            "保存记录",
-                            move || submit.submit(save_services.clone(), edit.get(), open, reload),
-                            "record-save",
-                            Some(state.saving),
-                        )),
-                )
-                .child(
-                    ui::app_sheet()
-                        .open(move || Some(guard.discard.get()))
-                        .on_open_change(move |e: &SheetEvent| {
-                            if let SheetEvent::OpenChange(next, _) = e {
-                                close.discard.set(*next);
-                            }
-                        })
+                        .flex_1()
+                        .rounded(move || px(ui::card_radius()))
+                        .overflow_hidden()
+                        .bg(move || theme().card)
                         .child(
                             view()
-                                .p_5()
-                                .pb_safe_area_plus(px(20.0))
-                                .gap_4()
-                                .bg(move || theme().background)
-                                .child(
-                                    text("放弃未保存的修改？")
-                                        .text_lg()
-                                        .font_weight(FontWeight::SEMIBOLD),
-                                )
-                                .child(
-                                    text("返回后，本次填写的内容将不会保存。")
-                                        .text_base()
-                                        .text_color(move || theme().muted_foreground),
-                                )
+                                .flex_row()
+                                .items_center()
+                                .gap_3()
+                                .px_5()
+                                .pt_safe_area_plus(px(12.0))
+                                .pb_3()
                                 .child(ui::secondary_button(
-                                    "继续填写",
-                                    move || state.discard.set(false),
-                                    "record-keep",
+                                    "取消",
+                                    move || cancel_button.cancel(open),
+                                    "record-cancel",
                                     None,
                                 ))
-                                .child(ui::primary_button(
-                                    "放弃修改",
-                                    move || {
-                                        state.discard.set(false);
-                                        open.set(false);
-                                    },
-                                    "record-discard",
-                                    None,
-                                )),
+                                .child(
+                                    text(title)
+                                        .text_lg()
+                                        .font_weight(FontWeight::SEMIBOLD)
+                                        .flex_1(),
+                                ),
+                        )
+                        .child(
+                            ui::interactive_scroll().flex_1().child(
+                                view()
+                                    .p_5()
+                                    .gap_5()
+                                    .child(when(
+                                        move || state.loading.get(),
+                                        || {
+                                            text("正在读取账户…")
+                                                .text_color(move || theme().muted_foreground)
+                                        },
+                                    ))
+                                    .child(when(
+                                        move || !state.loading.get(),
+                                        move || {
+                                            form_fields(
+                                                fields_state.clone(),
+                                                fields_services.clone(),
+                                                fields_submit.clone(),
+                                            )
+                                        },
+                                    )),
+                            ),
+                        )
+                        .child(view().px_5().pt_3().pb_safe_area_plus(px(16.0)).child(
+                            ui::primary_button(
+                                "保存记录",
+                                submit_action,
+                                "record-save",
+                                Some(state.saving),
+                            ),
+                        ))
+                        .child(
+                            ui::app_sheet()
+                                .open(move || Some(guard.discard.get()))
+                                .on_open_change(move |e: &SheetEvent| {
+                                    if let SheetEvent::OpenChange(next, _) = e {
+                                        close.discard.set(*next);
+                                    }
+                                })
+                                .child(
+                                    view()
+                                        .p_5()
+                                        .pb_safe_area_plus(px(20.0))
+                                        .gap_4()
+                                        .bg(move || theme().card)
+                                        .child(
+                                            text("放弃未保存的修改？")
+                                                .text_lg()
+                                                .font_weight(FontWeight::SEMIBOLD),
+                                        )
+                                        .child(
+                                            text("返回后，本次填写的内容将不会保存。")
+                                                .text_base()
+                                                .text_color(move || theme().muted_foreground),
+                                        )
+                                        .child(ui::primary_button(
+                                            "继续填写",
+                                            move || state.discard.set(false),
+                                            "record-keep",
+                                            None,
+                                        ))
+                                        .child(
+                                            view()
+                                                .role(AccessibilityRole::Button)
+                                                .label("放弃修改")
+                                                .test_id("record-discard")
+                                                .min_h(px(48.0))
+                                                .items_center()
+                                                .justify_center()
+                                                .on_press(move || {
+                                                    state.discard.set(false);
+                                                    open.set(false);
+                                                })
+                                                .child(
+                                                    text("放弃修改")
+                                                        .text_sm()
+                                                        .text_color(move || theme().destructive),
+                                                ),
+                                        ),
+                                ),
                         ),
                 )
         },
     )
 }
 
-fn form_fields(state: Form, services: Arc<Services>) -> impl IntoElement {
+fn form_fields(
+    state: Form,
+    services: Arc<Services>,
+    submit_action: impl Fn() + Clone + 'static,
+) -> impl IntoElement {
     let source = state.clone();
     let cross = state.clone();
     let received = state.received;
@@ -435,6 +486,9 @@ fn form_fields(state: Form, services: Arc<Services>) -> impl IntoElement {
     let keyboard_kind = state.kind;
     let amount_state = state.clone();
     let amount_currency = state.clone();
+    let amount_submit = submit_action.clone();
+    let payee_submit = submit_action.clone();
+    let note_submit = submit_action.clone();
 
     view()
         .test_id("record-ready")
@@ -470,6 +524,7 @@ fn form_fields(state: Form, services: Arc<Services>) -> impl IntoElement {
                             ui::themed_input()
                                 .value(amount_state.amount)
                                 .on_change(move |v: &str| amount_state.amount.set(v.to_owned()))
+                                .on_submit(move |_: &str| amount_submit())
                                 .keyboard_type(move || {
                                     if keyboard_kind.get() == RecordKind::OpeningBalance {
                                         KeyboardType::Numeric
@@ -511,14 +566,7 @@ fn form_fields(state: Form, services: Arc<Services>) -> impl IntoElement {
                         source.kind.get() != RecordKind::Transfer
                             && source.kind.get() != RecordKind::OpeningBalance
                     },
-                    move || {
-                        ui::select_field(
-                            "分类",
-                            source.categories,
-                            source.category,
-                            "record-category",
-                        )
-                    },
+                    move || category_grid(source.clone()),
                 ))
                 .child(when(
                     move || dest.kind.get() == RecordKind::Transfer,
@@ -548,19 +596,114 @@ fn form_fields(state: Form, services: Arc<Services>) -> impl IntoElement {
             "record-date",
             state.date,
         ))
-        .child(ui::text_field(
+        .child(ui::text_field_submit(
             "对方",
             "商家或付款方（可选）",
             state.payee,
             "record-payee",
+            payee_submit,
         ))
-        .child(ui::text_field(
+        .child(ui::text_field_submit(
             "备注",
             "给这笔记录补充一点信息",
             state.note,
             "record-note",
+            note_submit,
         ))
         .child(ui::error_line(state.error))
+}
+
+/// Category choices as four independent cells: the selection is a quiet wash
+/// plus a small steel check replacing the label's leading mark — no shared
+/// track, no raised inset, no shadow.
+fn category_grid(state: Form) -> AnyElement {
+    view()
+        .test_id("record-category")
+        .grid()
+        .grid_cols(4)
+        .gap(px(6.0))
+        .child(each(
+            move || state.categories.get(),
+            |c: &(String, String)| c.0.clone(),
+            move |item: ReadSignal<(String, String)>, _| {
+                let (value, label) = item.get();
+                category_cell(state.clone(), value, label)
+            },
+        ))
+        .into_element()
+}
+
+fn category_cell(state: Form, value: String, label: String) -> impl IntoElement {
+    let selected = state.clone();
+    let check = state.clone();
+    let semantic = state.clone();
+    let semantic_value = value.clone();
+    let press = state.clone();
+    let press_value = value.clone();
+    let bg_value = value.clone();
+    let text_value = value.clone();
+    view()
+        .role(AccessibilityRole::Button)
+        .label(format!("{label}分类选项"))
+        .accessibility_state(move || AccessibilityState {
+            selected: semantic.category.get() == semantic_value,
+            ..Default::default()
+        })
+        .test_id(&format!("record-category-{}", value))
+        .on_press(move || press.category.set(press_value.clone()))
+        .flex_1()
+        .min_h(px(48.0))
+        .min_w(px(48.0))
+        .px_2()
+        .py_2()
+        .items_center()
+        .justify_center()
+        .gap_1()
+        .rounded(move || px(theme().number("radius").unwrap_or(10.0)))
+        .bg(move || {
+            if selected.category.get() == bg_value {
+                crate::finance_ui::wash()
+            } else {
+                theme().card
+            }
+        })
+        .active(|s| s.opacity(0.8))
+        .focus(ui::focus_ring)
+        .child(dynamic(move || {
+            let active = check.category.get() == value;
+            let opacity = animated_value(1.0);
+            if !reduce_motion() {
+                opacity.set(0.0);
+                opacity.timing(1.0, 120.0, Easing::Bezier(0.16, 1.0, 0.3, 1.0));
+            }
+            ui::icon(if active {
+                ui::Icon::Check
+            } else {
+                ui::Icon::Expense
+            })
+            .w(px(17.0))
+            .h(px(17.0))
+            .text_color(move || {
+                if active {
+                    theme().ring
+                } else {
+                    theme().muted_foreground
+                }
+            })
+            .bind_opacity(&opacity)
+        }))
+        .child(
+            text(label)
+                .text_size(px(12.0))
+                .font_weight(FontWeight::MEDIUM)
+                .text_color(move || {
+                    if selected.category.get() == text_value {
+                        theme().foreground
+                    } else {
+                        theme().muted_foreground
+                    }
+                }),
+        )
 }
 
 fn kind_switch(state: Form, services: Arc<Services>) -> impl IntoElement {

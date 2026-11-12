@@ -269,6 +269,42 @@ pub fn soft_delete(conn: &mut Connection, stamper: &MutationStamper, entry_id: &
     Ok(())
 }
 
+/// Undo a tombstone: the entry and its postings become live again under a
+/// fresh stamp, so last-writer-wins carries the restoration to other devices.
+/// Only the outbox pointers are re-enqueued; sync resolves the rest.
+pub fn restore(conn: &mut Connection, stamper: &MutationStamper, entry_id: &str) -> Result<()> {
+    let tx = conn.savepoint()?;
+    let deleted_hlc: String = tx.query_row(
+        &format!(r#"SELECT hlc FROM "{JOURNAL_ENTRIES_TABLE}" WHERE id = ?1 AND owner_user_id = ?2 AND deleted_at IS NOT NULL"#),
+        params![entry_id, stamper.owner_user_id], |row| row.get(0),
+    )?;
+    let stamp = stamper.stamp(&tx)?;
+    let restored_at = stamp.now.div_euclid(1000);
+    tx.execute(
+        &format!(r#"UPDATE "{JOURNAL_ENTRIES_TABLE}" SET deleted_at = NULL, hlc = ?2, updated_by_device = ?3, updated_at = ?4 WHERE id = ?1 AND owner_user_id = ?5 AND deleted_at IS NOT NULL"#),
+        params![entry_id, stamp.hlc, stamp.device_id, restored_at, stamper.owner_user_id],
+    )?;
+    tx.execute(
+        &format!(r#"UPDATE "{POSTINGS_TABLE}" SET deleted_at = NULL, hlc = ?2, updated_by_device = ?3, updated_at = ?4 WHERE journal_entry_id = ?1 AND owner_user_id = ?5 AND deleted_at IS NOT NULL AND hlc = ?6"#),
+        params![entry_id, stamp.hlc, stamp.device_id, restored_at, stamper.owner_user_id, deleted_hlc],
+    )?;
+    outbox::enqueue(&tx, JOURNAL_ENTRIES_TABLE, entry_id)?;
+    let ids: Vec<String> = {
+        let mut stmt = tx.prepare_cached(&format!(
+            r#"SELECT id FROM "{POSTINGS_TABLE}" WHERE journal_entry_id = ?1 AND owner_user_id = ?2"#
+        ))?;
+        stmt.query_map(params![entry_id, stamper.owner_user_id], |row| {
+            row.get::<_, String>(0)
+        })?
+        .collect::<std::result::Result<Vec<_>, _>>()?
+    };
+    for id in ids {
+        outbox::enqueue(&tx, POSTINGS_TABLE, &id)?;
+    }
+    tx.commit()?;
+    Ok(())
+}
+
 fn tombstone_postings(
     conn: &Connection,
     stamper: &MutationStamper,

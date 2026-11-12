@@ -10,13 +10,75 @@ use std::{collections::BTreeMap, future::Future, pin::Pin, rc::Rc, sync::Arc};
 pub(crate) struct Navigation(pub Signal<Vec<String>>);
 #[derive(Clone, Copy)]
 pub(crate) struct Feedback(pub Signal<String>);
+
+/// One acknowledged change: where its receipt lives, what it says, and the
+/// record whose row should light up beside the message.
+#[derive(Clone, PartialEq)]
+pub struct Fact {
+    pub path: String,
+    pub message: String,
+    pub record_id: Option<String>,
+}
 #[derive(Clone, Copy)]
-pub(crate) struct ChangedFact(pub Signal<Option<(String, String)>>);
+pub(crate) struct ChangedFact(pub Signal<Option<Fact>>);
+
+/// The quiet-workspace wash (theme.json custom role; soft as the fallback).
+pub fn wash() -> AdaptiveColor {
+    theme().color("wash").unwrap_or_else(|| theme().secondary)
+}
+pub fn warning() -> AdaptiveColor {
+    theme()
+        .color("warning")
+        .unwrap_or_else(|| theme().destructive)
+}
+pub fn data_investment() -> AdaptiveColor {
+    theme()
+        .color("data-investment")
+        .unwrap_or_else(|| theme().primary)
+}
+
+pub fn gain() -> AdaptiveColor {
+    theme().color("up").unwrap_or_else(|| theme().foreground)
+}
+pub fn record_color(kind: crate::finance::RecordKind) -> AdaptiveColor {
+    match kind {
+        crate::finance::RecordKind::Income => gain(),
+        crate::finance::RecordKind::Expense => theme().destructive,
+        _ => theme().foreground,
+    }
+}
+pub fn data_cash() -> AdaptiveColor {
+    theme()
+        .color("data-cash")
+        .unwrap_or_else(|| theme().muted_foreground)
+}
+
+/// Page gutter: 22px, 18px below 370 CSS px.
+pub fn page_px() -> impl Fn() -> f32 + Clone + 'static {
+    move || {
+        if window().width.0 <= 370.0 {
+            18.0
+        } else {
+            22.0
+        }
+    }
+}
 
 /// Keep the receipt beside the financial facts it changed, until the next task.
 pub fn acknowledge(path: impl Into<String>, message: impl Into<String>) {
+    acknowledge_fact(path, message, None);
+}
+pub fn acknowledge_fact(
+    path: impl Into<String>,
+    message: impl Into<String>,
+    record_id: Option<String>,
+) {
     if let Some(fact) = use_context::<ChangedFact>() {
-        fact.0.set(Some((path.into(), message.into())));
+        fact.0.set(Some(Fact {
+            path: path.into(),
+            message: message.into(),
+            record_id,
+        }));
     }
 }
 pub fn clear_acknowledgement() {
@@ -27,9 +89,10 @@ pub fn clear_acknowledgement() {
 pub fn changed_fact(path: String, body: impl IntoElement) -> AnyElement {
     let fact = use_context::<ChangedFact>();
     let receipt_path = path.clone();
+    let probe_path = path.clone();
     view()
         .child(when(
-            move || fact.is_some_and(|f| f.0.get().is_some_and(|(p, _)| p == path)),
+            move || fact.is_some_and(|f| f.0.get().is_some_and(|p| p.path == probe_path)),
             move || {
                 let opacity = animated_value(0.75);
                 if !reduce_motion() {
@@ -38,21 +101,241 @@ pub fn changed_fact(path: String, body: impl IntoElement) -> AnyElement {
                 view()
                     .absolute()
                     .inset_0()
-                    .rounded(px(12.0))
-                    .bg(move || theme().secondary)
+                    .rounded(move || px(theme().number("radius").unwrap_or(10.0)))
+                    .bg(wash)
                     .pointer_events(PointerEvents::None)
                     .bind_opacity(&opacity)
             },
         ))
         .child(body)
         .child(dynamic(move || match fact.and_then(|f| f.0.get()) {
-            Some((path, message)) if path == receipt_path => text(message)
+            Some(fact) if fact.path == receipt_path => text(fact.message)
                 .test_id("finance-changed-fact")
                 .text_xs()
-                .text_color(move || theme().primary)
+                .text_color(move || theme().muted_foreground)
                 .into_element(),
             _ => view().into_element(),
         }))
+        .into_element()
+}
+
+/// A quiet wash that lights a row up when the acknowledged change touched it.
+pub fn record_highlight(record_id: &str) -> AnyElement {
+    let id = record_id.to_owned();
+    let test_id = format!("record-highlight-{id}");
+    let fact = use_context::<ChangedFact>();
+    view()
+        .absolute()
+        .inset_0()
+        .pointer_events(PointerEvents::None)
+        .child(when(
+            move || {
+                fact.is_some_and(|f| {
+                    f.0.get()
+                        .is_some_and(|p| p.record_id.as_deref() == Some(id.as_str()))
+                })
+            },
+            move || {
+                let opacity = animated_value(0.75);
+                if !reduce_motion() {
+                    opacity.timing(0.0, 1800.0, Easing::Bezier(0.16, 1.0, 0.3, 1.0));
+                }
+                view()
+                    .test_id(&test_id)
+                    .absolute()
+                    .inset_0()
+                    .rounded(move || px(ui::row_radius()))
+                    .bg(wash)
+                    .pointer_events(PointerEvents::None)
+                    .bind_opacity(&opacity)
+            },
+        ))
+        .into_element()
+}
+
+/// What the undo button does to the offered record.
+#[derive(Clone, Copy, PartialEq)]
+pub enum UndoAction {
+    /// A deletion being undone: bring the record back.
+    Restore,
+    /// A just-created record being undone: remove it again.
+    Remove,
+}
+
+#[derive(Clone, PartialEq)]
+pub struct UndoPending {
+    pub record_id: String,
+    pub message: String,
+    pub action: UndoAction,
+    pub expires_at: i64,
+}
+
+pub const UNDO_WINDOW_MS: u64 = 60_000;
+
+#[derive(Clone, Copy)]
+pub(crate) struct UndoOffer {
+    pub pending: Signal<Option<UndoPending>>,
+    pub busy: Signal<bool>,
+    pub error: Signal<String>,
+}
+
+/// Offer the 60-second cross-page undo for one record change. A later offer
+/// replaces the previous one, and the window survives navigation.
+pub fn offer_undo(record_id: String, message: impl Into<String>, action: UndoAction) {
+    if let Some(offer) = use_context::<UndoOffer>() {
+        let expires_at = lifeos::ids::now_millis() + UNDO_WINDOW_MS as i64;
+        offer.error.set(String::new());
+        offer.pending.set(Some(UndoPending {
+            record_id,
+            message: message.into(),
+            action,
+            expires_at,
+        }));
+        let pending = offer.pending;
+        set_timeout(
+            std::time::Duration::from_millis(UNDO_WINDOW_MS),
+            move || {
+                pending.update(|p| {
+                    if p.as_ref().is_some_and(|p| p.expires_at <= expires_at) {
+                        *p = None;
+                    }
+                });
+            },
+        );
+    }
+}
+
+/// The global undo pill: mounted once in the shell, visible on every tab and
+/// route so the window is genuinely cross-page.
+pub fn undo_pill(bottom: f32) -> AnyElement {
+    let offer = use_context::<UndoOffer>().expect("undo offer");
+    let pending = offer.pending;
+    let busy = offer.busy;
+    let error = offer.error;
+    let version = use_context::<crate::state::DataVersion>();
+    let now = signal(lifeos::ids::now_millis());
+    let _timer = set_interval(std::time::Duration::from_secs(1), move || {
+        now.set(lifeos::ids::now_millis())
+    });
+    let press = move || {
+        if busy.get() {
+            return;
+        }
+        let Some(p) = pending.get_untracked() else {
+            return;
+        };
+        if lifeos::ids::now_millis() >= p.expires_at {
+            pending.set(None);
+            return;
+        }
+        busy.set(true);
+        error.set(String::new());
+        let s = services();
+        spawn(async move {
+            let result = match p.action {
+                UndoAction::Restore => s.restore_finance_record(&p.record_id).await,
+                UndoAction::Remove => s.delete_finance_record(&p.record_id).await,
+            };
+            busy.set(false);
+            match result {
+                Ok(()) => {
+                    pending.update(|current| {
+                        if current.as_ref() == Some(&p) {
+                            *current = None;
+                        }
+                    });
+                    if let Some(v) = version {
+                        v.0.update(|v| *v += 1);
+                    }
+                    notice(match p.action {
+                        UndoAction::Restore => "已恢复这笔记录；余额与预算已更新。",
+                        UndoAction::Remove => "已撤销这笔记录；余额与预算已更新。",
+                    });
+                }
+                Err(e) => {
+                    if pending.get_untracked().as_ref() == Some(&p) {
+                        error.set(friendly_error(e));
+                    }
+                }
+            }
+        });
+    };
+    view()
+        .absolute()
+        .left_4()
+        .right_4()
+        .bottom(move || px(safe_area().bottom.0 + bottom))
+        .child(when(
+            move || pending.get().is_some(),
+            move || {
+                let offset = animated_value(0.0);
+                if !reduce_motion() {
+                    offset.set(6.0);
+                    offset.timing(0.0, 180.0, Easing::Bezier(0.16, 1.0, 0.3, 1.0));
+                }
+                view()
+                    .gap_1()
+                    .rounded(move || px(theme().number("radius").unwrap_or(10.0)))
+                    .bg(move || theme().primary)
+                    .px_4()
+                    .py_2()
+                    .bind_translate_y(&offset)
+                    .test_id("finance-undo-offer")
+                    .child(
+                        view()
+                            .flex_row()
+                            .items_center()
+                            .gap_2()
+                            .child(
+                                text(move || {
+                                    pending
+                                        .get()
+                                        .map(|p| {
+                                            format!(
+                                                "{} · {}秒",
+                                                p.message,
+                                                ((p.expires_at - now.get()).max(0) + 999) / 1000
+                                            )
+                                        })
+                                        .unwrap_or_default()
+                                })
+                                .text_sm()
+                                .text_color(move || theme().primary_foreground)
+                                .flex_1(),
+                            )
+                            .child(
+                                view()
+                                    .role(AccessibilityRole::Button)
+                                    .label("撤销")
+                                    .test_id("finance-undo-action")
+                                    .min_h(px(48.0))
+                                    .min_w(px(48.0))
+                                    .items_center()
+                                    .justify_center()
+                                    .disabled(move || busy.get())
+                                    .on_press(press)
+                                    .focus(|s| {
+                                        s.outline(px(2.0)).outline_color(move || theme().ring)
+                                    })
+                                    .child(
+                                        text("撤销")
+                                            .text_sm()
+                                            .font_weight(FontWeight::MEDIUM)
+                                            .text_color(move || theme().primary_foreground),
+                                    ),
+                            ),
+                    )
+                    .child(when(
+                        move || !error.get().is_empty(),
+                        move || {
+                            text(move || error.get())
+                                .text_xs()
+                                .text_color(move || theme().primary_foreground)
+                        },
+                    ))
+                    .into_element()
+            },
+        ))
         .into_element()
 }
 #[derive(Clone, Copy)]
@@ -153,8 +436,11 @@ fn feedback() -> AnyElement {
     let message = use_context::<Feedback>()
         .map(|v| v.0)
         .unwrap_or_else(|| signal(String::new()));
+    let undo = use_context::<UndoOffer>();
     when(
-        move || !message.get().is_empty(),
+        // While an undo offer is up it owns the bottom slot; the toast
+        // returns once the window is gone (for example after undoing).
+        move || !message.get().is_empty() && !undo.is_some_and(|u| u.pending.get().is_some()),
         move || {
             let offset = animated_value(0.0);
             if !reduce_motion() {
@@ -246,7 +532,7 @@ pub fn page(title: impl Into<String>, body: impl IntoElement) -> AnyElement {
                 .flex_row()
                 .items_center()
                 .gap_2()
-                .px_4()
+                .px(move || px(page_px()()))
                 .min_h(px(52.0))
                 .child(when(
                     move || nav.is_some_and(|v| !v.0.get().is_empty()),
@@ -260,12 +546,13 @@ pub fn page(title: impl Into<String>, body: impl IntoElement) -> AnyElement {
                             .items_center()
                             .justify_center()
                             .on_press(request_back)
+                            .focus(|s| s.outline(px(2.0)).outline_color(move || theme().ring))
                             .child(ui::icon(ui::Icon::Back))
                     },
                 ))
                 .child(
                     text(title)
-                        .text_size(px(21.0))
+                        .text_size(px(22.0))
                         .font_weight(FontWeight::SEMIBOLD)
                         .flex_1(),
                 ),
@@ -273,7 +560,7 @@ pub fn page(title: impl Into<String>, body: impl IntoElement) -> AnyElement {
         .child(
             ui::interactive_scroll().flex_1().child(
                 view()
-                    .px_4()
+                    .px(move || px(page_px()()))
                     .pt_2()
                     .pb_safe_area_plus(px(96.0))
                     .gap_4()
@@ -289,7 +576,7 @@ pub fn section(title: impl Into<String>, body: impl IntoElement) -> AnyElement {
         .pt_3()
         .child(
             text(title.into())
-                .text_size(px(15.0))
+                .text_size(px(14.0))
                 .font_weight(FontWeight::SEMIBOLD),
         )
         .child(body)
@@ -308,14 +595,19 @@ pub fn row(
         .label(format!("{title}，{subtitle}，{trailing}"))
         .test_id(&id)
         .on_press(on_press)
-        .min_h(px(62.0))
-        .py_3()
+        .min_h(px(68.0))
+        .py(px(11.0))
         .flex_row()
         .items_center()
         .gap_3()
         .border_b_1()
         .border_color(move || theme().border)
         .active(|s| s.opacity(0.7))
+        .focus(|s| {
+            s.outline(px(2.0))
+                .outline_color(move || theme().ring)
+                .outline_offset(px(-2.0))
+        })
         .child(
             view()
                 .flex_1()
@@ -337,10 +629,10 @@ pub fn row(
         )
         .child(
             text(trailing)
-                .text_size(px(14.0))
+                .text_size(px(15.0))
                 .tabular_nums()
                 .flex_shrink_0()
-                .max_w(move || px((window().width.0 - 32.0) * 0.52))
+                .max_w(move || px((window().width.0 - 44.0) * 0.52))
                 .text_right(),
         )
         .child(
@@ -352,6 +644,7 @@ pub fn row(
         .into_element()
 }
 pub fn metric(label: String, value: String, caption: String) -> AnyElement {
+    let size = if label == "净资产" { 32.0 } else { 29.0 };
     view()
         .gap_2()
         .py_3()
@@ -362,8 +655,8 @@ pub fn metric(label: String, value: String, caption: String) -> AnyElement {
         )
         .child(
             text(value)
-                .text_size(px(29.0))
-                .font_weight(FontWeight::SEMIBOLD)
+                .text_size(px(size))
+                .font_weight(FontWeight::MEDIUM)
                 .tabular_nums(),
         )
         .child(
@@ -385,17 +678,18 @@ pub fn action(
         .min_h(px(48.0))
         .px_3()
         .justify_center()
-        .rounded(px(8.0))
+        .rounded(move || px(theme().number("radius").unwrap_or(10.0)))
         .active(|s| {
             s.opacity(0.65)
                 .scale(if reduce_motion() { 1.0 } else { 0.98 })
         })
+        .focus(|s| s.outline(px(2.0)).outline_color(move || theme().ring))
         .transition_transform()
         .duration(if reduce_motion() { 0.0 } else { 100.0 })
         .ease_out()
         .child(
             text(label.into())
-                .text_size(px(14.0))
+                .text_size(px(13.0))
                 .font_weight(FontWeight::MEDIUM)
                 .text_color(move || theme().primary),
         )
@@ -404,6 +698,12 @@ pub fn action(
 
 /// Gaps are explicit missing evidence, never interpolated into a complete net worth.
 pub fn line_chart(points: Vec<(String, Option<Decimal>)>, label: String) -> AnyElement {
+    chart(points, label, false)
+}
+pub fn cash_chart(points: Vec<(String, Option<Decimal>)>, label: String) -> AnyElement {
+    chart(points, label, true)
+}
+fn chart(points: Vec<(String, Option<Decimal>)>, label: String, cash: bool) -> AnyElement {
     let values: Vec<f64> = points
         .iter()
         .filter_map(|(_, v)| v.and_then(|v| v.to_f64()))
@@ -472,7 +772,7 @@ pub fn line_chart(points: Vec<(String, Option<Decimal>)>, label: String) -> AnyE
             svg(nsh_core::element::ImageSrc::svg_markup(&svg_src))
                 .h(px(112.0))
                 .w_full()
-                .text_color(move || theme().primary),
+                .text_color(move || if cash { data_cash() } else { data_investment() }),
         )
         .child(
             view()
@@ -645,7 +945,7 @@ pub fn date_field(label: &'static str, id: &'static str, value: Signal<String>) 
                 .first_day_of_week(1_u32)
                 .previous_accessibility_label("上个月")
                 .next_accessibility_label("下个月")
-                .backdrop_style(|s| s.bg(hsla(0.0, 0.0, 0.0, 0.32)))
+                .backdrop_style(|s| s.bg(hsla(0.0, 0.0, 0.0, 0.36)))
                 .popup_style(|s| {
                     s.bg(move || theme().card)
                         .px_2()

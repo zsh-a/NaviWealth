@@ -813,3 +813,104 @@ fn split_account_filter_matches_every_custody_leg_and_totals_never_mix_currencie
         ]
     );
 }
+
+#[test]
+fn undo_delete_after_edit_restores_only_current_legs() {
+    let (mut conn, st) = setup();
+    let bank = account(&conn, &st, "撤销账户", "CNY");
+    let mut entry = draft(&st, &bank, RecordKind::Expense, 25);
+    let id = save(&mut conn, &st, None, &entry).unwrap();
+    entry.amount = Decimal::from(40);
+    assert_eq!(save(&mut conn, &st, Some(&id), &entry).unwrap(), id);
+    delete_record(&mut conn, &st, &id).unwrap();
+    assert_eq!(balance(&conn, &st, &bank.id), Decimal::ZERO);
+    let deletion = journal::get(&conn, &id).unwrap().unwrap().entry.sync.hlc;
+    restore_record(&mut conn, &st, &id).unwrap();
+    assert_eq!(balance(&conn, &st, &bank.id), Decimal::from(-40));
+    let restored = journal::get(&conn, &id).unwrap().unwrap();
+    assert_eq!(restored.postings.len(), 2);
+    assert!(restored.entry.sync.hlc > deletion);
+    assert!(
+        restored
+            .postings
+            .iter()
+            .all(|p| p.sync.hlc == restored.entry.sync.hlc)
+    );
+    restore_record(&mut conn, &st, &id).unwrap();
+    assert_eq!(balance(&conn, &st, &bank.id), Decimal::from(-40));
+}
+
+#[test]
+fn undo_delete_rejects_foreign_owner_missing_legs_and_deleted_accounts() {
+    let (mut conn, st) = setup();
+    let bank = account(&conn, &st, "恢复保护", "CNY");
+    let id = save(
+        &mut conn,
+        &st,
+        None,
+        &draft(&st, &bank, RecordKind::Expense, 25),
+    )
+    .unwrap();
+    delete_record(&mut conn, &st, &id).unwrap();
+    let other = MutationStamper::new("other", "other-device");
+    assert!(restore_record(&mut conn, &other, &id).is_err());
+    conn.execute(
+        r#"UPDATE "fin:accounts" SET deleted_at = 1 WHERE id = ?1"#,
+        params![bank.id],
+    )
+    .unwrap();
+    assert!(restore_record(&mut conn, &st, &id).is_err());
+    conn.execute(
+        r#"UPDATE "fin:accounts" SET deleted_at = NULL WHERE id = ?1"#,
+        params![bank.id],
+    )
+    .unwrap();
+    conn.execute(
+        r#"DELETE FROM "fin:postings" WHERE journal_entry_id = ?1 AND account_id = ?2"#,
+        params![id, bank.id],
+    )
+    .unwrap();
+    let pending = outbox::pending(&conn, 1000).unwrap();
+    assert!(restore_record(&mut conn, &st, &id).is_err());
+    assert!(
+        journal::get(&conn, &id)
+            .unwrap()
+            .unwrap()
+            .entry
+            .sync
+            .deleted_at
+            .is_some()
+    );
+    assert_eq!(outbox::pending(&conn, 1000).unwrap(), pending);
+}
+
+#[test]
+fn undo_refuses_structured_wealth_record() {
+    let (mut conn, st) = setup();
+    let bank = account(&conn, &st, "来源守卫", "CNY");
+    let id = save(
+        &mut conn,
+        &st,
+        None,
+        &draft(&st, &bank, RecordKind::Expense, 25),
+    )
+    .unwrap();
+    delete_record(&mut conn, &st, &id).unwrap();
+    conn.execute(
+        r#"UPDATE "fin:journal_entries" SET tag_ids_json = '["wealth:trade"]' WHERE id = ?1"#,
+        params![id],
+    )
+    .unwrap();
+    let pending = outbox::pending(&conn, 1000).unwrap();
+    assert!(restore_record(&mut conn, &st, &id).is_err());
+    assert!(
+        journal::get(&conn, &id)
+            .unwrap()
+            .unwrap()
+            .entry
+            .sync
+            .deleted_at
+            .is_some()
+    );
+    assert_eq!(outbox::pending(&conn, 1000).unwrap(), pending);
+}

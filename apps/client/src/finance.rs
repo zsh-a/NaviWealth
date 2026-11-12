@@ -74,7 +74,7 @@ impl Services {
         &self,
         id: Option<String>,
         draft: RecordDraft,
-    ) -> Result<(), String> {
+    ) -> Result<String, String> {
         let stamper = self.stamper();
         self.db
             .call(move |conn| Ok(daily::save(conn, &stamper, id.as_deref(), &draft)?))
@@ -86,6 +86,15 @@ impl Services {
         let id = id.to_owned();
         self.db
             .call(move |conn| Ok(daily::delete_record(conn, &stamper, &id)?))
+            .await
+            .map_err(|e| e.to_string())
+    }
+    /// Undo a deletion inside the 60-second window; same guards as the delete.
+    pub async fn restore_finance_record(&self, id: &str) -> Result<(), String> {
+        let stamper = self.stamper();
+        let id = id.to_owned();
+        self.db
+            .call(move |conn| Ok(daily::restore_record(conn, &stamper, &id)?))
             .await
             .map_err(|e| e.to_string())
     }

@@ -174,7 +174,12 @@ fn accounts_screen(initial_account: Option<String>, create: bool) -> impl IntoEl
                 move |row:ReadSignal<AccountRow>,_|account_row(row,selected))))))
         .child(account_details(services.clone(),selected,edit,form_open,version,notice))
         .child(account_form(services.clone(),form_open,edit,selected,version))
-        .child(crate::screens::record::record_dialog(services,record_open,version))
+        .child(crate::screens::record::record_dialog(
+            services,
+            record_open,
+            version,
+            "/activity",
+        ))
 }
 
 fn account_row(

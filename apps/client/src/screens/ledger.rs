@@ -94,7 +94,7 @@ pub fn LedgerScreen() -> impl IntoElement {
     let limit = signal(50_i64);
     let days: Signal<Vec<Day>> = signal(Vec::new());
     let totals: Signal<Vec<(String, Decimal, Decimal)>> = signal(Vec::new());
-    let budget_summary = signal(Vec::<String>::new());
+    let budget_summary = signal(Vec::<(String, u8)>::new());
     let account_options = signal(Vec::<(String, String)>::new());
     let account_count = signal(0_usize);
     let loading = signal(true);
@@ -104,6 +104,22 @@ pub fn LedgerScreen() -> impl IntoElement {
     let editor = signal(false);
     let edit_id: Signal<Option<String>> = signal(None);
     let sequence = Rc::new(Cell::new(0_u64));
+    // The workspace capture button opens this pane's editor in place.
+    let intent = use_context::<crate::CaptureIntent>()
+        .expect("capture intent")
+        .0;
+    let tab = use_context::<crate::ShellTab>().expect("tab").0;
+    let seen_intent = signal(intent.get_untracked());
+    effect(move || {
+        let now = intent.get();
+        if now != seen_intent.get_untracked() {
+            seen_intent.set(now);
+            if tab.get() == 1 {
+                edit_id.set(None);
+                editor.set(true);
+            }
+        }
+    });
     {
         let services = services.clone();
         effect(move || {
@@ -154,21 +170,44 @@ pub fn LedgerScreen() -> impl IntoElement {
                             }
                         }
                         if overflow {
-                            vec!["预算合计超出范围，请查看分类明细".into()]
+                            vec![("预算合计超出范围，请查看分类明细".into(), 2)]
                         } else {
                             currencies
                                 .into_iter()
                                 .map(|(currency, (spent, limit))| {
-                                    format!(
-                                        "分类预算 · {currency}  已用 {} / {}",
-                                        ui::money(spent),
-                                        ui::money(limit)
+                                    // Normal progress reads in the investment
+                                    // data role; near-limit and over-budget
+                                    // escalate with the explicit wording.
+                                    let ratio = if limit > Decimal::ZERO {
+                                        spent.checked_div(limit).unwrap_or(Decimal::MAX)
+                                    } else {
+                                        Decimal::ZERO
+                                    };
+                                    let status = if ratio >= Decimal::ONE {
+                                        2_u8
+                                    } else if ratio >= Decimal::new(9, 1) {
+                                        1
+                                    } else {
+                                        0
+                                    };
+                                    (
+                                        format!(
+                                            "分类预算 · {currency}  已用 {} / {}{}",
+                                            ui::money(spent),
+                                            ui::money(limit),
+                                            match status {
+                                                1 => " · 接近上限",
+                                                2 => " · 已达或超出预算",
+                                                _ => "",
+                                            }
+                                        ),
+                                        status,
                                     )
                                 })
                                 .collect()
                         }
                     }
-                    Err(_) => vec!["预算暂不可用，点此重新查看".into()],
+                    Err(_) => vec![("预算暂不可用，点此重新查看".into(), 2)],
                 });
                 match (records, monthly, accounts) {
                     (Ok(mut records), Ok(monthly), Ok(accounts)) => {
@@ -211,10 +250,6 @@ pub fn LedgerScreen() -> impl IntoElement {
     );
     let filters_open = signal(false);
     let tools_open = signal(false);
-    let add = move || {
-        edit_id.set(None);
-        editor.set(true);
-    };
     view()
         .flex_1()
         .child(
@@ -226,11 +261,10 @@ pub fn LedgerScreen() -> impl IntoElement {
                 .gap_3()
                 .child(
                     text("流水")
-                        .text_size(px(21.0))
+                        .text_size(px(22.0))
                         .font_weight(FontWeight::SEMIBOLD)
                         .flex_1(),
                 )
-                .child(ui::primary_button("记一笔", add, "open-record", None))
                 .child(fui::action("管理", "activity-tools", move || {
                     tools_open.set(true)
                 })),
@@ -303,7 +337,8 @@ pub fn LedgerScreen() -> impl IntoElement {
                                                     )
                                                     .child(
                                                         text(move || ui::money(row.get().1))
-                                                            .text_size(px(22.0))
+                                                            .text_color(fui::gain)
+                                                            .text_size(px(20.0))
                                                             .tabular_nums()
                                                             .font_weight(FontWeight::MEDIUM),
                                                     ),
@@ -321,7 +356,8 @@ pub fn LedgerScreen() -> impl IntoElement {
                                                     )
                                                     .child(
                                                         text(move || ui::money(row.get().2))
-                                                            .text_size(px(22.0))
+                                                            .text_color(|| theme().destructive)
+                                                            .text_size(px(29.0))
                                                             .tabular_nums()
                                                             .font_weight(FontWeight::MEDIUM),
                                                     ),
@@ -339,11 +375,14 @@ pub fn LedgerScreen() -> impl IntoElement {
                                 .min_h(px(48.0))
                                 .on_press(|| fui::navigate("/plan/budgets"))
                                 .test_id("ledger-budget-context")
-                                .children(budget_summary.get().into_iter().map(|line| {
-                                    text(line)
-                                        .text_size(px(12.0))
-                                        .tabular_nums()
-                                        .text_color(move || theme().primary)
+                                .children(budget_summary.get().into_iter().map(|(line, status)| {
+                                    text(line).text_size(px(12.0)).tabular_nums().text_color(
+                                        move || match status {
+                                            1 => fui::warning(),
+                                            2 => theme().destructive,
+                                            _ => fui::data_investment(),
+                                        },
+                                    )
                                 }))
                         },
                     ))
@@ -493,14 +532,12 @@ pub fn LedgerScreen() -> impl IntoElement {
                                         .font_weight(FontWeight::MEDIUM)
                                         .text_color(move || theme().muted_foreground),
                                 )
-                                .child(view().bg(move || theme().card).rounded(px(16.0)).child(
-                                    each(
-                                        move || day.get().records,
-                                        |record: &FinanceRecord| record.id.clone(),
-                                        move |record: ReadSignal<FinanceRecord>, _| {
-                                            record_row(record, selected)
-                                        },
-                                    ),
+                                .child(each(
+                                    move || day.get().records,
+                                    |record: &FinanceRecord| record.id.clone(),
+                                    move |record: ReadSignal<FinanceRecord>, _| {
+                                        record_row(record, selected)
+                                    },
                                 ))
                         },
                     ))
@@ -608,7 +645,11 @@ pub fn LedgerScreen() -> impl IntoElement {
             version,
         ))
         .child(super::record::record_editor(
-            services, editor, version, edit_id,
+            services,
+            editor,
+            version,
+            edit_id,
+            "/activity",
         ))
 }
 fn record_row(
@@ -649,16 +690,21 @@ fn record_row_content(
         .flex_row()
         .items_center()
         .gap_3()
+        .border_b_1()
+        .border_color(move || theme().border)
+        .active(|s| s.opacity(0.75))
+        .focus(|s| {
+            s.outline(px(2.0))
+                .outline_color(move || theme().ring)
+                .outline_offset(px(-2.0))
+        })
+        .child(fui::record_highlight(&item.id))
         .child(
-            view()
-                .w(px(30.0))
-                .h(px(30.0))
+            ui::icon(icon)
+                .w(px(20.0))
+                .h(px(20.0))
                 .flex_shrink_0()
-                .items_center()
-                .justify_center()
-                .rounded(px(12.0))
-                .bg(move || theme().muted)
-                .child(ui::icon(icon)),
+                .text_color(move || theme().muted_foreground),
         )
         .child(
             view()
@@ -685,7 +731,8 @@ fn record_row_content(
                 .items_end()
                 .child(
                     text(signed)
-                        .text_size(px(16.0))
+                        .text_color(move || fui::record_color(item.kind))
+                        .text_size(px(15.0))
                         .tabular_nums()
                         .font_weight(FontWeight::MEDIUM),
                 )
@@ -756,7 +803,12 @@ pub fn capture_route() -> AnyElement {
     });
     view()
         .flex_1()
-        .child(super::record::record_dialog(fui::services(), open, version))
+        .child(super::record::record_dialog(
+            fui::services(),
+            open,
+            version,
+            "/activity",
+        ))
         .into_element()
 }
 pub fn entry_route(id: String) -> AnyElement {
@@ -846,7 +898,7 @@ pub fn entry_route(id: String) -> AnyElement {
                         }))
                         .child(fui::confirm(
                             "删除这笔记录？".into(),
-                            "确认后会重新计算账户余额与分类预算。".into(),
+                            "确认后会重新计算账户余额与分类预算；删除后 60 秒内可撤销。".into(),
                             "删除记录".into(),
                             "entry-delete",
                             move || {
@@ -854,6 +906,7 @@ pub fn entry_route(id: String) -> AnyElement {
                                 let id = id.clone();
                                 Box::pin(async move {
                                     s.delete_finance_record(&id).await?;
+                                    fui::offer_undo(id, "这笔记录已删除", fui::UndoAction::Restore);
                                     Ok(Some("/activity".into()))
                                 })
                             },
@@ -862,7 +915,11 @@ pub fn entry_route(id: String) -> AnyElement {
                 body.into_element()
             }))
             .child(super::record::record_editor(
-                services, editor, version, edit_id,
+                services,
+                editor,
+                version,
+                edit_id,
+                "/activity",
             )),
     )
 }
@@ -1007,7 +1064,7 @@ fn record_detail(
                                         .font_weight(FontWeight::SEMIBOLD),
                                 )
                                 .child(
-                                    text("相关账户余额会同步更新。此操作无法撤销。")
+                                    text("相关账户余额会同步更新；删除后 60 秒内可撤销。")
                                         .text_base()
                                         .text_color(move || theme().muted_foreground),
                                 )
@@ -1032,6 +1089,11 @@ fn record_detail(
                                                     confirm.set(false);
                                                     selected.set(None);
                                                     version.update(|v| *v += 1);
+                                                    fui::offer_undo(
+                                                        id,
+                                                        "这笔记录已删除",
+                                                        fui::UndoAction::Restore,
+                                                    );
                                                 }
                                                 Err(e) => {
                                                     confirm.set(false);

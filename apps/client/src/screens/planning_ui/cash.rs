@@ -873,7 +873,7 @@ fn runway_page(selected_currency: String) -> AnyElement {
                 balance = balance.and_then(|v| v.checked_add(f.amount));
                 points.push((ui::ymd(f.due), balance));
             }
-            body = body.child(fui::line_chart(points, "计划现金余额，非历史收益".into()));
+            body = body.child(fui::cash_chart(points, "计划现金余额，非历史收益".into()));
             for a in &long.assumptions {
                 body = body.child(note(a.clone()));
             }
