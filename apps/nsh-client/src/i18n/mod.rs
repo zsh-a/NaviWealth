@@ -51,6 +51,8 @@ pub struct Strings {
     pub still_working: &'static str,
     pub estimate_hint: &'static str,
     pub foods: &'static str,
+    pub no_foods_title: &'static str,
+    pub no_foods_body: &'static str,
     pub add_food: &'static str,
     pub badge_estimate: &'static str,
     pub badge_check: &'static str,
