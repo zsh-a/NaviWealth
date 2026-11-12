@@ -55,36 +55,6 @@ fn chart(
     }
     let low = *values.iter().min().unwrap();
     let high = *values.iter().max().unwrap();
-    let low_float = low.to_f64().unwrap_or(0.0);
-    let high_float = high.to_f64().unwrap_or(0.0);
-    let spread = (high_float - low_float).max(0.000001);
-    let denominator = points.len().saturating_sub(1).max(1) as f64;
-    let mut paths = String::new();
-    let mut dots = String::new();
-    let mut active = false;
-    for (index, (_, value)) in points.iter().enumerate() {
-        if let Some(v) = value.and_then(|v| v.to_f64()) {
-            let x = 8.0 + index as f64 / denominator * 264.0;
-            let y = if high == low {
-                56.0
-            } else {
-                104.0 - (v - low_float) / spread * 96.0
-            };
-            paths.push_str(&format!(
-                "{} {x:.2} {y:.2} ",
-                if active { "L" } else { "M" }
-            ));
-            dots.push_str(&format!(
-                "<circle cx='{x:.2}' cy='{y:.2}' r='2.5' fill='currentColor'/>"
-            ));
-            active = true;
-        } else {
-            active = false;
-        }
-    }
-    let image = format!(
-        "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 280 112'><path d='M8 8H272M8 104H272' opacity='.18' stroke='currentColor'/><path d='{paths}' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round'/>{dots}</svg>"
-    );
     let first = points
         .iter()
         .find_map(|(d, v)| v.map(|v| (d.clone(), v)))
@@ -97,7 +67,7 @@ fn chart(
     let gaps = points.iter().any(|(_, v)| v.is_none());
     view()
         .gap_2()
-        .test_id("finance-trend-plot")
+        .test_id("finance-trend-section")
         .child(
             text(label)
                 .text_size(move || px(ui::token("type-body")))
@@ -116,11 +86,9 @@ fn chart(
                         .child(ui::quiet_text(ui::money_for(low, &currency))),
                 )
                 .child(
-                    svg(nsh_core::element::ImageSrc::svg_markup(&image))
+                    ui::trend_plot(points.clone(), currency.clone(), cash)
                         .flex_1()
-                        .min_w(px(0.0))
-                        .h(px(96.0))
-                        .text_color(move || if cash { data_cash() } else { data_investment() }),
+                        .min_w(px(0.0)),
                 ),
         )
         .child(

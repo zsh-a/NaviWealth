@@ -81,6 +81,15 @@ final class Native {
     static final int FILE_REQUEST = 69;
     static final int SPEECH = 70;
     static final int DOWNLOAD = 71;
+    static final int NOTIFICATION = 72;
+    static final int URL_SCHEME = 73;
+    static final int SECOND_INSTANCE = 74;
+    static final int AUDIO = 75;
+    static final int WINDOW = 76;
+    static final int EDIT_ACTION = 77;
+    static final int WHEEL = 78;
+    static final int WEB_EVALUATION = 79;
+    static final int MOUSE_UP = 80;
 
     /**
      * Draws the SVG {@code bytes} for a view {@code maxPx} pixels on its longer side, with its shorter side that long
@@ -136,8 +145,17 @@ final class Native {
      */
     static native String setThemeOverrides(long handle, String json);
 
+    /** Registers a font file; returns an error, or null. */
+    static native String registerFont(long handle, byte[] data);
+
     /** Whether the running app's web views may navigate to {@code url}. */
     static native boolean allowsWebview(long handle, String url);
+
+    /**
+     * Whether the running app's web pages may capture {@code kind}
+     * ({@code "microphone"}, {@code "camera"}): its {@code webview.media}.
+     */
+    static native boolean allowsWebMedia(long handle, String kind);
 
     /**
      * The URL a media load redirected from {@code base} to {@code location}
@@ -153,7 +171,7 @@ final class Native {
     static native byte[] imageBytes(long handle, String uri);
 
     /** {@code capabilities}: the app's declaration (JSON), {@code app}: its {@code app.json} ({@code id}); null for none. */
-    static native void load(long handle, byte[] code, boolean bytecode, String sourceMap, String capabilities, String app);
+    static native void load(long handle, byte[] code, boolean bytecode, String sourceMap, String capabilities, String app, String updater);
 
     static native boolean connectDevServer(long handle, String url);
 
@@ -217,8 +235,13 @@ final class Native {
      * values: safe area top, right, bottom, left, keyboard height, keyboard
      * animation duration (s), font scale, 1 if the language is right to left.
      * locale: the default locale's language tag (`Intl`'s default).
+     * timeZone: the system's time zone's ID (`Europe/Berlin`).
+     * languages: the preferred languages' tags, most preferred first, comma-separated.
+     * regional: the system's format locale's tag, with Android 14's regional
+     * preferences as its Unicode extension (`en-US-u-fw-mon-mu-celsius`).
      */
-    static native void environment(long handle, float[] values, boolean dark, String locale);
+    static native void environment(long handle, float[] values, boolean dark, String locale, String timeZone,
+            String languages, String regional);
 
     static native void event(long handle, int id, int kind, String text, int count, float x, float y);
 
@@ -263,6 +286,9 @@ final class Native {
     static native float[] afterBatch(long handle, long seq);
 
     static native float[] tick(long handle, long frameNanos);
+
+    /** Runs the functions the app asked to run on the UI thread. */
+    static native void runMainThreadTasks(long handle);
 
     /** Shader view {@code id} is {@code width} × {@code height} px; whether frames should come. */
     static native boolean shaderSize(long handle, int id, int width, int height);

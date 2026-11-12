@@ -3,7 +3,7 @@ use crate::{state::Services, ui};
 use nsh_base::PickedDate;
 use nsh_base::{DatePickerValue, SheetEvent, date_picker, theme};
 use nsh_core::prelude::*;
-use rust_decimal::{Decimal, prelude::ToPrimitive};
+use rust_decimal::Decimal;
 use std::{collections::BTreeMap, future::Future, pin::Pin, rc::Rc, sync::Arc};
 
 #[derive(Clone, Copy)]
@@ -24,25 +24,20 @@ pub(crate) struct ChangedFact(pub Signal<Option<Fact>>);
 
 /// The quiet-workspace wash (theme.json custom role; soft as the fallback).
 pub fn wash() -> AdaptiveColor {
-    theme().color("wash").unwrap_or_else(|| theme().secondary)
+    theme().accent
 }
 pub fn warning() -> AdaptiveColor {
     theme()
-        .color("warning")
+        .color("chart-4")
         .unwrap_or_else(|| theme().destructive)
-}
-pub fn data_investment() -> AdaptiveColor {
-    theme()
-        .color("data-investment")
-        .unwrap_or_else(|| theme().primary)
 }
 
 pub fn gain() -> AdaptiveColor {
-    theme().color("up").unwrap_or_else(|| theme().foreground)
+    theme().primary
 }
 pub fn data_cash() -> AdaptiveColor {
     theme()
-        .color("data-cash")
+        .color("chart-2")
         .unwrap_or_else(|| theme().muted_foreground)
 }
 
@@ -81,6 +76,10 @@ pub fn services() -> Arc<Services> {
 }
 pub fn navigate(path: impl Into<String>) {
     let path = path.into();
+    // A receipt belongs to the previous task; never cover the next form.
+    if let Some(Feedback(message)) = use_context::<Feedback>() {
+        message.set(String::new());
+    }
     clear_acknowledgement();
     dismiss_keyboard();
     if let Some(nav) = use_context::<Navigation>() {
@@ -119,6 +118,9 @@ pub(crate) fn dismiss_route(path: &str) {
     }
 }
 pub fn back() {
+    if let Some(Feedback(message)) = use_context::<Feedback>() {
+        message.set(String::new());
+    }
     dismiss_keyboard();
     if let Some(nav) = use_context::<Navigation>() {
         nav.0.update(|routes| {
@@ -136,65 +138,11 @@ pub fn notice(message: impl Into<String>) {
         f.0.set(message.into());
     }
 }
-pub fn feedback_overlay(bottom: f32) -> AnyElement {
-    view()
-        .absolute()
-        .left_4()
-        .right_4()
-        .bottom(move || px(safe_area().bottom.0 + bottom))
-        .child(feedback())
-        .into_element()
-}
-fn feedback() -> AnyElement {
-    let message = use_context::<Feedback>()
-        .map(|v| v.0)
-        .unwrap_or_else(|| signal(String::new()));
-    let undo = use_context::<UndoOffer>();
-    when(
-        // While an undo offer is up it owns the bottom slot; the toast
-        // returns once the window is gone (for example after undoing).
-        move || !message.get().is_empty() && !undo.is_some_and(|u| u.pending.get().is_some()),
-        move || {
-            let offset = animated_value(0.0);
-            if !reduce_motion() {
-                offset.set(6.0);
-                offset.spring(0.0, ui::settle_spring());
-            }
-            view()
-                .flex_row()
-                .items_center()
-                .px_4()
-                .py_2()
-                .gap_2()
-                .rounded(px(12.0))
-                .bg(move || theme().primary)
-                .bind_translate_y(&offset)
-                .test_id("finance-feedback")
-                .child(
-                    text(move || message.get())
-                        .text_size(move || px(crate::ui::token("type-section")))
-                        .text_color(move || theme().primary_foreground)
-                        .flex_1(),
-                )
-                .child(
-                    view()
-                        .role(AccessibilityRole::Button)
-                        .label("收起反馈")
-                        .test_id("finance-notice-dismiss")
-                        .w(px(48.0))
-                        .h(px(48.0))
-                        .items_center()
-                        .justify_center()
-                        .on_press(move || message.set(String::new()))
-                        .child(
-                            ui::icon(ui::Icon::Close)
-                                .text_color(move || theme().primary_foreground),
-                        ),
-                )
-        },
-    )
-    .into_element()
-}
+mod toasts;
+pub use toasts::feedback_overlay;
+#[derive(Clone, Copy)]
+pub(crate) struct HostedFeedback;
+
 pub fn finish(target: Option<String>, pop: bool) {
     let nav = use_context::<Navigation>();
     let version = use_context::<crate::state::DataVersion>();
@@ -278,7 +226,10 @@ pub fn page(title: impl Into<String>, body: impl IntoElement) -> AnyElement {
                     .child(body),
             ),
         )
-        .child(feedback_overlay(16.0))
+        .child(when(
+            move || use_context::<HostedFeedback>().is_none(),
+            || feedback_overlay(16.0),
+        ))
         .into_element()
 }
 pub fn section(title: impl Into<String>, body: impl IntoElement) -> AnyElement {

@@ -28,7 +28,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  NSH_VERSION: v0.4.0
+  NSH_VERSION: v0.5.0
   ANDROID_API_LEVEL: '28'
   CARGO_PROFILE_DEV_DEBUG: '0'
   CARGO_INCREMENTAL: '0'
@@ -88,7 +88,7 @@ jobs:
       - name: Install host GTK development libraries
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-4-dev
+          sudo apt-get install -y libgtk-4-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
 
       - name: Verify Rust workspace
         run: |

@@ -17,8 +17,8 @@ desktop = [
 ]
 
 [dependencies]
-nsh-core = { version = "0.4.0", features = ["svg"] }
-nsh-base = "0.4.0"
+nsh-core = { version = "0.5.0", features = ["svg"] }
+nsh-base = "0.5.0"
 env_logger = { version = "0.11", optional = true }
 lifeos = { workspace = true, default-features = false, features = [
     "sqlcipher",
@@ -49,14 +49,14 @@ agent-store = { path = "../../third_party/agent-runtime/crates/agent-store" }
 futures = "0.3"
 
 [target.'cfg(all(target_os = "linux", not(target_os = "android")))'.dependencies]
-nsh-platform-linux = { version = "0.4.0", default-features = false, optional = true }
+nsh-platform-linux = { version = "0.5.0", default-features = false, optional = true }
 
 [target.'cfg(target_os = "macos")'.dependencies]
-nsh-platform-macos = { version = "0.4.0", default-features = false, optional = true }
+nsh-platform-macos = { version = "0.5.0", default-features = false, optional = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
-nsh-platform-windows = { version = "0.4.0", default-features = false, optional = true }
+nsh-platform-windows = { version = "0.5.0", default-features = false, optional = true }
 
 [dev-dependencies]
-nsh-engine = "0.4.0"
-nsh-testing = "0.4.0"
+nsh-engine = "0.5.0"
+nsh-testing = "0.5.0"

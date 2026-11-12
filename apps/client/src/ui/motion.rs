@@ -34,6 +34,7 @@ pub fn settle_spring() -> Spring {
         damping: token("spring-damping"),
         mass: token("spring-mass"),
         velocity: None,
+        ..Default::default()
     }
 }
 pub fn enter_offset() -> AnimatedValue {
@@ -86,7 +87,8 @@ mod tests {
                 app.screen()
                     .accessibility_state("id:motion-choice")
                     .unwrap()
-                    .selected
+                    .pressed
+                    == Some(nsh_core::Checked::True)
             );
             let animated = observed.load(std::sync::atomic::Ordering::SeqCst);
             assert_eq!(animated, !reduced);

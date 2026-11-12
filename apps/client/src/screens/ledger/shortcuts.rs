@@ -7,7 +7,7 @@ pub(super) fn render(
     search_open: Signal<bool>,
     categories: Signal<Vec<naviwealth_finance::daily::ExpenseCategory>>,
 ) -> impl Element {
-    view()
+    nsh_base::toggle_group()
         .flex_row()
         .items_center()
         .gap_1()

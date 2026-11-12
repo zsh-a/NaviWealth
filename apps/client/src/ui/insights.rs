@@ -9,24 +9,19 @@ pub fn progress_bar(ratio: f32) -> impl Element {
     progress_bar_state(ratio, false)
 }
 pub fn progress_bar_state(ratio: f32, exceeded: bool) -> impl Element {
-    view()
-        .h(move || px(token("bar-height")))
-        .rounded(px(2.0))
-        .bg(move || theme().border)
-        .overflow_hidden()
-        .child(
-            view()
-                .h_full()
-                .w(relative(ratio.clamp(0.0, 1.0)))
-                .bg(move || {
-                    if exceeded {
-                        theme().destructive
-                    } else {
-                        theme().primary
-                    }
-                })
-                .rounded(px(2.0)),
-        )
+    nsh_base::progress()
+        .value(ratio.clamp(0.0, 1.0) * 100.0)
+        .accessibility_label("预算与目标进度")
+        .track_style(|s| s.h(px(4.0)).rounded_full().bg(move || theme().border))
+        .indicator_style(move |s| {
+            s.h_full().rounded_full().bg(move || {
+                if exceeded {
+                    theme().destructive
+                } else {
+                    theme().primary
+                }
+            })
+        })
 }
 pub fn ratio(value: Decimal, total: Decimal) -> f32 {
     if total <= Decimal::ZERO {
@@ -64,34 +59,6 @@ pub fn daily_spending(
     }
     Some(values)
 }
-pub fn mini_bars(values: &[Decimal]) -> impl Element + use<> {
-    let peak = spending_peak(values);
-    let max = peak.map(|(_, v)| v).unwrap_or_default();
-    let mut bars = view().flex_row().items_end().gap(px(3.0)).h(px(32.0));
-    for (index, value) in values.iter().enumerate() {
-        let height = (ratio(*value, max) * 30.0).max(2.0);
-        let selected = peak.is_some_and(|(i, _)| i == index);
-        bars = bars.child(
-            view()
-                .test_id(&format!("spending-day-{index}"))
-                .accessibility_state(move || AccessibilityState {
-                    selected,
-                    ..Default::default()
-                })
-                .flex_1()
-                .h(px(height))
-                .rounded(px(1.5))
-                .bg(move || {
-                    if selected {
-                        theme().primary
-                    } else {
-                        crate::finance_ui::data_cash()
-                    }
-                }),
-        );
-    }
-    bars
-}
 pub fn transaction_row(
     title: String,
     subtitle: String,
@@ -100,7 +67,7 @@ pub fn transaction_row(
     currency: RowCurrency,
     id: String,
     on_press: impl Fn() + 'static,
-) -> nsh_core::element::View {
+) -> NativeButton {
     transaction_amount_row(
         title,
         subtitle,
@@ -128,7 +95,7 @@ pub fn transaction_amount_row(
     amount: RowAmount,
     id: String,
     on_press: impl Fn() + 'static,
-) -> nsh_core::element::View {
+) -> NativeButton {
     let RowAmount {
         value,
         currency,

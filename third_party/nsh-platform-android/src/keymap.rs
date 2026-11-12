@@ -29,7 +29,7 @@ use jni::{
 };
 use nsh_core::{
     EventKind, EventPayload, PayloadValue, ROOT_ID,
-    keymap::{Key, KeyMatch, Keymap, Keystroke, Modifiers},
+    keymap::{Key, Keymap, Keystroke, Modifiers},
 };
 
 /// `KeyEvent.META_*_ON`.
@@ -93,6 +93,12 @@ extern "system" fn Java_com_longbridge_nsh_Native_keyDown(
 ) -> jboolean {
     // SAFETY: Java passes its live handle.
     let host = unsafe { crate::host::host(handle) };
+    // Every key down passes here before it acts: the focus it moves shows
+    // (`focus-visible:`). A modifier alone (Alt, Shift, Sym, Control,
+    // Caps Lock, Meta, Function: `KeyEvent.KEYCODE_*`) does not count.
+    if !matches!(code, 57..=60 | 63 | 113..=119) {
+        host.input_with(nsh_core::platform::InputModality::Keyboard);
+    }
     let Some(stroke) = keystroke(code, unicode, meta) else {
         return JNI_FALSE;
     };
@@ -107,7 +113,7 @@ extern "system" fn Java_com_longbridge_nsh_Native_keyDown(
         }
         found
     };
-    if let KeyMatch::Fire(id) = found {
+    if let Some(id) = found.fired() {
         host.dispatch(
             ROOT_ID,
             EventKind::KeyCommand,

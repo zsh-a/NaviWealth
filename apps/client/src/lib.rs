@@ -105,6 +105,7 @@ fn app_shell(services: std::sync::Arc<Services>) -> impl IntoElement {
     provide_context(finance_ui::Navigation(routes));
     let feedback = signal(String::new());
     provide_context(finance_ui::Feedback(feedback));
+    provide_context(finance_ui::HostedFeedback);
     provide_context(finance_ui::ChangedFact(signal(None)));
     provide_context(finance_ui::UndoOffer {
         pending: signal(None),
@@ -112,17 +113,7 @@ fn app_shell(services: std::sync::Arc<Services>) -> impl IntoElement {
         error: signal(String::new()),
     });
     provide_context(CaptureIntent(signal(0)));
-    effect(move || {
-        let current = feedback.get();
-        if !current.is_empty() {
-            set_timeout(std::time::Duration::from_secs(8), move || {
-                if feedback.get() == current {
-                    feedback.set(String::new());
-                }
-            });
-        }
-    });
-    nsh_base::nav_stack()
+    let pages = nsh_base::nav_stack()
         .flex_1()
         .child(
             nsh_base::nav_page()
@@ -163,7 +154,6 @@ fn app_shell(services: std::sync::Arc<Services>) -> impl IntoElement {
                                 ),
                         )
                         .child(tab_bar(selected))
-                        .child(finance_ui::feedback_overlay(62.0))
                         .child(finance_ui::undo_pill(62.0)),
                 ),
         )
@@ -207,7 +197,11 @@ fn app_shell(services: std::sync::Arc<Services>) -> impl IntoElement {
                             .child(finance_ui::undo_pill(16.0)),
                     )
             },
-        ))
+        ));
+    view()
+        .flex_1()
+        .child(pages)
+        .child(finance_ui::feedback_overlay(16.0))
 }
 /// The top workspace: one full-width quiet bar owning capture. The dock rule
 /// keeps 记一笔 on the two capture surfaces (Today / Ledger) and out of the

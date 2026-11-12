@@ -60,20 +60,11 @@ pub(super) fn render(data: Signal<Vec<Composition>>) -> impl IntoElement {
         move |c: ReadSignal<Composition>, _| {
             let c = c.get();
             let total = c.total;
-            let mut segments = view()
-                .flex_row()
-                .h(px(7.0))
-                .gap(px(2.0))
-                .rounded(px(3.0))
-                .overflow_hidden();
+            let mut parts = Vec::new();
             let mut legend = view().flex_row().flex_wrap().gap_3();
-            for (index, (name, amount)) in c.categories.iter().take(3).enumerate() {
+            for (name, amount) in c.categories.iter().take(3) {
                 let r = ui::ratio(*amount, total);
-                segments = segments.child(view().w(relative(r)).h_full().bg(move || match index {
-                    0 => theme().primary,
-                    1 => fui::data_cash(),
-                    _ => theme().muted_foreground,
-                }));
+                parts.push(*amount);
                 legend = legend.child(ui::quiet_text(format!("{name} {:.0}%", r * 100.0)));
             }
             let first = c
@@ -82,7 +73,7 @@ pub(super) fn render(data: Signal<Vec<Composition>>) -> impl IntoElement {
                 .take(3)
                 .map(|(_, a)| *a)
                 .sum::<Decimal>();
-            segments = segments.child(view().flex_1().h_full().bg(move || theme().border));
+            parts.push(total - first);
             if first < total {
                 legend = legend.child(ui::quiet_text(format!(
                     "其他 {:.0}%",
@@ -92,7 +83,7 @@ pub(super) fn render(data: Signal<Vec<Composition>>) -> impl IntoElement {
             view()
                 .test_id("ledger-category-composition")
                 .gap_2()
-                .child(segments)
+                .child(ui::category_composition_plot(&parts, total))
                 .child(legend)
         },
     )

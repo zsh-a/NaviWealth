@@ -62,8 +62,7 @@ fn select_field_mode(
     id: &'static str,
     compact: bool,
 ) -> impl IntoElement {
-    use nsh_base::SheetEvent;
-    let open = signal(false);
+    use nsh_base::{SelectEntry, SelectItem, select};
     let current =
         move || options.with(|items| items.iter().find(|o| o.value == selected.get()).cloned());
     let value_name = move || {
@@ -71,88 +70,82 @@ fn select_field_mode(
             .map(|o| o.label)
             .unwrap_or_else(|| "请选择".into())
     };
-    let value_currency = move || {
+    let value_unit = move || {
         current()
             .and_then(|o| o.trailing.or(o.currency))
             .unwrap_or_default()
     };
     view()
+        .gap_1()
+        .child(quiet_text(label).style_when(move || compact, |s| s.hidden()))
         .child(
-            press_target(move || {
-                dismiss_keyboard();
-                open.set(true);
-            })
-            .test_id(id)
-            .py_3()
-            .gap_2()
-            .child(quiet_text(label).style_when(move || compact, |s| s.hidden()))
-            .child(
-                view()
-                    .flex_row()
-                    .items_center()
-                    .gap_2()
-                    .child(
-                        text(value_name)
-                            .flex_1()
-                            .min_w(px(0.0))
-                            .truncate()
-                            .text_size(move || px(token("type-body")))
-                            .font_weight(FontWeight::MEDIUM),
-                    )
-                    .child(
-                        text(value_currency)
-                            .text_size(move || px(token("type-caption")))
-                            .text_color(move || theme().muted_foreground),
-                    )
-                    .child(
-                        icon(Icon::Arrow)
-                            .w(px(16.0))
-                            .h(px(16.0))
-                            .text_color(move || theme().muted_foreground),
-                    ),
-            ),
-        )
-        .child(
-            app_sheet()
-                .open(move || Some(open.get()))
-                .on_open_change(move |event: &SheetEvent| {
-                    if let SheetEvent::OpenChange(next, _) = event {
-                        open.set(*next);
-                    }
+            select()
+                .items(move || {
+                    options
+                        .get()
+                        .into_iter()
+                        .map(|o| SelectItem::new(o.value.clone(), o.display_label()))
+                        .collect::<Vec<_>>()
                 })
-                .child(
-                    view()
-                        .p_5()
-                        .pb_safe_area_plus(px(20.0))
-                        .gap_3()
-                        .h(move || px((window().height.0 * 0.75).clamp(240.0, 480.0)))
-                        .max_h(px(560.0))
+                .value(move || Some(SharedString::from(selected.get())))
+                .on_change(move |value: &Option<SharedString>| {
+                    selected.set(value.as_ref().map(ToString::to_string).unwrap_or_default())
+                })
+                .on_open(dismiss_keyboard)
+                .accessibility_label(label)
+                .searchable(move || options.get().len() > 8)
+                .search_placeholder("搜索选项")
+                .search_accessibility_label(format!("搜索{label}"))
+                .search_test_id(format!("{id}-search"))
+                .search_style(|s| {
+                    s.min_h(px(44.0))
+                        .px_3()
+                        .text_base()
+                        .text_color(move || theme().foreground)
                         .bg(move || theme().background)
-                        .child(text(label).text_lg().font_weight(FontWeight::SEMIBOLD))
-                        .child(interactive_scroll().flex_1().child(each(
-                            move || options.get(),
-                            |v: &SelectOption| v.value.clone(),
-                            move |item: ReadSignal<SelectOption>, _| {
-                                let option = item.get();
-                                let label = option.display_label();
-                                let value = option.value;
-                                let flag = value.clone();
-                                choice_button(
-                                    label,
-                                    move || selected.get() == flag,
-                                    move || {
-                                        selected.set(value.clone());
-                                        open.set(false);
-                                    },
-                                    format!("{id}-{}", item.get().value),
-                                )
-                            },
-                        )))
-                        .child(secondary_button("取消", move || open.set(false), "", None)),
+                })
+                .popup_style(|s| {
+                    s.bg(move || theme().popover)
+                        .text_color(move || theme().popover_foreground)
+                        .rounded_lg()
+                        .border_1()
+                        .border_color(move || theme().border)
+                        .shadow_lg()
+                        .p_1()
+                })
+                .item_style(|s| s.min_h(px(44.0)).px_3().py_2().rounded_md())
+                .item_class("focus:bg-accent selected:bg-accent")
+                .render_item(move |entry: &SelectEntry| {
+                    view()
+                        .test_id(&format!("{id}-{}", entry.value))
+                        .child(text(entry.title.clone()).text_base())
+                })
+                .trigger(
+                    view()
+                        .test_id(id)
+                        .min_h(px(44.0))
+                        .py_2()
+                        .flex_row()
+                        .items_center()
+                        .gap_2()
+                        .child(
+                            text(value_name)
+                                .flex_1()
+                                .min_w(px(0.0))
+                                .truncate()
+                                .text_base()
+                                .font_weight(FontWeight::MEDIUM),
+                        )
+                        .child(
+                            text(value_unit)
+                                .text_sm()
+                                .text_color(move || theme().muted_foreground),
+                        )
+                        .child(icon(Icon::Arrow).w(px(16.0)).h(px(16.0))),
                 ),
         )
+        .into_element()
 }
-
 #[cfg(test)]
 #[path = "selection_tests.rs"]
 mod tests;

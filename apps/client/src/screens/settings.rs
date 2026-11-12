@@ -32,10 +32,6 @@ macro_rules! section {
     }};
 }
 
-fn reactive_text(signal: Signal<String>) -> impl IntoElement {
-    text(move || signal.get())
-}
-
 #[allow(non_snake_case)]
 pub fn SettingsScreen() -> impl IntoElement {
     let services: Arc<Services> = use_context::<Arc<Services>>().expect("services context");
@@ -495,74 +491,6 @@ pub fn SettingsScreen() -> impl IntoElement {
         .child(restore_confirmation)
 }
 
-#[derive(Clone, Copy)]
-enum BackupCommand {
-    Export,
-    ChooseImport,
-    Restore,
-}
-
-fn provider_picker(selected: Signal<String>) -> impl IntoElement {
-    let options: [&'static str; 2] = ["anthropic", "openai"];
-    view().flex_row().gap_2().children(
-        options
-            .iter()
-            .map(|&option| {
-                ui::chip(
-                    option.to_owned(),
-                    move || selected.get() == option,
-                    move || selected.set(option.to_owned()),
-                )
-            })
-            .collect::<Vec<_>>(),
-    )
-}
-
-/// One opt-in domain: label + reactive enable/disable button. The switch
-/// updates the shared signal immediately (tabs follow at once) and
-/// persists to the settings KV, mirroring onto `Services` so sync and the
-/// AI tools pick it up.
-fn domain_toggle_row(
-    spec: &'static domains::DomainSpec,
-    domains: DomainsState,
-    services: Arc<Services>,
-) -> impl IntoElement {
-    let is_on = move || domains.is_enabled(spec.key);
-    let label = move || {
-        if is_on() {
-            "已启用".to_owned()
-        } else {
-            "已停用".to_owned()
-        }
-    };
-    view()
-        .flex_row()
-        .items_center()
-        .gap_3()
-        .child(
-            view()
-                .flex_1()
-                .child(text(spec.label).text_base().font_weight(FontWeight::MEDIUM)),
-        )
-        .child(ui::state_button(
-            label,
-            move || {
-                let next = !is_on();
-                domains.0.update(|list| {
-                    if next {
-                        if !list.contains(&spec.key) {
-                            list.push(spec.key);
-                        }
-                    } else {
-                        list.retain(|key| *key != spec.key);
-                    }
-                });
-                let services = services.clone();
-                spawn(async move {
-                    domains::set_enabled(&services, spec, next).await;
-                });
-            },
-            spec.toggle_test_id,
-            true,
-        ))
-}
+#[path = "settings/parts.rs"]
+mod parts;
+use parts::*;

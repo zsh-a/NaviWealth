@@ -194,7 +194,7 @@ fn mini_pair(data: &Today, currency: &str) -> AnyElement {
                     String::new(),
                     "type-mini",
                 ))
-                .child(ui::mini_bars(&values))
+                .child(ui::spending_chart(&values, currency))
                 .child(ui::quiet_text(format!(
                     "本月 1—{day_count} 日 · {currency}"
                 ))),

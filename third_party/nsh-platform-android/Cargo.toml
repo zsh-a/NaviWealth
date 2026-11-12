@@ -11,8 +11,9 @@
 
 [package]
 edition = "2024"
+rust-version = "1.97"
 name = "nsh-platform-android"
-version = "0.4.0"
+version = "0.5.0"
 build = "build.rs"
 autolib = false
 autobins = false
@@ -26,13 +27,51 @@ license = "Apache-2.0"
 repository = "https://github.com/longbridge/nsh"
 
 [features]
-default = ["js"]
+crypto = [
+    "js",
+    "nsh-engine/crypto",
+]
+default = [
+    "js",
+    "shader",
+    "editor",
+    "emoji-picker",
+    "highlight",
+    "math",
+    "plot",
+    "rich-editor",
+    "term",
+    "zlib",
+    "crypto",
+]
 dev = [
     "js",
+    "shader",
+    "editor",
+    "emoji-picker",
+    "highlight",
+    "math",
+    "plot",
+    "rich-editor",
+    "term",
+    "zlib",
+    "crypto",
     "dep:nsh-dev",
     "dep:nsh-testing",
 ]
-js = ["nsh-engine/js"]
+editor = ["nsh-base/editor"]
+emoji-picker = ["nsh-base/emoji-picker"]
+highlight = ["nsh-base/highlight"]
+js = ["nsh-engine/js-core"]
+math = ["nsh-base/math"]
+plot = ["nsh-base/plot"]
+rich-editor = ["nsh-base/rich-editor"]
+shader = ["nsh-engine/shader"]
+term = ["nsh-base/term"]
+zlib = [
+    "js",
+    "nsh-engine/zlib",
+]
 
 [lib]
 name = "nsh"
@@ -45,11 +84,6 @@ path = "src/lib.rs"
 [dependencies.log]
 version = "0.4"
 
-[target.'cfg(target_os = "android")'.dependencies.tokio]
-version = "1"
-features = ["sync"]
-default-features = false
-
 [target.'cfg(target_os = "android")'.dependencies.jni]
 version = "0.21"
 
@@ -57,29 +91,24 @@ version = "0.21"
 version = "0.2"
 
 [target.'cfg(target_os = "android")'.dependencies.nsh-base]
-version = "0.4.0"
-features = [
-    "highlight",
-    "math",
-]
+version = "0.5.0"
 default-features = false
 
 [target.'cfg(target_os = "android")'.dependencies.nsh-core]
-version = "0.4.0"
+version = "0.5.0"
 features = ["svg"]
 
 [target.'cfg(target_os = "android")'.dependencies.nsh-dev]
-version = "0.4.0"
+version = "0.5.0"
 features = ["client"]
 optional = true
 
 [target.'cfg(target_os = "android")'.dependencies.nsh-engine]
-version = "0.4.0"
-features = ["shader"]
+version = "0.5.0"
 default-features = false
 
 [target.'cfg(target_os = "android")'.dependencies.nsh-testing]
-version = "0.4.0"
+version = "0.5.0"
 features = ["agent"]
 optional = true
 default-features = false
@@ -89,6 +118,10 @@ version = "2.1"
 
 [target.'cfg(target_os = "android")'.dependencies.serde_json]
 version = "1"
+
+[target.'cfg(target_os = "android")'.dependencies.tokio]
+version = "1"
+default-features = false
 
 [target.'cfg(target_os = "android")'.dependencies.ttf-parser]
 version = "0.25"

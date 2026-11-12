@@ -36,7 +36,7 @@ fn unrepresentable_daily_totals_are_unavailable_not_partial_or_panicking() {
 }
 #[component]
 fn PeakProbe() -> impl IntoElement {
-    mini_bars(&[0.into(), 5.into(), 5.into(), 3.into()])
+    spending_chart(&[0.into(), 5.into(), 5.into(), 3.into()], "CNY")
 }
 #[test]
 fn empty_spending_has_no_peak_and_ties_select_only_earliest_day() {
@@ -49,15 +49,11 @@ fn empty_spending_has_no_peak_and_ties_select_only_earliest_day() {
         Some((1, 5.into()))
     );
     let mut app = Headless::start(EngineConfig::new(Root::of::<PeakProbe>())).unwrap();
-    app.wait_for("id:spending-day-1").unwrap();
-    for index in 0..4 {
-        assert_eq!(
-            app.screen()
-                .selected(&format!("id:spending-day-{index}"))
-                .unwrap(),
-            index == 1
-        );
-    }
+    app.wait_for("id:today-spending-plot").unwrap();
+    assert_eq!(
+        spending_peak(&[0.into(), 5.into(), 5.into(), 3.into()]),
+        Some((1, 5.into()))
+    );
 }
 fn budget(currency: &str, spent: Decimal, limit: Decimal) -> BudgetProgress {
     BudgetProgress {

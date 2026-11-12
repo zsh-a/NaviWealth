@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build the Rust client with its vendored Java document bridge and native runtime.
-# Prerequisites: Android SDK platform 35, build-tools 35+, JDK 17+, nsh 0.4.0,
+# Prerequisites: Android SDK platform 35, build-tools 35+, JDK 17+, nsh 0.5.0,
 # Rust Android targets and the NDK toolchain environment used by client-android CI.
 # Optional: NAVIWEALTH_ANDROID_KEYSTORE / NAVIWEALTH_ANDROID_KEY_ALIAS and
 # NSH_KEYSTORE_PASSWORD select a release signing key. NSH_KEY_PASSWORD optionally
@@ -18,8 +18,8 @@ for command_name in javac jar keytool nsh python3; do
     command -v "$command_name" >/dev/null || { echo "$command_name is required" >&2; exit 1; }
 done
 case "$(nsh --version)" in
-    "nsh 0.4.0"*) ;;
-    *) echo "The vendored Android runtime requires nsh 0.4.0" >&2; exit 1 ;;
+    "nsh 0.5.0"*) ;;
+    *) echo "The vendored Android runtime requires nsh 0.5.0" >&2; exit 1 ;;
 esac
 for arg in "$@"; do
     if [[ "$arg" == "--run" ]]; then echo "Install the resulting APK after this script finishes; --run is not supported" >&2; exit 1; fi
@@ -47,7 +47,7 @@ if [[ ! -f "$keystore" ]]; then
         -validity 10000 -dname "CN=Android Debug,O=Android,C=US" >/dev/null 2>&1
 fi
 out_dir="${NAVIWEALTH_APK_DIR:-$repo_dir/apps/client/.nsh/out}"
-# nsh 0.4 only accepts a store password. Its intermediate APK is re-signed below,
+# Keep the intermediate signer isolated from the final release key. Its intermediate APK is re-signed below,
 # so keep the real release key out of that stage and support distinct key passwords.
 packaging_keystore="$work_dir/packaging.keystore"
 keytool -genkeypair -noprompt -keystore "$packaging_keystore" -storepass android \

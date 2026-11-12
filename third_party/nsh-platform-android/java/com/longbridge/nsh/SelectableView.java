@@ -34,7 +34,7 @@ final class SelectableView implements SelectionHandle.Owner {
 
     private static native void nativeDestroy(long handle);
 
-    private static native boolean nativeSetTexts(long handle, SelectableView area, String[] contents, int[] keys, float[] frames);
+    private static native boolean nativeSetTexts(long handle, SelectableView area, String[] contents, int[] keys, boolean[] continues, float[] frames);
 
     private static native boolean nativeGesture(long handle, SelectableView area, float[] frames, int kind, float x, float y);
 
@@ -51,6 +51,12 @@ final class SelectableView implements SelectionHandle.Owner {
     private final Mounter mounter;
     /** The area's view. */
     final View view;
+    /** The area's node id. */
+    private final int id;
+    /** The selected text last reported to the area's {@code onSelectionChange}. */
+    private String reported = "";
+    /** The area's view is gone: clearing reports nothing. */
+    private boolean removed;
     /** The native model while there is a selection, else 0. */
     private long handle;
     /** The texts taking part, in document order (while there is a selection). */
@@ -79,9 +85,23 @@ final class SelectableView implements SelectionHandle.Owner {
         return true;
     };
 
-    SelectableView(Mounter mounter, View view) {
+    SelectableView(Mounter mounter, View view, int id) {
         this.mounter = mounter;
         this.view = view;
+        this.id = id;
+    }
+
+    /** The area's view is gone: ends the selection without reporting it. */
+    void remove() {
+        removed = true;
+        clear();
+    }
+
+    /** Reports {@code text}, the selected text, to {@code onSelectionChange} when it changed and JS listens. */
+    private void report(String text) {
+        if (text.equals(reported) || !mounter.wants(id, Native.SELECTION_CHANGE)) return;
+        reported = text;
+        mounter.eventMap(id, Native.SELECTION_CHANGE, new String[] {"text"}, new Object[] {text});
     }
 
     /** Whether the long press selected and the gesture goes on (presses are cancelled). */
@@ -146,7 +166,7 @@ final class SelectableView implements SelectionHandle.Owner {
         collect();
         if (texts.isEmpty()) return false;
         if (handle == 0) handle = nativeCreate();
-        nativeSetTexts(handle, this, contents(), keys(), frames());
+        nativeSetTexts(handle, this, contents(), keys(), continues(), frames());
         if (mounter.selectedText != null) mounter.selectedText.clearSelection();
         if (mounter.selectedArea != null && mounter.selectedArea != this) mounter.selectedArea.clear();
         mounter.selectedArea = this;
@@ -178,6 +198,8 @@ final class SelectableView implements SelectionHandle.Owner {
         mode = null;
         if (m != null) m.finish();
         nativeDestroy(h);
+        if (removed) reported = "";
+        else report("");
     }
 
     /** Whether the screen point is on one of the handles (a touch there keeps the selection). */
@@ -213,7 +235,7 @@ final class SelectableView implements SelectionHandle.Owner {
             clear();
             return;
         }
-        nativeSetTexts(handle, this, contents(), keys(), frames());
+        nativeSetTexts(handle, this, contents(), keys(), continues(), frames());
         update();
         if (empty() && !extending) clear();
     }
@@ -276,6 +298,13 @@ final class SelectableView implements SelectionHandle.Owner {
         return out;
     }
 
+    /** Which texts continue the one before them (a wrapped line's later parts): a copy joins them. */
+    private boolean[] continues() {
+        boolean[] out = new boolean[texts.size()];
+        for (int i = 0; i < out.length; i++) out[i] = texts.get(i).continuesText;
+        return out;
+    }
+
     private String[] contents() {
         String[] out = new String[texts.size()];
         for (int i = 0; i < out.length; i++) out[i] = texts.get(i).layout().getText().toString();
@@ -308,6 +337,17 @@ final class SelectableView implements SelectionHandle.Owner {
         view.getLocationOnScreen(at);
         float d = mounter.density;
         return new float[] {(rawX - at[0]) / d, (rawY - at[1]) / d};
+    }
+
+    /**
+     * The UTF-16 range {@code start..end} of text {@code i} as a copy gives
+     * it (called from Rust within a native call): without attachments and
+     * hidden runs.
+     */
+    String copiedText(int i, int start, int end) {
+        if (i < 0 || i >= texts.size()) return "";
+        Layout layout = texts.get(i).layout();
+        return layout == null ? "" : TextLayouts.shown(layout.getText(), start, end);
     }
 
     /**
@@ -349,6 +389,10 @@ final class SelectableView implements SelectionHandle.Owner {
         // Scrolled away, the ends' rows must not be recycled.
         int[] kept = nativeKept(handle);
         if (kept != null) Native.keepRendered(mounter.handle(), kept);
+        if (mounter.wants(id, Native.SELECTION_CHANGE)) {
+            String text = empty() ? "" : nativeText(handle, this);
+            report(text != null ? text : "");
+        }
         int[] ranges = nativeRanges(handle, this);
         java.util.ArrayList<TextBox> now = new java.util.ArrayList<>();
         if (ranges != null) {
@@ -476,6 +520,7 @@ final class SelectableView implements SelectionHandle.Owner {
                 android.content.res.Resources system = android.content.res.Resources.getSystem();
                 int share = system.getIdentifier("share", "string", "android");
                 if (share != 0) menu.add(android.view.Menu.NONE, android.R.id.shareText, 2, system.getString(share));
+                addTextActions(menu);
                 return true;
             }
 
@@ -490,7 +535,8 @@ final class SelectableView implements SelectionHandle.Owner {
                 if (handle == 0) return false;
                 int itemId = item.getItemId();
                 if (itemId == android.R.id.copy) {
-                    SystemUi.setClipboard(view.getContext(), nativeText(handle, SelectableView.this));
+                    String copied = nativeText(handle, SelectableView.this);
+                    if (copied != null && !copied.isEmpty()) SystemUi.setClipboard(view.getContext(), copied);
                     clear();
                     return true;
                 }
@@ -512,6 +558,23 @@ final class SelectableView implements SelectionHandle.Owner {
                         context.startActivity(chooser);
                     } catch (android.content.ActivityNotFoundException ignored) {
                         // Nothing can share text.
+                    }
+                    clear();
+                    return true;
+                }
+                android.content.Intent process = item.getIntent();
+                if (process != null && android.content.Intent.ACTION_PROCESS_TEXT.equals(process.getAction())) {
+                    android.content.Context context = view.getContext();
+                    android.content.Intent send = new android.content.Intent(process)
+                            .putExtra(android.content.Intent.EXTRA_PROCESS_TEXT, nativeText(handle, SelectableView.this))
+                            .putExtra(android.content.Intent.EXTRA_PROCESS_TEXT_READONLY, true);
+                    if (!(context instanceof android.app.Activity)) {
+                        send.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                    }
+                    try {
+                        context.startActivity(send);
+                    } catch (RuntimeException ignored) {
+                        // The app went away, or does not take the text.
                     }
                     clear();
                     return true;
@@ -554,5 +617,33 @@ final class SelectableView implements SelectionHandle.Owner {
                 else out.set(Math.round(all.left), Math.round(all.top), Math.round(all.right), Math.round(all.bottom));
             }
         }, android.view.ActionMode.TYPE_FLOATING);
+    }
+
+    /**
+     * The installed apps' text actions (Translate and the like) after the
+     * built-in items, as TextView's. The text is passed read-only.
+     */
+    private void addTextActions(android.view.Menu menu) {
+        android.content.Context context = view.getContext();
+        android.content.pm.PackageManager pm = context.getPackageManager();
+        android.content.Intent query = new android.content.Intent(android.content.Intent.ACTION_PROCESS_TEXT)
+                .setType("text/plain");
+        java.util.List<android.content.pm.ResolveInfo> found;
+        try {
+            found = pm.queryIntentActivities(query, 0);
+        } catch (RuntimeException e) {
+            return;
+        }
+        int order = 100;
+        for (android.content.pm.ResolveInfo info : found) {
+            android.content.pm.ActivityInfo activity = info.activityInfo;
+            if (activity == null || !activity.exported) continue;
+            if (activity.packageName.equals(context.getPackageName())) continue;
+            android.content.Intent intent = new android.content.Intent(query)
+                    .setClassName(activity.packageName, activity.name);
+            menu.add(android.view.Menu.NONE, android.view.Menu.NONE, order++, info.loadLabel(pm))
+                    .setIntent(intent)
+                    .setShowAsAction(android.view.MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        }
     }
 }

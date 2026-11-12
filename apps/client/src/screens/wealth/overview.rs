@@ -284,12 +284,24 @@ pub(super) fn allocation(group: summary::Allocation) -> impl Element {
         missing,
     } = group;
     let partial = missing > 0;
+    let plot_currency = c.currency.clone();
     let known_caption = format!(
         "已知资产 {} {} · {missing} 项持仓缺价",
         ui::money_for(c.assets, &c.currency),
         c.currency
     );
-    let r = ui::ratio(investment, c.assets);
+    let row = |label: &str, value: Decimal| {
+        view()
+            .flex_row()
+            .items_baseline()
+            .gap_2()
+            .child(ui::quiet_text(label).flex_1())
+            .child(ui::amount_text(
+                ui::money_for(value, &c.currency),
+                String::new(),
+                "type-allocation",
+            ))
+    };
     view()
         .gap_3()
         .child(
@@ -298,61 +310,24 @@ pub(super) fn allocation(group: summary::Allocation) -> impl Element {
                 c.currency,
                 if partial { " · 部分缺价" } else { "" }
             ))
-            .text_size(move || px(ui::token("type-section")))
+            .text_base()
             .font_weight(FontWeight::SEMIBOLD),
         )
         .child(
             view()
-                .style_when(move || partial, |s| s.hidden())
                 .flex_row()
-                .gap_1()
-                .h(move || px(ui::token("bar-allocation-height")))
-                .child(
-                    view()
-                        .w(relative(r))
-                        .h_full()
-                        .rounded(px(2.0))
-                        .bg(move || theme().primary),
-                )
-                .child(view().flex_1().h_full().rounded(px(2.0)).bg(move || {
-                    theme()
-                        .color("data-cash-surface")
-                        .unwrap_or_else(|| theme().secondary)
-                })),
-        )
-        .child(
-            view()
-                .flex_row()
-                .gap_3()
+                .items_center()
+                .gap_5()
+                .child(when(
+                    move || !partial,
+                    move || ui::allocation_plot(investment, cash, &plot_currency),
+                ))
                 .child(
                     view()
                         .flex_1()
-                        .gap_1()
-                        .child(ui::quiet_text(if partial {
-                            "已知投资"
-                        } else {
-                            "投资"
-                        }))
-                        .child(ui::amount_text(
-                            ui::money_for(investment, &c.currency),
-                            String::new(),
-                            "type-allocation",
-                        )),
-                )
-                .child(
-                    view()
-                        .flex_1()
-                        .gap_1()
-                        .child(ui::quiet_text(if partial {
-                            "已知现金"
-                        } else {
-                            "现金"
-                        }))
-                        .child(ui::amount_text(
-                            ui::money_for(cash, &c.currency),
-                            String::new(),
-                            "type-allocation",
-                        )),
+                        .gap_3()
+                        .child(row(if partial { "已知投资" } else { "投资" }, investment))
+                        .child(row(if partial { "已知现金" } else { "现金" }, cash)),
                 ),
         )
         .child(when(

@@ -19,9 +19,15 @@ fn enable_knowledge_from_settings_and_create_note() {
     app.wait_for("text:领域").unwrap();
     app.wait_for("id:domain-toggle-knowledge").unwrap();
 
-    // Flip the switch: the tab appears, the switch reads 已启用.
+    // Flip the official Switch: its checked state and workspace entry follow.
     app.press("id:domain-toggle-knowledge").unwrap();
-    app.wait_for("text:已启用").unwrap();
+    assert_eq!(
+        app.screen()
+            .accessibility_state("id:domain-toggle-knowledge")
+            .unwrap()
+            .checked,
+        Some(nsh_core::Checked::True)
+    );
     // Optional domains live in the workspace picker, while Finance keeps four tabs.
     root(&mut app);
     app.press("id:workspace-more").unwrap();

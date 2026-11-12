@@ -276,3 +276,9 @@ pub use record_currency::*;
 
 mod budget;
 pub use budget::*;
+
+mod native;
+pub use native::*;
+
+mod plots;
+pub use plots::*;

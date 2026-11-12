@@ -81,6 +81,9 @@ fn action_button(
     let label = label.into();
     let primary = matches!(kind, ButtonKind::Primary);
     let b = press_target(on_press)
+        .border_1()
+        .border_color(move || theme().border)
+        .shadow_sm()
         .items_center()
         .justify_center()
         .rounded(move || theme().radius)
@@ -160,29 +163,33 @@ pub fn chip(
     on_press: impl Fn() + 'static,
 ) -> impl Element {
     let selected_bg = selected.clone();
-    let selected_text = selected;
-    press_target(on_press)
-        .rounded(px(999.0))
-        .px(px(12.0))
-        .py(px(6.0))
-        .bg(move || {
-            if selected_bg() {
-                crate::finance_ui::wash()
-            } else {
-                theme().muted
-            }
-        })
-        .child(
-            text(label)
-                .text_size(move || px(token("type-action")))
-                .text_color(move || {
-                    if selected_text() {
-                        theme().foreground
-                    } else {
-                        theme().muted_foreground
-                    }
-                }),
-        )
+    let selected_text = selected.clone();
+    NativeControl(
+        nsh_base::toggle()
+            .pressed(selected.clone())
+            .on_change(move |_: &bool| on_press()),
+    )
+    .rounded(px(999.0))
+    .px(px(12.0))
+    .py(px(6.0))
+    .bg(move || {
+        if selected_bg() {
+            crate::finance_ui::wash()
+        } else {
+            theme().muted
+        }
+    })
+    .child(
+        text(label)
+            .text_size(move || px(token("type-action")))
+            .text_color(move || {
+                if selected_text() {
+                    theme().foreground
+                } else {
+                    theme().muted_foreground
+                }
+            }),
+    )
 }
 
 pub fn choice_button(
@@ -190,42 +197,42 @@ pub fn choice_button(
     selected: impl Fn() -> bool + Clone + 'static,
     on_press: impl Fn() + 'static,
     id: impl Into<String>,
-) -> nsh_core::element::View {
+) -> NativeToggle {
     let scale = selection_scale(selected.clone());
     let semantic = selected.clone();
     let bg = selected.clone();
-    press_target(on_press)
-        .bind_scale(&scale)
-        .accessibility_state(move || AccessibilityState {
-            selected: semantic(),
-            ..Default::default()
-        })
-        .test_id(&id.into())
-        .min_h(move || px(token("control-height")))
-        .px_3()
-        .py_2()
-        .rounded(move || px(theme().number("radius").unwrap_or(10.0)))
-        .items_center()
-        .justify_center()
-        .bg(move || {
-            if bg() {
-                crate::finance_ui::wash()
-            } else {
-                theme().secondary
-            }
-        })
-        .child(
-            text(label.into())
-                .text_size(move || px(token("type-action")))
-                .font_weight(FontWeight::MEDIUM)
-                .text_color(move || {
-                    if selected() {
-                        theme().foreground
-                    } else {
-                        theme().muted_foreground
-                    }
-                }),
-        )
+    NativeControl(
+        nsh_base::toggle()
+            .pressed(semantic)
+            .on_change(move |_: &bool| on_press()),
+    )
+    .bind_scale(&scale)
+    .test_id(&id.into())
+    .min_h(move || px(token("control-height")))
+    .px_3()
+    .py_2()
+    .rounded(move || px(theme().number("radius").unwrap_or(10.0)))
+    .items_center()
+    .justify_center()
+    .bg(move || {
+        if bg() {
+            crate::finance_ui::wash()
+        } else {
+            theme().secondary
+        }
+    })
+    .child(
+        text(label.into())
+            .text_size(move || px(token("type-action")))
+            .font_weight(FontWeight::MEDIUM)
+            .text_color(move || {
+                if selected() {
+                    theme().foreground
+                } else {
+                    theme().muted_foreground
+                }
+            }),
+    )
 }
 
 pub fn danger_button(
@@ -276,24 +283,32 @@ pub fn icon_button(
 }
 
 /// A single press/focus primitive for buttons, rows and icon targets.
-pub fn press_target(on_press: impl Fn() + 'static) -> nsh_core::element::View {
-    view()
-        .role(AccessibilityRole::Button)
-        .on_press(on_press)
-        .min_h(move || px(token("control-height")))
-        .active(|s| {
-            s.opacity(token("opacity-pressed"))
-                .scale(if reduce_motion() { 1.0 } else { 0.985 })
-        })
-        .focus(focus_ring)
-        .transition_transform()
-        .duration(if reduce_motion() {
-            0.0
-        } else {
-            token("motion-press-ms")
-        })
-        .ease_out()
-        .disabled_style(|s| s.opacity(token("opacity-disabled")))
+pub fn press_target(on_press: impl Fn() + 'static) -> NativeButton {
+    let scale = animated_value(1.0);
+    let down = scale;
+    let up = scale;
+    NativeControl(
+        nsh_base::button()
+            .on_press(move |_: &()| on_press())
+            .on_press_down(move |_: &()| {
+                if !reduce_motion() {
+                    down.spring(0.97, settle_spring());
+                }
+            })
+            .on_press_up(move |_: &()| {
+                if !reduce_motion() {
+                    up.spring(1.0, settle_spring());
+                } else {
+                    up.set(1.0);
+                }
+            })
+            .bind_scale(&scale),
+    )
+    .min_h(move || px(token("control-height")))
+    .hover(|s| s.opacity(0.9))
+    .active(|s| s.opacity(0.88))
+    .focus_visible(focus_ring)
+    .disabled_style(|s| s.opacity(0.4))
 }
 
 /// Quiet inline action, including safe destructive exits.

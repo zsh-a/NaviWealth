@@ -323,12 +323,18 @@ fn form_fields(
 }
 
 fn kind_switch(state: Form, services: Arc<Services>) -> impl IntoElement {
-    view()
+    nsh_base::tabs()
         .flex_row()
         .p_1()
-        .rounded(move || theme().radius)
-        .bg(move || theme().secondary)
-        .gap_1()
+        .rounded_lg()
+        .bg(move || theme().muted)
+        .indicator_style(|s| {
+            s.top(px(4.0))
+                .bottom(px(4.0))
+                .rounded_md()
+                .bg(move || theme().card)
+                .shadow_sm()
+        })
         .children(
             [
                 RecordKind::Expense,
@@ -337,26 +343,27 @@ fn kind_switch(state: Form, services: Arc<Services>) -> impl IntoElement {
             ]
             .map(|kind| {
                 let state = state.clone();
-                let selected = state.clone();
-                let kind_signal = state.kind;
                 let services = services.clone();
-                ui::choice_button(
-                    kind.label(),
-                    move || selected.kind.get() == kind,
-                    move || {
+                let selected = state.kind;
+                nsh_base::tab()
+                    .selected(move || selected.get() == kind)
+                    .on_press(move |_: &()| {
                         state.kind.set(kind);
                         state.categories(services.clone());
-                    },
-                    format!("record-kind-{}", kind.label()),
-                )
-                .bg(move || {
-                    if kind_signal.get() == kind {
-                        theme().card
-                    } else {
-                        theme().secondary
-                    }
-                })
-                .flex_1()
+                    })
+                    .flex_1()
+                    .min_h(px(44.0))
+                    .items_center()
+                    .justify_center()
+                    .child(
+                        view()
+                            .test_id(&format!("record-kind-{}", kind.label()))
+                            .items_center()
+                            .justify_center()
+                            .w_full()
+                            .h_full()
+                            .child(text(kind.label()).text_sm().font_weight(FontWeight::MEDIUM)),
+                    )
             }),
         )
 }

@@ -2,6 +2,8 @@
 
 状态：Rust 客户端已实现 FinanceOS 核心财务流程；Android 15（API 35）x86_64 已完成下述原生流程和界面验收。阶段 1/2 的双端完整验收尚未完成；iOS 未验证，其他领域及阶段 3+ 仍待实施。
 
+当前工作区升级至 **nsh 0.5.0**，采用 nsh-base 官方控件与 plot；CLI、Android CI 与本地平台补丁同步版本。升级后 251 项 workspace 测试及严格 clippy／fmt 通过，原生截图仅覆盖 Linux GTK。下方 Android 证据属于历史构建，不能作为 0.5.0 的运行验收；本轮证据见 `.impeccable/review/2026-11-12-nsh050-native/`。
+
 采用 nsh 纯 Rust 客户端，先交付 iOS、Android，再扩展 Web。
 本方案是新客户端的架构与实施基线；现有 Flutter 文档继续描述当前实现。
 
@@ -207,7 +209,7 @@ Xvfb 显示中采集；未使用浏览器 mock 或 headless 图像替代原生�
 ### 构建与复验
 
 从仓库根目录执行，Android 需要 SDK platform 35、build-tools 35+、JDK 17+、
-NDK、Rust Android targets 和 nsh 0.4.0；工具链环境参见 CI。
+NDK、Rust Android targets 和 nsh 0.5.0；工具链环境参见 CI。
 
 ```bash
 rtk cargo test --workspace --no-default-features

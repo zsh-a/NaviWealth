@@ -23,47 +23,52 @@ pub(super) fn category_grid(state: Form) -> AnyElement {
                 )),
         )
         .child(
-            view()
-                .test_id("record-category")
-                .grid()
-                .grid_cols(move || {
-                    columns(
-                        window().width.0 - ui::page_px()() * 2.0,
-                        font_scale(),
-                        &columns_state.categories.get(),
-                    )
-                })
-                .gap(px(8.0))
-                .child(each(
-                    move || {
-                        let categories = count.get();
-                        if expanded.get()
-                            || categories
-                                .iter()
-                                .skip(12)
-                                .any(|(id, _)| *id == state.category.get())
-                        {
-                            categories
-                        } else {
-                            categories.into_iter().take(12).collect()
-                        }
-                    },
-                    |c: &(String, String)| c.0.clone(),
-                    move |item: ReadSignal<(String, String)>, _| {
-                        let (value, label) = item.get();
-                        let category = state.category;
-                        let active = value.clone();
-                        let bg = value.clone();
-                        let checked = value.clone();
-                        let scale_value = value.clone();
-                        let scale = ui::selection_scale(move || category.get() == scale_value);
-                        ui::press_target(move || category.set(value.clone()))
+            nsh_base::radio_group().child(
+                view()
+                    .test_id("record-category")
+                    .grid()
+                    .grid_cols(move || {
+                        columns(
+                            window().width.0 - ui::page_px()() * 2.0,
+                            font_scale(),
+                            &columns_state.categories.get(),
+                        )
+                    })
+                    .gap(px(8.0))
+                    .child(each(
+                        move || {
+                            let categories = count.get();
+                            if expanded.get()
+                                || categories
+                                    .iter()
+                                    .skip(12)
+                                    .any(|(id, _)| *id == state.category.get())
+                            {
+                                categories
+                            } else {
+                                categories.into_iter().take(12).collect()
+                            }
+                        },
+                        |c: &(String, String)| c.0.clone(),
+                        move |item: ReadSignal<(String, String)>, _| {
+                            let (value, label) = item.get();
+                            let category = state.category;
+                            let active = value.clone();
+                            let bg = value.clone();
+                            let checked = value.clone();
+                            let scale_value = value.clone();
+                            let scale = ui::selection_scale(move || category.get() == scale_value);
+                            ui::NativeControl(
+                                nsh_base::radio()
+                                    .checked(move || category.get() == active)
+                                    .on_change(move |checked: &bool| {
+                                        if *checked {
+                                            category.set(value.clone());
+                                        }
+                                    })
+                                    .accessibility_label(format!("{label}分类选项")),
+                            )
                             .test_id(&format!("record-category-{}", item.get().0))
-                            .label(format!("{label}分类选项"))
-                            .accessibility_state(move || AccessibilityState {
-                                selected: category.get() == active,
-                                ..Default::default()
-                            })
                             .bind_scale(&scale)
                             .min_h(move || px(ui::token("category-height")))
                             .px_1()
@@ -97,8 +102,9 @@ pub(super) fn category_grid(state: Form) -> AnyElement {
                                         .text_color(move || theme().primary)
                                 },
                             ))
-                    },
-                )),
+                        },
+                    )),
+            ),
         )
         .child(dynamic(move || {
             let category = context.category.get();

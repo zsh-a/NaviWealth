@@ -1,5 +1,6 @@
 package com.longbridge.nsh;
 
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.DashPathEffect;
@@ -177,6 +178,9 @@ final class Decor extends Drawable {
     int[] boxShadowColors = new int[0];
     // Gradients, top layer first.
     Gradient[] gradients = new Gradient[0];
+    /** `maskImage`, top layer first. */
+    Gradient[] masks = new Gradient[0];
+    private Paint maskPaint;
     // `outline*` (px): width (0: none), color, style (0 solid, 1 dashed, 2
     // dotted), offset.
     float outlineWidth, outlineOffset;
@@ -385,9 +389,101 @@ final class Decor extends Drawable {
         return Math.max(0.01f, (blur / 2 - 0.5f) * 1.7320508f);
     }
 
+    /**
+     * Android 8 draws no shadow layers of shapes on a hardware canvas (only
+     * of text): there box shadows are drawn by the same code on a software
+     * canvas, into a bitmap ({@link #drawShadowSlices}).
+     */
+    private static boolean softwareShadows(Canvas canvas) {
+        return Build.VERSION.SDK_INT < 28 && canvas.isHardwareAccelerated();
+    }
+
+    /** Shadow bitmaps of Android 8, shared by boxes that look the same. */
+    private static final android.util.LruCache<String, Bitmap> SHADOWS =
+            new android.util.LruCache<String, Bitmap>(8 << 20) {
+                @Override
+                protected int sizeOf(String key, Bitmap value) {
+                    return value.getByteCount();
+                }
+            };
+
+    /**
+     * The outer or inset shadows of `b`, drawn in software into a bitmap of
+     * the smallest box that has the same corners, then stretched to `b` in
+     * nine slices: a 2 px band between the corners, where the shadow is the
+     * same all along, takes the rest of each side. So the bitmap does not
+     * depend on the box's size, and equal boxes (a list's cards) share one.
+     * An axis too short to have such a band is drawn at its size.
+     */
+    private void drawShadowSlices(Canvas canvas, Rect b, boolean inset) {
+        float reach = 0;
+        for (int n = 0; n < boxShadowColors.length; n++) {
+            int i = n * 5;
+            if ((boxShadows[i + 4] != 0) != inset || Color.alpha(boxShadowColors[n]) == 0) continue;
+            reach = Math.max(reach, Math.abs(boxShadows[i]) + Math.abs(boxShadows[i + 1])
+                    + Math.abs(boxShadows[i + 3]) + boxShadows[i + 2] * 2 + 4);
+        }
+        int m = (int) Math.ceil(reach);
+        float[] r = fit(b).clone();
+        // Continuous corners keep their full smoothing over 1.6 radii.
+        float k = continuous ? 1.6f : 1f;
+        int left = (int) Math.ceil((Math.max(r[0], r[3]) + m) * k + borderWidths[3]);
+        int right = (int) Math.ceil((Math.max(r[1], r[2]) + m) * k + borderWidths[1]);
+        int top = (int) Math.ceil((Math.max(r[0], r[1]) + m) * k + borderWidths[0]);
+        int bottom = (int) Math.ceil((Math.max(r[3], r[2]) + m) * k + borderWidths[2]);
+        int w = b.width(), h = b.height();
+        boolean wide = w > left + right + 2, tall = h > top + bottom + 2;
+        int sw = wide ? left + right + 2 : w, sh = tall ? top + bottom + 2 : h;
+        if (sw <= 0 || sh <= 0) return;
+
+        StringBuilder key = new StringBuilder(inset ? "i" : "o");
+        key.append(sw).append(',').append(sh).append(',').append(continuous);
+        for (float v : r) key.append(',').append(v);
+        if (inset) for (float v : borderWidths) key.append(',').append(v);
+        for (float v : boxShadows) key.append(',').append(v);
+        for (int c : boxShadowColors) key.append(',').append(c);
+        String id = key.toString();
+        Bitmap bitmap = SHADOWS.get(id);
+        if (bitmap == null) {
+            bitmap = Bitmap.createBitmap(sw + 2 * m, sh + 2 * m, Bitmap.Config.ARGB_8888);
+            Canvas software = new Canvas(bitmap);
+            software.translate(m, m);
+            Rect small = new Rect(0, 0, sw, sh);
+            if (inset) drawInsetShadows(software, small);
+            else drawOuterShadows(software, small);
+            SHADOWS.put(id, bitmap);
+        }
+
+        int[] xs = wide
+                ? new int[] {0, m + left, m + left + 2, sw + 2 * m}
+                : new int[] {0, sw + 2 * m};
+        int[] dxs = wide
+                ? new int[] {b.left - m, b.left + left, b.right - right, b.right + m}
+                : new int[] {b.left - m, b.right + m};
+        int[] ys = tall
+                ? new int[] {0, m + top, m + top + 2, sh + 2 * m}
+                : new int[] {0, sh + 2 * m};
+        int[] dys = tall
+                ? new int[] {b.top - m, b.top + top, b.bottom - bottom, b.bottom + m}
+                : new int[] {b.top - m, b.bottom + m};
+        Rect src = new Rect(), dst = new Rect();
+        for (int y = 0; y + 1 < ys.length; y++) {
+            for (int x = 0; x + 1 < xs.length; x++) {
+                src.set(xs[x], ys[y], xs[x + 1], ys[y + 1]);
+                dst.set(dxs[x], dys[y], dxs[x + 1], dys[y + 1]);
+                // No filtering: the band is the same along it, corners 1:1.
+                canvas.drawBitmap(bitmap, src, dst, null);
+            }
+        }
+    }
+
     /** Outer box shadows: only outside the box, as CSS draws them. */
     private void drawOuterShadows(Canvas canvas, Rect b) {
         if (!hasOuterShadows()) return;
+        if (softwareShadows(canvas)) {
+            drawShadowSlices(canvas, b, false);
+            return;
+        }
         canvas.save();
         if (android.os.Build.VERSION.SDK_INT >= 26) canvas.clipOutPath(shape(b, 0, path));
         paint.setStyle(Paint.Style.FILL);
@@ -415,6 +511,10 @@ final class Decor extends Drawable {
         boolean any = false;
         for (int n = 0; n < boxShadowColors.length; n++) any |= boxShadows[n * 5 + 4] != 0 && Color.alpha(boxShadowColors[n]) > 0;
         if (!any) return;
+        if (softwareShadows(canvas)) {
+            drawShadowSlices(canvas, b, true);
+            return;
+        }
         float t = borderWidths[0], r = borderWidths[1], bo = borderWidths[2], l = borderWidths[3];
         Rect pad = new Rect(Math.round(b.left + l), Math.round(b.top + t), Math.round(b.right - r), Math.round(b.bottom - bo));
         canvas.save();
@@ -461,72 +561,107 @@ final class Decor extends Drawable {
 
     private void drawGradients(Canvas canvas, Rect b) {
         if (gradients.length == 0) return;
-        float w = Math.max(1, b.width()), h = Math.max(1, b.height());
         paint.setStyle(Paint.Style.FILL);
         Path box = shape(b, 0, path);
         for (int i = gradients.length - 1; i >= 0; i--) {
-            Gradient g = gradients[i];
-            android.graphics.Shader shader;
-            switch (g.kind) {
-                case 2: {
-                    float cx = b.left + g.x * w, cy = b.top + g.y * h;
-                    float ax = g.x * w, ay = g.y * h;
-                    float dx, dy;
-                    switch (g.size) {
-                        case 0: dx = Math.min(ax, w - ax); dy = Math.min(ay, h - ay); break;
-                        case 2: dx = Math.max(ax, w - ax); dy = Math.max(ay, h - ay); break;
-                        case 1: dx = Math.min(ax, w - ax) * 1.4142135f; dy = Math.min(ay, h - ay) * 1.4142135f; break;
-                        default: dx = Math.max(ax, w - ax) * 1.4142135f; dy = Math.max(ay, h - ay) * 1.4142135f;
-                    }
-                    if (g.circle) {
-                        float r = g.size == 0 ? Math.min(dx, dy) : g.size == 2 ? Math.max(dx, dy)
-                                : (float) Math.hypot(dx / 1.4142135f, dy / 1.4142135f);
-                        dx = dy = r;
-                    }
-                    // The farthest corner, in radii of the ending shape: a repeating gradient's
-                    // rings go on to it.
-                    float reach = g.repeating && dx > 0 && dy > 0
-                            ? Math.max(1, (float) Math.hypot(Math.max(ax, w - ax) / dx, Math.max(ay, h - ay) / dy))
-                            : 1;
-                    // Lengths are along the ray to the right.
-                    g.place(dx, reach);
-                    shader = new android.graphics.RadialGradient(cx, cy, Math.max(0.5f, dx) * reach, g.drawnColors,
-                            g.drawnPositions, android.graphics.Shader.TileMode.CLAMP);
-                    // An ellipse: the circle scaled vertically.
-                    gradientMatrix.setScale(1, dy / Math.max(0.5f, dx), cx, cy);
-                    shader.setLocalMatrix(gradientMatrix);
-                    break;
-                }
-                case 3: {
-                    float cx = b.left + g.x * w, cy = b.top + g.y * h;
-                    g.place(0, 1);
-                    shader = new android.graphics.SweepGradient(cx, cy, g.drawnColors, g.drawnPositions);
-                    // Sweeps start right; CSS starts up.
-                    gradientMatrix.setRotate(g.angle - 90, cx, cy);
-                    shader.setLocalMatrix(gradientMatrix);
-                    break;
-                }
-                default: {
-                    float angle = g.angle;
-                    if (g.kind == 1) {
-                        float a = (float) Math.toDegrees(Math.atan2(h, w));
-                        angle = g.right ? (g.bottom ? 90 + a : 90 - a) : (g.bottom ? 270 - a : 270 + a);
-                    }
-                    double rad = Math.toRadians(angle);
-                    float sin = (float) Math.sin(rad), cos = (float) Math.cos(rad);
-                    float len = Math.abs(w * sin) + Math.abs(h * cos);
-                    float cx = b.left + w / 2, cy = b.top + h / 2;
-                    float dx = sin * len / 2, dy = -cos * len / 2;
-                    g.place(len, 1);
-                    shader = new android.graphics.LinearGradient(cx - dx, cy - dy, cx + dx, cy + dy, g.drawnColors,
-                            g.drawnPositions, android.graphics.Shader.TileMode.CLAMP);
-                }
-            }
-            paint.setShader(shader);
+            paint.setShader(shader(gradients[i], b));
             paint.setColor(0xff000000);
             canvas.drawPath(box, paint);
             paint.setShader(null);
         }
+    }
+
+    /** What `g` paints over the box `b`. */
+    private android.graphics.Shader shader(Gradient g, Rect b) {
+        float w = Math.max(1, b.width()), h = Math.max(1, b.height());
+        android.graphics.Shader shader;
+        switch (g.kind) {
+            case 2: {
+                float cx = b.left + g.x * w, cy = b.top + g.y * h;
+                float ax = g.x * w, ay = g.y * h;
+                float dx, dy;
+                switch (g.size) {
+                    case 0: dx = Math.min(ax, w - ax); dy = Math.min(ay, h - ay); break;
+                    case 2: dx = Math.max(ax, w - ax); dy = Math.max(ay, h - ay); break;
+                    case 1: dx = Math.min(ax, w - ax) * 1.4142135f; dy = Math.min(ay, h - ay) * 1.4142135f; break;
+                    default: dx = Math.max(ax, w - ax) * 1.4142135f; dy = Math.max(ay, h - ay) * 1.4142135f;
+                }
+                if (g.circle) {
+                    float r = g.size == 0 ? Math.min(dx, dy) : g.size == 2 ? Math.max(dx, dy)
+                            : (float) Math.hypot(dx / 1.4142135f, dy / 1.4142135f);
+                    dx = dy = r;
+                }
+                // The farthest corner, in radii of the ending shape: a repeating gradient's
+                // rings go on to it.
+                float reach = g.repeating && dx > 0 && dy > 0
+                        ? Math.max(1, (float) Math.hypot(Math.max(ax, w - ax) / dx, Math.max(ay, h - ay) / dy))
+                        : 1;
+                // Lengths are along the ray to the right.
+                g.place(dx, reach);
+                shader = new android.graphics.RadialGradient(cx, cy, Math.max(0.5f, dx) * reach, g.drawnColors,
+                        g.drawnPositions, android.graphics.Shader.TileMode.CLAMP);
+                // An ellipse: the circle scaled vertically.
+                gradientMatrix.setScale(1, dy / Math.max(0.5f, dx), cx, cy);
+                shader.setLocalMatrix(gradientMatrix);
+                break;
+            }
+            case 3: {
+                float cx = b.left + g.x * w, cy = b.top + g.y * h;
+                g.place(0, 1);
+                shader = new android.graphics.SweepGradient(cx, cy, g.drawnColors, g.drawnPositions);
+                // Sweeps start right; CSS starts up.
+                gradientMatrix.setRotate(g.angle - 90, cx, cy);
+                shader.setLocalMatrix(gradientMatrix);
+                break;
+            }
+            default: {
+                float angle = g.angle;
+                if (g.kind == 1) {
+                    float a = (float) Math.toDegrees(Math.atan2(h, w));
+                    angle = g.right ? (g.bottom ? 90 + a : 90 - a) : (g.bottom ? 270 - a : 270 + a);
+                }
+                double rad = Math.toRadians(angle);
+                float sin = (float) Math.sin(rad), cos = (float) Math.cos(rad);
+                float len = Math.abs(w * sin) + Math.abs(h * cos);
+                float cx = b.left + w / 2, cy = b.top + h / 2;
+                float dx = sin * len / 2, dy = -cos * len / 2;
+                g.place(len, 1);
+                shader = new android.graphics.LinearGradient(cx - dx, cy - dy, cx + dx, cy + dy, g.drawnColors,
+                        g.drawnPositions, android.graphics.Shader.TileMode.CLAMP);
+            }
+        }
+        return shader;
+    }
+
+    /**
+     * Keeps what `canvas` holds of the layer {@link #drawMasked} opened where
+     * `maskImage`'s topmost gradient is opaque (as iOS and macOS, which
+     * draw that one).
+     */
+    private void drawMask(Canvas canvas, Rect b) {
+        if (maskPaint == null) {
+            maskPaint = new Paint();
+            maskPaint.setXfermode(new android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.DST_IN));
+        }
+        maskPaint.setShader(shader(masks[0], b));
+        canvas.drawRect(b, maskPaint);
+        maskPaint.setShader(null);
+    }
+
+    /**
+     * Draws the view through `draw` under `maskImage`, in a layer of its own
+     * so the mask covers all of it, its backdrop included.
+     */
+    void drawMasked(Canvas canvas, android.view.View view, Runnable draw) {
+        if (masks.length == 0) {
+            draw.run();
+            return;
+        }
+        Rect b = new Rect(0, 0, view.getWidth(), view.getHeight());
+        int save = canvas.saveLayer(0, 0, b.right, b.bottom, null);
+        draw.run();
+        drawMask(canvas, b);
+        canvas.restoreToCount(save);
     }
 
     private void drawOutline(Canvas canvas, Rect b) {
@@ -607,7 +742,7 @@ final class Decor extends Drawable {
         return false;
     }
 
-    private boolean uniformBorder() {
+    boolean uniformBorder() {
         for (int i = 1; i < 4; i++) {
             if (borderWidths[i] != borderWidths[0] || borderColors[i] != borderColors[0]) return false;
         }
@@ -677,6 +812,14 @@ final class Decor extends Drawable {
                     outline.setRoundRect(r, fit(r)[0]);
                 } else if (Build.VERSION.SDK_INT >= 30) {
                     outline.setPath(shape(r, 0, new Path()));
+                } else if (continuous) {
+                    // Smoothed corners are not always convex, and Android 8 and 9
+                    // takes only convex outlines. Clipping is by path here
+                    // (`needsPathClip`), so the outline only casts the shadow:
+                    // a round rect of the smallest corner stands in for it.
+                    float smallest = Float.MAX_VALUE;
+                    for (float corner : fit(r)) smallest = Math.min(smallest, corner);
+                    outline.setRoundRect(r, smallest);
                 } else {
                     // Rounded rectangles are convex.
                     outline.setConvexPath(shape(r, 0, new Path()));

@@ -9,6 +9,8 @@ import android.graphics.Rect;
 import android.text.Layout;
 import android.util.SparseArray;
 import android.util.SparseLongArray;
+import android.os.Build;
+import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AccelerateInterpolator;
@@ -104,8 +106,10 @@ final class Mounter {
 
     /** One part of a layout animation (`encode.rs` `layout_transition`). */
     private static final class Transition {
-        int curve; // 0 linear, 1 ease in, 2 ease out, 3 ease in-out, 4 spring, 5 the keyboard's
+        int curve; // 0 linear, 1 ease in, 2 ease out, 3 ease in-out, 4 fitted spring, 5 the keyboard's, 6 spring
         float damping;
+        /** A spring's progress (6), sampled evenly over the time it settles in (the duration), ending at 1. */
+        float[] samples;
         int property; // 0 opacity, 1 scale
         long duration, delay;
 
@@ -119,6 +123,16 @@ final class Mounter {
                     // React Native's spring interpolator.
                     float d = damping;
                     return t -> (float) (1 + Math.pow(2, -10 * t) * Math.sin((t - d / 4) * Math.PI * 2 / d));
+                }
+                case 6: {
+                    float[] p = samples;
+                    int last = p.length - 1;
+                    return t -> {
+                        if (t >= 1) return 1;
+                        float x = Math.max(t, 0) * last;
+                        int i = (int) x;
+                        return p[i] + (p[i + 1] - p[i]) * (x - i);
+                    };
                 }
                 default: return new AccelerateDecelerateInterpolator();
             }
@@ -230,6 +244,11 @@ final class Mounter {
     /** Whether the running app's web views may navigate to {@code url} (its capabilities). */
     boolean allowsWebview(String url) {
         return Native.allowsWebview(handle(), url);
+    }
+
+    /** Whether the running app's web pages may capture {@code kind} (its {@code webview.media}). */
+    boolean allowsWebMedia(String kind) {
+        return Native.allowsWebMedia(handle(), kind);
     }
 
     long handle() {
@@ -638,6 +657,10 @@ final class Mounter {
         Transition t = new Transition();
         t.curve = b.getInt();
         t.damping = b.getFloat();
+        if (t.curve == 6) {
+            t.samples = new float[b.getInt()];
+            for (int i = 0; i < t.samples.length; i++) t.samples[i] = b.getFloat();
+        }
         t.property = b.getInt();
         t.duration = (long) b.getFloat();
         t.delay = (long) b.getFloat();
@@ -687,7 +710,7 @@ final class Mounter {
                 v = modal.root;
                 break;
             }
-            case 12: v = new WebBox(context, this, id); break;
+            case 12: v = WebBox.make(context, this, id); break;
             case 13: v = new VideoBox(context, this, host, id); break;
             case 14: v = new CanvasBox(context, this, id); break;
             case 15: v = new ComponentBox(context, this, id); break;
@@ -711,10 +734,68 @@ final class Mounter {
      * again.
      */
     void destroyComponents() {
+        Notifications.forget(this);
+        if (audio != null) {
+            audio.release();
+            audio = null;
+        }
         for (int i = 0; i < views.size(); i++) {
             View v = views.valueAt(i);
             if (v instanceof ComponentBox) ((ComponentBox) v).destroy();
+            if (v instanceof WebBox) ((WebBox) v).destroy();
+            if (v instanceof ScrollBox) {
+                ((ScrollBox) v).unmounted = true;
+                unkeyScroll((ScrollBox) v);
+            }
         }
+    }
+
+    // Scroll views the host watches (`NshView.watchScroll`), by `nativeID`.
+    private final java.util.Map<String, NshView.ScrollWatcher> scrollWatchers = new java.util.HashMap<>();
+    private final java.util.Map<String, ScrollBox> keyedScrolls = new java.util.HashMap<>();
+
+    void watchScroll(String key, NshView.ScrollWatcher watcher) {
+        if (watcher == null) {
+            scrollWatchers.remove(key);
+            return;
+        }
+        scrollWatchers.put(key, watcher);
+        ScrollBox box = keyedScrolls.get(key);
+        if (box != null) watcher.onAttached(new NshScrollHandle(box, key));
+    }
+
+    /** A scroll view's props were applied, with {@code key} its {@code nativeID} (null: none). */
+    private void keyScroll(ScrollBox box, String key) {
+        if (java.util.Objects.equals(box.hostKey, key)) return;
+        unkeyScroll(box);
+        if (key == null) return;
+        // Another scroll view of the same id makes way: the newest is watched.
+        ScrollBox previous = keyedScrolls.get(key);
+        if (previous != null) unkeyScroll(previous);
+        box.hostKey = key;
+        keyedScrolls.put(key, box);
+        NshView.ScrollWatcher watcher = scrollWatchers.get(key);
+        if (watcher != null) watcher.onAttached(new NshScrollHandle(box, key));
+    }
+
+    /** The scroll view is gone or lost its key: its handle goes dead and its watcher hears it. */
+    private void unkeyScroll(ScrollBox box) {
+        String key = box.hostKey;
+        if (key == null) return;
+        box.hostKey = null;
+        box.hostListeners.clear();
+        if (keyedScrolls.get(key) != box) return;
+        keyedScrolls.remove(key);
+        NshView.ScrollWatcher watcher = scrollWatchers.get(key);
+        if (watcher != null) watcher.onDetached();
+    }
+
+    /** The app's sounds and players (one per engine), made at its first audio command. UI thread. */
+    private Audio audio;
+
+    private Audio audio() {
+        if (audio == null) audio = new Audio(this);
+        return audio;
     }
 
     /**
@@ -878,7 +959,7 @@ final class Mounter {
         if (v instanceof StackBox) stacks.remove(v);
         SelectableView area = selectableViews.get(id);
         if (area != null) {
-            area.clear();
+            area.remove();
             selectableViews.remove(id);
         }
         screenOptions.remove(id);
@@ -886,11 +967,16 @@ final class Mounter {
         if (v instanceof Box) ((Box) v).dropShader();
         Animator running = layoutAnimators.get(id);
         if (running != null) running.cancel();
+        stopEffects(id);
         detach(v);
         if (v instanceof ImageBox) cancelImage((ImageBox) v);
         if (v instanceof WebBox) ((WebBox) v).destroy();
         if (v instanceof VideoBox) ((VideoBox) v).destroy();
         if (v instanceof ComponentBox) ((ComponentBox) v).destroy();
+        if (v instanceof ScrollBox) {
+            ((ScrollBox) v).unmounted = true;
+            unkeyScroll((ScrollBox) v);
+        }
         if (v == focused) focused = null;
         views.remove(id);
         headerItems.remove(id);
@@ -1020,6 +1106,9 @@ final class Mounter {
                 decor.borderWidths[i] = borderWidths[i] * density;
                 decor.borderColors[i] = borderColors[i];
             }
+            // A RippleDrawable rasterizes its mask once; a shape change here
+            // would leave the ripple clipped to the stale (pre-change) shape.
+            rippleMaskDirty(id);
             decor.borderStyle = borderStyle;
             decor.continuous = continuous;
             decor.originX = originXFraction ? originX : originX * density;
@@ -1031,6 +1120,7 @@ final class Mounter {
             decor.boxShadows = fx.shadows;
             decor.boxShadowColors = fx.shadowColors;
             decor.gradients = fx.gradients;
+            decor.masks = fx.masks;
             decor.outlineWidth = fx.outlineWidth;
             decor.outlineColor = fx.outlineColor;
             decor.outlineStyle = fx.outlineStyle;
@@ -1095,13 +1185,25 @@ final class Mounter {
         }
     }
 
+    /**
+     * Interpolates two colors in premultiplied ARGB, as CSS and the core's
+     * `lerp_color` (`transition.rs`) do, so that transparent ends do not pass
+     * through black. The progress is clamped: an overshooting easing (a bouncy
+     * spring's projection) must not carry a channel past its ends, where the
+     * packed byte would wrap into a garbage color for a frame.
+     */
     static int lerpColor(int a, int b, float t) {
-        int r = 0;
-        for (int shift = 0; shift < 32; shift += 8) {
-            int ca = (a >>> shift) & 0xff, cb = (b >>> shift) & 0xff;
-            r |= Math.round(ca + (cb - ca) * t) << shift;
+        if (a == b) return a;
+        t = Math.max(0f, Math.min(1f, t));
+        float alphaA = (a >>> 24) & 0xff, alphaB = (b >>> 24) & 0xff;
+        float alpha = alphaA + (alphaB - alphaA) * t;
+        int out = Math.round(Math.max(0, Math.min(255, alpha))) << 24;
+        if (alpha <= 0) return out;
+        for (int shift = 0; shift <= 16; shift += 8) {
+            float x = ((a >>> shift) & 0xff) * alphaA, y = ((b >>> shift) & 0xff) * alphaB;
+            out |= Math.round(Math.max(0, Math.min(255, (x + (y - x) * t) / alpha))) << shift;
         }
-        return r;
+        return out;
     }
 
     /** Animates the style change of `v` from `from` to the values just set. */
@@ -1131,6 +1233,9 @@ final class Mounter {
                         decor.radii[i] = from.radii[i] + (radii[i] - from.radii[i]) * t;
                         decor.borderWidths[i] = from.borderWidths[i] + (widths[i] - from.borderWidths[i]) * t;
                     }
+                    // Same as above: the ripple's cached mask must follow the
+                    // animated shape (e.g. the press corner morph).
+                    rippleMaskDirty(id);
                 }
             }
             now.opacity = opacity ? from.opacity + (to.opacity - from.opacity) * t : to.opacity;
@@ -1143,6 +1248,12 @@ final class Mounter {
             now.rotateY = to.rotateY;
             now.perspective = to.perspective;
             now.background = decor != null ? decor.fill : to.background;
+            // The frame's border colors are what the decor now carries; a
+            // fresh Dynamic's all-transparent array would have applyDynamic
+            // "restore" them to transparent every frame (an outlined view's
+            // border vanished after its first transition and never came
+            // back).
+            if (decor != null) System.arraycopy(decor.borderColors, 0, now.borderColors, 0, 4);
             applyDynamic(v, now);
             v.invalidate();
         });
@@ -1159,6 +1270,40 @@ final class Mounter {
             System.arraycopy(from.borderColors, 0, decor.borderColors, 0, 4);
         }
         a.start();
+    }
+
+    /**
+     * Stops the transition and keyframe animation of `id`, which is gone: an
+     * endless keyframe animation (a pulsing placeholder) would otherwise run
+     * on unseen, and the animation handler keep its view and this mounter.
+     */
+    private void stopEffects(int id) {
+        ValueAnimator transition = transitions.get(id);
+        transitions.remove(id);
+        if (transition != null) transition.cancel();
+        ValueAnimator keyframes = keyframeAnimators.get(id);
+        keyframeAnimators.remove(id);
+        motions.remove(id);
+        if (keyframes != null) keyframes.cancel();
+    }
+
+    /**
+     * The app stopped: its running animations stop too, since no
+     * {@code DELETE} follows for their views. The animation handler is the
+     * UI thread's and holds an animation until it ends, so an endless one
+     * would keep this mounter, its views and their activity forever.
+     */
+    void cancelAnimations() {
+        java.util.ArrayList<Animator> running = new java.util.ArrayList<>();
+        for (int i = 0; i < layoutAnimators.size(); i++) running.add(layoutAnimators.valueAt(i));
+        for (int i = 0; i < transitions.size(); i++) running.add(transitions.valueAt(i));
+        for (int i = 0; i < keyframeAnimators.size(); i++) running.add(keyframeAnimators.valueAt(i));
+        // Their end listeners remove them from these maps: clear first.
+        layoutAnimators.clear();
+        transitions.clear();
+        keyframeAnimators.clear();
+        motions.clear();
+        for (Animator a : running) a.cancel();
     }
 
     /** Starts (or stops) the keyframe animation of `v`. */
@@ -1358,6 +1503,17 @@ final class Mounter {
     }
 
     /**
+     * Drops the cached mask of the ripple of view {@code id}: a
+     * RippleDrawable rasterizes its mask once and reuses it until told
+     * otherwise, so any corner-radius change under an active (or later)
+     * ripple must invalidate it for the mask to follow the new shape.
+     */
+    private void rippleMaskDirty(int id) {
+        Feedback f = feedback.get(id);
+        if (f != null && f.ripple != null) f.ripple.invalidateSelf();
+    }
+
+    /**
      * Whether presses on {@code id} show feedback. A view that also handles
      * presses shows it itself; for one that does not, the root's
      * `TouchTracker` does, and the view stays unclickable.
@@ -1471,6 +1627,7 @@ final class Mounter {
             a.actionLabels[i] = string(objects, b.getInt());
         }
         a.testId = string(objects, b.getInt());
+        String nativeId = string(objects, b.getInt());
         float longPressDelay = b.getFloat();
         int ripple = b.getInt();
         Integer rippleColor = null;
@@ -1485,11 +1642,13 @@ final class Mounter {
             panActivations.remove(id);
         }
         boolean selectableView = b.getInt() != 0;
+        boolean continuesText = b.getInt() != 0;
         if (v == null) return;
+        if (v instanceof TextBox) ((TextBox) v).continuesText = continuesText;
         SelectableView area = selectableViews.get(id);
         if (selectableView && (area == null || area.view != v)) {
             if (area != null) area.clear();
-            selectableViews.put(id, new SelectableView(this, v));
+            selectableViews.put(id, new SelectableView(this, v, id));
         } else if (!selectableView && area != null) {
             area.clear();
             selectableViews.remove(id);
@@ -1508,6 +1667,7 @@ final class Mounter {
         if (v instanceof TextBox) ((TextBox) v).a11y = a;
         a11y.put(id, a);
         a.apply(v);
+        if (v instanceof ScrollBox) keyScroll((ScrollBox) v, nativeId);
     }
 
     private static String string(Object[] objects, int index) {
@@ -1515,26 +1675,21 @@ final class Mounter {
     }
 
     /** Applies `[animating, (view, prop, value)*]` from the animator. */
-    /** A canvas's drawing; loads the images it draws (bitmaps: an SVG is an image that failed to load). */
+    /** A canvas's drawing; loads the images it draws (an SVG as its rasterized bitmap). */
     private void drawing(CanvasBox canvas, int[] code, Object[] objects) {
         for (String uri : canvas.setDrawing(code, objects)) {
             if (canvas.images.containsKey(uri)) continue;
             // At their natural size: the drawing may scale them anyway.
             Images.Image cached = images.request(uri, 0, 0, (image, error) -> {
-                if (image != null && !image.vector) {
+                if (image != null) {
                     canvas.images.put(uri, image);
                     canvas.invalidate();
                 } else {
-                    android.util.Log.w("nsh", "canvas image failed: " + (image != null ? notABitmap(uri) : error));
+                    android.util.Log.w("nsh", "canvas image failed: " + error);
                 }
             });
-            if (cached != null && cached.vector) android.util.Log.w("nsh", "canvas image failed: " + notABitmap(uri));
-            else if (cached != null) canvas.images.put(uri, cached);
+            if (cached != null) canvas.images.put(uri, cached);
         }
-    }
-
-    private static String notABitmap(String uri) {
-        return uri + " is an SVG image: canvases draw bitmaps (PNG, JPEG, ...)";
     }
 
     /** Canvas animated value slot `n` arrives as property `CANVAS_ARG + n` (`animation.rs`). */
@@ -1788,6 +1943,16 @@ final class Mounter {
         return !shownModals.isEmpty();
     }
 
+    /** The windows of the dialogs shown, bottom to top (the test agent's screenshots). */
+    java.util.List<android.view.Window> modalWindows() {
+        java.util.ArrayList<android.view.Window> windows = new java.util.ArrayList<>();
+        for (ModalHost m : shownModals) {
+            android.view.Window window = m.dialogWindow();
+            if (window != null) windows.add(window);
+        }
+        return windows;
+    }
+
     /** The window of the topmost dialog shown, or null. */
     View topModalWindow() {
         for (int i = shownModals.size() - 1; i >= 0; i--) {
@@ -1992,6 +2157,43 @@ final class Mounter {
         if (f.getRootView() == host.getRootView()) host.requestFocus();
     }
 
+    /**
+     * `Haptics` of `nsh/mobile`: the haptic feedback constant closest to
+     * `haptic` (`nsh_core::Haptic`, in the order `encode.rs` writes), which
+     * the view plays when the user's touch feedback setting allows it.
+     * API levels: {@link HapticFeedbackConstants#CONFIRM} /
+     * {@link HapticFeedbackConstants#REJECT} from 30 (else
+     * {@link HapticFeedbackConstants#VIRTUAL_KEY} /
+     * {@link HapticFeedbackConstants#LONG_PRESS});
+     * {@link HapticFeedbackConstants#SEGMENT_TICK} from 34 (else
+     * {@link HapticFeedbackConstants#CLOCK_TICK} for selection).
+     */
+    private static void haptic(View view, int haptic) {
+        boolean api30 = Build.VERSION.SDK_INT >= 30;
+        int feedback;
+        switch (haptic) {
+            case 0: // selection
+                feedback = Build.VERSION.SDK_INT >= 34
+                        ? HapticFeedbackConstants.SEGMENT_TICK
+                        : HapticFeedbackConstants.CLOCK_TICK;
+                break;
+            case 1: feedback = HapticFeedbackConstants.KEYBOARD_TAP; break; // light
+            case 2: feedback = HapticFeedbackConstants.VIRTUAL_KEY; break; // medium
+            case 3: feedback = HapticFeedbackConstants.LONG_PRESS; break; // heavy
+            case 4: feedback = HapticFeedbackConstants.CLOCK_TICK; break; // soft
+            case 5: feedback = HapticFeedbackConstants.CONTEXT_CLICK; break; // rigid
+            case 6: // success
+                feedback = api30 ? HapticFeedbackConstants.CONFIRM : HapticFeedbackConstants.VIRTUAL_KEY;
+                break;
+            case 7: feedback = HapticFeedbackConstants.LONG_PRESS; break; // warning: no constant of its own
+            case 8: // error
+                feedback = api30 ? HapticFeedbackConstants.REJECT : HapticFeedbackConstants.LONG_PRESS;
+                break;
+            default: return;
+        }
+        view.performHapticFeedback(feedback);
+    }
+
     private void command(ByteBuffer b, Object[] objects) {
         int id = b.getInt(), kind = b.getInt();
         View v = views.get(id);
@@ -2046,6 +2248,17 @@ final class Mounter {
                 if (v instanceof WebBox) ((WebBox) v).command(kind, text);
                 break;
             }
+            case 46: {
+                String url = (String) objects[b.getInt()];
+                int count = b.getInt();
+                java.util.Map<String, String> headers = new java.util.LinkedHashMap<>();
+                for (int i = 0; i < count; i++) {
+                    String name = (String) objects[b.getInt()];
+                    headers.put(name, (String) objects[b.getInt()]);
+                }
+                if (v instanceof WebBox) ((WebBox) v).load(url, headers);
+                break;
+            }
             case 10: {
                 float seconds = b.getFloat();
                 if (v instanceof VideoBox) ((VideoBox) v).seek(seconds);
@@ -2079,8 +2292,11 @@ final class Mounter {
                 boolean block = b.getInt() != 0;
                 clearJsResponder();
                 if (block && v != null) {
-                    // Scroll views around the responder stop taking its touches.
+                    // Scroll views around the responder stop taking its touches, and the presses around it
+                    // end: a handle held past the long press delay is no long press of the text around it.
                     for (ViewParent p = v.getParent(); p != null; p = p.getParent()) {
+                        if (p instanceof Box) ((Box) p).cancelPress();
+                        else if (p instanceof TextBox && ((TextBox) p).press != null) ((TextBox) p).press.cancel();
                         if (p instanceof ScrollBox) {
                             ((ScrollBox) p).jsBlocked = true;
                             blockedScrolls.add((ScrollBox) p);
@@ -2096,6 +2312,29 @@ final class Mounter {
                 if (v instanceof InputBox) ((InputBox) v).select(start, end);
                 break;
             }
+            case 49: {
+                float x = b.getFloat(), y = b.getFloat(), w = b.getFloat(), h = b.getFloat();
+                int actions = b.getInt();
+                if (v instanceof InputBox) ((InputBox) v).openEditMenu(x, y, w, h, actions);
+                break;
+            }
+            case 51: {
+                int request = b.getInt();
+                String generation = (String) objects[b.getInt()];
+                String start = (String) objects[b.getInt()];
+                String poll = (String) objects[b.getInt()];
+                String cleanup = (String) objects[b.getInt()];
+                if (v instanceof WebBox) ((WebBox) v).evaluate(request, generation, start, poll, cleanup);
+                break;
+            }
+            case 52: {
+                int request = b.getInt();
+                if (v instanceof WebBox) ((WebBox) v).cancelEvaluation(request);
+                break;
+            }
+            case 50:
+                if (v instanceof InputBox) ((InputBox) v).closeEditMenu();
+                break;
             case 21: {
                 String name = string(objects, b.getInt());
                 String json = string(objects, b.getInt());
@@ -2127,8 +2366,48 @@ final class Mounter {
                 Picker.show(context, request);
                 break;
             }
+            case 45: {
+                Picker.Request request = new Picker.Request();
+                request.id = b.getInt();
+                request.limit = b.getInt();
+                String extensions = (String) objects[b.getInt()];
+                request.extensions = extensions.isEmpty() ? new String[0] : extensions.split(",");
+                request.maxBytes = b.getInt();
+                request.files = true;
+                request.view = host;
+                Picker.show(context, request);
+                break;
+            }
             case 27: {
                 for (int i = 0; i < dialogColors.length; i++) dialogColors[i] = b.getInt();
+                break;
+            }
+            case 28: {
+                int request = b.getInt();
+                String path = (String) objects[b.getInt()];
+                boolean opened = SystemUi.openPath(context, path);
+                if (opened) {
+                    eventMap(1, Native.FILE_REQUEST, new String[] {"id"}, new Object[] {(double) request});
+                } else {
+                    eventMap(1, Native.FILE_REQUEST, new String[] {"id", "error"},
+                            new Object[] {(double) request, "no app opened the file"});
+                }
+                break;
+            }
+            case 30: {
+                // A file request with no Android implementation: fail it so
+                // the waiting call returns instead of hanging.
+                int request = b.getInt();
+                eventMap(1, Native.FILE_REQUEST, new String[] {"id", "error"},
+                        new Object[] {(double) request, "not supported on Android"});
+                break;
+            }
+            case 44: {
+                Notifications.command(this, b, objects);
+                break;
+            }
+            case 47: {
+                audio().command(b, objects);
                 break;
             }
             case 26: {
@@ -2169,6 +2448,10 @@ final class Mounter {
                 (v != null ? v : host).announceForAccessibility(text);
                 break;
             }
+            case 48: {
+                haptic(host, b.getInt());
+                break;
+            }
             case 18: {
                 if (v != null) {
                     v.performAccessibilityAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS, null);
@@ -2206,8 +2489,8 @@ final class Mounter {
                     default: source = new Object[] {0};
                 }
                 String injected = optString(b, objects), before = optString(b, objects), ua = optString(b, objects);
-                boolean scroll = b.getInt() != 0, js = b.getInt() != 0;
-                if (v instanceof WebBox) ((WebBox) v).configure(source, injected, before, ua, scroll, js);
+                boolean scroll = b.getInt() != 0, js = b.getInt() != 0, incognito = b.getInt() != 0;
+                if (v instanceof WebBox) ((WebBox) v).configure(source, injected, before, ua, scroll, js, incognito);
                 break;
             }
             case 4: {

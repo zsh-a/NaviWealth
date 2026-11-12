@@ -18,7 +18,9 @@ use std::cell::RefCell;
 
 use jni::{
     JNIEnv,
-    objects::{JClass, JFloatArray, JIntArray, JObject, JObjectArray, JString, JValue},
+    objects::{
+        JBooleanArray, JClass, JFloatArray, JIntArray, JObject, JObjectArray, JString, JValue,
+    },
     sys::{jboolean, jfloat, jint, jintArray, jlong, jstring},
 };
 use nsh_core::{
@@ -34,6 +36,8 @@ struct Area {
     contents: Vec<String>,
     /// The texts' view ids: their identity across `texts_changed`.
     keys: Vec<u64>,
+    /// Which texts continue the one before them (`ViewProps::continues_text`).
+    continues: Vec<bool>,
     frames: Vec<Bounds<Points>>,
     /// The virtual list rows its ends are in, kept rendered.
     kept: KeptRows,
@@ -44,6 +48,7 @@ struct Area {
 struct Texts<'a, 'local> {
     contents: &'a [String],
     keys: &'a [u64],
+    continues: &'a [bool],
     frames: &'a [Bounds<Points>],
     env: RefCell<&'a mut JNIEnv<'local>>,
     this: &'a JObject<'local>,
@@ -64,6 +69,42 @@ impl SelectionTexts for Texts<'_, '_> {
 
     fn key(&self, i: usize) -> u64 {
         self.keys.get(i).copied().unwrap_or(i as u64)
+    }
+
+    fn continues(&self, i: usize) -> bool {
+        self.continues.get(i).copied().unwrap_or(false)
+    }
+
+    fn copied(&self, i: usize, range: std::ops::Range<u32>) -> String {
+        // Java's text knows its hidden runs (`TextLayouts.shown`).
+        let mut env = self.env.borrow_mut();
+        let copied = env
+            .call_method(
+                self.this,
+                "copiedText",
+                "(III)Ljava/lang/String;",
+                &[
+                    JValue::Int(i as jint),
+                    JValue::Int(range.start as jint),
+                    JValue::Int(range.end as jint),
+                ],
+            )
+            .and_then(|v| v.l());
+        match copied {
+            Ok(s) if !s.is_null() => {
+                let s = JString::from(s);
+                env.get_string(&s).map(String::from).unwrap_or_default()
+            }
+            Ok(_) => String::new(),
+            Err(err) => {
+                if env.exception_check().unwrap_or(false) {
+                    let _ = env.exception_describe();
+                    let _ = env.exception_clear();
+                }
+                log::error!("selection copy failed: {err}");
+                String::new()
+            }
+        }
     }
 
     fn offset_at(&self, i: usize, p: Point<Points>) -> u32 {
@@ -133,12 +174,14 @@ fn with_texts<'local, R>(
         model,
         contents,
         keys,
+        continues,
         frames,
         ..
     } = area;
     let texts = Texts {
         contents,
         keys,
+        continues,
         frames,
         env: RefCell::new(env),
         this,
@@ -169,9 +212,10 @@ extern "system" fn Java_com_longbridge_nsh_SelectableView_nativeDestroy(
 }
 
 /// The area's texts, in document order, are now these (content, view
-/// ids and frames): the selection follows (`texts_changed`). Returns whether it
+/// ids, whether each continues the one before, frames): the selection follows (`texts_changed`). Returns whether it
 /// changed.
 #[unsafe(no_mangle)]
+#[allow(clippy::too_many_arguments)]
 extern "system" fn Java_com_longbridge_nsh_SelectableView_nativeSetTexts<'local>(
     mut env: JNIEnv<'local>,
     _: JClass<'local>,
@@ -179,6 +223,7 @@ extern "system" fn Java_com_longbridge_nsh_SelectableView_nativeSetTexts<'local>
     this: JObject<'local>,
     contents: JObjectArray<'local>,
     keys: JIntArray<'local>,
+    continues: JBooleanArray<'local>,
     frames: JFloatArray<'local>,
 ) -> jboolean {
     // SAFETY: Java passes its live handle, on the UI thread.
@@ -206,6 +251,15 @@ extern "system" fn Java_com_longbridge_nsh_SelectableView_nativeSetTexts<'local>
         ids.clear();
     }
     area.keys = ids.into_iter().map(|id| id as u32 as u64).collect();
+    let len = env.get_array_length(&continues).unwrap_or(0).max(0) as usize;
+    let mut flags = vec![0; len];
+    if env
+        .get_boolean_array_region(&continues, 0, &mut flags)
+        .is_err()
+    {
+        flags.clear();
+    }
+    area.continues = flags.into_iter().map(|flag| flag != 0).collect();
     read_frames(&env, &frames, &mut area.frames);
     // Frames for every text, even if Java's array falls short.
     area.frames.resize(area.contents.len(), Bounds::default());

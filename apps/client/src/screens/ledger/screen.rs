@@ -93,7 +93,7 @@ pub fn LedgerScreen() -> impl IntoElement {
             });
         });
     }
-    let kinds = view().flex_row().gap_2().children(
+    let kinds = nsh_base::toggle_group().flex_row().gap_2().children(
         [
             (None, "全部"),
             (Some(RecordKind::Expense), "支出"),
@@ -115,7 +115,6 @@ pub fn LedgerScreen() -> impl IntoElement {
         }),
     );
     let filters_open = signal(false);
-    let tools_open = signal(false);
     view()
         .flex_1()
         .child(
@@ -159,12 +158,7 @@ pub fn LedgerScreen() -> impl IntoElement {
                                     all_dates.set(false);
                                 },
                             ))
-                            .child(ui::icon_button(
-                                ui::Icon::More,
-                                "流水管理",
-                                "activity-tools",
-                                move || tools_open.set(true),
-                            )),
+                            .child(overlays::tools_menu(filters_open)),
                     )
                     .child(when(
                         move || !totals.get().is_empty(),
@@ -449,7 +443,6 @@ pub fn LedgerScreen() -> impl IntoElement {
             ),
         )
         .child(overlays::overlays(
-            tools_open,
             filters_open,
             account_options,
             account,

@@ -152,7 +152,7 @@ fn accounts_screen(initial_account: Option<String>, create: bool) -> impl IntoEl
                 .child(ui::primary_button("添加",move ||{edit.set(None);form_open.set(true);},"open-account-form",None)))
             .child(view().flex_row().gap_3()
                 .child(ui::secondary_button("记一笔",move ||record_open.set(true),"open-record",None).flex_1())
-                .child(ui::choice_button("显示已归档",move ||archived.get(),move ||archived.update(|v|*v = !*v),"accounts-show-archived").flex_1())))
+                .child(ui::switch_field("显示已归档",archived,"accounts-show-archived").flex_1())))
         .child(ui::interactive_scroll().flex_1().child(view().px_4().pb_6().gap_3()
             .child(when(move ||!notice.get().is_empty(),move ||text(move ||notice.get()).text_sm().text_color(move ||theme().primary)))
             .child(when(move ||loading.get(),||text("正在读取账户…").text_sm().text_color(move ||theme().muted_foreground)))

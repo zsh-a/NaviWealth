@@ -2,7 +2,6 @@ use super::*;
 
 pub(super) fn workspace_header(selected: Signal<u8>) -> AnyElement {
     let intent = use_context::<CaptureIntent>().expect("capture intent");
-    let menu = signal(false);
     view()
         .flex_row()
         .items_center()
@@ -29,52 +28,46 @@ pub(super) fn workspace_header(selected: Signal<u8>) -> AnyElement {
                 })
             },
         ))
-        .child(ui::icon_button(
-            ui::Icon::More,
-            "更多",
-            "workspace-more",
-            move || menu.set(true),
-        ))
         .child(
-            ui::app_sheet()
-                .open(move || Some(menu.get()))
-                .on_open_change(move |e: &nsh_base::SheetEvent| {
-                    if let nsh_base::SheetEvent::OpenChange(next, _) = e {
-                        menu.set(*next);
-                    }
-                })
-                .child(
+            nsh_base::menu()
+                .trigger(
                     view()
-                        .p_5()
-                        .gap_3()
-                        .bg(move || theme().card)
-                        .child(ui::text_button(
-                            "切换工作空间",
-                            "domain-switcher",
-                            move || {
-                                menu.set(false);
-                                finance_ui::navigate("/domains");
-                            },
-                            false,
-                        ))
-                        .child(ui::text_button(
-                            "财务助手",
-                            "tab-chat",
-                            move || {
-                                menu.set(false);
-                                finance_ui::navigate("/assistant");
-                            },
-                            false,
-                        ))
-                        .child(ui::text_button(
-                            "设置",
-                            "tab-settings",
-                            move || {
-                                menu.set(false);
-                                finance_ui::navigate("/settings");
-                            },
-                            false,
-                        )),
+                        .test_id("workspace-more")
+                        .size(px(44.0))
+                        .items_center()
+                        .justify_center()
+                        .rounded_lg()
+                        .child(ui::icon(ui::Icon::More)),
+                )
+                .popup_style(|s| {
+                    s.min_w(px(200.0))
+                        .p_1()
+                        .bg(move || theme().popover)
+                        .rounded_lg()
+                        .border_1()
+                        .border_color(move || theme().border)
+                        .shadow_lg()
+                })
+                .children(
+                    [
+                        ("切换工作空间", "domain-switcher", "/domains"),
+                        ("财务助手", "tab-chat", "/assistant"),
+                        ("设置", "tab-settings", "/settings"),
+                    ]
+                    .map(|(label, id, path)| {
+                        ui::NativeControl(
+                            nsh_base::menu_item()
+                                .accessibility_label(label)
+                                .on_select(move |_: &()| finance_ui::navigate(path)),
+                        )
+                        .test_id(id)
+                        .min_h(px(44.0))
+                        .px_3()
+                        .rounded_md()
+                        .justify_center()
+                        .hover(|s| s.bg(move || theme().accent))
+                        .child(text(label).text_base())
+                    }),
                 ),
         )
         .into_element()
