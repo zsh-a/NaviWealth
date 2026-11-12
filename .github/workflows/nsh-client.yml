@@ -1,8 +1,8 @@
 name: nsh client
 
-# The native (NSH, Rust) client in apps/nsh-client. Run by hand: checks the
-# crate and builds a debug-signed arm64-v8a APK, uploaded as an artifact.
-# It never uses the release signing secrets.
+# The native (NSH, Rust) client in apps/nsh-client: checks the crate and
+# builds a debug-signed arm64-v8a APK, uploaded as an artifact. It never uses
+# the release signing secrets.
 
 on:
   workflow_dispatch:
