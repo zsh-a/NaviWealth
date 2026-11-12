@@ -71,10 +71,24 @@ fn capture(selected: Option<String>, selected_date: Option<String>) -> AnyElemen
                 );
             }
             let choices = accounts
-                .into_iter()
-                .map(|(a, _)| (a.id, format!("{} · {}", a.name, a.currency)))
+                .iter()
+                .map(|(a, _)| (a.id.clone(), format!("{} · {}", a.name, a.currency)))
                 .collect();
-            fui::form("建立对账预览",vec![Field::choice("reconcile-account","资金账户",selected.clone().unwrap_or_default(),choices),Field::date("reconcile-date","对账日期",selected_date.clone().unwrap_or_else(ui::today_text)).help("实际余额指所选日期结束时的余额。"),Field::decimal("reconcile-actual","实际余额","").help("使用账本符号：资产为正，欠款为负。零余额可直接填写 0。仅核对账户币种的现金余额。"),Field::multiline("reconcile-note","差额原因（有差额时必填）","").help("例如账单手续费遗漏；先核查交易，确需调整再确认。")],move|v|Box::pin(async move{let account=required(&v,"reconcile-account","资金账户")?;let actual=decimal(&v,"reconcile-actual","实际余额")?;let date=date(&v,"reconcile-date")?;let note=read_optional(&v,"reconcile-note").unwrap_or_default();let r=fui::services().finance_create_reconciliation(account,date,actual,note).await?;fui::notice("对账预览已保存，余额尚未改变");Ok(Some(format!("/activity/reconcile/{}",r.id)))}))
+            let account = Field::choice(
+                "reconcile-account",
+                "资金账户",
+                selected.clone().unwrap_or_default(),
+                choices,
+            );
+            let selected_account = account.value;
+            let currency = move || {
+                accounts
+                    .iter()
+                    .find(|(a, _)| a.id == selected_account.get())
+                    .map(|(a, _)| a.currency.clone())
+                    .unwrap_or_default()
+            };
+            fui::form("建立对账预览",vec![account,Field::date("reconcile-date","对账日期",selected_date.clone().unwrap_or_else(ui::today_text)).help("实际余额指所选日期结束时的余额。"),Field::money("reconcile-actual","实际余额","").currency(currency).help("使用账本符号：资产为正，欠款为负。零余额可直接填写 0。仅核对账户币种的现金余额。"),Field::multiline("reconcile-note","差额原因（有差额时必填）","").help("例如账单手续费遗漏；先核查交易，确需调整再确认。")],move|v|Box::pin(async move{let account=required(&v,"reconcile-account","资金账户")?;let actual=decimal(&v,"reconcile-actual","实际余额")?;let date=date(&v,"reconcile-date")?;let note=read_optional(&v,"reconcile-note").unwrap_or_default();let r=fui::services().finance_create_reconciliation(account,date,actual,note).await?;fui::notice("对账预览已保存，余额尚未改变");Ok(Some(format!("/activity/reconcile/{}",r.id)))}))
         },
     )
 }

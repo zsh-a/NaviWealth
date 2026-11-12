@@ -15,10 +15,13 @@ use rust_decimal::Decimal;
 #[derive(Clone, PartialEq)]
 struct Today {
     wealth: WealthSnapshot,
+    currencies: ui::RecordCurrencies,
     issues: Vec<FinancialIssue>,
     actions: Vec<PlanningAction>,
     totals: Vec<(String, Decimal, Decimal)>,
     records: Vec<FinanceRecord>,
+    spending: Vec<naviwealth_finance::daily::DailySpending>,
+    budgets: Vec<naviwealth_finance::planning::BudgetProgress>,
 }
 pub fn planning_route(source: &PlanningSource) -> String {
     match source {
@@ -73,33 +76,34 @@ pub fn render() -> AnyElement {
                     .settings_get("finance.base_currency")
                     .await
                     .unwrap_or_else(|| "CNY".into());
-                let (wealth, issues, actions, totals) = tokio::join!(
-                    s.wealth_snapshot(now, base),
-                    s.finance_inbox(now),
-                    s.finance_planning_actions(from, until),
-                    s.finance_monthly_totals(from, until)
+                let day = ui::date_to_secs(&ui::today_text()).ok_or("无效日期")?;
+                let (wealth, issues, actions, totals, budgets, spending, records, accounts) = tokio::join!(
+                    s.wealth_snapshot(now, base.clone()), s.finance_inbox(now),
+                    s.finance_planning_actions(from,until), s.finance_monthly_totals(from,until),
+                    s.finance_budgets(month), s.finance_daily_spending(from,until),
+                    s.finance_records(RecordFilter {from:Some(day),until:Some(day+86400),..Default::default()},5,0),
+                    s.finance_accounts(true)
                 );
-                let records = match ui::date_to_secs(&ui::today_text()) {
-                    Some(day) => s
-                        .finance_records(
-                            RecordFilter {
-                                from: Some(day),
-                                until: Some(day + 86_400),
-                                ..Default::default()
-                            },
-                            5,
-                            0,
-                        )
-                        .await
-                        .unwrap_or_default(),
-                    None => Vec::new(),
+                let accounts=accounts?;
+                let currencies = ui::RecordCurrencies {
+                    base: wealth
+                        .as_ref()
+                        .map(|w| w.base_currency.clone())
+                        .unwrap_or(base),
+                    accounts: accounts
+                        .into_iter()
+                        .map(|(a, _)| (a.id, a.currency))
+                        .collect(),
                 };
                 Ok(Today {
                     wealth: wealth?,
+                    currencies,
                     issues: issues?,
                     actions: actions?,
                     totals: totals?,
-                    records,
+                    records: records?,
+                    spending: spending?,
+                    budgets: budgets?,
                 })
             }
             .await;
@@ -122,11 +126,6 @@ pub fn render() -> AnyElement {
             "今日",
             view()
                 .gap_2()
-                .child(view().flex_row().gap_2().child(fui::action(
-                    "导入账单",
-                    "today-import",
-                    || fui::navigate("/activity/import"),
-                )))
                 .child(ui::error_line(error))
                 .child(when(
                     move || !error.get().is_empty(),
@@ -138,142 +137,13 @@ pub fn render() -> AnyElement {
                 ))
                 .child(when(
                     move || loading.get() && data.get().is_none(),
-                    || {
-                        text("正在汇总本地财务…")
-                            .text_sm()
-                            .text_color(move || theme().muted_foreground)
-                    },
+                    ui::skeleton,
                 ))
                 .child(dynamic(move || {
                     let Some(data) = data.get() else {
                         return view().into_element();
                     };
-                    let mut body = view().gap_2();
-                    let no_totals = data.totals.is_empty();
-                    body = body.child(fui::section(
-                        "本月收支",
-                        view()
-                            .gap_2()
-                            .child(when(
-                                move || no_totals,
-                                || {
-                                    text("本月暂无收支记录")
-                                        .text_sm()
-                                        .text_color(move || theme().muted_foreground)
-                                },
-                            ))
-                            .children(data.totals.into_iter().map(
-                                |(currency, income, expense)| {
-                                    view()
-                                        .gap_2()
-                                        .child(
-                                            text(currency)
-                                                .text_sm()
-                                                .font_weight(FontWeight::MEDIUM),
-                                        )
-                                        .child(
-                                            view()
-                                                .flex_row()
-                                                .gap_3()
-                                                .child(cash_metric("收入", income))
-                                                .child(cash_metric("支出", expense))
-                                                .child(cash_metric("结余", income - expense)),
-                                        )
-                                },
-                            )),
-                    ));
-                    body = body.child(
-                        text("本金转移、投资申赎与期初余额不计入收支。")
-                            .text_xs()
-                            .text_color(move || theme().muted_foreground),
-                    );
-                    if !data.records.is_empty() {
-                        body = body.child(fui::changed_fact(
-                            "/today".into(),
-                            view().gap_2().child(fui::section(
-                                "今天",
-                                view().gap_2().children(
-                                    data.records
-                                        .iter()
-                                        .map(|r| today_record_row(r.clone()))
-                                        .chain(std::iter::once(fui::row(
-                                            "查看全部流水".into(),
-                                            String::new(),
-                                            "打开".into(),
-                                            "today-all-records".into(),
-                                            || fui::navigate("/activity"),
-                                        ))),
-                                ),
-                            )),
-                        ));
-                    }
-                    let count = data.issues.len();
-                    body = body.child(fui::section(
-                        "财务收件箱",
-                        fui::row(
-                            if count == 0 {
-                                "目前没有待处理事项".into()
-                            } else {
-                                format!("{count} 项待处理")
-                            },
-                            "账单复核、到期安排与估值缺口".into(),
-                            "查看".into(),
-                            "today-inbox".into(),
-                            || fui::navigate("/today/inbox"),
-                        ),
-                    ));
-                    let pending: Vec<_> = data
-                        .actions
-                        .into_iter()
-                        .filter(|a| a.state == OccurrenceState::Due)
-                        .collect();
-                    let mut actions = view();
-                    if pending.is_empty() {
-                        actions = actions.child(
-                            text("本月到期安排已处理。可在规划中添加周期账单、贷款或定投。")
-                                .text_sm()
-                                .text_color(move || theme().muted_foreground),
-                        );
-                    }
-                    for a in pending.into_iter().take(8) {
-                        let path = planning_route(&a.source);
-                        actions = actions.child(fui::row(
-                            a.name,
-                            format!("{} · 待确认", ui::ymd(a.due)),
-                            format!("{} {}", ui::money(a.amount), a.currency),
-                            format!("today-action-{path}-{}", a.due),
-                            move || fui::navigate(path.clone()),
-                        ));
-                    }
-                    body = body.child(fui::section("本月安排", actions));
-                    let w = data.wealth;
-                    let summary = w
-                        .net_worth
-                        .map(|v| format!("{} {}", ui::money(v), w.base_currency))
-                        .unwrap_or_else(|| "等待完整估值".into());
-                    body = body.child(fui::section(
-                        "财富状态",
-                        fui::row(
-                            "查看资产与负债".into(),
-                            format!(
-                                "{} 项持仓 · 缺 {} 项价格 / {} 组汇率",
-                                w.holdings.len(),
-                                w.missing_prices.len(),
-                                w.missing_fx.len()
-                            ),
-                            summary,
-                            "today-wealth".into(),
-                            || fui::navigate("/wealth"),
-                        ),
-                    ));
-                    body = body.child(fui::row(
-                        "完成月结".into(),
-                        "复核来源、现金安全与下一步安排".into(),
-                        "进入".into(),
-                        "today-close".into(),
-                        || fui::navigate("/activity/close"),
-                    ));
-                    body.into_element()
+                    summary::body(data)
                 })),
         ))
         .child(super::record::record_dialog(
@@ -285,58 +155,5 @@ pub fn render() -> AnyElement {
         .into_element()
 }
 
-/// One of today's records in place; the acknowledged save lights its row.
-fn today_record_row(item: FinanceRecord) -> AnyElement {
-    let id = item.id.clone();
-    let path = format!("/activity/entry/{}", item.id);
-    let title = item
-        .payee
-        .clone()
-        .or(item.category_name.clone())
-        .unwrap_or_else(|| item.kind.label().to_owned());
-    let detail = match item.kind {
-        RecordKind::Transfer => match &item.destination_account_name {
-            Some(dest) => format!("{} → {dest}", item.account_name),
-            None => item.account_name.clone(),
-        },
-        _ => item.account_name.clone(),
-    };
-    let signed = match item.kind {
-        RecordKind::Expense => format!("-{}", ui::money(item.amount)),
-        RecordKind::Income => format!("+{}", ui::money(item.amount)),
-        _ => ui::money(item.amount),
-    };
-    let currency = item.currency.clone();
-    view()
-        .child(fui::record_highlight(&id))
-        .child(fui::row(
-            title,
-            detail,
-            format!("{signed} {currency}"),
-            format!("today-record-{id}"),
-            move || fui::navigate(path.clone()),
-        ))
-        .into_element()
-}
-fn cash_metric(label: &'static str, value: Decimal) -> AnyElement {
-    view()
-        .flex_1()
-        .gap_1()
-        .child(
-            text(label)
-                .text_xs()
-                .text_color(move || theme().muted_foreground),
-        )
-        .child(
-            text(ui::money(value))
-                .text_size(px(if label == "支出" { 29.0 } else { 20.0 }))
-                .text_color(move || match label {
-                    "收入" => fui::gain(),
-                    "支出" => theme().destructive,
-                    _ => theme().foreground,
-                })
-                .tabular_nums()
-                .font_weight(FontWeight::MEDIUM),
-        )
-        .into_element()
-}
+#[path = "today/summary.rs"]
+mod summary;

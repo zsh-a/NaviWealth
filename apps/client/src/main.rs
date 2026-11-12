@@ -6,8 +6,6 @@
 
 #[cfg(feature = "desktop")]
 fn main() -> impl std::process::Termination {
-    use nsh_core::prelude::*;
-
     #[cfg(all(target_os = "linux", not(target_os = "android")))]
     use nsh_platform_linux as platform;
     #[cfg(target_os = "macos")]
@@ -17,7 +15,15 @@ fn main() -> impl std::process::Termination {
 
     env_logger::init();
     platform::run_app(
-        platform::AppSource::Rust(platform::Root::of::<naviwealth_client::App>()),
+        platform::AppSource::Rust(
+            platform::Root::of::<naviwealth_client::App>()
+                .tokens(
+                    nsh_base::Theme::from_json(include_str!("../theme.json"))
+                        .expect("valid app theme")
+                        .into_tokens(),
+                )
+                .font(&include_bytes!("../assets/fonts/manrope-latin-variable.woff2")[..]),
+        ),
         platform::AppOptions {
             title: "NaviWealth".to_owned(),
             #[cfg(any(target_os = "linux", target_os = "windows"))]

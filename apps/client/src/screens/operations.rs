@@ -110,6 +110,8 @@ fn heading(message: impl Into<String>) -> AnyElement {
         .into_element()
 }
 fn detail(label: &str, value: impl Into<String>) -> AnyElement {
+    let value = value.into();
+    let tone = value.clone();
     view()
         .flex_row()
         .gap_3()
@@ -121,7 +123,8 @@ fn detail(label: &str, value: impl Into<String>) -> AnyElement {
                 .w(px(88.0)),
         )
         .child(
-            text(value.into())
+            text(value)
+                .text_color(move || ui::money_tone(&tone))
                 .text_sm()
                 .flex_1()
                 .min_w(px(0.0))
@@ -184,7 +187,7 @@ fn previous_month() -> String {
 }
 use chrono::Datelike;
 fn amount(value: Decimal, currency: &str) -> String {
-    format!("{} {currency}", ui::money(value))
+    format!("{} {currency}", ui::money_for(value, currency))
 }
 fn read_optional(v: &Values, id: &'static str) -> Option<String> {
     v.get(id)

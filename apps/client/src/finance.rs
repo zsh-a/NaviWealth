@@ -8,6 +8,24 @@ use naviwealth_finance::{daily, models::Account, repos::account_repository::Acco
 use rust_decimal::Decimal;
 
 impl Services {
+    pub async fn finance_expense_categories(&self) -> Result<Vec<daily::ExpenseCategory>, String> {
+        let owner = self.owner();
+        self.db
+            .call(move |c| Ok(daily::expense_categories(c, &owner)?))
+            .await
+            .map_err(|e| e.to_string())
+    }
+    pub async fn finance_daily_spending(
+        &self,
+        from: i64,
+        until: i64,
+    ) -> Result<Vec<daily::DailySpending>, String> {
+        let owner = self.owner();
+        self.db
+            .call(move |c| Ok(daily::daily_spending(c, &owner, from, until)?))
+            .await
+            .map_err(|e| e.to_string())
+    }
     pub async fn finance_record_source_route(&self, id: String) -> Result<Option<String>, String> {
         let owner = self.owner();
         self.db

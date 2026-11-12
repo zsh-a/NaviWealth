@@ -35,7 +35,7 @@ pub(crate) struct FinanceNavigation {
 
 #[native_module("naviwealth/native")]
 fn native(registry: &mut Registry) {
-    registry.register::<App>();
+    registry.register::<App>().assets(assets!());
 }
 
 /// The application's root component: the base four tabs (账户 / 账本 /
@@ -89,6 +89,7 @@ fn startup(
 }
 
 fn app_shell(services: std::sync::Arc<Services>) -> impl IntoElement {
+    provide_context(finance_ui::PageKind::Root);
     let enabled_domains = services.enabled_domain_keys();
     provide_context(services);
     provide_context(state::DataVersion(signal(0)));
@@ -170,6 +171,7 @@ fn app_shell(services: std::sync::Arc<Services>) -> impl IntoElement {
             move || routes.get(),
             |route: &String| route.clone(),
             move |route: ReadSignal<String>, _| {
+                provide_context(finance_ui::PageKind::Detail);
                 let guard = signal(None::<finance_ui::GuardCallback>);
                 provide_context(finance_ui::LeaveGuard(guard));
                 let back_path = route.get();
@@ -210,137 +212,10 @@ fn app_shell(services: std::sync::Arc<Services>) -> impl IntoElement {
 /// The top workspace: one full-width quiet bar owning capture. The dock rule
 /// keeps 记一笔 on the two capture surfaces (Today / Ledger) and out of the
 /// way on Wealth / Plan.
-fn workspace_header(selected: Signal<u8>) -> AnyElement {
-    let intent = use_context::<CaptureIntent>().expect("capture intent");
-    view()
-        .flex_row()
-        .items_center()
-        .px_4()
-        .pt_1()
-        .min_h(px(64.0))
-        .gap_1()
-        .bg(move || theme().card)
-        .border_b_1()
-        .border_color(move || theme().border)
-        .child(
-            view()
-                .role(AccessibilityRole::Button)
-                .test_id("domain-switcher")
-                .min_h(px(48.0))
-                .flex_1()
-                .on_press(|| finance_ui::navigate("/domains"))
-                .child(
-                    text("FinanceOS")
-                        .text_size(px(15.0))
-                        .font_weight(FontWeight::MEDIUM),
-                ),
-        )
-        .child(when(
-            move || selected.get() == 0 || selected.get() == 1,
-            move || {
-                ui::primary_button(
-                    "记一笔",
-                    move || intent.0.update(|v| *v += 1),
-                    "open-record",
-                    None,
-                )
-            },
-        ))
-        .child(ui::icon_button(
-            ui::Icon::Chat,
-            "财务助手",
-            "tab-chat",
-            || finance_ui::navigate("/assistant"),
-        ))
-        .child(ui::icon_button(
-            ui::Icon::Settings,
-            "设置",
-            "tab-settings",
-            || finance_ui::navigate("/settings"),
-        ))
-        .into_element()
-}
-fn tab_item(
-    index: u8,
-    label: &'static str,
-    id: &'static str,
-    selected: Signal<u8>,
-) -> impl Element {
-    tab()
-        .selected(move || selected.get() == index)
-        .on_press(move |_: &()| {
-            dismiss_keyboard();
-            finance_ui::clear_acknowledgement();
-            selected.set(index);
-        })
-        .flex_1()
-        .min_h(px(52.0))
-        .items_center()
-        .justify_center()
-        .child(
-            view()
-                .test_id(id)
-                .items_center()
-                .gap_1()
-                .child(
-                    // The short selection line replaces a filled pill.
-                    view()
-                        .w(px(18.0))
-                        .h(px(2.0))
-                        .rounded(px(1.0))
-                        .bg(move || theme().foreground)
-                        .opacity(move || {
-                            if selected.get() == index {
-                                1.0_f32
-                            } else {
-                                0.0_f32
-                            }
-                        }),
-                )
-                .child(
-                    ui::icon(match index {
-                        0 => ui::Icon::Today,
-                        1 => ui::Icon::Ledger,
-                        2 => ui::Icon::Wallet,
-                        _ => ui::Icon::Plan,
-                    })
-                    .text_color(move || {
-                        if selected.get() == index {
-                            theme().foreground
-                        } else {
-                            theme().muted_foreground
-                        }
-                    }),
-                )
-                .child(
-                    text(label)
-                        .text_size(px(12.0))
-                        .font_weight(FontWeight::MEDIUM)
-                        .text_color(move || {
-                            if selected.get() == index {
-                                theme().foreground
-                            } else {
-                                theme().muted_foreground
-                            }
-                        }),
-                ),
-        )
-}
-fn tab_bar(selected: Signal<u8>) -> impl IntoElement {
-    view()
-        .pb_safe_area_plus(px(2.0))
-        .border_t_1()
-        .border_color(move || theme().border)
-        .bg(move || theme().card)
-        .child(
-            tabs()
-                .flex_row()
-                .child(tab_item(0, "今日", "tab-today", selected))
-                .child(tab_item(1, "流水", "tab-ledger", selected))
-                .child(tab_item(2, "财富", "tab-accounts", selected))
-                .child(tab_item(3, "规划", "tab-plan", selected)),
-        )
-}
+#[path = "shell.rs"]
+mod shell;
+use shell::{tab_bar, workspace_header};
+
 fn render_route(path: String) -> AnyElement {
     if path.starts_with("/wealth/accounts") {
         return screens::accounts::account_route(path);

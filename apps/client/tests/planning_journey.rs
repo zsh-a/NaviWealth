@@ -2,7 +2,7 @@
 use naviwealth_finance::{
     daily::{RecordDraft, RecordKind},
     models::{AccountCategory, NewAccount},
-    planning::{Budget, FlowKind, OccurrenceState, Recurring},
+    planning::{Budget, FlowKind, Goal, OccurrenceState, Recurring},
 };
 use nsh_engine::{EngineConfig, Root};
 use nsh_testing::Headless;
@@ -83,10 +83,25 @@ fn budget_exact_drilldown_recurring_post_undo_fire_and_portfolio_tree() {
             .unwrap();
         (account, category, entry, recurring)
     });
+    s.runtime
+        .block_on(s.save_finance_goal(
+            None,
+            Goal {
+                name: "规划验收备用金".into(),
+                currency: "CNY".into(),
+                target: Decimal::from(5000),
+                target_date: now + 365 * 86400,
+                monthly_contribution: Decimal::from(500),
+                asset_id: None,
+            },
+        ))
+        .unwrap();
     let mut app = Headless::start(EngineConfig::new(Root::of::<naviwealth_client::App>())).unwrap();
     app.wait_for("id:tab-plan").unwrap();
     app.press("id:tab-plan").unwrap();
     app.wait_for("id:plan-budgets").unwrap();
+    app.wait_for("text:规划验收账单").unwrap();
+    app.wait_for("text:0.00 / 5,000.00 CNY").unwrap();
     app.press("id:plan-budgets").unwrap();
     app.wait_for("id:budget-create").unwrap();
     app.press("id:budget-create").unwrap();
@@ -112,6 +127,29 @@ fn budget_exact_drilldown_recurring_post_undo_fire_and_portfolio_tree() {
     let budget_id = budgets[0].id.clone();
     assert_eq!(budgets[0].entry_ids, vec![entry.clone()]);
     back(&mut app, 3);
+    app.wait_for("text:可用 186.63 CNY").unwrap();
+    app.press("id:plan-budgets").unwrap();
+    app.wait_for(&format!("id:budget-{budget_id}")).unwrap();
+    app.press(&format!("id:budget-{budget_id}")).unwrap();
+    app.press("id:budget-edit").unwrap();
+    app.wait_for("id:limit").unwrap();
+    for field in ["month", "category", "currency"] {
+        assert_eq!(app.screen().count(&format!("id:{field}")).unwrap(), 0);
+    }
+    app.clear("id:limit").unwrap();
+    app.type_text("id:limit", "234.56").unwrap();
+    app.press("id:finance-form-save").unwrap();
+    app.wait_for("text:额度已更新为 234.56 CNY；已花与剩余额度已重新核对。")
+        .unwrap();
+    let updated = s
+        .runtime
+        .block_on(s.finance_budget(budget_id.clone()))
+        .unwrap();
+    assert_eq!(updated.budget.month, month);
+    assert_eq!(updated.budget.category_id, category);
+    assert_eq!(updated.budget.currency, "CNY");
+    assert_eq!(updated.remaining, "221.19".parse::<Decimal>().unwrap());
+    back(&mut app, 2);
     app.press("id:plan-recurring").unwrap();
     app.wait_for(&format!("id:recurring-{recurring}")).unwrap();
     app.press(&format!("id:recurring-{recurring}")).unwrap();
@@ -166,7 +204,7 @@ fn budget_exact_drilldown_recurring_post_undo_fire_and_portfolio_tree() {
     pick(&mut app, "sleeve", &sleeve.id);
     app.type_text("id:quantity", "1000").unwrap();
     app.press("id:finance-form-save").unwrap();
-    app.wait_for("text:1000.00 CNY").unwrap();
+    app.wait_for("text:1,000.00 CNY").unwrap();
     assert_eq!(
         s.runtime
             .block_on(s.finance_portfolio_snapshot(plan.id.clone(), now + 10))

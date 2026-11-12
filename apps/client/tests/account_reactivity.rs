@@ -18,7 +18,7 @@ fn account_row_and_currency_totals_refresh_without_switching_tabs() {
     app.type_text("id:account-name", "响应式账户").unwrap();
     app.type_text("id:account-opening", "1000").unwrap();
     app.press("id:account-save").unwrap();
-    app.wait_for("text:1000.00 CNY").unwrap();
+    app.wait_for("text:1,000.00 CNY").unwrap();
     let services = Services::shared();
     let accounts = services
         .runtime
@@ -48,7 +48,7 @@ fn account_row_and_currency_totals_refresh_without_switching_tabs() {
     app.wait_for_gone("text:响应式账户", Duration::from_secs(2))
         .unwrap();
     app.wait_for(&format!("id:account-{id}")).unwrap();
-    app.wait_for("text:1000.00 CNY").unwrap();
+    app.wait_for("text:1,000.00 CNY").unwrap();
 
     // Cancel also returns to the account list: a native detail window must
     // never remain above or reappear over the root-level account editor.
@@ -70,7 +70,7 @@ fn account_row_and_currency_totals_refresh_without_switching_tabs() {
     app.press("id:record-save").unwrap();
     app.wait_for("text:950.00 CNY").unwrap();
     app.wait_for("text:950.00").unwrap();
-    app.wait_for_gone("text:1000.00 CNY", Duration::from_secs(2))
+    app.wait_for_gone("text:1,000.00 CNY", Duration::from_secs(2))
         .unwrap();
     app.wait_for(&format!("id:account-{id}")).unwrap();
 

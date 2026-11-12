@@ -86,6 +86,86 @@
   新建撤销后记录消失、Enter 提交及分类选中语义；仓储新增财富来源恢复拒绝。
   弃置主次已按源码统一，现有测试覆盖继续填写／放弃行为，未自动断言视觉主次。
 
+### 2026-11-12 原生界面与刷新修复
+
+本轮将 Linux 原生运行接通：Arch Linux 安装 GTK 4.24.1 后，`nsh run`
+已成功构建并显示真实 GTK 窗口。最终截图使用同一原生 runner，在独立
+Xvfb 显示中采集；未使用浏览器 mock 或 headless 图像替代原生渲染。
+
+- 40 张原生截图与逐图哈希见
+  [原生验证证据](../../.impeccable/review/2026-11-12-native-polish/evidence.json)。
+  覆盖今日／流水／财富／规划／记账编辑器，浅／深色、411／360 宽度、
+  系统字号 1.0／1.3 的完整组合。字号通过独立 XSettings 的 `Xft/DPI`
+  配置，并以 `gtk4-query-settings` 核对 98304／127795；没有仅按文件名
+  声称字号生效。数据来自独立临时目录中的合成账户和计划。
+- 规划读取在挂起、失败及无变化刷新时保留内容；失败提供重试。
+  Headless 覆盖挂起、失败、同值重试及真实快照更新时原生 input／scroll
+  节点身份保持；预算和组合表单的冻结草稿测试继续通过。
+- `ui.rs` 与 `finance_ui.rs` 拆分，按钮、列表按压与焦点共用 `ui::press_target`；
+  字号使用 theme 的语义 token，金额样式不再判断中文标签。
+  记账／通用财务／账户表单统一为继续填写主操作、放弃修改危险文字操作。
+- 规划首页显示本月分类预算余额、待确认安排和真实目标投入；预算调额只提供
+  额度字段，原月份、分类、币种作为上下文保留。集成测试核对调额后的精确余额。
+- 列表变化使用 180ms `animate_layout`，选中及保存反馈采用阻尼 spring；
+  减少动态效果测试核对最终选中状态和跳过布局动效。大字号账户选择器允许
+  换行，完整保留账户名称和币种。
+- 暂保留全局 `DataVersion`：记账会同时影响预算、财富、收件箱及目标，
+  登录、恢复和同步还需整体失效。按数据族拆分需先定义这些依赖及所有写入口的
+  广播契约；本轮采用快照比较避免无变化重建，不冒漏刷财务派生数据的风险。
+- 最终检查：`rtk cargo test -p naviwealth-client` 61 项通过；
+  `rtk cargo test --workspace` 与 `rtk cargo test --workspace --no-default-features`
+  均 210 项／22 套件通过。默认与无桌面依赖模式的 workspace Clippy
+  （`--all-targets -- -D warnings`）、`cargo fmt --all -- --check`、
+  `git diff --check` 均通过。默认桌面检查另外清除了入口的未用 import。
+- Linux 截图不扩大为 Android／iOS 的原生验收；触屏键盘、辅助技术和实体机
+  动效性能仍待验证。既有不透明壳层回退继续适用。
+
+### 2026-11-12 原生界面质感 v2
+
+继续保留上轮刷新、冻结草稿、金额与撤销语义，未改 `apps/mobile` 或财务领域实现。
+
+- 记账分类改用纯文字，按可用宽度、最长标签、系统字号自适应 1–4 列；
+  360／1.3 的标准分类为三列，去除了重复的占位箭头。账户值与币种分开布局；
+  金额币种并入标签行，避免原生 input 与普通文本的基线差异。
+- 编辑器滚动尾部留出额外空间，保存栏有独立不透明底面和分隔；补充采集了
+  八个组合下滚动到底的原生截图，核对最后分类、日期、对方、备注可达。
+- 五页共用数值／小号单位的段落、4/8 间距和一层 paper 摘要。今日主读结余，
+  流水主读支出，财富主读净资产，规划主读确认项；财富分解资产／负债，
+  不在币种和图表末端重复净资产。行减少箭头与细线，深色采用递进的石墨层级。
+- 本轮拆分了记录、流水、财富、账户表单和现金规划视图；工作区改动中的
+  Rust 文件均小于 500 行。所有既有 test_id 和四个根标签保留。
+- 最终 `cargo test --workspace` 211 项／22 套件通过；Clippy（all-targets、
+  `-D warnings`）、fmt check、diff check 通过。五页原生启发式自评 31/40，
+  不与先前 27/40 源码评审作同条件量化比较。
+- 原生改前／改后各 40 张和逐张自查、色彩对比度、评分见
+  [v2 证据](../../.impeccable/review/2026-11-12-native-polish-v2/evidence.json)
+  与 [对照图库](../../.impeccable/review/2026-11-12-native-polish-v2/comparison.html)。
+  截图是 GTK／Xvfb 实际绘制，不是浏览器 UI。原生自评只覆盖这五页；
+  手机键盘、辅助技术、平板及实体机动效仍待专门验证。
+
+### 2026-11-12 原生界面质感 v3
+
+- 金额展示统一千分位、紧贴正负号、零中性色及币种最低小数位，保留更细精度；
+  输入聚焦编辑原始文本、失焦格式化回显，不改 Decimal 存储／计算。新增实际记账
+  表单测试核对 1,234.567 回显后余额仍为 8,765.433。
+- 顶栏使用唯一当前页标题，捕获为统一加号／文字主操作；财富四入口增加数量和
+  明确可点表面。历史少于三点不画线，三点以上有高低轴及首末精确值。
+- 流水去掉箭头占位图标，使用分类首字徽标；预算改为分币种进度模块。
+  今日列表底部用轻量“全部流水 →”入口，统一行内与组间节奏。
+- 修复 nsh 的 `font-*` 字体家族保留命名与尺寸 token 冲突：尺寸改为 `type-*`，
+  并测试主题尺寸实际可读。窄屏大字号的分组主金额与币种保持基线。
+- 最终 workspace 222 项／22 套件、client 无桌面依赖 73 项／9 套件通过；
+  workspace Clippy（all-targets、`-D warnings`）、fmt check、diff check 通过。
+  本轮所有工作区修改的 Rust 文件仍小于 500 行；未改 apps/mobile 或财务领域逻辑。
+- [v3 对照图库](../../.impeccable/review/2026-11-12-native-polish-v3/comparison.html)
+  保留 v2 after 的 40 张原图作为 before。本轮真实 GTK 主矩阵 40 张，另有
+  8 张滚动、4 张三点图表、2 张失焦金额回显和 2 张空流水图。
+  [v3 证据](../../.impeccable/review/2026-11-12-native-polish-v3/evidence.json)
+  包含二进制／源码／图片哈希、有效 DPI、逐图自查与限制。
+- 十项启发式保守自评 31/40，未按修复条目自动加分；不是独立评审。
+  24 分类扫描、次要内容滚动、深层及极端内容的原生矩阵仍有缺口；手机 IME、
+  读屏、平板和实体机动效未在本轮验收。
+
 ### v0.2 日常记账基础的历史验证
 
 以下记录描述此前记账版本，不能代替本轮扩展功能的原生验收。
@@ -224,3 +304,22 @@ Web 完成后移除 Flutter、FRB 及其专属构建链。
 
 参考：[nsh Rust 开发](https://nsh.dev/docs/rust/)、[nsh Web](https://nsh.dev/docs/web/)、
 [nsh 测试](https://nsh.dev/docs/testing-and-trace/)。
+
+### Direction A native implementation (2026-11-12)
+
+The selected warm-paper direction is now the `apps/client/DESIGN.md` authority:
+Manrope Latin/numeral assets with system CJK fallback, warm light/dark tokens,
+shared linear category SVGs, and five native root/capture surfaces. Today uses
+A-styled budget/peak mini cards. Opt-in screenshot data lives in the client
+example, never production startup. Actual GTK comparisons, 50 primary images,
+22 supplementary states, font provenance and exact limits are in
+[the direction-A review](../../.impeccable/review/2026-11-12-direction-a/review.md).
+The final workspace gate passed 227 tests across 23 suites, clippy and fmt.
+The independent verdict resolved its five named visual fixes; it does not imply
+Android/iOS/Web, keyboard-open, assistive-technology or hardware acceptance.
+
+The final three-detail pass corrected demo coffee classification, omitted matching
+record currency units (foreign units remain inline), and moved workspace switching
+from root titles to the More menu. Current evidence has 50 primary and 24
+supplementary GTK images; the workspace gate passes 230 tests across 23 suites,
+clippy and fmt. The prior independent verdict remains scoped to its five fixes.
