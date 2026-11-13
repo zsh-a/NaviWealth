@@ -47,7 +47,6 @@ pub fn backup_section() -> impl IntoElement {
     let username = signal(kept.username.clone());
     let password = signal(kept.password.clone());
     let passphrase = signal(String::new());
-    let had_passphrase = untracked(backup::has_passphrase);
     // Backups in the folder, once listed for a restore.
     let listed = signal(None::<Vec<String>>);
     let listing = signal(false);
@@ -62,6 +61,15 @@ pub fn backup_section() -> impl IntoElement {
         };
         let new_passphrase = passphrase.get_untracked();
         let new_passphrase = (!new_passphrase.is_empty()).then_some(new_passphrase);
+        if !folder.is_complete()
+            || new_passphrase
+                .as_ref()
+                .is_some_and(|p| p.chars().count() < MIN_PASSPHRASE)
+            || (new_passphrase.is_none() && !untracked(backup::has_passphrase))
+        {
+            message.set(Some(s().backup_not_configured.to_owned()));
+            return;
+        }
         backup::configure(folder, new_passphrase);
         passphrase.set(String::new());
         message.set(None);
@@ -116,7 +124,7 @@ pub fn backup_section() -> impl IntoElement {
                     .auto_capitalize(AutoCapitalize::None)
                     .auto_correct(false)
                     .placeholder(move || {
-                        if had_passphrase {
+                        if backup::has_passphrase() {
                             s().backup_passphrase_kept.to_owned()
                         } else {
                             String::new()

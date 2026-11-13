@@ -114,9 +114,9 @@ pub fn folder() -> Folder {
     state().with_untracked(|s| s.kept.folder.clone())
 }
 
-/// Whether a passphrase is kept (untracked).
+/// Whether a passphrase is kept (tracked).
 pub fn has_passphrase() -> bool {
-    state().with_untracked(|s| !s.passphrase.is_empty())
+    state().with(|s| !s.passphrase.is_empty())
 }
 
 /// What the backup is doing (tracked).

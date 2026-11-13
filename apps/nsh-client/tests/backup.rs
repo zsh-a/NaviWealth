@@ -8,6 +8,18 @@ use dav::Dav;
 use nsh_app_naviwealth_health::domain::backup::{self, BackupError};
 use nsh_testing::DialogAnswer;
 
+#[test]
+fn incomplete_settings_explain_what_is_missing_without_saving_them() -> Result<(), String> {
+    let (mut app, storage) = start(vec![], None);
+    app.press("label:Settings")?;
+    app.press("Save and back up")?;
+    app.wait_for(
+        "text:Fill in the folder, account, password and a passphrase of at least 8 characters.",
+    )?;
+    assert!(!storage.entries().contains_key("backup.v1"));
+    Ok(())
+}
+
 fn backups(dav: &Dav, passphrase: &str, last_day: Option<String>) -> Vec<(String, String)> {
     vec![
         (
