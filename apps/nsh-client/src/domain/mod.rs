@@ -6,7 +6,7 @@ pub mod account;
 pub mod format;
 pub mod meal;
 pub mod weight;
-pub use health_core::{catalog, nutrition, recognition};
+pub use health_core::{catalog, garmin, nutrition, recognition};
 
 /// Why a provider gave no usable reply.
 #[derive(Debug, Clone, PartialEq, Eq)]

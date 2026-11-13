@@ -8,6 +8,7 @@
 //! NW_PREVIEW_PHOTOS=/a.jpg:/b.jpg:/c.jpg     # photos of the seeded meals
 //! NW_PREVIEW_ROUTE=new:/meal.jpg | manual | edit | settings
 //! NW_PREVIEW_EDITOR=1                        # open the first food once foods arrive
+//! NW_PREVIEW_GARMIN_KEY_FILE=/path/garmin.key # connect a real Garmin key
 //! ```
 
 use std::env;
@@ -15,7 +16,7 @@ use std::env;
 use nsh_core::{platform::Appearance, prelude::*};
 
 use crate::{
-    data::{clock, meals, photos, settings, weights},
+    data::{clock, garmin, meals, photos, settings, weights},
     domain::{
         account::{ModelAccount, Provider},
         catalog,
@@ -51,6 +52,16 @@ pub fn apply() {
     }
     if has("meals") && untracked(meals::all).is_empty() {
         seed_meals();
+    }
+    if let Ok(path) = env::var("NW_PREVIEW_GARMIN_KEY_FILE")
+        && !untracked(garmin::connected)
+        && let Ok(key) = std::fs::read_to_string(path)
+    {
+        spawn(async move {
+            if let Err(failure) = garmin::connect(key).await {
+                log::warn!("preview: Garmin did not connect: {failure:?}");
+            }
+        });
     }
     if has("weights") && untracked(|| weights::latest_until(clock::today())).is_none() {
         // A month drifting down, with a few days skipped.

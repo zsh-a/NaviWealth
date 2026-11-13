@@ -6,8 +6,10 @@ it to be sent to your own vision model, review the estimated foods and amounts,
 and save; Today shows the day's energy and macronutrients. Manual entry works
 without any account. Design standards and the motion inventory: `DESIGN.md`.
 
-Everything stays on the device: meals in `naviwealth.sqlite` and photos in the
-app's data directory, the API key under its own storage key. Photos go straight from the device to the base
+Everything stays on the device: meals, weights and Garmin days in
+`naviwealth.sqlite`, photos in the app's data directory, the model and Garmin
+keys under their own storage keys. Garmin data comes read-only from Garmin's
+Personal API with the user's own key. Photos go straight from the device to the base
 URL you configure (Anthropic Messages API or an OpenAI-compatible Chat
 Completions API); there is no NaviWealth relay.
 

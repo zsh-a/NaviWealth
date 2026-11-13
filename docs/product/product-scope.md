@@ -71,11 +71,12 @@ whether the owner uses a feature every day or every week.
   editable consumed grams, local catalog nutrition, manual entry.
 - Weight: manual entry plus Garmin body composition when available.
 - Garmin daily data through Garmin's official Personal API (self-serve key,
-  read-only, own data only): sleep, resting heart rate, steps, and, if the
-  API exposes them, HRV, stress and Body Battery. Pull on app start and on
-  refresh. The reverse-engineered Garmin Connect client (password + MFA) is
-  not ported. Phase 1 verifies the exact endpoints, token exchange, history
-  backfill and rate limits before design.
+  read-only, own data only): sleep duration and score, HRV with its status,
+  resting heart rate, Body Battery high, steps and average stress. Pulled at
+  app start and resume, at most every 30 minutes; the first pull covers 30
+  days. The key's region (garmin.com or garmin.cn) is found by trying both.
+  The reverse-engineered Garmin Connect client (password + MFA) is not
+  ported. Garmin weight is not imported yet (no scale data to verify).
 
 ### Data
 

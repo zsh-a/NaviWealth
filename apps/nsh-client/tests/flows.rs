@@ -511,6 +511,126 @@ fn deleting_a_weight_can_be_undone() -> Result<(), String> {
     Ok(())
 }
 
+fn raw(status: u16, body: &str) -> StubResponse {
+    let mut response = StubResponse::default();
+    response.status = status;
+    response.body = body.as_bytes().to_vec();
+    response.delay = Duration::from_millis(20);
+    response
+}
+
+const GARMIN_COM: &str = "https://personal.connectapi.garmin.com";
+const GARMIN_CN: &str = "https://personal.connectapi.garmin.cn";
+
+/// Garmin as a garmin.cn account sees it: the global host does not know
+/// the key, the China host gives a token and today's numbers.
+fn garmin_cn() -> Arc<StubNetwork> {
+    let day = today().to_string();
+    let not_here =
+        r#"{"message":"Personal API Key with ID x does not exist.","error":"NotFoundException"}"#;
+    let daily = json!({"data": [{"calendarDate": day, "heartRate": {"restingValue": 44},
+        "bodyBattery": {"maxValue": 97}, "stress": {"avgLevel": 26},
+        "movement": {"steps": {"value": 13794}}}]});
+    let sleep = json!([{"calendarDate": day, "sleepTimeSeconds": 27120,
+        "sleepScores": {"overall": {"value": 89}}}]);
+    let hrv =
+        json!({"hrvSummaries": [{"calendarDate": day, "lastNightAvg": 75, "status": "BALANCED"}]});
+    Arc::new(StubNetwork::new([
+        (
+            format!("POST {GARMIN_COM}/personalapitoken-service/*"),
+            raw(404, not_here),
+        ),
+        (
+            format!("POST {GARMIN_CN}/personalapitoken-service/*"),
+            raw(200, "aaa.bbb.ccc"),
+        ),
+        (
+            format!("GET {GARMIN_CN}/usersummary-service/v2/dailysummaries*"),
+            raw(200, &daily.to_string()),
+        ),
+        (
+            format!("GET {GARMIN_CN}/sleep-service/*"),
+            raw(200, &sleep.to_string()),
+        ),
+        (
+            format!("GET {GARMIN_CN}/hrv-service/*"),
+            raw(200, &hrv.to_string()),
+        ),
+    ]))
+}
+
+#[test]
+fn a_garmin_key_connects_in_its_region_and_brings_todays_numbers() -> Result<(), String> {
+    let dir = tempfile::tempdir().unwrap();
+    let stub = garmin_cn();
+    let (mut app, storage) = start_in(Some(dir.path()), Vec::new(), Some(stub.clone()));
+    app.press("label:Settings")?;
+    app.wait_for("Personal API key")?;
+    app.type_text("text:Paste your Garmin key", "GCDC-test-key")?;
+    app.press("Connect")?;
+    app.wait_for("text:Connected · garmin.cn")?;
+    assert_eq!(
+        storage
+            .entries()
+            .get("secret.garmin-key.v1")
+            .map(String::as_str),
+        Some("GCDC-test-key")
+    );
+    app.press("label:Back")?;
+    app.wait_for("text:7h 32m")?;
+    let data: Vec<_> = stub
+        .requests()
+        .into_iter()
+        .filter(|r| r.method == "GET")
+        .collect();
+    assert_eq!(data.len(), 3, "daily, sleep and HRV");
+    assert!(data.iter().all(|r| {
+        r.url.starts_with(GARMIN_CN)
+            && r.headers
+                .iter()
+                .any(|(n, v)| n.eq_ignore_ascii_case("authorization") && v == "Bearer aaa.bbb.ccc")
+    }));
+
+    app.wait_for("text:Score 89")?;
+    app.wait_for("text:44 bpm")?;
+    app.wait_for("text:75 ms")?;
+    app.wait_for("text:13,794")?;
+    drop(app);
+
+    // Kept: a restart within 30 minutes shows them without asking Garmin.
+    let quiet = Arc::new(StubNetwork::new([] as [(String, StubResponse); 0]));
+    let (mut app, _) = start_in(
+        Some(dir.path()),
+        storage.entries().into_iter().collect(),
+        Some(quiet.clone()),
+    );
+    app.wait_for("text:7h 32m")?;
+    assert!(quiet.requests().is_empty());
+    Ok(())
+}
+
+#[test]
+fn a_garmin_key_neither_region_knows_is_refused_and_not_kept() -> Result<(), String> {
+    let gone = r#"{"message":"does not exist","error":"NotFoundException"}"#;
+    let stub = Arc::new(StubNetwork::new([
+        (
+            format!("POST {GARMIN_COM}/personalapitoken-service/*"),
+            raw(404, gone),
+        ),
+        (
+            format!("POST {GARMIN_CN}/personalapitoken-service/*"),
+            raw(404, gone),
+        ),
+    ]));
+    let (mut app, storage) = start(Vec::new(), Some(stub));
+    app.press("label:Settings")?;
+    app.type_text("text:Paste your Garmin key", "GCDC-old")?;
+    app.press("Connect")?;
+    app.wait_for("text:Garmin did not accept the key. It may have expired; create a new one.")?;
+    assert!(!storage.entries().contains_key("secret.garmin-key.v1"));
+    Ok(())
+}
+
 #[test]
 fn the_api_key_is_kept_apart_from_the_settings() -> Result<(), String> {
     let (mut app, storage) = start(Vec::new(), None);

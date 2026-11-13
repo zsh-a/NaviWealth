@@ -18,7 +18,7 @@ use std::time::Duration;
 use nsh_core::prelude::*;
 
 use crate::{
-    data::{clock, db, meals, photos, settings, weights},
+    data::{clock, db, garmin, meals, photos, settings, weights},
     ui::color,
 };
 
@@ -35,6 +35,16 @@ pub fn App() -> impl IntoElement {
     db::open();
     meals::load();
     weights::load();
+    garmin::load();
+    // At start, and as soon as a key is connected. The memo re-runs the
+    // effect only when that changes, not on every sync state change (which
+    // would cancel the pull it started).
+    let linked = computed(garmin::connected);
+    effect(move || {
+        if linked.get() {
+            spawn(garmin::refresh(false));
+        }
+    });
     settings::load();
     spawn(photos::sweep_orphans());
     // Midnight, and coming back to the app, move "today" on.
@@ -42,6 +52,7 @@ pub fn App() -> impl IntoElement {
     effect(move || {
         if lifecycle() == nsh_core::platform::Lifecycle::Active {
             untracked(clock::tick);
+            spawn(garmin::refresh(false));
         }
     });
     #[cfg(not(any(target_os = "android", target_os = "ios")))]

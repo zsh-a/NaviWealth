@@ -54,7 +54,14 @@ health-only Review; Assets arrives with Phase 3.
    (token exchange; sleep, resting HR, steps, HRV, stress, Body Battery and
    weight fields; history backfill; rate limits; revocation), then import
    daily summaries into `health-core` and show them on Today. Product Scope's
-   Garmin list shrinks to what the API really provides.
+   Garmin list shrinks to what the API really provides. Verified on
+   2026-11-13 with a real garmin.cn key: `POST …/personal-api-key/token`
+   with `Authorization: ApiKey` returns a plain-text JWT (24 h, five read
+   scopes); the global host answers 404 for a China key; daily summaries,
+   sleep summaries and HRV ranges of 90 days work. Implemented: parsing in
+   `health_core::garmin`, pulls and the `garmin_days` table in the NSH
+   client, a Today card and a Settings key field. Remaining: rate limits are
+   undocumented and unobserved; Garmin scale weight is untested.
 5. **Health review and backup.** Weekly intake, macros, weight and Garmin
    averages on Review; automatic local backups and encrypted export/restore
    through a user-picked location.

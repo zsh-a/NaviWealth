@@ -66,6 +66,23 @@ pub struct Strings {
     pub weight_deleted: &'static str,
     pub delete_weight: &'static str,
     pub save_weight: &'static str,
+    pub garmin: &'static str,
+    pub sleep: &'static str,
+    pub resting_hr: &'static str,
+    pub hrv: &'static str,
+    pub body_battery: &'static str,
+    pub steps: &'static str,
+    pub stress: &'static str,
+    pub garmin_key: &'static str,
+    pub garmin_key_placeholder: &'static str,
+    pub garmin_connect: &'static str,
+    pub garmin_disconnect: &'static str,
+    pub garmin_note: &'static str,
+    pub garmin_key_rejected: &'static str,
+    pub garmin_network: &'static str,
+    pub garmin_unreadable: &'static str,
+    pub garmin_syncing: &'static str,
+    pub garmin_no_data: &'static str,
     pub discard_title: &'static str,
     pub discard_body: &'static str,
     pub discard: &'static str,
@@ -192,6 +209,35 @@ impl Strings {
             (true, _) => format!("{days} 天前记录"),
             (false, 1) => "Logged yesterday".to_owned(),
             (false, _) => format!("Logged {days} days ago"),
+        }
+    }
+
+    /// A sleep duration: `7h 32m`.
+    pub fn sleep_time(&self, seconds: u32) -> String {
+        let minutes = (seconds + 30) / 60;
+        let (h, m) = (minutes / 60, minutes % 60);
+        if self.zh() {
+            format!("{h}小时{m}分")
+        } else {
+            format!("{h}h {m}m")
+        }
+    }
+
+    /// The sleep score line.
+    pub fn sleep_score(&self, score: u8) -> String {
+        if self.zh() {
+            format!("评分 {score}")
+        } else {
+            format!("Score {score}")
+        }
+    }
+
+    /// Which Garmin site the key belongs to.
+    pub fn garmin_connected(&self, host: &str) -> String {
+        if self.zh() {
+            format!("已连接 · {host}")
+        } else {
+            format!("Connected · {host}")
         }
     }
 

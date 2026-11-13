@@ -3,6 +3,7 @@
 
 pub mod clock;
 pub mod db;
+pub mod garmin;
 pub mod meals;
 pub mod photos;
 pub mod settings;

@@ -18,8 +18,15 @@ fn main() -> impl std::process::Termination {
             title: "NaviWealth Health".to_owned(),
             #[cfg(any(target_os = "linux", target_os = "windows"))]
             app_id: "com.naviwealth.health.nsh".to_owned(),
-            // A phone-sized window: the layout this client is designed for.
-            size: (390, 844),
+            // A phone-sized window: the layout this client is designed for
+            // (`NW_PREVIEW_HEIGHT` makes it taller to capture a whole page).
+            size: (
+                390,
+                std::env::var("NW_PREVIEW_HEIGHT")
+                    .ok()
+                    .and_then(|h| h.parse().ok())
+                    .unwrap_or(844),
+            ),
             ..Default::default()
         },
     )

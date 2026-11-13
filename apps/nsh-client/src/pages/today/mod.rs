@@ -1,6 +1,7 @@
 //! Today: the day's energy, meals and weight, and the one main action,
 //! logging a meal from a photo. The last four weeks are a swipe away.
 
+mod garmin;
 mod hero;
 mod meal_list;
 mod week;
@@ -80,7 +81,8 @@ pub fn today_page() -> Screen {
                             .child(hero::hero(day))
                             .child(setup_card())
                             .child(meal_list::meal_list(day))
-                            .child(weight::weight_card(day, weight_open)),
+                            .child(weight::weight_card(day, weight_open))
+                            .child(garmin::garmin_card(day)),
                     ),
                 )
                 .child(bottom_bar(

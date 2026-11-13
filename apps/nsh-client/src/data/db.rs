@@ -30,6 +30,12 @@ const MIGRATIONS: &[&str] = &[
         kg REAL NOT NULL,
         logged_at_ms INTEGER NOT NULL
     );",
+    // 3: Garmin daily summaries, one JSON body per day (`health_core::garmin`).
+    "CREATE TABLE garmin_days (
+        day TEXT PRIMARY KEY NOT NULL,
+        body TEXT NOT NULL,
+        fetched_at_ms INTEGER NOT NULL
+    );",
 ];
 
 #[derive(Clone, Default)]
