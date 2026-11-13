@@ -1,8 +1,9 @@
 # NaviWealth
 
 > Local-first Personal LifeOS. FinanceOS is always on; HealthOS, KnowledgeOS,
-> and ExecutionOS are opt-in domains. Mobile app is Flutter. Backend is
-> Cloudflare Workers in Rust. Sync is v3 row-state LWW. AI is device-only with
+> and ExecutionOS are opt-in domains. Client direction is NSH/Rust; Flutter is
+> frozen to bug fixes. Backend is Cloudflare Workers in Rust. Sync is v3
+> row-state LWW. AI is device-only with
 > user-owned LLM profiles; there is no backend AI relay.
 
 ## Essential Docs
@@ -22,9 +23,16 @@
 - [HealthOS](docs/domains/healthos-domain.md): Health domain behavior, data, AI tools, agents.
 - [KnowledgeOS](docs/domains/knowledgeos-domain.md): Notes, decisions, relations, proposals, and memory projections.
 - [ExecutionOS](docs/domains/executionos-domain.md): Plans, actions, progress, and review.
-- [FinanceOS Roadmap](docs/roadmap/roadmap-finance.md): Finance domain sequencing.
+- [LifeOS Migration Roadmap](docs/roadmap/roadmap-lifeos.md): Active NSH migration gates.
+- [NSH Migration ADR](docs/architecture/adr/0001-nsh-client-migration.md): Target ownership and open Web/coexistence/iOS decisions.
+- [FinanceOS Roadmap](docs/roadmap/roadmap-finance.md): Archived historical sequencing.
 
 ## Current Code Roots
+
+- `apps/nsh-client/`: New Rust/NSH UI client.
+- `crates/health-core/`: Shared meal recognition and nutrition.
+- `third_party/agent-runtime/`: Provider-neutral Rust runtime.
+- Existing Dart roots below are frozen-client maintenance authorities.
 
 - `apps/mobile/lib/app/domain_packs.dart`: Production domain inventory.
 - `apps/mobile/lib/core/auth/domain_scope.dart`: Domain opt-in enum and wire values.
@@ -36,4 +44,6 @@
 ## Documentation Policy
 
 Documentation describes the current implementation. Superseded protocols,
-migration notes, and compatibility-only plans are removed rather than archived.
+migration notes, and compatibility-only plans are removed rather than archived,
+except the explicitly archived Finance roadmap and product-direction study
+retained by the NSH migration decision.

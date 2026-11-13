@@ -1,6 +1,12 @@
 # NaviWealth FinanceOS Roadmap
 
-Status: active FinanceOS sequencing SSOT.
+Status: Archived — superseded on 2026-11-13 by the
+[NSH client migration roadmap](roadmap-lifeos.md) and
+[ADR 0001](../architecture/adr/0001-nsh-client-migration.md).
+
+The material below is retained as historical context. Its Now/Next priorities,
+studies, and promotion rules no longer govern delivery. Flutter is frozen to
+bug fixes; new features belong in NSH/Rust crates.
 
 Last reviewed: 2026-09-30.
 

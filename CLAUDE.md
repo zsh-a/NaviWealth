@@ -1,6 +1,17 @@
 # NaviWealth Agent Guide
 
-NaviWealth is a local-first Personal LifeOS. FinanceOS is the seed domain; HealthOS, KnowledgeOS, and ExecutionOS are opt-in domains registered through the LifeOS shell. The app targets iOS, Android, and Web. Device AI is native-only; Web has no AI runtime and no Health integration.
+NaviWealth is a local-first Personal LifeOS. FinanceOS is the seed domain;
+HealthOS, KnowledgeOS, and ExecutionOS are opt-in domains registered through
+the LifeOS shell. The client direction is NSH 0.5.0 with domain truth in Rust
+crates. Android is
+in active migration scope; Web retention and iOS scope remain open decisions.
+Device AI stays native-only; any retained Web client has no AI runtime or Health
+platform integration.
+
+Flutter (`apps/mobile`) is frozen: bug fixes only; new features belong in
+NSH/Rust crates. Read `docs/architecture/adr/0001-nsh-client-migration.md` and
+`docs/roadmap/roadmap-lifeos.md` before planning work. The old Finance roadmap
+and product-direction Now/Next plans are archived.
 
 Start with `docs/agent-map.md`, which routes each task to the smallest
 authoritative context. Before changing architecture or cross-domain code, read:
@@ -8,7 +19,7 @@ authoritative context. Before changing architecture or cross-domain code, read:
 - `docs/architecture/lifeos-architecture-northstar.md`: boundaries and non-goals.
 - `docs/architecture/lifeos-shell.md`: cross-domain shell, domain registration, AI, sync, memory, persistence.
 - Roadmaps and domain SSOTs as needed: `docs/index.md`,
-  `docs/roadmap/roadmap-lifeos.md`, `docs/roadmap/roadmap-finance.md`,
+  `docs/roadmap/roadmap-lifeos.md`,
   `docs/domains/financeos-domain.md`,
   `docs/domains/healthos-domain.md`, `docs/domains/knowledgeos-domain.md`,
   `docs/domains/executionos-domain.md`.
@@ -22,13 +33,23 @@ authoritative context. Before changing architecture or cross-domain code, read:
 | KnowledgeOS | User opt-in | `features/knowledge/`, `features/knowledge/knowledge_ai_tools.dart` | `know:` |
 | ExecutionOS | User opt-in | `features/execution/`, `features/execution/execution_ai_tools.dart` | `exec:` |
 
-The production domain inventory is `apps/mobile/lib/app/domain_packs.dart`. Each domain contributes a `DomainPack`: tools, prompt block, shell route, shell spec, agents, command palette entries, and tab paths. Add a new domain by adding a real domain package and one registry entry; do not scatter one-off branching through bootstrap.
+The frozen Flutter production domain inventory is `apps/mobile/lib/app/domain_packs.dart`. Each domain contributes a `DomainPack`: tools, prompt block, shell route, shell spec, agents, command palette entries, and tab paths. Add a new domain by adding a real domain package and one registry entry; do not scatter one-off branching through bootstrap.
+
+The target Rust composition preserves `DomainPack` as traits plus a registry.
+Domain crates own business truth; `lifeos-core` owns neutral persistence/Sync,
+`sync-wire` shared envelopes and table JSON formats, and `lifeos-ai` the
+in-process runtime host. These target crates are introduced by gated phases;
+Phase 0 does not claim they all exist. Existing Dart path rules below apply
+to Flutter maintenance only. Do not extend FRB for new client features.
 
 ## Repository Map
 
 | Area | Path | Language |
 |---|---|---|
-| Mobile app | `apps/mobile/` | Dart, Flutter |
+| New native client | `apps/nsh-client/` | Rust, NSH |
+| Shared Health core | `crates/health-core/` | Rust |
+| Agent Runtime | `third_party/agent-runtime/` | Rust submodule |
+| Frozen mobile app | `apps/mobile/` | Dart, Flutter |
 | Native embedding runtime | `apps/mobile/native/lifeos_native/` | Rust, flutter_rust_bridge |
 | Backend | `apps/backend/` | Rust, Cloudflare Workers, D1 |
 | Securities catalog build | `tool/asset_catalog/` | Python |
@@ -70,6 +91,11 @@ apps/backend/src/
 ```
 
 ## Architecture Rules
+
+- New client architecture follows ADR 0001: domain-owned Rust truth and a UI-only NSH client; keep cross-domain infrastructure neutral.
+- Use rusqlite + SQLCipher for target business persistence; NSH KV is a 5 MB preferences store. Current NSH API keys are plaintext in KV and must migrate to Keystore through the Android host channel.
+- Keep Sync v3 wire formats unchanged. Migrate existing accounts by server pull, not Drift file conversion. Production dual-client coexistence remains an open product decision.
+- The Dart/Flutter rules below govern the frozen client's bug fixes until replacement.
 
 - `core/` is domain-neutral. It must not import `features/<domain>/` or domain business entities.
 - Domain business code lives under `features/<domain>/`, including all Finance slices under `features/finance/`. Finance composition belongs in `features/finance/`; cross-domain composition belongs in `app/`.
@@ -113,7 +139,14 @@ Use `rg` for exact strings, comments, config literals, and generated-file checks
 
 Prefix shell commands with `rtk` when running from this repo.
 
-Mobile:
+NSH client:
+
+```bash
+rtk cargo test --manifest-path apps/nsh-client/Cargo.toml
+rtk cargo test --manifest-path crates/health-core/Cargo.toml --locked
+```
+
+Mobile maintenance:
 
 ```bash
 cd apps/mobile
@@ -242,6 +275,8 @@ Project lint gates:
 
 | Doc | Use |
 |---|---|
+| `docs/architecture/adr/0001-nsh-client-migration.md` | NSH/Rust direction and open decisions |
+| `docs/roadmap/roadmap-lifeos.md` | Active migration phases and exit gates |
 | `docs/architecture/lifeos-architecture-northstar.md` | Architecture boundaries and non-goals |
 | `docs/architecture/lifeos-shell.md` | Cross-domain shell SSOT |
 | `docs/domains/healthos-domain.md` | HealthOS scope, data, AI tools, agents |

@@ -5,10 +5,23 @@ Status: active documentation router.
 Use this page to load the smallest authoritative context for a task. It is a
 router, not a second source of product or architecture truth.
 
+## Client Direction
+
+[ADR 0001](architecture/adr/0001-nsh-client-migration.md) and the
+[migration roadmap](roadmap/roadmap-lifeos.md) govern new work. Flutter
+(`apps/mobile`) is frozen: bug fixes only; new features go to NSH/Rust crates.
+NSH owns UI/composition; domain truth moves to domain crates. The target
+`lifeos-core`, `sync-wire`, and `lifeos-ai` packages are phased work, not current
+code inventory. Web, production client coexistence, and iOS remain open in the ADR.
+
+The Flutter paths below route maintenance of the existing client. The Shell
+SSOT describes that implementation; it does not override the migration ADR.
+
 ## Task Routing
 
 | Task | Read first | Code authority | Minimum verification |
 |---|---|---|---|
+| Implement NSH/Rust migration work | [ADR 0001](architecture/adr/0001-nsh-client-migration.md), [migration roadmap](roadmap/roadmap-lifeos.md), owning domain SSOT | `apps/nsh-client/`, `crates/health-core/`, phased Rust packages | Rust tests, `nsh-testing` flows, phase-specific device/Sync evidence |
 | Change architecture or cross-domain ownership | [Architecture Northstar](architecture/lifeos-architecture-northstar.md), [LifeOS Shell](architecture/lifeos-shell.md) | `apps/mobile/lib/core/lifeos/domain_pack.dart`, `apps/mobile/lib/app/domain_packs.dart` | Architecture lint scripts in the Shell SSOT |
 | Add or change a domain | [LifeOS Shell](architecture/lifeos-shell.md), owning domain SSOT | Owning `apps/mobile/lib/app/domain_packs/*_pack.dart`, `apps/mobile/lib/features/<domain>/` | Domain composition, router, and opt-in tests |
 | Change FinanceOS behavior | [FinanceOS](domains/financeos-domain.md), then the relevant Finance topic SSOT | `apps/mobile/lib/features/finance/` | Focused repository/tool/widget tests |
@@ -19,7 +32,7 @@ router, not a second source of product or architecture truth.
 | Change backup or destructive data management | [LifeOS Shell](architecture/lifeos-shell.md), owning domain SSOT | `apps/mobile/lib/core/backup/`, `apps/mobile/lib/core/data_management/` | Restore atomicity and data-management tests |
 | Change Web behavior | [Web Compatibility](development/web-compat-matrix.md), [Web Routing](development/web-routing.md) | Web adapters, router, `web_smoke/` | Release web build and focused Playwright smoke |
 | Change test architecture or CI coverage | [Testing Strategy](development/testing-strategy.md) | Tests and `.github/workflows/` | The affected local command plus CI-equivalent gate |
-| Plan product work | Relevant roadmap only after reading the owning SSOT | `roadmap/roadmap-lifeos.md` or `roadmap/roadmap-finance.md` | Exit evidence stated in the roadmap |
+| Plan product work | [Migration roadmap](roadmap/roadmap-lifeos.md), ADR 0001, owning SSOT | `roadmap/roadmap-lifeos.md` | Phase exit evidence; archived Now/Next plans do not authorize work |
 
 ## Source-Of-Truth Rules
 

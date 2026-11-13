@@ -193,7 +193,7 @@ flutter run -d chrome --dart-define=BYPASS_AUTH=true
 | Agent Runtime | [Current Architecture](docs/architecture/agent-runtime-current.md) |
 | 数据同步 | [Sync v3](docs/sync/sync-v3.md) |
 | 测试策略 | [Testing Strategy](docs/development/testing-strategy.md) |
-| 产品路线 | [LifeOS Roadmap](docs/roadmap/roadmap-lifeos.md) · [FinanceOS Roadmap](docs/roadmap/roadmap-finance.md) |
+| 客户端迁移 | [NSH Migration ADR](docs/architecture/adr/0001-nsh-client-migration.md) · [LifeOS Roadmap](docs/roadmap/roadmap-lifeos.md)（Flutter 冻结，仅修 bug；新功能进入 NSH/Rust） |
 
 <details>
 <summary><strong>开发者工作流</strong></summary>
