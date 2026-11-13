@@ -138,7 +138,7 @@ fn a_meal_added_by_hand_counts_toward_today() -> Result<(), String> {
     app.type_text("label:Energy", "130")?;
     app.press("Done")?;
     app.wait_for("text:Rice")?;
-    app.press("Save meal")?;
+    app.press("text:/^Save meal/")?;
     app.wait_for("text:325")?;
     assert!(app.shows("Rice"));
     let kept = storage
@@ -182,9 +182,10 @@ fn a_photo_is_sent_only_after_consent_and_becomes_editable_foods() -> Result<(),
         "image/jpeg"
     );
 
-    // 480 g × 92 + 150 g × 130 (the catalog's rice, not the model's 1) per 100 g.
-    assert!(app.shows("637"));
-    app.press("Save meal")?;
+    // 480 g × 92 + 150 g × 130 (the catalog's rice, not the model's 1) per 100 g;
+    // the total counts up to it.
+    app.wait_for("text:637")?;
+    app.press("text:/^Save meal/")?;
     app.wait_for("text:Beef noodle soup")?;
     app.wait_for("text:637")?;
     Ok(())
@@ -285,6 +286,6 @@ fn a_food_without_nutrition_is_not_saved_as_zero() -> Result<(), String> {
     app.type_text("label:Energy", "1")?;
     app.press("Done")?;
     app.wait_for("text:Tea")?;
-    assert!(app.screen().enabled("Save meal")?);
+    assert!(app.screen().enabled("text:/^Save meal/")?);
     Ok(())
 }

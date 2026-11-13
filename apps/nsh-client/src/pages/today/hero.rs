@@ -1,5 +1,5 @@
-//! The day at a glance: the energy ring with the day's figure in its
-//! middle, where the energy came from beside it, and the goal under it.
+//! The day at a glance: a large ring with the day's energy counting up in
+//! its middle, the goal under it, and where the energy came from.
 
 use nsh_core::prelude::*;
 
@@ -8,16 +8,17 @@ use crate::{
     domain::{format, meal::Day, nutrition::Nutrients},
     i18n::s,
     ui::{
-        Type, Typo, color,
-        feedback::appear,
+        Icon, Type, Typo, color,
+        figures::{counting, macro_tiles},
+        icon,
         ring::{RingData, energy_ring},
         space,
-        surface::{card, hairline},
+        surface::card,
     },
 };
 
-const RING: f32 = 136.0;
-const STROKE: f32 = 13.0;
+const RING: f32 = 204.0;
+const STROKE: f32 = 17.0;
 
 /// The hero card of `day`.
 pub fn hero(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
@@ -36,58 +37,54 @@ pub fn hero(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
         RingData { shares, fill }
     };
     card()
-        .p(px(space::CARD))
-        .gap_4()
+        .px(px(space::CARD))
+        .pt_6()
+        .pb(px(space::CARD))
+        .items_center()
+        .gap_5()
         .child(
             view()
-                .flex_row()
-                .items_center()
-                .gap(px(space::CARD + 2.0))
-                .child(
-                    view()
-                        .size(px(RING))
-                        .child(energy_ring(RING, STROKE, ring))
-                        .child(center(total, logged)),
-                )
-                .child(legend(total, logged)),
+                .size(px(RING))
+                .child(energy_ring(RING, STROKE, ring))
+                .child(center(total, logged)),
         )
-        .child(when(
-            move || logged() && goal.get().is_some(),
-            move || goal_footer(total, move || goal.get().unwrap_or_default()),
-        ))
+        .child(goal_pill(total, logged, move || goal.get()))
+        .child(view().self_stretch().child(macro_tiles(
+            [|| s().protein, || s().carbs, || s().fat],
+            total,
+            logged,
+        )))
 }
 
-/// The figure in the ring: it rises in again whenever it changes.
+/// The figure in the ring.
 fn center(
     total: impl Fn() -> Nutrients + Copy + 'static,
     logged: impl Fn() -> bool + Copy + 'static,
 ) -> impl IntoElement {
-    let figure = computed(move || {
-        if logged() {
-            format::kcal(total().kcal)
-        } else {
-            "—".to_owned()
-        }
-    });
     view()
         .absolute()
         .inset_0()
         .items_center()
         .justify_center()
-        .px_4()
-        .child(dynamic(move || {
-            let value = figure.get();
-            untracked(|| {
-                appear(
-                    0,
-                    text(value)
-                        .typo(Type::Display)
-                        .tabular_nums()
-                        .text_color(color::INK)
-                        .number_of_lines(1),
-                )
+        .gap(px(2.0))
+        .child(
+            when(logged, move || {
+                counting(move || total().kcal, format::kcal)
+                    .typo(Type::Hero)
+                    .text_color(color::INK)
+                    .number_of_lines(1)
             })
-        }))
+            .otherwise(|| {
+                view()
+                    .size(px(56.0))
+                    .mb_2()
+                    .items_center()
+                    .justify_center()
+                    .rounded_full()
+                    .bg(color::SURFACE_2)
+                    .child(icon(Icon::Utensils, 26.0, color::FAINT))
+            }),
+        )
         .child(
             text(move || {
                 if logged() {
@@ -96,115 +93,49 @@ fn center(
                     s().nothing_logged
                 }
             })
-            .typo(Type::Caption)
+            .typo(Type::Subhead)
             .text_color(color::MUTED)
             .text_center(),
         )
 }
 
-/// Protein, carbs and fat: grams eaten and their share of the energy.
-fn legend(
+/// What is left of the goal (or how far past it), in a quiet pill.
+fn goal_pill(
     total: impl Fn() -> Nutrients + Copy + 'static,
     logged: impl Fn() -> bool + Copy + 'static,
+    goal: impl Fn() -> Option<f64> + Copy + 'static,
 ) -> impl IntoElement {
-    let shares = move || total().energy_split().shares();
-    view()
-        .flex_1()
-        .min_w(px(0.0))
-        .gap_2()
-        .child(legend_row(
-            || s().protein,
-            color::PROTEIN,
-            move || logged().then(|| total().protein),
-            move || shares()[0],
-        ))
-        .child(legend_row(
-            || s().carbs,
-            color::CARBS,
-            move || logged().then(|| total().carbs),
-            move || shares()[1],
-        ))
-        .child(legend_row(
-            || s().fat,
-            color::FAT,
-            move || logged().then(|| total().fat),
-            move || shares()[2],
-        ))
-}
-
-fn legend_row(
-    label: fn() -> &'static str,
-    tint: AdaptiveColor,
-    grams: impl Fn() -> Option<f64> + Copy + 'static,
-    share: impl Fn() -> f64 + Copy + 'static,
-) -> impl IntoElement {
-    view()
-        .gap(px(2.0))
-        .child(
+    when(
+        move || goal().is_some(),
+        move || {
             view()
                 .flex_row()
                 .items_center()
                 .gap_2()
-                .child(view().size(px(8.0)).rounded_full().bg(tint))
+                .px_4()
+                .py(px(7.0))
+                .rounded_full()
+                .bg(color::SURFACE_2)
                 .child(
-                    text(label)
-                        .typo(Type::Subhead)
-                        .text_color(color::MUTED)
-                        .flex_1()
-                        .number_of_lines(1),
-                )
-                .child(
-                    text(move || match grams() {
-                        Some(_) => format::percent(share()),
-                        None => String::new(),
+                    text(move || {
+                        let goal = goal().unwrap_or_default();
+                        if logged() {
+                            s().goal_status(total().kcal, goal)
+                        } else {
+                            s().of_goal(goal)
+                        }
                     })
-                    .typo(Type::Caption)
-                    .tabular_nums()
-                    .text_color(color::FAINT),
-                ),
-        )
-        .child(
-            view()
-                .flex_row()
-                .items_end()
-                .gap_1()
-                .pl(px(16.0))
-                .child(
-                    text(move || grams().map(format::grams).unwrap_or_else(|| "—".into()))
-                        .typo(Type::Headline)
-                        .tabular_nums()
-                        .text_color(color::INK),
-                )
-                .child(
-                    text(move || if grams().is_some() { "g" } else { "" })
-                        .typo(Type::Caption)
-                        .text_color(color::MUTED)
-                        .pb(px(2.0)),
-                ),
-        )
-}
-
-/// The goal and what is left of it.
-fn goal_footer(
-    total: impl Fn() -> Nutrients + Copy + 'static,
-    goal: impl Fn() -> f64 + Copy + 'static,
-) -> impl IntoElement {
-    view().gap_3().child(hairline(0.0)).child(
-        view()
-            .flex_row()
-            .items_center()
-            .justify_between()
-            .child(
-                text(move || s().of_goal(goal()))
-                    .typo(Type::Subhead)
-                    .text_color(color::MUTED),
-            )
-            .child(
-                text(move || s().goal_status(total().kcal, goal()))
                     .typo(Type::Subhead)
                     .font_weight(FontWeight::SEMIBOLD)
                     .tabular_nums()
                     .text_color(color::INK),
-            ),
+                )
+                .child(when(logged, move || {
+                    text(move || s().of_goal(goal().unwrap_or_default()))
+                        .typo(Type::Subhead)
+                        .tabular_nums()
+                        .text_color(color::MUTED)
+                }))
+        },
     )
 }

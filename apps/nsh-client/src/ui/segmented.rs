@@ -7,8 +7,8 @@ use nsh_base::{tab, tabs};
 use nsh_core::{Haptic, prelude::*};
 
 use super::{
-    Typo,
-    theme::{Type, color, radius},
+    Lift, Typo,
+    theme::{Type, color, shadow},
 };
 
 /// One choice: its value and its label (read in a binding).
@@ -33,18 +33,17 @@ pub fn segmented<T: Copy + PartialEq + 'static>(
     selected: impl Fn() -> T + Copy + 'static,
     select: impl Fn(T) + Copy + 'static,
 ) -> impl IntoElement {
-    let inner = radius::CONTROL - 3.0;
     tabs()
         .flex_row()
-        .p(px(3.0))
-        .rounded(px(radius::CONTROL))
+        .p(px(4.0))
+        .rounded_full()
         .bg(color::SUNKEN)
         .indicator_style(move |s| {
-            s.top(px(3.0))
-                .bottom(px(3.0))
-                .rounded(px(inner))
+            s.top(px(4.0))
+                .bottom(px(4.0))
+                .rounded_full()
                 .bg(color::RAISED)
-                .shadow_sm()
+                .lift(&shadow::SEGMENT)
         })
         .children(segments.into_iter().map(move |segment| {
             let value = segment.value;
@@ -62,8 +61,8 @@ pub fn segmented<T: Copy + PartialEq + 'static>(
                 .min_h(px(38.0))
                 .items_center()
                 .justify_center()
-                .rounded(px(inner))
-                .focus_visible(|s| s.outline(px(2.0)).outline_color(color::ACCENT))
+                .rounded_full()
+                .focus_visible(|s| s.outline(px(2.0)).outline_color(color::INK))
                 .child(
                     text(move || label())
                         .typo(Type::Subhead)

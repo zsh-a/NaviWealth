@@ -14,7 +14,10 @@ pub use foods::failure_copy;
 use std::{rc::Rc, time::Duration};
 
 use nsh_base::{alert_dialog, nav_page};
-use nsh_core::{element::Screen, prelude::*};
+use nsh_core::{
+    element::{AnimatedValue, Screen},
+    prelude::*,
+};
 
 use self::{
     consent::consent_sheet,
@@ -22,16 +25,20 @@ use self::{
     food_editor::food_editor,
 };
 use super::{
-    parts::{bottom_bar, bottom_clearance, status_bar, top_bar},
+    parts::{bottom_bar, bottom_clearance, status_bar},
     today::slot_name,
 };
 use crate::{
     data::{clock, meals, photos},
-    domain::meal::{Day, MealSlot},
+    domain::{
+        format,
+        meal::{Day, MealSlot},
+        nutrition::total,
+    },
     i18n::s,
     nav,
     ui::{
-        Btn, Icon, IconBtn, Size, Type, Typo, color, icon,
+        Btn, Icon, IconBtn, Size, Type, Typo, Variant, color, icon, motion, radius,
         segmented::{Segment, segmented},
         sheet::bottom_sheet,
         space,
@@ -95,56 +102,67 @@ fn page(draft: Draft) -> Screen {
         });
     }
     let back = move || request_back(draft);
+    let scroll_y = animated_value(0.0);
+    // Over the photo, the top bar frosts in (its buttons turning solid) once
+    // the panel slides under it, and clears when the photo comes back: two
+    // settled states, never one half-faded over the photo.
+    let edge =
+        move || photo::header_height(window().width.0) - photo::OVERLAP - (safe_area().top.0 + BAR);
+    let immersive =
+        move || draft.photo.with(Option::is_some) || draft.phase.get() == Phase::Preparing;
+    let past_photo = signal(false);
+    let frost = animated_value(0.0);
+    effect(move || {
+        let to = if past_photo.get() { 1.0 } else { 0.0 };
+        if untracked(reduce_motion) {
+            frost.set(to);
+        } else {
+            frost.timing(to, motion::FAST, motion::SETTLE);
+        }
+    });
     nav_page()
         .title(move || SharedString::from(title(draft)))
         .header_visible(false)
-        .status_bar(status_bar)
+        .status_bar(move || {
+            if immersive() && !past_photo.get() {
+                StatusBarSetting::from(StatusBarStyle::Light)
+            } else {
+                status_bar()
+            }
+        })
         .pop_on_back(move || !draft.has_unsaved_work())
         .on_back_press(back)
         .child(
             view()
                 .flex_1()
                 .bg(color::CANVAS)
-                .child(top_bar(
-                    move || title(draft).into(),
-                    back,
-                    draft.is_saved_meal().then(|| {
-                        IconBtn::new(Icon::Trash, || s().delete_meal.into())
-                            .on_press(move || delete(draft))
-                            .mr_1()
-                            .into_element()
-                    }),
-                ))
                 .child(
-                    scroll().flex_1().child(
-                        view()
-                            .px(px(space::GUTTER))
-                            .pt_2()
-                            .pb(move || px(bottom_clearance()))
-                            .gap_5()
-                            .child(photo::photo_card(draft))
-                            .child(status_line(draft))
-                            .child(segmented(
-                                MealSlot::ALL
-                                    .into_iter()
-                                    .map(|slot| {
-                                        Segment::new(slot, move || slot_name(s(), slot).into())
-                                    })
-                                    .collect(),
-                                move || draft.slot.get(),
-                                move |slot| {
-                                    draft.slot.set(slot);
-                                    draft.dirty.set(true);
-                                },
-                            ))
-                            .child(foods::foods_section(draft)),
-                    ),
+                    scroll()
+                        .flex_1()
+                        .scroll_value(&scroll_y)
+                        .on_scroll(move |event: &ScrollEvent| {
+                            let past = event.offset.y.0 > untracked(edge);
+                            if past != past_photo.get_untracked() {
+                                past_photo.set(past);
+                            }
+                        })
+                        .child(
+                            view()
+                                .child(
+                                    when(immersive, move || photo::photo_header(draft, scroll_y))
+                                        .otherwise(|| {
+                                            view().h(move || px(safe_area().top.0 + 60.0))
+                                        }),
+                                )
+                                .child(content(draft, immersive)),
+                        ),
                 )
+                .child(chrome(draft, frost, past_photo, immersive, back))
                 .child(bottom_bar(
                     Btn::primary()
                         .size(Size::Large)
                         .icon(Icon::Check)
-                        .label(|| s().save_meal.into())
+                        .label(move || save_label(draft))
                         .disabled(move || !draft.can_save())
                         .on_press(move || draft.save()),
                 ))
@@ -159,6 +177,116 @@ fn page(draft: Draft) -> Screen {
                     food_editor(),
                 )),
         )
+}
+
+/// The panel under the photo (rising over its bottom edge), or the page's
+/// content under the top bar when there is no photo.
+fn content(draft: Draft, immersive: impl Fn() -> bool + Copy + 'static) -> impl IntoElement {
+    view()
+        .mt(move || px(if immersive() { -photo::OVERLAP } else { 0.0 }))
+        .rounded_t(px(radius::SHEET))
+        .bg(color::CANVAS)
+        .px(px(space::GUTTER))
+        .pt(move || px(if immersive() { 22.0 } else { 6.0 }))
+        .pb(move || px(bottom_clearance()))
+        .gap_5()
+        .child(status_line(draft))
+        .child(segmented(
+            MealSlot::ALL
+                .into_iter()
+                .map(|slot| Segment::new(slot, move || slot_name(s(), slot).into()))
+                .collect(),
+            move || draft.slot.get(),
+            move |slot| {
+                draft.slot.set(slot);
+                draft.dirty.set(true);
+            },
+        ))
+        .child(foods::foods_section(draft))
+}
+
+/// The top bar's height under the status bar: its padding and buttons.
+const BAR: f32 = 6.0 + 44.0 + 8.0;
+
+/// The top bar: Back, the title and Delete. Over a photo its buttons are
+/// frosted glass and its background is clear; past the photo it is the
+/// frosted canvas with solid buttons, like the bar of a page without one.
+fn chrome(
+    draft: Draft,
+    frost: AnimatedValue,
+    past_photo: Signal<bool>,
+    immersive: impl Fn() -> bool + Copy + 'static,
+    back: impl Fn() + Copy + 'static,
+) -> impl IntoElement {
+    dynamic(move || {
+        let over_photo = immersive();
+        let solid = !over_photo || past_photo.get();
+        untracked(move || {
+            let variant = if solid {
+                Variant::Secondary
+            } else {
+                Variant::Glass
+            };
+            let background = view()
+                .absolute()
+                .inset_0()
+                // Opaque enough where there is no blur (Android before 12).
+                .bg(color::CANVAS.opacity(0.94))
+                .backdrop_blur(px(20.0))
+                .border_b(px(0.75))
+                .border_b_color(color::LINE);
+            let heading = text(move || title(draft))
+                .typo(Type::Headline)
+                .text_color(color::INK)
+                .number_of_lines(1)
+                .text_center()
+                .flex_1();
+            let (background, heading) = if over_photo {
+                (
+                    background.bind_opacity(&frost),
+                    heading.bind_opacity(&frost),
+                )
+            } else {
+                (background, heading)
+            };
+            view()
+                .absolute()
+                .top_0()
+                .left_0()
+                .right_0()
+                .flex_row()
+                .items_center()
+                .gap_2()
+                .px_3()
+                .pt_safe_area_plus(px(6.0))
+                .pb_2()
+                .child(background)
+                .child(
+                    IconBtn::new(Icon::ChevronLeft, || s().back.into())
+                        .variant(variant)
+                        .on_press(back),
+                )
+                .child(heading)
+                .child(if draft.is_saved_meal() {
+                    IconBtn::new(Icon::Trash, || s().delete_meal.into())
+                        .variant(variant)
+                        .on_press(move || delete(draft))
+                        .into_element()
+                } else {
+                    view().size(px(44.0)).into_element()
+                })
+        })
+    })
+}
+
+/// Save, with what the meal adds up to.
+fn save_label(draft: Draft) -> SharedString {
+    let kcal = draft.foods.with(|foods| total(foods).kcal);
+    if kcal > 0.0 {
+        format!("{} · {} {}", s().save_meal, format::kcal(kcal), s().kcal).into()
+    } else {
+        s().save_meal.into()
+    }
 }
 
 fn title(draft: Draft) -> &'static str {

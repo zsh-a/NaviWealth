@@ -1,8 +1,10 @@
-//! Waiting and state: spinners, skeletons, badges, empty states, and the
-//! entrance every arriving piece of content shares.
+//! Waiting and state: spinners, shimmering placeholders, badges, empty
+//! states, and the entrance every arriving piece of content shares.
+
+use std::time::Duration;
 
 use nsh_core::{
-    element::{ImageSrc, Timing},
+    element::{AnimatedValue, ImageSrc, Timing},
     prelude::*,
 };
 
@@ -24,54 +26,85 @@ pub fn spinner(size: f32, tint: impl IntoReactive<AdaptiveColor>) -> impl IntoEl
         .accessibility_elements_hidden(true)
 }
 
-/// A placeholder block of a known shape, pulsing slowly while its content
-/// loads.
-pub fn skeleton(width: Option<f32>, height: f32) -> View {
+/// A light that keeps passing over placeholders while content loads (0 to
+/// 1, then again); it rests at 0 with reduced motion. Make one per group of
+/// placeholders, so they shimmer together.
+pub fn shimmer() -> AnimatedValue {
+    let sweep = animated_value(0.0);
+    if !reduce_motion() {
+        spawn(async move {
+            loop {
+                sweep.set(0.0);
+                let _ = sweep.timing(1.0, 1300.0, Easing::EaseInOut).await;
+                timer(Duration::from_millis(250)).await;
+            }
+        });
+    }
+    sweep
+}
+
+/// A placeholder block of a known shape, with the `sweep` light passing.
+pub fn skeleton(width: Option<f32>, height: f32, sweep: AnimatedValue) -> View {
+    let travel = width.unwrap_or(360.0);
     view()
         .h(px(height))
         .when_some(width, |v, w| v.w(px(w)))
-        .rounded(px(radius::BADGE))
+        .rounded(px((height / 2.0).min(radius::BADGE)))
         .bg(color::SUNKEN)
-        .when(!reduce_motion(), |v| v.animate_pulse())
+        .overflow_hidden()
+        .child(
+            view()
+                .absolute()
+                .top_0()
+                .bottom_0()
+                .w(px(140.0))
+                .bind_translate_x(&sweep.interpolate(&[0.0, 1.0], &[-140.0, travel + 140.0]))
+                .bg_linear_to_r()
+                .gradient_from(color::SURFACE.opacity(0.0))
+                .gradient_via(color::SURFACE.opacity(0.75))
+                .gradient_to(color::SURFACE.opacity(0.0)),
+        )
 }
 
 /// What a badge says.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Tone {
+    /// A classification: neutral.
     Neutral,
-    Accent,
+    /// The model's estimate: neutral, with the AI's light on its glyph.
+    Ai,
+    /// Worth a look.
     Caution,
-    Danger,
 }
 
 impl Tone {
-    fn colors(self) -> (AdaptiveColor, AdaptiveColor) {
+    fn colors(self) -> (AdaptiveColor, AdaptiveColor, AdaptiveColor) {
         match self {
-            Tone::Neutral => (color::SUNKEN, color::MUTED),
-            Tone::Accent => (color::ACCENT_SOFT, color::ACCENT),
-            Tone::Caution => (color::CAUTION_SOFT, color::CAUTION),
-            Tone::Danger => (color::DANGER_SOFT, color::DANGER),
+            Tone::Neutral => (color::SURFACE_2, color::MUTED, color::MUTED),
+            Tone::Ai => (color::SURFACE_2, color::MUTED, color::AI_FROM),
+            Tone::Caution => (color::CAUTION_SOFT, color::CAUTION, color::CAUTION),
         }
     }
 }
 
-/// A short state or classification, with an optional glyph.
+/// A short state or classification in a pill, with an optional glyph.
 pub fn badge(
     content: impl IntoReactive<SharedString>,
     tone: Tone,
     glyph: Option<Icon>,
 ) -> impl IntoElement {
-    let (fill, ink) = tone.colors();
+    let (fill, ink, mark) = tone.colors();
     view()
         .flex_row()
         .items_center()
         .gap_1()
-        .px_2()
+        .pl(px(if glyph.is_some() { 7.0 } else { 9.0 }))
+        .pr(px(9.0))
         .py(px(3.0))
-        .rounded(px(radius::BADGE))
+        .rounded_full()
         .bg(fill)
         .self_start()
-        .child(glyph.map(|glyph| icon(glyph, 13.0, ink)))
+        .child(glyph.map(|glyph| icon(glyph, 13.0, mark)))
         .child(
             text(content)
                 .typo(Type::Caption)
@@ -89,17 +122,17 @@ pub fn empty_state(
 ) -> View {
     view()
         .items_center()
-        .gap_3()
+        .gap_4()
         .px_6()
         .py_8()
         .child(
             view()
-                .size(px(56.0))
+                .size(px(64.0))
                 .rounded_full()
                 .items_center()
                 .justify_center()
-                .bg(color::ACCENT_SOFT)
-                .child(icon(glyph, 26.0, color::ACCENT)),
+                .bg(color::SURFACE_2)
+                .child(icon(glyph, 28.0, color::INK)),
         )
         .child(
             view()

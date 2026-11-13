@@ -1,20 +1,25 @@
-//! Surfaces: cards and grouped lists on the canvas, their rows and
+//! Surfaces: cards lifted off the canvas by soft light, their rows and
 //! hairlines, and section headers.
 
 use nsh_base::{ButtonElement, button};
 use nsh_core::prelude::*;
 
 use super::{
-    Typo,
-    theme::{Type, color, motion, radius, space},
+    Lift, Typo,
+    icons::{Icon, icon},
+    theme::{Type, color, motion, radius, shadow, space},
 };
 
 /// A hairline's thickness.
 pub const HAIRLINE: f32 = 0.75;
 
-/// A grouped surface on the canvas.
+/// A card: a white surface lifted by soft light (a hairline edge in dark).
 pub fn card() -> View {
-    view().bg(color::SURFACE).rounded(px(radius::CARD))
+    view()
+        .bg(color::SURFACE)
+        .rounded(px(radius::CARD))
+        .lift(&shadow::CARD)
+        .dark(|s| s.border_1().border_color(color::LINE))
 }
 
 /// A hairline between rows, inset from the leading edge by `inset`.
@@ -32,8 +37,8 @@ pub fn section_header(
         .flex_row()
         .items_center()
         .justify_between()
-        .min_h(px(32.0))
-        .px(px(4.0))
+        .min_h(px(36.0))
+        .px(px(2.0))
         .child(
             text(title)
                 .typo(Type::Title)
@@ -43,22 +48,46 @@ pub fn section_header(
         .child(trailing)
 }
 
-/// A pressable row of a grouped list: it fills the group's width, washes
-/// on hover and darkens while pressed (rows do not scale).
+/// A pressable row inside a card: it fills the card's width and darkens
+/// while pressed.
 pub fn row_button(press: impl Fn() + 'static) -> ButtonElement {
     button()
         .on_press(press)
         .flex_row()
         .items_center()
         .gap_3()
-        .min_h(px(64.0))
-        .px(px(space::CARD - 2.0))
+        .min_h(px(68.0))
+        .px(px(space::CARD))
         .py_3()
         .transition_colors()
         .duration(motion::INSTANT)
-        .hover(|s| s.bg(color::SUNKEN.opacity(0.6)))
+        .hover(|s| s.bg(color::SURFACE_2))
         .active(|s| s.bg(color::SUNKEN))
-        .focus_visible(|s| s.bg(color::ACCENT_SOFT))
+        .focus_visible(|s| s.bg(color::SURFACE_2))
+}
+
+/// A pressable card: it sinks a little under the finger.
+pub fn card_button(press: impl Fn() + 'static) -> ButtonElement {
+    let scale = animated_value(1.0);
+    button()
+        .on_press_down(move || {
+            if !reduce_motion() {
+                scale.spring(motion::PRESS_SCALE_CARD, motion::PRESS);
+            }
+        })
+        .on_press_up(move || {
+            scale.spring(1.0, motion::PRESS);
+        })
+        .on_press(press)
+        .bind_scale(&scale)
+        .bg(color::SURFACE)
+        .rounded(px(radius::CARD))
+        .lift(&shadow::CARD)
+        .dark(|s| s.border_1().border_color(color::LINE))
+        .transition_colors()
+        .duration(motion::INSTANT)
+        .active(|s| s.bg(color::SURFACE_2))
+        .focus_visible(|s| s.outline(px(2.0)).outline_color(color::INK))
 }
 
 /// A row that shows or hides the content under it; its chevron turns as
@@ -70,8 +99,8 @@ pub fn disclosure(open: Signal<bool>, label: impl Fn() -> SharedString + 'static
         .items_center()
         .justify_between()
         .min_h(px(44.0))
-        .rounded(px(radius::SMALL))
-        .focus_visible(|s| s.outline(px(2.0)).outline_color(color::ACCENT))
+        .rounded(px(radius::BADGE))
+        .focus_visible(|s| s.outline(px(2.0)).outline_color(color::INK))
         .active(|s| s.opacity(0.7))
         .child(text(label).typo(Type::Headline).text_color(color::INK))
         .child(
@@ -85,11 +114,7 @@ pub fn disclosure(open: Signal<bool>, label: impl Fn() -> SharedString + 'static
                         0.0
                     })
                 })
-                .child(super::icons::icon(
-                    super::icons::Icon::ChevronRight,
-                    18.0,
-                    color::MUTED,
-                )),
+                .child(icon(Icon::ChevronRight, 18.0, color::MUTED)),
         )
 }
 
@@ -99,6 +124,6 @@ pub fn group_label(title: impl IntoReactive<SharedString>) -> impl IntoElement {
         .typo(Type::Subhead)
         .font_weight(FontWeight::SEMIBOLD)
         .text_color(color::MUTED)
-        .px_1()
+        .px(px(6.0))
         .role(AccessibilityRole::Header)
 }

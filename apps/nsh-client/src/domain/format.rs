@@ -20,9 +20,9 @@ pub fn grams(value: f64) -> String {
     }
 }
 
-/// A share from 0 to 1 as a whole percentage: `45%`.
-pub fn percent(share: f64) -> String {
-    format!("{}%", (share.clamp(0.0, 1.0) * 100.0).round() as i64)
+/// A whole percentage: `45%`.
+pub fn percent(whole: u32) -> String {
+    format!("{}%", whole.min(100))
 }
 
 /// A value for a number field: at most one decimal, no trailing zeros.
@@ -83,8 +83,8 @@ mod tests {
 
     #[test]
     fn percents_and_fields() {
-        assert_eq!(percent(0.454), "45%");
-        assert_eq!(percent(1.7), "100%");
+        assert_eq!(percent(45), "45%");
+        assert_eq!(percent(170), "100%");
         assert_eq!(field_number(149.0), "149");
         assert_eq!(field_number(6.94), "6.9");
         assert_eq!(parse_number(" 12,5 "), Some(12.5));

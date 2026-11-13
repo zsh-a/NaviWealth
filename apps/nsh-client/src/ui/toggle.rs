@@ -1,6 +1,6 @@
 //! Two-state controls: a checkbox for a choice inside a decision, a switch
 //! for a setting that applies at once. Both are rows whose whole width is
-//! the target, the label included.
+//! the target, the label included. Ink when on.
 
 use nsh_base::{checkbox, switch};
 use nsh_core::{Haptic, prelude::*};
@@ -26,9 +26,9 @@ pub fn checkbox_row(
         .items_center()
         .gap_3()
         .min_h(px(size::TOUCH))
-        .focus_visible(|s| s.outline(px(2.0)).outline_color(color::ACCENT))
+        .focus_visible(|s| s.outline(px(2.0)).outline_color(color::INK))
         .indicator_style(|s| {
-            s.size(px(22.0))
+            s.size(px(24.0))
                 .items_center()
                 .justify_center()
                 .rounded(px(radius::BADGE))
@@ -36,9 +36,9 @@ pub fn checkbox_row(
                 .border_color(color::LINE_STRONG)
                 .transition_colors()
                 .duration(motion::INSTANT)
-                .checked(|s| s.bg(color::ACCENT_FILL).border_color(color::ACCENT_FILL))
+                .checked(|s| s.bg(color::ACTION).border_color(color::ACTION))
         })
-        .indicator(when(checked, || icon(Icon::Check, 16.0, color::ON_ACCENT)))
+        .indicator(when(checked, || icon(Icon::Check, 16.0, color::ON_ACTION)))
         .child(
             text(label)
                 .typo(Type::Callout)
@@ -65,25 +65,25 @@ pub fn switch_row(
         .justify_between()
         .gap_4()
         .min_h(px(size::TOUCH))
-        .focus_visible(|s| s.outline(px(2.0)).outline_color(color::ACCENT))
+        .focus_visible(|s| s.outline(px(2.0)).outline_color(color::INK))
         .track_style(|s| {
-            s.w(px(48.0))
-                .h(px(28.0))
-                .p(px(2.0))
+            s.w(px(50.0))
+                .h(px(30.0))
+                .p(px(3.0))
                 .rounded_full()
                 .bg(color::LINE_STRONG)
                 .transition_colors()
                 .duration(motion::FAST)
-                .checked(|s| s.bg(color::ACCENT_FILL))
+                .checked(|s| s.bg(color::ACTION))
         })
         .thumb_style(move |s| {
             s.size(px(24.0))
                 .rounded_full()
-                .bg(color::KNOB)
+                .bg(color::SURFACE)
                 .shadow_sm()
                 .transition_transform()
                 .duration(motion::FAST)
-                .checked(move |s| s.translate_x(px(travel)))
+                .checked(move |s| s.translate_x(px(travel)).bg(color::ON_ACTION))
         })
         .child(
             text(label)
