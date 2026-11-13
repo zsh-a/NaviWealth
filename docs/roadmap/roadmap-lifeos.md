@@ -54,21 +54,16 @@ observed results, and limitations. All four probes need recorded outcomes:
    lifecycle and error contracts. Exit evidence is a device exercise with no
    secret in logs, backup, or Sync. Stop if the host channel or key lifecycle
    cannot safely support the app; keep credential migration blocked.
-3. **Pure Rust NSH Web.** Build and run the actual Rust UI on Web, exercising
-   navigation and a viable persistence boundary. Exit evidence is a browser
-   build/smoke result or a reproducible unsupported-target failure, not NSH
-   marketing support alone. If pure Rust fails, the product owner must choose
-   dropping Web or a TSX UI. Stop Web implementation until that choice;
-   Web continues to exclude device AI and Health platform integration.
+3. **Pure Rust NSH Web — dropped.** Web is out of scope (ADR 0001, decided
+   2026-11-13); Flutter Web stays frozen and retires with Flutter.
 4. **`nsh-base` plot suitability.** Reproduce representative `fl_chart` needs:
    time series, bars, axes/labels, gaps, touch inspection, large histories,
    theme and accessible summaries. Exit evidence is a comparison on Android
    with performance and interaction results. Stop expansion if critical chart
    behavior is absent; agree a bounded adapter or narrowed scope before porting.
 
-Phase exit: all outcomes are recorded, native blockers are resolved, and Web
-scope is explicitly decided. iOS remains outside active delivery until a
-product decision and native proof add it. A failing critical proof pauses the
+Phase exit: all outcomes are recorded and native blockers are resolved. Web
+and iOS are out of scope. A failing critical proof pauses the
 migration path that depends on it; it does not reopen Flutter feature work.
 
 ## Phase 2 — Shared Storage And Meal Sync
@@ -149,8 +144,8 @@ migration path that depends on it; it does not reopen Flutter feature work.
   off; packaged-device acceptance, NSH release CI, successful server-pull
   migration and encrypted restore/recovery exercises, and a rollback/retention
   plan covering unsynced and local-only data. No remaining FRB consumers.
-- Dependencies: domain parity across Phases 3–5 and explicit decisions on Web,
-  coexistence, and iOS. Keep unsupported platforms outside release claims.
+- Dependencies: domain parity across Phases 3–5 and the coexistence decision. Web and iOS
+  are out of scope. Keep unsupported platforms outside release claims.
 - Stop condition: any account lacks a tested recovery path, an active platform
   has no accepted replacement, or a supported workflow still requires Flutter.
   Do not delete local data simply because the new client can sign in.

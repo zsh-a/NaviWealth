@@ -1,6 +1,7 @@
 # ADR 0001: Migrate The Client To NSH
 
-Status: accepted direction; platform and coexistence questions remain open.
+Status: accepted direction. Platform scope decided 2026-11-13 (Android only;
+Web and iOS out of scope); client coexistence remains open.
 
 Date: 2026-11-13.
 
@@ -84,11 +85,10 @@ validation, explicit confirmation, and audit boundaries. There is no backend
 AI relay or cloud fallback. Remove FRB and `lifeos_native` only after their
 callers and native capabilities have replacements.
 
-Use NSH host channels for Android-only services. Phase 1 must establish
-whether a pure Rust NSH app can run on Web; do not assume the native client
-or SQLCipher build is a browser runtime. Any retained Web client continues
-to exclude device AI and Health platform integration. iOS is outside the
-current delivery scope pending an explicit decision.
+Use NSH host channels for Android-only services. The NSH client targets
+Android; desktop builds exist only for development and headless tests. Web is
+out of scope: the existing Flutter Web build stays frozen and is retired with
+Flutter in Phase 6, and no NSH Web probe is scheduled. iOS is out of scope.
 
 ## Delivery Gates
 
@@ -97,7 +97,7 @@ and stop conditions for these phases:
 
 0. Freeze Flutter, accept this ADR, and replace old planning entry points.
 1. Prove Android rusqlite + SQLCipher, Kotlin Keystore over the host channel,
-   pure Rust NSH Web feasibility, and `nsh-base` plots against `fl_chart` needs.
+   and `nsh-base` plots against `fl_chart` needs.
 2. Build `lifeos-core` and `sync-wire`; move NSH meals to SQLite and Sync v3;
    prove Flutter ↔ NSH bidirectional visibility.
 3. Migrate remaining Health, Execution, Knowledge, and the registered shell.
@@ -123,15 +123,18 @@ support. Finance size requires independently verifiable batches and exact
 money/rounding parity. Rewrite Dart widget tests as Rust unit tests and
 `nsh-testing` flows; reuse privacy-safe statement corpus fixtures and expected
 outcomes where possible. Passing headless tests does not prove an Android
-package, Keystore recovery, or Web compatibility.
+package or Keystore recovery.
 
-## Open Decisions
+## Decisions
+
+Decided 2026-11-13: Web is out of scope (Flutter Web retires with Flutter);
+iOS is out of scope. Reopening either needs a new ADR.
+
+Open:
 
 | Decision | Recommendation / evidence required | Decision owner |
 |---|---|---|
-| Retain Web? | Run the Phase 1 pure Rust probe. If it fails, choose dropping Web or maintaining a TSX UI; no automatic second implementation. | Product owner |
 | Allow two clients on one account? | Allow coexistence during migration after bidirectional Sync, reset, and recovery tests. Phase 2 production rollout waits for approval. | Product owner |
-| Include iOS? | Keep it outside current scope until NSH/native dependencies, signing, and device CI have an explicit delivery commitment. | Product owner |
 
 ## References
 
