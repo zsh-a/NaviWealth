@@ -1,13 +1,18 @@
 # LifeOS Architecture Northstar
 
-This document defines hard architecture boundaries for new work. It is not a roadmap and does not track completed migration history. When code and this document disagree, treat this document as the target boundary and update the stale source.
+This document defines hard architecture boundaries for new work. It is not a
+roadmap. [ADR 0001](adr/0001-nsh-client-migration.md) adopts NSH and Rust domain
+crates as the target. Flutter (`apps/mobile`) is frozen: bug fixes only; new
+features belong in NSH/Rust crates. Existing Dart paths below describe the
+frozen implementation until their owning migration phase is complete.
 
 ## Document Contract
 
 Owns cross-domain layering, hard boundaries, and non-goals. It does not own
 current feature inventories, wire formats, or delivery sequencing. The
-architecture lint scripts are the executable authority for dependency
-boundaries; use [LifeOS Shell](lifeos-shell.md) for current composition.
+architecture lint scripts enforce the existing Flutter dependency boundaries;
+use [LifeOS Shell](lifeos-shell.md) for that implementation. The ADR owns the
+client migration decision and [roadmap](../roadmap/roadmap-lifeos.md) its gates.
 
 ## Positioning
 
@@ -28,10 +33,10 @@ LifeOS value lives in shared infrastructure: identity, memory, sync, AI runtime,
 
 - Do not add enums, fields, tools, tables, or abstractions without a current caller.
 - Do not generalize for a hypothetical future domain. Add abstractions only when at least two real domains use them or a shell seam already exists.
-- Do not pivot the app into a wide Flutter/Rust local engine. Rust is allowed
-  for the existing domain-neutral Agent Runtime, narrow native capability
-  surfaces, the shared meal-recognition core, and the scoped standalone market-data SDK described under Rust
-  Boundary. Domain truth and business side effects stay in the Host.
+- Do not add new Flutter features or extend the FRB architecture for new
+  client work. NSH is the UI target; domain truth and business effects belong
+  in their owning Rust crates under ADR 0001.
+- Do not use NSH's 5 MB KV as the business database or as credential storage.
 - Do not make one domain import another domain's business entities.
 - Do not turn sync v3 into an event platform, CRDT framework, or multi-schema negotiation layer.
 - Do not add social, collaboration, publishing, enterprise SaaS, or entertainment surfaces.
@@ -48,28 +53,38 @@ LifeOS value lives in shared infrastructure: identity, memory, sync, AI runtime,
 ## Layering
 
 ```text
-Experience layer
-  Flutter UI, Forui, design system, domain shells
+Experience and composition
+  apps/nsh-client: NSH UI, presentation adapters, Rust domain registry
 
 Domain business layer
-  features/<domain>/{ui,data,domain,ai_tools,agents}
+  crates/{finance-core,health-core,knowledge-core,execution-core}
 
 Cross-domain infrastructure
-  core/{ai,auth,sync,persistence,audit,shell,lifeos,speech,background,notifications}
+  crates/lifeos-core: encrypted persistence, HLC/outbox, Sync, audit, backup
+  crates/lifeos-ai: in-process Agent Runtime host and domain-tool registration
+  crates/sync-wire: shared envelopes and per-table JSON row contracts
+
+Platform capabilities
+  NSH host channels; apps/nsh-host-android Kotlin plugins where needed
 ```
 
-Rules:
+This is the target package map; Phase 0 does not create the missing crates.
+Dependencies flow from UI to domains to neutral infrastructure. Domain crates
+must not import sibling domain business models. Cross-domain composition
+belongs in the app; domain validation, calculations, and confirmed writes
+belong in the owning domain crate. `sync-wire` does not give the backend
+business ownership.
 
-- Dependencies flow downward: experience to domain to infrastructure.
-- `core/` must stay domain-neutral and must not import `features/`.
-- `features/<domain>/` must not import a sibling domain. Cross-domain coordination belongs in `app/` or `core/` seams.
-- `app/` is the composition root and may import multiple domains.
-- Shared contracts carry primitive, JSON, or domain-neutral data. They must not
-  expose Finance, Health, Knowledge, or Execution entities.
+While Flutter remains, its existing rules still apply: `core/` is neutral and
+must not import `features/`; domains must not import sibling domains; `app/`
+is its composition root. Shared seams carry domain-neutral data. Use these
+boundaries for bug fixes, not as a requirement to keep new truth in Dart.
 
 ## Domain Registration
 
-The current shell registration seam is `DomainPack`.
+The frozen Flutter shell registration seam is `DomainPack`. NSH preserves its
+contribution/registry design through Rust traits and one app-owned registry;
+ADR 0001 defines ownership without claiming that registry already exists.
 
 Locations:
 
@@ -99,7 +114,7 @@ tool registry, or agent registry.
 
 ## AI Boundaries
 
-Domain-neutral code:
+Existing Flutter domain-neutral code (target host: `crates/lifeos-ai`):
 
 - `core/ai/contracts/`
 - `core/ai/runtime/`
@@ -107,7 +122,7 @@ Domain-neutral code:
 - `core/ai/agents/`
 - `core/ai/composition/`
 
-Domain-owned code:
+Existing Flutter domain-owned code (target: owning domain crates):
 
 - `features/finance/ai_tools/` and finance slice `ai_tools/`
 - `features/health/ai_tools/`
@@ -153,7 +168,15 @@ not additional runtime architectures.
 
 ## Persistence Boundaries
 
-`core/persistence/` is the shared Drift adapter and contains app tables because Drift uses one database. That placement does not make table ownership global.
+The target is rusqlite + SQLCipher infrastructure in `crates/lifeos-core`, with
+domain repositories owning business table access. HLC/outbox, sync, audit, and
+backup are shared infrastructure; per-table wire specifications belong in
+`crates/sync-wire`. Keys belong in platform secure storage, outside Sync and
+exports. NSH KV is limited to small non-secret preferences.
+
+The frozen Flutter client uses `core/persistence/` as its shared Drift adapter.
+That placement does not make table ownership global. NSH migrates accounts by
+pulling server rows into its database, never by converting Drift files.
 
 Ownership rules:
 
@@ -164,7 +187,7 @@ Ownership rules:
 - Cross-domain infrastructure may touch only infrastructure-owned tables such as auth, sync, traces, events, memories, embeddings, and local-only side tables.
 - Direct DB access to another domain's business table is a boundary violation.
 
-Shared sync envelope types live in `core/sync/`:
+In the frozen Flutter client, shared sync envelope types live in `core/sync/`:
 
 - `Hlc`
 - `SyncMeta`
@@ -222,102 +245,63 @@ through an explicit Memory proposal and user confirmation.
 
 ## Rust Boundary
 
-Rust responsibilities are bounded by ownership:
+[ADR 0001](adr/0001-nsh-client-migration.md) supersedes the old Dart-Host truth
+and narrow-Rust-only restrictions. Rust now owns application domain truth,
+repositories, Money math, and confirmed business effects in domain crates.
+Cross-domain infrastructure stays neutral; NSH stays a UI/composition layer.
 
-- The standalone Agent Runtime owns provider-neutral execution semantics,
-  ChatTurn continuation, budgets, context validation, and resume contracts.
-- `crates/health-core` is the narrow shared meal-recognition exception used by
-  the Flutter and NSH hosts. It owns the versioned prompt, model schema and
-  validation, catalog nutrient snapshots and portion calculations, image
-  normalization, and destination-bound upload consent. It does not own
-  repositories, Sync, user permissions, UI, or confirmed business writes.
-- NaviWealth Host/Dart owns domain repositories, permissions, Drift, user
-  confirmation, and business effects dispatched through Host gateways.
-- Native capabilities and the market-data SDK own their scoped model/runtime
-  or provider-protocol work; they do not acquire application business truth.
+- `lifeos-core` owns rusqlite + SQLCipher infrastructure, HLC, outbox, Sync v3
+  client, audit, and backup. Domains own table access and semantic migrations.
+- `sync-wire` owns shared Sync v3 envelopes and existing table JSON formats.
+  The backend remains schema-agnostic; it does not calculate domain values.
+- `health-core` currently shares meal recognition, catalog nutrition, photo
+  normalization, and destination-bound upload consent. Its planned domain
+  expansion follows the roadmap; repositories and Sync are not already ported.
+- `lifeos-ai` will host `third_party/agent-runtime` in process and register
+  domain tools through traits. The standalone runtime remains the authority
+  for provider-neutral execution, ChatTurn continuation, budgets, and resume.
+- `apps/nsh-client` owns presentation and app-level registration. Platform-only
+  Keystore, Health Connect, and background work use NSH host channels and a
+  Kotlin Android plugin where needed.
 
-New Rust work is allowed only when all are true:
+New crates and abstractions require a current phase caller. Keep the reviewed
+NSH 0.5.0 baseline and lockfiles; wrap framework use in local UI adapters.
+Android encryption/key handling, Web feasibility, and plot suitability require
+Phase 1 evidence. iOS remains outside active scope pending a product decision.
 
-- It maintains the existing domain-neutral Agent Runtime, demonstrates a real
-  performance or security delta for a native capability, or implements the
-  standalone market-data SDK or shared meal-recognition exception.
-- A caller exists in the current phase.
-- The FFI surface is narrow enough for `flutter_rust_bridge`.
-- Web does not require a new wasm runtime.
+### Transitional Native Adapters
 
-Current Rust surface:
+`apps/mobile/native/lifeos_native/` and generated FRB bindings remain only
+while existing Flutter callers need them. Existing embedding, LLM transport,
+Health, and market-data bridges are maintenance surfaces. Do not hand-edit
+generated bindings. Retire FRB after replacements and caller-removal evidence,
+not merely when the new in-process host compiles.
 
-- `apps/mobile/native/lifeos_native/`
-- EmbeddingGemma embedder via fastembed and ONNX Runtime.
-- Native agent-runtime / `llm-protocol` / `llm-client` / `llm-reqwest` / `agent-chat` FRB bridge for
-  device-only provider calls, ChatTurn request contracts, and runtime JSON
-  contract normalization.
-- Native Health provider primitives where platform/runtime behavior requires
-  Rust.
-- Android/macOS A-share request/cancel bridge to the independent `market-data-rs`
-  provider SDK, with FinanceOS-owned Dart adaptation and Drift caching.
-- Generated FRB bindings under `apps/mobile/lib/src/rust/`.
+Speech capabilities remain domain-neutral. High-frequency audio stays native;
+interaction policy and domain confirmation do not move into recognition
+engines. Reuse the existing ChatTurn/proposal/session contracts rather than
+introducing a second Agent loop.
 
-The standalone Rust `agent-runtime` already exists as the
-`third_party/agent-runtime` Git submodule and is the source of truth for
-`agent-core`, `agent-chat`, `llm-protocol` / `llm-client` / `llm-reqwest`, runner, store, schema, and fixture
-contracts. NaviWealth's `apps/mobile/lib/app/agent_runtime/` code is the
-Host/FRB adapter layer. Full-duplex voice must reuse its ChatTurn,
-tool-continuation, proposal, InteractionEnvelope, and durable-resume contracts;
-it must not add a parallel Agent loop. A pure session reducer may be moved into
-the standalone runtime later only after a real multi-host, durable-resume, or
-replay requirement appears.
+### Standalone Market-Data SDK
 
-The separate `sherpa_onnx` C++/Dart-FFI dependency is allowed only behind the
-domain-neutral `core/speech/` contract. It consumes microphone PCM and emits
-draft text; it does not own business policy, persistence, tools, or automatic
-writes. Web uses a stub and does not load the native runtime.
+`market-data-rs` remains an independent provider SDK. It may own upstream
+protocols, identifier/quote normalization, routing, batching, rate limits,
+bounded retries, deadlines, cancellation, and circuit breakers. It must not
+depend on NaviWealth entities or repositories or mutate financial records.
 
-### Standalone market-data SDK
+Finance owns portfolio valuation, simulated trading, returns, corporate-action
+application, Money math, ledger writes, policy, and persistent application
+caching. These move from Dart into `finance-core` in verified batches. Existing
+Flutter uses its Finance-owned `MarketDataService` adapter and Drift cache;
+new NSH work uses Rust domain ownership. Avoid a second persistent cache or
+stacked upstream retry/fallback chains.
 
-`market-data-rs` is permitted as an independent, reusable provider SDK. The
-exception is justified by sharing provider protocols and request governance
-across hosts; it does not require a performance claim. Platform activation and
-verification belong to the Market Data Providers document.
-
-- Rust may own upstream HTTP protocols, provider capability declarations,
-  security identifier and market-data normalization, provider routing,
-  batching, rate limits, bounded retries, deadlines, cancellation, and circuit
-  breakers. Adding a provider must not require changes to FinanceOS business
-  logic or the routing engine.
-- FinanceOS owns the Dart adapter under `features/finance/`, exposed through
-  the existing `MarketDataService` seam. Features must not call the SDK or
-  upstream providers directly. Native access uses a thin FRB bridge; Web may
-  use an HTTP adapter to a separately deployed service without introducing a
-  browser wasm runtime. Neither transport may require an AI runtime.
-- The SDK must not depend on NaviWealth entities or repositories. Portfolio
-  valuation, simulated trading, returns, corporate-action application, Money
-  math, ledger writes, and user policy remain in Dart. Upstream reference data
-  must never directly mutate user financial records.
-- Each request path has one owner for provider routing, retry, and quota
-  policy. When Rust owns these policies, the Dart adapter must not wrap it in
-  a second upstream retry or provider-fallback chain.
-- NaviWealth's persistent market cache remains owned by FinanceOS through
-  Drift. Embedded SDK caching is disabled for this integration; the SDK must
-  not access the application database or introduce a parallel SQLite store.
-  A remote service cache, if used, must preserve provenance and freshness so
-  the client cannot relabel cached or stale data as newly observed data.
-- Transport contracts preserve actual provider source, observation and fetch
-  times, freshness, adjustment mode, historical coverage, and failure
-  diagnostics. Prices cross JSON/FFI as decimal strings, quote instants as
-  UTC, and daily bars as trading-date labels. Cache identity includes the
-  canonical security, interval, and adjustment mode where applicable.
-  Adapters must not silently substitute adjustment modes, merge incompatible
-  histories, or present partial coverage as complete.
-
-Provider usage and reference-data rules remain owned by
-[Market data providers](../domains/market-data-providers.md). Native target
-support requires target builds and runtime validation; a working Rust SDK
-alone does not establish Android, iOS, or Web integration readiness.
-
-Outside this scoped SDK exception, do not move market fetchers into Rust.
-Do not move business logic, Money math, application SQL access, domain
-repositories, or local LLM model inference into Rust.
+Transport contracts preserve source, observation/fetch times, freshness,
+adjustment mode, historical coverage, and failure diagnostics. Prices cross
+JSON as decimal strings, quote instants as UTC, and daily bars as trading-date
+labels. Do not substitute adjustment modes, merge incompatible histories, or
+present partial coverage as complete. Provider rules remain owned by
+[Market Data Providers](../domains/market-data-providers.md).
 
 ## Review Checklist
 
@@ -345,4 +329,5 @@ Before merging architecture-affecting code, answer:
 - `knowledgeos-domain.md`: KnowledgeOS domain behavior.
 - `executionos-domain.md`: ExecutionOS domain behavior.
 - `roadmap-lifeos.md`: cross-domain roadmap and product sequencing.
-- `roadmap-finance.md`: FinanceOS roadmap and product sequencing.
+- `adr/0001-nsh-client-migration.md`: client direction and open platform decisions.
+- `roadmap-finance.md`: archived historical sequencing, not active priorities.

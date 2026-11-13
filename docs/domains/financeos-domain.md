@@ -6,16 +6,14 @@ Last reviewed: 2026-08-01.
 
 ## Document Contract
 
-The production Weekly Wealth Review is a scheduled LLM assistant registered
-through the Finance pack and adapted by app composition. It reads authoritative
-Finance tools and generates evidence-backed analysis; deterministic financial
-calculations remain tool-owned. The task must not invent weekly returns from
-a current snapshot. No model means no generated review, not a rule-based
-replacement. Existing agent/report identities are retained.
+The production Weekly Wealth Review is a scheduled LLM assistant registered through the Finance pack and
+adapted by app composition. It reads authoritative Finance tools and generates evidence-backed analysis;
+deterministic financial calculations remain tool-owned. The task must not invent weekly returns from a current
+snapshot. No model means no generated review, not a rule-based replacement. Existing agent/report identities
+are retained.
 
-Owns FinanceOS scope, composition, data ownership, and routing to focused
-Finance SSOTs. It does not own cross-domain architecture, Sync v3 wire
-semantics, or roadmap sequencing.
+Owns FinanceOS scope, composition, data ownership, and routing to focused Finance SSOTs. It does not own
+cross-domain architecture, Sync v3 wire semantics, or roadmap sequencing.
 
 Code authority:
 
@@ -23,19 +21,17 @@ Code authority:
 - `apps/mobile/lib/features/finance/`
 - `apps/mobile/lib/core/sync/sync_table_registry.dart`
 
-Read this before changing Finance composition or deciding which Finance topic
-document applies. Use focused feature tests plus the composition and boundary
-gates for verification.
+Read this before changing Finance composition or deciding which Finance topic document applies. Use focused
+feature tests plus the composition and boundary gates for verification.
 
 ## Scope
 
-FinanceOS is the always-on seed domain. It owns accounts, assets, liabilities,
-journal activity, cashflow and budgets, investments, portfolio strategy, FIRE,
-financial decisions, market-data consumption, and options income.
+FinanceOS is the always-on seed domain. It owns accounts, assets, liabilities, journal activity, cashflow and
+budgets, investments, portfolio strategy, FIRE, financial decisions, market-data consumption, and options
+income.
 
-FinanceOS does not own Health, Knowledge, or Execution entities. Cross-domain
-coordination uses domain-neutral Life signals, source references, proposals,
-Memory records, and app-level composition.
+FinanceOS does not own Health, Knowledge, or Execution entities. Cross-domain coordination uses domain-neutral
+Life signals, source references, proposals, Memory records, and app-level composition.
 
 ## Composition
 
@@ -50,14 +46,12 @@ inventory. It contributes:
 - command palette, settings, data management, share ingestion, Life signals,
   and source-route resolution.
 
-The registry and composition tests are authoritative for the exact inventory;
-do not duplicate full tool or route lists here.
+The registry and composition tests are authoritative for the exact inventory; do not duplicate full tool or
+route lists here.
 
-The command palette favors frequent Finance work. FIRE, Income Strategy,
-Options, Wheel lifecycle, and strategy statistics remain available through the
-Plan tab's visible workflow entries instead of competing as global commands.
-Their Assistant tools are likewise added only while the user is on the owning
-Plan route.
+The command palette favors frequent Finance work. FIRE, Income Strategy, Options, Wheel lifecycle, and
+strategy statistics remain available through the Plan tab's visible workflow entries instead of competing as
+global commands. Their Assistant tools are likewise added only while the user is on the owning Plan route.
 
 ## Data And Sync
 
@@ -467,7 +461,7 @@ derived rows do not sync and remain rebuildable FinanceOS cache data.
 
 | Concern | Authoritative document |
 |---|---|
-| Current Finance sequencing | [FinanceOS Roadmap](../roadmap/roadmap-finance.md) |
+| Current Finance migration sequencing | [LifeOS Migration Roadmap](../roadmap/roadmap-lifeos.md#phase-5-finance-in-batches); [old Finance roadmap](../roadmap/roadmap-finance.md) is archived |
 | Income-plan intent and allocation | [Income Strategy](income-strategy.md) |
 | Options scanning, scoring, Wheel, journal, and risk rules | [Options Income](options-income.md) |
 | Portfolio strategy grouping and rebalance ownership | [Portfolio Strategy Groups](portfolio-strategy-groups.md) |
