@@ -59,6 +59,13 @@ pub struct Strings {
     pub delete_meal: &'static str,
     pub log_again: &'static str,
     pub recent_foods: &'static str,
+    pub weight: &'static str,
+    pub weight_not_logged: &'static str,
+    pub weight_hint: &'static str,
+    pub error_weight: &'static str,
+    pub weight_deleted: &'static str,
+    pub delete_weight: &'static str,
+    pub save_weight: &'static str,
     pub discard_title: &'static str,
     pub discard_body: &'static str,
     pub discard: &'static str,
@@ -154,6 +161,38 @@ pub fn strings(lang: Lang) -> &'static Strings {
 impl Strings {
     fn zh(&self) -> bool {
         self.lang == Lang::Zh
+    }
+
+    /// A weight in kg, to one decimal.
+    pub fn kg(&self, kg: f64) -> String {
+        format!("{kg:.1}")
+    }
+
+    /// The change over about a week, signed.
+    pub fn weight_change(&self, delta: f64) -> String {
+        let sign = if delta > 0.0 {
+            "+"
+        } else if delta < 0.0 {
+            "−"
+        } else {
+            "±"
+        };
+        let value = format!("{sign}{:.1} kg", delta.abs());
+        if self.zh() {
+            format!("近一周 {value}")
+        } else {
+            format!("{value} this week")
+        }
+    }
+
+    /// When the shown weight was logged, `days` before the chosen day.
+    pub fn weight_days_ago(&self, days: i32) -> String {
+        match (self.zh(), days) {
+            (true, 1) => "昨天记录".to_owned(),
+            (true, _) => format!("{days} 天前记录"),
+            (false, 1) => "Logged yesterday".to_owned(),
+            (false, _) => format!("Logged {days} days ago"),
+        }
     }
 
     /// `n` meals.

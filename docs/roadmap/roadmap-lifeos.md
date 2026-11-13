@@ -45,7 +45,11 @@ health-only Review; Assets arrives with Phase 3.
    delete, and history beyond the four-week strip. Each change keeps the
    existing consent, estimate-review and confirm-before-save rules.
 3. **Weight.** Manual entry and a trend line, checked against an `nsh-base`
-   plot proof (gaps, touch inspection, dark theme).
+   plot proof (gaps, touch inspection, dark theme). Implemented: one entry per
+   day in SQLite, a Today card with the weekly change and a 30-day line drawn
+   by `nsh-base` `plot`/`line` (days without an entry are gaps), and a sheet
+   to log, correct or delete (with Undo). Dark theme and on-device rendering
+   still need a look.
 4. **Garmin Personal API.** Verify against Garmin's own docs and a real key
    (token exchange; sleep, resting HR, steps, HRV, stress, Body Battery and
    weight fields; history backfill; rate limits; revocation), then import

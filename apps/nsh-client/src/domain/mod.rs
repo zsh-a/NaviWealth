@@ -5,6 +5,7 @@
 pub mod account;
 pub mod format;
 pub mod meal;
+pub mod weight;
 pub use health_core::{catalog, nutrition, recognition};
 
 /// Why a provider gave no usable reply.

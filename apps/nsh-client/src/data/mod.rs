@@ -7,3 +7,4 @@ pub mod meals;
 pub mod photos;
 pub mod settings;
 pub mod vision;
+pub mod weights;

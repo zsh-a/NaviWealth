@@ -18,7 +18,7 @@ use std::time::Duration;
 use nsh_core::prelude::*;
 
 use crate::{
-    data::{clock, db, meals, photos, settings},
+    data::{clock, db, meals, photos, settings, weights},
     ui::color,
 };
 
@@ -34,6 +34,7 @@ fn native(registry: &mut Registry) {
 pub fn App() -> impl IntoElement {
     db::open();
     meals::load();
+    weights::load();
     settings::load();
     spawn(photos::sweep_orphans());
     // Midnight, and coming back to the app, move "today" on.

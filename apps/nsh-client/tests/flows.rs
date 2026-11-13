@@ -196,6 +196,8 @@ fn a_meal_added_by_hand_counts_toward_today() -> Result<(), String> {
     app.press("Done")?;
     app.wait_for("text:Rice")?;
     app.press("text:/^Save meal/")?;
+    // Today's own count: the review page has closed and the meal is kept.
+    app.wait_for("text:1 meal")?;
     app.wait_for("text:325")?;
     assert!(app.shows("Rice"));
     let kept = stored_meals(dir.path());
@@ -248,6 +250,7 @@ fn a_photo_is_sent_only_after_consent_and_becomes_editable_foods() -> Result<(),
     // the total counts up to it.
     app.wait_for("text:637")?;
     app.press("text:/^Save meal/")?;
+    app.wait_for("text:1 meal")?;
     app.wait_for("text:Beef noodle soup")?;
     app.wait_for("text:637")?;
     let saved = stored_meals(dir.path());
@@ -419,6 +422,7 @@ fn a_saved_meal_can_be_logged_again_today() -> Result<(), String> {
     app.press("Log again today")?;
     app.wait_for("New meal")?;
     app.press("text:/^Save meal/")?;
+    app.wait_for("text:2 meals")?;
     app.wait_for("text:600")?;
     let kept = stored_meals(dir.path());
     assert_eq!(kept.len(), 2, "a second meal, the first unchanged");
@@ -438,6 +442,7 @@ fn a_recent_food_fills_the_new_food() -> Result<(), String> {
     app.press("text:Pasta")?;
     app.press("Done")?;
     app.press("text:/^Save meal/")?;
+    app.wait_for("text:2 meals")?;
     app.wait_for("text:600")?;
     let kept = stored_meals(dir.path());
     assert_eq!(kept.len(), 2);
@@ -446,6 +451,63 @@ fn a_recent_food_fills_the_new_food() -> Result<(), String> {
         kept[1]["foods"][0]["source"], kept[0]["foods"][0]["source"],
         "an unchanged recent food keeps its catalog source"
     );
+    Ok(())
+}
+
+fn stored_weights(dir: &Path) -> Vec<(String, f64)> {
+    let connection = rusqlite::Connection::open(database_in(dir)).expect("the database opens");
+    let mut statement = connection
+        .prepare("SELECT day, kg FROM weights ORDER BY day")
+        .unwrap();
+    statement
+        .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))
+        .unwrap()
+        .map(Result::unwrap)
+        .collect()
+}
+
+#[test]
+fn todays_weight_is_logged_kept_and_checked() -> Result<(), String> {
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
+    app.wait_for("text:Tap to log today's weight")?;
+    app.press("text:Tap to log today's weight")?;
+    app.wait_for("Save weight")?;
+    app.type_text("label:Weight", "5")?;
+    app.press("Save weight")?;
+    app.wait_for("text:Enter a weight between 20 and 400 kg.")?;
+    assert!(
+        stored_weights(dir.path()).is_empty(),
+        "nothing out of range is kept"
+    );
+
+    // Typing appends: the field now reads 52.44, kept to one decimal.
+    app.type_text("label:Weight", "2.44")?;
+    app.press("Save weight")?;
+    app.wait_for("text:52.4")?;
+    assert_eq!(stored_weights(dir.path()), [(today().to_string(), 52.4)]);
+    drop(app);
+
+    let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
+    app.wait_for("text:52.4")?;
+    Ok(())
+}
+
+#[test]
+fn deleting_a_weight_can_be_undone() -> Result<(), String> {
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
+    app.press("text:Tap to log today's weight")?;
+    app.type_text("label:Weight", "70")?;
+    app.press("Save weight")?;
+    app.wait_for("text:70.0")?;
+    app.press("text:70.0")?;
+    app.press("Delete")?;
+    app.wait_for("Weight deleted")?;
+    assert!(stored_weights(dir.path()).is_empty());
+    app.press("Undo")?;
+    app.wait_for("text:70.0")?;
+    assert_eq!(stored_weights(dir.path()).len(), 1);
     Ok(())
 }
 

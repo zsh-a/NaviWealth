@@ -24,6 +24,12 @@ const MIGRATIONS: &[&str] = &[
         body TEXT NOT NULL
     );
     CREATE INDEX meals_by_day ON meals (day, logged_at_ms);",
+    // 2: body weight, one entry per day (`domain::weight`).
+    "CREATE TABLE weights (
+        day TEXT PRIMARY KEY NOT NULL,
+        kg REAL NOT NULL,
+        logged_at_ms INTEGER NOT NULL
+    );",
 ];
 
 #[derive(Clone, Default)]
