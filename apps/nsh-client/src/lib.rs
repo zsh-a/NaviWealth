@@ -18,7 +18,7 @@ use std::time::Duration;
 use nsh_core::prelude::*;
 
 use crate::{
-    data::{clock, meals, photos, settings},
+    data::{backup, clock, db, garmin, meals, photos, settings, tasks, weights},
     ui::color,
 };
 
@@ -32,7 +32,30 @@ fn native(registry: &mut Registry) {
 /// the navigation stack on the canvas.
 #[component]
 pub fn App() -> impl IntoElement {
+    tasks::mark_root();
+    db::open();
     meals::load();
+    weights::load();
+    garmin::load();
+    backup::load();
+    // At start, and as soon as a key is connected. The memo re-runs the
+    // effect only when that changes, not on every sync state change (which
+    // would cancel the pull it started).
+    let linked = computed(garmin::connected);
+    effect(move || {
+        if linked.get() {
+            tasks::spawn_app(garmin::refresh(false));
+        }
+    });
+    // The day's backup, at start and once backups are set up.
+    let backing_up = computed(backup::configured);
+    effect(move || {
+        if backing_up.get() {
+            spawn(async {
+                let _ = backup::backup_now(false).await;
+            });
+        }
+    });
     settings::load();
     spawn(photos::sweep_orphans());
     // Midnight, and coming back to the app, move "today" on.
@@ -40,6 +63,10 @@ pub fn App() -> impl IntoElement {
     effect(move || {
         if lifecycle() == nsh_core::platform::Lifecycle::Active {
             untracked(clock::tick);
+            tasks::spawn_app(garmin::refresh(false));
+            tasks::spawn_app(async {
+                let _ = backup::backup_now(false).await;
+            });
         }
     });
     #[cfg(not(any(target_os = "android", target_os = "ios")))]

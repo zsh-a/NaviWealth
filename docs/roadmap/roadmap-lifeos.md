@@ -13,8 +13,7 @@ local-only, reduced rewrite) and [ADR 0001](../architecture/adr/0001-nsh-client-
 roadmap owns delivery order and gates.
 
 Flutter (`apps/mobile`) is frozen: bug fixes only. It is not a parity target.
-The NSH 0.5.0 meal client and shared `health-core` are the seed; meals still
-use NSH KV and the API key is plaintext in KV. The archived
+The NSH 0.5.0 meal client and shared `health-core` are the seed. The archived
 [Finance roadmap](roadmap-finance.md) and
 [product-direction study](product-direction-and-demand-validation.md) do not
 authorize work. Phases are dependency gates, not dates.
@@ -31,12 +30,14 @@ owner logs meals and weight only in NSH. Ledger and holdings wait. Only build
 the tabs that have content: Today, Records (meals and weight) and a
 health-only Review; Assets arrives with Phase 3.
 
-1. **Storage and credential gates.** Prove rusqlite + SQLCipher on Android
-   arm64 (create, reopen, atomic migration, wrong-key rejection) and a Kotlin
-   Keystore plugin over the NSH host channel. Then move meals from NSH KV to
-   SQLite transactionally and the API key from plaintext KV to Keystore.
-   Stop if encryption or key handling cannot be proved; never fall back to
-   plaintext.
+1. **Meal storage in SQLite.** Meals move from NSH KV (5 MB, capped at
+   3,000 meals) to `naviwealth.sqlite` in the app's private directory, one
+   row per meal, with versioned migrations; legacy KV meals move once in a
+   transaction and the entry is removed after commit. No SQLCipher or
+   Keystore (ADR 0002 decision 5); the API key stays in app-private KV.
+   Implemented in `apps/nsh-client/src/data/db.rs` with headless restart and
+   migration flows; remaining evidence is an Android APK build (CI) and a
+   device upgrade from a KV build.
 2. **Meal logging polish.** Remove friction observed in daily use. Candidates,
    chosen by actual use rather than all built: camera capture besides the
    library, several views per meal as `health-core` already supports, quick
@@ -44,15 +45,34 @@ health-only Review; Assets arrives with Phase 3.
    delete, and history beyond the four-week strip. Each change keeps the
    existing consent, estimate-review and confirm-before-save rules.
 3. **Weight.** Manual entry and a trend line, checked against an `nsh-base`
-   plot proof (gaps, touch inspection, dark theme).
+   plot proof (gaps, touch inspection, dark theme). Implemented: one entry per
+   day in SQLite, a Today card with the weekly change and a 30-day line drawn
+   by `nsh-base` `plot`/`line` (days without an entry are gaps), and a sheet
+   to log, correct or delete (with Undo). Dark theme and on-device rendering
+   still need a look.
 4. **Garmin Personal API.** Verify against Garmin's own docs and a real key
    (token exchange; sleep, resting HR, steps, HRV, stress, Body Battery and
    weight fields; history backfill; rate limits; revocation), then import
    daily summaries into `health-core` and show them on Today. Product Scope's
-   Garmin list shrinks to what the API really provides.
+   Garmin list shrinks to what the API really provides. Verified on
+   2026-11-13 with a real garmin.cn key: `POST …/personal-api-key/token`
+   with `Authorization: ApiKey` returns a plain-text JWT (24 h, five read
+   scopes); the global host answers 404 for a China key; daily summaries,
+   sleep summaries and HRV ranges of 90 days work. Implemented: parsing in
+   `health_core::garmin`, pulls and the `garmin_days` table in the NSH
+   client, a Today card and a Settings key field. Remaining: rate limits are
+   undocumented and unobserved; Garmin scale weight is untested.
 5. **Health review and backup.** Weekly intake, macros, weight and Garmin
    averages on Review; automatic local backups and encrypted export/restore
-   through a user-picked location.
+   through a user-picked location. Implemented: seven-day health review with
+   previous weeks; encrypted SQLite backups to an owner-configured WebDAV
+   folder, once per day on open/resume and manually; confirmed restore with
+   schema/record validation and transactional replacement. Timestamped files
+   preserve previous backups. Photos and credentials are excluded. Real HTTP
+   headless flows cover folder creation, upload, listing, restoration, errors
+   and cross-day resume. Remaining: Android device verification, system-picker
+   local export and optional photo archives. The implementation contract is in
+   `apps/nsh-client/README.md`, “Health review and backups”.
 
 - Exit: the owner uses NSH as the only meal/weight app for two weeks; meals
   survive restart, upgrade and restore; wrong-key or corrupted backups are

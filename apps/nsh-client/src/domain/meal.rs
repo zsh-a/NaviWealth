@@ -152,16 +152,14 @@ pub fn summarize(meals: &[Meal], day: Day) -> DaySummary {
         })
 }
 
-/// The most meals kept; the oldest go first.
-pub const MAX_KEPT_MEALS: usize = 3000;
-
 #[derive(Serialize, Deserialize)]
 struct Stored<T> {
     version: u32,
     meals: Vec<T>,
 }
 
-/// The stored form of `meals`.
+/// The legacy key-value form of `meals` (`meals.v1`), read once to move
+/// meals into the database.
 pub fn encode_meals(meals: &[Meal]) -> String {
     serde_json::to_string(&Stored {
         version: 1,
@@ -184,18 +182,33 @@ pub fn decode_meals(raw: &str) -> Vec<Meal> {
     stored
         .meals
         .into_iter()
-        .filter_map(|value| match serde_json::from_value::<Meal>(value) {
-            Ok(meal) if meal.is_valid() => Some(meal),
-            Ok(meal) => {
-                log::warn!("meals: dropped invalid meal {}", meal.id);
-                None
-            }
-            Err(error) => {
-                log::warn!("meals: dropped unreadable meal: {error}");
-                None
-            }
-        })
+        .filter_map(|value| checked(serde_json::from_value::<Meal>(value)))
         .collect()
+}
+
+/// One meal's stored form: a database row's body.
+pub fn encode_meal(meal: &Meal) -> String {
+    serde_json::to_string(meal).unwrap_or_default()
+}
+
+/// The meal in a row's `raw` body, if it can be read and is valid (logged
+/// otherwise).
+pub fn decode_meal(raw: &str) -> Option<Meal> {
+    checked(serde_json::from_str::<Meal>(raw))
+}
+
+fn checked(read: serde_json::Result<Meal>) -> Option<Meal> {
+    match read {
+        Ok(meal) if meal.is_valid() => Some(meal),
+        Ok(meal) => {
+            log::warn!("meals: dropped invalid meal {}", meal.id);
+            None
+        }
+        Err(error) => {
+            log::warn!("meals: dropped unreadable meal: {error}");
+            None
+        }
+    }
 }
 
 #[cfg(test)]
@@ -284,5 +297,15 @@ mod tests {
         assert_eq!(decode_meals(&value.to_string()), vec![kept]);
         assert!(decode_meals("not json").is_empty());
         assert!(decode_meals("{\"version\":9,\"meals\":[]}").is_empty());
+    }
+
+    #[test]
+    fn a_row_body_round_trips_and_refuses_bad_meals() {
+        let kept = meal("a", "2026-11-12", 10, 200.0);
+        assert_eq!(decode_meal(&encode_meal(&kept)), Some(kept));
+        let mut broken = serde_json::to_value(meal("b", "2026-11-12", 11, 200.0)).unwrap();
+        broken["foods"][0]["grams"] = serde_json::json!(-5);
+        assert_eq!(decode_meal(&broken.to_string()), None);
+        assert_eq!(decode_meal("not json"), None);
     }
 }

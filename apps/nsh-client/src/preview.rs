@@ -3,11 +3,12 @@
 //! captured without a picker or a real account. Not compiled for phones.
 //!
 //! ```sh
-//! NW_PREVIEW=account,trust,meals,goal,dark   # what to seed
+//! NW_PREVIEW=account,trust,meals,goal,weights,dark   # what to seed
 //! NW_PREVIEW_BASE_URL=http://127.0.0.1:8799/v1
 //! NW_PREVIEW_PHOTOS=/a.jpg:/b.jpg:/c.jpg     # photos of the seeded meals
-//! NW_PREVIEW_ROUTE=new:/meal.jpg | manual | edit | settings
+//! NW_PREVIEW_ROUTE=new:/meal.jpg | manual | edit | settings | review
 //! NW_PREVIEW_EDITOR=1                        # open the first food once foods arrive
+//! NW_PREVIEW_GARMIN_KEY_FILE=/path/garmin.key # connect a real Garmin key
 //! ```
 
 use std::env;
@@ -15,7 +16,7 @@ use std::env;
 use nsh_core::{platform::Appearance, prelude::*};
 
 use crate::{
-    data::{clock, meals, photos, settings},
+    data::{clock, garmin, meals, photos, settings, weights},
     domain::{
         account::{ModelAccount, Provider},
         catalog,
@@ -52,6 +53,24 @@ pub fn apply() {
     if has("meals") && untracked(meals::all).is_empty() {
         seed_meals();
     }
+    if let Ok(path) = env::var("NW_PREVIEW_GARMIN_KEY_FILE")
+        && !untracked(garmin::connected)
+        && let Ok(key) = std::fs::read_to_string(path)
+    {
+        spawn(async move {
+            if let Err(failure) = garmin::connect(key).await {
+                log::warn!("preview: Garmin did not connect: {failure:?}");
+            }
+        });
+    }
+    if has("weights") && untracked(|| weights::latest_until(clock::today())).is_none() {
+        // A month drifting down, with a few days skipped.
+        let today = untracked(clock::today);
+        for back in (0..30).rev().filter(|back| back % 4 != 2) {
+            let kg = 74.6 - f64::from(29 - back) * 0.07 + [0.3, -0.2, 0.1, -0.1][back as usize % 4];
+            weights::set(today.plus_days(-back), kg);
+        }
+    }
     match route.as_deref() {
         Some(r) if r.starts_with("new:") => {
             if let Ok(bytes) = std::fs::read(&r[4..]) {
@@ -72,6 +91,7 @@ pub fn apply() {
             }
         }
         Some("settings") => nav::push(Route::Settings),
+        Some("review") => nav::push(Route::WeekReview),
         _ => {}
     }
 }

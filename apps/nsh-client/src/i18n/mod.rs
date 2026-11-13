@@ -57,6 +57,66 @@ pub struct Strings {
     pub total: &'static str,
     pub save_meal: &'static str,
     pub delete_meal: &'static str,
+    pub log_again: &'static str,
+    pub recent_foods: &'static str,
+    pub weight: &'static str,
+    pub weight_not_logged: &'static str,
+    pub weight_hint: &'static str,
+    pub error_weight: &'static str,
+    pub weight_deleted: &'static str,
+    pub delete_weight: &'static str,
+    pub save_weight: &'static str,
+    pub garmin: &'static str,
+    pub sleep: &'static str,
+    pub resting_hr: &'static str,
+    pub hrv: &'static str,
+    pub body_battery: &'static str,
+    pub steps: &'static str,
+    pub stress: &'static str,
+    pub garmin_key: &'static str,
+    pub garmin_key_placeholder: &'static str,
+    pub garmin_connect: &'static str,
+    pub garmin_disconnect: &'static str,
+    pub garmin_note: &'static str,
+    pub garmin_key_rejected: &'static str,
+    pub garmin_network: &'static str,
+    pub garmin_unreadable: &'static str,
+    pub garmin_syncing: &'static str,
+    pub garmin_no_data: &'static str,
+    pub backup: &'static str,
+    pub week_review: &'static str,
+    pub previous_week: &'static str,
+    pub next_week: &'static str,
+    pub intake: &'static str,
+    pub per_logged_day: &'static str,
+    pub weight_week: &'static str,
+    pub recovery: &'static str,
+    pub avg_sleep: &'static str,
+    pub avg_sleep_score: &'static str,
+    pub no_week_data: &'static str,
+    pub webdav_url: &'static str,
+    pub webdav_user: &'static str,
+    pub webdav_password: &'static str,
+    pub backup_passphrase: &'static str,
+    pub backup_passphrase_kept: &'static str,
+    pub backup_passphrase_note: &'static str,
+    pub backup_note: &'static str,
+    pub backup_save: &'static str,
+    pub restore: &'static str,
+    pub backup_never: &'static str,
+    pub backup_running: &'static str,
+    pub backup_network: &'static str,
+    pub backup_unauthorized: &'static str,
+    pub backup_wrong_passphrase: &'static str,
+    pub backup_not_backup: &'static str,
+    pub backup_newer: &'static str,
+    pub backup_storage: &'static str,
+    pub backup_not_configured: &'static str,
+    pub restore_title: &'static str,
+    pub restore_body: &'static str,
+    pub restore_confirm: &'static str,
+    pub restored: &'static str,
+    pub no_backups: &'static str,
     pub discard_title: &'static str,
     pub discard_body: &'static str,
     pub discard: &'static str,
@@ -152,6 +212,122 @@ pub fn strings(lang: Lang) -> &'static Strings {
 impl Strings {
     fn zh(&self) -> bool {
         self.lang == Lang::Zh
+    }
+
+    /// A weight in kg, to one decimal.
+    pub fn kg(&self, kg: f64) -> String {
+        format!("{kg:.1}")
+    }
+
+    /// The change over about a week, signed.
+    pub fn weight_change(&self, delta: f64) -> String {
+        let sign = if delta > 0.0 {
+            "+"
+        } else if delta < 0.0 {
+            "−"
+        } else {
+            "±"
+        };
+        let value = format!("{sign}{:.1} kg", delta.abs());
+        if self.zh() {
+            format!("近一周 {value}")
+        } else {
+            format!("{value} this week")
+        }
+    }
+
+    /// When the shown weight was logged, `days` before the chosen day.
+    pub fn weight_days_ago(&self, days: i32) -> String {
+        match (self.zh(), days) {
+            (true, 1) => "昨天记录".to_owned(),
+            (true, _) => format!("{days} 天前记录"),
+            (false, 1) => "Logged yesterday".to_owned(),
+            (false, _) => format!("Logged {days} days ago"),
+        }
+    }
+
+    /// A sleep duration: `7h 32m`.
+    pub fn sleep_time(&self, seconds: u32) -> String {
+        let minutes = (seconds + 30) / 60;
+        let (h, m) = (minutes / 60, minutes % 60);
+        if self.zh() {
+            format!("{h}小时{m}分")
+        } else {
+            format!("{h}h {m}m")
+        }
+    }
+
+    /// The sleep score line.
+    pub fn sleep_score(&self, score: u8) -> String {
+        if self.zh() {
+            format!("评分 {score}")
+        } else {
+            format!("Score {score}")
+        }
+    }
+
+    /// Which Garmin site the key belongs to.
+    pub fn garmin_connected(&self, host: &str) -> String {
+        if self.zh() {
+            format!("已连接 · {host}")
+        } else {
+            format!("Connected · {host}")
+        }
+    }
+
+    /// How many of the seven days have meals.
+    pub fn logged_days(&self, n: usize) -> String {
+        if self.zh() {
+            format!("7 天中记录了 {n} 天")
+        } else {
+            format!("{n} of 7 days logged")
+        }
+    }
+
+    /// The seven days' span: `Nov 7 – Nov 13`.
+    pub fn week_span(&self, first: Day, last: Day) -> String {
+        let (a, b) = (first.0, last.0);
+        if self.zh() {
+            format!(
+                "{}月{}日 – {}月{}日",
+                a.month(),
+                a.day(),
+                b.month(),
+                b.day()
+            )
+        } else {
+            format!(
+                "{} {} – {} {}",
+                self.month_short(a.month()),
+                a.day(),
+                self.month_short(b.month()),
+                b.day()
+            )
+        }
+    }
+
+    fn month_short(&self, month: i8) -> &'static str {
+        [
+            "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+        ][(month.clamp(1, 12) - 1) as usize]
+    }
+
+    /// When the last backup was put.
+    pub fn backup_last(&self, when: &str) -> String {
+        if self.zh() {
+            format!("上次备份：{when}")
+        } else {
+            format!("Last backup: {when}")
+        }
+    }
+
+    /// A server status nothing else explains.
+    pub fn backup_server(&self, status: u16) -> String {
+        if self.zh() {
+            format!("WebDAV 服务器返回 {status}。")
+        } else {
+            format!("The WebDAV server answered {status}.")
+        }
     }
 
     /// `n` meals.

@@ -1,117 +1,9 @@
-//! The user's flows on the real engine, headless: a stub network stands in
-//! for the model provider and a stub picker for the photo library.
+//! Meal logging: by hand, from a photo with consent, editing, repeating
+//! and recent foods, and the meals' storage.
 
-use std::{io::Cursor, sync::Arc, time::Duration};
+mod common;
 
-use image::{ImageFormat, RgbImage};
-use nsh_app_naviwealth_health::{
-    App,
-    domain::{
-        meal::{Day, Meal, MealSlot, encode_meals},
-        nutrition::{Food, FoodSource, Nutrients},
-    },
-};
-use nsh_core::{ImageData, picker::PickedFile};
-use nsh_engine::{EngineConfig, Root};
-use nsh_testing::{Headless, MemoryStorage, StubNetwork, StubResponse};
-use serde_json::{Value, json};
-
-const MESSAGES: &str = "POST https://api.anthropic.com/v1/messages";
-const GONE: Duration = Duration::from_secs(5);
-
-fn start(
-    entries: Vec<(String, String)>,
-    network: Option<Arc<StubNetwork>>,
-) -> (Headless, Arc<MemoryStorage>) {
-    let storage = MemoryStorage::new(entries);
-    let mut config = EngineConfig::new(Root::of::<App>());
-    config.storage = Some(storage.clone());
-    if let Some(network) = network {
-        config.network = Some(network);
-    }
-    let mut app = Headless::start(config).expect("the app starts");
-    app.wait_for("Log a meal").expect("Today shows");
-    (app, storage)
-}
-
-fn account(trusted: bool) -> Vec<(String, String)> {
-    let fingerprint = json!([
-        "anthropic",
-        "https://api.anthropic.com/v1",
-        "claude-opus-5-5"
-    ])
-    .to_string();
-    let settings = json!({
-        "account": {
-            "provider": "anthropic",
-            "base_url": "https://api.anthropic.com/v1",
-            "model": "claude-opus-5-5"
-        },
-        "trusted": if trusted { vec![fingerprint] } else { vec![] },
-    });
-    vec![
-        ("settings.v1".to_owned(), settings.to_string()),
-        ("secret.model-key.v1".to_owned(), "sk-test-key".to_owned()),
-    ]
-}
-
-fn response(status: u16, body: Value) -> StubResponse {
-    let mut response = StubResponse::default();
-    response.status = status;
-    response.body = body.to_string().into_bytes();
-    response.delay = Duration::from_millis(40);
-    response
-}
-
-fn estimate() -> Value {
-    let answer = json!({
-        "title": "Beef noodle soup",
-        "foods": [
-            { "name": "Beef noodle soup", "grams": 480, "catalog_id": null, "confidence": "medium",
-              "per_100g": { "kcal": 92, "protein": 5.6, "carbs": 11.8, "fat": 2.6 } },
-            { "name": "White rice", "grams": 150, "catalog_id": "168878", "confidence": "high",
-              "per_100g": { "kcal": 1, "protein": 1, "carbs": 1, "fat": 1 } }
-        ]
-    });
-    json!({
-        "model": "claude-opus-5-5",
-        "stop_reason": "end_turn",
-        "content": [{ "type": "text", "text": answer.to_string() }]
-    })
-}
-
-fn network(status: u16, body: Value) -> Arc<StubNetwork> {
-    Arc::new(StubNetwork::new([(
-        MESSAGES.to_owned(),
-        response(status, body),
-    )]))
-}
-
-fn photo() -> Vec<u8> {
-    let image = RgbImage::from_fn(96, 72, |x, y| {
-        image::Rgb([(x * 2) as u8, (y * 3) as u8, 120])
-    });
-    let mut bytes = Cursor::new(Vec::new());
-    image.write_to(&mut bytes, ImageFormat::Png).expect("a PNG");
-    bytes.into_inner()
-}
-
-fn picks_a_photo(app: &mut Headless) {
-    let bytes = photo();
-    app.on_pick(move |_| {
-        vec![PickedFile::new(
-            "meal.png",
-            "image/png",
-            ImageData::new(bytes.clone()),
-        )]
-    });
-}
-
-fn today() -> Day {
-    Day(jiff::Timestamp::now()
-        .to_zoned(jiff::tz::TimeZone::UTC)
-        .date())
-}
+use common::*;
 
 #[test]
 fn an_empty_day_explains_what_to_do() -> Result<(), String> {
@@ -135,7 +27,8 @@ fn logging_without_an_account_explains_the_setup() -> Result<(), String> {
 
 #[test]
 fn a_meal_added_by_hand_counts_toward_today() -> Result<(), String> {
-    let (mut app, storage) = start(Vec::new(), None);
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
     app.press("label:Add manually")?;
     app.wait_for("text:e.g. Beef noodle soup")?;
     app.type_text("text:e.g. Beef noodle soup", "Rice")?;
@@ -144,21 +37,24 @@ fn a_meal_added_by_hand_counts_toward_today() -> Result<(), String> {
     app.press("Done")?;
     app.wait_for("text:Rice")?;
     app.press("text:/^Save meal/")?;
+    // Today's own count: the review page has closed and the meal is kept.
+    app.wait_for("text:1 meal")?;
     app.wait_for("text:325")?;
     assert!(app.shows("Rice"));
-    let kept = storage
-        .entries()
-        .get("meals.v1")
-        .cloned()
-        .unwrap_or_default();
-    assert!(kept.contains("\"Rice\""), "the meal is kept: {kept}");
+    let kept = stored_meals(dir.path());
+    assert_eq!(kept.len(), 1);
+    assert_eq!(
+        kept[0]["foods"][0]["name"], "Rice",
+        "the meal is kept: {kept:?}"
+    );
     Ok(())
 }
 
 #[test]
 fn a_photo_is_sent_only_after_consent_and_becomes_editable_foods() -> Result<(), String> {
     let stub = network(200, estimate());
-    let (mut app, storage) = start(account(false), Some(stub.clone()));
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, _) = start_in(Some(dir.path()), account(false), Some(stub.clone()));
     picks_a_photo(&mut app);
     app.press("Log a meal")?;
     app.wait_for("Send this photo for analysis?")?;
@@ -195,11 +91,12 @@ fn a_photo_is_sent_only_after_consent_and_becomes_editable_foods() -> Result<(),
     // the total counts up to it.
     app.wait_for("text:637")?;
     app.press("text:/^Save meal/")?;
+    app.wait_for("text:1 meal")?;
     app.wait_for("text:Beef noodle soup")?;
     app.wait_for("text:637")?;
-    let saved: Value = serde_json::from_str(&storage.entries()["meals.v1"]).unwrap();
+    let saved = stored_meals(dir.path());
     assert_eq!(
-        saved["meals"][0]["prompt_version"],
+        saved[0]["prompt_version"],
         health_core::recognition::PROMPT_VERSION
     );
     Ok(())
@@ -278,6 +175,97 @@ fn deleting_a_meal_can_be_undone() -> Result<(), String> {
     app.press("Undo")?;
     app.wait_for("Tomato pasta")?;
     app.wait_for_gone("Meal deleted", GONE)?;
+    Ok(())
+}
+
+#[test]
+fn legacy_meals_move_into_the_database_and_survive_a_restart() -> Result<(), String> {
+    let first = Meal {
+        id: "m1".to_owned(),
+        day: today(),
+        logged_at_ms: jiff::Timestamp::now().as_millisecond(),
+        slot: MealSlot::Lunch,
+        title: Some("Tomato pasta".to_owned()),
+        foods: vec![Food {
+            id: 1,
+            name: "Pasta".to_owned(),
+            grams: 300.0,
+            per_100g: Nutrients::new(100.0, 4.0, 20.0, 1.0),
+            source: FoodSource::Manual,
+            confidence: None,
+            estimated_grams: None,
+        }],
+        photo: None,
+        model: None,
+        prompt_version: None,
+    };
+    let second = Meal {
+        id: "m2".to_owned(),
+        logged_at_ms: first.logged_at_ms + 1,
+        title: Some("Second".to_owned()),
+        ..first.clone()
+    };
+    let dir = tempfile::tempdir().unwrap();
+    let entries = vec![("meals.v1".to_owned(), encode_meals(&[first, second]))];
+
+    let (mut app, storage) = start_in(Some(dir.path()), entries, None);
+    app.wait_for("Tomato pasta")?;
+    assert!(app.shows("Second"));
+    assert!(
+        !storage.entries().contains_key("meals.v1"),
+        "the legacy entry goes once the meals are in the database"
+    );
+    assert_eq!(stored_meals(dir.path()).len(), 2);
+    drop(app);
+
+    let (app, _) = start_in(Some(dir.path()), Vec::new(), None);
+    assert!(
+        app.shows("Tomato pasta"),
+        "meals come back from the database"
+    );
+    assert!(app.shows("Second"));
+    Ok(())
+}
+
+#[test]
+fn a_saved_meal_can_be_logged_again_today() -> Result<(), String> {
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, _) = start_in(Some(dir.path()), pasta_today(), None);
+    app.wait_for("text:300")?;
+    app.press("Tomato pasta")?;
+    app.wait_for("Edit meal")?;
+    app.press("Log again today")?;
+    app.wait_for("New meal")?;
+    app.press("text:/^Save meal/")?;
+    app.wait_for("text:2 meals")?;
+    app.wait_for("text:600")?;
+    let kept = stored_meals(dir.path());
+    assert_eq!(kept.len(), 2, "a second meal, the first unchanged");
+    assert_ne!(kept[0]["id"], kept[1]["id"]);
+    assert_ne!(kept[0]["foods"][0]["id"], kept[1]["foods"][0]["id"]);
+    assert_eq!(kept[1]["foods"][0]["name"], "Pasta");
+    Ok(())
+}
+
+#[test]
+fn a_recent_food_fills_the_new_food() -> Result<(), String> {
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, _) = start_in(Some(dir.path()), pasta_today(), None);
+    app.wait_for("text:300")?;
+    app.press("label:Add manually")?;
+    app.wait_for("Recent")?;
+    app.press("text:Pasta")?;
+    app.press("Done")?;
+    app.press("text:/^Save meal/")?;
+    app.wait_for("text:2 meals")?;
+    app.wait_for("text:600")?;
+    let kept = stored_meals(dir.path());
+    assert_eq!(kept.len(), 2);
+    assert_eq!(kept[1]["foods"][0]["grams"], 300.0);
+    assert_eq!(
+        kept[1]["foods"][0]["source"], kept[0]["foods"][0]["source"],
+        "an unchanged recent food keeps its catalog source"
+    );
     Ok(())
 }
 

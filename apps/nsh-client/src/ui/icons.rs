@@ -24,6 +24,7 @@ pub enum Icon {
     Lock,
     Refresh,
     Utensils,
+    Chart,
 }
 
 impl Icon {
@@ -73,6 +74,7 @@ impl Icon {
             Icon::Utensils => {
                 r#"<path d="M7 3.5v17M4.4 3.5v4.8a2.6 2.6 0 0 0 5.2 0V3.5"/><path d="M17.2 20.5V3.5c-2.3 1.3-3.7 3.9-3.7 7.1V14h3.7"/>"#
             }
+            Icon::Chart => r#"<path d="M4 20h16"/><path d="M7 16.5v-5M12 16.5V7M17 16.5v-3.5"/>"#,
         }
     }
 

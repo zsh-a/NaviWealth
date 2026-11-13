@@ -68,19 +68,6 @@ pub fn keep(name: &str, jpeg: &[u8]) {
     }
 }
 
-/// Deletes the kept photo `name`.
-pub fn delete(name: &str) {
-    cache().update(|cache| {
-        cache.0.remove(name);
-    });
-    if let Some(path) = path_of(name)
-        && let Err(error) = std::fs::remove_file(&path)
-        && error.kind() != std::io::ErrorKind::NotFound
-    {
-        log::warn!("photos: could not delete {name}: {error}");
-    }
-}
-
 /// Deletes kept photos no meal refers to (meals deleted earlier, after
 /// their Undo window). Runs off the engine thread.
 pub async fn sweep_orphans() {

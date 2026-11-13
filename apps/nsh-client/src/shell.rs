@@ -6,7 +6,10 @@ use nsh_core::prelude::*;
 
 use crate::{
     nav::{self, Route},
-    pages::{edit_meal_page, new_meal_page, settings_page, today_page},
+    pages::{
+        edit_meal_page, new_meal_page, repeat_meal_page, settings_page, today_page,
+        week_review_page,
+    },
 };
 
 pub fn shell() -> impl IntoElement {
@@ -20,7 +23,9 @@ pub fn shell() -> impl IntoElement {
                 let page = match route.get_untracked() {
                     Route::NewMeal { day, capture } => new_meal_page(day, capture),
                     Route::EditMeal(id) => edit_meal_page(&id),
+                    Route::RepeatMeal { day, from } => repeat_meal_page(day, &from),
                     Route::Settings => settings_page(),
+                    Route::WeekReview => week_review_page(),
                 };
                 // Back on iOS and Android is the system's: it pops the page
                 // natively, and the routes follow.

@@ -1,9 +1,11 @@
-//! Today: the day's energy and meals, and the one main action, logging a
-//! meal from a photo. The last four weeks are a swipe away.
+//! Today: the day's energy, meals and weight, and the one main action,
+//! logging a meal from a photo. The last four weeks are a swipe away.
 
+mod garmin;
 mod hero;
 mod meal_list;
 mod week;
+mod weight;
 
 pub use meal_list::slot_name;
 
@@ -32,6 +34,7 @@ pub fn today_page() -> Screen {
     let offset = signal(0_i32);
     let day = move || clock::today().plus_days(offset.get());
     let setup_open = signal(false);
+    let weight_open = signal(false);
     let log = move || {
         if settings::ready_account().is_none() {
             setup_open.set(true);
@@ -77,7 +80,9 @@ pub fn today_page() -> Screen {
                             .child(week::day_strip(offset))
                             .child(hero::hero(day))
                             .child(setup_card())
-                            .child(meal_list::meal_list(day)),
+                            .child(meal_list::meal_list(day))
+                            .child(weight::weight_card(day, weight_open))
+                            .child(garmin::garmin_card(day)),
                     ),
                 )
                 .child(bottom_bar(
@@ -101,7 +106,12 @@ pub fn today_page() -> Screen {
                         ),
                 ))
                 .child(toast_host(|| BOTTOM_BAR + safe_area().bottom.0 + 12.0))
-                .child(setup_sheet(setup_open, manual)),
+                .child(setup_sheet(setup_open, manual))
+                .child(bottom_sheet(
+                    move || weight_open.get(),
+                    move || weight_open.set(false),
+                    weight::weight_editor(day, weight_open),
+                )),
         )
 }
 
@@ -129,6 +139,11 @@ fn header(day: impl Fn() -> crate::domain::meal::Day + Copy + 'static) -> impl I
                         .number_of_lines(1)
                         .role(AccessibilityRole::Header),
                 ),
+        )
+        .child(
+            IconBtn::new(Icon::Chart, || s().week_review.into())
+                .variant(Variant::Secondary)
+                .on_press(|| nav::push(Route::WeekReview)),
         )
         .child(
             IconBtn::new(Icon::Sliders, || s().settings.into())

@@ -16,7 +16,7 @@ all = { level = "warn", priority = -1 }
 
 [dependencies]
 nsh-core = "0.5.0"
-nsh-base = { version = "0.5.0", default-features = false }
+nsh-base = { version = "0.5.0", default-features = false, features = ["plot"] }
 log = "0.4"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -27,6 +27,16 @@ llm-protocol = { path = "../../third_party/agent-runtime/crates/llm-protocol" }
 llm-client = { path = "../../third_party/agent-runtime/crates/llm-client" }
 # Local calendar dates from the device's time zone (Android's tzdata included).
 jiff = "0.2"
+# The app's database, SQLite compiled in (ADR 0002: private storage, not SQLCipher).
+rusqlite = { version = "0.37", features = ["bundled"] }
+# Backups: Argon2id from the passphrase, XChaCha20-Poly1305 over the database.
+argon2 = "0.5"
+chacha20poly1305 = "0.10"
+getrandom = "0.3"
+thiserror = "2"
+# NSH 0.5's Android HttpURLConnection rejects WebDAV extension methods.
+ureq = { version = "3", default-features = false, features = ["rustls"] }
+url = "2"
 
 [target.'cfg(any(target_os = "linux", target_os = "macos", target_os = "windows"))'.dependencies]
 env_logger = "0.11"
@@ -41,6 +51,8 @@ nsh-platform-macos = { version = "0.5.0", default-features = false }
 nsh-platform-windows = { version = "0.5.0", default-features = false }
 
 [dev-dependencies]
+tempfile = "3"
+rusqlite = { version = "0.37", features = ["bundled"] }
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp"] }
 nsh-engine = { version = "0.5.0", default-features = false }
 nsh-testing = { version = "0.5.0", default-features = false }

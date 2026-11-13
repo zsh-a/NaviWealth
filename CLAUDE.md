@@ -37,7 +37,7 @@ The frozen Flutter production domain inventory is `apps/mobile/lib/app/domain_pa
 
 The NSH client is a fixed four-tab composition (no `DomainPack` registry, per
 ADR 0002). `finance-core` and `health-core` own business truth; `lifeos-core`
-owns encrypted storage, backup/restore and the one-time Flutter import. These
+owns SQLite storage, backup/restore and the one-time Flutter import (today in `apps/nsh-client/src/data/db.rs`). These
 target crates are introduced by gated phases; only `health-core` exists today. Existing Dart path rules below apply
 to Flutter maintenance only. Do not extend FRB for new client features.
 
@@ -93,8 +93,8 @@ apps/backend/src/
 
 - New client architecture follows ADR 0001 as narrowed by ADR 0002: domain-owned Rust truth (`finance-core`, `health-core`) and a UI-only NSH client.
 - Features follow `docs/product/product-scope.md`: personal use, four tabs, AI for recognition drafts only. Do not port removed Flutter features (Knowledge, Execution, AI chat/agents, FIRE, options, rebalance, Runway).
-- Use rusqlite + SQLCipher for target business persistence; NSH KV is a 5 MB preferences store. Current NSH API keys are plaintext in KV and must migrate to Keystore through the Android host channel.
-- The NSH client is local-only: no Sync, login or backend calls; encrypted local backups only. Flutter data moves once through an importer. Sync v3 stays unchanged for the frozen Flutter client until it retires.
+- Business data lives in SQLite (`rusqlite`, bundled) in the app's private directory; NSH KV is a 5 MB preferences store. No SQLCipher or Keystore (ADR 0002): the Android sandbox protects data at rest, and only exported backups are passphrase-encrypted.
+- The NSH client is local-only: no Sync, login or backend calls; local backups only. Flutter data moves once through an importer. Sync v3 stays unchanged for the frozen Flutter client until it retires.
 - The Dart/Flutter rules below govern the frozen client's bug fixes until replacement.
 
 - `core/` is domain-neutral. It must not import `features/<domain>/` or domain business entities.

@@ -1,6 +1,7 @@
 //! Settings: the user's own vision model (provider, address, model, key),
-//! the optional daily goal, and whether to ask before each photo. Edits
-//! stay a draft until Save; leaving with changes asks first.
+//! the optional daily goal, whether to ask before each photo, and the
+//! Garmin connection. Edits stay a draft until Save (Garmin connects at
+//! once); leaving with changes asks first.
 
 use nsh_base::{alert_dialog, nav_page};
 use nsh_core::{
@@ -373,7 +374,13 @@ pub fn settings_page() -> Screen {
                                             || Some(s().ask_each_photo_note.into()),
                                             || false,
                                         )),
-                                ),
+                                )
+                                .child(view().h_3())
+                                .child(group_label(|| s().garmin))
+                                .child(super::settings_garmin::garmin_section())
+                                .child(view().h_3())
+                                .child(group_label(|| s().backup))
+                                .child(super::settings_backup::backup_section()),
                         ),
                 )
                 .child(bottom_bar(

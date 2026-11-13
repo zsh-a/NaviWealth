@@ -31,7 +31,9 @@ whether the owner uses a feature every day or every week.
 4. Anything derivable is derived, not entered: net worth, positions, monthly
    balance, averages.
 5. Adding a new kind of record requires removing one or a written reason.
-6. Data stays on the device. Backups are local files the owner controls.
+6. Business data stays on the device. Encrypted backup files go only to a
+   location the owner configures, including their own WebDAV folder; there is
+   no NaviWealth account, server backup or record sync.
 
 ## Tabs
 
@@ -71,17 +73,22 @@ whether the owner uses a feature every day or every week.
   editable consumed grams, local catalog nutrition, manual entry.
 - Weight: manual entry plus Garmin body composition when available.
 - Garmin daily data through Garmin's official Personal API (self-serve key,
-  read-only, own data only): sleep, resting heart rate, steps, and, if the
-  API exposes them, HRV, stress and Body Battery. Pull on app start and on
-  refresh. The reverse-engineered Garmin Connect client (password + MFA) is
-  not ported. Phase 1 verifies the exact endpoints, token exchange, history
-  backfill and rate limits before design.
+  read-only, own data only): sleep duration and score, HRV with its status,
+  resting heart rate, Body Battery high, steps and average stress. Pulled at
+  app start and resume, at most every 30 minutes; the first pull covers 30
+  days. The key's region (garmin.com or garmin.cn) is found by trying both.
+  The reverse-engineered Garmin Connect client (password + MFA) is not
+  ported. Garmin weight is not imported yet (no scale data to verify).
 
 ### Data
 
-- Encrypted local database.
-- Automatic local backups plus manual export/restore of an encrypted backup
-  file to a location the owner picks; meal photos optional in the export.
+- A local SQLite database in the app's private storage (Android sandbox and
+  file-based encryption; no SQLCipher, see ADR 0002).
+- Automatic local backups plus manual export/restore of a passphrase-encrypted
+  backup file to a location the owner picks; meal photos optional in the export.
+  The current Health increment uses an owner-configured WebDAV folder for
+  daily foreground backups and manual backup/restore, excluding photos and
+  credentials. System-picker local export and photo archives remain planned.
 - A one-time import of kept records from the Flutter client.
 
 ## Removed

@@ -21,6 +21,9 @@ use crate::{
     },
 };
 
+/// How many recently eaten foods a new food offers.
+const RECENT: usize = 8;
+
 const PORTIONS: [(f64, &str); 6] = [
     (0.5, "½×"),
     (0.75, "¾×"),
@@ -73,6 +76,38 @@ pub fn FoodEditor() -> impl IntoElement {
     let fields = initial.clone().map(signal);
     let details_open = signal(is_new);
     let attempted = signal(false);
+    // A recent food the user picked: kept as it was (its source and exact
+    // nutrients) unless its nutrients are then changed.
+    let picked: Stored<Option<(Food, [String; 4])>> = stored(None);
+    let recent = if is_new {
+        let in_meal: Vec<String> = draft
+            .foods
+            .with_untracked(|foods| foods.iter().map(|f| f.name.trim().to_lowercase()).collect());
+        meals::recent_foods(RECENT + in_meal.len())
+            .into_iter()
+            .filter(|food| !in_meal.contains(&food.name.trim().to_lowercase()))
+            .take(RECENT)
+            .collect()
+    } else {
+        Vec::new()
+    };
+    let pick = move |food: &Food| {
+        let values = [
+            field_number(food.per_100g.kcal),
+            field_number(food.per_100g.protein),
+            field_number(food.per_100g.carbs),
+            field_number(food.per_100g.fat),
+        ];
+        batch(|| {
+            name.set(food.name.clone());
+            grams.set(field_number(food.grams));
+            for (field, value) in fields.iter().zip(&values) {
+                field.set(value.clone());
+            }
+            details_open.set(false);
+        });
+        picked.replace(Some((food.clone(), values)));
+    };
 
     let parsed_grams = move || grams.with(|g| parse_number(g));
     let per_100g = move || {
@@ -112,6 +147,28 @@ pub fn FoodEditor() -> impl IntoElement {
             .iter()
             .zip(&initial)
             .any(|(field, initial)| field.with_untracked(|f| f.trim() != initial.trim()));
+        let kept = picked.with(|picked| {
+            picked.as_ref().and_then(|(food, values)| {
+                let same = fields
+                    .iter()
+                    .zip(values)
+                    .all(|(field, value)| field.with_untracked(|f| f.trim() == value.trim()));
+                same.then(|| (food.per_100g, food.source.clone()))
+            })
+        });
+        if let Some((per_100g, source)) = kept {
+            draft.add_food(Food {
+                id: base_for_done.id,
+                name: clean,
+                grams: grams_value,
+                per_100g,
+                source,
+                confidence: None,
+                estimated_grams: None,
+            });
+            draft.editing.set(None);
+            return;
+        }
         let food = Food {
             id: base_for_done.id,
             name: clean,
@@ -171,6 +228,24 @@ pub fn FoodEditor() -> impl IntoElement {
                         })
                 })),
         )
+        .child((!recent.is_empty()).then(|| {
+            field(
+                || s().recent_foods,
+                view()
+                    .flex_row()
+                    .flex_wrap()
+                    .gap(px(6.0))
+                    .children(recent.into_iter().map(move |food| {
+                        let label: SharedString = food.name.clone().into();
+                        let chosen = stored(food.name.clone());
+                        chip(
+                            move || label.clone(),
+                            move || chosen.with(|c| name.with(|n| n == c)),
+                            move || pick(&food),
+                        )
+                    })),
+            )
+        }))
         .child(
             field(
                 || s().name,

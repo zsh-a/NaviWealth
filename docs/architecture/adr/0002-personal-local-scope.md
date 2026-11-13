@@ -38,24 +38,33 @@ features. The migration becomes a reduced rewrite, not a port.
 
    | Package | Owns |
    |---|---|
-   | `crates/lifeos-core` | rusqlite + SQLCipher storage, migrations, clock, encrypted backup/restore, Flutter import framework |
+   | `crates/lifeos-core` | SQLite storage, migrations, clock, encrypted backup export/restore, Flutter import framework; extracted from `apps/nsh-client/src/data/db.rs` once Finance needs it |
    | `crates/finance-core` | Accounts, transactions, categories, budget, statement parsers, receipt recognition, securities, trades, quotes, FX, derived positions and net worth |
    | `crates/health-core` | Meal recognition and nutrition (existing), meals, weight, Garmin Personal API client and daily summaries |
    | `apps/nsh-client` | Four tabs, settings, UI components; fixed composition |
-   | `apps/nsh-host-android` if needed | Kotlin host-channel plugins (Keystore, file location picker) |
 
    No `knowledge-core`, `execution-core`, `lifeos-ai` or `DomainPack`-style
    registry. Recognition calls use `llm-protocol` / `llm-client` from the Agent
    Runtime submodule directly; the Agent Runtime loop is not hosted.
-5. **Garmin through the Personal API.** Use the self-serve personal key and
-   its token flow, read-only. The key and tokens live in Android Keystore,
-   never in backups. The reverse-engineered client in `lifeos_native` is not
+5. **No SQLCipher, no Keystore (2026-11-13).** NSH's standalone Android
+   APK is packaged from a prebuilt runtime without Gradle: there is no place
+   for Kotlin code and no JavaVM handed to Rust, so Keystore would need an
+   unsafe JNI shim (Android 12+ only) or a different host app. For a
+   personal single-device app this is not worth it. The database is plain
+   SQLite in the app's private directory, protected by the Android sandbox
+   and file-based encryption; model and Garmin credentials stay in
+   app-private storage. Exported backups are the files that leave the
+   sandbox, so they are encrypted with a passphrase. Revisit if NSH exposes
+   JNI or host plugins to standalone apps.
+6. **Garmin through the Personal API.** Use the self-serve personal key and
+   its token flow, read-only. The key and tokens stay in app-private
+   storage and never enter exported backups. The reverse-engineered client in `lifeos_native` is not
    ported. Endpoint changes or failures keep the last imported data visible.
 
 Unchanged from ADR 0001: Flutter freeze, Android only (no Web, no iOS),
-domain truth in Rust crates with UI only in `apps/nsh-client`, SQLCipher at
-rest, credentials in Keystore, no backend AI relay, NSH 0.5.0 pinned behind
-local UI adapters.
+domain truth in Rust crates with UI only in `apps/nsh-client`, no backend
+AI relay, NSH 0.5.0 pinned behind local UI adapters. ADR 0001's SQLCipher and
+Keystore requirements are replaced by decision 5.
 
 ## Consequences
 
