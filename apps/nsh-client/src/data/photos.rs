@@ -68,13 +68,21 @@ pub fn keep(name: &str, jpeg: &[u8]) {
     }
 }
 
-/// Deletes kept photos no meal refers to (meals deleted earlier, after
-/// their Undo window). Runs off the engine thread.
+/// The kept photo `name`'s bytes (a small file, read in place), to send
+/// again.
+pub fn bytes(name: &str) -> Option<Vec<u8>> {
+    path_of(name).and_then(|path| std::fs::read(path).ok())
+}
+
+/// Deletes kept photos no meal, favorite or draft refers to (meals deleted
+/// earlier, after their Undo window). Runs off the engine thread.
 pub async fn sweep_orphans() {
     let Some(dir) = folder() else {
         return;
     };
-    let referenced = super::meals::photo_names();
+    let mut referenced = super::meals::photo_names();
+    referenced.extend(super::favorites::photo_names());
+    referenced.extend(super::pending::photo_names());
     let _ = blocking(move || {
         let Ok(entries) = std::fs::read_dir(&dir) else {
             return;

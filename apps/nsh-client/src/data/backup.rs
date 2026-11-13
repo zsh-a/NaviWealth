@@ -2,7 +2,7 @@
 //! or comes back, or when asked, the database is copied, encrypted with
 //! the user's passphrase off the engine thread, and put as
 //! `naviwealth-<day>-<timestamp>.nwbk`. Restoring
-//! gets one, decrypts it and replaces meals, weights and Garmin days in one
+//! gets one, decrypts it and replaces meals, favorites, weights and Garmin days in one
 //! transaction. Keys, passwords and the passphrase never enter a backup;
 //! the password and passphrase are kept under their own storage entries.
 
@@ -10,7 +10,7 @@ use nsh_core::{prelude::*, storage::Storage};
 use serde::{Deserialize, Serialize};
 
 use super::{
-    clock, db, garmin, meals,
+    clock, db, favorites, garmin, meals, notes,
     webdav::{DavError, Folder},
     weights,
 };
@@ -217,7 +217,7 @@ pub async fn list() -> Result<Vec<String>, Failure> {
     Ok(folder.list().await?)
 }
 
-/// Replaces meals, weights and Garmin days with the backup `name`.
+/// Replaces meals, favorites, weights and Garmin days with the backup `name`.
 pub async fn restore(name: String) -> Result<(), Failure> {
     let (folder, passphrase) = begin()?;
     state().update(|s| s.status = Status::Running);
@@ -232,6 +232,8 @@ pub async fn restore(name: String) -> Result<(), Failure> {
             db::RestoreError::Storage => Failure::Storage,
         })?;
         meals::load();
+        favorites::load();
+        notes::load();
         weights::load();
         garmin::load();
         state().update(|s| {

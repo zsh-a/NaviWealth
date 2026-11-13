@@ -1,67 +1,63 @@
-//! What Garmin measured on the chosen day: last night's sleep, HRV,
-//! resting heart rate, Body Battery, steps and stress. Shown once a key is
-//! connected or days were imported; a failed update keeps the last data
-//! and says so.
+//! What Garmin measured today in full: last night's sleep, HRV, resting
+//! heart rate, Body Battery, steps and stress, in a sheet opened from the
+//! vitals. A failed update keeps the last data and says so.
 
 use health_core::garmin::GarminDay;
 use nsh_core::prelude::*;
 
 use crate::{
-    data::garmin::{self, Failure, SyncState},
-    domain::{format, meal::Day},
+    data::{
+        clock,
+        garmin::{self, Failure, SyncState},
+    },
+    domain::format,
     i18n::s,
-    ui::{Type, Typo, color, radius, space, surface::card},
+    ui::{Type, Typo, color, radius},
 };
 
-/// The Garmin card of `day`.
-pub fn garmin_card(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
-    let summary = computed(move || garmin::on(day()));
-    when(
-        || garmin::connected() || garmin::has_days(),
-        move || {
-            card()
-                .p(px(space::CARD))
-                .gap_4()
+/// Today's Garmin data in full, opened from a Garmin vital.
+pub fn garmin_sheet() -> impl IntoElement {
+    let summary = computed(|| garmin::on(clock::today()));
+    view()
+        .gap_4()
+        .child(
+            view()
+                .flex_row()
+                .items_baseline()
+                .justify_between()
+                .gap_3()
                 .child(
-                    view()
-                        .flex_row()
-                        .items_baseline()
-                        .justify_between()
-                        .gap_3()
-                        .child(
-                            text(|| s().garmin)
-                                .typo(Type::Headline)
-                                .text_color(color::INK)
-                                .role(AccessibilityRole::Header),
-                        )
-                        .child(
-                            text(status)
-                                .typo(Type::Caption)
-                                .text_color(move || {
-                                    if matches!(garmin::sync_state(), SyncState::Failed(_)) {
-                                        color::CAUTION
-                                    } else {
-                                        color::MUTED
-                                    }
-                                })
-                                .number_of_lines(2)
-                                .flex_shrink(1.0)
-                                .text_right(),
-                        ),
+                    text(|| s().garmin)
+                        .typo(Type::Title)
+                        .text_color(color::INK)
+                        .role(AccessibilityRole::Header),
                 )
                 .child(
-                    when(
-                        move || summary.with(Option::is_some),
-                        move || metrics(move || summary.get().unwrap_or_default()),
-                    )
-                    .otherwise(|| {
-                        text(|| s().garmin_no_data)
-                            .typo(Type::Subhead)
-                            .text_color(color::MUTED)
-                    }),
-                )
-        },
-    )
+                    text(status)
+                        .typo(Type::Caption)
+                        .text_color(move || {
+                            if matches!(garmin::sync_state(), SyncState::Failed(_)) {
+                                color::CAUTION
+                            } else {
+                                color::MUTED
+                            }
+                        })
+                        .number_of_lines(2)
+                        .flex_shrink(1.0)
+                        .text_right(),
+                ),
+        )
+        .child(
+            when(
+                move || summary.with(Option::is_some),
+                move || metrics(move || summary.get().unwrap_or_default()),
+            )
+            .otherwise(|| {
+                text(|| s().garmin_no_data)
+                    .typo(Type::Subhead)
+                    .text_color(color::MUTED)
+            }),
+        )
 }
 
 fn status() -> String {

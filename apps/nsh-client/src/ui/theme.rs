@@ -127,8 +127,6 @@ pub mod size {
 /// Text roles.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Type {
-    /// The day's energy.
-    Hero,
     /// A meal's total.
     Display,
     /// A page's title.
@@ -153,7 +151,6 @@ impl Type {
     /// Size, line height, weight (100–900) and tracking, in points.
     pub const fn metrics(self) -> (f32, f32, u16, f32) {
         match self {
-            Type::Hero => (60.0, 64.0, 700, -2.4),
             Type::Display => (44.0, 48.0, 700, -1.6),
             Type::LargeTitle => (34.0, 40.0, 700, -1.0),
             Type::Title => (22.0, 28.0, 700, -0.4),

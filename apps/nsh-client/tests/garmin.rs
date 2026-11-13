@@ -67,6 +67,9 @@ fn a_garmin_key_connects_in_its_region_and_brings_todays_numbers() -> Result<(),
     }));
 
     app.wait_for("text:Score 89")?;
+    app.wait_for("text:Resting 44")?;
+    // The rest of the day's Garmin data is one press away.
+    app.press("label:Sleep, 7h 32m")?;
     app.wait_for("text:44 bpm")?;
     app.wait_for("text:75 ms")?;
     app.wait_for("text:13,794")?;

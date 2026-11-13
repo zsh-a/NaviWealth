@@ -16,12 +16,13 @@ use std::env;
 use nsh_core::{platform::Appearance, prelude::*};
 
 use crate::{
-    data::{clock, garmin, meals, photos, settings, weights},
+    data::{clock, favorites, garmin, meals, pending, photos, settings, weights},
     domain::{
         account::{ModelAccount, Provider},
         catalog,
         meal::{Day, Meal, MealSlot},
         nutrition::{Confidence, Food, FoodSource, Nutrients},
+        pending::{PendingMeal, PendingStatus},
         recognition::Lang,
     },
     nav::{self, Route},
@@ -52,6 +53,14 @@ pub fn apply() {
     }
     if has("meals") && untracked(meals::all).is_empty() {
         seed_meals();
+    }
+    if has("favorites") && !untracked(favorites::any) {
+        for meal in untracked(meals::all).iter().take(4) {
+            favorites::save_from(meal);
+        }
+    }
+    if has("drafts") && untracked(pending::all).is_empty() {
+        seed_drafts();
     }
     if let Ok(path) = env::var("NW_PREVIEW_GARMIN_KEY_FILE")
         && !untracked(garmin::connected)
@@ -91,8 +100,57 @@ pub fn apply() {
             }
         }
         Some("settings") => nav::push(Route::Settings),
-        Some("review") => nav::push(Route::WeekReview),
+        Some("review") => nav::select(nav::Tab::Review),
+        Some("records") => nav::select(nav::Tab::Records),
         _ => {}
+    }
+}
+
+/// A ready draft and one still being read, on the seeded meals' photos.
+fn seed_drafts() {
+    let photos: Vec<String> = untracked(meals::all)
+        .into_iter()
+        .filter_map(|meal| meal.photo)
+        .collect();
+    let today = untracked(clock::today);
+    for (index, (status, slot)) in [
+        (PendingStatus::Ready, MealSlot::Dinner),
+        (PendingStatus::Analyzing, MealSlot::Snack),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let Some(photo) = photos.get(index).cloned() else {
+            return;
+        };
+        let foods = untracked(meals::all)
+            .first()
+            .filter(|_| status == PendingStatus::Ready)
+            .map(|meal| meal.foods.clone())
+            .unwrap_or_default();
+        pending::put(PendingMeal {
+            id: format!("dpreview{index}"),
+            day: today,
+            slot,
+            title: None,
+            foods,
+            photo,
+            model: None,
+            prompt_version: None,
+            skipped: 0,
+            status,
+            created_at_ms: clock::now_ms() - index as i64,
+        });
+    }
+}
+
+/// Opens the capture sheet once the home is up, when asked
+/// (`NW_PREVIEW_ROUTE=capture`).
+pub fn home_opened(capture: Signal<bool>) {
+    if env::var("NW_PREVIEW_ROUTE").is_ok_and(|route| route == "capture") {
+        set_timeout(std::time::Duration::from_millis(600), move || {
+            capture.set(true)
+        });
     }
 }
 

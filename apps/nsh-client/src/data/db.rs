@@ -36,6 +36,25 @@ const MIGRATIONS: &[&str] = &[
         body TEXT NOT NULL,
         fetched_at_ms INTEGER NOT NULL
     );",
+    // 4: favorites, one JSON body each (`domain::favorite`).
+    "CREATE TABLE saved_meals (
+        id TEXT PRIMARY KEY NOT NULL,
+        saved_at_ms INTEGER NOT NULL,
+        used_at_ms INTEGER NOT NULL,
+        body TEXT NOT NULL
+    );",
+    // 5: recognition drafts (`domain::pending`); not in backups.
+    "CREATE TABLE meal_drafts (
+        id TEXT PRIMARY KEY NOT NULL,
+        created_at_ms INTEGER NOT NULL,
+        body TEXT NOT NULL
+    );",
+    // 6: the owner's review notes, one line per day (`data::notes`).
+    "CREATE TABLE review_notes (
+        day TEXT PRIMARY KEY NOT NULL,
+        text TEXT NOT NULL,
+        updated_at_ms INTEGER NOT NULL
+    );",
 ];
 
 #[derive(Clone, Default)]
@@ -106,6 +125,8 @@ const TABLES: &[(&str, &str)] = &[
     ("meals", "id, day, logged_at_ms, body"),
     ("weights", "day, kg, logged_at_ms"),
     ("garmin_days", "day, body, fetched_at_ms"),
+    ("saved_meals", "id, saved_at_ms, used_at_ms, body"),
+    ("review_notes", "day, text, updated_at_ms"),
 ];
 
 /// Why a restore was refused; nothing changed.
@@ -269,6 +290,29 @@ fn validate_restored(connection: &Connection) -> Result<(), String> {
                 return Err(rusqlite::Error::InvalidQuery);
             }
         }
+        let mut statement = connection.prepare("SELECT id, body FROM saved_meals")?;
+        let rows = statement.query_map([], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+        })?;
+        for row in rows {
+            let (id, body) = row?;
+            let value: crate::domain::favorite::Favorite =
+                serde_json::from_str(&body).map_err(|_| rusqlite::Error::InvalidQuery)?;
+            if !value.is_valid() || value.id != id {
+                return Err(rusqlite::Error::InvalidQuery);
+            }
+        }
+        let mut statement = connection.prepare("SELECT day, text FROM review_notes")?;
+        let rows = statement.query_map([], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+        })?;
+        for row in rows {
+            let (day, text) = row?;
+            if day.parse::<crate::domain::meal::Day>().is_err() || !crate::data::notes::valid(&text)
+            {
+                return Err(rusqlite::Error::InvalidQuery);
+            }
+        }
         Ok(())
     };
     read().map_err(|e| e.to_string())
@@ -316,5 +360,30 @@ mod tests {
             .query_row("SELECT COUNT(*) FROM meals", [], |row| row.get(0))
             .unwrap();
         assert_eq!(count, 1);
+    }
+
+    #[test]
+    fn a_restore_checks_favorites_too() {
+        let mut connection = Connection::open_in_memory().unwrap();
+        migrate(&mut connection).unwrap();
+        let food = r#"{"id":1,"name":"Oats","grams":50.0,"per_100g":{"kcal":380.0,"protein":13.0,"carbs":67.0,"fat":7.0},"source":{"kind":"manual"}}"#;
+        let body = format!(r#"{{"id":"f1","foods":[{food}],"saved_at_ms":1,"used_at_ms":1}}"#);
+        connection
+            .execute(
+                "INSERT INTO saved_meals (id, saved_at_ms, used_at_ms, body) VALUES ('f1', 1, 1, ?1)",
+                [&body],
+            )
+            .unwrap();
+        assert_eq!(validate_restored(&connection), Ok(()));
+        connection
+            .execute(
+                "UPDATE saved_meals SET body = '{\"id\":\"f1\",\"foods\":[],\"saved_at_ms\":1,\"used_at_ms\":1}'",
+                [],
+            )
+            .unwrap();
+        assert!(
+            validate_restored(&connection).is_err(),
+            "a favorite without foods"
+        );
     }
 }

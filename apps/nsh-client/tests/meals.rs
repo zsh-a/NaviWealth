@@ -1,5 +1,5 @@
-//! Meal logging: by hand, from a photo with consent, editing, repeating
-//! and recent foods, and the meals' storage.
+//! Meal logging: by hand, from a photo with consent, editing, recent
+//! foods, and the meals' storage. Favorites are in `favorites.rs`.
 
 mod common;
 
@@ -17,6 +17,7 @@ fn an_empty_day_explains_what_to_do() -> Result<(), String> {
 #[test]
 fn logging_without_an_account_explains_the_setup() -> Result<(), String> {
     let (mut app, _) = start(Vec::new(), None);
+    app.press("label:New entry")?;
     app.press("Log a meal")?;
     app.wait_until("the setup sheet", GONE, |screen| {
         screen.count("text:Set up…").unwrap_or(0) == 2
@@ -29,6 +30,7 @@ fn logging_without_an_account_explains_the_setup() -> Result<(), String> {
 fn a_meal_added_by_hand_counts_toward_today() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
+    app.press("label:New entry")?;
     app.press("label:Add manually")?;
     app.wait_for("text:e.g. Beef noodle soup")?;
     app.type_text("text:e.g. Beef noodle soup", "Rice")?;
@@ -56,6 +58,7 @@ fn a_photo_is_sent_only_after_consent_and_becomes_editable_foods() -> Result<(),
     let dir = tempfile::tempdir().unwrap();
     let (mut app, _) = start_in(Some(dir.path()), account(false), Some(stub.clone()));
     picks_a_photo(&mut app);
+    app.press("label:New entry")?;
     app.press("Log a meal")?;
     app.wait_for("Send this photo for analysis?")?;
     assert!(app.shows("api.anthropic.com"));
@@ -107,6 +110,7 @@ fn declining_consent_sends_nothing() -> Result<(), String> {
     let stub = network(200, estimate());
     let (mut app, _) = start(account(false), Some(stub.clone()));
     picks_a_photo(&mut app);
+    app.press("label:New entry")?;
     app.press("Log a meal")?;
     app.wait_for("Send this photo for analysis?")?;
     app.press("Cancel")?;
@@ -121,6 +125,7 @@ fn a_rejected_key_points_to_settings() -> Result<(), String> {
     let stub = network(401, json!({ "error": { "message": "invalid x-api-key" } }));
     let (mut app, _) = start(account(true), Some(stub));
     picks_a_photo(&mut app);
+    app.press("label:New entry")?;
     app.press("Log a meal")?;
     app.wait_for("The API key was rejected")?;
     assert!(app.shows("Open settings…"));
@@ -135,6 +140,7 @@ fn a_failed_whole_body_fetch_is_not_automatically_replayed() -> Result<(), Strin
     let stub = Arc::new(StubNetwork::new([(MESSAGES.to_owned(), reply)]));
     let (mut app, _) = start(account(true), Some(stub.clone()));
     picks_a_photo(&mut app);
+    app.press("label:New entry")?;
     app.press("Log a meal")?;
     app.wait_for("Can't reach the model")?;
     assert_eq!(stub.requests().len(), 1);
@@ -228,30 +234,11 @@ fn legacy_meals_move_into_the_database_and_survive_a_restart() -> Result<(), Str
 }
 
 #[test]
-fn a_saved_meal_can_be_logged_again_today() -> Result<(), String> {
-    let dir = tempfile::tempdir().unwrap();
-    let (mut app, _) = start_in(Some(dir.path()), pasta_today(), None);
-    app.wait_for("text:300")?;
-    app.press("Tomato pasta")?;
-    app.wait_for("Edit meal")?;
-    app.press("Log again today")?;
-    app.wait_for("New meal")?;
-    app.press("text:/^Save meal/")?;
-    app.wait_for("text:2 meals")?;
-    app.wait_for("text:600")?;
-    let kept = stored_meals(dir.path());
-    assert_eq!(kept.len(), 2, "a second meal, the first unchanged");
-    assert_ne!(kept[0]["id"], kept[1]["id"]);
-    assert_ne!(kept[0]["foods"][0]["id"], kept[1]["foods"][0]["id"]);
-    assert_eq!(kept[1]["foods"][0]["name"], "Pasta");
-    Ok(())
-}
-
-#[test]
 fn a_recent_food_fills_the_new_food() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
     let (mut app, _) = start_in(Some(dir.path()), pasta_today(), None);
     app.wait_for("text:300")?;
+    app.press("label:New entry")?;
     app.press("label:Add manually")?;
     app.wait_for("Recent")?;
     app.press("text:Pasta")?;
@@ -276,7 +263,7 @@ fn the_api_key_is_kept_apart_from_the_settings() -> Result<(), String> {
     app.wait_for("Vision model")?;
     app.type_text("text:Paste your key", "sk-ant-secret")?;
     app.press("Save")?;
-    app.wait_for("Log a meal")?;
+    app.wait_for("label:New entry")?;
     app.wait_for_gone("Connect a vision model", GONE)?;
     let entries = storage.entries();
     assert_eq!(
@@ -295,6 +282,7 @@ fn the_api_key_is_kept_apart_from_the_settings() -> Result<(), String> {
 #[test]
 fn a_food_without_nutrition_is_not_saved_as_zero() -> Result<(), String> {
     let (mut app, _) = start(Vec::new(), None);
+    app.press("label:New entry")?;
     app.press("label:Add manually")?;
     app.wait_for("text:e.g. Beef noodle soup")?;
     app.type_text("text:e.g. Beef noodle soup", "Tea")?;

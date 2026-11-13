@@ -44,12 +44,16 @@ health-only Review; Assets arrives with Phase 3.
    re-log of recent foods or meals, a daily energy/macro goal, undo after
    delete, and history beyond the four-week strip. Each change keeps the
    existing consent, estimate-review and confirm-before-save rules.
+   Implemented: favorites (save from a meal's page; the Today secondary
+   action opens them; tap logs with Undo, hold adjusts or removes) replace
+   "log again today"; camera capture is the system picker's own.
 3. **Weight.** Manual entry and a trend line, checked against an `nsh-base`
    plot proof (gaps, touch inspection, dark theme). Implemented: one entry per
    day in SQLite, a Today card with the weekly change and a 30-day line drawn
    by `nsh-base` `plot`/`line` (days without an entry are gaps), and a sheet
-   to log, correct or delete (with Undo). Dark theme and on-device rendering
-   still need a look.
+   to log, correct or delete (with Undo). Since the tab redesign the weight is
+   a Today vital and a row in Records; the trend lives on Review. Dark theme
+   and on-device rendering still need a look.
 4. **Garmin Personal API.** Verify against Garmin's own docs and a real key
    (token exchange; sleep, resting HR, steps, HRV, stress, Body Battery and
    weight fields; history backfill; rate limits; revocation), then import
@@ -73,6 +77,20 @@ health-only Review; Assets arrives with Phase 3.
    and cross-day resume. Remaining: Android device verification, system-picker
    local export and optional photo archives. The implementation contract is in
    `apps/nsh-client/README.md`, “Health review and backups”.
+
+6. **Tabs and capture (Product Scope, Interaction Model).** Implemented:
+   the home with Today, Records and Review tabs beside one capture button;
+   the capture sheet (photo meal, weight, favorites, manual); Today shows
+   only today; Records lists every day with its total and filters; a meal's
+   date chip moves it to another day. Recognition drafts: a photo's
+   recognition runs under the app's root, leaving the review page keeps it
+   as a draft (SQLite `meal_drafts`, not in backups) pinned on Today and
+   atop Records; it can be confirmed, discarded with Undo, or tried again
+   after a restart cut it short. Review: this week or this calendar month
+   (stepping back), the daily average with its change from the period
+   before, a bar per day against the goal line (amber past it, ink today),
+   weight change and line, Garmin averages. Personal notes are stored by date, saved while typing and included in
+   encrypted backups. Remaining: Android device verification.
 
 - Exit: the owner uses NSH as the only meal/weight app for two weeks; meals
   survive restart, upgrade and restore; wrong-key or corrupted backups are

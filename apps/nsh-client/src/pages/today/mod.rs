@@ -1,122 +1,55 @@
-//! Today: the day's energy, meals and weight, and the one main action,
-//! logging a meal from a photo. The last four weeks are a swipe away.
+//! Today: what the day adds up to (intake), three vitals, and today's
+//! records. Only today: past days are in Records.
 
 mod garmin;
 mod hero;
 mod meal_list;
+mod vitals;
 mod week;
 mod weight;
 
-pub use meal_list::slot_name;
+pub use garmin::garmin_sheet;
+pub use meal_list::{meal_title, slot_name};
+pub use week::day_strip;
+pub use weight::weight_editor;
 
-use nsh_base::nav_page;
-use nsh_core::{
-    element::Screen,
-    geometry::{DevicePixels, Percentage},
-    picker::PickRequest,
-    prelude::*,
+use nsh_core::prelude::*;
+
+use super::{
+    drafts::drafts_section,
+    home::{Sheets, dock_clearance},
 };
-
-use super::parts::{BOTTOM_BAR, bottom_bar, bottom_clearance, status_bar};
 use crate::{
-    data::{clock, photos, settings},
+    data::{clock, settings},
     i18n::s,
     nav::{self, Route},
     ui::{
         Btn, Icon, IconBtn, Size, Type, Typo, Variant, color, icon, sheet::bottom_sheet, space,
-        surface::card, toast::toast_host,
+        surface::card,
     },
 };
 
-/// The root page.
-pub fn today_page() -> Screen {
-    // Days back from today: 0 follows today across midnight.
-    let offset = signal(0_i32);
-    let day = move || clock::today().plus_days(offset.get());
-    let setup_open = signal(false);
-    let weight_open = signal(false);
-    let log = move || {
-        if settings::ready_account().is_none() {
-            setup_open.set(true);
-            return;
-        }
-        let day = day();
-        let mut request = PickRequest::new(false, 1);
-        request.max_dimension = Some(DevicePixels(1600));
-        request.quality = Some(Percentage(0.9));
-        let picked = pick_images(request);
-        spawn(async move {
-            if let Some(file) = picked.await.into_iter().next() {
-                let capture = photos::hold(file.data.to_vec());
-                nav::push(Route::NewMeal {
-                    day,
-                    capture: Some(capture),
-                });
-            }
-        });
-    };
-    let manual = move || {
-        nav::push(Route::NewMeal {
-            day: day(),
-            capture: None,
-        })
-    };
-    nav_page()
-        .title(move || SharedString::from(s().today))
-        .header_visible(false)
-        .status_bar(status_bar)
-        .child(
-            view()
-                .flex_1()
-                .bg(color::CANVAS)
-                .child(
-                    scroll().flex_1().child(
-                        view()
-                            .px(px(space::GUTTER))
-                            .pt_safe_area_plus(px(10.0))
-                            .pb(move || px(bottom_clearance()))
-                            .gap_5()
-                            .child(header(day))
-                            .child(week::day_strip(offset))
-                            .child(hero::hero(day))
-                            .child(setup_card())
-                            .child(meal_list::meal_list(day))
-                            .child(weight::weight_card(day, weight_open))
-                            .child(garmin::garmin_card(day)),
-                    ),
-                )
-                .child(bottom_bar(
-                    view()
-                        .flex_row()
-                        .items_center()
-                        .gap_3()
-                        .child(
-                            Btn::primary()
-                                .size(Size::Large)
-                                .icon(Icon::Photo)
-                                .label(|| s().log_meal.into())
-                                .on_press(log)
-                                .flex_1(),
-                        )
-                        .child(
-                            IconBtn::new(Icon::Pencil, || s().add_manually.into())
-                                .variant(Variant::Secondary)
-                                .side(56.0)
-                                .on_press(manual),
-                        ),
-                ))
-                .child(toast_host(|| BOTTOM_BAR + safe_area().bottom.0 + 12.0))
-                .child(setup_sheet(setup_open, manual))
-                .child(bottom_sheet(
-                    move || weight_open.get(),
-                    move || weight_open.set(false),
-                    weight::weight_editor(day, weight_open),
-                )),
-        )
+/// The Today tab's content.
+pub fn today_tab() -> impl IntoElement {
+    let day = clock::today;
+    scroll().flex_1().child(
+        view()
+            .px(px(space::GUTTER))
+            .pt_safe_area_plus(px(10.0))
+            .pb(move || px(dock_clearance()))
+            .gap_5()
+            .child(header())
+            .child(drafts_section(false))
+            .child(setup_card())
+            .child(hero::hero(day))
+            .child(vitals::vitals(day))
+            .child(meal_list::meal_list(day)),
+    )
 }
 
-/// The chosen day's title and date, and Settings.
-fn header(day: impl Fn() -> crate::domain::meal::Day + Copy + 'static) -> impl IntoElement {
+/// Today's date and title, and Settings.
+fn header() -> impl IntoElement {
+    let day = clock::today;
     view()
         .flex_row()
         .items_center()
@@ -133,17 +66,12 @@ fn header(day: impl Fn() -> crate::domain::meal::Day + Copy + 'static) -> impl I
                         .number_of_lines(1),
                 )
                 .child(
-                    text(move || s().day_title(day(), clock::today()))
+                    text(|| s().today)
                         .typo(Type::LargeTitle)
                         .text_color(color::INK)
                         .number_of_lines(1)
                         .role(AccessibilityRole::Header),
                 ),
-        )
-        .child(
-            IconBtn::new(Icon::Chart, || s().week_review.into())
-                .variant(Variant::Secondary)
-                .on_press(|| nav::push(Route::WeekReview)),
         )
         .child(
             IconBtn::new(Icon::Sliders, || s().settings.into())
@@ -207,7 +135,9 @@ fn ai_mark(side: f32) -> impl IntoElement {
 }
 
 /// Why photos need an account, from the main action, with both ways on.
-fn setup_sheet(open: Signal<bool>, manual: impl Fn() + Copy + 'static) -> impl IntoElement {
+pub fn setup_sheet(sheets: Sheets) -> impl IntoElement {
+    let open = sheets.setup;
+    let manual = move || sheets.manual();
     bottom_sheet(
         move || open.get(),
         move || open.set(false),

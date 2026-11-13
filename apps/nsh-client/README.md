@@ -3,7 +3,8 @@
 NaviWealth's native client, written in Rust on [NSH](https://github.com/longbridge/nsh)
 0.5.0. Its first page is HealthOS meal logging: choose a photo of a meal, allow
 it to be sent to your own vision model, review the estimated foods and amounts,
-and save; Today shows the day's energy and macronutrients. Manual entry works
+and save. The home has three tabs: Today (the day's energy, macros and
+vitals), Records (all history) and Review (the week). Manual entry works
 without any account. Design standards and the motion inventory: `DESIGN.md`.
 
 Meals, weights and Garmin days live on the device in
@@ -19,7 +20,8 @@ src/
   domain/   host-owned meals/account and shared health-core domain exports
   data/     device storage, photos, local time, thin NSH fetch Transport
   ui/       the app's styled components over nsh-base, and its tokens
-  pages/    Today, meal editing, weekly health review, Settings
+  pages/    the home (Today, Records, Review tabs, capture sheet), meal
+            editing, Settings
   i18n/     English and Chinese copy
   preview.rs  desktop-only preview seeding for design review
 tests/      headless meal, weight, Garmin, review and backup flows
@@ -58,8 +60,9 @@ device upgrade and restore acceptance remains separate from CI signing checks.
 
 ## Health review and backups
 
-The chart action on Today opens seven days ending today, with earlier weeks
-one step back. Intake and macros average only days with logged meals; missing
+The Review tab shows seven days ending today or a calendar month (up to
+today), with earlier periods one step back; the daily average is compared
+with the period before and each day's bar with the goal. Intake and macros average only days with logged meals; missing
 days are unknown. Weight compares the first and last measurements in the window.
 Garmin averages each measurement over the days that contain it.
 
@@ -103,6 +106,12 @@ NW_PREVIEW=account,trust,meals,goal NW_PREVIEW_BASE_URL=http://127.0.0.1:8799/v1
 NW_PREVIEW_ROUTE=new:/path/to/meal.jpg cargo run
 ```
 
-`NW_PREVIEW` also takes `dark`/`light`; `NW_PREVIEW_ROUTE` takes `manual`,
-`edit`, `settings` and `review`; `NW_PREVIEW_PHOTOS` lists photos for the seeded meals;
+`NW_PREVIEW` also takes `dark`/`light`, `drafts` (two recognition drafts) and `favorites` (the first seeded meals
+saved as favorites); `NW_PREVIEW_ROUTE` takes `manual`,
+`edit`, `settings`, `review`, `records` and `capture`; `NW_PREVIEW_PHOTOS` lists photos for the seeded meals;
 `NW_PREVIEW_EDITOR=1` opens the first food's editor once results arrive.
+
+Review notes are single lines (up to 280 characters), saved automatically on
+their date. Review shows the latest note in its week or month for editing and
+earlier notes above it. Clear the field to remove a note. Notes survive restart
+and are included in encrypted backups.

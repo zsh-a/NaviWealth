@@ -5,18 +5,19 @@
 use std::{rc::Rc, time::Duration};
 
 use health_core::consent::Consent;
-use nsh_core::{Haptic, HapticNotification, prelude::*};
+use nsh_core::prelude::*;
 
 use crate::{
-    data::{clock, meals, photos, settings, vision},
+    data::{clock, favorites, meals, pending, photos, settings, vision},
     domain::{
         VisionFailure,
         account::ModelAccount,
+        favorite::Favorite,
         meal::{Day, Meal, MealSlot},
         nutrition::{Food, MAX_FOODS_PER_MEAL},
+        pending::{PendingMeal, PendingStatus},
         recognition::Lang,
     },
-    i18n::s,
     nav,
 };
 
@@ -65,10 +66,18 @@ pub enum Editing {
 /// The review's state; `Copy`, provided to the page's parts as context.
 #[derive(Clone, Copy)]
 pub struct Draft {
-    pub day: Day,
+    /// The day it counts toward; the owner may move it (logging late).
+    pub day: Signal<Day>,
     pub meal_id: Stored<Option<String>>,
     logged_at: Stored<Option<i64>>,
-    photo_name: Stored<Option<String>>,
+    pub(super) photo_name: Stored<Option<String>>,
+    /// The favorite it started from, marked used on Save.
+    favorite: Stored<Option<String>>,
+    /// The recognition draft it is (`data::pending`), once its photo was
+    /// sent: leaving the page keeps it there instead of losing it.
+    pub pending: Signal<Option<String>>,
+    /// The draft was made on this page (its photo sent from here).
+    pub(super) started: Stored<bool>,
     pub foods: Signal<Vec<Food>>,
     pub slot: Signal<MealSlot>,
     pub title: Signal<Option<String>>,
@@ -83,7 +92,8 @@ pub struct Draft {
     pub dirty: Signal<bool>,
     pub editing: Signal<Option<Editing>>,
     pub consent_open: Signal<bool>,
-    analysis: Stored<Option<Spawned<()>>>,
+    /// The day sheet is open.
+    pub choosing_day: Signal<bool>,
 }
 
 impl Draft {
@@ -91,10 +101,13 @@ impl Draft {
     pub fn new(day: Day) -> Self {
         let (hour, minute) = clock::hour_minute(clock::now_ms());
         Self {
-            day,
+            day: signal(day),
             meal_id: stored(None),
             logged_at: stored(None),
             photo_name: stored(None),
+            favorite: stored(None),
+            pending: signal(None),
+            started: stored(false),
             foods: signal(Vec::new()),
             slot: signal(MealSlot::at(hour, minute)),
             title: signal(None),
@@ -108,7 +121,7 @@ impl Draft {
             dirty: signal(false),
             editing: signal(None),
             consent_open: signal(false),
-            analysis: stored(None),
+            choosing_day: signal(false),
         }
     }
 
@@ -126,13 +139,16 @@ impl Draft {
         draft
     }
 
-    /// A new meal on `day` with `meal`'s foods (new ids), title and
-    /// provenance, its slot from the time of day; the photo stays with
-    /// `meal`. Nothing is kept before Save.
-    pub fn repeating(meal: &Meal, day: Day) -> Self {
+    /// A new meal on `day` with `favorite`'s foods (new ids), title,
+    /// provenance and photo, its slot from the time of day. Nothing is
+    /// kept before Save.
+    pub fn from_favorite(favorite: &Favorite, day: Day) -> Self {
         let draft = Self::new(day);
+        draft.favorite.replace(Some(favorite.id.clone()));
+        draft.photo_name.replace(favorite.photo.clone());
         draft.foods.set(
-            meal.foods
+            favorite
+                .foods
                 .iter()
                 .map(|food| Food {
                     id: meals::new_food_id(),
@@ -140,9 +156,9 @@ impl Draft {
                 })
                 .collect(),
         );
-        draft.title.set(meal.title.clone());
-        draft.model.set(meal.model.clone());
-        draft.prompt_version.set(meal.prompt_version.clone());
+        draft.title.set(favorite.title.clone());
+        draft.model.set(favorite.model.clone());
+        draft.prompt_version.set(favorite.prompt_version.clone());
         draft
     }
 
@@ -226,52 +242,61 @@ impl Draft {
         else {
             return;
         };
-        if let Some(task) = self.analysis.replace(None) {
-            task.cancel();
-        }
         let Ok(consent) = Consent::approve(vision::upload_target(&account), true) else {
             self.phase.set(Phase::Failed(VisionFailure::Refused));
             return;
         };
+        let id = self
+            .pending
+            .get_untracked()
+            .unwrap_or_else(|| format!("d{}", meals::new_meal_id()));
+        // The photo is kept now: the draft shows it once the page closes,
+        // and the meal it becomes shares the file.
+        let photo = match self.photo_name.with(|name| name.clone()) {
+            Some(name) => name,
+            None => {
+                let name = format!("{id}.jpg");
+                let jpeg = self
+                    .photo
+                    .with_untracked(|p| p.as_ref().and_then(|p| p.keep.clone()))
+                    .unwrap_or_else(|| upload.clone());
+                photos::keep(&name, &jpeg);
+                self.photo_name.replace(Some(name.clone()));
+                self.photo.update(|p| {
+                    if let Some(p) = p {
+                        p.keep = None;
+                    }
+                });
+                name
+            }
+        };
         self.phase.set(Phase::Analyzing);
         self.slow.set(false);
-        self.dirty.set(true);
         self.sent_to
             .set(Some((account.host(), account.model.trim().to_owned())));
+        let draft = PendingMeal {
+            id: id.clone(),
+            day: self.day.get_untracked(),
+            slot: self.slot.get_untracked(),
+            title: None,
+            foods: Vec::new(),
+            photo,
+            model: None,
+            prompt_version: None,
+            skipped: 0,
+            status: PendingStatus::Analyzing,
+            created_at_ms: clock::now_ms(),
+        };
         let lang = Lang::from_language(locale().language());
-        let task = spawn(async move {
-            let slow_after = spawn(async move {
-                timer(Duration::from_secs(15)).await;
+        pending::recognize(draft, account, upload, lang, consent);
+        self.pending.set(Some(id));
+        self.started.replace(true);
+        spawn(async move {
+            timer(Duration::from_secs(15)).await;
+            if self.phase.get_untracked() == Phase::Analyzing {
                 self.slow.set(true);
-            });
-            let result = vision::recognize(account, upload, lang, consent).await;
-            slow_after.cancel();
-            match result {
-                Ok(estimate) => {
-                    let found = estimate.recognition.foods.len();
-                    batch(|| {
-                        self.foods.set(estimate.recognition.foods);
-                        self.title.set(estimate.recognition.title);
-                        self.model.set(Some(estimate.model));
-                        self.prompt_version.set(Some(estimate.prompt_version));
-                        self.skipped.set(estimate.recognition.skipped);
-                        self.phase.set(if found == 0 {
-                            Phase::NoFood
-                        } else {
-                            Phase::Ready
-                        });
-                    });
-                    haptic(Haptic::Notification(HapticNotification::Success));
-                    announce_for_accessibility(s().food_count(found));
-                }
-                Err(failure) => {
-                    log::warn!("vision: recognition failed: {failure:?}");
-                    self.phase.set(Phase::Failed(failure));
-                    haptic(Haptic::Notification(HapticNotification::Error));
-                }
             }
         });
-        self.analysis.replace(Some(task));
     }
 
     /// Analyzes again after a failure.
@@ -318,7 +343,9 @@ impl Draft {
 
     /// Whether leaving would lose work (tracked).
     pub fn has_unsaved_work(&self) -> bool {
-        self.dirty.get() || matches!(self.phase.get(), Phase::Analyzing)
+        // A draft keeps everything: leaving it loses nothing.
+        self.pending.with(Option::is_none)
+            && (self.dirty.get() || matches!(self.phase.get(), Phase::Analyzing))
     }
 
     /// Keeps the meal and closes the page.
@@ -340,7 +367,7 @@ impl Draft {
         };
         meals::save(Meal {
             id,
-            day: self.day,
+            day: self.day.get_untracked(),
             logged_at_ms: self.logged_at.with(|at| at.unwrap_or_else(clock::now_ms)),
             slot: self.slot.get_untracked(),
             title: self.title.get_untracked(),
@@ -349,7 +376,31 @@ impl Draft {
             model: self.model.get_untracked(),
             prompt_version: self.prompt_version.get_untracked(),
         });
+        if let Some(favorite) = self.favorite.with(|id| id.clone()) {
+            favorites::touch(&favorite);
+        }
+        if let Some(draft) = self.pending.get_untracked() {
+            pending::remove(&draft);
+        }
         self.dirty.set(false);
         nav::pop();
+    }
+
+    /// The meal as Save would keep it, to keep as a favorite.
+    pub fn snapshot(&self) -> Option<Meal> {
+        if !untracked(|| self.can_save()) {
+            return None;
+        }
+        Some(Meal {
+            id: self.meal_id.with(|id| id.clone())?,
+            day: self.day.get_untracked(),
+            logged_at_ms: self.logged_at.with(|at| at.unwrap_or_else(clock::now_ms)),
+            slot: self.slot.get_untracked(),
+            title: self.title.get_untracked(),
+            foods: self.foods.get_untracked(),
+            photo: self.photo_name.with(|name| name.clone()),
+            model: self.model.get_untracked(),
+            prompt_version: self.prompt_version.get_untracked(),
+        })
     }
 }

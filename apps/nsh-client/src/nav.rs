@@ -1,5 +1,6 @@
-//! The navigation stack's state: the pages open over Today, bottom to top.
-//! Putting a route in pushes its page; taking it out pops it.
+//! Navigation state: the home's chosen tab, and the pages open over the
+//! home, bottom to top. Putting a route in pushes its page; taking it out
+//! pops it.
 
 use nsh_core::prelude::*;
 
@@ -12,12 +13,38 @@ pub enum Route {
     NewMeal { day: Day, capture: Option<u64> },
     /// The saved meal with this id.
     EditMeal(String),
-    /// A new meal on `day` with the foods of the saved meal `from`.
-    RepeatMeal { day: Day, from: String },
+    /// The recognition draft with this id.
+    Pending(String),
+    /// A new meal on `day` from the favorite `id`, to adjust before Save.
+    FromFavorite { day: Day, id: String },
     /// The model account and goal.
     Settings,
-    /// The last seven days of health in review.
-    WeekReview,
+}
+
+/// The home's tabs.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum Tab {
+    #[default]
+    Today,
+    Records,
+    Review,
+}
+
+impl Tab {
+    pub const ALL: [Tab; 3] = [Tab::Today, Tab::Records, Tab::Review];
+}
+
+#[derive(Clone, Copy, Default, PartialEq)]
+struct Chosen(Tab);
+
+/// The chosen tab (tracked).
+pub fn tab() -> Tab {
+    global::<Chosen>().get().0
+}
+
+/// Shows `tab`.
+pub fn select(tab: Tab) {
+    global::<Chosen>().set(Chosen(tab));
 }
 
 impl Route {

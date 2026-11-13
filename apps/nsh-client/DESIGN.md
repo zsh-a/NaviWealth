@@ -11,8 +11,27 @@ AI only, the user's own model account, no relay.
 - **Primary task:** log a meal from a photo and see what today adds up to.
 - **Objects:** a meal (foods with eaten grams and per-100 g nutrients, a slot,
   a photo kept only on the device) and a day (its meals and their total).
-- **Always available:** Log a meal (photo library), Add manually, the last
-  four weeks, Settings.
+- **Home:** three tabs (Today · Records · Review) in a floating glass bar
+  beside one ink capture button; Settings is the corner action on Today.
+  Pages pushed over the home cover the bar. Hidden tabs stay alive (their
+  scroll position stays) and are hidden from screen readers.
+- **Capture sheet (the one way to record):** Log a meal (the system photo
+  picker also takes photos) and Log weight as two large actions, favorites
+  as a row of photo tiles (tap logs today with Undo; hold offers Adjust,
+  then log / Remove), and Add manually. A saved meal's bookmark saves or
+  removes it as a favorite.
+- **Today shows today:** the intake glance (figure, what is left of the
+  goal, a compact macro ring), three vitals (sleep, weight, Body Battery
+  with resting heart rate; a Garmin vital opens all of the day's Garmin
+  data), and today's records. Past days are in Records; a meal is moved to
+  another day with the date chip on its review page.
+- **Drafts:** a sent photo becomes a draft; leaving the review page never
+  loses it. Drafts are cards edged in the AI's light, pinned on Today and
+  atop Records: being read (shimmer), ready (Confirm), no food found or
+  failed (open to add foods or try again). Edits on a draft's page are
+  kept on the draft; its trash discards it with Undo.
+- **Records:** every day newest first with its total, meals and weights as
+  rows of one card, filtered by all / meals / weight, 21 days at a time.
 - **States designed:** first run (no account), empty day, past day, photo
   being prepared, consent pending / declined, analyzing (and slow), results,
   no food found, every failure with its recovery, editing, unsaved changes.
@@ -38,7 +57,7 @@ surfaces separated by tone and a hairline instead of shadows.
 | Data | `PROTEIN` coral, `CARBS` saffron, `FAT` azure, `OTHER`, `TRACK` |
 | Media | `ON_MEDIA`, `MEDIA_SCRIM`, `PHOTO_WELL` |
 
-- **Type** (`Type`): Hero 60 / -2.4, Display 44, LargeTitle 34, Title 22,
+- **Type** (`Type`): Display 44, LargeTitle 34, Title 22,
   Figure 20, Headline 17, Body 16, Callout 15, Subhead 14, Caption 12.5;
   tight tracking on large figures, tabular numerals everywhere numbers move.
 - **Shape:** controls are pills; sheet 32 > card 24 > well 18 > field 16 >
@@ -91,9 +110,10 @@ still.
 | Screen | Change | Motion | Reduced motion |
 |---|---|---|---|
 | All | Button press | Spring to 0.96 (cards 0.98, icon buttons 0.90), deeper fill | Fill only |
-| Today | Day chosen | One ink pill slides to the day (native spring) | Jumps |
+| Home | Tab chosen | The bar's pill slides to the tab (native spring) | Jumps |
+| Review | Day chosen (date chip) | One ink pill slides to the day (native spring) | Jumps |
 | Today | Day's energy changes | Ring segments sweep from old to new ends, `slower`, settle; the figure counts to its new value | Set at once |
-| Today | Meals arrive (open, save, undo) | Cards rise 14 pt and fade in, staggered | Shown at once |
+| Today | Meals arrive (open, save, undo) | Rows rise 14 pt and fade in, staggered | Shown at once |
 | Today | Meal deleted | Toast slides up and fades, `slow`; Undo restores | Shown at once |
 | Review | Scrolling | Photo drifts at half speed; pulling stretches it; once the panel slides under the top bar, the bar frosts in (`fast`) and its buttons turn solid, never resting half-faded | No stretch; bar switches at once |
 | Review | Analyzing | The AI's light passes over the photo (2 s loop); a frosted caption rises in; placeholders shimmer | No light, no shimmer |

@@ -4,8 +4,11 @@
 pub mod backup;
 pub mod clock;
 pub mod db;
+pub mod favorites;
 pub mod garmin;
 pub mod meals;
+pub mod notes;
+pub mod pending;
 pub mod photos;
 pub mod settings;
 pub mod tasks;

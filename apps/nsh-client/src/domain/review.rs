@@ -1,4 +1,4 @@
-//! The week in review: seven days of intake, weight and Garmin numbers,
+//! The week or month in review: intake, weight and Garmin numbers,
 //! averaged over the days that have them. A day without records is
 //! unknown: it is left out of averages, never counted as zero.
 
@@ -18,7 +18,43 @@ pub fn days_ending(last: Day) -> Vec<Day> {
     (0..DAYS).rev().map(|back| last.plus_days(-back)).collect()
 }
 
-/// What the week's meals add up to.
+/// The span a review covers.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum Period {
+    /// Seven days ending on a day.
+    #[default]
+    Week,
+    /// A calendar month, up to today while it is the current one.
+    Month,
+}
+
+/// The days of the `period` that is `back` periods before the current one
+/// (`today` ends the current week; the current month stops at `today`),
+/// oldest first.
+pub fn period_days(period: Period, today: Day, back: i32) -> Vec<Day> {
+    match period {
+        Period::Week => days_ending(today.plus_days(-DAYS * back)),
+        Period::Month => {
+            let month = today
+                .0
+                .first_of_month()
+                .checked_sub(jiff::Span::new().months(back))
+                .unwrap_or_else(|_| today.0.first_of_month());
+            let last = month.last_of_month().min(today.0);
+            let first = Day(month);
+            (0..=Day(last).days_since(first))
+                .map(|offset| first.plus_days(offset))
+                .collect()
+        }
+    }
+}
+
+/// Days whose energy passed `goal`.
+pub fn over_goal(kcal: &[Option<f64>], goal: f64) -> usize {
+    kcal.iter().flatten().filter(|&&k| k > goal).count()
+}
+
+/// What the period's meals add up to.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Intake {
     /// Each day's energy, `None` where nothing was logged.
@@ -97,6 +133,21 @@ mod tests {
         assert_eq!(days.len(), 7);
         assert_eq!(days[0], day("2026-11-07"));
         assert_eq!(days[6], day("2026-11-13"));
+    }
+
+    #[test]
+    fn a_month_runs_from_its_first_day_to_today_or_its_end() {
+        let today = day("2026-11-13");
+        let current = period_days(Period::Month, today, 0);
+        assert_eq!(current.len(), 13);
+        assert_eq!(current[0], day("2026-11-01"));
+        assert_eq!(current[12], today);
+        let october = period_days(Period::Month, today, 1);
+        assert_eq!(october.len(), 31);
+        assert_eq!(october[30], day("2026-10-31"));
+        let week = period_days(Period::Week, today, 1);
+        assert_eq!((week[0], week[6]), (day("2026-10-31"), day("2026-11-06")));
+        assert_eq!(over_goal(&[Some(2100.0), None, Some(1900.0)], 2000.0), 1);
     }
 
     #[test]

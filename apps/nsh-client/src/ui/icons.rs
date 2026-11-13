@@ -25,6 +25,15 @@ pub enum Icon {
     Refresh,
     Utensils,
     Chart,
+    Bookmark,
+    BookmarkFilled,
+    Sun,
+    List,
+    Scale,
+    Moon,
+    Bolt,
+    Calendar,
+    ChevronDown,
 }
 
 impl Icon {
@@ -75,6 +84,29 @@ impl Icon {
                 r#"<path d="M7 3.5v17M4.4 3.5v4.8a2.6 2.6 0 0 0 5.2 0V3.5"/><path d="M17.2 20.5V3.5c-2.3 1.3-3.7 3.9-3.7 7.1V14h3.7"/>"#
             }
             Icon::Chart => r#"<path d="M4 20h16"/><path d="M7 16.5v-5M12 16.5V7M17 16.5v-3.5"/>"#,
+            Icon::Bookmark => {
+                r#"<path d="M7 3.5h10a1.5 1.5 0 0 1 1.5 1.5v15.5L12 16.5l-6.5 4V5A1.5 1.5 0 0 1 7 3.5z"/>"#
+            }
+            Icon::Sun => {
+                r#"<circle cx="12" cy="12" r="3.8"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/>"#
+            }
+            Icon::List => {
+                r#"<path d="M9 6.5h11M9 12h11M9 17.5h11"/><path d="M4.5 6.5h.01M4.5 12h.01M4.5 17.5h.01" stroke-width="2.6"/>"#
+            }
+            Icon::Scale => {
+                r#"<rect x="3.5" y="3.5" width="17" height="17" rx="5"/><path d="M8.3 10a5.2 5.2 0 0 1 7.4 0"/><path d="M12 10.2l1.6-2"/>"#
+            }
+            Icon::Moon => {
+                r#"<path d="M19.5 14.6A7.6 7.6 0 0 1 9.4 4.5a7.6 7.6 0 1 0 10.1 10.1z"/>"#
+            }
+            Icon::Bolt => r#"<path d="M13 3.5L6 13.5h5l-1 7 7-10h-5z"/>"#,
+            Icon::Calendar => {
+                r#"<rect x="4" y="5" width="16" height="15" rx="3.5"/><path d="M4 10h16M8.5 3.5v3M15.5 3.5v3"/>"#
+            }
+            Icon::ChevronDown => r#"<path d="M6.5 9.5L12 15l5.5-5.5"/>"#,
+            Icon::BookmarkFilled => {
+                r#"<path fill="currentColor" d="M7 3.5h10a1.5 1.5 0 0 1 1.5 1.5v15.5L12 16.5l-6.5 4V5A1.5 1.5 0 0 1 7 3.5z"/>"#
+            }
         }
     }
 

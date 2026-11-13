@@ -18,7 +18,10 @@ use std::time::Duration;
 use nsh_core::prelude::*;
 
 use crate::{
-    data::{backup, clock, db, garmin, meals, photos, settings, tasks, weights},
+    data::{
+        backup, clock, db, favorites, garmin, meals, notes, pending, photos, settings, tasks,
+        weights,
+    },
     ui::color,
 };
 
@@ -35,6 +38,9 @@ pub fn App() -> impl IntoElement {
     tasks::mark_root();
     db::open();
     meals::load();
+    favorites::load();
+    pending::load();
+    notes::load();
     weights::load();
     garmin::load();
     backup::load();

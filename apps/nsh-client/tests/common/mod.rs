@@ -47,7 +47,7 @@ pub fn start_in(
         config.network = Some(network);
     }
     let mut app = Headless::start(config).expect("the app starts");
-    app.wait_for("Log a meal").expect("Today shows");
+    app.wait_for("label:New entry").expect("the home shows");
     (app, storage)
 }
 

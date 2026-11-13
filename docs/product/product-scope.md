@@ -39,10 +39,26 @@ whether the owner uses a feature every day or every week.
 
 | Tab | Answers | Contents |
 |---|---|---|
-| Today | What happened today? | Spending and intake so far, last night's sleep and today's Garmin summary, latest weight; two primary actions: record a transaction, log a meal |
+| Today | What happened today? | Today only (history lives in Records): a summary of spending and intake so far, sleep, latest weight and Body Battery, today's records, and drafts awaiting confirmation |
 | Records | What did I record? | One date-ordered timeline of transactions and meals; drafts awaiting confirmation (imports, recognition results) pinned on top |
 | Assets | What do I own? | Accounts and balances, holdings with quantity, cost and market value, net worth and its trend |
 | Review | How did this week / month go? | Spending by category vs the previous period and the optional budget, net worth and holdings change, average intake and macros, weight trend, Garmin sleep/resting HR/steps averages, one line of the owner's own notes |
+
+## Interaction Model
+
+Decided 2026-11-13; screens in `.impeccable/mocks/2026-11-13-lifeos-ia/`.
+
+- A floating tab bar beside one capture button. The capture sheet holds
+  every way to record: log a meal from a photo (the system picker also takes
+  photos), weight, favorites, manual meal, and later a transaction and a
+  receipt. No record type gets its own permanent button.
+- Recognition never blocks. The owner may leave the review page while a
+  photo is analyzed; an unconfirmed result becomes a draft pinned on Today
+  and in Records. Nothing is saved before confirmation.
+- Today shows today. Past days are reached in Records; logging for another
+  day changes the date on the review page.
+- Today keeps one layout from health-only to finance: the summary card shows
+  intake now and spending beside it once the ledger exists.
 
 ## Kept Features
 
@@ -71,6 +87,10 @@ whether the owner uses a feature every day or every week.
 
 - Meal logging as in the current NSH client: photo recognition with consent,
   editable consumed grams, local catalog nutrition, manual entry.
+- Favorites: a saved meal kept as a favorite (its own copy, photo shared)
+  logs again on any day with one tap and Undo, or after adjusting. It
+  replaced "log again today", which could only copy a meal still in the
+  four-week strip onto today (Rule 5).
 - Weight: manual entry plus Garmin body composition when available.
 - Garmin daily data through Garmin's official Personal API (self-serve key,
   read-only, own data only): sleep duration and score, HRV with its status,
@@ -112,5 +132,5 @@ and keep it as an archive file.
 ## Records In Scope
 
 Account, Transaction, Category, Budget (optional), Security, Trade, Quote,
-Meal (with food snapshots and local photos), Weight, Garmin daily summary,
+Meal (with food snapshots and local photos), Favorite meal, Weight, Garmin daily summary,
 Review note. Positions and net worth are derived and not stored as truth.

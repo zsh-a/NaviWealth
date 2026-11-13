@@ -4,6 +4,7 @@
 //! so a language change follows.
 
 mod en;
+mod phrases;
 mod zh;
 
 use nsh_core::prelude::*;
@@ -57,11 +58,41 @@ pub struct Strings {
     pub total: &'static str,
     pub save_meal: &'static str,
     pub delete_meal: &'static str,
-    pub log_again: &'static str,
+    pub records: &'static str,
+    pub review: &'static str,
+    pub new_entry: &'static str,
+    pub photo_or_library: &'static str,
+    pub log_weight: &'static str,
+    pub tap_to_log: &'static str,
+    pub resting: &'static str,
+    pub connect_garmin: &'static str,
+    pub todays_records: &'static str,
+    pub all_records: &'static str,
+    pub history: &'static str,
+    pub show_earlier: &'static str,
+    pub no_records: &'static str,
+    pub no_records_body: &'static str,
+    pub meal_day: &'static str,
+    pub discard_draft: &'static str,
+    pub draft_kept: &'static str,
+    pub draft_discarded: &'static str,
+    pub to_confirm: &'static str,
+    pub confirm: &'static str,
+    pub draft_retry: &'static str,
+    pub draft_add: &'static str,
+    pub this_week: &'static str,
+    pub this_month: &'static str,
+    pub previous_month: &'static str,
+    pub next_month: &'static str,
+    pub daily_intake: &'static str,
+    pub favorites: &'static str,
+    pub save_favorite: &'static str,
+    pub remove_favorite: &'static str,
+    pub favorite_saved: &'static str,
+    pub favorite_removed: &'static str,
+    pub adjust_then_log: &'static str,
     pub recent_foods: &'static str,
     pub weight: &'static str,
-    pub weight_not_logged: &'static str,
-    pub weight_hint: &'static str,
     pub error_weight: &'static str,
     pub weight_deleted: &'static str,
     pub delete_weight: &'static str,
@@ -77,6 +108,8 @@ pub struct Strings {
     pub garmin_key_placeholder: &'static str,
     pub garmin_connect: &'static str,
     pub garmin_disconnect: &'static str,
+    pub review_note: &'static str,
+    pub review_note_hint: &'static str,
     pub garmin_note: &'static str,
     pub garmin_key_rejected: &'static str,
     pub garmin_network: &'static str,
@@ -84,15 +117,11 @@ pub struct Strings {
     pub garmin_syncing: &'static str,
     pub garmin_no_data: &'static str,
     pub backup: &'static str,
-    pub week_review: &'static str,
     pub previous_week: &'static str,
     pub next_week: &'static str,
     pub intake: &'static str,
-    pub per_logged_day: &'static str,
     pub weight_week: &'static str,
-    pub recovery: &'static str,
     pub avg_sleep: &'static str,
-    pub avg_sleep_score: &'static str,
     pub no_week_data: &'static str,
     pub webdav_url: &'static str,
     pub webdav_user: &'static str,
@@ -219,23 +248,6 @@ impl Strings {
         format!("{kg:.1}")
     }
 
-    /// The change over about a week, signed.
-    pub fn weight_change(&self, delta: f64) -> String {
-        let sign = if delta > 0.0 {
-            "+"
-        } else if delta < 0.0 {
-            "−"
-        } else {
-            "±"
-        };
-        let value = format!("{sign}{:.1} kg", delta.abs());
-        if self.zh() {
-            format!("近一周 {value}")
-        } else {
-            format!("{value} this week")
-        }
-    }
-
     /// When the shown weight was logged, `days` before the chosen day.
     pub fn weight_days_ago(&self, days: i32) -> String {
         match (self.zh(), days) {
@@ -272,15 +284,6 @@ impl Strings {
             format!("已连接 · {host}")
         } else {
             format!("Connected · {host}")
-        }
-    }
-
-    /// How many of the seven days have meals.
-    pub fn logged_days(&self, n: usize) -> String {
-        if self.zh() {
-            format!("7 天中记录了 {n} 天")
-        } else {
-            format!("{n} of 7 days logged")
         }
     }
 
@@ -339,21 +342,11 @@ impl Strings {
         }
     }
 
-    /// `n` foods.
     pub fn food_count(&self, n: usize) -> String {
         match (self.zh(), n) {
             (true, _) => format!("{n} 种食物"),
             (false, 1) => "1 food".to_owned(),
             (false, _) => format!("{n} foods"),
-        }
-    }
-
-    /// The goal line under the day's figure.
-    pub fn of_goal(&self, goal: f64) -> String {
-        if self.zh() {
-            format!("目标 {} 千卡", format::kcal(goal))
-        } else {
-            format!("of {} kcal", format::kcal(goal))
         }
     }
 
@@ -421,12 +414,12 @@ impl Strings {
         }
     }
 
-    /// A day's title: Today, Yesterday, or the weekday.
+    /// A day's title: Today, Yesterday, or its date.
     pub fn day_title(&self, day: Day, today: Day) -> String {
         match today.days_since(day) {
             0 => self.today.to_owned(),
             1 => self.yesterday.to_owned(),
-            _ => self.weekday(day).to_owned(),
+            _ => self.long_date(day),
         }
     }
 
@@ -503,7 +496,6 @@ mod tests {
         assert_eq!(zh.meal_count(3), "3 餐");
         assert_eq!(en.goal_status(1240.0, 2000.0), "760 kcal left");
         assert_eq!(zh.goal_status(2120.0, 2000.0), "超出 120 千卡");
-        assert_eq!(en.of_goal(2000.0), "of 2,000 kcal");
     }
 
     #[test]
@@ -514,6 +506,9 @@ mod tests {
         assert_eq!(zh.long_date(today), "11月12日 星期四");
         assert_eq!(en.day_title(today, today), "Today");
         assert_eq!(zh.day_title(today.plus_days(-1), today), "昨天");
-        assert_eq!(en.day_title(today.plus_days(-3), today), "Monday");
+        assert_eq!(
+            en.day_title(today.plus_days(-3), today),
+            "Monday, November 9"
+        );
     }
 }

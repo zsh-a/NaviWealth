@@ -4,23 +4,28 @@
 //! deleted (with Undo on Today).
 
 mod consent;
+mod day;
 mod draft;
 mod food_editor;
 mod foods;
+mod pending;
 mod photo;
 
 pub use foods::failure_copy;
+pub use pending::pending_meal_page;
 
 use std::{rc::Rc, time::Duration};
 
 use nsh_base::{alert_dialog, nav_page};
 use nsh_core::{
+    Haptic, HapticNotification,
     element::{AnimatedValue, Screen},
     prelude::*,
 };
 
 use self::{
     consent::consent_sheet,
+    day::{day_chip, day_sheet},
     draft::{Draft, Editing, Phase, Photo},
     food_editor::food_editor,
 };
@@ -29,7 +34,7 @@ use super::{
     today::slot_name,
 };
 use crate::{
-    data::{clock, meals, photos},
+    data::{clock, favorites, meals, photos},
     domain::{
         format,
         meal::{Day, MealSlot},
@@ -61,12 +66,13 @@ pub fn new_meal_page(day: Day, capture: Option<u64>) -> Screen {
     page(draft)
 }
 
-/// A new meal on `day` with the foods of the saved meal `from`.
-pub fn repeat_meal_page(day: Day, from: &str) -> Screen {
-    let draft = match untracked(|| meals::get(from)) {
-        Some(meal) => Draft::repeating(&meal, day),
+/// A new meal on `day` from the favorite `id`, to adjust before Save.
+pub fn favorite_meal_page(day: Day, id: &str) -> Screen {
+    let draft = match favorites::get(id) {
+        Some(favorite) => Draft::from_favorite(&favorite, day),
         None => Draft::new(day),
     };
+    show_kept_photo(draft);
     page(draft)
 }
 
@@ -76,25 +82,32 @@ pub fn edit_meal_page(id: &str) -> Screen {
         Some(meal) => Draft::editing_meal(&meal),
         None => Draft::new(untracked(clock::today)),
     };
-    if let Some(name) = draft.kept_photo() {
-        spawn(photos::load(vec![name.clone()]));
-        effect(move || {
-            if let Some(uri) = photos::uri(&name)
-                && draft.photo.with_untracked(Option::is_none)
-            {
-                draft.photo.set(Some(Photo {
-                    uri,
-                    upload: None,
-                    keep: None,
-                }));
-            }
-        });
-    }
+    show_kept_photo(draft);
     page(draft)
+}
+
+/// Shows the draft's kept photo once it is loaded.
+fn show_kept_photo(draft: Draft) {
+    let Some(name) = draft.kept_photo() else {
+        return;
+    };
+    spawn(photos::load(vec![name.clone()]));
+    effect(move || {
+        if let Some(uri) = photos::uri(&name)
+            && draft.photo.with_untracked(Option::is_none)
+        {
+            draft.photo.set(Some(Photo {
+                uri,
+                upload: None,
+                keep: None,
+            }));
+        }
+    });
 }
 
 fn page(draft: Draft) -> Screen {
     provide_context(draft);
+    draft.follow_pending();
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
     if crate::preview::wants_editor() {
         let opened = stored(false);
@@ -181,6 +194,11 @@ fn page(draft: Draft) -> Screen {
                     consent_sheet(),
                 ))
                 .child(bottom_sheet(
+                    move || draft.choosing_day.get(),
+                    move || draft.choosing_day.set(false),
+                    day_sheet(draft),
+                ))
+                .child(bottom_sheet(
                     move || draft.editing.with(Option::is_some),
                     move || draft.editing.set(None),
                     food_editor(),
@@ -200,6 +218,7 @@ fn content(draft: Draft, immersive: impl Fn() -> bool + Copy + 'static) -> impl 
         .pb(move || px(bottom_clearance()))
         .gap_5()
         .child(status_line(draft))
+        .child(day_chip(draft))
         .child(segmented(
             MealSlot::ALL
                 .into_iter()
@@ -212,31 +231,12 @@ fn content(draft: Draft, immersive: impl Fn() -> bool + Copy + 'static) -> impl 
             },
         ))
         .child(foods::foods_section(draft))
-        .child(draft.is_saved_meal().then(|| log_again(draft)))
-}
-
-/// Opens a new meal today with this meal's foods, in place of this page.
-fn log_again(draft: Draft) -> impl IntoElement {
-    Btn::secondary()
-        .icon(Icon::Refresh)
-        .label(|| s().log_again.into())
-        .disabled(move || draft.has_unsaved_work())
-        .on_press(move || {
-            let Some(from) = draft.meal_id.with(|id| id.clone()) else {
-                return;
-            };
-            nav::pop();
-            nav::push(nav::Route::RepeatMeal {
-                day: clock::today(),
-                from,
-            });
-        })
 }
 
 /// The top bar's height under the status bar: its padding and buttons.
 const BAR: f32 = 6.0 + 44.0 + 8.0;
 
-/// The top bar: Back, the title and Delete. Over a photo its buttons are
+/// The top bar: Back, the title, and for a saved meal Favorite and Delete. Over a photo its buttons are
 /// frosted glass and its background is clear; past the photo it is the
 /// frosted canvas with solid buttons, like the bar of a page without one.
 fn chrome(
@@ -249,6 +249,13 @@ fn chrome(
     dynamic(move || {
         let over_photo = immersive();
         let solid = !over_photo || past_photo.get();
+        let saved = draft.is_saved_meal();
+        let is_draft = draft.pending.get().is_some();
+        let favorite = saved
+            && draft
+                .meal_id
+                .with(|id| id.as_deref().and_then(favorites::of_meal))
+                .is_some();
         untracked(move || {
             let variant = if solid {
                 Variant::Secondary
@@ -294,11 +301,33 @@ fn chrome(
                         .variant(variant)
                         .on_press(back),
                 )
+                // Balances the two buttons on the right, keeping the title centered.
+                .child(saved.then(|| view().size(px(44.0))))
                 .child(heading)
-                .child(if draft.is_saved_meal() {
-                    IconBtn::new(Icon::Trash, || s().delete_meal.into())
+                .child(if saved {
+                    let (glyph, label): (Icon, fn() -> SharedString) = if favorite {
+                        (Icon::BookmarkFilled, || s().remove_favorite.into())
+                    } else {
+                        (Icon::Bookmark, || s().save_favorite.into())
+                    };
+                    view()
+                        .flex_row()
+                        .gap_2()
+                        .child(
+                            IconBtn::new(glyph, label)
+                                .variant(variant)
+                                .on_press(move || toggle_favorite(draft)),
+                        )
+                        .child(
+                            IconBtn::new(Icon::Trash, || s().delete_meal.into())
+                                .variant(variant)
+                                .on_press(move || delete(draft)),
+                        )
+                        .into_element()
+                } else if is_draft {
+                    IconBtn::new(Icon::Trash, || s().discard_draft.into())
                         .variant(variant)
-                        .on_press(move || delete(draft))
+                        .on_press(move || pending::discard(draft))
                         .into_element()
                 } else {
                     view().size(px(44.0)).into_element()
@@ -365,7 +394,13 @@ fn status_line(draft: Draft) -> impl IntoElement {
 /// Back: straight away when nothing would be lost, else after asking.
 fn request_back(draft: Draft) {
     if !untracked(|| draft.has_unsaved_work()) {
+        // A photo sent from this page waits on Today as a draft: say so
+        // (not when an existing draft is only looked at).
+        let kept = draft.started_draft();
         nav::pop();
+        if kept {
+            show_toast(s().draft_kept, None);
+        }
         return;
     }
     let answer = alert_dialog()
@@ -383,6 +418,29 @@ fn request_back(draft: Draft) {
             nav::pop();
         }
     });
+}
+
+/// Keeps the meal as shown as a favorite, or removes the favorite saved
+/// from it. The filled bookmark is the confirmation (toasts show on Today),
+/// pressing it again undoes.
+fn toggle_favorite(draft: Draft) {
+    let Some(id) = draft.meal_id.with(|id| id.clone()) else {
+        return;
+    };
+    if let Some(favorite) = untracked(|| favorites::of_meal(&id)) {
+        if favorites::remove(&favorite.id).is_some() {
+            haptic(Haptic::Selection);
+            announce_for_accessibility(s().favorite_removed.to_owned());
+        }
+        return;
+    }
+    match draft.snapshot().as_ref().and_then(favorites::save_from) {
+        Some(_) => {
+            haptic(Haptic::Notification(HapticNotification::Success));
+            announce_for_accessibility(s().favorite_saved.to_owned());
+        }
+        None => haptic(Haptic::Notification(HapticNotification::Error)),
+    }
 }
 
 /// Deletes the saved meal, closes the page and offers Undo on Today.

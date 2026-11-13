@@ -61,6 +61,11 @@ fn backed_up(dav: &Dav) -> Result<Vec<u8>, String> {
         ],
     )
     .unwrap();
+    db.execute(
+        "INSERT INTO review_notes VALUES (?1, 'Lighter dinners.', 42)",
+        [today().to_string()],
+    )
+    .unwrap();
     drop(db);
     let mut entries = backups(dav, "correct horse battery", None);
     entries.extend(account(false));
@@ -144,6 +149,10 @@ fn encrypted_backup_creates_the_folder_and_restores_on_a_fresh_install() -> Resu
         vec![(today().to_string(), 72.4)]
     );
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    let note: String = db
+        .query_row("SELECT text FROM review_notes", [], |r| r.get(0))
+        .unwrap();
+    assert_eq!(note, "Lighter dinners.");
     let body: String = db
         .query_row("SELECT body FROM garmin_days", [], |r| r.get(0))
         .unwrap();
@@ -187,7 +196,7 @@ fn resuming_on_a_new_day_backs_up_once_even_when_settings_closes() -> Result<(),
     config.storage = Some(storage.clone());
     config.data_dir = Some(dir.path().to_path_buf());
     let mut app = Headless::start(config).unwrap();
-    app.wait_for("Log a meal")?;
+    app.wait_for("label:New entry")?;
     app.press("label:Settings")?;
     app.set_environment("background", |e| e.lifecycle = Lifecycle::Background)?;
     app.set_system_time(now + Duration::from_secs(24 * 3600))?;

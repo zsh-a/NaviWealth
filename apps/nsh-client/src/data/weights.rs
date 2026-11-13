@@ -70,6 +70,11 @@ pub fn weekly_change(latest: Weight) -> Option<f64> {
     weights().with(|w| weight::change_since(&w.0, latest, 7))
 }
 
+/// Every entry in day order (tracked).
+pub fn all() -> Vec<Weight> {
+    weights().with(|w| w.0.clone())
+}
+
 /// The entries of the `days` days ending on `day` (tracked).
 pub fn window(day: Day, days: i32) -> Vec<Weight> {
     weights().with(|w| weight::window(&w.0, day, days))
