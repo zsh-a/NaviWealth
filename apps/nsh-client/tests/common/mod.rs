@@ -217,6 +217,10 @@ pub const GARMIN_CN: &str = "https://personal.connectapi.garmin.cn";
 /// Garmin as a garmin.cn account sees it: the global host does not know
 /// the key, the China host gives a token and today's numbers.
 pub fn garmin_cn() -> Arc<StubNetwork> {
+    garmin_cn_with_delay(Duration::from_millis(20))
+}
+
+pub fn garmin_cn_with_delay(delay: Duration) -> Arc<StubNetwork> {
     let day = today().to_string();
     let not_here =
         r#"{"message":"Personal API Key with ID x does not exist.","error":"NotFoundException"}"#;
@@ -227,6 +231,11 @@ pub fn garmin_cn() -> Arc<StubNetwork> {
         "sleepScores": {"overall": {"value": 89}}}]);
     let hrv =
         json!({"hrvSummaries": [{"calendarDate": day, "lastNightAvg": 75, "status": "BALANCED"}]});
+    let data = |body: &str| {
+        let mut response = raw(200, body);
+        response.delay = delay;
+        response
+    };
     Arc::new(StubNetwork::new([
         (
             format!("POST {GARMIN_COM}/personalapitoken-service/*"),
@@ -238,15 +247,15 @@ pub fn garmin_cn() -> Arc<StubNetwork> {
         ),
         (
             format!("GET {GARMIN_CN}/usersummary-service/v2/dailysummaries*"),
-            raw(200, &daily.to_string()),
+            data(&daily.to_string()),
         ),
         (
             format!("GET {GARMIN_CN}/sleep-service/*"),
-            raw(200, &sleep.to_string()),
+            data(&sleep.to_string()),
         ),
         (
             format!("GET {GARMIN_CN}/hrv-service/*"),
-            raw(200, &hrv.to_string()),
+            data(&hrv.to_string()),
         ),
     ]))
 }

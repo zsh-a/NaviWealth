@@ -52,6 +52,7 @@ struct Link {
 
 #[derive(Clone, Default, PartialEq)]
 struct State {
+    generation: u64,
     link: Link,
     key: String,
     token: Option<(String, i64)>,
@@ -65,6 +66,7 @@ fn state() -> Signal<State> {
 
 /// Reads the connection and the kept days; the root calls it once.
 pub fn load() {
+    let generation = state().with_untracked(|s| s.generation.wrapping_add(1));
     let link: Link = Storage::get_item(KEY_LINK)
         .and_then(|raw| serde_json::from_str(&raw).ok())
         .unwrap_or_default();
@@ -77,6 +79,7 @@ pub fn load() {
     })
     .unwrap_or_default();
     state().set(State {
+        generation,
         link,
         key,
         days,
@@ -148,6 +151,7 @@ pub async fn connect(key: String) -> Result<Region, Failure> {
             Ok(token) => {
                 let _ = Storage::set_item(KEY_SECRET, key.clone());
                 state().update(|s| {
+                    s.generation = s.generation.wrapping_add(1);
                     s.key = key.clone();
                     s.link.region = Some(region);
                     s.token = Some((token, clock::now_ms() + TOKEN_MS));
@@ -168,6 +172,7 @@ pub async fn connect(key: String) -> Result<Region, Failure> {
 pub fn disconnect() {
     Storage::remove_item(KEY_SECRET);
     state().update(|s| {
+        s.generation = s.generation.wrapping_add(1);
         s.key.clear();
         s.token = None;
         s.link = Link::default();
@@ -179,13 +184,14 @@ pub fn disconnect() {
 /// Pulls recent days when connected: always when `force`, else only when
 /// the last pull is older than 30 minutes. One pull at a time.
 pub async fn refresh(force: bool) {
-    let (key, region, last, syncing, token) = state().with_untracked(|s| {
+    let (key, region, last, syncing, token, generation) = state().with_untracked(|s| {
         (
             s.key.clone(),
             s.link.region,
             s.link.last_sync_ms,
             s.sync == SyncState::Syncing,
             s.token.clone(),
+            s.generation,
         )
     });
     let Some(region) = region.filter(|_| !key.is_empty()) else {
@@ -197,6 +203,17 @@ pub async fn refresh(force: bool) {
     }
     state().update(|s| s.sync = SyncState::Syncing);
     let result = pull(region, &key, token.filter(|(_, until)| *until > now)).await;
+    // A root task can finish after disconnect, reconnect or restore.
+    // It must not write or revive the previous connection's state.
+    if state().with_untracked(|s| s.generation != generation) {
+        return;
+    }
+    if let Ok((_, days)) = &result {
+        let written = db::with(|c| write_days(c, days));
+        if let Some(Err(error)) = written {
+            log::error!("garmin: days were not kept: {error}");
+        }
+    }
     state().update(|s| match result {
         Ok((token, days)) => {
             s.token = Some(token);
@@ -253,10 +270,6 @@ async fn pull(region: Region, key: &str, token: Option<(String, i64)>) -> Result
         .filter(|day| !day.is_empty())
         .filter_map(|day| Some((Day(day.day.parse().ok()?), day)))
         .collect();
-    let written = db::with(|c| write_days(c, &days));
-    if let Some(Err(error)) = written {
-        log::error!("garmin: days were not kept: {error}");
-    }
     Ok((token, days))
 }
 

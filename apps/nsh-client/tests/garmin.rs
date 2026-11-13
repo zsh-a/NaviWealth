@@ -5,6 +5,36 @@ mod common;
 use common::*;
 
 #[test]
+fn disconnect_during_a_root_pull_does_not_restore_the_key_or_import_late_rows() -> Result<(), String>
+{
+    let dir = tempfile::tempdir().unwrap();
+    let stub = garmin_cn_with_delay(Duration::from_millis(250));
+    let (mut app, storage) = start_in(Some(dir.path()), vec![], Some(stub.clone()));
+    app.press("label:Settings")?;
+    app.type_text("text:Paste your Garmin key", "GCDC-test-key")?;
+    app.press("Connect")?;
+    app.wait_for("text:Connected · garmin.cn")?;
+    // Let the root pull start, then revoke the connection before it returns.
+    for _ in 0..50 {
+        if stub.requests().iter().any(|r| r.method == "GET") {
+            break;
+        }
+        std::thread::sleep(Duration::from_millis(10));
+    }
+    assert!(stub.requests().iter().any(|r| r.method == "GET"));
+    app.press("Disconnect")?;
+    app.wait_for("text:Connect")?;
+    std::thread::sleep(Duration::from_secs(1));
+    assert!(!storage.entries().contains_key("secret.garmin-key.v1"));
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    let count: i64 = db
+        .query_row("SELECT COUNT(*) FROM garmin_days", [], |r| r.get(0))
+        .unwrap();
+    assert_eq!(count, 0);
+    Ok(())
+}
+
+#[test]
 fn a_garmin_key_connects_in_its_region_and_brings_todays_numbers() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
     let stub = garmin_cn();
