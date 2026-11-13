@@ -1,6 +1,7 @@
-//! The confirmed meals, kept in the app's device storage. Their signal is
-//! private: pages read through these functions and change meals only with
-//! [`save`], [`remove`] and [`restore`].
+//! The confirmed meals, kept in the app's database ([`super::db`]) and
+//! mirrored in a signal for the pages. The signal is private: pages read
+//! through these functions and change meals only with [`save`], [`remove`]
+//! and [`restore`]; each change is written to its row before returning.
 
 use std::{
     collections::HashSet,
@@ -8,13 +9,15 @@ use std::{
 };
 
 use nsh_core::{prelude::*, storage::Storage};
+use rusqlite::{Connection, params};
 
-use super::{clock, photos};
+use super::{clock, db};
 use crate::domain::meal::{
-    Day, DaySummary, MAX_KEPT_MEALS, Meal, decode_meals, encode_meals, meals_of, summarize,
+    Day, DaySummary, Meal, decode_meal, decode_meals, encode_meal, meals_of, summarize,
 };
 
-const KEY: &str = "meals.v1";
+/// Where meals were kept before the database: moved once, then removed.
+const LEGACY_KEY: &str = "meals.v1";
 
 #[derive(Clone, Default, PartialEq)]
 struct Meals(Vec<Meal>);
@@ -23,17 +26,83 @@ fn meals() -> Signal<Meals> {
     global::<Meals>()
 }
 
-/// Reads the kept meals; the root calls it once.
+/// Reads the kept meals; the root calls it once, after [`db::open`].
 pub fn load() {
-    let list = Storage::get_item(KEY)
-        .map(|raw| decode_meals(&raw))
-        .unwrap_or_default();
+    let list = db::with(|connection| {
+        move_legacy(connection);
+        read_all(connection).unwrap_or_else(|error| {
+            log::error!("meals: cannot read the database: {error}");
+            Vec::new()
+        })
+    })
+    .unwrap_or_default();
     meals().set(Meals(list));
 }
 
-fn persist(list: &[Meal]) {
-    if Storage::set_item(KEY, encode_meals(list)).is_err() {
-        log::error!("meals: device storage is full; the last change was not kept");
+/// Moves meals from the legacy key-value entry into the database in one
+/// transaction, and removes the entry only after it commits. Meals already
+/// in the database keep their row.
+fn move_legacy(connection: &Connection) {
+    let Some(raw) = Storage::get_item(LEGACY_KEY) else {
+        return;
+    };
+    let legacy = decode_meals(&raw);
+    let moved =
+        (|| -> rusqlite::Result<()> {
+            let tx = connection.unchecked_transaction()?;
+            for meal in &legacy {
+                tx.execute(
+                "INSERT OR IGNORE INTO meals (id, day, logged_at_ms, body) VALUES (?1, ?2, ?3, ?4)",
+                params![meal.id, meal.day.to_string(), meal.logged_at_ms, encode_meal(meal)],
+            )?;
+            }
+            tx.commit()
+        })();
+    match moved {
+        Ok(()) => {
+            Storage::remove_item(LEGACY_KEY);
+            log::info!("meals: moved {} meals into the database", legacy.len());
+        }
+        Err(error) => log::error!("meals: kept the legacy entry, the move failed: {error}"),
+    }
+}
+
+fn read_all(connection: &Connection) -> rusqlite::Result<Vec<Meal>> {
+    let mut statement = connection.prepare("SELECT body FROM meals ORDER BY logged_at_ms, id")?;
+    let bodies = statement.query_map([], |row| row.get::<_, String>(0))?;
+    let mut list = Vec::new();
+    for body in bodies {
+        if let Some(meal) = decode_meal(&body?) {
+            list.push(meal);
+        }
+    }
+    Ok(list)
+}
+
+fn write(meal: &Meal) {
+    let written = db::with(|connection| {
+        connection.execute(
+            "INSERT INTO meals (id, day, logged_at_ms, body) VALUES (?1, ?2, ?3, ?4)
+             ON CONFLICT (id) DO UPDATE SET
+                day = excluded.day, logged_at_ms = excluded.logged_at_ms, body = excluded.body",
+            params![
+                meal.id,
+                meal.day.to_string(),
+                meal.logged_at_ms,
+                encode_meal(meal)
+            ],
+        )
+    });
+    if let Some(Err(error)) = written {
+        log::error!("meals: meal {} was not kept: {error}", meal.id);
+    }
+}
+
+fn delete(id: &str) {
+    let deleted =
+        db::with(|connection| connection.execute("DELETE FROM meals WHERE id = ?1", params![id]));
+    if let Some(Err(error)) = deleted {
+        log::error!("meals: meal {id} was not deleted: {error}");
     }
 }
 
@@ -52,27 +121,15 @@ pub fn get(id: &str) -> Option<Meal> {
     meals().with(|meals| meals.0.iter().find(|meal| meal.id == id).cloned())
 }
 
-/// Adds `meal`, or replaces the one with its id. The oldest meals beyond
-/// the kept maximum go, with their photos.
+/// Adds `meal`, or replaces the one with its id.
 pub fn save(meal: Meal) {
-    let mut dropped = Vec::new();
-    meals().update(|meals| {
-        match meals.0.iter_mut().find(|kept| kept.id == meal.id) {
+    write(&meal);
+    meals().update(
+        |meals| match meals.0.iter_mut().find(|kept| kept.id == meal.id) {
             Some(kept) => *kept = meal,
             None => meals.0.push(meal),
-        }
-        if meals.0.len() > MAX_KEPT_MEALS {
-            meals.0.sort_by_key(|meal| meal.logged_at_ms);
-            let excess = meals.0.len() - MAX_KEPT_MEALS;
-            dropped.extend(meals.0.drain(..excess));
-        }
-        persist(&meals.0);
-    });
-    for meal in dropped {
-        if let Some(photo) = meal.photo {
-            photos::delete(&photo);
-        }
-    }
+        },
+    );
 }
 
 /// Removes the meal `id` and gives it back (to undo). Its photo stays
@@ -82,7 +139,7 @@ pub fn remove(id: &str) -> Option<Meal> {
     meals().update(|meals| {
         if let Some(index) = meals.0.iter().position(|meal| meal.id == id) {
             removed = Some(meals.0.remove(index));
-            persist(&meals.0);
+            delete(id);
         }
     });
     removed

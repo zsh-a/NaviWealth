@@ -18,7 +18,7 @@ use std::time::Duration;
 use nsh_core::prelude::*;
 
 use crate::{
-    data::{clock, meals, photos, settings},
+    data::{clock, db, meals, photos, settings},
     ui::color,
 };
 
@@ -32,6 +32,7 @@ fn native(registry: &mut Registry) {
 /// the navigation stack on the canvas.
 #[component]
 pub fn App() -> impl IntoElement {
+    db::open();
     meals::load();
     settings::load();
     spawn(photos::sweep_orphans());

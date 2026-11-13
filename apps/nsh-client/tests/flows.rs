@@ -1,7 +1,12 @@
 //! The user's flows on the real engine, headless: a stub network stands in
 //! for the model provider and a stub picker for the photo library.
 
-use std::{io::Cursor, sync::Arc, time::Duration};
+use std::{
+    io::Cursor,
+    path::{Path, PathBuf},
+    sync::Arc,
+    time::Duration,
+};
 
 use image::{ImageFormat, RgbImage};
 use nsh_app_naviwealth_health::{
@@ -23,9 +28,20 @@ fn start(
     entries: Vec<(String, String)>,
     network: Option<Arc<StubNetwork>>,
 ) -> (Headless, Arc<MemoryStorage>) {
+    start_in(None, entries, network)
+}
+
+/// Starts the app keeping its files (the database) under `dir`; without
+/// one the database lives in memory.
+fn start_in(
+    dir: Option<&Path>,
+    entries: Vec<(String, String)>,
+    network: Option<Arc<StubNetwork>>,
+) -> (Headless, Arc<MemoryStorage>) {
     let storage = MemoryStorage::new(entries);
     let mut config = EngineConfig::new(Root::of::<App>());
     config.storage = Some(storage.clone());
+    config.data_dir = dir.map(Path::to_path_buf);
     if let Some(network) = network {
         config.network = Some(network);
     }
@@ -107,6 +123,41 @@ fn picks_a_photo(app: &mut Headless) {
     });
 }
 
+/// The database the app keeps under `dir`.
+fn database_in(dir: &Path) -> PathBuf {
+    fn find(dir: &Path) -> Option<PathBuf> {
+        for entry in std::fs::read_dir(dir).ok()?.flatten() {
+            let path = entry.path();
+            if path
+                .file_name()
+                .is_some_and(|name| name == "naviwealth.sqlite")
+            {
+                return Some(path);
+            }
+            if path.is_dir()
+                && let Some(found) = find(&path)
+            {
+                return Some(found);
+            }
+        }
+        None
+    }
+    find(dir).expect("the app keeps a database")
+}
+
+/// The stored meal bodies under `dir`, oldest first.
+fn stored_meals(dir: &Path) -> Vec<Value> {
+    let connection = rusqlite::Connection::open(database_in(dir)).expect("the database opens");
+    let mut statement = connection
+        .prepare("SELECT body FROM meals ORDER BY logged_at_ms")
+        .unwrap();
+    statement
+        .query_map([], |row| row.get::<_, String>(0))
+        .unwrap()
+        .map(|body| serde_json::from_str(&body.unwrap()).unwrap())
+        .collect()
+}
+
 fn today() -> Day {
     Day(jiff::Timestamp::now()
         .to_zoned(jiff::tz::TimeZone::UTC)
@@ -135,7 +186,8 @@ fn logging_without_an_account_explains_the_setup() -> Result<(), String> {
 
 #[test]
 fn a_meal_added_by_hand_counts_toward_today() -> Result<(), String> {
-    let (mut app, storage) = start(Vec::new(), None);
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
     app.press("label:Add manually")?;
     app.wait_for("text:e.g. Beef noodle soup")?;
     app.type_text("text:e.g. Beef noodle soup", "Rice")?;
@@ -146,19 +198,20 @@ fn a_meal_added_by_hand_counts_toward_today() -> Result<(), String> {
     app.press("text:/^Save meal/")?;
     app.wait_for("text:325")?;
     assert!(app.shows("Rice"));
-    let kept = storage
-        .entries()
-        .get("meals.v1")
-        .cloned()
-        .unwrap_or_default();
-    assert!(kept.contains("\"Rice\""), "the meal is kept: {kept}");
+    let kept = stored_meals(dir.path());
+    assert_eq!(kept.len(), 1);
+    assert_eq!(
+        kept[0]["foods"][0]["name"], "Rice",
+        "the meal is kept: {kept:?}"
+    );
     Ok(())
 }
 
 #[test]
 fn a_photo_is_sent_only_after_consent_and_becomes_editable_foods() -> Result<(), String> {
     let stub = network(200, estimate());
-    let (mut app, storage) = start(account(false), Some(stub.clone()));
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, _) = start_in(Some(dir.path()), account(false), Some(stub.clone()));
     picks_a_photo(&mut app);
     app.press("Log a meal")?;
     app.wait_for("Send this photo for analysis?")?;
@@ -197,9 +250,9 @@ fn a_photo_is_sent_only_after_consent_and_becomes_editable_foods() -> Result<(),
     app.press("text:/^Save meal/")?;
     app.wait_for("text:Beef noodle soup")?;
     app.wait_for("text:637")?;
-    let saved: Value = serde_json::from_str(&storage.entries()["meals.v1"]).unwrap();
+    let saved = stored_meals(dir.path());
     assert_eq!(
-        saved["meals"][0]["prompt_version"],
+        saved[0]["prompt_version"],
         health_core::recognition::PROMPT_VERSION
     );
     Ok(())
@@ -278,6 +331,55 @@ fn deleting_a_meal_can_be_undone() -> Result<(), String> {
     app.press("Undo")?;
     app.wait_for("Tomato pasta")?;
     app.wait_for_gone("Meal deleted", GONE)?;
+    Ok(())
+}
+
+#[test]
+fn legacy_meals_move_into_the_database_and_survive_a_restart() -> Result<(), String> {
+    let first = Meal {
+        id: "m1".to_owned(),
+        day: today(),
+        logged_at_ms: jiff::Timestamp::now().as_millisecond(),
+        slot: MealSlot::Lunch,
+        title: Some("Tomato pasta".to_owned()),
+        foods: vec![Food {
+            id: 1,
+            name: "Pasta".to_owned(),
+            grams: 300.0,
+            per_100g: Nutrients::new(100.0, 4.0, 20.0, 1.0),
+            source: FoodSource::Manual,
+            confidence: None,
+            estimated_grams: None,
+        }],
+        photo: None,
+        model: None,
+        prompt_version: None,
+    };
+    let second = Meal {
+        id: "m2".to_owned(),
+        logged_at_ms: first.logged_at_ms + 1,
+        title: Some("Second".to_owned()),
+        ..first.clone()
+    };
+    let dir = tempfile::tempdir().unwrap();
+    let entries = vec![("meals.v1".to_owned(), encode_meals(&[first, second]))];
+
+    let (mut app, storage) = start_in(Some(dir.path()), entries, None);
+    app.wait_for("Tomato pasta")?;
+    assert!(app.shows("Second"));
+    assert!(
+        !storage.entries().contains_key("meals.v1"),
+        "the legacy entry goes once the meals are in the database"
+    );
+    assert_eq!(stored_meals(dir.path()).len(), 2);
+    drop(app);
+
+    let (app, _) = start_in(Some(dir.path()), Vec::new(), None);
+    assert!(
+        app.shows("Tomato pasta"),
+        "meals come back from the database"
+    );
+    assert!(app.shows("Second"));
     Ok(())
 }
 

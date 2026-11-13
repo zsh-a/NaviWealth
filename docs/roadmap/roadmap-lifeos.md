@@ -13,8 +13,7 @@ local-only, reduced rewrite) and [ADR 0001](../architecture/adr/0001-nsh-client-
 roadmap owns delivery order and gates.
 
 Flutter (`apps/mobile`) is frozen: bug fixes only. It is not a parity target.
-The NSH 0.5.0 meal client and shared `health-core` are the seed; meals still
-use NSH KV and the API key is plaintext in KV. The archived
+The NSH 0.5.0 meal client and shared `health-core` are the seed. The archived
 [Finance roadmap](roadmap-finance.md) and
 [product-direction study](product-direction-and-demand-validation.md) do not
 authorize work. Phases are dependency gates, not dates.
@@ -31,12 +30,14 @@ owner logs meals and weight only in NSH. Ledger and holdings wait. Only build
 the tabs that have content: Today, Records (meals and weight) and a
 health-only Review; Assets arrives with Phase 3.
 
-1. **Storage and credential gates.** Prove rusqlite + SQLCipher on Android
-   arm64 (create, reopen, atomic migration, wrong-key rejection) and a Kotlin
-   Keystore plugin over the NSH host channel. Then move meals from NSH KV to
-   SQLite transactionally and the API key from plaintext KV to Keystore.
-   Stop if encryption or key handling cannot be proved; never fall back to
-   plaintext.
+1. **Meal storage in SQLite.** Meals move from NSH KV (5 MB, capped at
+   3,000 meals) to `naviwealth.sqlite` in the app's private directory, one
+   row per meal, with versioned migrations; legacy KV meals move once in a
+   transaction and the entry is removed after commit. No SQLCipher or
+   Keystore (ADR 0002 decision 5); the API key stays in app-private KV.
+   Implemented in `apps/nsh-client/src/data/db.rs` with headless restart and
+   migration flows; remaining evidence is an Android APK build (CI) and a
+   device upgrade from a KV build.
 2. **Meal logging polish.** Remove friction observed in daily use. Candidates,
    chosen by actual use rather than all built: camera capture besides the
    library, several views per meal as `health-core` already supports, quick

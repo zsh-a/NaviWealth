@@ -79,9 +79,10 @@ whether the owner uses a feature every day or every week.
 
 ### Data
 
-- Encrypted local database.
-- Automatic local backups plus manual export/restore of an encrypted backup
-  file to a location the owner picks; meal photos optional in the export.
+- A local SQLite database in the app's private storage (Android sandbox and
+  file-based encryption; no SQLCipher, see ADR 0002).
+- Automatic local backups plus manual export/restore of a passphrase-encrypted
+  backup file to a location the owner picks; meal photos optional in the export.
 - A one-time import of kept records from the Flutter client.
 
 ## Removed

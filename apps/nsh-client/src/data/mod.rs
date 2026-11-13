@@ -2,6 +2,7 @@
 //! device, local time, and the user's vision model.
 
 pub mod clock;
+pub mod db;
 pub mod meals;
 pub mod photos;
 pub mod settings;
