@@ -51,6 +51,8 @@ pub(super) static STRINGS: Strings = Strings {
     total: "Total",
     save_meal: "Save meal",
     delete_meal: "Delete meal",
+    log_again: "Log again today",
+    recent_foods: "Recent",
     discard_title: "Discard this meal?",
     discard_body: "The photo and the estimate won't be kept.",
     discard: "Discard",

@@ -12,6 +12,8 @@ pub enum Route {
     NewMeal { day: Day, capture: Option<u64> },
     /// The saved meal with this id.
     EditMeal(String),
+    /// A new meal on `day` with the foods of the saved meal `from`.
+    RepeatMeal { day: Day, from: String },
     /// The model account and goal.
     Settings,
 }

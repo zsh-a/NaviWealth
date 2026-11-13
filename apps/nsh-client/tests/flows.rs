@@ -383,6 +383,72 @@ fn legacy_meals_move_into_the_database_and_survive_a_restart() -> Result<(), Str
     Ok(())
 }
 
+/// A saved 300 kcal pasta lunch today, as the legacy entry that moves in.
+fn pasta_today() -> Vec<(String, String)> {
+    let meal = Meal {
+        id: "m1".to_owned(),
+        day: today(),
+        logged_at_ms: jiff::Timestamp::now().as_millisecond(),
+        slot: MealSlot::Lunch,
+        title: Some("Tomato pasta".to_owned()),
+        foods: vec![Food {
+            id: 1,
+            name: "Pasta".to_owned(),
+            grams: 300.0,
+            per_100g: Nutrients::new(100.0, 4.0, 20.0, 1.0),
+            source: FoodSource::Catalog {
+                fdc_id: "168927".to_owned(),
+            },
+            confidence: None,
+            estimated_grams: None,
+        }],
+        photo: None,
+        model: None,
+        prompt_version: None,
+    };
+    vec![("meals.v1".to_owned(), encode_meals(&[meal]))]
+}
+
+#[test]
+fn a_saved_meal_can_be_logged_again_today() -> Result<(), String> {
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, _) = start_in(Some(dir.path()), pasta_today(), None);
+    app.wait_for("text:300")?;
+    app.press("Tomato pasta")?;
+    app.wait_for("Edit meal")?;
+    app.press("Log again today")?;
+    app.wait_for("New meal")?;
+    app.press("text:/^Save meal/")?;
+    app.wait_for("text:600")?;
+    let kept = stored_meals(dir.path());
+    assert_eq!(kept.len(), 2, "a second meal, the first unchanged");
+    assert_ne!(kept[0]["id"], kept[1]["id"]);
+    assert_ne!(kept[0]["foods"][0]["id"], kept[1]["foods"][0]["id"]);
+    assert_eq!(kept[1]["foods"][0]["name"], "Pasta");
+    Ok(())
+}
+
+#[test]
+fn a_recent_food_fills_the_new_food() -> Result<(), String> {
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, _) = start_in(Some(dir.path()), pasta_today(), None);
+    app.wait_for("text:300")?;
+    app.press("label:Add manually")?;
+    app.wait_for("Recent")?;
+    app.press("text:Pasta")?;
+    app.press("Done")?;
+    app.press("text:/^Save meal/")?;
+    app.wait_for("text:600")?;
+    let kept = stored_meals(dir.path());
+    assert_eq!(kept.len(), 2);
+    assert_eq!(kept[1]["foods"][0]["grams"], 300.0);
+    assert_eq!(
+        kept[1]["foods"][0]["source"], kept[0]["foods"][0]["source"],
+        "an unchanged recent food keeps its catalog source"
+    );
+    Ok(())
+}
+
 #[test]
 fn the_api_key_is_kept_apart_from_the_settings() -> Result<(), String> {
     let (mut app, storage) = start(Vec::new(), None);

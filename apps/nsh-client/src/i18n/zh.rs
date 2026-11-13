@@ -47,6 +47,8 @@ pub(super) static STRINGS: Strings = Strings {
     total: "合计",
     save_meal: "保存这餐",
     delete_meal: "删除这餐",
+    log_again: "今天再记一次",
+    recent_foods: "最近吃过",
     discard_title: "放弃这餐？",
     discard_body: "照片和估算结果都不会保存。",
     discard: "放弃",

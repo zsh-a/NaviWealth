@@ -61,6 +61,15 @@ pub fn new_meal_page(day: Day, capture: Option<u64>) -> Screen {
     page(draft)
 }
 
+/// A new meal on `day` with the foods of the saved meal `from`.
+pub fn repeat_meal_page(day: Day, from: &str) -> Screen {
+    let draft = match untracked(|| meals::get(from)) {
+        Some(meal) => Draft::repeating(&meal, day),
+        None => Draft::new(day),
+    };
+    page(draft)
+}
+
 /// The saved meal `id`, to correct or delete.
 pub fn edit_meal_page(id: &str) -> Screen {
     let draft = match untracked(|| meals::get(id)) {
@@ -203,6 +212,25 @@ fn content(draft: Draft, immersive: impl Fn() -> bool + Copy + 'static) -> impl 
             },
         ))
         .child(foods::foods_section(draft))
+        .child(draft.is_saved_meal().then(|| log_again(draft)))
+}
+
+/// Opens a new meal today with this meal's foods, in place of this page.
+fn log_again(draft: Draft) -> impl IntoElement {
+    Btn::secondary()
+        .icon(Icon::Refresh)
+        .label(|| s().log_again.into())
+        .disabled(move || draft.has_unsaved_work())
+        .on_press(move || {
+            let Some(from) = draft.meal_id.with(|id| id.clone()) else {
+                return;
+            };
+            nav::pop();
+            nav::push(nav::Route::RepeatMeal {
+                day: clock::today(),
+                from,
+            });
+        })
 }
 
 /// The top bar's height under the status bar: its padding and buttons.

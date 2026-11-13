@@ -126,6 +126,26 @@ impl Draft {
         draft
     }
 
+    /// A new meal on `day` with `meal`'s foods (new ids), title and
+    /// provenance, its slot from the time of day; the photo stays with
+    /// `meal`. Nothing is kept before Save.
+    pub fn repeating(meal: &Meal, day: Day) -> Self {
+        let draft = Self::new(day);
+        draft.foods.set(
+            meal.foods
+                .iter()
+                .map(|food| Food {
+                    id: meals::new_food_id(),
+                    ..food.clone()
+                })
+                .collect(),
+        );
+        draft.title.set(meal.title.clone());
+        draft.model.set(meal.model.clone());
+        draft.prompt_version.set(meal.prompt_version.clone());
+        draft
+    }
+
     /// Whether it is a meal saved before.
     pub fn is_saved_meal(&self) -> bool {
         self.meal_id.with(|id| id.is_some())

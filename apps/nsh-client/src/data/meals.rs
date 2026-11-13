@@ -12,8 +12,9 @@ use nsh_core::{prelude::*, storage::Storage};
 use rusqlite::{Connection, params};
 
 use super::{clock, db};
-use crate::domain::meal::{
-    Day, DaySummary, Meal, decode_meal, decode_meals, encode_meal, meals_of, summarize,
+use crate::domain::{
+    meal::{Day, DaySummary, Meal, decode_meal, decode_meals, encode_meal, meals_of, summarize},
+    nutrition::Food,
 };
 
 /// Where meals were kept before the database: moved once, then removed.
@@ -150,6 +151,25 @@ pub fn restore(meal: Meal) {
     save(meal);
 }
 
+/// The most recently eaten foods, one per name (case-insensitive), newest
+/// first: what the food editor offers to add again.
+pub fn recent_foods(limit: usize) -> Vec<Food> {
+    meals().with_untracked(|meals| latest_foods(&meals.0, limit))
+}
+
+fn latest_foods(meals: &[Meal], limit: usize) -> Vec<Food> {
+    let mut ordered: Vec<&Meal> = meals.iter().collect();
+    ordered.sort_by_key(|meal| std::cmp::Reverse(meal.logged_at_ms));
+    let mut seen = HashSet::new();
+    ordered
+        .into_iter()
+        .flat_map(|meal| meal.foods.iter())
+        .filter(|food| seen.insert(food.name.trim().to_lowercase()))
+        .take(limit)
+        .cloned()
+        .collect()
+}
+
 /// The photos the kept meals refer to.
 pub fn photo_names() -> HashSet<String> {
     meals().with_untracked(|meals| meals.0.iter().filter_map(|m| m.photo.clone()).collect())
@@ -175,4 +195,54 @@ pub fn new_meal_id() -> String {
 pub fn new_food_id() -> u64 {
     let base = (clock::now_ms().max(0) as u64) << 12;
     base | (NEXT.fetch_add(1, Ordering::Relaxed) & 0xfff)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::domain::{
+        meal::MealSlot,
+        nutrition::{FoodSource, Nutrients},
+    };
+
+    fn meal(id: &str, at: i64, names: &[&str]) -> Meal {
+        Meal {
+            id: id.to_owned(),
+            day: Day("2026-11-13".parse().unwrap()),
+            logged_at_ms: at,
+            slot: MealSlot::Lunch,
+            title: None,
+            foods: names
+                .iter()
+                .enumerate()
+                .map(|(index, name)| Food {
+                    id: at as u64 * 10 + index as u64,
+                    name: (*name).to_owned(),
+                    grams: 100.0,
+                    per_100g: Nutrients::new(100.0, 1.0, 1.0, 1.0),
+                    source: FoodSource::Manual,
+                    confidence: None,
+                    estimated_grams: None,
+                })
+                .collect(),
+            photo: None,
+            model: None,
+            prompt_version: None,
+        }
+    }
+
+    #[test]
+    fn recent_foods_are_newest_first_and_one_per_name() {
+        let meals = vec![
+            meal("old", 1, &["Rice", "Egg"]),
+            meal("new", 3, &["rice ", "Tofu"]),
+            meal("mid", 2, &["Apple"]),
+        ];
+        let names: Vec<_> = latest_foods(&meals, 10)
+            .into_iter()
+            .map(|food| food.name)
+            .collect();
+        assert_eq!(names, ["rice ", "Tofu", "Apple", "Egg"]);
+        assert_eq!(latest_foods(&meals, 2).len(), 2);
+    }
 }

@@ -57,6 +57,8 @@ pub struct Strings {
     pub total: &'static str,
     pub save_meal: &'static str,
     pub delete_meal: &'static str,
+    pub log_again: &'static str,
+    pub recent_foods: &'static str,
     pub discard_title: &'static str,
     pub discard_body: &'static str,
     pub discard: &'static str,
