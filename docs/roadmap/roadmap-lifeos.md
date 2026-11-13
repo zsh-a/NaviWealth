@@ -1,4 +1,4 @@
-# LifeOS Client Migration Roadmap
+# NSH Client Roadmap
 
 Status: active sequencing SSOT; replaces the previous Now/Next plans.
 
@@ -6,159 +6,98 @@ Last reviewed: 2026-11-13.
 
 ## Contract And Baseline
 
-[ADR 0001](../architecture/adr/0001-nsh-client-migration.md) owns the NSH/Rust
-direction and open platform decisions. The [Northstar](../architecture/lifeos-architecture-northstar.md)
-owns boundaries; domain SSOTs own business behavior; [Sync v3](../sync/sync-v3.md)
-owns the unchanged protocol. This roadmap owns unfinished migration sequencing.
+[Product Scope](../product/product-scope.md) owns what is built.
+[ADR 0002](../architecture/adr/0002-personal-local-scope.md) (personal,
+local-only, reduced rewrite) and [ADR 0001](../architecture/adr/0001-nsh-client-migration.md)
+(NSH direction, Flutter freeze, Android only) own the architecture. This
+roadmap owns delivery order and gates.
 
-Flutter (`apps/mobile`) is frozen: fix bugs only; put new features in NSH and
-Rust crates. The NSH 0.5.0 meal client and shared `health-core` are the seed.
-Meals still use KV; API credentials are currently plaintext in KV. Neither
-SQLite migration nor cross-client Sync has been delivered by Phase 0.
+Flutter (`apps/mobile`) is frozen: bug fixes only. It is not a parity target.
+The NSH 0.5.0 meal client and shared `health-core` are the seed; meals still
+use NSH KV and the API key is plaintext in KV. The archived
+[Finance roadmap](roadmap-finance.md) and
+[product-direction study](product-direction-and-demand-validation.md) do not
+authorize work. Phases are dependency gates, not dates.
 
-The [Finance roadmap](roadmap-finance.md) and
-[product-direction study](product-direction-and-demand-validation.md) are
-archived historical inputs. Their Now/Next priorities do not authorize work.
-Owner labels below identify accountable roles, not assigned people. Each
-implementation PR must name its actual owner and attach the gate evidence.
-Phases are dependency gates, not dates or claims of completion.
+## Phase 0 — Freeze And Decisions (done)
 
-## Phase 0 — Freeze And Architecture Decision
+ADR 0001 merged with PR #336 on 2026-11-13; Product Scope and ADR 0002 record
+the scope reduction. The Agent Runtime submodule points at its `main`.
 
-- Owner: architecture maintainer, with product owner for open decisions.
-- Scope: accept ADR 0001; freeze Flutter feature work; update the Northstar,
-  documentation router, guide, navigation, and this roadmap; archive old plans.
-  Inspect the Agent Runtime submodule branch without pushing its `main`.
-- Exit evidence: consistent architecture and entry documents, no broken links,
-  documentation checks, NSH tests, and the requested Flutter regression checks
-  for the existing shared-meal/FRB change; reviewed PR with actual CI results.
-- Stop condition: unresolved contradictory ownership or broken documentation
-  blocks declaring the freeze complete. Record failed checks explicitly;
-  Phase 0 does not assert any Phase 1 technical proof.
+## Phase 1 — Health Experience On The Meal Client
 
-## Phase 1 — Technical Proofs
+Polish Health first, starting from the current NSH meal client, until the
+owner logs meals and weight only in NSH. Ledger and holdings wait. Only build
+the tabs that have content: Today, Records (meals and weight) and a
+health-only Review; Assets arrives with Phase 3.
 
-Owner: Rust/platform maintainer; product owner resolves platform choices.
-Keep probes small and record build commands, pinned dependencies, device/ABI,
-observed results, and limitations. All four probes need recorded outcomes:
+1. **Storage and credential gates.** Prove rusqlite + SQLCipher on Android
+   arm64 (create, reopen, atomic migration, wrong-key rejection) and a Kotlin
+   Keystore plugin over the NSH host channel. Then move meals from NSH KV to
+   SQLite transactionally and the API key from plaintext KV to Keystore.
+   Stop if encryption or key handling cannot be proved; never fall back to
+   plaintext.
+2. **Meal logging polish.** Remove friction observed in daily use. Candidates,
+   chosen by actual use rather than all built: camera capture besides the
+   library, several views per meal as `health-core` already supports, quick
+   re-log of recent foods or meals, a daily energy/macro goal, undo after
+   delete, and history beyond the four-week strip. Each change keeps the
+   existing consent, estimate-review and confirm-before-save rules.
+3. **Weight.** Manual entry and a trend line, checked against an `nsh-base`
+   plot proof (gaps, touch inspection, dark theme).
+4. **Garmin Personal API.** Verify against Garmin's own docs and a real key
+   (token exchange; sleep, resting HR, steps, HRV, stress, Body Battery and
+   weight fields; history backfill; rate limits; revocation), then import
+   daily summaries into `health-core` and show them on Today. Product Scope's
+   Garmin list shrinks to what the API really provides.
+5. **Health review and backup.** Weekly intake, macros, weight and Garmin
+   averages on Review; automatic local backups and encrypted export/restore
+   through a user-picked location.
 
-1. **Android rusqlite + SQLCipher.** Package and run an encrypted database on
-   Android arm64; create, read, update, close, and reopen rows. Demonstrate
-   atomic migrations and wrong-key rejection, and inspect the packaged native
-   dependencies. Exit evidence is device logs and a reproducible APK/database
-   test. Stop if encryption, linking, or reopen durability cannot be proved;
-   do not substitute plaintext persistence.
-2. **Kotlin Keystore over NSH host channel.** Prove a minimal plugin can store,
-   retrieve, and delete a secret across process restarts, handle missing or
-   invalidated keys, and remove migrated plaintext KV credentials. Document
-   lifecycle and error contracts. Exit evidence is a device exercise with no
-   secret in logs, backup, or Sync. Stop if the host channel or key lifecycle
-   cannot safely support the app; keep credential migration blocked.
-3. **Pure Rust NSH Web — dropped.** Web is out of scope (ADR 0001, decided
-   2026-11-13); Flutter Web stays frozen and retires with Flutter.
-4. **`nsh-base` plot suitability.** Reproduce representative `fl_chart` needs:
-   time series, bars, axes/labels, gaps, touch inspection, large histories,
-   theme and accessible summaries. Exit evidence is a comparison on Android
-   with performance and interaction results. Stop expansion if critical chart
-   behavior is absent; agree a bounded adapter or narrowed scope before porting.
+- Exit: the owner uses NSH as the only meal/weight app for two weeks; meals
+  survive restart, upgrade and restore; wrong-key or corrupted backups are
+  rejected without touching current data; Garmin failures keep the last data
+  visible; `nsh-testing` flows and an Android device run pass.
 
-Phase exit: all outcomes are recorded and native blockers are resolved. Web
-and iOS are out of scope. A failing critical proof pauses the
-migration path that depends on it; it does not reopen Flutter feature work.
+## Phase 2 — Flutter Health Import
 
-## Phase 2 — Shared Storage And Meal Sync
+- Scope: decide whether Rust can read the Flutter backup archive or whether a
+  minimal Flutter exporter is needed; import meals (with photos where present)
+  and weight once into NSH.
+- Exit: imported meal and weight counts and daily totals match the Flutter
+  export; importing twice creates no duplicates.
 
-- Owner: Rust persistence/sync maintainer and Health maintainer.
-- Scope: implement `lifeos-core` (rusqlite + SQLCipher, HLC, outbox, accepted
-  acks, domain generations, audit, backup) and `sync-wire` (envelopes and exact
-  per-table JSON row formats shared with backend). Move NSH meal persistence
-  to domain-owned SQLite repositories and sync `health:health_meals`.
-  Migrate existing NSH KV meals transactionally before clearing legacy values.
-- Exit evidence: create/edit/delete on Flutter and observe on NSH, then the
-  reverse, using the same test account. Include concurrent/offline changes,
-  retries, accepted acks, tombstones, reset-generation rejection, process
-  restart, and backup/restore tests against existing Sync v3 fixtures. Pull an
-  existing server account into a clean NSH database without Drift conversion.
-- Dependencies: native storage/key proofs from Phase 1. Production coexistence
-  requires the product owner's decision; test-account interoperability does not.
-- Stop condition: any row-format divergence, data loss, reset resurrection,
-  key exposure, or failed restore blocks rollout. Do not invent a new Sync
-  version to bypass incompatibility or assume photos/local-only rows sync.
+## Phase 3 — Ledger
 
-## Phase 3 — Health, Execution, Knowledge, And Shell
+- Scope: `finance-core` accounts, transactions, categories, optional monthly
+  budget; Alipay, WeChat XLSX and CMB statement import with duplicate review;
+  receipt/screenshot recognition drafts in Records; the Assets tab with
+  account balances.
+- Exit: exact money and rounding tests; statement corpus fixtures pass with
+  pinned accepted/rejected counts; nothing is saved without confirmation.
 
-- Owner: respective domain maintainers and NSH shell maintainer.
-- Scope: move remaining Health models/repositories and platform adapters,
-  Execution plans/actions/progress, Knowledge notes/decisions/relations, and
-  domain opt-in/navigation to Rust. Implement a `DomainPack`-style Rust trait
-  registry. Use an Android Kotlin host plugin for Health Connect and background
-  work where NSH needs it. Keep the UI focused on existing tasks.
-- Exit evidence: each domain passes repository and wire fixtures, cross-client
-  create/edit/delete checks, inactive-domain gating, source routing, and
-  `nsh-testing` shell flows; Android platform permission/resume behavior is
-  exercised on a device. Record parity gaps per domain before cutover.
-- Dependencies: Phase 2 storage, Sync, audit, and restore contracts.
-- Stop condition: cross-domain imports, UI-owned business truth, missing opt-in
-  isolation, or unsupported native behavior blocks the affected domain cutover.
+## Phase 4 — Holdings
 
-## Phase 4 — In-Process AI
+- Scope: securities catalog, trades (buy, sell, dividend, fee), derived
+  positions, average cost and gains, one quote provider, FX, allocation and
+  net worth on Assets.
+- Exit: derived positions match hand-computed fixtures, including partial
+  sells and dividends; quote failures leave last prices marked stale.
 
-- Owner: AI runtime and native capability maintainers.
-- Scope: implement `lifeos-ai` as the in-process Agent Runtime host; register
-  domain tools through traits; port confirmation, proposals, memory, transport,
-  cancellation, and audit seams. Replace remaining FRB/native capabilities and
-  remove FRB / `lifeos_native` once no supported client depends on them.
-- Exit evidence: domain tool and proposal parity, provider/transport contract
-  tests, cancellation/resume and secret-isolation tests, device runtime checks,
-  and an inventory proving no live FRB caller remains. Stage deletion after
-  Flutter callers are retired or given replacements; retain the adapter while
-  they exist, even if final deletion must wait for Phase 6.
-- Dependencies: domain ownership/registry from Phase 3; a reviewable upstream
-  integration for the Agent Runtime transport branch.
-- Stop condition: missing confirmation, a second Agent loop, cloud fallback,
-  or any remaining dependent client blocks runtime/bridge removal.
+## Phase 5 — Full Review, Finance Import, Retire Flutter
 
-## Phase 5 — Finance In Batches
-
-- Owner: Finance maintainer with persistence and NSH maintainers.
-- Scope: build `finance-core`; begin with accounts, expense, ingest, Monthly
-  Close, Runway, and Inbox. Port remaining Finance capabilities in separate
-  dependency-ordered batches, each with an explicit inventory and parity gate.
-  Reuse statement corpus fixtures and expected accepted/rejected rows.
-- Exit evidence: per-batch exact money/rounding and repository tests, existing
-  JSON row compatibility, deduplication/reversal and audit tests, cross-client
-  Sync, and `nsh-testing` task flows. Compare imports and consequential financial
-  calculations against the frozen implementation; complete chart device checks.
-- Dependencies: Phase 2 storage and Phase 3 shell; AI workflows require Phase 4.
-- Stop condition: an unexplained calculation delta, duplicate financial effect,
-  missing source provenance, or absent corpus coverage blocks that batch.
-  Do not use Finance size as a reason for an unverified big-bang replacement.
-
-## Phase 6 — Retire Flutter
-
-- Owner: release maintainer and product owner, with all domain maintainers.
-- Scope: cut over supported platforms, close any remaining native adapter
-  removal, retire Flutter distribution and obsolete code/CI after user data
-  continuity is established. Update implementation SSOTs to Rust code authority.
-- Exit evidence: all supported domain workflows and platform choices signed
-  off; packaged-device acceptance, NSH release CI, successful server-pull
-  migration and encrypted restore/recovery exercises, and a rollback/retention
-  plan covering unsynced and local-only data. No remaining FRB consumers.
-- Dependencies: domain parity across Phases 3–5 and the coexistence decision. Web and iOS
-  are out of scope. Keep unsupported platforms outside release claims.
-- Stop condition: any account lacks a tested recovery path, an active platform
-  has no accepted replacement, or a supported workflow still requires Flutter.
-  Do not delete local data simply because the new client can sign in.
+- Scope: complete Review with spending and net worth; import kept Finance
+  records from Flutter; archive the full Flutter backup; retire Flutter,
+  FRB / `lifeos_native`, the Sync v3 backend and their CI.
+- Exit: imported balances and position quantities match the Flutter export;
+  restore from an NSH export on a clean install succeeds; two weeks of NSH as
+  the only app.
 
 ## Operating Rules
 
-- Do not start broad domain ports before their technical and data gates pass.
-- Record implementation, headless tests, packaged-device evidence, and user
-  acceptance separately. Passing one is not proof of another.
-- Lock the reviewed NSH baseline and keep framework calls behind local UI
-  adapters. Upgrade deliberately with device and regression evidence.
-- The backend stays a generic Sync v3 store; domain semantics stay client-side.
-- Keep domain business truth in the owning Rust crate and cross-domain
-  infrastructure neutral. New crates need current callers, not speculative APIs.
-- Track open product decisions in ADR 0001. No phase silently decides platform
-  support or authorizes production dual-client operation.
+- Product Scope decides features; a new feature needs a daily or weekly
+  question and, for a new record type, a removal or written reason.
+- Keep domain truth in `finance-core` / `health-core`; the UI only presents
+  and confirms. New crates need a current caller.
+- Pin NSH 0.5.0 behind local UI adapters; upgrade only with device evidence.
+- Record headless tests and Android device evidence separately.

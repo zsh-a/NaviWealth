@@ -9,7 +9,10 @@ platform integration.
 
 Flutter (`apps/mobile`) is frozen: bug fixes only; new features belong in
 NSH/Rust crates. [ADR 0001](architecture/adr/0001-nsh-client-migration.md)
-records the decision and [LifeOS Roadmap](roadmap/roadmap-lifeos.md) its gates.
+records the direction, [ADR 0002](architecture/adr/0002-personal-local-scope.md)
+narrows it to a personal local-only app defined by
+[Product Scope](product/product-scope.md), and the [roadmap](roadmap/roadmap-lifeos.md)
+owns its gates.
 
 This documentation uses a docs-as-code structure:
 

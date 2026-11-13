@@ -1,7 +1,10 @@
 # ADR 0001: Migrate The Client To NSH
 
-Status: accepted direction. Platform scope decided 2026-11-13 (Android only;
-Web and iOS out of scope); client coexistence remains open.
+Status: accepted direction; partially superseded by
+[ADR 0002](0002-personal-local-scope.md) (2026-11-13). ADR 0002 replaces the
+target packages, Data Continuity (Sync v3 coexistence), the in-process Agent
+Runtime plan and the delivery gates below; the Flutter freeze, NSH direction
+and Android-only scope still hold.
 
 Date: 2026-11-13.
 
@@ -130,11 +133,8 @@ package or Keystore recovery.
 Decided 2026-11-13: Web is out of scope (Flutter Web retires with Flutter);
 iOS is out of scope. Reopening either needs a new ADR.
 
-Open:
-
-| Decision | Recommendation / evidence required | Decision owner |
-|---|---|---|
-| Allow two clients on one account? | Allow coexistence during migration after bidirectional Sync, reset, and recovery tests. Phase 2 production rollout waits for approval. | Product owner |
+Two clients on one account: closed as moot by ADR 0002 (the NSH client is
+local-only and imports Flutter data once).
 
 ## References
 

@@ -7,12 +7,13 @@ router, not a second source of product or architecture truth.
 
 ## Client Direction
 
-[ADR 0001](architecture/adr/0001-nsh-client-migration.md) and the
-[migration roadmap](roadmap/roadmap-lifeos.md) govern new work. Flutter
+[Product Scope](product/product-scope.md), [ADR 0001](architecture/adr/0001-nsh-client-migration.md),
+[ADR 0002](architecture/adr/0002-personal-local-scope.md) and the
+[roadmap](roadmap/roadmap-lifeos.md) govern new work. Flutter
 (`apps/mobile`) is frozen: bug fixes only; new features go to NSH/Rust crates.
-NSH owns UI/composition; domain truth moves to domain crates. The target
-`lifeos-core`, `sync-wire`, and `lifeos-ai` packages are phased work, not current
-code inventory. Web, production client coexistence, and iOS remain open in the ADR.
+NSH owns UI/composition; domain truth moves to domain crates. The NSH client is
+personal and local-only; target `lifeos-core` and `finance-core` are phased
+work, not current code. Web and iOS are out of scope.
 
 The Flutter paths below route maintenance of the existing client. The Shell
 SSOT describes that implementation; it does not override the migration ADR.

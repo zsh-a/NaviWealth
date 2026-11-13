@@ -6,6 +6,12 @@ crates as the target. Flutter (`apps/mobile`) is frozen: bug fixes only; new
 features belong in NSH/Rust crates. Existing Dart paths below describe the
 frozen implementation until their owning migration phase is complete.
 
+[ADR 0002](adr/0002-personal-local-scope.md) narrows the NSH client to a
+personal, local-only app defined by [Product Scope](../product/product-scope.md):
+ledger, holdings, meals, weight and Garmin. The multi-domain positioning,
+opt-in domains, Sync v3 and Agent Runtime sections below apply only to the
+frozen Flutter client and are not targets for the NSH client.
+
 ## Document Contract
 
 Owns cross-domain layering, hard boundaries, and non-goals. It does not own

@@ -23,8 +23,10 @@
 - [HealthOS](docs/domains/healthos-domain.md): Health domain behavior, data, AI tools, agents.
 - [KnowledgeOS](docs/domains/knowledgeos-domain.md): Notes, decisions, relations, proposals, and memory projections.
 - [ExecutionOS](docs/domains/executionos-domain.md): Plans, actions, progress, and review.
-- [LifeOS Migration Roadmap](docs/roadmap/roadmap-lifeos.md): Active NSH migration gates.
-- [NSH Migration ADR](docs/architecture/adr/0001-nsh-client-migration.md): Target ownership and open Web/coexistence/iOS decisions.
+- [Product Scope](docs/product/product-scope.md): What the NSH client builds and deliberately omits.
+- [NSH Client Roadmap](docs/roadmap/roadmap-lifeos.md): Active delivery gates.
+- [NSH Migration ADR](docs/architecture/adr/0001-nsh-client-migration.md): NSH direction, Flutter freeze, Android only.
+- [Personal Local Scope ADR](docs/architecture/adr/0002-personal-local-scope.md): Personal, local-only reduced rewrite.
 - [FinanceOS Roadmap](docs/roadmap/roadmap-finance.md): Archived historical sequencing.
 
 ## Current Code Roots
