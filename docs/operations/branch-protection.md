@@ -37,6 +37,23 @@ on pull requests.
 | `KEYSTORE_PASSWORD` | Signed Android releases |
 | `KEY_ALIAS` | Signed Android releases |
 | `KEY_PASSWORD` | Signed Android releases |
+
+## NSH Health releases
+
+The `nsh client` manual workflow builds `apps/nsh-client` and signs its APK
+with the same fixed repository keystore secrets above. From `nsh-v0.2.1`
+(build 4), it uploads only `naviwealth-health-nsh-release-arm64-v8a` after
+certificate matching and non-debuggable APK checks pass. Missing credentials,
+debug certificates or signature verification failures stop publication.
+`tool/sign-nsh-apk.sh` keeps passwords out of command arguments and removes
+temporary key material. Do not replace this with freshly generated debug keys.
+
+NSH Health uses `nsh-vX.Y.Z` tags and its own package identity. Build the exact
+tag with the manual workflow and publish the verified APK plus `SHA256SUMS`.
+Keep the global latest release unchanged; it belongs to another client channel.
+Legacy debug-signed Health installs need a data migration before switching to
+this certificate; subsequent Health releases must retain the fixed key.
+
 ## Tag-based release flow
 
 `main` is the sole production deployment source for Web and backend. Pages
