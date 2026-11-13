@@ -30,6 +30,8 @@ jobs:
         working-directory: apps/nsh-client
     steps:
       - uses: actions/checkout@v7
+        with:
+          submodules: recursive
       - name: Linux backend libraries (GTK 4, GStreamer)
         run: |
           sudo apt-get update
@@ -44,6 +46,7 @@ jobs:
       - run: cargo fmt --check
       - run: cargo clippy --all-targets -- -D warnings
       - run: cargo test
+      - run: cargo test --manifest-path ../../crates/health-core/Cargo.toml --locked
 
   apk:
     name: Debug APK (arm64-v8a)
@@ -56,6 +59,8 @@ jobs:
       CARGO_TARGET_DIR: ${{ github.workspace }}/apps/nsh-client/target
     steps:
       - uses: actions/checkout@v7
+        with:
+          submodules: recursive
       - name: Linux backend libraries (nsh builds the crate on the host first)
         run: |
           sudo apt-get update

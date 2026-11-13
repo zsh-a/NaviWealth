@@ -1,7 +1,7 @@
-use agent_llm::{
-    AnthropicProvider, LlmProvider, LlmRequest, MockLlmProvider, OpenAiCompatibleProvider,
-};
 use anyhow::Result;
+use llm_client::{LlmProvider, MockLlmProvider};
+use llm_protocol::LlmRequest;
+use llm_reqwest::{AnthropicProvider, OpenAiCompatibleProvider};
 use serde_json::{Value, json};
 
 pub(super) fn profile_llm_provider(request: &LlmRequest) -> Result<Box<dyn LlmProvider>> {
@@ -39,12 +39,12 @@ pub(super) fn profile_llm_provider(request: &LlmRequest) -> Result<Box<dyn LlmPr
     }
 }
 
-pub(super) fn llm_error_to_anyhow(error: agent_llm::LlmError) -> anyhow::Error {
+pub(super) fn llm_error_to_anyhow(error: llm_protocol::LlmError) -> anyhow::Error {
     let record = error.record;
     anyhow::anyhow!("{}: {}", record.code, record.message)
 }
 
-pub(super) fn llm_error_record_metadata(error: agent_llm::LlmError) -> Value {
+pub(super) fn llm_error_record_metadata(error: llm_protocol::LlmError) -> Value {
     let record = error.record;
     json!({
         "code": record.code,
@@ -104,9 +104,9 @@ mod tests {
 
     #[test]
     fn preserves_provider_error_code_for_dart_classification() {
-        let error = agent_llm::LlmError {
-            record: Box::new(agent_llm::LlmErrorRecord {
-                kind: agent_llm::LlmErrorKind::ProviderError,
+        let error = llm_protocol::LlmError {
+            record: Box::new(llm_protocol::LlmErrorRecord {
+                kind: llm_protocol::LlmErrorKind::ProviderError,
                 code: "structured_output_parse_failed".to_owned(),
                 message: "model returned empty output".to_owned(),
                 retryable: false,

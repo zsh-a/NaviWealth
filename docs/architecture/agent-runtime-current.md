@@ -44,7 +44,7 @@ adding one does not transfer domain ownership into the standalone runtime.
 ## Interaction Session Relationship
 
 The standalone runtime already exists and is the source of truth for
-`agent-core`, `agent-chat`, `agent-llm`, runner, store, schema, and fixture
+`agent-core`, `agent-chat`, `llm-protocol`, `llm-client`, runner, store, schema, and fixture
 contracts. NaviWealth consumes it through the `apps/mobile/lib/app/agent_runtime/`
 Host/FRB adapter layer. Full-duplex voice must reuse the existing ChatTurn,
 tool-continuation, ProposalEnvelope, InteractionEnvelope, trace, and durable
@@ -81,7 +81,9 @@ crates/
   agent-core/       Stable DTOs, traits, IDs, errors, trace/session/proposal contracts
   agent-runtime/    AgentRunner, scheduler, retry/timeout, lease locking, trace capture
   agent-store/      In-memory and file-backed run/state/proposal/session stores
-  agent-llm/        Provider-neutral LLM DTOs, mock/OpenAI/Anthropic/Ollama providers
+  llm-protocol/     Typed LLM content, provider codecs, SSE and schema validation (no I/O)
+  llm-client/       Runtime-neutral transport, retry, deadline and capability policy
+  llm-reqwest/      Reqwest transport and native/browser provider adapters
   agent-chat/       Shared ChatTurn request/event contract and provider/tool loop
   agent-tools/      Reusable tool registry, policy, and tool-host helpers
   agent-cli/        Local developer surfaces and host adapters
@@ -105,18 +107,20 @@ crates/agent-store/src/
   util.rs           Shared scope and run sorting helpers
   tests.rs          Store backend tests
 
-crates/agent-llm/src/
-  lib.rs            Public exports only
-  types.rs          Provider-neutral LLM DTOs, stream events, errors, provider trait
-  mock.rs           Mock provider for local tests and deterministic runners
-  usage.rs          Rough token usage estimator for mock/local responses
-  sse.rs            Shared server-sent event frame parsing helpers
-  providers/
-    mod.rs          Provider exports and shared mapping helpers
-    openai.rs       OpenAI-compatible chat/completions request, response, stream mapping
-    anthropic.rs    Anthropic messages request, response, stream mapping
-    ollama.rs       Ollama chat request, response, synthetic stream mapping
-  tests.rs          Provider request mapping and SSE stream tests
+crates/llm-protocol/src/
+  types.rs, content.rs   Typed messages, events, responses, errors, images as bytes
+  endpoint.rs           Endpoint, redacted credentials and encoded HTTP request
+  wire.rs               Provider codecs, capabilities, structured output and errors
+  decoder.rs, sse.rs     Incremental byte-oriented SSE decoding
+  structured.rs         Local JSON schema validation
+
+crates/llm-client/src/
+  transport.rs          Host HTTP/body/clock contract, without Send/runtime assumptions
+  client.rs             Shared retries, deadlines, cancellation and capability cache
+  provider.rs, mock.rs  Object-safe provider seam and deterministic test provider
+
+crates/llm-reqwest/src/
+  lib.rs                Reqwest transport; CLI, browser and Flutter native adapters
 
 crates/agent-chat/src/
   types.rs          ChatTurn request and resume contracts
@@ -201,8 +205,9 @@ contents and sends them back to Rust, without implementing another Agent runtime
 ## Runtime Layers
 
 1. `agent-core` defines protocol shapes and host-facing traits.
-2. `agent-llm` owns provider-neutral request/response/event DTOs and provider
-   clients.
+2. `llm-protocol` owns typed LLM contracts, codecs and SSE parsing. `llm-client`
+   owns shared request policy over a Host Transport; `llm-reqwest` implements
+   that transport for native and browser hosts.
 3. `agent-chat` owns provider-neutral interactive ChatTurn request/event
    contracts and the LLM/tool continuation loop over `AgentServices`.
 4. `agent-runtime` executes scheduled or explicit `Agent` instances through
@@ -350,7 +355,7 @@ TUI uses persistent natural input by default. Plain text runs the shared
 |---|---|---|
 | Add or change a wire field | `schemas/`, `crates/agent-core/`, fixtures | schema validation tests, `rtk cargo test -p agent-cli` |
 | Change runner lifecycle | `crates/agent-runtime/src/lib.rs` | `rtk cargo test -p agent-runtime`, `rtk cargo test -p agent-cli` |
-| Change LLM provider behavior | `crates/agent-llm/src/providers/` | `rtk cargo test -p agent-llm`, native tests when FRB LLM bridge behavior changes |
+| Change LLM provider behavior | `crates/llm-protocol/`, `crates/llm-client/`, `crates/llm-reqwest/` | `rtk cargo test -p llm-protocol -p llm-client -p llm-reqwest`, native tests when FRB LLM bridge behavior changes |
 | Change ChatTurn behavior | `crates/agent-chat/`, `schemas/chat-turn-*.schema.json`, ChatTurn fixtures, `apps/mobile/lib/app/agent_runtime/bridges/agent_runtime_llm_stream_bridge.dart`, `apps/mobile/lib/app/agent_runtime/chat/frb_chat_runner.dart` | `rtk cargo test -p agent-chat`, `rtk cargo test -p agent-cli --test contracts`, native tests, Flutter chat bridge tests |
 | Change CLI command behavior | `crates/agent-cli/src/commands/` plus supporting module | focused command test, `rtk cargo test -p agent-cli` |
 | Change tool host behavior | `crates/agent-cli/src/tools.rs`, `apps/mobile/lib/app/agent_runtime/tools/agent_runtime_tool_host.dart` | CLI tool tests, Flutter bridge tests when Dart changes |

@@ -1,7 +1,7 @@
 /// Dart-side LLM profile adapter for the FRB agent runtime.
 ///
 /// The user's LLM key remains device-local. This bridge only converts the
-/// active [LlmProfile] into the provider-neutral `agent-llm` request shape and
+/// active [LlmProfile] into the provider-neutral `llm-protocol` request shape and
 /// sends it over the local FRB bridge.
 library;
 
@@ -52,9 +52,7 @@ class AgentRuntimeLlmBridge {
     return <String, Object?>{
       'protocol_version': kAgentRuntimeProtocolVersion,
       'provider': _profile.provider.wire,
-      'model': _profile.model?.trim().isNotEmpty == true
-          ? _profile.model!.trim()
-          : _defaultModel(_profile.provider),
+      'model': resolveLlmProfileModel(_profile),
       'messages': messages,
       'temperature': ?temperature,
       'max_output_tokens': outputTokenLimit,
@@ -133,9 +131,12 @@ class AgentRuntimeLlmBridge {
   }
 }
 
-String _defaultModel(LlmProvider provider) {
-  return switch (provider) {
-    LlmProvider.anthropic => 'claude-sonnet-4-5',
+/// Resolves the exact model for both the request and upload consent label.
+String resolveLlmProfileModel(LlmProfile profile) {
+  final configured = profile.model?.trim();
+  if (configured != null && configured.isNotEmpty) return configured;
+  return switch (profile.provider) {
+    LlmProvider.anthropic => kDefaultDeviceModel,
     LlmProvider.openai => 'gpt-5-mini',
   };
 }

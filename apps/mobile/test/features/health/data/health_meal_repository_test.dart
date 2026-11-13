@@ -54,6 +54,7 @@ void main() {
     Uint8List? photo,
     DateTime? day,
     List<MealPhoto>? photos,
+    String? promptVersion,
   }) => repo.save(
     expectedOwnerUserId: 'user',
     capturedAt: now,
@@ -62,7 +63,54 @@ void main() {
     foods: foods,
     photoBytes: photo,
     photos: photos,
+    recognitionPromptVersion: promptVersion,
   );
+
+  test('recognition provenance survives storage, sync and backup', () async {
+    final entry = await save(promptVersion: 'meal-v2');
+    expect(entry.recognitionPromptVersion, 'meal-v2');
+    expect(
+      (await repo.find(
+        id: entry.id,
+        ownerUserId: 'user',
+      ))!.recognitionPromptVersion,
+      'meal-v2',
+    );
+    final row = (await DriftPendingRows(db).readRow('health_meals', entry.id))!;
+    expect(
+      HealthMeal.decodePromptVersion(row['foods_json']! as String),
+      'meal-v2',
+    );
+    final service = BackupService(
+      db: db,
+      codec: BackupCodec(),
+      outbox: DriftOutboxStore(db),
+      ownerUserId: 'user',
+    );
+    final archive = await service.exportBackup(
+      passphrase: 'provenance',
+      overrideIterations: 1000,
+      domain: DomainScope.health,
+    );
+    await repo.delete(entry);
+    await service.restoreBackup(
+      passphrase: 'provenance',
+      fileBytes: archive,
+      expectedDomain: DomainScope.health,
+    );
+    expect(
+      (await repo.find(
+        id: entry.id,
+        ownerUserId: 'user',
+      ))!.recognitionPromptVersion,
+      'meal-v2',
+    );
+    expect(
+      HealthMeal.decodePromptVersion(HealthMeal.encodeFoods(foods)),
+      isNull,
+    );
+    await expectLater(save(promptVersion: 'v' * 81), throwsArgumentError);
+  });
 
   test(
     'calendar counts are month-bounded, owner-scoped and exclude tombstones',

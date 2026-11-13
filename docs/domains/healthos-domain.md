@@ -277,7 +277,7 @@ calibrated depth/volume measurement or a guaranteed accuracy improvement.
 
 Photo identification requires per-request consent naming the captured model
 profile. The existing document-recognition permission does not authorize meal
-photos. The native FRB profile completion path sends the normalized photo
+photos. The native `health_meal` FRB adapter calls `crates/health-core` and sends the normalized photo
 directly to that profile's provider; there is no backend AI relay or fallback.
 Consent cancellation sends nothing. Owner/domain/profile changes invalidate
 pending results. Recognition is a read-only draft operation with a Health
@@ -292,6 +292,17 @@ labels as supporting evidence, and uses after-meal views only for leftovers.
 It requests edible weight actually consumed, never summed per-image totals.
 Recognition remains an editable estimate; users confirm the consumed grams
 and nutrient snapshots before saving.
+
+`crates/health-core` is shared by the Flutter and NSH hosts. It owns the
+versioned prompt, response schema, strict parsing, catalog validation, portion
+calculations, photo normalization, and upload consent bound to the provider,
+base URL, and model. Each host owns its UI, user permission flow, storage and
+confirmed writes. The shared LLM client uses host-provided HTTP and clock
+implementations; NSH uses platform fetch and Flutter native uses reqwest.
+Unknown catalog IDs or malformed foods fail recognition rather than silently
+dropping items or claiming catalog provenance. Both hosts persist the model
+and prompt version with the confirmed meal; Flutter stores the prompt version
+inside the existing versioned `foods_json` snapshot, including Sync and backup.
 
 The offline catalog is a small CC0 USDA FoodData Central SR Legacy subset,
 with explicit cooked/raw names, FDC IDs, and source attribution in

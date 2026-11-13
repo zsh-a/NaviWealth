@@ -3,12 +3,15 @@ library;
 
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_llm_bridge.dart';
 import 'package:naviwealth/core/ai/contracts/contracts.dart';
+import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
 import 'package:naviwealth/features/finance/activity/data/activity_entry_insight_client.dart';
 import 'package:naviwealth/features/finance/ingest/data/ingest_llm_client.dart';
 import 'package:naviwealth/features/health/data/meal_recognition_client.dart';
 import 'package:naviwealth/features/health/domain/meal_photo.dart';
 import 'package:naviwealth/features/knowledge/data/knowledge_rewrite_client.dart';
 import 'package:naviwealth/l10n/gen/app_localizations.dart';
+
+import 'health_meal_native_bridge.dart';
 
 class FrbActivityEntryInsightClient implements ActivityEntryInsightClient {
   FrbActivityEntryInsightClient({
@@ -309,19 +312,23 @@ class FrbIngestLlmProfileClient implements IngestLlmProfileClient {
 
 class FrbMealRecognitionClient implements MealRecognitionClient {
   FrbMealRecognitionClient({
-    required AgentRuntimeLlmBridge llmBridge,
-    required this.providerLabel,
+    required HealthMealNativeBridge nativeBridge,
+    required LlmProfile profile,
     FrbProfileCompletionTraceRecorder? recordTrace,
-  }) : _completer = _TracedProfileCompleter(
-         llmBridge: llmBridge,
-         recordTrace: recordTrace,
-         domain: const AiDomain.domain(DomainScope.health),
-         defaultAgentId: 'health_meal_recognition',
-       );
+  }) : _nativeBridge = nativeBridge,
+       _profile = profile,
+       _model = resolveLlmProfileModel(profile),
+       _baseUrl = _mealProfileBaseUrl(profile),
+       _recordTrace = recordTrace;
 
-  final _TracedProfileCompleter _completer;
+  final HealthMealNativeBridge _nativeBridge;
+  // This immutable snapshot is also the destination shown by the consent UI.
+  final LlmProfile _profile;
+  final String _model;
+  final String _baseUrl;
+  final FrbProfileCompletionTraceRecorder? _recordTrace;
   @override
-  final String providerLabel;
+  String get providerLabel => '${_profile.displayName} · $_model\n$_baseUrl';
 
   @override
   Future<MealRecognitionDraft> recognize({
@@ -329,22 +336,66 @@ class FrbMealRecognitionClient implements MealRecognitionClient {
     required String languageCode,
     required bool allowUpload,
     String context = '',
-  }) {
+  }) async {
     if (!allowUpload) {
       throw StateError('Meal photo upload has not been authorized');
     }
-    return _completer.completeProfileAndTransform(
-      messages: mealRecognitionMessages(
-        photos: photos,
-        languageCode: languageCode,
-        context: context,
-      ),
-      responseFormat: const {'type': 'json_object'},
-      metadata: const {
-        'surface': 'health_meal_recognition',
-        'agent_id': 'health_meal_recognition',
-      },
-      transform: parseMealRecognition,
-    );
+    final startedAt = DateTime.now().toUtc();
+    Map<String, Object?>? response;
+    Object? failure;
+    try {
+      response = await _nativeBridge.recognize(
+        request: {
+          'provider': _profile.provider.wire,
+          'model': _model,
+          'base_url': _baseUrl,
+          'api_key': _profile.apiKey,
+          'allow_upload': true,
+          'language_code': languageCode,
+          'context': context,
+          'photos': [
+            for (final photo in photos)
+              {
+                'bytes': photo.bytes,
+                'role': photo.role.wire,
+                'timestamp_ms': ?photo.timestampMs,
+              },
+          ],
+        },
+      );
+      return mealRecognitionDraftFromCore(response);
+    } on Object catch (error) {
+      failure = error;
+      rethrow;
+    } finally {
+      // The trace sees only core metadata, never photos, prompt or credentials.
+      await _recordProfileCompletionBestEffort(
+        _recordTrace,
+        agentId: 'health_meal_recognition',
+        llmResponse: response == null
+            ? null
+            : {
+                'model': response['model'],
+                'provider': response['provider'],
+                'finish_reason': response['finish_reason'],
+                'usage': response['usage'],
+                'metadata': {'prompt_version': response['prompt_version']},
+              },
+        startedAt: startedAt,
+        finishedAt: DateTime.now().toUtc(),
+        domain: const AiDomain.domain(DomainScope.health),
+        surface: 'health_meal_recognition',
+        error: failure,
+      );
+    }
   }
+}
+
+String _mealProfileBaseUrl(LlmProfile profile) {
+  final configured = profile.baseUrl?.trim();
+  if (configured != null && configured.isNotEmpty) return configured;
+  return switch (profile.provider) {
+    LlmProvider.anthropic => 'https://api.anthropic.com/v1',
+    LlmProvider.openai => 'https://api.openai.com/v1',
+  };
 }

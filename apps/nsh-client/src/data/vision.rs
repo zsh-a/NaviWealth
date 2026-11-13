@@ -1,92 +1,193 @@
-//! Talking to the user's model: requests go through the platform's own
-//! network stack (`fetch`), straight from this device to the account's base
-//! URL. No relay, no fallback.
+//! Thin NSH platform transport over the shared LLM client and meal core.
 
-use std::time::Duration;
+use std::{future::Future, pin::Pin, rc::Rc, sync::OnceLock, time::Duration};
 
-use nsh_core::prelude::*;
+use futures::stream::{self, Iter};
+use health_core::{
+    consent::{Consent, UploadTarget},
+    photo::{MealPhoto, PhotoRole},
+    recognition::{Lang, MealEstimate, RecognitionError, recognize_meal},
+};
+use llm_client::{Bytes, CapabilityCache, Client, HttpResponse, Timeouts, Transport};
+use llm_protocol::{Endpoint, HttpRequest, LlmError, LlmRequest, Protocol};
+use nsh_core::prelude::{fetch, timer};
+use serde_json::json;
 
 use super::meals::new_food_id;
 use crate::domain::{
-    VisionFailure,
-    account::ModelAccount,
-    recognition::{Lang, Recognition, parse_recognition},
-    wire::{Ask, Stop, WireRequest, build_request, parse_reply, rejects_structured_output},
+    ProviderError, VisionFailure,
+    account::{ModelAccount, Provider},
 };
 
-/// How long a recognition may take: thinking models can need a minute.
 pub const RECOGNIZE_TIMEOUT: Duration = Duration::from_secs(150);
-/// How long the connection test may take.
 pub const PING_TIMEOUT: Duration = Duration::from_secs(60);
 
-/// What the model recognized, and which model it was.
-#[derive(Debug, Clone, PartialEq)]
-pub struct Estimate {
-    pub recognition: Recognition,
-    pub model: String,
+static CAPABILITIES: OnceLock<CapabilityCache> = OnceLock::new();
+
+type Body = Iter<std::vec::IntoIter<Result<Bytes, LlmError>>>;
+
+/// NSH fetch is local to its engine thread and currently returns a whole body.
+/// The client accepts that body as one chunk without requiring Tokio or TLS.
+struct NshTransport {
+    epoch: nsh_core::time::Instant,
 }
 
-/// Asks `account` to recognize the meal in `jpeg`. A provider that refuses
-/// the structured-answer option is asked once more without it.
+impl NshTransport {
+    fn new() -> Self {
+        Self {
+            epoch: nsh_core::time::now(),
+        }
+    }
+}
+
+impl Transport for NshTransport {
+    type Body = Body;
+    type SendFuture<'a> = Pin<Box<dyn Future<Output = Result<HttpResponse<Body>, LlmError>> + 'a>>;
+    type SleepFuture<'a> = Pin<Box<dyn Future<Output = ()> + 'a>>;
+
+    fn send(&self, request: HttpRequest) -> Self::SendFuture<'_> {
+        Box::pin(async move {
+            let mut http = nsh_core::platform::HttpRequest::new("POST", request.url);
+            // Credentials must never follow a redirect to a different destination.
+            http.follow_redirects = false;
+            for (name, value) in request.headers {
+                http = http.header(name, value);
+            }
+            let response = fetch(http.body(request.body)).await.map_err(|_| {
+                LlmError::provider(
+                    "network_error",
+                    "The platform request failed",
+                    // Whole-body NSH fetch cannot tell whether the provider
+                    // already began replying. Leave replay to the user.
+                    false,
+                    json!({}),
+                )
+            })?;
+            Ok(HttpResponse {
+                status: response.status(),
+                headers: response.head.headers,
+                body: stream::iter(vec![Ok(Bytes::from(response.body))]),
+            })
+        })
+    }
+
+    fn sleep(&self, duration: Duration) -> Self::SleepFuture<'_> {
+        Box::pin(async move {
+            timer(duration).await;
+        })
+    }
+
+    fn now(&self) -> Duration {
+        self.epoch.elapsed()
+    }
+}
+
+fn endpoint(account: &ModelAccount) -> Result<Endpoint, VisionFailure> {
+    let protocol = match account.provider {
+        Provider::Anthropic => Protocol::Anthropic,
+        Provider::OpenAiCompatible => Protocol::OpenAiCompatible,
+    };
+    let provider = match account.provider {
+        Provider::Anthropic => "anthropic",
+        Provider::OpenAiCompatible => "openai",
+    };
+    Endpoint::new(
+        protocol,
+        provider,
+        account.normalized_base_url(),
+        &account.api_key,
+    )
+    .map_err(llm_failure)
+}
+
+pub fn upload_target(account: &ModelAccount) -> UploadTarget {
+    let provider = match account.provider {
+        Provider::Anthropic => "anthropic",
+        Provider::OpenAiCompatible => "openai",
+    };
+    UploadTarget::new(provider, &account.normalized_base_url(), &account.model)
+}
+
 pub async fn recognize(
     account: ModelAccount,
-    jpeg: std::rc::Rc<Vec<u8>>,
+    jpeg: Rc<Vec<u8>>,
     lang: Lang,
-) -> Result<Estimate, VisionFailure> {
-    let mut structured = true;
-    loop {
-        let request = build_request(&account, Ask::Meal { jpeg: &jpeg, lang }, structured);
-        let response = send(request, RECOGNIZE_TIMEOUT).await?;
-        let body = response.text();
-        if structured && rejects_structured_output(response.status(), &body) {
-            log::info!("vision: provider takes no structured output; asking again without it");
-            structured = false;
-            continue;
-        }
-        let reply = parse_reply(account.provider, response.status(), &body)
-            .map_err(VisionFailure::Provider)?;
-        match reply.stop {
-            Stop::Truncated => return Err(VisionFailure::Truncated),
-            Stop::Refused => return Err(VisionFailure::Refused),
-            Stop::Complete => {}
-        }
-        let recognition = parse_recognition(&reply.text, &mut new_food_id)
-            .map_err(|_| VisionFailure::Unreadable)?;
-        return Ok(Estimate {
-            recognition,
-            model: reply
-                .model
-                .unwrap_or_else(|| account.model.trim().to_owned()),
+    consent: Consent,
+) -> Result<MealEstimate, VisionFailure> {
+    let client = Client::new(endpoint(&account)?, NshTransport::new())
+        .with_capability_cache(CAPABILITIES.get_or_init(CapabilityCache::default).clone())
+        .with_timeouts(Timeouts {
+            total: RECOGNIZE_TIMEOUT,
+            ..Timeouts::default()
         });
+    let photos = [MealPhoto::new((*jpeg).clone(), PhotoRole::Overview, None)];
+    let mut estimate = recognize_meal(&client, &account.model, &photos, &consent, lang, "")
+        .await
+        .map_err(recognition_failure)?;
+    for food in &mut estimate.recognition.foods {
+        food.id = new_food_id();
     }
+    Ok(estimate)
 }
 
-/// The smallest request that proves `account` answers: the model that did,
-/// and the seconds it took.
 pub async fn ping(account: ModelAccount) -> Result<(String, f64), VisionFailure> {
     let started = nsh_core::time::now();
-    let response = send(build_request(&account, Ask::Ping, false), PING_TIMEOUT).await?;
-    let reply = parse_reply(account.provider, response.status(), &response.text())
-        .map_err(VisionFailure::Provider)?;
-    let seconds = started.elapsed().as_secs_f64();
-    Ok((
-        reply
-            .model
-            .unwrap_or_else(|| account.model.trim().to_owned()),
-        seconds,
-    ))
+    let request: LlmRequest = serde_json::from_value(json!({
+        "protocol_version":"agent.v1", "provider": match account.provider {
+            Provider::Anthropic => "anthropic", Provider::OpenAiCompatible => "openai"
+        }, "model":account.model.trim(),
+        "messages":[{"role":"user","content":"Reply with OK."}], "max_output_tokens":32
+    }))
+    .map_err(|_| VisionFailure::Unreadable)?;
+    let client = Client::new(endpoint(&account)?, NshTransport::new()).with_timeouts(Timeouts {
+        total: PING_TIMEOUT,
+        ..Timeouts::default()
+    });
+    let response = client.complete(request).await.map_err(llm_failure)?;
+    Ok((response.model, started.elapsed().as_secs_f64()))
 }
 
-async fn send(request: WireRequest, limit: Duration) -> Result<HttpResponse, VisionFailure> {
-    let mut http = HttpRequest::new("POST", request.url);
-    for (name, value) in request.headers {
-        http = http.header(name, value);
+fn recognition_failure(error: RecognitionError) -> VisionFailure {
+    match error {
+        RecognitionError::Truncated => VisionFailure::Truncated,
+        RecognitionError::Refused => VisionFailure::Refused,
+        RecognitionError::Photo(_) => VisionFailure::Photo,
+        RecognitionError::Consent(_) => VisionFailure::Refused,
+        RecognitionError::Llm(error) => llm_failure(error),
+        _ => VisionFailure::Unreadable,
     }
-    let http = http.body(request.body);
-    let fetching = async { fetch(http).await.map_err(VisionFailure::Offline) };
-    let waiting = async {
-        timer(limit).await;
-        Err(VisionFailure::Timeout)
+}
+
+fn llm_failure(error: LlmError) -> VisionFailure {
+    let code = error.record.code.as_str();
+    let status = error
+        .record
+        .details
+        .get("status")
+        .and_then(serde_json::Value::as_u64)
+        .unwrap_or(0) as u16;
+    if code.contains("timeout") {
+        return VisionFailure::Timeout;
+    }
+    if code.contains("refusal") || code.contains("content_filter") {
+        return VisionFailure::Refused;
+    }
+    if code.contains("network") || code.contains("transport") {
+        return VisionFailure::Offline("Network request failed".into());
+    }
+    let problem = match status {
+        401 => ProviderError::Unauthorized,
+        403 => ProviderError::Forbidden,
+        404 => ProviderError::NotFound,
+        429 => ProviderError::RateLimited,
+        503 | 529 => ProviderError::Overloaded,
+        500..=599 => ProviderError::Server(status),
+        400..=499 => ProviderError::Rejected {
+            status,
+            message: "The model rejected the request. Check the account and image support.".into(),
+        },
+        _ if code.contains("rate_limit") => ProviderError::RateLimited,
+        _ => ProviderError::Decode,
     };
-    futures_lite::future::or(fetching, waiting).await
+    VisionFailure::Provider(problem)
 }

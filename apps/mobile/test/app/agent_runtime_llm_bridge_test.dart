@@ -10,7 +10,7 @@ import 'package:naviwealth/core/ai/runtime/device/device_system_prompt.dart'
 import 'agent_runtime_native_bridge_test_harness.dart';
 
 void main() {
-  test('buildRequest maps LlmProfile to agent-llm request shape', () {
+  test('buildRequest maps LlmProfile to llm-protocol request shape', () {
     final bridge = AgentRuntimeLlmBridge(
       bridge: FakeAgentRuntimeNativeBridge(),
       profile: const LlmProfile(
@@ -112,7 +112,7 @@ void main() {
 
     expect(response['content'], 'Pong');
     expect(native.llmRequests.single['provider'], 'anthropic');
-    expect(native.llmRequests.single['model'], 'claude-sonnet-4-5');
+    expect(native.llmRequests.single['model'], kDefaultDeviceModel);
   });
 
   test(

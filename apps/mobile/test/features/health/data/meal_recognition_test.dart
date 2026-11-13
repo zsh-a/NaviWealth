@@ -1,170 +1,142 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:image/image.dart' as img;
-import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_llm_bridge.dart';
-import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_native_bridge.dart';
+import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_llm_bridge.dart'
+    show resolveLlmProfileModel;
 import 'package:naviwealth/app/agent_runtime/bridges/agent_runtime_profile_completion_clients.dart';
+import 'package:naviwealth/app/agent_runtime/bridges/health_meal_native_bridge.dart';
 import 'package:naviwealth/core/ai/contracts/ai_domain.dart';
 import 'package:naviwealth/core/ai/llm_credentials/llm_credentials.dart';
-import 'package:naviwealth/core/ai/runtime/device/device_system_prompt.dart';
 import 'package:naviwealth/features/health/data/meal_photo_capture.dart';
 import 'package:naviwealth/features/health/data/meal_recognition_client.dart';
 import 'package:naviwealth/features/health/domain/meal_photo.dart';
 
-class _NativeBridge implements AgentRuntimeNativeBridge {
+class _NativeBridge implements HealthMealNativeBridge {
   _NativeBridge(this.complete);
   final Future<Map<String, Object?>> Function(Map<String, Object?>) complete;
   @override
-  Future<Map<String, Object?>> completeProfileLlm({
+  Future<Map<String, Object?>> recognize({
     required Map<String, Object?> request,
   }) => complete(request);
   @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+  Future<Uint8List> normalizePhoto(Uint8List bytes) async => bytes;
 }
 
+class _NativeApi implements HealthMealNativeApi {
+  String? requestJson;
+  Uint8List? photoBytes;
+
+  @override
+  Future<String> recognize({required String requestJson}) async {
+    this.requestJson = requestJson;
+    return jsonEncode(_result());
+  }
+
+  @override
+  Future<Uint8List> normalizePhoto({required Uint8List bytes}) async {
+    photoBytes = bytes;
+    return Uint8List.fromList([10, 20, 30]);
+  }
+}
+
+Map<String, Object?> _result() => {
+  'model': 'test-vision',
+  'provider': 'openai',
+  'finish_reason': 'stop',
+  'usage': {'input_tokens': 10, 'output_tokens': 20, 'total_tokens': 30},
+  'prompt_version': 'meal-v1',
+  'title': '米饭',
+  'foods': [
+    {
+      'name': '米饭（熟）',
+      'grams': 200,
+      'catalog_id': '168878',
+      'source': 'USDA FDC 168878',
+      'per_100g': {'kcal': 130, 'protein': 2.69, 'carbs': 28.17, 'fat': 0.28},
+    },
+  ],
+};
+
 void main() {
-  test('multiple views carry roles and context for one deduplicated meal', () {
-    final messages = mealRecognitionMessages(
-      photos: [
-        MealPhoto(bytes: Uint8List.fromList([1])),
-        MealPhoto(
-          bytes: Uint8List.fromList([2]),
-          role: MealPhotoRole.side,
-          timestampMs: 1200,
-        ),
-        MealPhoto(
-          bytes: Uint8List.fromList([3]),
-          role: MealPhotoRole.afterMeal,
-        ),
-        MealPhoto(bytes: Uint8List.fromList([4]), role: MealPhotoRole.label),
-      ],
-      languageCode: 'zh',
-      context: '两人分食，熟米饭 150g',
+  test('normalization requires native composition while manual meals remain independent', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    expect(
+      () =>
+          container.read(mealPhotoNormalizerProvider)(Uint8List.fromList([1])),
+      throwsUnsupportedError,
     );
-    final system = messages.first['content']! as String;
-    expect(system, contains('count each serving ONCE'));
-    expect(system, contains('leftovers, never additional food'));
-    expect(system, contains('1 kcal = 4.184 kJ'));
-    final content = messages.last['content']! as List<Map<String, Object?>>;
-    expect(content.where((part) => part['type'] == 'image'), hasLength(4));
-    expect(content.map((part) => part['text']).join(), contains('after_meal'));
-    expect(content.map((part) => part['text']).join(), contains('两人分食'));
-    expect(content.map((part) => part['text']).join(), contains('1200'));
+    expect(container.read(mealRecognitionClientProvider), isNull);
+  });
+
+  test('profile defaults and explicit overrides resolve before consent', () {
+    const profile = LlmProfile(
+      id: 'profile',
+      name: 'Vision',
+      provider: LlmProvider.anthropic,
+      apiKey: 'key',
+    );
+    expect(resolveLlmProfileModel(profile), kDefaultDeviceModel);
+    expect(
+      resolveLlmProfileModel(profile.copyWith(model: '  custom-vision  ')),
+      'custom-vision',
+    );
+    expect(
+      resolveLlmProfileModel(profile.copyWith(provider: LlmProvider.openai)),
+      'gpt-5-mini',
+    );
+  });
+
+  test('shared-core DTO maps into editable Host foods with provenance', () {
+    final draft = mealRecognitionDraftFromCore(_result());
+    expect(draft.foods.single.nutrients.kcal, 260);
+    expect(draft.foods.single.source, 'USDA FDC 168878');
+    expect(draft.foods.single.catalogId, '168878');
+    expect(draft.model, 'test-vision');
+    expect(draft.promptVersion, 'meal-v1');
+    expect(draft.title, '米饭');
   });
 
   test(
-    'recognition rejects excess views, missing meal view and oversized context',
+    'Host accepts only the validated core contract, never provider text',
     () {
-      for (final photos in [
-        <MealPhoto>[],
-        List.generate(5, (_) => MealPhoto(bytes: Uint8List.fromList([1]))),
-        [
-          MealPhoto(
-            bytes: Uint8List.fromList([1]),
-            role: MealPhotoRole.afterMeal,
-          ),
-        ],
-        [
-          MealPhoto(bytes: Uint8List.fromList([1]), role: MealPhotoRole.label),
-        ],
+      for (final response in [
+        {'content': jsonEncode(_result())},
+        {'object': _result()},
+        {..._result(), 'prompt_version': null},
+        {..._result(), 'foods': <Object?>[]},
+        {
+          ..._result(),
+          'foods': <Object?>[null],
+        },
       ]) {
         expect(
-          () => mealRecognitionMessages(photos: photos, languageCode: 'en'),
+          () => mealRecognitionDraftFromCore(response),
           throwsFormatException,
         );
       }
-      expect(
-        () => mealRecognitionMessages(
-          photos: [
-            MealPhoto(bytes: Uint8List.fromList([1])),
-          ],
-          languageCode: 'en',
-          context: 'a' * 1001,
-        ),
-        throwsFormatException,
-      );
     },
   );
 
-  Map<String, Object?> response(List<Object?> foods) => {
-    'model': 'test-vision',
-    'object': {'foods': foods},
-  };
-  Map<String, Object?> food({String? catalog = '168878', double grams = 200}) =>
-      {
-        'name': '米饭（熟）',
-        'grams': grams,
-        'catalog_id': catalog,
-        'per_100g': {'kcal': 999, 'protein': 1, 'carbs': 2, 'fat': 3},
-      };
-
-  test('catalog-backed nutrition overrides model values; uncataloged recipes stay estimates', () {
-    final draft = parseMealRecognition(
-      response([food(), food(catalog: null, grams: 100)]),
-    );
-    expect(draft.foods.first.nutrients.kcal, 260);
-    expect(draft.foods.first.source, 'USDA FDC 168878');
-    expect(draft.foods.last.nutrients.kcal, 999);
-    expect(draft.foods.last.isEstimate, true);
-    expect(draft.model, 'test-vision');
-  });
-  test('empty, unknown, malformed, oversized and truncated results fail without saving guesses', () {
-    for (final object in [
-      response([]),
-      response([food(catalog: 'invented')]),
-      response([food(grams: -1)]),
-      response([food(grams: double.infinity)]),
-      response(List.filled(31, food())),
-      {'content': 'not JSON'},
-      {
-        ...response([food()]),
-        'finish_reason': 'length',
-      },
-    ]) {
-      expect(() => parseMealRecognition(object), throwsFormatException);
-    }
-  });
-  test(
-    'photo normalization resizes and re-encodes without original metadata',
-    () {
-      final image = img.Image(width: 1800, height: 900);
-      image.exif.imageIfd.imageDescription = 'private original metadata';
-      final original = Uint8List.fromList(img.encodeJpg(image));
-      final normalized = normalizeMealPhoto(original);
-      final decoded = img.decodeJpg(normalized)!;
-      expect(decoded.width, 1280);
-      expect(decoded.height, 640);
-      expect(
-        decoded.exif.imageIfd.imageDescription,
-        isNot('private original metadata'),
-      );
-      expect(normalized.length, lessThan(2 * 1024 * 1024));
-      expect(
-        () => normalizeMealPhoto(Uint8List.fromList([1, 2])),
-        throwsFormatException,
-      );
-    },
-  );
-  test('permission denial makes no native call and recognition is traced to Health', () async {
+  test('consent denial prevents native calls; frozen profile and all views cross the core boundary', () async {
     final calls = <Map<String, Object?>>[];
     final traces = <Map<String, Object?>>[];
     final native = _NativeBridge((request) async {
       calls.add(request);
-      return response([food()]);
+      return _result();
     });
     final client = FrbMealRecognitionClient(
-      llmBridge: AgentRuntimeLlmBridge(
-        bridge: native,
-        profile: const LlmProfile(
-          id: 'profile',
-          name: 'Vision',
-          provider: LlmProvider.openai,
-          apiKey: 'test-key',
-          model: 'test-vision',
-        ),
+      nativeBridge: native,
+      profile: const LlmProfile(
+        id: 'profile',
+        name: 'Vision',
+        provider: LlmProvider.openai,
+        apiKey: 'test-key',
+        baseUrl: 'https://vision.example/v1',
+        model: 'test-vision',
       ),
-      providerLabel: 'Vision',
       recordTrace:
           ({
             required String agentId,
@@ -181,35 +153,152 @@ void main() {
               'agent': agentId,
               'domain': domain.wire,
               'surface': surface,
+              'response': llmResponse,
+              'error': error,
             });
             return null;
           },
     );
     expect(
-      () => client.recognize(
-        photos: [
-          MealPhoto(bytes: Uint8List.fromList([1])),
-        ],
-        languageCode: 'zh',
-        allowUpload: false,
+      client.providerLabel,
+      'Vision · test-vision\nhttps://vision.example/v1',
+    );
+    final photos = [
+      MealPhoto(bytes: Uint8List.fromList([1])),
+      MealPhoto(
+        bytes: Uint8List.fromList([2]),
+        role: MealPhotoRole.side,
+        timestampMs: 1200,
       ),
+      MealPhoto(bytes: Uint8List.fromList([3]), role: MealPhotoRole.afterMeal),
+      MealPhoto(bytes: Uint8List.fromList([4]), role: MealPhotoRole.label),
+    ];
+    await expectLater(
+      client.recognize(photos: photos, languageCode: 'zh', allowUpload: false),
       throwsStateError,
     );
     expect(calls, isEmpty);
+    expect(traces, isEmpty);
     final draft = await client.recognize(
-      photos: List.generate(
-        4,
-        (index) => MealPhoto(bytes: Uint8List.fromList([index + 1])),
-      ),
+      photos: photos,
       languageCode: 'zh',
       allowUpload: true,
+      context: '两人分食，熟米饭 150g',
     );
     expect(draft.foods.single.nutrients.kcal, 260);
-    expect(calls.single['response_format'], {'type': 'json_object'});
-    expect(calls.single['max_output_tokens'], kDefaultLlmMaxOutputTokens);
-    final messages = calls.single['messages']! as List<Map<String, Object?>>;
-    final content = messages.last['content']! as List<Map<String, Object?>>;
-    expect(content.where((block) => block['type'] == 'image'), hasLength(4));
+    expect(calls.single, {
+      'provider': 'openai',
+      'model': 'test-vision',
+      'base_url': 'https://vision.example/v1',
+      'api_key': 'test-key',
+      'allow_upload': true,
+      'language_code': 'zh',
+      'context': '两人分食，熟米饭 150g',
+      'photos': [
+        {
+          'bytes': [1],
+          'role': 'overview',
+        },
+        {
+          'bytes': [2],
+          'role': 'side',
+          'timestamp_ms': 1200,
+        },
+        {
+          'bytes': [3],
+          'role': 'after_meal',
+        },
+        {
+          'bytes': [4],
+          'role': 'label',
+        },
+      ],
+    });
     expect(traces.single['domain'], 'health');
+    expect(traces.single['response'], {
+      'model': 'test-vision',
+      'provider': 'openai',
+      'finish_reason': 'stop',
+      'usage': {'input_tokens': 10, 'output_tokens': 20, 'total_tokens': 30},
+      'metadata': {'prompt_version': 'meal-v1'},
+    });
+    expect(jsonEncode(traces), isNot(contains('test-key')));
+    expect(jsonEncode(traces), isNot(contains('两人分食')));
+    expect(jsonEncode(traces), isNot(contains('foods')));
+  });
+
+  test(
+    'native normalization and recognition share initialized local runtime',
+    () async {
+      final api = _NativeApi();
+      final paths = <String?>[];
+      final bridge = FfiHealthMealNativeBridge(
+        api: api,
+        initialize: ({String? libraryPath}) async => paths.add(libraryPath),
+        libraryPath: '/native/lifeos',
+      );
+      final bytes = Uint8List.fromList([1, 2, 3]);
+      expect(await bridge.normalizePhoto(bytes), [10, 20, 30]);
+      expect(api.photoBytes, same(bytes));
+      final result = await bridge.recognize(
+        request: {
+          'allow_upload': true,
+          'photos': [
+            {'bytes': bytes},
+          ],
+        },
+      );
+      expect(result['prompt_version'], 'meal-v1');
+      expect(jsonDecode(api.requestJson!), {
+        'allow_upload': true,
+        'photos': [
+          {
+            'bytes': [1, 2, 3],
+          },
+        ],
+      });
+      expect(paths, ['/native/lifeos', '/native/lifeos']);
+    },
+  );
+
+  test('native failures are traced without changing the failure', () async {
+    final failure = StateError('recognition_refused');
+    Object? tracedError;
+    final client = FrbMealRecognitionClient(
+      nativeBridge: _NativeBridge((_) async => throw failure),
+      profile: const LlmProfile(
+        id: 'p',
+        name: 'Vision',
+        provider: LlmProvider.anthropic,
+        apiKey: 'key',
+        model: 'vision',
+      ),
+      recordTrace:
+          ({
+            required String agentId,
+            required Map<String, Object?>? llmResponse,
+            DateTime? startedAt,
+            DateTime? finishedAt,
+            String? requestId,
+            required AiDomain domain,
+            String surface = '',
+            String routingReason = '',
+            Object? error,
+          }) async {
+            tracedError = error;
+            throw StateError('trace unavailable');
+          },
+    );
+    await expectLater(
+      client.recognize(
+        photos: [
+          MealPhoto(bytes: Uint8List.fromList([1])),
+        ],
+        languageCode: 'en',
+        allowUpload: true,
+      ),
+      throwsA(same(failure)),
+    );
+    expect(tracedError, same(failure));
   });
 }

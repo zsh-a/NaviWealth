@@ -49,6 +49,7 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
   bool _photosChanged = false;
   bool _recognizing = false;
   String? _recognitionModel;
+  String? _recognitionPromptVersion;
   bool _loading = false;
   bool _working = false;
   bool _confirming = false;
@@ -99,6 +100,7 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
           'type': _type.name,
           'foods': _foods.map((food) => food.toJson()).toList(),
           'model': _recognitionModel,
+          'prompt_version': _recognitionPromptVersion,
           'details': _showDetails,
           // Photos remain memory-only until Save. Never put binary images in
           // the shared preferences snapshot or upload them during recovery.
@@ -144,6 +146,7 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
           }
         }
         _recognitionModel = value['model'] as String?;
+        _recognitionPromptVersion = value['prompt_version'] as String?;
         _showDetails = value['details'] == true || _note.text.isNotEmpty;
         _draftPhotosNeedReselect = value['hadPhotos'] == true;
       }),
@@ -173,6 +176,7 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
           _note.text = meal.note ?? '';
           _showDetails = _note.text.isNotEmpty;
           _recognitionModel = meal.recognitionModel;
+          _recognitionPromptVersion = meal.recognitionPromptVersion;
           _photos.addAll(photos);
         }
         _loading = false;
@@ -756,6 +760,7 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
           ..clear()
           ..addAll(result.foods);
         _recognitionModel = result.model;
+        _recognitionPromptVersion = result.promptVersion;
       });
       _markChanged();
       _revealFoods();
@@ -818,6 +823,7 @@ class _HealthMealEntryPageState extends ConsumerState<HealthMealEntryPage>
           foods: foods,
           note: _note.text,
           recognitionModel: _recognitionModel,
+          recognitionPromptVersion: _recognitionPromptVersion,
           photos: _photosChanged ? List<MealPhoto>.of(_photos) : null,
         );
       },

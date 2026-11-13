@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "runtime_commit": "fd66dbeb60d722883537e3743572e8662349a9de",
+  "runtime_commit": "ca75b05f16ebde585a0b1e80fc2095384f9dae8b",
   "protocol": {
     "wire": "agent.v1",
     "embedded_snapshot": 1,
@@ -45,6 +45,9 @@
     "crates/agent-core/src/embedded.rs",
     "crates/agent-chat/src/snapshot.rs",
     "crates/agent-store/Cargo.toml",
+    "crates/llm-protocol/src/lib.rs",
+    "crates/llm-client/src/lib.rs",
+    "crates/llm-reqwest/src/lib.rs",
     "bindings/ts/package.json",
     "bindings/ts/src/http-client.ts",
     "bindings/ts/src/generate-object.ts",

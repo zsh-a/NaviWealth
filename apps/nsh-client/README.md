@@ -13,15 +13,21 @@ Completions API); there is no NaviWealth relay.
 
 ```text
 src/
-  domain/   plain Rust: nutrition math, meals, USDA catalog, prompt and answer
-            parsing, provider wire formats (tested without an engine)
-  data/     device storage, photos, local time, the vision client (NSH fetch)
+  domain/   host-owned meals/account and shared health-core domain exports
+  data/     device storage, photos, local time, thin NSH fetch Transport
   ui/       the app's styled components over nsh-base, and its tokens
   pages/    Today, the meal review (photo, consent, editor), Settings
   i18n/     English and Chinese copy
   preview.rs  desktop-only preview seeding for design review
 tests/flows.rs  user flows on the real engine, headless
 ```
+
+Meal recognition, catalog nutrition, photo normalization and destination-bound
+consent live in `../../crates/health-core`, shared with Flutter. Provider wire
+formats live in `../../third_party/agent-runtime/crates/llm-protocol`; request
+policy lives in `llm-client`. NSH supplies its platform fetch transport rather
+than the reqwest adapter. NSH 0.5.0 returns whole response bodies; recognition does not require
+streaming. Each saved estimate records its model and prompt version.
 
 ## Commands
 

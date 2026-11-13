@@ -1,7 +1,7 @@
 [package]
 name = "nsh-app-naviwealth-health"
 description = "NaviWealth's native (NSH) client: photo meal logging for HealthOS."
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 rust-version = "1.97"
 publish = false
@@ -21,12 +21,12 @@ log = "0.4"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 base64 = "0.22"
-futures-lite = { version = "2", default-features = false, features = ["std"] }
+futures = "0.3"
+health-core = { path = "../../crates/health-core" }
+llm-protocol = { path = "../../third_party/agent-runtime/crates/llm-protocol" }
+llm-client = { path = "../../third_party/agent-runtime/crates/llm-client" }
 # Local calendar dates from the device's time zone (Android's tzdata included).
 jiff = "0.2"
-# Normalizes picked photos the same way on every platform: upright, at most
-# 1280 px, re-encoded as JPEG (which drops EXIF/GPS metadata).
-image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp"] }
 
 [target.'cfg(any(target_os = "linux", target_os = "macos", target_os = "windows"))'.dependencies]
 env_logger = "0.11"
@@ -41,6 +41,7 @@ nsh-platform-macos = { version = "0.5.0", default-features = false }
 nsh-platform-windows = { version = "0.5.0", default-features = false }
 
 [dev-dependencies]
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp"] }
 nsh-engine = { version = "0.5.0", default-features = false }
 nsh-testing = { version = "0.5.0", default-features = false }
 

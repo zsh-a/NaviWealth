@@ -44,6 +44,7 @@ fn chat_turn_to_llm_request(request: &ChatTurnRequest) -> LlmRequest {
         model: request.model.clone(),
         messages: request.messages.clone(),
         temperature: request.temperature,
+        effort: None,
         max_output_tokens: request.max_output_tokens,
         tools: request.tools.clone(),
         response_format: None,

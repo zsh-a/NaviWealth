@@ -103,6 +103,7 @@ class _Recognition implements MealRecognitionClient {
     return MealRecognitionDraft(
       foods: [mealFoodCatalog.first.portion(200, name: 'Rice')],
       model: 'test-vision',
+      promptVersion: 'meal-v1',
     );
   }
 }
@@ -128,6 +129,7 @@ class _DelayedRepository extends HealthMealRepository {
     required List<MealFood> foods,
     String? note,
     String? recognitionModel,
+    String? recognitionPromptVersion,
     Uint8List? photoBytes,
     bool removePhoto = false,
     List<MealPhoto>? photos,
@@ -144,6 +146,7 @@ class _DelayedRepository extends HealthMealRepository {
       foods: foods,
       note: note,
       recognitionModel: recognitionModel,
+      recognitionPromptVersion: recognitionPromptVersion,
       photoBytes: photoBytes,
       removePhoto: removePhoto,
       photos: photos,
@@ -266,6 +269,8 @@ void main() {
       final store = LocalFormDraftStore(preferences, owner: kLocalOnlyUserId);
       await store.write('health.meal.new', {
         'note': 'Recovered meal',
+        'model': 'restored-vision',
+        'prompt_version': 'meal-restored',
         'day': '2026-10-24T00:00:00.000Z',
         'capturedAt': '2026-10-24T12:00:00.000',
         'type': 'breakfast',
@@ -304,6 +309,8 @@ void main() {
       final saved = await db.select(db.healthMeals).getSingle();
       expect(HealthMeal.decodeFoods(saved.foodsJson).single.grams, 175);
       expect(saved.note, 'Recovered meal');
+      expect(saved.recognitionModel, 'restored-vision');
+      expect(saved.foodsJson, contains('meal-restored'));
       expect(saved.mealType, 'dinner');
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pumpAndSettle();
@@ -401,6 +408,10 @@ void main() {
       await tester.tap(find.byKey(const Key('meal-save')));
       await tester.pumpAndSettle();
       expect(await db.select(db.healthMealPhotos).get(), hasLength(1));
+      expect(
+        (await db.select(db.healthMeals).getSingle()).foodsJson,
+        contains('meal-v1'),
+      );
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pumpAndSettle();
     },
@@ -525,6 +536,8 @@ void main() {
       await tester.pumpAndSettle();
       final first = (await db.select(db.healthMeals).get()).single;
       expect(first.foodsJson, contains('100.0'));
+      expect(first.recognitionModel, 'test-vision');
+      expect(first.foodsJson, contains('meal-v1'));
       final savedFood = HealthMeal.decodeFoods(first.foodsJson).single;
       expect(savedFood.catalogId, mealFoodCatalog.first.id);
       expect(savedFood.per100g.kcal, mealFoodCatalog.first.per100g.kcal);

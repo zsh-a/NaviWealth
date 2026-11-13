@@ -92,19 +92,27 @@ Map<String, Object?> _buildManifest(Directory runtime) {
       ).contains('sqlite = ["dep:sqlx"]'),
     },
     'llm_providers': <String>[
-      for (final provider in <String>['mock', 'openai', 'anthropic', 'ollama'])
-        if (File(
-          provider == 'mock'
-              ? '${runtime.path}/crates/agent-llm/src/mock.rs'
-              : '${runtime.path}/crates/agent-llm/src/providers/$provider.rs',
-        ).existsSync())
-          provider,
+      if (File('${runtime.path}/crates/llm-client/src/mock.rs').existsSync())
+        'mock',
+      for (final provider in <String, String>{
+        'openai': 'OpenAiCompatibleProvider',
+        'anthropic': 'AnthropicProvider',
+        'ollama': 'OllamaProvider',
+      }.entries)
+        if (_read(
+          runtime,
+          'crates/llm-reqwest/src/lib.rs',
+        ).contains('pub struct ${provider.value}'))
+          provider.key,
     ],
     'authoritative_inputs': <String>[
       'crates/agent-core/src/lib.rs',
       'crates/agent-core/src/embedded.rs',
       'crates/agent-chat/src/snapshot.rs',
       'crates/agent-store/Cargo.toml',
+      'crates/llm-protocol/src/lib.rs',
+      'crates/llm-client/src/lib.rs',
+      'crates/llm-reqwest/src/lib.rs',
       'bindings/ts/package.json',
       'bindings/ts/src/http-client.ts',
       'bindings/ts/src/generate-object.ts',

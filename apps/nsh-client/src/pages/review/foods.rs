@@ -14,9 +14,8 @@ use super::draft::{Draft, Editing, Phase};
 use crate::{
     data::photos,
     domain::{
-        VisionFailure, format,
+        ProviderError, VisionFailure, format,
         nutrition::{Food, FoodSource, total},
-        wire::ProviderError,
     },
     i18n::{Strings, s},
     nav::{self, Route},

@@ -17,7 +17,7 @@ ChatRepository
   -> RuntimeRoutingAiChatApiClient
   -> FrbChatRunner
   -> AgentRuntimeLlmStreamBridge (ChatTurn stream/resume) + AgentRuntimeToolHost
-  -> agent-chat / agent-llm native provider + Dart device-tool dispatch
+  -> agent-chat / llm-client native provider + Dart device-tool dispatch
 ```
 
 The Flutter bridge and TUI now share the ChatTurn request/message/tool shape.

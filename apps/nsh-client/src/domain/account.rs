@@ -46,13 +46,24 @@ impl Provider {
 
 /// A configured account. The key is kept apart from the rest (it is never
 /// serialized with it).
-#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct ModelAccount {
     pub provider: Provider,
     pub base_url: String,
     pub model: String,
     #[serde(skip)]
     pub api_key: String,
+}
+
+impl std::fmt::Debug for ModelAccount {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ModelAccount")
+            .field("provider", &self.provider)
+            .field("base_url", &self.base_url)
+            .field("model", &self.model)
+            .field("api_key", &"[REDACTED]")
+            .finish()
+    }
 }
 
 /// Which field of an account is wrong.
@@ -130,11 +141,24 @@ impl ModelAccount {
             Provider::Anthropic => "anthropic",
             Provider::OpenAiCompatible => "openai",
         };
-        format!(
-            "{provider}|{}|{}",
-            self.normalized_base_url().to_ascii_lowercase(),
-            self.model.trim()
-        )
+        let base = self.normalized_base_url();
+        // Only scheme/authority are case-insensitive. A gateway path can name
+        // a different tenant, so changing its case requires fresh consent.
+        let destination = if let Some((scheme, rest)) = base.split_once("://") {
+            let boundary = rest.find('/').unwrap_or(rest.len());
+            format!(
+                "{}://{}{}",
+                scheme.to_ascii_lowercase(),
+                rest[..boundary].to_ascii_lowercase(),
+                &rest[boundary..],
+            )
+        } else {
+            base
+        };
+        // Structured encoding prevents delimiter characters in a gateway
+        // path or model identifier from colliding with another target.
+        serde_json::to_string(&(provider, destination, self.model.trim()))
+            .expect("a tuple of strings is serializable")
     }
 
     /// The key as the settings show it at rest: its last four characters.
@@ -206,7 +230,16 @@ mod tests {
         b.api_key = "two".into();
         b.base_url = "https://API.anthropic.com/v1/".into();
         assert_eq!(a.fingerprint(), b.fingerprint());
+        a.base_url = "https://gateway.example/v1/TeamA".into();
+        b.base_url = "https://gateway.example/v1/teama".into();
+        assert_ne!(a.fingerprint(), b.fingerprint());
+        b.base_url = a.base_url.clone();
         b.model = "claude-haiku-5-5".into();
+        assert_ne!(a.fingerprint(), b.fingerprint());
+        a.base_url = "https://gateway.example/a|b".into();
+        a.model = "c".into();
+        b.base_url = "https://gateway.example/a".into();
+        b.model = "b|c".into();
         assert_ne!(a.fingerprint(), b.fingerprint());
     }
 
@@ -216,6 +249,7 @@ mod tests {
         account.api_key = "secret".into();
         let json = serde_json::to_string(&account).unwrap();
         assert!(!json.contains("secret"));
+        assert!(!format!("{account:?}").contains("secret"));
         let back: ModelAccount = serde_json::from_str(&json).unwrap();
         assert!(back.api_key.is_empty());
     }
