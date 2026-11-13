@@ -1,12 +1,17 @@
 //! The app's design tokens, the only place raw colors and sizes live.
 //!
-//! "澄白 · Porcelain": a cool porcelain canvas, white grouped surfaces and
-//! graphite text keep figures readable; iris marks what can be pressed and
-//! what is selected. Food data has its own colors (protein rose, carbs
-//! amber, fat teal) that never stand in for actions or status. Every color
-//! is an `AdaptiveColor`, so light and dark switch natively.
+//! "墨与日光 · Ink & Daylight": a warm daylight canvas, white surfaces lifted
+//! by soft light, and ink for everything that acts: buttons, selection,
+//! focus. The interface itself is monochrome so that the food (its photos
+//! and its nutrition colors) carries the color. An iris-to-sky light marks
+//! the moments the AI works. Every color is an `AdaptiveColor`, so light and
+//! dark (a deep graphite with white ink) switch natively.
 
-use nsh_core::element::{AdaptiveColor, Easing, Spring, Timing};
+use nsh_core::{
+    color::rgba,
+    element::{AdaptiveColor, BoxShadow, Easing, Spring, Timing},
+    geometry::px,
+};
 
 /// Color roles.
 pub mod color {
@@ -16,144 +21,186 @@ pub mod color {
         AdaptiveColor::rgb(light, dark)
     }
 
-    /// The page.
-    pub const CANVAS: AdaptiveColor = c(0xF5F6F9, 0x0E1015);
-    /// Grouped content: cards, lists, sheets.
-    pub const SURFACE: AdaptiveColor = c(0xFFFFFF, 0x181B22);
-    /// A control or well on a surface: fields, tracks, steppers.
-    pub const SUNKEN: AdaptiveColor = c(0xEEF0F4, 0x242833);
-    /// What sits raised on a sunken track: the selected segment.
-    pub const RAISED: AdaptiveColor = c(0xFFFFFF, 0x363C4C);
-    /// A switch's knob.
-    pub const KNOB: AdaptiveColor = c(0xFFFFFF, 0xF3F4F8);
-    /// Hairlines between rows and around fields.
-    pub const LINE: AdaptiveColor = c(0xE4E7EE, 0x2C313D);
-    /// A field's edge when it has focus.
-    pub const LINE_STRONG: AdaptiveColor = c(0xC9CEDA, 0x434A5A);
+    /// The page: warm daylight / deep graphite.
+    pub const CANVAS: AdaptiveColor = c(0xF5F4F1, 0x0A0A0B);
+    /// Cards, sheets, rows.
+    pub const SURFACE: AdaptiveColor = c(0xFFFFFF, 0x161618);
+    /// A well inside a surface: macro tiles, detail rows, chips.
+    pub const SURFACE_2: AdaptiveColor = c(0xF4F3F0, 0x1F1F22);
+    /// Fields and tracks.
+    pub const SUNKEN: AdaptiveColor = c(0xEFEEEA, 0x1C1C1F);
+    /// What sits raised on a track: the selected segment.
+    pub const RAISED: AdaptiveColor = c(0xFFFFFF, 0x2C2C30);
+    /// Hairlines.
+    pub const LINE: AdaptiveColor = c(0xEAE9E5, 0x26262A);
+    /// Stronger edges: unchecked boxes, the grabber.
+    pub const LINE_STRONG: AdaptiveColor = c(0xD4D3CE, 0x3C3C41);
 
     /// Titles and figures.
-    pub const INK: AdaptiveColor = c(0x161922, 0xF3F4F8);
-    /// Readable copy.
-    pub const BODY: AdaptiveColor = c(0x2A2F3B, 0xD9DDE6);
-    /// Secondary text: units, metadata.
-    pub const MUTED: AdaptiveColor = c(0x646B7A, 0xA2A9B9);
+    pub const INK: AdaptiveColor = c(0x0E0E10, 0xF6F6F7);
+    /// Copy.
+    pub const BODY: AdaptiveColor = c(0x2C2C30, 0xE2E2E6);
+    /// Secondary text.
+    pub const MUTED: AdaptiveColor = c(0x76767C, 0x9C9CA4);
     /// Tertiary marks: chevrons, placeholders.
-    pub const FAINT: AdaptiveColor = c(0x9097A5, 0x6E7586);
+    pub const FAINT: AdaptiveColor = c(0xABABB0, 0x606066);
 
-    /// What can be pressed, and what is selected.
-    pub const ACCENT: AdaptiveColor = c(0x4F5BD5, 0x9AA4F7);
-    /// The primary button's fill.
-    pub const ACCENT_FILL: AdaptiveColor = c(0x4F5BD5, 0x8F9AF2);
-    /// Text and icons on the accent fill.
-    pub const ON_ACCENT: AdaptiveColor = c(0xFFFFFF, 0x0F1230);
-    /// A quiet accent wash: tonal buttons, the selected segment.
-    pub const ACCENT_SOFT: AdaptiveColor = c(0xECEEFD, 0x262B4F);
+    /// The primary action's fill: ink.
+    pub const ACTION: AdaptiveColor = c(0x111113, 0xF6F6F7);
+    /// Its pressed fill.
+    pub const ACTION_PRESSED: AdaptiveColor = c(0x33333A, 0xD6D6DA);
+    /// The top of its sheen.
+    pub const ACTION_SHEEN: AdaptiveColor = c(0x2E2E33, 0xFFFFFF);
+    /// Text and icons on the action fill.
+    pub const ON_ACTION: AdaptiveColor = c(0xFFFFFF, 0x0B0B0C);
+
+    /// The AI's light, from iris to sky: analysis, estimates.
+    pub const AI_FROM: AdaptiveColor = c(0x7B61FF, 0x9B87FF);
+    pub const AI_TO: AdaptiveColor = c(0x22B8F0, 0x48C9F5);
 
     /// Destructive actions and errors.
-    pub const DANGER: AdaptiveColor = c(0xC9364A, 0xFF7A86);
-    pub const DANGER_SOFT: AdaptiveColor = c(0xFCEBED, 0x3A1F25);
+    pub const DANGER: AdaptiveColor = c(0xE5484D, 0xFF6369);
+    pub const DANGER_SOFT: AdaptiveColor = c(0xFDECEC, 0x3A1618);
     /// Estimates to check.
-    pub const CAUTION: AdaptiveColor = c(0xA1620A, 0xF2B45A);
-    pub const CAUTION_SOFT: AdaptiveColor = c(0xFDF2E1, 0x372B16);
+    pub const CAUTION: AdaptiveColor = c(0xB86E00, 0xFFC046);
+    pub const CAUTION_SOFT: AdaptiveColor = c(0xFFF3DA, 0x372809);
     /// Done, connected.
-    pub const POSITIVE: AdaptiveColor = c(0x1C7F55, 0x5DD39E);
+    pub const POSITIVE: AdaptiveColor = c(0x1E9A55, 0x4CC38A);
 
     /// Energy from protein.
-    pub const PROTEIN: AdaptiveColor = c(0xDE5479, 0xF27C9B);
+    pub const PROTEIN: AdaptiveColor = c(0xFF5A5F, 0xFF6E72);
     /// Energy from carbohydrates.
-    pub const CARBS: AdaptiveColor = c(0xE29A2E, 0xF3BD5E);
+    pub const CARBS: AdaptiveColor = c(0xFFAA1C, 0xFFBF45);
     /// Energy from fat.
-    pub const FAT: AdaptiveColor = c(0x2E9C92, 0x58C6BB);
+    pub const FAT: AdaptiveColor = c(0x3D8BFF, 0x5C9DFF);
     /// Energy the macronutrients do not explain.
-    pub const OTHER: AdaptiveColor = c(0xB7BDCA, 0x4D5465);
+    pub const OTHER: AdaptiveColor = c(0xCCCAC4, 0x4A4A50);
     /// The ring's empty track.
-    pub const TRACK: AdaptiveColor = c(0xEDEFF4, 0x232733);
+    pub const TRACK: AdaptiveColor = c(0xEFEEEA, 0x1E1E22);
 
     /// The dim behind sheets.
-    pub const SCRIM: AdaptiveColor = c(0x0B0D14, 0x000000);
+    pub const SCRIM: AdaptiveColor = c(0x0A0A0B, 0x000000);
     /// Behind photos while they load.
-    pub const PHOTO_WELL: AdaptiveColor = c(0xE6E8EE, 0x1F232C);
+    pub const PHOTO_WELL: AdaptiveColor = c(0xE7E6E2, 0x1C1C1F);
     /// Text and marks over a photo, on [`MEDIA_SCRIM`].
     pub const ON_MEDIA: AdaptiveColor = c(0xFFFFFF, 0xFFFFFF);
     /// The shade that keeps text over a photo readable.
-    pub const MEDIA_SCRIM: AdaptiveColor = c(0x0A0C12, 0x05060A);
+    pub const MEDIA_SCRIM: AdaptiveColor = c(0x050506, 0x050506);
 }
 
-/// Corner radii, from the largest surfaces down.
+/// Corner radii, from the largest surfaces down. Controls are pills.
 pub mod radius {
-    /// Sheets' top corners.
-    pub const SHEET: f32 = 28.0;
-    /// Cards and grouped lists.
-    pub const CARD: f32 = 22.0;
-    /// The meal photo.
-    pub const PHOTO: f32 = 18.0;
-    /// Buttons and fields.
-    pub const CONTROL: f32 = 14.0;
-    /// Small controls: chips, steppers, thumbnails.
-    pub const SMALL: f32 = 10.0;
-    /// Badges.
-    pub const BADGE: f32 = 6.0;
+    /// Sheets' top corners and the content rising over a photo.
+    pub const SHEET: f32 = 32.0;
+    /// Cards.
+    pub const CARD: f32 = 24.0;
+    /// Wells inside cards: tiles, detail groups.
+    pub const WELL: f32 = 18.0;
+    /// Fields.
+    pub const FIELD: f32 = 16.0;
+    /// Photo thumbnails.
+    pub const THUMB: f32 = 16.0;
+    /// Small marks.
+    pub const BADGE: f32 = 8.0;
 }
 
-/// Spacing that is not on the 4 pt scale's methods: the page's gutter.
+/// Spacing that is not on the 4 pt scale's methods.
 pub mod space {
     /// The page's leading and trailing inset on phones.
     pub const GUTTER: f32 = 20.0;
     /// A card's inset.
-    pub const CARD: f32 = 18.0;
+    pub const CARD: f32 = 20.0;
 }
 
 /// Control heights (touch: at least 44 pt).
 pub mod size {
-    /// The main actions of a screen.
+    /// A screen's main action.
     pub const LARGE: f32 = 56.0;
     /// Ordinary buttons and fields.
-    pub const MEDIUM: f32 = 48.0;
-    /// Compact buttons inside rows and cards (44 pt hit area).
-    pub const SMALL: f32 = 36.0;
+    pub const MEDIUM: f32 = 50.0;
+    /// Compact buttons inside rows and cards (44 pt hit area kept).
+    pub const SMALL: f32 = 38.0;
     /// The touch target every pressable keeps.
     pub const TOUCH: f32 = 44.0;
 }
 
-/// Text roles: size (pt), line height (pt) and weight.
+/// Text roles.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Type {
-    /// The day's energy figure.
+    /// The day's energy.
+    Hero,
+    /// A meal's total.
     Display,
     /// A page's title.
     LargeTitle,
-    /// A sheet's or card's title.
+    /// Section and sheet titles.
     Title,
-    /// Row titles and emphasized values.
+    /// Figures in cards and tiles.
+    Figure,
+    /// Row titles, buttons.
     Headline,
     /// Copy.
     Body,
     /// Secondary copy.
     Callout,
-    /// Metadata.
+    /// Metadata, labels.
     Subhead,
-    /// Units, badges, captions.
+    /// Units, badges.
     Caption,
 }
 
 impl Type {
-    /// Size, line height and weight (100–900).
-    pub const fn metrics(self) -> (f32, f32, u16) {
+    /// Size, line height, weight (100–900) and tracking, in points.
+    pub const fn metrics(self) -> (f32, f32, u16, f32) {
         match self {
-            Type::Display => (34.0, 38.0, 650),
-            Type::LargeTitle => (30.0, 36.0, 700),
-            Type::Title => (20.0, 26.0, 650),
-            Type::Headline => (16.0, 22.0, 600),
-            Type::Body => (16.0, 23.0, 400),
-            Type::Callout => (15.0, 21.0, 400),
-            Type::Subhead => (14.0, 19.0, 450),
-            Type::Caption => (12.5, 16.0, 550),
+            Type::Hero => (60.0, 64.0, 700, -2.4),
+            Type::Display => (44.0, 48.0, 700, -1.6),
+            Type::LargeTitle => (34.0, 40.0, 700, -1.0),
+            Type::Title => (22.0, 28.0, 700, -0.4),
+            Type::Figure => (20.0, 24.0, 700, -0.4),
+            Type::Headline => (17.0, 22.0, 600, -0.2),
+            Type::Body => (16.0, 23.0, 400, 0.0),
+            Type::Callout => (15.0, 21.0, 400, 0.0),
+            Type::Subhead => (14.0, 19.0, 500, 0.0),
+            Type::Caption => (12.5, 16.0, 600, 0.0),
         }
     }
 }
 
-/// Motion: durations in ms, curves and springs. Reduced motion turns
-/// every one of them off ([`super::motion::reduced`]).
+/// Soft light: shadows of surfaces that float above the canvas.
+pub mod shadow {
+    use super::{BoxShadow, px, rgba};
+
+    const fn layer(y: f32, blur: f32, spread: f32, color: u32) -> BoxShadow {
+        BoxShadow {
+            offset_x: px(0.0),
+            offset_y: px(y),
+            blur: px(blur),
+            spread: px(spread),
+            color: rgba(color).to_packed(),
+            inset: false,
+        }
+    }
+
+    /// A card on the daylight canvas: a close contact shadow and a wide,
+    /// faint glow under it.
+    pub const CARD: [BoxShadow; 2] = [
+        layer(1.0, 2.0, 0.0, 0x1A14080A),
+        layer(10.0, 30.0, -6.0, 0x1A14081A),
+    ];
+    /// A floating control: the main action, raised round buttons.
+    pub const FLOAT: [BoxShadow; 2] = [
+        layer(2.0, 6.0, 0.0, 0x0A0A0B1F),
+        layer(14.0, 32.0, -8.0, 0x0A0A0B40),
+    ];
+    /// The selected segment on its track.
+    pub const SEGMENT: [BoxShadow; 1] = [layer(2.0, 6.0, 0.0, 0x1A140814)];
+    /// Dark appearance: depth comes from the surfaces' tone, not shadows.
+    pub const NONE: [BoxShadow; 0] = [];
+}
+
+/// Motion: durations in ms, curves and springs. Reduced motion turns every
+/// one of them off.
 pub mod motion {
     use super::{Easing, Spring, Timing};
 
@@ -163,28 +210,32 @@ pub mod motion {
     pub const FAST: f32 = 180.0;
     /// Moving into place: a selection sliding, a glyph swapping.
     pub const BASE: f32 = 240.0;
-    /// Reveals: a sheet's content, a result arriving.
-    pub const SLOW: f32 = 360.0;
-    /// Unhurried entrances: a list's wave, the ring filling.
-    pub const SLOWER: f32 = 520.0;
+    /// Reveals: a result arriving.
+    pub const SLOW: f32 = 380.0;
+    /// Unhurried entrances: the ring filling, figures counting.
+    pub const SLOWER: f32 = 640.0;
 
     /// Rows arriving one after another, this far apart (capped at 8).
-    pub const STAGGER: f32 = 45.0;
+    pub const STAGGER: f32 = 50.0;
     /// How far arriving content rises, in points.
-    pub const RISE: f32 = 10.0;
+    pub const RISE: f32 = 14.0;
 
+    /// A soft settle: fast out, long gentle landing.
+    pub const SETTLE: Easing = Easing::Bezier(0.22, 1.0, 0.36, 1.0);
     /// Content arriving.
-    pub const ENTER: Timing = Timing::new(SLOW, Easing::EaseOut);
-    /// Sinking under the finger and back: quick, critically damped.
+    pub const ENTER: Timing = Timing::new(SLOW, SETTLE);
+    /// Sinking under the finger and back: quick, just short of critical.
     pub const PRESS: Spring = Spring {
-        stiffness: 520.0,
-        damping: 36.0,
+        stiffness: 600.0,
+        damping: 38.0,
         mass: 1.0,
         velocity: None,
         frame_rate: None,
     };
     /// How far a pressed button shrinks.
-    pub const PRESS_SCALE: f32 = 0.97;
+    pub const PRESS_SCALE: f32 = 0.96;
+    /// How far a pressed card shrinks.
+    pub const PRESS_SCALE_CARD: f32 = 0.98;
     /// How far a pressed icon button shrinks.
-    pub const PRESS_SCALE_ICON: f32 = 0.92;
+    pub const PRESS_SCALE_ICON: f32 = 0.9;
 }

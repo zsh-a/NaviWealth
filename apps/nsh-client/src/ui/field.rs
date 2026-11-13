@@ -1,5 +1,5 @@
 //! Form fields: a visible label, the control, and its description or error
-//! right under it. Inputs share one height, inset and focus edge.
+//! right under it. Inputs share one height, inset and focus edge (ink).
 
 use nsh_base::input;
 use nsh_core::{
@@ -15,12 +15,13 @@ use super::{
 /// `control` under its `label`.
 pub fn field(label: impl IntoReactive<SharedString>, control: impl IntoElement) -> View {
     view()
-        .gap(px(6.0))
+        .gap(px(8.0))
         .child(
             text(label)
                 .typo(Type::Subhead)
                 .font_weight(FontWeight::SEMIBOLD)
-                .text_color(color::MUTED),
+                .text_color(color::MUTED)
+                .pl(px(4.0)),
         )
         .child(control)
 }
@@ -37,6 +38,7 @@ pub fn note(
             text(move || content().unwrap_or_default())
                 .typo(Type::Subhead)
                 .text_color(move || if error() { color::DANGER } else { color::MUTED })
+                .pl(px(4.0))
         },
     )
 }
@@ -48,13 +50,13 @@ pub fn text_input(value: Signal<String>) -> Input {
             .value(move || value.get())
             .on_change(move |text: &str| value.set(text.to_owned())),
     )
-    .min_h(px(size::MEDIUM))
+    .min_h(px(size::MEDIUM + 2.0))
     .px_4()
     .bg(color::SUNKEN)
-    .rounded(px(radius::CONTROL))
-    .border_1()
+    .rounded(px(radius::FIELD))
+    .border(px(1.5))
     .border_color(AdaptiveColor::TRANSPARENT)
-    .focus(|s| s.border_color(color::ACCENT).bg(color::SURFACE))
+    .focus(|s| s.border_color(color::INK).bg(color::SURFACE))
 }
 
 /// A decimal input bound to `value` (the text as typed), with its `unit`
@@ -67,13 +69,13 @@ pub fn number_input(
     view()
         .flex_row()
         .items_center()
-        .min_h(px(size::MEDIUM))
+        .min_h(px(size::MEDIUM + 2.0))
         .pr_4()
         .bg(color::SUNKEN)
-        .rounded(px(radius::CONTROL))
-        .border_1()
+        .rounded(px(radius::FIELD))
+        .border(px(1.5))
         .border_color(AdaptiveColor::TRANSPARENT)
-        .focus_within(|s| s.border_color(color::ACCENT).bg(color::SURFACE))
+        .focus_within(|s| s.border_color(color::INK).bg(color::SURFACE))
         .child(
             styled(
                 input()
@@ -96,6 +98,6 @@ fn styled(input: Input) -> Input {
         .typo(Type::Body)
         .text_color(color::INK)
         .placeholder_color(|| nsh_core::prelude::color(color::FAINT))
-        .caret_color(|| nsh_core::prelude::color(color::ACCENT))
-        .selection_color(|| nsh_core::prelude::color(color::ACCENT.opacity(0.25)))
+        .caret_color(|| nsh_core::prelude::color(color::INK))
+        .selection_color(|| nsh_core::prelude::color(color::AI_TO.opacity(0.3)))
 }

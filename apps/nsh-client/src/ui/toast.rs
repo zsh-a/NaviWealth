@@ -10,7 +10,7 @@ use nsh_core::prelude::*;
 
 use super::{
     Typo,
-    theme::{Type, color, motion, radius},
+    theme::{Type, color, motion},
 };
 
 /// How long a message stays.
@@ -104,10 +104,10 @@ fn bubble(message: Message) -> impl IntoElement {
         .items_center()
         .gap_3()
         .mx_4()
-        .pl_4()
-        .pr(px(if message.action.is_some() { 6.0 } else { 16.0 }))
-        .min_h(px(48.0))
-        .rounded(px(radius::CONTROL))
+        .pl_5()
+        .pr(px(if message.action.is_some() { 8.0 } else { 20.0 }))
+        .min_h(px(52.0))
+        .rounded_full()
         .bg(color::INK)
         .shadow_lg()
         .child(
@@ -128,14 +128,14 @@ fn bubble(message: Message) -> impl IntoElement {
                 .px_3()
                 .min_h(px(36.0))
                 .justify_center()
-                .rounded(px(radius::SMALL))
+                .rounded_full()
                 .hit_slop(EdgeInsets::all(px(6.0)))
                 .active(|s| s.opacity(0.6))
-                .focus_visible(|s| s.outline(px(2.0)).outline_color(color::ACCENT))
+                .focus_visible(|s| s.outline(px(2.0)).outline_color(color::ON_ACTION))
                 .child(
                     text(label)
                         .typo(Type::Headline)
-                        .text_color(color::ACCENT_SOFT),
+                        .text_color(color::ON_ACTION),
                 )
         }))
 }

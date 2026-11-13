@@ -1,5 +1,5 @@
-//! The day's meals: one grouped list, oldest first, each row opening the
-//! meal; a clear empty state when the day has none.
+//! The day's meals: one card each, oldest first, led by the meal's photo;
+//! a calm empty state when the day has none.
 
 use nsh_core::prelude::*;
 
@@ -15,11 +15,11 @@ use crate::{
         Icon, Type, Typo, color,
         feedback::{appear, empty_state},
         icon, radius,
-        surface::{card, hairline, row_button, section_header},
+        surface::{card, card_button, section_header},
     },
 };
 
-const THUMB: f32 = 52.0;
+const THUMB: f32 = 68.0;
 
 /// The meals section of `day`.
 pub fn meal_list(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
@@ -55,11 +55,9 @@ pub fn meal_list(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
             when(
                 move || count() > 0,
                 move || {
-                    card().overflow_hidden().child(each(
-                        list,
-                        |meal: &Meal| meal.id.clone(),
-                        meal_row,
-                    ))
+                    view()
+                        .gap_3()
+                        .child(each(list, |meal: &Meal| meal.id.clone(), meal_card))
                 },
             )
             .otherwise(move || {
@@ -102,68 +100,92 @@ pub fn slot_name(strings: &Strings, slot: MealSlot) -> &'static str {
     }
 }
 
-fn meal_row(meal: ReadSignal<Meal>, index: ReadSignal<usize>) -> impl IntoElement {
+fn meal_card(meal: ReadSignal<Meal>, index: ReadSignal<usize>) -> impl IntoElement {
     let id = meal.with_untracked(|meal| meal.id.clone());
+    let total = move || meal.with(Meal::total);
     appear(
         index.get_untracked() as u32,
-        view()
-            .child(when(move || index.get() > 0, || hairline(THUMB + 30.0)))
+        card_button(move || nav::push(Route::EditMeal(id.clone())))
+            .flex_row()
+            .items_center()
+            .gap(px(14.0))
+            .p(px(12.0))
+            .pr(px(18.0))
+            .child(thumbnail(meal))
             .child(
-                row_button(move || nav::push(Route::EditMeal(id.clone())))
-                    .child(thumbnail(meal))
+                view()
+                    .flex_1()
+                    .min_w(px(0.0))
+                    .gap(px(3.0))
                     .child(
-                        view()
-                            .flex_1()
-                            .min_w(px(0.0))
-                            .gap(px(2.0))
-                            .child(
-                                text(move || meal.with(meal_title))
-                                    .typo(Type::Headline)
-                                    .text_color(color::INK)
-                                    .number_of_lines(1),
-                            )
-                            .child(
-                                text(move || {
-                                    meal.with(|meal| {
-                                        format!(
-                                            "{} · {}",
-                                            slot_name(s(), meal.slot),
-                                            clock::time_label(meal.logged_at_ms)
-                                        )
-                                    })
-                                })
-                                .typo(Type::Subhead)
-                                .text_color(color::MUTED)
-                                .number_of_lines(1),
-                            ),
+                        text(move || meal.with(meal_title))
+                            .typo(Type::Headline)
+                            .text_color(color::INK)
+                            .number_of_lines(1),
+                    )
+                    .child(
+                        text(move || {
+                            meal.with(|meal| {
+                                format!(
+                                    "{} · {}",
+                                    slot_name(s(), meal.slot),
+                                    clock::time_label(meal.logged_at_ms)
+                                )
+                            })
+                        })
+                        .typo(Type::Subhead)
+                        .text_color(color::MUTED)
+                        .number_of_lines(1),
                     )
                     .child(
                         view()
-                            .items_end()
-                            .child(
-                                text(move || meal.with(|meal| format::kcal(meal.total().kcal)))
-                                    .typo(Type::Headline)
-                                    .tabular_nums()
-                                    .text_color(color::INK),
-                            )
-                            .child(
-                                text(move || s().kcal)
-                                    .typo(Type::Caption)
-                                    .text_color(color::MUTED),
-                            ),
+                            .flex_row()
+                            .gap(px(10.0))
+                            .pt(px(3.0))
+                            .child(macro_mark(color::PROTEIN, move || total().protein))
+                            .child(macro_mark(color::CARBS, move || total().carbs))
+                            .child(macro_mark(color::FAT, move || total().fat)),
+                    ),
+            )
+            .child(
+                view()
+                    .items_end()
+                    .child(
+                        text(move || format::kcal(total().kcal))
+                            .typo(Type::Figure)
+                            .tabular_nums()
+                            .text_color(color::INK),
                     )
-                    .child(icon(Icon::ChevronRight, 16.0, color::FAINT)),
+                    .child(
+                        text(|| s().kcal)
+                            .typo(Type::Caption)
+                            .text_color(color::MUTED),
+                    ),
             ),
     )
+}
+
+fn macro_mark(tint: AdaptiveColor, grams: impl Fn() -> f64 + 'static) -> impl IntoElement {
+    view()
+        .flex_row()
+        .items_center()
+        .gap(px(4.0))
+        .child(view().size(px(6.0)).rounded_full().bg(tint))
+        .child(
+            text(move || format!("{}g", format::grams(grams())))
+                .typo(Type::Caption)
+                .tabular_nums()
+                .text_color(color::MUTED),
+        )
 }
 
 fn thumbnail(meal: ReadSignal<Meal>) -> impl IntoElement {
     let uri = move || meal.with(|meal| meal.photo.as_deref().and_then(photos::uri));
     view()
         .size(px(THUMB))
-        .rounded(px(radius::SMALL + 2.0))
+        .rounded(px(radius::THUMB))
         .overflow_hidden()
-        .bg(color::SUNKEN)
+        .bg(color::SURFACE_2)
         .items_center()
         .justify_center()
         .child(
@@ -176,7 +198,7 @@ fn thumbnail(meal: ReadSignal<Meal>) -> impl IntoElement {
                         .accessibility_elements_hidden(true)
                 },
             )
-            .otherwise(|| icon(Icon::Utensils, 22.0, color::FAINT)),
+            .otherwise(|| icon(Icon::Utensils, 24.0, color::FAINT)),
         )
 }
 

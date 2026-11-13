@@ -168,6 +168,23 @@ impl EnergySplit {
             self.other / total,
         ]
     }
+
+    /// Each part's share in whole percents that add up to 100 (the parts
+    /// rounded down the most get the rest), or all 0 for nothing.
+    pub fn percents(self) -> [u32; 4] {
+        let exact = self.shares().map(|share| share * 100.0);
+        if exact.iter().all(|share| *share <= 0.0) {
+            return [0; 4];
+        }
+        let mut whole = exact.map(|share| share.floor() as u32);
+        let missing = 100_u32.saturating_sub(whole.iter().sum());
+        let mut order = [0, 1, 2, 3];
+        order.sort_by(|a, b| (exact[*b].fract()).total_cmp(&exact[*a].fract()));
+        for part in order.into_iter().take(missing as usize) {
+            whole[part] += 1;
+        }
+        whole
+    }
 }
 
 /// Where a food's per-100 g values came from.
@@ -343,6 +360,26 @@ mod tests {
         assert!((split.total() - 400.0).abs() < 1e-9);
         let shares = split.shares();
         assert!((shares.iter().sum::<f64>() - 1.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn percents_add_up_to_a_hundred() {
+        // 30.5 + 38.5 + 31 would round to 101.
+        let split = EnergySplit {
+            protein: 30.5,
+            carbs: 38.5,
+            fat: 31.0,
+            other: 0.0,
+        };
+        assert_eq!(split.percents(), [31, 38, 31, 0]);
+        let thirds = EnergySplit {
+            protein: 1.0,
+            carbs: 1.0,
+            fat: 1.0,
+            other: 0.0,
+        };
+        assert_eq!(thirds.percents().iter().sum::<u32>(), 100);
+        assert_eq!(EnergySplit::default().percents(), [0; 4]);
     }
 
     #[test]

@@ -210,18 +210,20 @@ pub fn FoodEditor() -> impl IntoElement {
                     ),
             )
             .child(estimate.map(|estimate| {
-                view()
-                    .flex_row()
-                    .flex_wrap()
-                    .gap_2()
-                    .children(PORTIONS.iter().map(move |(factor, label)| {
+                // One row of equal pills, however narrow the screen.
+                view().flex_row().gap(px(6.0)).children(PORTIONS.iter().map(
+                    move |(factor, label)| {
                         let target = (estimate * factor).round();
                         chip(
                             move || (*label).into(),
                             move || parsed_grams().is_some_and(|g| (g - target).abs() < 0.5),
                             move || grams.set(field_number(target)),
                         )
-                    }))
+                        .flex_1()
+                        .min_w(px(0.0))
+                        .px_1()
+                    },
+                ))
             }))
             .child(note(
                 move || grams_error().then(|| s().error_grams.into()),

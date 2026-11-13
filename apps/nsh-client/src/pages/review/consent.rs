@@ -44,8 +44,8 @@ pub fn ConsentSheet() -> impl IntoElement {
         )
         .child(
             view()
-                .rounded(px(radius::CONTROL))
-                .bg(color::SUNKEN)
+                .rounded(px(radius::WELL))
+                .bg(color::SURFACE_2)
                 .px_4()
                 .child(detail(Icon::Server, || s().consent_server, host))
                 .child(hairline(30.0))

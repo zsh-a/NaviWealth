@@ -389,7 +389,7 @@ fn test_row(test: Signal<Test>, run: impl Fn() + 'static) -> impl IntoElement {
     view()
         .gap_2()
         .child(
-            Btn::secondary()
+            Btn::tonal()
                 .size(Size::Small)
                 .icon(Icon::Refresh)
                 .label(|| s().test_connection.into())

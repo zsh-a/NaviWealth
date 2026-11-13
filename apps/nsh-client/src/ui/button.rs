@@ -1,5 +1,5 @@
-//! Buttons: one press feedback, one focus ring and one disabled look for
-//! every action in the app.
+//! Buttons: pills of one press feedback, one focus ring and one disabled
+//! look for every action in the app.
 //!
 //! ```ignore
 //! Btn::primary().size(Size::Large).icon(Icon::Photo).label(|| "Log a meal".into()).on_press(pick)
@@ -11,65 +11,75 @@ use nsh_base::{ButtonElement, button};
 use nsh_core::{Haptic, HapticImpact, prelude::*};
 
 use super::{
-    Typo,
+    Lift, Typo,
     feedback::spinner,
     icons::{Icon, icon},
-    theme::{Type, color, motion, radius, size},
+    theme::{Type, color, motion, shadow, size},
 };
 
 /// What a button means.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Variant {
-    /// The one commitment of a decision area (Save, Send, Log).
+    /// The one commitment of a decision area: ink.
     #[default]
     Primary,
-    /// A clear but quieter action, in the accent's wash.
+    /// A neutral well: secondary actions inside cards.
     Tonal,
-    /// An ordinary action on a framed surface.
+    /// A raised surface: an action floating on the canvas.
     Secondary,
-    /// A low-emphasis inline or toolbar action.
+    /// No fill: low-emphasis inline actions.
     Ghost,
     /// A destructive action.
     Danger,
+    /// Frosted glass over a photo.
+    Glass,
 }
 
 impl Variant {
     fn fill(self) -> AdaptiveColor {
         match self {
-            Variant::Primary => color::ACCENT_FILL,
-            Variant::Tonal => color::ACCENT_SOFT,
+            Variant::Primary => color::ACTION,
+            Variant::Tonal => color::SURFACE_2,
             Variant::Secondary => color::SURFACE,
             Variant::Ghost => AdaptiveColor::TRANSPARENT,
             Variant::Danger => color::DANGER_SOFT,
-        }
-    }
-
-    fn hover_fill(self) -> AdaptiveColor {
-        match self {
-            Variant::Primary => color::ACCENT_FILL.map(|c| c.darken(0.06)),
-            Variant::Tonal => color::ACCENT_SOFT.map(|c| c.darken(0.03)),
-            Variant::Secondary => color::SUNKEN,
-            Variant::Ghost => color::ACCENT_SOFT,
-            Variant::Danger => color::DANGER_SOFT.map(|c| c.darken(0.03)),
+            Variant::Glass => color::MEDIA_SCRIM.opacity(0.38),
         }
     }
 
     fn pressed_fill(self) -> AdaptiveColor {
         match self {
-            Variant::Primary => color::ACCENT_FILL.map(|c| c.darken(0.12)),
-            Variant::Tonal => color::ACCENT_SOFT.map(|c| c.darken(0.07)),
-            Variant::Secondary => color::LINE,
-            Variant::Ghost => color::ACCENT_SOFT.map(|c| c.darken(0.05)),
-            Variant::Danger => color::DANGER_SOFT.map(|c| c.darken(0.07)),
+            Variant::Primary => color::ACTION_PRESSED,
+            Variant::Tonal | Variant::Ghost => color::SUNKEN,
+            Variant::Secondary => color::SURFACE_2,
+            Variant::Danger => color::DANGER_SOFT.map(|c| c.darken(0.05)),
+            Variant::Glass => color::MEDIA_SCRIM.opacity(0.55),
         }
     }
 
     fn ink(self) -> AdaptiveColor {
         match self {
-            Variant::Primary => color::ON_ACCENT,
-            Variant::Tonal | Variant::Ghost => color::ACCENT,
-            Variant::Secondary => color::INK,
+            Variant::Primary => color::ON_ACTION,
+            Variant::Tonal | Variant::Secondary | Variant::Ghost => color::INK,
             Variant::Danger => color::DANGER,
+            Variant::Glass => color::ON_MEDIA,
+        }
+    }
+
+    /// Fill, sheen, edge and lift: the parts that make the surface.
+    fn surface<E: Styled + Sized>(self, element: E) -> E {
+        let element = element.bg(self.fill());
+        match self {
+            Variant::Primary => element
+                .bg_linear_to_b()
+                .gradient_from(color::ACTION_SHEEN)
+                .gradient_to(color::ACTION)
+                .lift(&shadow::FLOAT),
+            Variant::Secondary => element
+                .lift(&shadow::CARD)
+                .dark(|s| s.border_1().border_color(color::LINE)),
+            Variant::Glass => element.backdrop_blur(px(18.0)),
+            _ => element,
         }
     }
 }
@@ -97,9 +107,9 @@ impl Size {
 
     fn padding(self) -> f32 {
         match self {
-            Size::Small => 14.0,
-            Size::Medium => 18.0,
-            Size::Large => 24.0,
+            Size::Small => 16.0,
+            Size::Medium => 22.0,
+            Size::Large => 26.0,
         }
     }
 
@@ -111,14 +121,6 @@ impl Size {
         }
     }
 
-    fn radius(self) -> f32 {
-        match self {
-            Size::Small => radius::SMALL,
-            Size::Medium => radius::CONTROL,
-            Size::Large => radius::CONTROL + 2.0,
-        }
-    }
-
     fn type_(self) -> Type {
         match self {
             Size::Small => Type::Subhead,
@@ -127,16 +129,15 @@ impl Size {
     }
 }
 
-type Text = Rc<dyn Fn() -> SharedString>;
+type Label = Rc<dyn Fn() -> SharedString>;
 type Flag = Rc<dyn Fn() -> bool>;
 
 /// A button being configured; [`Btn::on_press`] makes it.
 pub struct Btn {
     variant: Variant,
     size: Size,
-    capsule: bool,
     icon: Option<Icon>,
-    label: Option<Text>,
+    label: Option<Label>,
     busy: Option<Flag>,
     disabled: Option<Flag>,
 }
@@ -147,7 +148,6 @@ impl Btn {
         Self {
             variant,
             size: Size::Medium,
-            capsule: false,
             icon: None,
             label: None,
             busy: None,
@@ -173,12 +173,6 @@ impl Btn {
 
     pub fn size(mut self, size: Size) -> Self {
         self.size = size;
-        self
-    }
-
-    /// Fully rounded ends: the floating main action only.
-    pub fn capsule(mut self) -> Self {
-        self.capsule = true;
         self
     }
 
@@ -209,7 +203,6 @@ impl Btn {
         let Btn {
             variant,
             size,
-            capsule,
             icon: glyph,
             label,
             busy,
@@ -220,11 +213,22 @@ impl Btn {
             let busy = busy.clone();
             move || busy.as_ref().is_some_and(|busy| busy())
         };
+        let is_disabled = move || disabled.as_ref().is_some_and(|disabled| disabled());
         let inactive = {
+            let (is_busy, is_disabled) = (is_busy.clone(), is_disabled.clone());
+            move || is_busy() || is_disabled()
+        };
+        // Disabled goes flat and quiet; busy keeps its full look (the
+        // spinner says it is working).
+        let dim = {
             let is_busy = is_busy.clone();
-            move || is_busy() || disabled.as_ref().is_some_and(|disabled| disabled())
+            move || is_disabled() && !is_busy()
         };
         let ink = variant.ink();
+        let tint = {
+            let dim = dim.clone();
+            move || if dim() { color::FAINT } else { ink }
+        };
         let mut element = button()
             .disabled(inactive)
             .on_press_down(move || {
@@ -248,35 +252,37 @@ impl Btn {
             .gap(px(if size == Size::Small { 6.0 } else { 8.0 }))
             .min_h(px(size.height()))
             .px(px(size.padding()))
-            .bg(variant.fill())
+            .rounded_full()
             .transition_colors()
             .duration(motion::INSTANT)
-            .hover(move |s| s.bg(variant.hover_fill()))
             .active(move |s| s.bg(variant.pressed_fill()))
+            .hover(move |s| s.bg(variant.pressed_fill()))
             .focus_visible(|s| {
                 s.outline(px(2.0))
-                    .outline_color(color::ACCENT)
+                    .outline_color(color::INK)
                     .outline_offset(px(2.0))
-            })
-            .disabled_style(|s| s.opacity(0.42));
-        element = if capsule {
-            element.rounded_full()
-        } else {
-            element.rounded(px(size.radius()))
-        };
-        if variant == Variant::Secondary {
-            element = element.border_1().border_color(color::LINE);
+            });
+        element = variant.surface(element);
+        if variant == Variant::Primary {
+            let quiet = move |dim: bool, on: AdaptiveColor| if dim { color::SUNKEN } else { on };
+            let (bg, from, to) = (dim.clone(), dim.clone(), dim.clone());
+            element = element
+                .bg(move || quiet(bg(), color::ACTION))
+                .gradient_from(move || quiet(from(), color::ACTION_SHEEN))
+                .gradient_to(move || quiet(to(), color::ACTION))
+                .disabled_style(|s| s.shadow_none());
         }
         if size == Size::Small {
             let slop = (size::TOUCH - size.height()) / 2.0;
             element = element.hit_slop(EdgeInsets::all(px(slop)));
         }
         let icon_size = size.icon();
-        let leading = glyph.map(move |glyph| {
+        let leading = glyph.map(|glyph| {
             let is_busy = is_busy.clone();
+            let tint = tint.clone();
             when(
                 move || !is_busy(),
-                move || icon(glyph, icon_size, ink).into_element(),
+                move || icon(glyph, icon_size, tint.clone()).into_element(),
             )
             .otherwise(move || spinner(icon_size, ink).into_element())
         });
@@ -293,19 +299,19 @@ impl Btn {
                 text(move || label())
                     .typo(size.type_())
                     .font_weight(FontWeight::SEMIBOLD)
-                    .text_color(ink)
+                    .text_color(tint)
                     .number_of_lines(1)
             }))
     }
 }
 
-/// An icon-only button: a square of the touch size, named for screen
+/// An icon-only button: a circle of the touch size, named for screen
 /// readers.
 pub struct IconBtn {
     icon: Icon,
     variant: Variant,
-    label: Text,
-    size: f32,
+    label: Label,
+    side: f32,
 }
 
 impl IconBtn {
@@ -315,7 +321,7 @@ impl IconBtn {
             icon,
             variant: Variant::Ghost,
             label: Rc::new(label),
-            size: size::TOUCH,
+            side: size::TOUCH,
         }
     }
 
@@ -324,9 +330,9 @@ impl IconBtn {
         self
     }
 
-    /// Its side, at least the touch size.
+    /// Its diameter, at least the touch size.
     pub fn side(mut self, side: f32) -> Self {
-        self.size = side.max(size::TOUCH);
+        self.side = side.max(size::TOUCH);
         self
     }
 
@@ -335,17 +341,9 @@ impl IconBtn {
             icon: glyph,
             variant,
             label,
-            size: side,
+            side,
         } = self;
         let scale = animated_value(1.0);
-        let tint = match variant {
-            Variant::Ghost => color::INK,
-            other => other.ink(),
-        };
-        let rest = match variant {
-            Variant::Ghost => AdaptiveColor::TRANSPARENT,
-            other => other.fill(),
-        };
         let element = button()
             .accessibility_label(move || Some(label()))
             .on_press_down(move || {
@@ -362,46 +360,55 @@ impl IconBtn {
             .items_center()
             .justify_center()
             .rounded_full()
-            .bg(rest)
             .transition_colors()
             .duration(motion::INSTANT)
-            .hover(|s| s.bg(color::SUNKEN))
-            .active(|s| s.bg(color::LINE))
-            .focus_visible(|s| s.outline(px(2.0)).outline_color(color::ACCENT))
-            .disabled_style(|s| s.opacity(0.42))
-            .child(icon(glyph, 22.0, tint));
-        if variant == Variant::Secondary {
-            element.border_1().border_color(color::LINE)
-        } else {
-            element
-        }
+            .hover(move |s| s.bg(variant.pressed_fill()))
+            .active(move |s| s.bg(variant.pressed_fill()))
+            .focus_visible(|s| s.outline(px(2.0)).outline_color(color::INK))
+            .disabled_style(|s| s.opacity(0.3))
+            .child(icon(
+                glyph,
+                if side > 48.0 { 24.0 } else { 22.0 },
+                variant.ink(),
+            ));
+        variant.surface(element)
     }
 }
 
-/// A compact choice or shortcut (a portion size): neutral at rest, the
-/// accent's wash while `selected` reads true.
+/// A compact choice or shortcut (a portion size): a neutral pill at rest,
+/// ink while `selected` reads true.
 pub fn chip(
     label: impl Fn() -> SharedString + 'static,
     selected: impl Fn() -> bool + Copy + 'static,
     press: impl Fn() + 'static,
 ) -> ButtonElement {
+    let scale = animated_value(1.0);
     button()
         .selected(selected)
+        .on_press_down(move || {
+            if !reduce_motion() {
+                scale.spring(motion::PRESS_SCALE, motion::PRESS);
+            }
+        })
+        .on_press_up(move || {
+            scale.spring(1.0, motion::PRESS);
+        })
         .on_press(press)
-        .min_w(px(48.0))
+        .bind_scale(&scale)
+        .min_w(px(52.0))
         .min_h(px(size::SMALL))
-        .px_3()
+        .px_4()
         .items_center()
         .justify_center()
-        .rounded(px(radius::SMALL))
-        .bg(color::SUNKEN)
+        .rounded_full()
+        .bg(color::SURFACE_2)
         .hit_slop(EdgeInsets::all(px(4.0)))
         .transition_colors()
-        .duration(motion::INSTANT)
-        .hover(|s| s.bg(color::LINE))
-        .active(|s| s.bg(color::LINE_STRONG))
-        .selected_style(|s| s.bg(color::ACCENT_SOFT))
-        .focus_visible(|s| s.outline(px(2.0)).outline_color(color::ACCENT))
+        .duration(motion::FAST)
+        .hover(|s| s.bg(color::SUNKEN))
+        .active(|s| s.bg(color::SUNKEN))
+        .selected_style(|s| s.bg(color::ACTION))
+        .focus_visible(|s| s.outline(px(2.0)).outline_color(color::INK))
         .child(
             text(label)
                 .typo(Type::Subhead)
@@ -409,7 +416,7 @@ pub fn chip(
                 .tabular_nums()
                 .text_color(move || {
                     if selected() {
-                        color::ACCENT
+                        color::ON_ACTION
                     } else {
                         color::BODY
                     }

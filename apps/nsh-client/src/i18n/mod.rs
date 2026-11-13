@@ -16,9 +16,6 @@ pub struct Strings {
     // Today
     pub today: &'static str,
     pub yesterday: &'static str,
-    pub back_to_today: &'static str,
-    pub previous_day: &'static str,
-    pub next_day: &'static str,
     pub settings: &'static str,
     pub kcal: &'static str,
     pub kcal_today: &'static str,
@@ -279,6 +276,16 @@ impl Strings {
             ];
             let month = MONTHS[(date.month().clamp(1, 12) - 1) as usize];
             format!("{}, {month} {}", self.weekday(day), date.day())
+        }
+    }
+
+    /// A day's short weekday, for the day strip (`Mon`, `周一`).
+    pub fn weekday_short(&self, day: Day) -> &'static str {
+        let index = day.0.weekday().to_monday_zero_offset() as usize;
+        if self.zh() {
+            ["周一", "周二", "周三", "周四", "周五", "周六", "周日"][index]
+        } else {
+            ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][index]
         }
     }
 
