@@ -31,7 +31,9 @@ whether the owner uses a feature every day or every week.
 4. Anything derivable is derived, not entered: net worth, positions, monthly
    balance, averages.
 5. Adding a new kind of record requires removing one or a written reason.
-6. Data stays on the device. Backups are local files the owner controls.
+6. Business data stays on the device. Encrypted backup files go only to a
+   location the owner configures, including their own WebDAV folder; there is
+   no NaviWealth account, server backup or record sync.
 
 ## Tabs
 
@@ -84,6 +86,9 @@ whether the owner uses a feature every day or every week.
   file-based encryption; no SQLCipher, see ADR 0002).
 - Automatic local backups plus manual export/restore of a passphrase-encrypted
   backup file to a location the owner picks; meal photos optional in the export.
+  The current Health increment uses an owner-configured WebDAV folder for
+  daily foreground backups and manual backup/restore, excluding photos and
+  credentials. System-picker local export and photo archives remain planned.
 - A one-time import of kept records from the Flutter client.
 
 ## Removed

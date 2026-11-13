@@ -29,6 +29,14 @@ llm-client = { path = "../../third_party/agent-runtime/crates/llm-client" }
 jiff = "0.2"
 # The app's database, SQLite compiled in (ADR 0002: private storage, not SQLCipher).
 rusqlite = { version = "0.37", features = ["bundled"] }
+# Backups: Argon2id from the passphrase, XChaCha20-Poly1305 over the database.
+argon2 = "0.5"
+chacha20poly1305 = "0.10"
+getrandom = "0.3"
+thiserror = "2"
+# NSH 0.5's Android HttpURLConnection rejects WebDAV extension methods.
+ureq = { version = "3", default-features = false, features = ["rustls"] }
+url = "2"
 
 [target.'cfg(any(target_os = "linux", target_os = "macos", target_os = "windows"))'.dependencies]
 env_logger = "0.11"

@@ -134,8 +134,8 @@ pub fn has_days() -> bool {
 }
 
 /// Connects `key`: finds its region by exchanging it for a token and keeps
-/// it. The root's [`refresh`] then pulls the last 30 days (not this task:
-/// it belongs to the page that asked, which may close first). Nothing is
+/// it. The root's [`refresh`] then pulls the last 30 days. Both tasks live
+/// under the app root so closing Settings does not interrupt them. Nothing is
 /// kept when it fails.
 pub async fn connect(key: String) -> Result<Region, Failure> {
     let key = key.trim().to_owned();
@@ -196,9 +196,7 @@ pub async fn refresh(force: bool) {
         return;
     }
     state().update(|s| s.sync = SyncState::Syncing);
-    let guard = Pulling;
     let result = pull(region, &key, token.filter(|(_, until)| *until > now)).await;
-    std::mem::forget(guard);
     state().update(|s| match result {
         Ok((token, days)) => {
             s.token = Some(token);
@@ -214,20 +212,6 @@ pub async fn refresh(force: bool) {
             s.sync = SyncState::Failed(failure);
         }
     });
-}
-
-/// Puts a pull that was dropped part way (its task cancelled) back to
-/// idle, so the next start or resume pulls again.
-struct Pulling;
-
-impl Drop for Pulling {
-    fn drop(&mut self) {
-        state().update(|s| {
-            if s.sync == SyncState::Syncing {
-                s.sync = SyncState::Idle;
-            }
-        });
-    }
 }
 
 type Pulled = ((String, i64), BTreeMap<Day, GarminDay>);

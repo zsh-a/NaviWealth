@@ -83,6 +83,40 @@ pub struct Strings {
     pub garmin_unreadable: &'static str,
     pub garmin_syncing: &'static str,
     pub garmin_no_data: &'static str,
+    pub backup: &'static str,
+    pub week_review: &'static str,
+    pub previous_week: &'static str,
+    pub next_week: &'static str,
+    pub intake: &'static str,
+    pub per_logged_day: &'static str,
+    pub weight_week: &'static str,
+    pub recovery: &'static str,
+    pub avg_sleep: &'static str,
+    pub avg_sleep_score: &'static str,
+    pub no_week_data: &'static str,
+    pub webdav_url: &'static str,
+    pub webdav_user: &'static str,
+    pub webdav_password: &'static str,
+    pub backup_passphrase: &'static str,
+    pub backup_passphrase_kept: &'static str,
+    pub backup_passphrase_note: &'static str,
+    pub backup_note: &'static str,
+    pub backup_save: &'static str,
+    pub restore: &'static str,
+    pub backup_never: &'static str,
+    pub backup_running: &'static str,
+    pub backup_network: &'static str,
+    pub backup_unauthorized: &'static str,
+    pub backup_wrong_passphrase: &'static str,
+    pub backup_not_backup: &'static str,
+    pub backup_newer: &'static str,
+    pub backup_storage: &'static str,
+    pub backup_not_configured: &'static str,
+    pub restore_title: &'static str,
+    pub restore_body: &'static str,
+    pub restore_confirm: &'static str,
+    pub restored: &'static str,
+    pub no_backups: &'static str,
     pub discard_title: &'static str,
     pub discard_body: &'static str,
     pub discard: &'static str,
@@ -238,6 +272,61 @@ impl Strings {
             format!("已连接 · {host}")
         } else {
             format!("Connected · {host}")
+        }
+    }
+
+    /// How many of the seven days have meals.
+    pub fn logged_days(&self, n: usize) -> String {
+        if self.zh() {
+            format!("7 天中记录了 {n} 天")
+        } else {
+            format!("{n} of 7 days logged")
+        }
+    }
+
+    /// The seven days' span: `Nov 7 – Nov 13`.
+    pub fn week_span(&self, first: Day, last: Day) -> String {
+        let (a, b) = (first.0, last.0);
+        if self.zh() {
+            format!(
+                "{}月{}日 – {}月{}日",
+                a.month(),
+                a.day(),
+                b.month(),
+                b.day()
+            )
+        } else {
+            format!(
+                "{} {} – {} {}",
+                self.month_short(a.month()),
+                a.day(),
+                self.month_short(b.month()),
+                b.day()
+            )
+        }
+    }
+
+    fn month_short(&self, month: i8) -> &'static str {
+        [
+            "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+        ][(month.clamp(1, 12) - 1) as usize]
+    }
+
+    /// When the last backup was put.
+    pub fn backup_last(&self, when: &str) -> String {
+        if self.zh() {
+            format!("上次备份：{when}")
+        } else {
+            format!("Last backup: {when}")
+        }
+    }
+
+    /// A server status nothing else explains.
+    pub fn backup_server(&self, status: u16) -> String {
+        if self.zh() {
+            format!("WebDAV 服务器返回 {status}。")
+        } else {
+            format!("The WebDAV server answered {status}.")
         }
     }
 

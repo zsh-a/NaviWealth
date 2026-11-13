@@ -16,6 +16,8 @@ pub enum Route {
     RepeatMeal { day: Day, from: String },
     /// The model account and goal.
     Settings,
+    /// The last seven days of health in review.
+    WeekReview,
 }
 
 impl Route {

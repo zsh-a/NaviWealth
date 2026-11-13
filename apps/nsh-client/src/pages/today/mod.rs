@@ -141,6 +141,11 @@ fn header(day: impl Fn() -> crate::domain::meal::Day + Copy + 'static) -> impl I
                 ),
         )
         .child(
+            IconBtn::new(Icon::Chart, || s().week_review.into())
+                .variant(Variant::Secondary)
+                .on_press(|| nav::push(Route::WeekReview)),
+        )
+        .child(
             IconBtn::new(Icon::Sliders, || s().settings.into())
                 .variant(Variant::Secondary)
                 .on_press(|| nav::push(Route::Settings)),

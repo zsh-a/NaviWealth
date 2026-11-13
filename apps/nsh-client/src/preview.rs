@@ -6,7 +6,7 @@
 //! NW_PREVIEW=account,trust,meals,goal,weights,dark   # what to seed
 //! NW_PREVIEW_BASE_URL=http://127.0.0.1:8799/v1
 //! NW_PREVIEW_PHOTOS=/a.jpg:/b.jpg:/c.jpg     # photos of the seeded meals
-//! NW_PREVIEW_ROUTE=new:/meal.jpg | manual | edit | settings
+//! NW_PREVIEW_ROUTE=new:/meal.jpg | manual | edit | settings | review
 //! NW_PREVIEW_EDITOR=1                        # open the first food once foods arrive
 //! NW_PREVIEW_GARMIN_KEY_FILE=/path/garmin.key # connect a real Garmin key
 //! ```
@@ -91,6 +91,7 @@ pub fn apply() {
             }
         }
         Some("settings") => nav::push(Route::Settings),
+        Some("review") => nav::push(Route::WeekReview),
         _ => {}
     }
 }

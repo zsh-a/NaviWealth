@@ -64,7 +64,15 @@ health-only Review; Assets arrives with Phase 3.
    undocumented and unobserved; Garmin scale weight is untested.
 5. **Health review and backup.** Weekly intake, macros, weight and Garmin
    averages on Review; automatic local backups and encrypted export/restore
-   through a user-picked location.
+   through a user-picked location. Implemented: seven-day health review with
+   previous weeks; encrypted SQLite backups to an owner-configured WebDAV
+   folder, once per day on open/resume and manually; confirmed restore with
+   schema/record validation and transactional replacement. Timestamped files
+   preserve previous backups. Photos and credentials are excluded. Real HTTP
+   headless flows cover folder creation, upload, listing, restoration, errors
+   and cross-day resume. Remaining: Android device verification, system-picker
+   local export and optional photo archives. The implementation contract is in
+   `apps/nsh-client/README.md`, “Health review and backups”.
 
 - Exit: the owner uses NSH as the only meal/weight app for two weeks; meals
   survive restart, upgrade and restore; wrong-key or corrupted backups are
