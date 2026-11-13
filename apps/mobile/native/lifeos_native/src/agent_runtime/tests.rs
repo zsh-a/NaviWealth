@@ -54,7 +54,7 @@ fn chat_turn_event_wraps_llm_event_with_envelope() {
         mode: Some("chat".to_owned()),
     };
     let event = LlmEvent {
-        kind: agent_llm::LlmEventKind::Delta,
+        kind: llm_protocol::LlmEventKind::Delta,
         content: Some("done".to_owned()),
         response: None,
         tool_call_id: None,
@@ -89,16 +89,16 @@ fn chat_turn_finished_event_expands_to_chat_turn_events() {
         mode: Some("chat".to_owned()),
     };
     let event = LlmEvent {
-        kind: agent_llm::LlmEventKind::Finished,
+        kind: llm_protocol::LlmEventKind::Finished,
         content: None,
         response: Some(LlmResponse {
             protocol_version: protocol_version(),
             provider: "mock".to_owned(),
             model: "mock-model".to_owned(),
             content: "done".to_owned(),
-            finish_reason: agent_llm::LlmFinishReason::Stop,
+            finish_reason: llm_protocol::LlmFinishReason::Stop,
             object: None,
-            usage: Some(agent_llm::LlmUsage {
+            usage: Some(llm_protocol::LlmUsage {
                 input_tokens: 1,
                 output_tokens: 2,
                 total_tokens: 3,
@@ -316,7 +316,7 @@ fn native_effect_response_errors_set_stream_error_terminal_reason() {
 #[test]
 fn llm_stream_event_contract_normalizes_metadata() {
     let mut event = LlmEvent {
-        kind: agent_llm::LlmEventKind::Delta,
+        kind: llm_protocol::LlmEventKind::Delta,
         content: Some("hello".to_owned()),
         response: None,
         tool_call_id: None,
@@ -334,16 +334,16 @@ fn llm_stream_event_contract_normalizes_metadata() {
 #[test]
 fn llm_stream_event_contract_validates_finished_response() {
     let mut event = LlmEvent {
-        kind: agent_llm::LlmEventKind::Finished,
+        kind: llm_protocol::LlmEventKind::Finished,
         content: None,
         response: Some(LlmResponse {
             protocol_version: protocol_version(),
             provider: "mock".to_owned(),
             model: "mock-model".to_owned(),
             content: "hello".to_owned(),
-            finish_reason: agent_llm::LlmFinishReason::Stop,
+            finish_reason: llm_protocol::LlmFinishReason::Stop,
             object: None,
-            usage: Some(agent_llm::LlmUsage {
+            usage: Some(llm_protocol::LlmUsage {
                 input_tokens: 2,
                 output_tokens: 3,
                 total_tokens: 4,

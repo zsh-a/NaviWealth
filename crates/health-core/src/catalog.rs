@@ -31,7 +31,7 @@ pub const CATALOG: &[CatalogFood] = &[
     food(
         "171287",
         "Whole egg, raw",
-        "全鸡蛋（生）",
+        "全鸡蛋（生，可食部分）",
         143.0,
         12.56,
         0.72,
@@ -40,7 +40,7 @@ pub const CATALOG: &[CatalogFood] = &[
     food(
         "171477",
         "Chicken breast, roasted",
-        "鸡胸肉（烤，去皮）",
+        "鸡胸肉（烤熟、去皮）",
         165.0,
         31.02,
         0.0,
@@ -49,8 +49,8 @@ pub const CATALOG: &[CatalogFood] = &[
     food("171413", "Olive oil", "橄榄油", 884.0, 0.0, 0.0, 100.0),
     food(
         "172475",
-        "Firm tofu, raw",
-        "老豆腐（生）",
+        "Firm tofu, raw, calcium-set",
+        "硬豆腐（生、硫酸钙凝固）",
         144.0,
         17.27,
         2.78,
@@ -59,7 +59,7 @@ pub const CATALOG: &[CatalogFood] = &[
     food(
         "171688",
         "Apple, raw, with skin",
-        "苹果（生，带皮）",
+        "苹果（生、带皮）",
         52.0,
         0.26,
         13.81,
@@ -68,7 +68,7 @@ pub const CATALOG: &[CatalogFood] = &[
     food(
         "173944",
         "Banana, raw",
-        "香蕉（生）",
+        "香蕉（生、去皮）",
         89.0,
         1.09,
         22.84,
@@ -77,7 +77,7 @@ pub const CATALOG: &[CatalogFood] = &[
     food(
         "171265",
         "Whole milk, 3.25% fat",
-        "全脂牛奶",
+        "全脂牛奶（脂肪 3.25%）",
         61.0,
         3.15,
         4.8,
@@ -85,8 +85,8 @@ pub const CATALOG: &[CatalogFood] = &[
     ),
     food(
         "169967",
-        "Broccoli, boiled",
-        "西兰花（水煮）",
+        "Broccoli, boiled, drained",
+        "西兰花（水煮、沥干）",
         35.0,
         2.38,
         7.18,
@@ -113,7 +113,7 @@ pub const CATALOG: &[CatalogFood] = &[
     food(
         "169124",
         "Pineapple, raw",
-        "菠萝（生）",
+        "菠萝（生、可食部分）",
         50.0,
         0.54,
         13.12,

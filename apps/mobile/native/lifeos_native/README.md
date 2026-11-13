@@ -6,7 +6,7 @@ Native primitives for the Flutter app, exposed through
 - EmbeddingGemma-300M sentence embedder via `fastembed-rs` + ONNX Runtime.
 - Native agent-runtime JSON contract helpers and device LLM provider bridge
   through the `third_party/agent-runtime` submodule's `agent-core`,
-  `agent-llm`, and `agent-chat` crates.
+  `llm-protocol` / `llm-client` / `llm-reqwest`, and `agent-chat` crates.
 - Health provider primitives that require native HTTP/runtime behavior.
 - Android/macOS A-share request/cancel bridge to the independent `market-data-rs`
   SDK; see [Market Data Providers](../../../../docs/domains/market-data-providers.md).

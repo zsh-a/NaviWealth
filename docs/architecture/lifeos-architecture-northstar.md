@@ -30,7 +30,7 @@ LifeOS value lives in shared infrastructure: identity, memory, sync, AI runtime,
 - Do not generalize for a hypothetical future domain. Add abstractions only when at least two real domains use them or a shell seam already exists.
 - Do not pivot the app into a wide Flutter/Rust local engine. Rust is allowed
   for the existing domain-neutral Agent Runtime, narrow native capability
-  surfaces, and the scoped standalone market-data SDK described under Rust
+  surfaces, the shared meal-recognition core, and the scoped standalone market-data SDK described under Rust
   Boundary. Domain truth and business side effects stay in the Host.
 - Do not make one domain import another domain's business entities.
 - Do not turn sync v3 into an event platform, CRDT framework, or multi-schema negotiation layer.
@@ -226,6 +226,11 @@ Rust responsibilities are bounded by ownership:
 
 - The standalone Agent Runtime owns provider-neutral execution semantics,
   ChatTurn continuation, budgets, context validation, and resume contracts.
+- `crates/health-core` is the narrow shared meal-recognition exception used by
+  the Flutter and NSH hosts. It owns the versioned prompt, model schema and
+  validation, catalog nutrient snapshots and portion calculations, image
+  normalization, and destination-bound upload consent. It does not own
+  repositories, Sync, user permissions, UI, or confirmed business writes.
 - NaviWealth Host/Dart owns domain repositories, permissions, Drift, user
   confirmation, and business effects dispatched through Host gateways.
 - Native capabilities and the market-data SDK own their scoped model/runtime
@@ -235,7 +240,7 @@ New Rust work is allowed only when all are true:
 
 - It maintains the existing domain-neutral Agent Runtime, demonstrates a real
   performance or security delta for a native capability, or implements the
-  standalone market-data SDK exception defined below.
+  standalone market-data SDK or shared meal-recognition exception.
 - A caller exists in the current phase.
 - The FFI surface is narrow enough for `flutter_rust_bridge`.
 - Web does not require a new wasm runtime.
@@ -244,7 +249,7 @@ Current Rust surface:
 
 - `apps/mobile/native/lifeos_native/`
 - EmbeddingGemma embedder via fastembed and ONNX Runtime.
-- Native agent-runtime / `agent-llm` / `agent-chat` FRB bridge for
+- Native agent-runtime / `llm-protocol` / `llm-client` / `llm-reqwest` / `agent-chat` FRB bridge for
   device-only provider calls, ChatTurn request contracts, and runtime JSON
   contract normalization.
 - Native Health provider primitives where platform/runtime behavior requires
@@ -255,7 +260,7 @@ Current Rust surface:
 
 The standalone Rust `agent-runtime` already exists as the
 `third_party/agent-runtime` Git submodule and is the source of truth for
-`agent-core`, `agent-chat`, `agent-llm`, runner, store, schema, and fixture
+`agent-core`, `agent-chat`, `llm-protocol` / `llm-client` / `llm-reqwest`, runner, store, schema, and fixture
 contracts. NaviWealth's `apps/mobile/lib/app/agent_runtime/` code is the
 Host/FRB adapter layer. Full-duplex voice must reuse its ChatTurn,
 tool-continuation, proposal, InteractionEnvelope, and durable-resume contracts;

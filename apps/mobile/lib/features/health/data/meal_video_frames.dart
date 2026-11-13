@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
 
 import '../domain/meal_photo.dart';
-import 'meal_photo_capture.dart';
 
 class MealVideoException implements Exception {
   const MealVideoException(this.code);
@@ -73,6 +72,8 @@ class _ScoredFrame {
 
 /// Samples across time, prefers sharp frames in each interval, then removes
 /// near-duplicates. Visual difference is a heuristic, not a depth measurement.
+/// Selected frames remain transient; MealPhotoCapture normalizes them through
+/// health-core before the UI can save or upload them.
 List<MealPhoto> selectMealVideoFrames(List<MealVideoFrame> frames, int limit) {
   if (limit < 1 || limit > MealPhoto.maxCount || frames.length > 8) {
     throw const MealVideoException('unreadable');
@@ -132,7 +133,7 @@ List<MealPhoto> selectMealVideoFrames(List<MealVideoFrame> frames, int limit) {
   return [
     for (final frame in selected)
       MealPhoto(
-        bytes: normalizeMealPhoto(frame.frame.bytes),
+        bytes: frame.frame.bytes,
         timestampMs: frame.frame.timestampMs,
         role: MealPhotoRole.overview,
       ),

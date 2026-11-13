@@ -138,6 +138,7 @@ class HealthMealRepository {
     required List<MealFood> foods,
     String? note,
     String? recognitionModel,
+    String? recognitionPromptVersion,
     Uint8List? photoBytes,
     bool removePhoto = false,
     List<MealPhoto>? photos,
@@ -166,6 +167,7 @@ class HealthMealRepository {
         foods.any((food) => !food.isValid) ||
         (note?.length ?? 0) > 1000 ||
         (recognitionModel?.length ?? 0) > 200 ||
+        (recognitionPromptVersion?.length ?? 0) > 80 ||
         (replacementPhotos != null &&
             (replacementPhotos.length > MealPhoto.maxCount ||
                 replacementPhotos.any((photo) => !photo.isValid) ||
@@ -207,6 +209,7 @@ class HealthMealRepository {
         foods: foods,
         note: _optional(note),
         recognitionModel: _optional(recognitionModel),
+        recognitionPromptVersion: _optional(recognitionPromptVersion),
         sync: SyncMeta(
           ownerUserId: stamp.ownerUserId,
           updatedAt: stamp.now,
@@ -222,7 +225,10 @@ class HealthMealRepository {
               capturedAt: meal.capturedAt,
               day: meal.day,
               mealType: meal.type.name,
-              foodsJson: HealthMeal.encodeFoods(meal.foods),
+              foodsJson: HealthMeal.encodeFoods(
+                meal.foods,
+                recognitionPromptVersion: meal.recognitionPromptVersion,
+              ),
               note: Value(meal.note),
               recognitionModel: Value(meal.recognitionModel),
               ownerUserId: stamp.ownerUserId,
@@ -325,6 +331,7 @@ class HealthMealRepository {
     foods: HealthMeal.decodeFoods(row.foodsJson),
     note: row.note,
     recognitionModel: row.recognitionModel,
+    recognitionPromptVersion: HealthMeal.decodePromptVersion(row.foodsJson),
     sync: SyncMeta(
       ownerUserId: row.ownerUserId,
       updatedAt: row.updatedAt,

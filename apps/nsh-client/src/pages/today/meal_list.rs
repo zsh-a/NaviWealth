@@ -228,6 +228,7 @@ mod tests {
                 .collect(),
             photo: None,
             model: None,
+            prompt_version: None,
         }
     }
 

@@ -4,6 +4,7 @@
 
 use std::{rc::Rc, time::Duration};
 
+use health_core::consent::Consent;
 use nsh_core::{Haptic, HapticNotification, prelude::*};
 
 use crate::{
@@ -72,6 +73,7 @@ pub struct Draft {
     pub slot: Signal<MealSlot>,
     pub title: Signal<Option<String>>,
     pub model: Signal<Option<String>>,
+    pub prompt_version: Signal<Option<String>>,
     pub phase: Signal<Phase>,
     pub skipped: Signal<usize>,
     pub photo: Signal<Option<Photo>>,
@@ -97,6 +99,7 @@ impl Draft {
             slot: signal(MealSlot::at(hour, minute)),
             title: signal(None),
             model: signal(None),
+            prompt_version: signal(None),
             phase: signal(Phase::Ready),
             skipped: signal(0),
             photo: signal(None),
@@ -119,6 +122,7 @@ impl Draft {
         draft.slot.set(meal.slot);
         draft.title.set(meal.title.clone());
         draft.model.set(meal.model.clone());
+        draft.prompt_version.set(meal.prompt_version.clone());
         draft
     }
 
@@ -205,6 +209,10 @@ impl Draft {
         if let Some(task) = self.analysis.replace(None) {
             task.cancel();
         }
+        let Ok(consent) = Consent::approve(vision::upload_target(&account), true) else {
+            self.phase.set(Phase::Failed(VisionFailure::Refused));
+            return;
+        };
         self.phase.set(Phase::Analyzing);
         self.slow.set(false);
         self.dirty.set(true);
@@ -216,7 +224,7 @@ impl Draft {
                 timer(Duration::from_secs(15)).await;
                 self.slow.set(true);
             });
-            let result = vision::recognize(account, upload, lang).await;
+            let result = vision::recognize(account, upload, lang, consent).await;
             slow_after.cancel();
             match result {
                 Ok(estimate) => {
@@ -225,6 +233,7 @@ impl Draft {
                         self.foods.set(estimate.recognition.foods);
                         self.title.set(estimate.recognition.title);
                         self.model.set(Some(estimate.model));
+                        self.prompt_version.set(Some(estimate.prompt_version));
                         self.skipped.set(estimate.recognition.skipped);
                         self.phase.set(if found == 0 {
                             Phase::NoFood
@@ -318,6 +327,7 @@ impl Draft {
             foods: self.foods.get_untracked(),
             photo,
             model: self.model.get_untracked(),
+            prompt_version: self.prompt_version.get_untracked(),
         });
         self.dirty.set(false);
         nav::pop();

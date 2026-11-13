@@ -5,58 +5,17 @@
 
 use std::{
     collections::HashMap,
-    io::Cursor,
     path::PathBuf,
     rc::Rc,
     sync::atomic::{AtomicU64, Ordering},
 };
 
 use base64::Engine;
-use image::{
-    DynamicImage, ImageDecoder, ImageReader, codecs::jpeg::JpegEncoder, imageops::FilterType,
-    metadata::Orientation,
-};
 use nsh_core::prelude::*;
 
-/// The longest side of the photo sent to the model.
-pub const UPLOAD_EDGE: u32 = 1280;
-/// The longest side of the photo kept with a meal.
-pub const KEEP_EDGE: u32 = 960;
-/// Larger picks are refused before decoding.
-const MAX_INPUT_BYTES: usize = 48 * 1024 * 1024;
-
-/// Prepares picked `bytes` (JPEG, PNG or WebP): upright, scaled down,
-/// re-encoded. `None` for anything it cannot decode.
+/// Image decoding, orientation and metadata stripping are shared with Flutter.
 pub fn prepare(bytes: &[u8]) -> Option<(Vec<u8>, Vec<u8>)> {
-    if bytes.is_empty() || bytes.len() > MAX_INPUT_BYTES {
-        return None;
-    }
-    let reader = ImageReader::new(Cursor::new(bytes))
-        .with_guessed_format()
-        .ok()?;
-    let mut decoder = reader.into_decoder().ok()?;
-    let orientation = decoder.orientation().unwrap_or(Orientation::NoTransforms);
-    let mut image = DynamicImage::from_decoder(decoder).ok()?;
-    image.apply_orientation(orientation);
-    let upload = encode(&fit(&image, UPLOAD_EDGE), 82)?;
-    let keep = encode(&fit(&image, KEEP_EDGE), 80)?;
-    Some((upload, keep))
-}
-
-fn fit(image: &DynamicImage, edge: u32) -> DynamicImage {
-    if image.width().max(image.height()) <= edge {
-        image.clone()
-    } else {
-        image.resize(edge, edge, FilterType::Triangle)
-    }
-}
-
-fn encode(image: &DynamicImage, quality: u8) -> Option<Vec<u8>> {
-    let mut out = Vec::new();
-    JpegEncoder::new_with_quality(&mut out, quality)
-        .encode_image(&image.to_rgb8())
-        .ok()?;
-    Some(out)
+    health_core::photo::prepare(bytes).ok()
 }
 
 /// `jpeg` as a `data:` URI an image shows without a request.

@@ -35,7 +35,12 @@ fn start(
 }
 
 fn account(trusted: bool) -> Vec<(String, String)> {
-    let fingerprint = "anthropic|https://api.anthropic.com/v1|claude-opus-5-5";
+    let fingerprint = json!([
+        "anthropic",
+        "https://api.anthropic.com/v1",
+        "claude-opus-5-5"
+    ])
+    .to_string();
     let settings = json!({
         "account": {
             "provider": "anthropic",
@@ -153,7 +158,7 @@ fn a_meal_added_by_hand_counts_toward_today() -> Result<(), String> {
 #[test]
 fn a_photo_is_sent_only_after_consent_and_becomes_editable_foods() -> Result<(), String> {
     let stub = network(200, estimate());
-    let (mut app, _) = start(account(false), Some(stub.clone()));
+    let (mut app, storage) = start(account(false), Some(stub.clone()));
     picks_a_photo(&mut app);
     app.press("Log a meal")?;
     app.wait_for("Send this photo for analysis?")?;
@@ -177,10 +182,14 @@ fn a_photo_is_sent_only_after_consent_and_becomes_editable_foods() -> Result<(),
         nsh_core::platform::HttpBody::Bytes(bytes) => serde_json::from_slice(bytes).expect("JSON"),
         _ => panic!("a JSON body"),
     };
-    assert_eq!(
-        body["messages"][0]["content"][0]["source"]["media_type"],
-        "image/jpeg"
-    );
+    let images: Vec<_> = body["messages"][0]["content"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|block| block["type"] == "image")
+        .collect();
+    assert_eq!(images.len(), 1);
+    assert_eq!(images[0]["source"]["media_type"], "image/jpeg");
 
     // 480 g × 92 + 150 g × 130 (the catalog's rice, not the model's 1) per 100 g;
     // the total counts up to it.
@@ -188,6 +197,11 @@ fn a_photo_is_sent_only_after_consent_and_becomes_editable_foods() -> Result<(),
     app.press("text:/^Save meal/")?;
     app.wait_for("text:Beef noodle soup")?;
     app.wait_for("text:637")?;
+    let saved: Value = serde_json::from_str(&storage.entries()["meals.v1"]).unwrap();
+    assert_eq!(
+        saved["meals"][0]["prompt_version"],
+        health_core::recognition::PROMPT_VERSION
+    );
     Ok(())
 }
 
@@ -218,6 +232,22 @@ fn a_rejected_key_points_to_settings() -> Result<(), String> {
 }
 
 #[test]
+fn a_failed_whole_body_fetch_is_not_automatically_replayed() -> Result<(), String> {
+    let mut reply = StubResponse::default();
+    reply.error = Some("Connection reset while receiving the reply".into());
+    let stub = Arc::new(StubNetwork::new([(MESSAGES.to_owned(), reply)]));
+    let (mut app, _) = start(account(true), Some(stub.clone()));
+    picks_a_photo(&mut app);
+    app.press("Log a meal")?;
+    app.wait_for("Can't reach the model")?;
+    assert_eq!(stub.requests().len(), 1);
+    app.wait(Duration::from_secs(3))?;
+    assert_eq!(stub.requests().len(), 1);
+    assert!(app.shows("Try again"));
+    Ok(())
+}
+
+#[test]
 fn deleting_a_meal_can_be_undone() -> Result<(), String> {
     let meal = Meal {
         id: "m1".into(),
@@ -236,6 +266,7 @@ fn deleting_a_meal_can_be_undone() -> Result<(), String> {
         }],
         photo: None,
         model: None,
+        prompt_version: None,
     };
     let (mut app, _) = start(vec![("meals.v1".to_owned(), encode_meals(&[meal]))], None);
     app.wait_for("text:300")?;

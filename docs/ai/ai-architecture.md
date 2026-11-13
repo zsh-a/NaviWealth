@@ -44,7 +44,7 @@ HealthOS 餐食照片使用独立的逐次上传确认，明确显示本次选�
 Domain agent / business AI seam
   -> AgentRuntimeProfileTurnRunner | AgentRuntimeLlmBridge
   -> FRB generated API
-  -> lifeos_native::agent_runtime / agent-llm
+  -> lifeos_native::agent_runtime / llm-client
   -> Anthropic | OpenAI-compatible provider
   -> Dart AgentRuntimeToolHost / proposal confirmation seam
 ```
@@ -56,7 +56,7 @@ ChatRepository
   -> RuntimeRoutingAiChatApiClient
   -> FrbChatRunner
   -> AgentRuntimeLlmStreamBridge
-  -> agent-chat / agent-llm
+  -> agent-chat / llm-client
   -> AgentRuntimeToolHost
 ```
 

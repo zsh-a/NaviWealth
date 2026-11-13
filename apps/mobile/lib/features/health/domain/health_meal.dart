@@ -142,6 +142,7 @@ class HealthMeal {
     required this.sync,
     this.note,
     this.recognitionModel,
+    this.recognitionPromptVersion,
   }) : foods = List.unmodifiable(foods);
 
   final String id;
@@ -151,15 +152,34 @@ class HealthMeal {
   final List<MealFood> foods;
   final String? note;
   final String? recognitionModel;
+  final String? recognitionPromptVersion;
   final SyncMeta sync;
 
   MealNutrients get total =>
       foods.fold(MealNutrients.zero, (sum, food) => sum + food.nutrients);
 
-  static String encodeFoods(List<MealFood> foods) => jsonEncode({
+  static String encodeFoods(
+    List<MealFood> foods, {
+    String? recognitionPromptVersion,
+  }) => jsonEncode({
     'version': 1,
     'foods': foods.map((food) => food.toJson()).toList(),
+    'recognition_prompt_version': ?recognitionPromptVersion,
   });
+
+  /// Provenance travels with the food snapshot through Sync and backup.
+  static String? decodePromptVersion(String raw) {
+    final json = jsonDecode(raw);
+    if (json is! Map<String, dynamic> || json['version'] != 1) {
+      throw const FormatException('Unsupported meal food payload');
+    }
+    final version = json['recognition_prompt_version'];
+    if (version == null) return null;
+    if (version is! String || version.trim().isEmpty || version.length > 80) {
+      throw const FormatException('Invalid meal prompt version');
+    }
+    return version;
+  }
 
   static List<MealFood> decodeFoods(String raw) {
     final json = jsonDecode(raw);

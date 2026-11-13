@@ -32,7 +32,10 @@ anyhow = "1.0.102"
 agent-core = { path = "../../../../third_party/agent-runtime/crates/agent-core" }
 agent_runtime_upstream = { package = "agent-runtime", path = "../../../../third_party/agent-runtime/crates/agent-runtime" }
 agent-chat = { path = "../../../../third_party/agent-runtime/crates/agent-chat" }
-agent-llm = { path = "../../../../third_party/agent-runtime/crates/agent-llm" }
+llm-protocol = { path = "../../../../third_party/agent-runtime/crates/llm-protocol" }
+llm-client = { path = "../../../../third_party/agent-runtime/crates/llm-client" }
+llm-reqwest = { path = "../../../../third_party/agent-runtime/crates/llm-reqwest" }
+health-core = { path = "../../../../crates/health-core" }
 futures = "0.3"
 market-data-rs = { path = "../../../../third_party/market-data-rs/crates/market-data", default-features = false }
 # flutter_rust_bridge generates Dart bindings from these signatures.
@@ -51,6 +54,9 @@ uuid = { version = "1.23.2", features = ["v4"] }
 async-trait = "0.1.89"
 once_cell = "1.21.4"
 base64 = "0.22.1"
+
+[dev-dependencies]
+image = { version = "0.25", default-features = false, features = ["png"] }
 
 [target.'cfg(target_os = "android")'.dependencies]
 jni = "0.22.4"

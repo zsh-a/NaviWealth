@@ -108,6 +108,9 @@ pub struct Meal {
     /// The model that estimated it, as provenance.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub model: Option<String>,
+    /// The shared recognition prompt that produced the editable estimate.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub prompt_version: Option<String>,
 }
 
 impl Meal {
@@ -222,6 +225,7 @@ mod tests {
             }],
             photo: None,
             model: None,
+            prompt_version: None,
         }
     }
 

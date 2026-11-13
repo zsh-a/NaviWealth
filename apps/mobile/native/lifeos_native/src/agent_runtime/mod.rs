@@ -21,11 +21,10 @@ use agent_core::{
     AgentRuntimeCatalog, AgentSpec, AgentTrace, InteractionEnvelope, ProposalKindSpec, RunRequest,
     ScheduleSpec, ToolSpec, catalog_version, protocol_version,
 };
-use agent_llm::{
-    LlmEvent, LlmEventKind, LlmFinishReason, LlmProvider, LlmRequest, LlmResponse, MockLlmProvider,
-};
 use anyhow::Result;
 use futures::StreamExt;
+use llm_client::{LlmProvider, MockLlmProvider};
+use llm_protocol::{LlmEvent, LlmEventKind, LlmFinishReason, LlmRequest, LlmResponse};
 use serde::Serialize;
 use serde_json::{Map, Value, json};
 use std::collections::HashSet;

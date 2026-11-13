@@ -804,6 +804,11 @@ Allowed:
   context validation, and resume contracts through the existing app-owned FRB
   bridge; permissions, Drift and business effects remain Host-owned.
 - Health provider primitives requiring native HTTP/runtime behavior.
+- Shared meal recognition through `crates/health-core`: prompt/schema,
+  model-result validation, nutrition snapshots, image normalization, and
+  endpoint/model-bound upload consent. Flutter uses a narrow JSON FRB adapter;
+  NSH supplies its platform fetch Transport. Each Host retains persistence,
+  opt-in, confirmation, and business writes.
 - Future security-sensitive sync encryption only after a separate trigger.
 - Standalone `market-data-rs` provider protocols and request governance behind
   the FinanceOS `MarketDataService`, under the scoped exception in
@@ -813,7 +818,7 @@ Allowed:
 
 Not allowed:
 
-- Business logic.
+- Business logic beyond the scoped shared meal-recognition core above.
 - Money math.
 - Market data fetchers outside the standalone SDK exception above.
 - SQL/Drift logic.

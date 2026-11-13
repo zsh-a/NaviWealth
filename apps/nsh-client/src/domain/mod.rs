@@ -3,14 +3,31 @@
 //! account, what is asked of a vision model and how its answer is read.
 
 pub mod account;
-pub mod catalog;
 pub mod format;
 pub mod meal;
-pub mod nutrition;
-pub mod recognition;
-pub mod wire;
+pub use health_core::{catalog, nutrition, recognition};
 
-use wire::ProviderError;
+/// Why a provider gave no usable reply.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ProviderError {
+    /// 401: the key is wrong or revoked.
+    Unauthorized,
+    /// 403: the key may not use this model or feature.
+    Forbidden,
+    /// 404: the base URL or the model does not exist.
+    NotFound,
+    /// 429: too many requests, or the quota is used up.
+    RateLimited,
+    /// 503 / 529: the provider is overloaded.
+    Overloaded,
+    /// Another 5xx.
+    Server(u16),
+    /// The request was refused as invalid (400, 413, 422 …), with the
+    /// provider's message: often a model that takes no images.
+    Rejected { status: u16, message: String },
+    /// A success whose body is not the API's shape.
+    Decode,
+}
 
 /// Why recognizing a photo failed, as the review page explains it.
 #[derive(Debug, Clone, PartialEq, Eq)]
