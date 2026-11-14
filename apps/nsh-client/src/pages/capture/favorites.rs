@@ -1,18 +1,19 @@
 //! Favorites in the capture sheet: meals the owner eats often, as a row of
-//! photo tiles. A tap logs one today at once (with Undo on Today); holding
-//! one offers to adjust it before logging, or to remove it.
+//! photo tiles. A tap logs one today at once (with Undo on Today); the
+//! logged meal is adjusted like any other, from Today. Edit shows a remove
+//! mark on each tile (removing has Undo); nothing hides behind a long press.
 
 use std::rc::Rc;
 
-use nsh_base::alert_dialog;
+use nsh_base::button;
 use nsh_core::{Haptic, HapticImpact, HapticNotification, prelude::*};
 
 use crate::{
     data::{clock, favorites, meals, photos},
     domain::{favorite::Favorite, format},
     i18n::s,
-    nav::{self, Route},
-    ui::{Icon, Type, Typo, color, icon, motion, radius, space, toast::show_toast},
+    nav,
+    ui::{Icon, Type, Typo, color, icon, motion, radius, space, theme::size, toast::show_toast},
 };
 
 /// A tile's width and its photo's height.
@@ -21,6 +22,13 @@ const PHOTO: f32 = 96.0;
 
 /// The favorites section, while there are any; `close` closes the sheet.
 pub fn favorites_row(close: impl Fn() + Copy + 'static) -> impl IntoElement {
+    let editing = signal(false);
+    // Leaving with no favorites left ends editing.
+    effect(move || {
+        if !favorites::any() {
+            untracked(|| editing.set(false));
+        }
+    });
     when(favorites::any, move || {
         view()
             .gap_3()
@@ -38,11 +46,17 @@ pub fn favorites_row(close: impl Fn() + Copy + 'static) -> impl IntoElement {
                             .role(AccessibilityRole::Header),
                     )
                     .child(
-                        text(|| s().favorites_hint())
-                            .typo(Type::Caption)
-                            .text_color(color::MUTED)
-                            .number_of_lines(1)
-                            .flex_shrink(1.0),
+                        button()
+                            .on_press(move || editing.update(|e| *e = !*e))
+                            .min_h(px(size::TOUCH))
+                            .px(px(6.0))
+                            .justify_center()
+                            .child(
+                                text(move || if editing.get() { s().done } else { s().edit })
+                                    .typo(Type::Subhead)
+                                    .font_weight(FontWeight::SEMIBOLD)
+                                    .text_color(color::INK),
+                            ),
                     ),
             )
             .child(dynamic(move || {
@@ -61,25 +75,25 @@ pub fn favorites_row(close: impl Fn() + Copy + 'static) -> impl IntoElement {
                                 .flex_row()
                                 .gap(px(10.0))
                                 .px(px(space::GUTTER))
-                                .children(list.into_iter().map(move |f| tile(f, close))),
+                                .children(list.into_iter().map(move |f| tile(f, close, editing))),
                         )
                 })
             }))
     })
 }
 
-fn tile(favorite: Favorite, close: impl Fn() + Copy + 'static) -> impl IntoElement {
+fn tile(
+    favorite: Favorite,
+    close: impl Fn() + Copy + 'static,
+    editing: Signal<bool>,
+) -> impl IntoElement {
     let id = favorite.id.clone();
-    let held = favorite.id.clone();
     let name = favorite.name();
     let kcal = format!("{} {}", format::kcal(favorite.total().kcal), s().kcal);
     let label = format!("{name}, {kcal}");
-    // Pressable and holdable (buttons take presses only): it sinks a little
-    // under the finger.
+    let removing = format!("{}, {name}", s().remove_favorite);
     let scale = animated_value(1.0);
-    view()
-        .role(AccessibilityRole::Button)
-        .label(SharedString::from(label))
+    button()
         .on_press_down(move || {
             if !reduce_motion() {
                 scale.spring(motion::PRESS_SCALE_CARD, motion::PRESS);
@@ -89,17 +103,41 @@ fn tile(favorite: Favorite, close: impl Fn() + Copy + 'static) -> impl IntoEleme
             scale.spring(1.0, motion::PRESS);
         })
         .on_press(move || {
-            close();
-            log(&id);
+            if editing.get_untracked() {
+                remove(&id);
+            } else {
+                close();
+                log(&id);
+            }
         })
-        .on_long_press(move || {
-            haptic(Haptic::Impact(HapticImpact::Medium));
-            actions(held.clone(), close);
+        .accessibility_label(move || {
+            Some(
+                if editing.get() {
+                    removing.clone()
+                } else {
+                    label.clone()
+                }
+                .into(),
+            )
         })
         .bind_scale(&scale)
         .w(px(TILE))
         .gap(px(8.0))
-        .child(photo(favorite.photo.clone()))
+        .child(view().child(photo(favorite.photo.clone())).child(when(
+            move || editing.get(),
+            || {
+                view()
+                    .absolute()
+                    .top(px(6.0))
+                    .right(px(6.0))
+                    .size(px(26.0))
+                    .rounded_full()
+                    .items_center()
+                    .justify_center()
+                    .bg(color::ACTION)
+                    .child(icon(Icon::Minus, 14.0, color::ON_ACTION))
+            },
+        )))
         .child(
             view()
                 .px(px(2.0))
@@ -168,45 +206,17 @@ fn log(id: &str) {
     );
 }
 
-/// Holding a tile: adjust before logging, or remove it (with Undo).
-fn actions(id: String, close: impl Fn() + Copy + 'static) {
-    let Some(favorite) = favorites::get(&id) else {
+/// Removes the favorite `id`, with Undo.
+fn remove(id: &str) {
+    let Some(removed) = favorites::remove(id) else {
         return;
     };
-    let answer = alert_dialog()
-        .title(favorite.name())
-        .action("adjust", s().adjust_then_log)
-        .destructive("remove", s().remove_favorite)
-        .cancel("cancel", s().cancel)
-        .action_sheet()
-        .show();
-    spawn(async move {
-        let Ok(answer) = answer.await else {
-            return;
-        };
-        match answer.action.as_deref() {
-            Some("adjust") => {
-                close();
-                nav::push(Route::FromFavorite {
-                    day: clock::today(),
-                    id: id.clone(),
-                });
-            }
-            Some("remove") => {
-                let Some(removed) = favorites::remove(&id) else {
-                    return;
-                };
-                // The toast and its Undo show under the sheet otherwise.
-                close();
-                show_toast(
-                    s().favorite_removed,
-                    Some((
-                        s().undo.into(),
-                        Rc::new(move || favorites::restore(removed.clone())),
-                    )),
-                );
-            }
-            _ => {}
-        }
-    });
+    haptic(Haptic::Impact(HapticImpact::Light));
+    show_toast(
+        s().favorite_removed,
+        Some((
+            s().undo.into(),
+            Rc::new(move || favorites::restore(removed.clone())),
+        )),
+    );
 }

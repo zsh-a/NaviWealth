@@ -2,7 +2,7 @@
 
 Status: active sequencing SSOT; replaces the previous Now/Next plans.
 
-Last reviewed: 2026-11-13.
+Last reviewed: 2026-11-14.
 
 ## Contract And Baseline
 
@@ -44,9 +44,9 @@ health-only Review; Assets arrives with Phase 3.
    re-log of recent foods or meals, a daily energy/macro goal, undo after
    delete, and history beyond the four-week strip. Each change keeps the
    existing consent, estimate-review and confirm-before-save rules.
-   Implemented: favorites (save from a meal's page; the Today secondary
-   action opens them; tap logs with Undo, hold adjusts or removes) replace
-   "log again today"; camera capture is the system picker's own.
+   Implemented: favorites (save from a meal's page; the capture sheet
+   lists them; tap logs with Undo, Edit removes with Undo, no long press)
+   replace "log again today"; camera capture is the system picker's own.
 3. **Weight.** Manual entry and a trend line, checked against an `nsh-base`
    plot proof (gaps, touch inspection, dark theme). Implemented: one entry per
    day in SQLite, a Today card with the weekly change and a 30-day line drawn

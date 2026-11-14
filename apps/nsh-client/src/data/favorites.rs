@@ -157,14 +157,6 @@ pub fn log(id: &str, day: Day) -> Option<Meal> {
     Some(meal)
 }
 
-/// Marks the favorite `id` used now (logged after adjusting).
-pub fn touch(id: &str) {
-    if let Some(mut favorite) = get(id) {
-        favorite.used_at_ms = clock::now_ms();
-        put(favorite);
-    }
-}
-
 /// The photos the favorites refer to.
 pub fn photo_names() -> HashSet<String> {
     favorites().with_untracked(|list| list.0.iter().filter_map(|f| f.photo.clone()).collect())

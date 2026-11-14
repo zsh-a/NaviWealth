@@ -1,5 +1,5 @@
 //! Settings' Garmin section: a personal API key to connect, or the
-//! connection to end. It acts at once, apart from the page's Save.
+//! connection to end. It acts at once.
 
 use nsh_core::{element::AutoCapitalize, prelude::*};
 
@@ -16,7 +16,7 @@ use crate::{
 };
 
 /// Garmin: a personal API key to connect, or the connection to end. Acts
-/// at once, apart from the page's Save.
+/// at once.
 pub fn garmin_section() -> impl IntoElement {
     let key = signal(String::new());
     let busy = signal(false);

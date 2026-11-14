@@ -94,10 +94,18 @@ pub fn set_trusted(account: &ModelAccount, trusted: bool) {
     });
 }
 
-/// Replaces the account and the goal.
-pub fn save(account: ModelAccount, goal_kcal: Option<f64>) {
+/// Keeps `account` as the model account. Photos go to a changed account
+/// only after asking again: trust belongs to an account's fingerprint.
+pub fn save_account(account: ModelAccount) {
     settings().update(|s| {
         s.account = Some(account);
+        persist(s);
+    });
+}
+
+/// Keeps the daily goal (`None` clears it; out of range is not kept).
+pub fn save_goal(goal_kcal: Option<f64>) {
+    settings().update(|s| {
         s.goal_kcal = goal_kcal.filter(|goal| GOAL_RANGE.contains(goal));
         persist(s);
     });

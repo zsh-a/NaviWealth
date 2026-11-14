@@ -66,16 +66,6 @@ pub fn new_meal_page(day: Day, capture: Option<u64>) -> Screen {
     page(draft)
 }
 
-/// A new meal on `day` from the favorite `id`, to adjust before Save.
-pub fn favorite_meal_page(day: Day, id: &str) -> Screen {
-    let draft = match favorites::get(id) {
-        Some(favorite) => Draft::from_favorite(&favorite, day),
-        None => Draft::new(day),
-    };
-    show_kept_photo(draft);
-    page(draft)
-}
-
 /// The saved meal `id`, to correct or delete.
 pub fn edit_meal_page(id: &str) -> Screen {
     let draft = match untracked(|| meals::get(id)) {

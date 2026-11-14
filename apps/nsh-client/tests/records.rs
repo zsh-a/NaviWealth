@@ -139,3 +139,14 @@ fn the_calendar_goes_to_a_day_beyond_the_first_page() -> Result<(), String> {
     app.wait_for(&format!("text:{}", long_date(target)))?;
     Ok(())
 }
+
+#[test]
+fn a_day_in_reviews_month_opens_in_records() -> Result<(), String> {
+    let (mut app, _) = start(pasta_every_day(3), None);
+    app.press("label:Review")?;
+    app.press("This month")?;
+    let day = today();
+    app.press(&format!("label:{}, 300 kcal", long_date(day)))?;
+    app.wait_for("text:All history")?;
+    Ok(())
+}

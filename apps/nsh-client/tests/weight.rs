@@ -124,14 +124,15 @@ fn today_and_review_use_the_shared_average_and_caption_fits_large_text() -> Resu
     app.press("label:Review")?;
     // The preceding complete calendar week spans six days between endpoints.
     app.press("label:Previous week")?;
-    app.wait_for("text:−0.6 kg")?;
+    // Review leads with what changed.
+    app.wait_for("text:Weight trend −0.6 kg")?;
     app.wait_for("label:One sentence")?;
     app.press("label:Next week")?;
     assert!(!app.screen().enabled("label:Next week")?);
     app.press("This month")?;
     let delta = -f64::from(today().0.day() - 1) * 0.1;
     if delta != 0.0 {
-        app.wait_for(&format!("text:−{:.1} kg", delta.abs()))?;
+        app.wait_for(&format!("text:Weight trend −{:.1} kg", delta.abs()))?;
     }
     Ok(())
 }

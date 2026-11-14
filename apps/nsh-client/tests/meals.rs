@@ -260,9 +260,12 @@ fn a_recent_food_fills_the_new_food() -> Result<(), String> {
 fn the_api_key_is_kept_apart_from_the_settings() -> Result<(), String> {
     let (mut app, storage) = start(Vec::new(), None);
     app.press("label:Settings")?;
-    app.wait_for("Vision model")?;
+    app.press("label:/^Vision model, /")?;
     app.type_text("text:Paste your key", "sk-ant-secret")?;
-    app.press("Save")?;
+    // Kept as typed: no Save.
+    app.press("label:Back")?;
+    app.wait_for("label:/^Vision model, Anthropic · /")?;
+    app.press("label:Back")?;
     app.wait_for("label:New entry")?;
     app.wait_for_gone("Connect a vision model", GONE)?;
     let entries = storage.entries();
@@ -294,5 +297,22 @@ fn a_food_without_nutrition_is_not_saved_as_zero() -> Result<(), String> {
     app.press("Done")?;
     app.wait_for("text:Tea")?;
     assert!(app.screen().enabled("text:/^Save meal/")?);
+    Ok(())
+}
+
+#[test]
+fn settings_keep_the_goal_as_typed_without_save() -> Result<(), String> {
+    let (mut app, storage) = start(Vec::new(), None);
+    app.press("label:Settings")?;
+    app.type_text("label:Daily goal", "1800")?;
+    app.press("label:Back")?;
+    app.wait_for("label:New entry")?;
+    let settings = storage
+        .entries()
+        .get("settings.v1")
+        .cloned()
+        .unwrap_or_default();
+    assert!(settings.contains("1800"), "the goal is kept: {settings}");
+    assert!(!app.shows("text:Save"));
     Ok(())
 }

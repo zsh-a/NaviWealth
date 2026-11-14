@@ -6,7 +6,7 @@
 //! NW_PREVIEW=account,trust,meals,goal,weights,dark   # what to seed
 //! NW_PREVIEW_BASE_URL=http://127.0.0.1:8799/v1
 //! NW_PREVIEW_PHOTOS=/a.jpg:/b.jpg:/c.jpg     # photos of the seeded meals
-//! NW_PREVIEW_ROUTE=new:/meal.jpg | manual | edit | settings | review | review-month | records-jump
+//! NW_PREVIEW_ROUTE=new:/meal.jpg | manual | edit | settings | model | review | review-month | records-jump
 //! NW_PREVIEW_EDITOR=1                        # open the first food once foods arrive
 //! NW_PREVIEW_GARMIN_KEY_FILE=/path/garmin.key # connect a real Garmin key
 //! ```
@@ -48,7 +48,8 @@ pub fn apply() {
         }
         account.api_key = "sk-ant-preview-0000".into();
         let goal = has("goal").then_some(2000.0);
-        settings::save(account.clone(), goal);
+        settings::save_account(account.clone());
+        settings::save_goal(goal);
         settings::set_trusted(&account, has("trust"));
     }
     if has("meals") && untracked(meals::all).is_empty() {
@@ -100,6 +101,10 @@ pub fn apply() {
             }
         }
         Some("settings") => nav::push(Route::Settings),
+        Some("model") => {
+            nav::push(Route::Settings);
+            nav::push(Route::ModelSettings);
+        }
         Some("review" | "review-month") => nav::select(nav::Tab::Review),
         Some("records") => nav::select(nav::Tab::Records),
         _ => {}

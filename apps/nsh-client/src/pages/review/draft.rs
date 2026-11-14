@@ -8,11 +8,10 @@ use health_core::consent::Consent;
 use nsh_core::prelude::*;
 
 use crate::{
-    data::{clock, favorites, meals, pending, photos, settings, vision},
+    data::{clock, meals, pending, photos, settings, vision},
     domain::{
         VisionFailure,
         account::ModelAccount,
-        favorite::Favorite,
         meal::{Day, Meal, MealSlot},
         nutrition::{Food, MAX_FOODS_PER_MEAL},
         pending::{PendingMeal, PendingStatus},
@@ -71,8 +70,6 @@ pub struct Draft {
     pub meal_id: Stored<Option<String>>,
     logged_at: Stored<Option<i64>>,
     pub(super) photo_name: Stored<Option<String>>,
-    /// The favorite it started from, marked used on Save.
-    favorite: Stored<Option<String>>,
     /// The recognition draft it is (`data::pending`), once its photo was
     /// sent: leaving the page keeps it there instead of losing it.
     pub pending: Signal<Option<String>>,
@@ -105,7 +102,6 @@ impl Draft {
             meal_id: stored(None),
             logged_at: stored(None),
             photo_name: stored(None),
-            favorite: stored(None),
             pending: signal(None),
             started: stored(false),
             foods: signal(Vec::new()),
@@ -136,29 +132,6 @@ impl Draft {
         draft.title.set(meal.title.clone());
         draft.model.set(meal.model.clone());
         draft.prompt_version.set(meal.prompt_version.clone());
-        draft
-    }
-
-    /// A new meal on `day` with `favorite`'s foods (new ids), title,
-    /// provenance and photo, its slot from the time of day. Nothing is
-    /// kept before Save.
-    pub fn from_favorite(favorite: &Favorite, day: Day) -> Self {
-        let draft = Self::new(day);
-        draft.favorite.replace(Some(favorite.id.clone()));
-        draft.photo_name.replace(favorite.photo.clone());
-        draft.foods.set(
-            favorite
-                .foods
-                .iter()
-                .map(|food| Food {
-                    id: meals::new_food_id(),
-                    ..food.clone()
-                })
-                .collect(),
-        );
-        draft.title.set(favorite.title.clone());
-        draft.model.set(favorite.model.clone());
-        draft.prompt_version.set(favorite.prompt_version.clone());
         draft
     }
 
@@ -376,9 +349,6 @@ impl Draft {
             model: self.model.get_untracked(),
             prompt_version: self.prompt_version.get_untracked(),
         });
-        if let Some(favorite) = self.favorite.with(|id| id.clone()) {
-            favorites::touch(&favorite);
-        }
         if let Some(draft) = self.pending.get_untracked() {
             pending::remove(&draft);
         }

@@ -4,8 +4,9 @@ NaviWealth's native client, written in Rust on [NSH](https://github.com/longbrid
 0.5.0. Its first page is HealthOS meal logging: choose a photo of a meal, allow
 it to be sent to your own vision model, review the estimated foods and amounts,
 and save. The home has three tabs: Today (the day's energy, macros and
-vitals), Records (all history) and Review (the week). Manual entry works
-without any account. Design standards and the motion inventory: `DESIGN.md`.
+vitals), Records (all history, with a calendar to go to any day) and Review
+(the week or month, led by what changed). Settings keep each change as it is
+made; there is no Save. Manual entry works without any account. Design standards and the motion inventory: `DESIGN.md`.
 
 Meals, weights and Garmin days live on the device in
 `naviwealth.sqlite`, photos in the app's data directory, the model and Garmin
@@ -67,7 +68,7 @@ days are unknown. Weight change compares trailing seven-calendar-day means at th
 and end; Today uses the same comparison seven days apart. Each mean requires
 at least three measured days and a measurement in the last three days. Sparse
 or stale windows and gaps longer than a week produce no delta. Missing days
-are never filled in. Records All folds weight into its editable day summary;
+are never filled in. Records All shows the day's weight as a chip in its header that opens the editor;
 the Weight filter keeps individual measurements without deltas.
 Garmin averages each measurement over the days that contain it.
 
@@ -113,7 +114,7 @@ NW_PREVIEW_ROUTE=new:/path/to/meal.jpg cargo run
 
 `NW_PREVIEW` also takes `dark`/`light`, `drafts` (two recognition drafts) and `favorites` (the first seeded meals
 saved as favorites); `NW_PREVIEW_ROUTE` takes `manual`,
-`edit`, `settings`, `review`, `review-month`, `records`, `records-jump` and `capture`; `NW_PREVIEW_PHOTOS` lists photos for the seeded meals;
+`edit`, `settings`, `model`, `review`, `review-month`, `records`, `records-jump` and `capture`; `NW_PREVIEW_PHOTOS` lists photos for the seeded meals;
 `NW_PREVIEW_EDITOR=1` opens the first food's editor once results arrive.
 
 Review notes are single lines (up to 280 characters), saved automatically on

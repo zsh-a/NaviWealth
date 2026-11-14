@@ -1,11 +1,10 @@
 //! Favorites: saving a meal, logging it again with one tap (and Undo),
-//! adjusting it before logging, removing it, and keeping it across a
-//! restart and the deletion of the meal it came from.
+//! removing it in Edit (and Undo), and keeping it across a restart and the
+//! deletion of the meal it came from.
 
 mod common;
 
 use common::*;
-use nsh_testing::DialogAnswer;
 
 const TILE: &str = "id:favorites >> label:Tomato pasta, 300 kcal";
 const OPEN: &str = "label:New entry";
@@ -46,7 +45,7 @@ fn a_favorite_outlives_its_meal_and_logs_with_one_tap() -> Result<(), String> {
 
     app.press(OPEN)?;
     app.wait_for("text:Favorites")?;
-    app.wait_for("text:Tap to log · Hold for more")?;
+    app.wait_for("text:Edit")?;
     app.press(TILE)?;
     app.wait_for("Logged Tomato pasta")?;
     app.wait_for("text:1 meal")?;
@@ -72,27 +71,23 @@ fn a_favorite_outlives_its_meal_and_logs_with_one_tap() -> Result<(), String> {
 }
 
 #[test]
-fn holding_a_favorite_adjusts_it_before_logging_or_removes_it() -> Result<(), String> {
+fn edit_removes_a_favorite_with_undo_and_no_long_press() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
     let (mut app, _) = start_in(Some(dir.path()), pasta_today(), None);
     save_pasta(&mut app)?;
     app.press("label:Back")?;
     app.wait_for(OPEN)?;
 
-    app.on_dialog(|_| DialogAnswer::Press("Adjust, then log".into()));
     app.press(OPEN)?;
-    app.long_press(TILE)?;
-    app.wait_for("New meal")?;
-    app.press("text:/^Save meal/")?;
-    app.wait_for("text:2 meals")?;
-    app.wait_for("text:600")?;
-    assert_eq!(stored_meals(dir.path()).len(), 2);
-
-    app.on_dialog(|_| DialogAnswer::Press("Remove from favorites".into()));
-    app.press(OPEN)?;
-    app.long_press(TILE)?;
+    app.wait_for(TILE)?;
+    assert!(!app.shows("text:Tap to log · Hold for more"));
+    app.press("text:Edit")?;
+    app.wait_for("text:Done")?;
+    // In Edit a tap removes instead of logging.
+    app.press("id:favorites >> label:Remove from favorites, Tomato pasta")?;
     app.wait_for("Removed from favorites")?;
     assert!(stored_favorites(dir.path()).is_empty());
+    assert_eq!(stored_meals(dir.path()).len(), 1);
 
     app.press("Undo")?;
     app.wait_for_gone("Removed from favorites", GONE)?;

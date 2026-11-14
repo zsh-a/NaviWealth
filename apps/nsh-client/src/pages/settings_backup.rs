@@ -1,6 +1,5 @@
 //! Settings' Backup section: the WebDAV folder, its account, the backup
-//! passphrase, the last backup and restoring one. It acts at once, apart
-//! from the page's Save.
+//! passphrase, the last backup and restoring one. It acts at once.
 
 use nsh_base::alert_dialog;
 use nsh_core::{

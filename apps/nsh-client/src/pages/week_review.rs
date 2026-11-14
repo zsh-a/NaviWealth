@@ -5,11 +5,13 @@
 //! and Garmin's averages. Earlier periods are a step back; a short personal
 //! note is kept on its day.
 
+use std::rc::Rc;
+
 use nsh_core::prelude::*;
 
 use super::{
-    home::dock_clearance,
-    review_calendar::{calendar, month_days},
+    home::{Sheets, dock_clearance},
+    review_calendar::{Pick, calendar, month_days},
     review_charts::{chart, macros, trend},
 };
 use crate::{
@@ -20,6 +22,7 @@ use crate::{
         review::{self, Intake, Period},
     },
     i18n::s,
+    nav::{self, Tab},
     ui::{
         Icon, IconBtn, Type, Typo, color,
         figures::{Scale, stat},
@@ -67,7 +70,8 @@ pub fn review_tab() -> impl IntoElement {
                     back.set(0);
                 },
             ))
-            .child(intake_card(period, days, before))
+            .child(summary(period, days, before))
+            .child(intake_card(period, days))
             .child(super::review_note::note_editor(days))
             .child(weight_card(days))
             .child(recovery_card(days)),
@@ -141,37 +145,43 @@ fn label(title: fn() -> &'static str) -> impl IntoElement {
         .text_color(color::MUTED)
 }
 
-/// A quiet pill with a change.
-fn delta_pill(text_of: impl Fn() -> String + 'static) -> impl IntoElement {
-    view()
-        .px(px(10.0))
-        .py(px(4.0))
-        .rounded_full()
-        .bg(color::SURFACE_2)
-        .child(
-            text(text_of)
-                .typo(Type::Caption)
-                .font_weight(FontWeight::SEMIBOLD)
-                .tabular_nums()
-                .text_color(color::MUTED),
-        )
-}
-
 fn intake_of(days: Vec<Day>) -> Intake {
     let summaries: Vec<_> = days.into_iter().map(meals::summary).collect();
     review::intake(&summaries)
 }
 
-fn intake_card(
+/// The period in one sentence: the daily average against the period
+/// before, and the weight trend.
+fn summary(
     period: Signal<Period>,
     days: Memo<Vec<Day>>,
     before: Memo<Vec<Day>>,
 ) -> impl IntoElement {
+    let line = computed(move || {
+        let average = intake_of(days.get()).average.map(|a| a.kcal);
+        let previous = intake_of(before.get()).average.map(|a| a.kcal);
+        let change = average
+            .zip(previous)
+            .map(|(a, p)| a - p)
+            .filter(|d| d.is_finite());
+        let weight = days.with(|d| review::weight_change(&weights::all(), d[0], d[d.len() - 1]));
+        s().review_summary(period.get() == Period::Month, change, weight)
+    });
+    when(
+        move || line.with(Option::is_some),
+        move || {
+            text(move || line.get().unwrap_or_default())
+                .typo(Type::Headline)
+                .text_color(color::INK)
+                .px(px(4.0))
+        },
+    )
+}
+
+fn intake_card(period: Signal<Period>, days: Memo<Vec<Day>>) -> impl IntoElement {
     let intake = computed(move || intake_of(days.get()));
-    let previous = computed(move || intake_of(before.get()).average.map(|a| a.kcal));
     let goal = computed(settings::goal);
     let average = move || intake.with(|i| i.average.map(|a| a.kcal));
-    let delta = move || Some(average()? - previous.get()?).filter(|d| d.is_finite());
     card()
         .p(px(space::CARD))
         .gap_4()
@@ -190,15 +200,7 @@ fn intake_card(
                             || s().kcal.to_owned(),
                             Scale::Hero,
                         )),
-                )
-                .child(when(
-                    move || delta().is_some(),
-                    move || {
-                        delta_pill(move || {
-                            s().vs_previous(delta().unwrap_or(0.0), period.get() == Period::Month)
-                        })
-                    },
-                )),
+                ),
         )
         .child(
             when(
@@ -214,8 +216,19 @@ fn intake_card(
                                     days.iter().map(|&d| weights::on(d).is_some()).collect();
                                 let start = s().week_start();
                                 untracked(move || {
-                                    calendar(month_days(&days, &kcal, &weighed), goal, start, None)
-                                        .into_element()
+                                    let sheets = Sheets::get();
+                                    // A day opens in Records.
+                                    let pick: Pick = Rc::new(move |day| {
+                                        nav::select(Tab::Records);
+                                        sheets.jump_to.set(Some(day));
+                                    });
+                                    calendar(
+                                        month_days(&days, &kcal, &weighed),
+                                        goal,
+                                        start,
+                                        Some(pick),
+                                    )
+                                    .into_element()
                                 })
                             } else {
                                 untracked(move || chart(days, kcal, goal).into_element())
@@ -252,9 +265,6 @@ fn weight_card(days: Memo<Vec<Day>>) -> impl IntoElement {
         let (first, last) = days.with(|d| (d[0], d[d.len() - 1]));
         weights::window(last, last.days_since(first) + 1)
     });
-    let change = computed(move || {
-        days.with(|d| review::weight_change(&weights::all(), d[0], d[d.len() - 1]))
-    });
     let latest = move || entries.with(|e| e.last().copied());
     when(
         move || latest().is_some(),
@@ -263,22 +273,7 @@ fn weight_card(days: Memo<Vec<Day>>) -> impl IntoElement {
                 .px(px(4.0))
                 .pt_2()
                 .gap_3()
-                .child(
-                    view()
-                        .flex_row()
-                        .items_center()
-                        .justify_between()
-                        .child(label(|| s().weight_week))
-                        .child(when(
-                            move || change.with(Option::is_some),
-                            move || {
-                                delta_pill(move || {
-                                    let d = change.with(|c| c.unwrap_or(0.0));
-                                    format!("{} kg", s().signed_kg(d))
-                                })
-                            },
-                        )),
-                )
+                .child(label(|| s().weight_week))
                 .child(stat(
                     move || latest().map(|w| s().kg(w.kg)),
                     || "kg".to_owned(),

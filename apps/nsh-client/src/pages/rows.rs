@@ -1,5 +1,6 @@
-//! Rows shared by Today and Records: a meal led by its photo and a weight
-//! entry, grouped in one card with hairlines between them.
+//! Rows shared by Today and Records: a meal led by its photo when it has
+//! one, and a weight entry, grouped in one card with hairlines between
+//! them. A row without a photo starts with its text: no placeholder art.
 
 use nsh_core::prelude::*;
 
@@ -8,15 +9,15 @@ use crate::{
     domain::{format, meal::Meal, weight::Weight},
     i18n::s,
     nav::{self, Route},
-    ui::{Icon, Type, Typo, color, icon, radius, surface::row_button},
+    ui::{Type, Typo, color, radius, space, surface::row_button},
 };
 
 use super::today::{meal_title, slot_name};
 
 /// A row's thumbnail side.
 pub const THUMB: f32 = 52.0;
-/// Where hairlines start: past the thumbnail.
-pub const INSET: f32 = 12.0 + THUMB + 14.0;
+/// A row's leading padding without a photo, and where hairlines start.
+pub const INSET: f32 = space::CARD;
 
 /// A saved meal; pressing it opens it.
 pub fn meal_row(meal: Meal) -> impl IntoElement {
@@ -28,13 +29,14 @@ pub fn meal_row(meal: Meal) -> impl IntoElement {
         format::kcal(total.kcal),
         s().kcal
     );
+    let photo = meal.photo.clone();
     row_button(move || nav::push(Route::EditMeal(id.clone())))
-        .pl(px(12.0))
+        .pl(px(if photo.is_some() { 12.0 } else { INSET }))
         .pr(px(18.0))
         .py(px(10.0))
         .gap(px(14.0))
         .accessibility_label(move || Some(label.clone().into()))
-        .child(thumbnail(meal.photo.clone()))
+        .child(photo.map(thumbnail))
         .child(
             view()
                 .flex_1()
@@ -65,7 +67,7 @@ pub fn meal_row(meal: Meal) -> impl IntoElement {
 pub fn weight_row(entry: Weight, open: impl Fn() + 'static) -> impl IntoElement {
     let kg = s().kg(entry.kg);
     row_button(open)
-        .pl(px(12.0))
+        .pl(px(INSET))
         .pr(px(18.0))
         .py(px(10.0))
         .gap(px(14.0))
@@ -73,7 +75,6 @@ pub fn weight_row(entry: Weight, open: impl Fn() + 'static) -> impl IntoElement 
             let label = format!("{}, {kg} kg", s().weight);
             move || Some(label.clone().into())
         })
-        .child(glyph(Icon::Scale))
         .child(
             view()
                 .flex_1()
@@ -110,36 +111,22 @@ fn figure(value: String, unit: &'static str) -> impl IntoElement {
         .child(text(unit).typo(Type::Caption).text_color(color::MUTED))
 }
 
-fn glyph(glyph: Icon) -> impl IntoElement {
-    view()
-        .size(px(THUMB))
-        .rounded(px(radius::THUMB))
-        .bg(color::SURFACE_2)
-        .items_center()
-        .justify_center()
-        .child(icon(glyph, 24.0, color::MUTED))
-}
-
-fn thumbnail(photo: Option<String>) -> impl IntoElement {
+/// The meal's photo; its well shows while the photo loads.
+fn thumbnail(photo: String) -> impl IntoElement {
     let photo = stored(photo);
-    let uri = move || photo.with(|p| p.as_deref().and_then(photos::uri));
+    let uri = move || photo.with(|p| photos::uri(p));
     view()
         .size(px(THUMB))
         .rounded(px(radius::THUMB))
         .overflow_hidden()
-        .bg(color::SURFACE_2)
-        .items_center()
-        .justify_center()
-        .child(
-            when(
-                move || uri().is_some(),
-                move || {
-                    image(move || uri().unwrap_or_default())
-                        .object_fit(ResizeMode::Cover)
-                        .size(px(THUMB))
-                        .accessibility_elements_hidden(true)
-                },
-            )
-            .otherwise(|| icon(Icon::Utensils, 22.0, color::FAINT)),
-        )
+        .bg(color::PHOTO_WELL)
+        .child(when(
+            move || uri().is_some(),
+            move || {
+                image(move || uri().unwrap_or_default())
+                    .object_fit(ResizeMode::Cover)
+                    .size(px(THUMB))
+                    .accessibility_elements_hidden(true)
+            },
+        ))
 }

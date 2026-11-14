@@ -15,10 +15,10 @@ pub enum Route {
     EditMeal(String),
     /// The recognition draft with this id.
     Pending(String),
-    /// A new meal on `day` from the favorite `id`, to adjust before Save.
-    FromFavorite { day: Day, id: String },
-    /// The model account and goal.
+    /// Settings.
     Settings,
+    /// The vision model account, from Settings.
+    ModelSettings,
 }
 
 /// The home's tabs.

@@ -40,16 +40,6 @@ impl Strings {
         }
     }
 
-    /// `n` foods.
-    /// Beside the favorites' title: what a tap and a hold do.
-    pub fn favorites_hint(&self) -> &'static str {
-        if self.zh() {
-            "轻点即记 · 长按更多"
-        } else {
-            "Tap to log · Hold for more"
-        }
-    }
-
     /// The last weight, under Log weight.
     pub fn last_weight(&self, kg: f64) -> String {
         if self.zh() {
@@ -95,22 +85,51 @@ impl Strings {
         }
     }
 
-    /// The change of the daily average from the period before.
-    pub fn vs_previous(&self, delta: f64, month: bool) -> String {
-        let sign = if delta > 0.0 {
-            "+"
-        } else if delta < 0.0 {
-            "−"
-        } else {
-            "±"
-        };
-        let value = format!("{sign}{}", format::kcal(delta.abs()));
-        match (self.zh(), month) {
-            (true, false) => format!("较上周 {value}"),
-            (true, true) => format!("较上月 {value}"),
-            (false, false) => format!("{value} vs last week"),
-            (false, true) => format!("{value} vs last month"),
+    /// Review's one-line conclusion, what changed: the daily average
+    /// against the period before, then the weight trend. The figures below
+    /// it show the levels; `None` with no change to tell.
+    pub fn review_summary(
+        &self,
+        month: bool,
+        change: Option<f64>,
+        weight: Option<f64>,
+    ) -> Option<String> {
+        let zh = self.zh();
+        let mut parts = Vec::new();
+        if let Some(change) = change.filter(|c| c.round() != 0.0) {
+            let by = format::kcal(change.abs());
+            let more = change > 0.0;
+            parts.push(match (zh, month, more) {
+                (true, false, true) => format!("日均比上周多 {by} 千卡"),
+                (true, false, false) => format!("日均比上周少 {by} 千卡"),
+                (true, true, true) => format!("日均比上月多 {by} 千卡"),
+                (true, true, false) => format!("日均比上月少 {by} 千卡"),
+                (false, false, true) => format!("{by} kcal a day more than last week"),
+                (false, false, false) => format!("{by} kcal a day less than last week"),
+                (false, true, true) => format!("{by} kcal a day more than last month"),
+                (false, true, false) => format!("{by} kcal a day less than last month"),
+            });
         }
+        if let Some(weight) = weight {
+            let kg = self.signed_kg(weight);
+            parts.push(if zh {
+                format!("体重趋势 {kg} kg")
+            } else {
+                format!("weight trend {kg} kg")
+            });
+        }
+        let mut line = if zh {
+            parts.join("，")
+        } else {
+            parts.join(", ")
+        };
+        if line.is_empty() {
+            return None;
+        }
+        if !zh {
+            line[..1].make_ascii_uppercase();
+        }
+        Some(line)
     }
 
     /// Under the intake chart: the goal and the days past it, and how many

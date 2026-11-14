@@ -7,8 +7,7 @@ use nsh_core::prelude::*;
 use crate::{
     nav::{self, Route},
     pages::{
-        edit_meal_page, favorite_meal_page, home_page, new_meal_page, pending_meal_page,
-        settings_page,
+        edit_meal_page, home_page, model_page, new_meal_page, pending_meal_page, settings_page,
     },
 };
 
@@ -24,8 +23,8 @@ pub fn shell() -> impl IntoElement {
                     Route::NewMeal { day, capture } => new_meal_page(day, capture),
                     Route::EditMeal(id) => edit_meal_page(&id),
                     Route::Pending(id) => pending_meal_page(&id),
-                    Route::FromFavorite { day, id } => favorite_meal_page(day, &id),
                     Route::Settings => settings_page(),
+                    Route::ModelSettings => model_page(),
                 };
                 // Back on iOS and Android is the system's: it pops the page
                 // natively, and the routes follow.
