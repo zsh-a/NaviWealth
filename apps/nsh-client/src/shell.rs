@@ -25,6 +25,8 @@ pub fn shell() -> impl IntoElement {
                     Route::Pending(id) => pending_meal_page(&id),
                     Route::Settings => settings_page(),
                     Route::ModelSettings => model_page(),
+                    Route::Account(name) => crate::pages::assets::account_page(&name),
+                    Route::Holding(id) => crate::pages::holdings::holding_page(&id),
                 };
                 // Back on iOS and Android is the system's: it pops the page
                 // natively, and the routes follow.

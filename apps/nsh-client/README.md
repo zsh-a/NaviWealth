@@ -3,10 +3,12 @@
 NaviWealth's native client, written in Rust on [NSH](https://github.com/longbridge/nsh)
 0.5.0. Its first page is HealthOS meal logging: choose a photo of a meal, allow
 it to be sent to your own vision model, review the estimated foods and amounts,
-and save. The home has three tabs: Today (the day's energy, macros and
-vitals), Records (all history; its calendar opens any day on its own) and Review
-(the week or month, led by what changed). Settings keep each change as it is
-made; there is no Save. Manual entry works without any account. Design standards and the motion inventory: `DESIGN.md`.
+and save. The home has four tabs: Today (spending, intake and vitals), Records
+(all history), Assets (accounts, book balances and net worth), and Review
+(the week or month). The capture button accepts a description or image and
+keeps a draft for confirmation. Settings keep each change as it is made;
+manual entry and account management work without a model account. Design
+standards and the motion inventory: `DESIGN.md`.
 
 Meals, weights and Garmin days live on the device in
 `naviwealth.sqlite`, photos in the app's data directory, the model and Garmin
@@ -21,7 +23,7 @@ src/
   domain/   host-owned meals/account and shared health-core domain exports
   data/     device storage, photos, local time, thin NSH fetch Transport
   ui/       the app's styled components over nsh-base, and its tokens
-  pages/    the home (Today, Records, Review tabs, capture sheet), meal
+  pages/    the home (Today, Records, Assets, Review tabs, capture sheet), meal
             editing, Settings
   i18n/     English and Chinese copy
   preview.rs  desktop-only preview seeding for design review
@@ -127,3 +129,128 @@ Review notes are single lines (up to 280 characters), saved automatically on
 their date. Review shows the latest note in its week or month for editing and
 earlier notes above it. Clear the field to remove a note. Notes survive restart
 and are included in encrypted backups.
+
+
+## Ledger: manual records and storage
+
+The capture sheet's **Log transaction** action records an expense, income or
+transfer. Amounts are exact CNY minor units; more than two decimal places are
+rejected. Choose a category and an asset/liability account, or name a new own
+account within the draft. No account or posting is written until Save succeeds.
+The sheet edits the date/time, payee and note; dismissal asks before discarding
+changes. Existing rows open the editor; Delete offers Undo.
+
+Today combines meals and transactions in time order and shows today's spending
+beside intake once the ledger has records. Income and transfers do not count as
+spending. Records groups both kinds by date, offers a Money filter, and
+its calendar includes days containing only transactions.
+
+`crates/lifeos-core` provides neutral SQLite opening, versioned migrations,
+snapshots and atomic table replacement. `finance-core::repository` owns account,
+transaction, posting and mapping-rule SQL, validation and confirmed writes. The
+client's `data::finance` only mirrors successfully committed records into UI
+signals. Opening an unreadable/unwritable or newer database blocks startup;
+only a headless host without a data directory uses memory storage.
+
+Schema 7 adds the financial tables. New encrypted backups restore Health and
+Finance together, rejecting unbalanced entries, missing account references and
+invalid source identities before replacing current rows. Health-only backups
+(schema 1–6) restore Health while preserving the current ledger. Restore remains
+explicitly confirmed. Balances and spending are derived, never stored as truth.
+Statement import and budgets are subsequent increments. The initial holdings
+increment is described below.
+
+Desktop previews accept `NW_PREVIEW=account,meals,finance,light` (or `dark`) and
+`NW_PREVIEW_ROUTE=transaction` / `transaction-new` for the editor, in addition
+to `records` and `capture`. These seed synthetic entries only in the selected
+preview data directory. Headless tests verify behavior; they are not Android
+device evidence.
+
+
+## Text and image capture
+
+The global capture button opens a single description/image composer. The
+owner's model returns money, meal or body-weight drafts; a short correction
+updates the complete draft without creating a chat history. Manual entry is a
+secondary disclosure. A purchase with a price does not imply food consumption.
+
+- `domain/capture.rs` composes the envelope and delegates money, nutrition and
+  weight validation to their owning domains. `finance-core::recognition`
+  rejects unsupported currencies, imprecise money and wrong account kinds;
+  missing fields remain editable, unconfirmed values.
+- `data/capture.rs` keeps input/results in SQLite `capture_drafts` (schema 8),
+  runs recognition under the app root, and atomically consumes the draft while
+  writing its whole batch. Neither recognition nor correction writes records.
+  Database failures retain the draft for retry, with no partial batch.
+- Consent covers input text, the attached image and ledger account names;
+  old photo-only trust does not grant the broader consent. The model account
+  fingerprint scopes remembered consent. There is no backend or agent loop.
+- Today and Records expose the same drafts. Interrupted runs can be retried
+  after restart. Photos are re-encoded before use; inputs are never logged.
+- Manual money has in-sheet selection views, a calendar, secondary details,
+  and last-confirmed choices. Task sheets keep their action above the keyboard.
+
+`tests/capture.rs` exercises natural-language correction, missing-account
+blocking, atomic multi-domain confirmation, a real SQLite failure and retry,
+restart, and invalid model output. The existing meal/draft flows now use the
+unified composer; finance tests retain exact posting/balance assertions.
+Desktop visual previews include `capture`, `capture-ready`, `capture-missing`,
+`transaction` and `transaction-new`. GTK previews are not Android evidence.
+
+## Accounts and Assets
+
+Assets shows net worth, asset/debt balances and a 30-day dated valuation trend.
+Without holdings it uses book balances. Account details show dated entries,
+with older entries loaded in batches.
+The owner can create asset/liability accounts and rename them without merging
+accounts. Renaming updates postings, import mappings, balance observations and
+saved recognition references together; a running recognition must finish first.
+
+Balance checking asks only for the actual balance/debt and date. Positive debt
+means money owed; negative debt means a credit balance. A separate preview shows
+the book value, actual value and difference before confirmation. The domain
+repository recomputes the expected balance inside the transaction and rejects a
+stale preview. It writes a balanced opening/adjustment entry against equity and a
+balance observation atomically. Zero difference saves only the observation;
+balance checks never change income/spending. Confirmed balance entries can be
+inspected from all timelines. Corrections use another balance check.
+
+Schema 9 adds `finance_balance_checks` to encrypted backup/restore and validation.
+`finance-core::assets` owns book totals and debt presentation;
+`finance-core::holdings` replaces security book cost with dated market values.
+The NSH pages only display those values.
+
+Previews: `NW_PREVIEW=account,meals,finance,assets,light` with
+`NW_PREVIEW_ROUTE=assets`, `asset-account`, or `asset-balance`; `assets-empty`
+with only `NW_PREVIEW=light` checks the empty state. `NW_PREVIEW_WIDTH` and
+`NW_PREVIEW_HEIGHT` set the desktop viewport. GTK light/dark captures and
+headless 360×640/1.3 text-scale/simulated-IME checks are development evidence;
+Android device and real keyboard verification remain outstanding.
+
+## Simple holdings
+
+Holdings live inside Assets, with no additional tab. Add an existing position
+using a name/code, quantity and unit cost, or record a purchase against a cash
+account. A holding opens its quantity, remaining cost, unrealized gain and
+trade history. Buy, sell and cash dividend share one compact editor; date and
+fees are secondary details. Deleting a trade requires confirmation and replays
+later trades; a deletion or backdated sale that would oversell is rejected.
+
+This increment is CNY-only, with manually named securities and manual dated
+prices. Unpriced positions explicitly use cost; known prices replace cost in
+net worth and are never applied to earlier days. There is no live quote provider,
+catalog lookup, FX or AI trade recognition yet. Existing capture rejects trades.
+
+`finance-core::holdings` owns six-decimal integer quantities/prices, cent rounding,
+moving-average cost, realized gains, dividends and journal postings. Buy fees
+enter cost; sale/dividend fees reduce proceeds. Existing positions do not deduct
+cash. Trade and cash writes commit together. Internal security cost accounts
+cannot be selected or altered as cash accounts. Account renaming also updates
+trade references. Schema 10 includes securities, trades and prices in encrypted
+backups; restore rejects disagreement between trades and generated journal rows.
+
+Meaningful checks cover partial/full sales, dividends/fees, cash rename,
+historical valuation, failed writes/retry, unsafe history edits, restart and
+backup validation. GTK previews use `NW_PREVIEW=account,meals,finance,assets,holdings,light`
+and routes `holdings`, `holding`, `holding-new`, `holding-trade`, `holding-price`.
+These previews and headless checks are not Android device evidence.

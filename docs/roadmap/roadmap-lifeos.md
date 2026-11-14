@@ -128,12 +128,35 @@ Flutter import.
   2. SQLite tables (accounts, transactions, postings, mapping rules) in the
      client, restored with backups; manual entry; Records and Today show
      spending.
+     Implemented: `lifeos-core` owns neutral SQLite opening, migrations,
+     snapshots and atomic table replacement; `finance-core` owns the ledger
+     repository. The capture sheet adds expense, income and transfer entries,
+     with account creation, edits, guarded dismissal and delete/Undo. Today
+     shows spending and mixed records; Records adds a Transactions filter and
+     opens transaction-only dates from its calendar. Schema 7 backups include
+     accounts, transactions, postings and mapping rules; older Health-only
+     backups preserve the current ledger. Disk-open failures block startup
+     instead of accepting records into memory. Remaining: Android device
+     upgrade, editor/keyboard and mixed-domain backup/restore verification.
   3. Statement import: file picker, account and category mapping asked once,
      the review page, confirmation.
   4. Review: spending by expense account against the period before, the
      monthly budget.
   5. Assets tab: asset and liability balances, net worth, balance checks.
-  6. Payment-screenshot recognition into transaction drafts.
+     Implemented by owner request (2026-11-14): fourth tab, account details,
+     standalone account creation/rename, book net worth and 30-day trend,
+     dated balance previews and atomic opening/adjustment confirmation.
+     Zero-difference observations are retained without artificial postings;
+     schema 9 backs up balance observations. Rename updates journal, mappings
+     and recognition-draft references together. Remaining: Android device,
+     system Back and real IME verification. Initial holdings are tracked below.
+  6. Text/image capture into recognition drafts (brought forward by the owner
+     on 2026-11-14). Implemented: one composer for money, meals and weight,
+     natural-language corrections, shared durable drafts, explicit consent and
+     atomic batch confirmation. Manual entry is secondary and its money
+     editor has in-sheet pickers, a calendar and fixed actions. Statement
+     import in step 3 remains pending. Remaining: real-model quality and
+     Android keyboard/device verification.
 - Exit: every transaction balances (property tests); exact money and
   rounding tests; statement corpus fixtures pass with pinned
   accepted/rejected counts; importing a statement twice adds nothing;
@@ -141,6 +164,18 @@ Flutter import.
 
 ## Phase 4 — Holdings
 
+- Initial increment implemented at the owner's request (2026-11-15), keeping
+  capture simple: manually named CNY securities, existing-position opening,
+  buy/sell/dividend with optional fees, exact moving-average cost and gains,
+  atomic cash/journal updates, dated manual prices and valuation-aware net worth.
+  Holdings are inline on Assets with one detail page and compact task sheets.
+  Schema 10 backups validate positions against generated journal postings;
+  unsafe deletion/backdated trades roll back. Core fixtures, headless flows,
+  restart/restore and GTK light/dark small-screen checks cover this increment.
+  Android device, system Back and real IME verification remain outstanding.
+- Remaining: catalog lookup, a quote provider, FX and allocation. AI trade
+  recognition is not included in this increment; the existing capture rejects
+  trades. This initial implementation does not close the full phase.
 - Scope: securities catalog, trades (buy, sell, dividend, fee), derived
   positions, average cost and gains, one quote provider, FX, allocation and
   net worth on Assets.

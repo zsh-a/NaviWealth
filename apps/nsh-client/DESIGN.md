@@ -3,37 +3,82 @@
 The NSH (Rust) client's design system and the decisions behind it. Tokens
 live in `src/ui/theme.rs`; every screen is composed from `src/ui/`. Product
 rules come from `docs/product/product-scope.md`: personal use, local-first,
-AI only to turn a photo into a draft, the owner's own model account.
+AI only to turn text and images into drafts, using the owner's model account.
 
 ## The task
 
-- **Primary task:** log a meal from a photo and see what today adds up to;
-  each week, see what changed.
-- **Home:** three tabs (Today · Records · Review) in a floating glass bar
+- **Primary task:** describe or photograph a record, confirm the result, and
+  see what today adds up to; each week, see what changed.
+- **Home:** four tabs (Today · Records · Assets · Review) in a floating glass bar
   beside one ink capture button. Settings is the corner action on Today.
   Pages pushed over the home cover the bar. Hidden tabs stay alive (their
   scroll position stays) and are hidden from screen readers.
-- **Capture sheet (the one way to record):** Log a meal (the system picker
-  also takes photos) and Log weight as two large actions, favorites as a
-  row of photo tiles, and Add manually. A tap on a favorite logs it today
-  with Undo; the logged meal is adjusted like any other meal, from Today.
-  Edit beside Favorites marks each tile for removal (with Undo). A saved
-  meal's bookmark saves or removes it as a favorite.
+- **Capture:** one text/image composer. The result is a readable receipt-like
+  summary, with one correction box. No domain selection before input and no
+  prefilled form as the main result. Missing values ask a concrete question;
+  proposed new accounts are marked. Multiple records show their count on
+  confirmation. Manual meal/money/weight actions are secondary under one
+  disclosure; favorites remain directly available with Undo.
+- **Task sheets:** header and actions stay fixed; only the body scrolls.
+  Available height excludes the keyboard. Toasts belong to the active sheet
+  while it is open, so Undo cannot be covered by its backdrop.
+- **Manual money:** amount, account/category (or from/to), a calendar date,
+  optional details. Pickers replace the body in the same sheet; Back returns
+  to the draft. Time, payee and note live in Details. Successful saves alone
+  update remembered account/category choices.
 - **No hidden gestures.** Every action is a visible control; nothing
   depends on a long press.
 - **Today shows today:** the intake card (figure, what is left of the goal,
   the macro ring) and, laid flat beneath it, the vitals: weight, plus sleep
   and Body Battery once Garmin is connected (a Garmin vital opens all of the
   day's Garmin data). Then today's meals. Past days are in Records.
-- **Drafts:** a new photo, once sent, returns to Today by itself and is
-  read there as a draft (a result or failure that comes within half a
-  second stays on the meal page); leaving the meal page never loses it. Drafts are edged in the AI's light, pinned on Today and atop
-  Records: being read (shimmer), ready (Confirm), no food found or failed.
+- **Drafts:** text/image inputs and recognition results are kept on device,
+  pinned on Today and atop Records from one shared source. They can be left,
+  reopened, corrected in a sentence, retried, confirmed or discarded with
+  Undo. Confirmation consumes the draft and writes all its records together.
+  A draft never contributes to totals. Recognized food nutrition remains an
+  estimate, and unknown payment accounts are never silently guessed.
 - **Records:** every day newest first, its header on one line (date, the
   day's kcal, a weight chip that opens the weight editor), its meals as rows
-  of one card; all / meals / weight; 21 days at a time. The calendar button
+  of one card; all / meals / weight / money; 21 days at a time. The calendar button
   opens a month calendar; a chosen day is shown alone, under a bar with its
   date, steps to the days with records before and after it, and All days.
+- **Assets:** net worth leads, with asset and debt totals beneath it, then
+  holdings, a 30-day trend and own accounts grouped as assets or liabilities.
+  With holdings, values use dated manual CNY prices, falling back to cost
+  when unpriced; without holdings, the basis is book balances. The visible
+  basis note, each holding's price date or unpriced label, and each account's
+  last-check date or unchecked label keep those limits clear. Internal holding
+  cost accounts stay out of the account list. No accounts or holdings shows a
+  short empty state with Add account and Add holding. The global text/image
+  capture button remains the main record entry.
+- **Holdings:** flat rows show name, quantity and average unit cost, value,
+  and price status; closed positions remain visible. A row opens a detail
+  page with value, an explicit price-edit action, quantity, cost, unrealized
+  gain, Record trade, and newest-first activity. Realized gain and dividends
+  appear when nonzero; unpriced unrealized gain is a dash. Opening a holding
+  needs name, quantity and unit cost. Buy/sell use quantity, price and a cash
+  account; dividends use amount and a cash account. Optional fees and date
+  sit under Details. Date and cash pickers replace the same sheet body;
+  Back preserves the draft. Unsaved trade input has a discard guard. Prices
+  have their own compact amount-and-date sheet. Activity opens a receipt
+  with an explicit, confirmed remove action.
+- **Own accounts:** creation asks only for asset/liability type and name;
+  the balance can be checked later. Creating an account opens its detail
+  page. Account rows open the book balance or debt, latest check status and
+  newest-first activity, with Show earlier for more history. Rename is a
+  visible pencil action; it edits the name, not the account type.
+- **Balance checks:** one compact task sheet asks for amount and date.
+  The calendar and then the difference preview replace its body; Back
+  preserves the input. The preview names the account and date, shows book
+  balance or debt, actual balance or debt, and the difference before an
+  explicit confirmation. A match saves the observation without a posting;
+  a difference also records an equity posting (opening balance when there
+  is no prior activity, adjustment otherwise), with copy explaining that
+  income and spending are unaffected. Debt is presented as an amount owed,
+  including in the preview; credit is negative. Unsaved name or amount edits
+  have a discard guard. Opening and adjustment entries open a readable
+  summary linked to the account; corrections go through another balance check.
 - **Review:** a calendar week (Monday first in Chinese and ISO locales) or
   month, stepped back with a labelled stepper. It leads with one sentence of
   what changed (daily average against the period before, weight trend),
@@ -41,10 +86,10 @@ AI only to turn a photo into a draft, the owner's own model account.
   (shaded by share of the goal, amber past it, a dot on weighed days, today
   outlined; a day opens in Records). Then the one-line note, the weight with
   its 7-day trend line, and Garmin averages.
-- **Settings keep every change as it is made; there is no Save.** The vision
-  model has its own page; the goal, asking before each photo, Garmin and
-  backups sit on the Settings page. A changed model account is asked about
-  again before a photo goes to it.
+- **Settings keep every change as it is made; there is no Save.** The model
+  has its own page; the goal, asking before recognition, Garmin and backups
+  sit on the Settings page. A changed model account requires consent again
+  before sending text, images and account names.
 
 Missing records never read as zero: an empty day shows "—" and "Nothing
 logged yet", never 0 kcal; a day without meals has no bar and no shade.
@@ -94,7 +139,8 @@ graphite with white ink, surfaces separated by tone and a hairline.
 `Btn` (primary ink with sheen / tonal / secondary raised / ghost / danger /
 glass; three pill sizes), `IconBtn` (circles of the same variants), `chip`,
 `card`, `row_button`, `hairline`, `section_header`, `group_label`,
-`disclosure`, `segmented`, fields (labelled inputs, ink focus edge),
+`disclosure`, `segmented`, fields (visible labels and placeholders in
+`MUTED`, ink focus edge),
 `checkbox_row` / `switch_row`, `bottom_sheet`, toast (ink pill with one
 action, usually Undo), `spinner`, `shimmer` + `skeleton`, `badge`,
 `empty_state`, `appear`, `stat` with `counted` (a figure easing to its new
@@ -102,6 +148,18 @@ value), `macro_tiles`, the energy `ring`, and one icon family (24 pt line
 glyphs). Pages share one top bar: a raised round Back and the title
 centered. Screens: the month calendar (`pages/review_calendar.rs`) serves
 Review's month and Records' go-to-day sheet.
+
+Assets uses the same type, spacing and controls on a flat canvas: one large
+net-worth figure, smaller totals and hairline-separated holding, account and
+activity rows. Its trend is a single ink line with a visible range and date
+endpoints, plus an accessible start/end summary; insufficient history gets
+explanatory text. Money keeps tabular numerals and neutral ink, including
+gains and losses. Quantity and unit price retain up to six decimal places;
+cost and gain figures come from the domain calculation. The price basis is
+manual CNY, without live quotes, FX, catalog search or AI trade entry.
+Account, holding and price editors reuse `task_sheet` and the existing
+calendar picker, with actions fixed above the keyboard. Quantity and unit
+cost/price share one row; secondary trade details remain collapsed initially.
 
 ## Platform decisions
 
@@ -113,8 +171,9 @@ Review's month and Records' go-to-day sheet.
   Every pick becomes an upright JPEG of at most 1280 px, which drops
   EXIF/GPS.
 - Requests go through NSH's `fetch`, straight to the account's base URL.
-- Before a photo leaves the device, a sheet names the server and model it
-  goes to. "Don't ask again" is remembered per account fingerprint.
+- Before recognition input leaves the device, a sheet names the server,
+  model and data being sent. "Don't ask again" is remembered per account
+  fingerprint; old photo-only consent does not authorize text/account context.
 - The API key is stored on the device under its own storage key, never with
   the other settings, never logged.
 
@@ -140,4 +199,6 @@ still.
 | Toggles | Checkbox / switch | Fill `instant`; knob slides `fast` | Instant |
 
 Verified on the GTK desktop build with the previews in `src/preview.rs`;
-Android verification happens on the device build.
+holdings review captures are in `.impeccable/review/holdings/` at the repository
+root. These are desktop development evidence only; Android verification
+happens on the device build.

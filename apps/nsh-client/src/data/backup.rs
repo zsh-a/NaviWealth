@@ -4,7 +4,7 @@
 //! `naviwealth-<day>-<timestamp>.nwbk`. A backup made by hand also carries
 //! the meal photos (`…-photos.nwbk`); the daily one does not, so it stays
 //! small. Restoring gets one, decrypts it, replaces meals, favorites,
-//! notes, weights and Garmin days in one transaction and writes back the
+//! notes, weights, Garmin days and the ledger in one transaction and writes back the
 //! photos it carries (photos already on the device stay). Keys, passwords and the passphrase never enter a backup;
 //! the password and passphrase are kept under their own storage entries.
 
@@ -12,7 +12,7 @@ use nsh_core::{prelude::*, storage::Storage};
 use serde::{Deserialize, Serialize};
 
 use super::{
-    clock, db, favorites, garmin, meals, notes, photos,
+    clock, db, favorites, finance, garmin, meals, notes, photos,
     webdav::{DavError, Folder},
     weights,
 };
@@ -230,8 +230,8 @@ pub async fn list() -> Result<Vec<String>, Failure> {
     Ok(folder.list().await?)
 }
 
-/// Replaces meals, favorites, notes, weights and Garmin days with the
-/// backup `name`, and writes back the photos it carries.
+/// Replaces Health and ledger records with backup `name`, and writes back
+/// the photos it carries. Older Health-only backups leave the ledger intact.
 pub async fn restore(name: String) -> Result<(), Failure> {
     let (folder, passphrase) = begin()?;
     state().update(|s| s.status = Status::Running);
@@ -251,6 +251,7 @@ pub async fn restore(name: String) -> Result<(), Failure> {
         notes::load();
         weights::load();
         garmin::load();
+        finance::load().map_err(|_| Failure::Storage)?;
         state().update(|s| {
             s.kept.last_backup_day = Some(clock::today().to_string());
             persist(&s.kept);

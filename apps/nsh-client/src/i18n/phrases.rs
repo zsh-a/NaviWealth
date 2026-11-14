@@ -60,15 +60,6 @@ impl Strings {
         }
     }
 
-    /// The last weight, under Log weight.
-    pub fn last_weight(&self, kg: f64) -> String {
-        if self.zh() {
-            format!("上次 {} kg", self.kg(kg))
-        } else {
-            format!("Last {} kg", self.kg(kg))
-        }
-    }
-
     /// A draft's headline: what its recognition reached, for `slot`'s meal.
     pub fn draft_headline(
         &self,

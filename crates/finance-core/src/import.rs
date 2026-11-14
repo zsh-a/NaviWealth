@@ -30,7 +30,7 @@ pub struct Rules {
 impl Rules {
     /// Remembers that `method` on `provider`'s statements is `account`.
     pub fn remember_method(&mut self, provider: Provider, method: &str, account: Account) {
-        if account.kind().is_own() {
+        if account.is_cash() {
             self.methods
                 .entry(provider.key().to_owned())
                 .or_default()

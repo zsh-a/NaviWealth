@@ -23,6 +23,8 @@ serde_json = "1"
 base64 = "0.22"
 futures = "0.3"
 health-core = { path = "../../crates/health-core" }
+finance-core = { path = "../../crates/finance-core" }
+lifeos-core = { path = "../../crates/lifeos-core" }
 llm-protocol = { path = "../../third_party/agent-runtime/crates/llm-protocol" }
 llm-client = { path = "../../third_party/agent-runtime/crates/llm-client" }
 # Local calendar dates from the device's time zone (Android's tzdata included).

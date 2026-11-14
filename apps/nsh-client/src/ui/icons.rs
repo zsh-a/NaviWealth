@@ -7,6 +7,7 @@ use nsh_core::{element::ImageSrc, prelude::*};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Icon {
     Photo,
+    Wallet,
     Pencil,
     Sliders,
     ChevronLeft,
@@ -39,6 +40,9 @@ pub enum Icon {
 impl Icon {
     fn body(self) -> &'static str {
         match self {
+            Icon::Wallet => {
+                r#"<rect x="3" y="5" width="18" height="15" rx="3"/><path d="M4 5l13-2v2M21 10h-6v5h6M17 12.5h.01"/>"#
+            }
             Icon::Photo => {
                 r#"<rect x="3" y="4.5" width="18" height="15" rx="3.5"/><circle cx="9" cy="10" r="1.6"/><path d="M3.6 17.2l4.9-4.4 3.6 3.1 2.9-2.4 5.4 4.4"/>"#
             }

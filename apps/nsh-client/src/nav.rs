@@ -10,7 +10,10 @@ use crate::domain::meal::Day;
 #[derive(Debug, Clone, PartialEq)]
 pub enum Route {
     /// A new meal on `day`, from the picked photo `capture` or by hand.
-    NewMeal { day: Day, capture: Option<u64> },
+    NewMeal {
+        day: Day,
+        capture: Option<u64>,
+    },
     /// The saved meal with this id.
     EditMeal(String),
     /// The recognition draft with this id.
@@ -19,6 +22,9 @@ pub enum Route {
     Settings,
     /// The vision model account, from Settings.
     ModelSettings,
+    /// An own financial account.
+    Account(String),
+    Holding(String),
 }
 
 /// The home's tabs.
@@ -27,11 +33,12 @@ pub enum Tab {
     #[default]
     Today,
     Records,
+    Assets,
     Review,
 }
 
 impl Tab {
-    pub const ALL: [Tab; 3] = [Tab::Today, Tab::Records, Tab::Review];
+    pub const ALL: [Tab; 4] = [Tab::Today, Tab::Records, Tab::Assets, Tab::Review];
 }
 
 #[derive(Clone, Copy, Default, PartialEq)]

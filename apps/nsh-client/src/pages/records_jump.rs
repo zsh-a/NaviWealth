@@ -11,7 +11,7 @@ use super::{
     review_calendar::{calendar, month_days},
 };
 use crate::{
-    data::{clock, meals, settings, weights},
+    data::{clock, finance, meals, settings, weights},
     domain::review::{self, Period},
     i18n::s,
     ui::{Icon, IconBtn, Type, Typo, color},
@@ -64,13 +64,18 @@ pub fn jump_sheet(sheets: Sheets) -> impl IntoElement {
                 })
                 .collect();
             let weighed: Vec<bool> = days.iter().map(|&d| weights::on(d).is_some()).collect();
+            let transactions = finance::transactions();
+            let mut cells = month_days(&days, &kcal, &weighed);
+            for cell in &mut cells {
+                cell.has_transactions = transactions.iter().any(|t| t.at.date() == cell.day.0);
+            }
             let (goal, start) = (settings::goal(), s().week_start());
             untracked(move || {
                 let pick = Rc::new(move |day| {
                     sheets.jump.set(false);
                     sheets.jump_to.set(Some(day));
                 });
-                calendar(month_days(&days, &kcal, &weighed), goal, start, Some(pick))
+                calendar(cells, goal, start, Some(pick))
             })
         }))
 }

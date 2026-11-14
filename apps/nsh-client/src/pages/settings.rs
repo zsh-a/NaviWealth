@@ -64,11 +64,11 @@ pub fn settings_page() -> Screen {
 fn recognition() -> impl IntoElement {
     let account = move || settings::current().account;
     let ask = signal(untracked(|| {
-        account().is_none_or(|a| !settings::is_trusted(&a))
+        account().is_none_or(|a| !settings::all_recognition_trusted(&a))
     }));
     // Follows the kept account: a changed account is asked about again.
     effect(move || {
-        let asks = account().is_none_or(|a| !settings::is_trusted(&a));
+        let asks = account().is_none_or(|a| !settings::all_recognition_trusted(&a));
         if untracked(|| ask.get()) != asks {
             untracked(|| ask.set(asks));
         }
@@ -76,9 +76,9 @@ fn recognition() -> impl IntoElement {
     effect(move || {
         let asks = ask.get();
         if let Some(account) = untracked(account)
-            && untracked(|| settings::is_trusted(&account)) == asks
+            && untracked(|| settings::all_recognition_trusted(&account)) == asks
         {
-            untracked(|| settings::set_trusted(&account, !asks));
+            untracked(|| settings::set_all_recognition_trusted(&account, !asks));
         }
     });
     let summary = move || match settings::ready_account() {

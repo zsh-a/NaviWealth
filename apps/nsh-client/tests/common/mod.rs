@@ -64,7 +64,8 @@ pub fn account(trusted: bool) -> Vec<(String, String)> {
             "base_url": "https://api.anthropic.com/v1",
             "model": "claude-opus-5-5"
         },
-        "trusted": if trusted { vec![fingerprint] } else { vec![] },
+        "trusted": if trusted { vec![fingerprint.clone()] } else { vec![] },
+        "trusted_capture": if trusted { vec![fingerprint] } else { vec![] },
     });
     vec![
         ("settings.v1".to_owned(), settings.to_string()),
@@ -258,4 +259,36 @@ pub fn garmin_cn_with_delay(delay: Duration) -> Arc<StubNetwork> {
             data(&hrv.to_string()),
         ),
     ]))
+}
+
+pub fn record_reply(records: Vec<Value>) -> Value {
+    json!({"model":"test-model","stop_reason":"end_turn","content":[{"type":"text","text":json!({"records":records,"question":""}).to_string()}]})
+}
+
+pub fn meal_record() -> Value {
+    let meal: Value =
+        serde_json::from_str(estimate()["content"][0]["text"].as_str().unwrap()).unwrap();
+    json!({"kind":"meal","day":today().to_string(),"slot":"lunch","meal":meal,"money":null,"weight_kg":null})
+}
+
+pub fn money_record(amount: &str) -> Value {
+    json!({"kind":"money","day":today().to_string(),"slot":null,"meal":null,"weight_kg":null,
+        "money":{"kind":"expense","amount":amount,"currency":"CNY","account":"资产:Cash","other_account":null,
+            "category":"支出:餐饮","time":null,"payee":"Lunch shop","note":""}})
+}
+
+pub fn open_manual(app: &mut Headless, kind: &str) -> Result<(), String> {
+    app.press("label:New entry")?;
+    app.press("Enter manually")?;
+    app.press(kind)?;
+    Ok(())
+}
+
+pub fn attach_capture(app: &mut Headless) -> Result<(), String> {
+    picks_a_photo(app);
+    app.press("label:New entry")?;
+    app.press("Attach image")?;
+    app.wait_for("Remove image")?;
+    app.press("Create draft")?;
+    Ok(())
 }

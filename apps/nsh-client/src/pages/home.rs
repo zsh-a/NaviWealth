@@ -1,19 +1,14 @@
-//! The home, at the bottom of the navigation stack: the three tabs over one
+//! The home, at the bottom of the navigation stack: the four tabs over one
 //! canvas (each kept alive while hidden, so its scroll position stays), a
 //! floating glass tab bar beside the one capture button, and the sheets any
 //! tab can open. Pages pushed over the home cover the bar.
 
 use nsh_base::{nav_page, tab, tabs};
-use nsh_core::{
-    Haptic,
-    element::Screen,
-    geometry::{DevicePixels, Percentage},
-    picker::PickRequest,
-    prelude::*,
-};
+use nsh_core::{Haptic, element::Screen, prelude::*};
 
 use super::{
-    capture::capture_sheet,
+    capture::capture_editor,
+    finance::finance_editor,
     parts::status_bar,
     records::records_tab,
     records_jump::jump_sheet,
@@ -21,7 +16,7 @@ use super::{
     week_review::review_tab,
 };
 use crate::{
-    data::{clock, photos, settings},
+    data::clock,
     domain::meal::Day,
     i18n::s,
     nav::{self, Route, Tab},
@@ -46,9 +41,12 @@ pub fn dock_clearance() -> f32 {
 #[derive(Clone, Copy)]
 pub struct Sheets {
     pub capture: Signal<bool>,
+    pub capture_draft: Signal<Option<String>>,
     pub setup: Signal<bool>,
     /// The day whose weight the editor shows.
     pub weight: Signal<Option<Day>>,
+    /// Empty id creates a transaction; an existing id opens its editor.
+    pub finance: Signal<Option<String>>,
     pub garmin: Signal<bool>,
     /// The Records calendar for going to a day.
     pub jump: Signal<bool>,
@@ -60,29 +58,6 @@ impl Sheets {
     /// The home's sheets; only the home's tabs call it.
     pub fn get() -> Self {
         use_context::<Sheets>().expect("the home provides its sheets")
-    }
-
-    /// Picks a meal photo and opens the review page, or explains the setup
-    /// first when no account can analyze photos.
-    pub fn log_photo(self) {
-        if settings::ready_account().is_none() {
-            self.setup.set(true);
-            return;
-        }
-        let day = clock::today();
-        let mut request = PickRequest::new(false, 1);
-        request.max_dimension = Some(DevicePixels(1600));
-        request.quality = Some(Percentage(0.9));
-        let picked = pick_images(request);
-        spawn(async move {
-            if let Some(file) = picked.await.into_iter().next() {
-                let capture = photos::hold(file.data.to_vec());
-                nav::push(Route::NewMeal {
-                    day,
-                    capture: Some(capture),
-                });
-            }
-        });
     }
 
     /// A new meal by hand, today.
@@ -97,15 +72,23 @@ impl Sheets {
 pub fn home_page() -> Screen {
     let sheets = Sheets {
         capture: signal(false),
+        capture_draft: signal(None),
         setup: signal(false),
         weight: signal(None),
+        finance: signal(None),
         garmin: signal(false),
         jump: signal(false),
         jump_to: signal(None),
     };
     provide_context(sheets);
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
-    crate::preview::home_opened(sheets.capture, sheets.jump, sheets.jump_to);
+    crate::preview::home_opened(
+        sheets.capture,
+        sheets.capture_draft,
+        sheets.jump,
+        sheets.jump_to,
+        sheets.finance,
+    );
     nav_page()
         .title(|| SharedString::from(tab_name(nav::tab())))
         .header_visible(false)
@@ -116,16 +99,24 @@ pub fn home_page() -> Screen {
                 .bg(color::CANVAS)
                 .child(pane(Tab::Today, today_tab()))
                 .child(pane(Tab::Records, records_tab()))
+                .child(pane(Tab::Assets, super::assets::assets_tab()))
                 .child(pane(Tab::Review, review_tab()))
                 .child(fade())
                 .child(dock(sheets))
-                .child(toast_host(|| DOCK + DOCK_GAP + safe_area().bottom.0 + 12.0))
-                .child(bottom_sheet(
-                    move || sheets.capture.get(),
-                    move || sheets.capture.set(false),
-                    capture_sheet(sheets),
-                ))
+                .child(
+                    view()
+                        .absolute()
+                        .inset_0()
+                        .pointer_events(PointerEvents::BoxNone)
+                        .style_when(
+                            move || sheets.capture.get() || sheets.finance.get().is_some(),
+                            |s| s.hidden(),
+                        )
+                        .child(toast_host(|| DOCK + DOCK_GAP + safe_area().bottom.0 + 12.0)),
+                )
+                .child(capture_editor(sheets))
                 .child(setup_sheet(sheets))
+                .child(finance_editor(sheets.finance))
                 .child(bottom_sheet(
                     move || sheets.weight.with(Option::is_some),
                     move || sheets.weight.set(None),
@@ -149,6 +140,7 @@ fn tab_name(tab: Tab) -> &'static str {
         Tab::Today => s().today,
         Tab::Records => s().records,
         Tab::Review => s().review,
+        Tab::Assets => s().assets,
     }
 }
 
@@ -169,11 +161,11 @@ fn fade() -> impl IntoElement {
         .left_0()
         .right_0()
         .bottom_0()
-        .h(move || px(DOCK + DOCK_GAP + safe_area().bottom.0 + 36.0))
+        .h(move || px(DOCK + DOCK_GAP + safe_area().bottom.0))
         .pointer_events(PointerEvents::None)
         .bg_linear_to_t()
         .gradient_from(color::CANVAS)
-        .gradient_via(color::CANVAS.opacity(0.85))
+        .gradient_via(color::CANVAS.opacity(0.35))
         .gradient_to(color::CANVAS.opacity(0.0))
 }
 
@@ -211,7 +203,10 @@ fn dock(sheets: Sheets) -> impl IntoElement {
             IconBtn::new(Icon::Plus, || s().new_entry.into())
                 .variant(Variant::Primary)
                 .side(DOCK)
-                .on_press(move || sheets.capture.set(true)),
+                .on_press(move || {
+                    sheets.capture_draft.set(None);
+                    sheets.capture.set(true);
+                }),
         )
 }
 
@@ -222,6 +217,7 @@ fn tab_item(tab_of: Tab) -> impl IntoElement {
         Tab::Today => Icon::Sun,
         Tab::Records => Icon::List,
         Tab::Review => Icon::Chart,
+        Tab::Assets => Icon::Wallet,
     };
     tab()
         .selected(chosen)

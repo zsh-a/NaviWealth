@@ -18,13 +18,13 @@ fn a_meal_logged_late_lands_on_its_day_in_records() -> Result<(), String> {
     let (mut app, _) = start_in(Some(dir.path()), pasta_today(), None);
     app.wait_for("text:300")?;
 
-    app.press("label:New entry")?;
-    app.press("label:Add manually")?;
+    open_manual(&mut app, "Manual meal")?;
     app.wait_for("text:e.g. Beef noodle soup")?;
     app.type_text("text:e.g. Beef noodle soup", "Rice")?;
     app.type_text("label:Amount eaten", "200")?;
     app.type_text("label:Energy", "130")?;
     app.press("Done")?;
+    app.wait_for_gone("text:Nutrition per 100 g", GONE)?;
     app.wait_for("text:Rice")?;
     // Today unless moved: the chip opens the last four weeks.
     app.press("label:/^Day, /")?;

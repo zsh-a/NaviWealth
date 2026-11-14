@@ -12,8 +12,8 @@ router, not a second source of product or architecture truth.
 [roadmap](roadmap/roadmap-lifeos.md) govern new work. Flutter
 (`apps/mobile`) is frozen: bug fixes only; new features go to NSH/Rust crates.
 NSH owns UI/composition; domain truth moves to domain crates. The NSH client is
-personal and local-only; target `lifeos-core` and `finance-core` are phased
-work, not current code. Web and iOS are out of scope.
+personal and local-only; `lifeos-core` supplies shared SQLite infrastructure and
+`finance-core` owns the ledger and its repository. Web and iOS are out of scope.
 
 The Flutter paths below route maintenance of the existing client. The Shell
 SSOT describes that implementation; it does not override the migration ADR.

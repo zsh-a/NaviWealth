@@ -41,7 +41,7 @@ fn a_favorite_outlives_its_meal_and_logs_with_one_tap() -> Result<(), String> {
 
     // The meal goes; the favorite stays.
     app.press("label:Delete meal")?;
-    app.wait_for("No meals logged today")?;
+    app.wait_for("Nothing recorded today")?;
 
     app.press(OPEN)?;
     app.wait_for("text:Favorites")?;
@@ -60,7 +60,7 @@ fn a_favorite_outlives_its_meal_and_logs_with_one_tap() -> Result<(), String> {
     );
 
     app.press("Undo")?;
-    app.wait_for("No meals logged today")?;
+    app.wait_for("Nothing recorded today")?;
     assert!(stored_meals(dir.path()).is_empty());
     drop(app);
 

@@ -25,6 +25,7 @@ pub struct CalendarDay {
     /// The energy eaten, if anything was logged.
     pub kcal: Option<f64>,
     pub weighed: bool,
+    pub has_transactions: bool,
 }
 
 /// How strongly a logged day is shaded: its share of the goal, kept above a
@@ -67,7 +68,12 @@ pub fn month_days(days: &[Day], kcal: &[Option<f64>], weighed: &[bool]) -> Vec<C
         .iter()
         .zip(kcal)
         .zip(weighed)
-        .map(|((&day, &kcal), &weighed)| CalendarDay { day, kcal, weighed })
+        .map(|((&day, &kcal), &weighed)| CalendarDay {
+            day,
+            kcal,
+            weighed,
+            has_transactions: false,
+        })
         .collect();
     if let Some(last) = out.last().map(|d| d.day) {
         let mut next = last.plus_days(1);
@@ -76,6 +82,7 @@ pub fn month_days(days: &[Day], kcal: &[Option<f64>], weighed: &[bool]) -> Vec<C
                 day: next,
                 kcal: None,
                 weighed: false,
+                has_transactions: false,
             });
             next = next.plus_days(1);
         }
@@ -147,7 +154,7 @@ fn day_cell(
         Some(kcal) => (Some(color::HEAT.opacity(shade(kcal, goal))), color::INK),
         None if future => (None, color::FAINT.opacity(0.5)),
         // A weight alone makes a day a place to go when picking.
-        None if cell.weighed && pick.is_some() => (None, color::BODY),
+        None if (cell.weighed || cell.has_transactions) && pick.is_some() => (None, color::BODY),
         None => (None, color::FAINT),
     };
     let label = match cell.kcal {
@@ -159,33 +166,36 @@ fn day_cell(
         ),
         None => s().long_date(cell.day),
     };
-    let face = view()
-        .flex_1()
-        .h(px(CELL))
-        .items_center()
-        .justify_center()
-        .gap(px(2.0))
-        .rounded(px(radius::BADGE + 4.0))
-        .style_when(
-            move || fill.is_some(),
-            move |s| s.bg(fill.unwrap_or(color::TRACK)),
-        )
-        .style_when(
-            move || cell.day == today,
-            |s| s.border(px(1.5)).border_color(color::INK),
-        )
-        .child(
-            text(cell.day.0.day().to_string())
-                .typo(Type::Caption)
-                .tabular_nums()
-                .text_color(ink),
-        )
-        .child(view().size(px(4.0)).rounded_full().bg(if cell.weighed {
-            color::MUTED
-        } else {
-            AdaptiveColor::TRANSPARENT
-        }));
-    let recorded = cell.kcal.is_some() || cell.weighed;
+    let face =
+        view()
+            .flex_1()
+            .h(px(CELL))
+            .items_center()
+            .justify_center()
+            .gap(px(2.0))
+            .rounded(px(radius::BADGE + 4.0))
+            .style_when(
+                move || fill.is_some(),
+                move |s| s.bg(fill.unwrap_or(color::TRACK)),
+            )
+            .style_when(
+                move || cell.day == today,
+                |s| s.border(px(1.5)).border_color(color::INK),
+            )
+            .child(
+                text(cell.day.0.day().to_string())
+                    .typo(Type::Caption)
+                    .tabular_nums()
+                    .text_color(ink),
+            )
+            .child(view().size(px(4.0)).rounded_full().bg(
+                if cell.weighed || cell.has_transactions {
+                    color::MUTED
+                } else {
+                    AdaptiveColor::TRANSPARENT
+                },
+            ));
+    let recorded = cell.kcal.is_some() || cell.weighed || cell.has_transactions;
     match pick.filter(|_| recorded) {
         Some(pick) => button()
             .on_press(move || pick(cell.day))

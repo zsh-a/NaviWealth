@@ -5,6 +5,7 @@ pub mod backup;
 pub mod clock;
 pub mod db;
 pub mod favorites;
+pub mod finance;
 pub mod garmin;
 pub mod meals;
 pub mod notes;
@@ -15,3 +16,5 @@ pub mod tasks;
 pub mod vision;
 pub mod webdav;
 pub mod weights;
+
+pub mod capture;

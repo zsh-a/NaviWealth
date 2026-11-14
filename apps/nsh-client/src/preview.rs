@@ -16,7 +16,7 @@ use std::env;
 use nsh_core::{platform::Appearance, prelude::*};
 
 use crate::{
-    data::{clock, favorites, garmin, meals, pending, photos, settings, weights},
+    data::{clock, favorites, finance, garmin, meals, pending, photos, settings, weights},
     domain::{
         account::{ModelAccount, Provider},
         catalog,
@@ -54,6 +54,138 @@ pub fn apply() {
     }
     if has("meals") && untracked(meals::all).is_empty() {
         seed_meals();
+    }
+    if has("finance") && untracked(finance::transactions).is_empty() {
+        use finance_core::{
+            account::{Account, AccountKind, defaults},
+            journal::{self, Entry, Source},
+        };
+        let cash = Account::new(AccountKind::Assets, "Wallet").unwrap();
+        let bank = Account::new(AccountKind::Assets, "Bank").unwrap();
+        let today = untracked(clock::today).0;
+        for (id, day, hour, payee, amount) in [
+            ("preview-lunch", today, 12, "Lunch", 3150),
+            ("preview-groceries", today, 16, "Groceries", 6800),
+            (
+                "preview-earlier",
+                today.yesterday().unwrap(),
+                18,
+                "Dinner",
+                4250,
+            ),
+        ] {
+            let t = journal::spend(
+                Entry {
+                    id: id.into(),
+                    at: day.at(hour, 30, 0, 0),
+                    payee: payee.into(),
+                    note: String::new(),
+                    source: Source::Manual,
+                },
+                &cash,
+                &defaults::expense("餐饮"),
+                amount,
+            )
+            .unwrap();
+            let _ = finance::save(t);
+        }
+        let t = journal::transfer(
+            Entry {
+                id: "preview-transfer".into(),
+                at: today.at(9, 0, 0, 0),
+                payee: String::new(),
+                note: String::new(),
+                source: Source::Manual,
+            },
+            &bank,
+            &cash,
+            20000,
+        )
+        .unwrap();
+        let _ = finance::save(t);
+    }
+    if has("assets") {
+        use finance_core::{
+            account::{Account, AccountKind},
+            repository::BalanceCheck,
+        };
+        for (name, kind, actual) in [
+            ("Wallet", AccountKind::Assets, 120000),
+            ("Bank", AccountKind::Assets, 5234080),
+            ("Credit card", AccountKind::Liabilities, -234560),
+        ] {
+            let a = Account::new(kind, name).unwrap();
+            if !finance::accounts().contains(&a) {
+                let _ = finance::create_account(a.clone());
+            }
+            let day = clock::today().plus_days(-20);
+            let check = BalanceCheck {
+                id: format!("preview-opening-{name}"),
+                account: a,
+                day: day.0,
+                actual,
+                checked_at: clock::zoned(clock::now_ms()).datetime(),
+            };
+            let _ = finance::confirm_balance(check, 0);
+        }
+    }
+    if has("holdings") && finance::holdings().securities.is_empty() {
+        use finance_core::holdings::{Kind, Quote, Security, Trade};
+        let name = if crate::i18n::s().lang == Lang::Zh {
+            "沪深300ETF"
+        } else {
+            "CSI 300 ETF"
+        };
+        let sec = Security::new("preview-etf", name).unwrap();
+        let day = clock::today().plus_days(-18);
+        let opening = Trade {
+            id: "preview-units".into(),
+            security: sec.id.clone(),
+            at: day.0.at(12, 0, 0, 0),
+            kind: Kind::Opening,
+            quantity: 1_000_000_000,
+            price: 4_125_000,
+            amount: 0,
+            fee: 0,
+            cash: None,
+        };
+        finance::add_trade(Some(&sec), &opening).unwrap();
+        finance::set_quote(&Quote {
+            security: sec.id,
+            day: clock::today().plus_days(-1).0,
+            price: 4_380_000,
+        })
+        .unwrap();
+    }
+    if route.as_deref().is_some_and(|r| r.starts_with("capture-")) {
+        use crate::domain::capture::{Record, Status};
+        use finance_core::{
+            account::{Account, defaults},
+            recognition::{Kind, MoneyDraft},
+        };
+        let mut draft = crate::data::capture::new();
+        draft.input = "Lunch 32 yuan, paid from Wallet".into();
+        draft.model = "preview-model".into();
+        draft.status = Status::Ready;
+        draft.records = vec![Record::Money {
+            day: clock::today(),
+            draft: MoneyDraft {
+                kind: Kind::Expense,
+                amount: Some("32.00".into()),
+                currency: "CNY".into(),
+                account: if route.as_deref() == Some("capture-missing") {
+                    None
+                } else {
+                    Some(Account::parse("资产:Wallet").unwrap())
+                },
+                other_account: None,
+                category: Some(defaults::expense("餐饮")),
+                time: None,
+                payee: "Lunch".into(),
+                note: String::new(),
+            },
+        }];
+        let _ = crate::data::capture::put(draft);
     }
     if has("favorites") && !untracked(favorites::any) {
         for meal in untracked(meals::all).iter().take(4) {
@@ -107,7 +239,51 @@ pub fn apply() {
         }
         Some("review" | "review-month") => nav::select(nav::Tab::Review),
         Some("records") => nav::select(nav::Tab::Records),
+        Some("assets" | "assets-empty") => nav::select(nav::Tab::Assets),
+        Some("holdings" | "holding-new") => nav::select(nav::Tab::Assets),
+        Some("holding" | "holding-trade" | "holding-price") => {
+            nav::select(nav::Tab::Assets);
+            nav::push(Route::Holding("preview-etf".into()));
+        }
+        Some("asset-account" | "asset-balance") => {
+            nav::select(nav::Tab::Assets);
+            nav::push(Route::Account("资产:Wallet".into()));
+        }
+        Some("asset-debt-balance") => {
+            nav::select(nav::Tab::Assets);
+            nav::push(Route::Account("负债:Credit card".into()));
+        }
         _ => {}
+    }
+}
+
+pub fn holdings_opened(open: Signal<Option<String>>) {
+    if env::var("NW_PREVIEW_ROUTE").as_deref() == Ok("holding-new") {
+        open.set(Some(String::new()));
+    }
+}
+pub fn holding_detail_opened(trade: Signal<Option<String>>, price: Signal<bool>) {
+    match env::var("NW_PREVIEW_ROUTE").as_deref() {
+        Ok("holding-trade") => trade.set(Some("preview-etf".into())),
+        Ok("holding-price") => price.set(true),
+        _ => {}
+    }
+}
+
+pub fn balance_opened(open: Signal<bool>) {
+    if matches!(
+        env::var("NW_PREVIEW_ROUTE").as_deref(),
+        Ok("asset-balance" | "asset-debt-balance")
+    ) {
+        open.set(true);
+    }
+}
+
+pub fn balance_value() -> Option<i64> {
+    match env::var("NW_PREVIEW_ROUTE").as_deref() {
+        Ok("asset-balance") => Some(130000),
+        Ok("asset-debt-balance") => Some(-240000),
+        _ => None,
     }
 }
 
@@ -151,9 +327,30 @@ fn seed_drafts() {
 
 /// Opens the capture sheet (`NW_PREVIEW_ROUTE=capture`) or the Records
 /// calendar (`records-jump`) once the home is up.
-pub fn home_opened(capture: Signal<bool>, jump: Signal<bool>, jump_to: Signal<Option<Day>>) {
+pub fn home_opened(
+    capture: Signal<bool>,
+    capture_id: Signal<Option<String>>,
+    jump: Signal<bool>,
+    jump_to: Signal<Option<Day>>,
+    finance: Signal<Option<String>>,
+) {
     let sheet = match env::var("NW_PREVIEW_ROUTE").as_deref() {
         Ok("capture") => capture,
+        Ok("capture-ready" | "capture-missing") => {
+            capture_id.set(crate::data::capture::all().first().map(|d| d.id.clone()));
+            capture
+        }
+        Ok("transaction" | "transaction-new") => {
+            let new = env::var("NW_PREVIEW_ROUTE").as_deref() == Ok("transaction-new");
+            set_timeout(std::time::Duration::from_millis(600), move || {
+                finance.set(Some(if new {
+                    String::new()
+                } else {
+                    "preview-lunch".into()
+                }));
+            });
+            return;
+        }
         Ok("records-day") => {
             nav::select(nav::Tab::Records);
             let day = untracked(clock::today).plus_days(-1);

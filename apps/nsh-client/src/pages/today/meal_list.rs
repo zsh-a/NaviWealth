@@ -1,13 +1,18 @@
 //! The day's meals, oldest first, as rows of one card led by each meal's
 //! photo; a calm empty state when the day has none.
 
+use finance_core::journal::Transaction;
 use nsh_core::prelude::*;
 
 use crate::{
-    data::{clock, meals, photos},
+    data::{clock, finance, meals, photos},
     domain::meal::{Day, Meal, MealSlot},
     i18n::{Strings, s},
-    pages::rows::{INSET, meal_row},
+    pages::{
+        finance::transaction_row,
+        home::Sheets,
+        rows::{INSET, meal_row},
+    },
     ui::{
         Icon, Type, Typo, color,
         feedback::{appear, empty_state},
@@ -15,13 +20,51 @@ use crate::{
     },
 };
 
+#[derive(Clone, PartialEq)]
+enum Record {
+    Meal(Meal),
+    Transaction(Transaction),
+}
+
+impl Record {
+    fn key(&self) -> String {
+        match self {
+            Self::Meal(m) => format!("meal:{}", m.id),
+            Self::Transaction(t) => format!("transaction:{}", t.id),
+        }
+    }
+}
+
 /// The records section of `day`.
 pub fn meal_list(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
-    let list = computed(move || meals::on(day()));
+    let sheets = Sheets::get();
+    let list = computed(move || {
+        let mut records: Vec<Record> = meals::on(day())
+            .into_iter()
+            .map(Record::Meal)
+            .chain(
+                finance::transactions()
+                    .into_iter()
+                    .filter(|t| t.at.date() == day().0)
+                    .map(Record::Transaction),
+            )
+            .collect();
+        records.sort_by_key(|r| match r {
+            Record::Meal(m) => clock::zoned(m.logged_at_ms).time(),
+            Record::Transaction(t) => t.at.time(),
+        });
+        records
+    });
     // Kept photos load off the engine thread as the day's meals change.
     effect(move || {
-        let names: Vec<String> =
-            list.with(|list| list.iter().filter_map(|m| m.photo.clone()).collect());
+        let names: Vec<String> = list.with(|list| {
+            list.iter()
+                .filter_map(|r| match r {
+                    Record::Meal(m) => m.photo.clone(),
+                    Record::Transaction(_) => None,
+                })
+                .collect()
+        });
         if !names.is_empty() {
             spawn(photos::load(names));
         }
@@ -36,8 +79,10 @@ pub fn meal_list(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                     let n = count();
                     if n == 0 {
                         String::new()
-                    } else {
+                    } else if list.with(|l| l.iter().all(|r| matches!(r, Record::Meal(_)))) {
                         s().meal_count(n)
+                    } else {
+                        n.to_string()
                     }
                 })
                 .typo(Type::Subhead)
@@ -51,15 +96,24 @@ pub fn meal_list(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                 move || {
                     card().overflow_hidden().child(each(
                         list,
-                        |meal: &Meal| meal.id.clone(),
-                        |meal, index| {
+                        |record: &Record| record.key(),
+                        move |meal, index| {
                             appear(
                                 index.get_untracked() as u32,
                                 view()
                                     .child(when(move || index.get() > 0, || hairline(INSET)))
                                     .child(dynamic(move || {
                                         let meal = meal.get();
-                                        untracked(move || meal_row(meal))
+                                        untracked(move || match meal {
+                                            Record::Meal(meal) => meal_row(meal).into_element(),
+                                            Record::Transaction(transaction) => {
+                                                let id = transaction.id.clone();
+                                                transaction_row(transaction, move || {
+                                                    sheets.finance.set(Some(id.clone()))
+                                                })
+                                                .into_element()
+                                            }
+                                        })
                                     })),
                             )
                         },

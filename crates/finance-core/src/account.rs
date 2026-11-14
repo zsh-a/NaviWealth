@@ -103,6 +103,15 @@ impl Account {
     pub fn as_str(&self) -> &str {
         &self.0
     }
+
+    pub fn is_holding(&self) -> bool {
+        self.kind() == AccountKind::Assets
+            && self.name().starts_with(crate::holdings::ACCOUNT_PREFIX)
+    }
+    /// Accounts that can be picked for cash entry or balance reconciliation.
+    pub fn is_cash(&self) -> bool {
+        self.kind().is_own() && !self.is_holding()
+    }
 }
 
 impl fmt::Display for Account {

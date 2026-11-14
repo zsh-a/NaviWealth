@@ -55,6 +55,14 @@ const MIGRATIONS: &[&str] = &[
         text TEXT NOT NULL,
         updated_at_ms INTEGER NOT NULL
     );",
+    // 7: the confirmed double-entry ledger and remembered import rules.
+    finance_core::repository::SCHEMA,
+    // 8: text/image recognition drafts, consumed atomically on confirmation.
+    "CREATE TABLE capture_drafts (id TEXT PRIMARY KEY NOT NULL, created_at_ms INTEGER NOT NULL, body TEXT NOT NULL);",
+    // 9: confirmed balance observations, including zero-difference checks.
+    finance_core::repository::BALANCE_SCHEMA,
+    // 10: securities, exact trades and dated manual prices.
+    finance_core::holdings::store::SCHEMA,
 ];
 
 #[derive(Clone, Default)]
@@ -75,53 +83,35 @@ fn db() -> Signal<Db> {
 }
 
 /// Opens the database once per app; the root calls it before loading.
-pub fn open() {
+pub fn open() -> Result<(), String> {
     if db().with_untracked(|db| db.0.is_some()) {
-        return;
+        return Ok(());
     }
     let connection = match data_dir() {
-        Some(dir) => open_file(&dir).unwrap_or_else(|error| {
-            log::error!("db: cannot open {FILE} ({error}); changes will not be kept");
-            in_memory()
-        }),
-        None => in_memory(),
-    };
+        Some(dir) => open_file(&dir),
+        None => lifeos_core::memory(MIGRATIONS),
+    }
+    .map_err(|error| {
+        log::error!("db: cannot open {FILE}: {error}");
+        error.to_string()
+    })?;
     db().set(Db(Some(Rc::new(connection))));
-}
-
-fn open_file(dir: &Path) -> rusqlite::Result<Connection> {
-    if let Err(error) = std::fs::create_dir_all(dir) {
-        log::warn!("db: cannot create the data directory: {error}");
-    }
-    let mut connection = Connection::open(dir.join(FILE))?;
-    connection.pragma_update(None, "journal_mode", "WAL")?;
-    migrate(&mut connection)?;
-    Ok(connection)
-}
-
-fn in_memory() -> Connection {
-    let mut connection = Connection::open_in_memory().expect("SQLite opens in memory");
-    migrate(&mut connection).expect("the schema applies to an empty database");
-    connection
-}
-
-/// Runs the migrations `connection` has not run yet.
-fn migrate(connection: &mut Connection) -> rusqlite::Result<()> {
-    let done: usize = connection.pragma_query_value(None, "user_version", |row| row.get(0))?;
-    for (index, sql) in MIGRATIONS.iter().enumerate().skip(done) {
-        let tx = connection.transaction()?;
-        tx.execute_batch(sql)?;
-        tx.pragma_update(None, "user_version", index + 1)?;
-        tx.commit()?;
-    }
     Ok(())
+}
+
+fn open_file(dir: &Path) -> Result<Connection, lifeos_core::Error> {
+    lifeos_core::open(&dir.join(FILE), MIGRATIONS)
+}
+
+fn migrate(connection: &mut Connection) -> Result<(), lifeos_core::Error> {
+    lifeos_core::migrate(connection, MIGRATIONS)
 }
 
 /// The schema version this app writes: how many migrations exist.
 pub const SCHEMA: u32 = MIGRATIONS.len() as u32;
 
 /// What a backup carries and a restore replaces: each table and its columns.
-const TABLES: &[(&str, &str)] = &[
+const HEALTH_TABLES: &[(&str, &str)] = &[
     ("meals", "id, day, logged_at_ms, body"),
     ("weights", "day, kg, logged_at_ms"),
     ("garmin_days", "day, body, fetched_at_ms"),
@@ -157,75 +147,67 @@ fn remove_scratch(path: &Path) {
 pub fn snapshot() -> Result<Vec<u8>, String> {
     let path = scratch("snapshot");
     remove_scratch(&path);
-    let copied = with(|c| c.execute("VACUUM INTO ?1", [path.to_string_lossy()]))
+    let result = with(|c| lifeos_core::snapshot(c, &path))
         .ok_or("the database is not open")?
-        .map_err(|e| e.to_string());
-    let bytes = copied.and_then(|_| std::fs::read(&path).map_err(|e| e.to_string()));
+        .map_err(|error| error.to_string());
     remove_scratch(&path);
-    bytes
+    result
 }
 
-/// Replaces every table's rows with those of the database `file` in one
-/// transaction, after checking it (integrity, a schema this app knows) and
-/// bringing it to the current schema. On any error nothing changes.
+/// Health-only backups (schema 1–6) replace Health records and preserve the
+/// current ledger. Backups from schema 7 onward replace both domains. The
+/// whole replacement is atomic and validated before touching current rows.
 pub fn replace_with(file: &[u8]) -> Result<(), RestoreError> {
     let path = scratch("restore");
     remove_scratch(&path);
     std::fs::write(&path, file).map_err(|_| RestoreError::Storage)?;
-    let result = (|| {
-        {
-            let mut restored = Connection::open(&path).map_err(|_| RestoreError::Unreadable)?;
-            restored
-                .pragma_update(None, "trusted_schema", false)
-                .map_err(|_| RestoreError::Unreadable)?;
-            let ok: String = restored
-                .query_row("PRAGMA integrity_check", [], |row| row.get(0))
-                .map_err(|_| RestoreError::Unreadable)?;
-            let version: u32 = restored
-                .pragma_query_value(None, "user_version", |row| row.get(0))
-                .map_err(|_| RestoreError::Unreadable)?;
-            if ok != "ok" || version == 0 {
-                return Err(RestoreError::Unreadable);
-            }
-            if version > SCHEMA {
-                return Err(RestoreError::Newer);
-            }
-            migrate(&mut restored).map_err(|_| RestoreError::Unreadable)?;
-            validate_restored(&restored).map_err(|_| RestoreError::Unreadable)?;
-        }
-        with(|c| -> rusqlite::Result<()> {
-            c.execute("ATTACH DATABASE ?1 AS restored", [path.to_string_lossy()])?;
-            let copied = (|| {
-                let tx = c.unchecked_transaction()?;
-                for (table, columns) in TABLES {
-                    tx.execute(&format!("DELETE FROM main.{table}"), [])?;
-                    tx.execute(
-                        &format!(
-                            "INSERT INTO main.{table} ({columns}) SELECT {columns} FROM restored.{table}"
-                        ),
-                        [],
-                    )?;
-                }
-                tx.commit()
-            })();
-            c.execute("DETACH DATABASE restored", [])?;
-            copied
-        })
-        .ok_or(RestoreError::Storage)?
-        .map_err(|error| {
-            log::error!("db: restore failed: {error}");
-            RestoreError::Unreadable
-        })
-    })();
+    let result = with(|c| restore_file(c, &path)).unwrap_or(Err(RestoreError::Storage));
     remove_scratch(&path);
     result
+}
+
+fn restore_file(connection: &Connection, path: &Path) -> Result<(), RestoreError> {
+    let mut restored = Connection::open(path).map_err(|_| RestoreError::Unreadable)?;
+    restored
+        .pragma_update(None, "trusted_schema", false)
+        .map_err(|_| RestoreError::Unreadable)?;
+    let ok: String = restored
+        .query_row("PRAGMA integrity_check", [], |r| r.get(0))
+        .map_err(|_| RestoreError::Unreadable)?;
+    let version: u32 = restored
+        .pragma_query_value(None, "user_version", |r| r.get(0))
+        .map_err(|_| RestoreError::Unreadable)?;
+    if ok != "ok" || version == 0 {
+        return Err(RestoreError::Unreadable);
+    }
+    if version > SCHEMA {
+        return Err(RestoreError::Newer);
+    }
+    migrate(&mut restored).map_err(|_| RestoreError::Unreadable)?;
+    validate_restored(&restored).map_err(|_| RestoreError::Unreadable)?;
+    drop(restored);
+    let mut tables = HEALTH_TABLES.to_vec();
+    if version >= 7 {
+        tables.extend_from_slice(finance_core::repository::TABLES);
+    }
+    lifeos_core::replace_tables(connection, path, &tables).map_err(|error| {
+        log::error!("db: restore failed: {error}");
+        match error {
+            lifeos_core::Error::Sql(rusqlite::Error::SqliteFailure(error, _))
+                if error.code == rusqlite::ErrorCode::ConstraintViolation =>
+            {
+                RestoreError::Unreadable
+            }
+            _ => RestoreError::Storage,
+        }
+    })
 }
 
 /// Reject malformed records before replacing anything. Ordinary loading
 /// skips bad rows; doing that during restore would silently lose data.
 fn validate_restored(connection: &Connection) -> Result<(), String> {
     use crate::domain::{meal::Meal, weight::valid_kg};
-    for (table, _) in TABLES {
+    for (table, _) in HEALTH_TABLES.iter().chain(finance_core::repository::TABLES) {
         let kind: String = connection
             .query_row(
                 "SELECT type FROM sqlite_schema WHERE name = ?1",
@@ -315,7 +297,8 @@ fn validate_restored(connection: &Connection) -> Result<(), String> {
         }
         Ok(())
     };
-    read().map_err(|e| e.to_string())
+    read().map_err(|e| e.to_string())?;
+    finance_core::repository::validate(connection).map_err(|e| e.to_string())
 }
 
 /// Runs `f` on the open database; `None` before [`open`].
@@ -327,6 +310,178 @@ pub fn with<R>(f: impl FnOnce(&Connection) -> R) -> Option<R> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn spending(id: &str, amount: i64) -> finance_core::journal::Transaction {
+        use finance_core::{
+            account::{Account, defaults},
+            journal::{self, Entry, Source},
+        };
+        journal::spend(
+            Entry {
+                id: id.into(),
+                at: jiff::civil::date(2026, 11, 14).at(12, 0, 0, 0),
+                payee: "Lunch".into(),
+                note: String::new(),
+                source: Source::Manual,
+            },
+            &Account::parse("资产:现金").unwrap(),
+            &defaults::expense("餐饮"),
+            amount,
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn health_only_restore_preserves_the_current_ledger() {
+        let dir = tempfile::tempdir().unwrap();
+        let source = dir.path().join("health.sqlite");
+        let old = lifeos_core::open(&source, &MIGRATIONS[..6]).unwrap();
+        old.execute("INSERT INTO weights VALUES ('2026-11-14', 70.0, 1)", [])
+            .unwrap();
+        drop(old);
+        let current = lifeos_core::memory(MIGRATIONS).unwrap();
+        finance_core::repository::save(&current, &spending("current", 3150)).unwrap();
+        current
+            .execute("INSERT INTO weights VALUES ('2026-11-14', 80.0, 1)", [])
+            .unwrap();
+        restore_file(&current, &source).unwrap();
+        assert_eq!(
+            finance_core::repository::transactions(&current).unwrap(),
+            [spending("current", 3150)]
+        );
+        assert_eq!(
+            current
+                .query_row("SELECT kg FROM weights", [], |r| r.get::<_, f64>(0))
+                .unwrap(),
+            70.0
+        );
+    }
+
+    #[test]
+    fn financial_restore_replaces_both_domains_and_rejects_unbalanced_backup() {
+        let dir = tempfile::tempdir().unwrap();
+        let source = dir.path().join("both.sqlite");
+        let backup = lifeos_core::open(&source, MIGRATIONS).unwrap();
+        finance_core::repository::save(&backup, &spending("backup", 4150)).unwrap();
+        let check = finance_core::repository::BalanceCheck {
+            id: "verified".into(),
+            account: spending("backup", 4150)
+                .own_postings()
+                .next()
+                .unwrap()
+                .account
+                .clone(),
+            day: jiff::civil::date(2026, 11, 14),
+            actual: -4150,
+            checked_at: jiff::civil::date(2026, 11, 14).at(16, 0, 0, 0),
+        };
+        finance_core::repository::confirm_balance(&backup, &check, -4150).unwrap();
+        backup
+            .execute("INSERT INTO weights VALUES ('2026-11-14', 70.0, 1)", [])
+            .unwrap();
+        let current = lifeos_core::memory(MIGRATIONS).unwrap();
+        finance_core::repository::save(&current, &spending("current", 3150)).unwrap();
+        current
+            .execute("INSERT INTO weights VALUES ('2026-11-14', 80.0, 1)", [])
+            .unwrap();
+        backup
+            .execute("UPDATE finance_postings SET amount=1 WHERE position=0", [])
+            .unwrap();
+        assert_eq!(
+            restore_file(&current, &source),
+            Err(RestoreError::Unreadable)
+        );
+        assert_eq!(
+            finance_core::repository::transactions(&current).unwrap(),
+            [spending("current", 3150)]
+        );
+        assert_eq!(
+            current
+                .query_row("SELECT kg FROM weights", [], |r| r.get::<_, f64>(0))
+                .unwrap(),
+            80.0
+        );
+        finance_core::repository::save(&backup, &spending("backup", 4150)).unwrap();
+        drop(backup);
+        restore_file(&current, &source).unwrap();
+        assert_eq!(
+            finance_core::repository::balance_checks(&current).unwrap(),
+            vec![check]
+        );
+        assert_eq!(
+            finance_core::repository::transactions(&current).unwrap(),
+            [spending("backup", 4150)]
+        );
+        assert_eq!(
+            current
+                .query_row("SELECT kg FROM weights", [], |r| r.get::<_, f64>(0))
+                .unwrap(),
+            70.0
+        );
+    }
+
+    #[test]
+    fn holdings_restore_keeps_prices_and_rejects_trade_ledger_mismatch() {
+        use finance_core::{
+            holdings::{Kind, Quote, Security, Trade, store},
+            repository,
+        };
+        let dir = tempfile::tempdir().unwrap();
+        let source = dir.path().join("holdings.sqlite");
+        let backup = lifeos_core::open(&source, MIGRATIONS).unwrap();
+        let day = jiff::civil::date(2026, 11, 15);
+        let security = Security::new("etf", "ETF").unwrap();
+        store::add_trade(
+            &backup,
+            Some(&security),
+            &Trade {
+                id: "opening".into(),
+                security: security.id.clone(),
+                at: day.at(12, 0, 0, 0),
+                kind: Kind::Opening,
+                quantity: 100_000_000,
+                price: 4_000_000,
+                amount: 0,
+                fee: 0,
+                cash: None,
+            },
+            day,
+        )
+        .unwrap();
+        let expected = store::set_quote(
+            &backup,
+            &Quote {
+                security: security.id.clone(),
+                day,
+                price: 5_000_000,
+            },
+            day,
+        )
+        .unwrap();
+        let current = lifeos_core::memory(MIGRATIONS).unwrap();
+        restore_file(&current, &source).unwrap();
+        assert_eq!(store::load(&current).unwrap(), expected.book);
+        assert_eq!(
+            repository::transactions(&current).unwrap(),
+            expected.entries
+        );
+        assert_eq!(
+            expected.book.overview(&expected.entries, day).unwrap().net,
+            50000
+        );
+        backup
+            .execute("UPDATE finance_trades SET quantity=200000000", [])
+            .unwrap();
+        assert_eq!(
+            restore_file(&current, &source),
+            Err(RestoreError::Unreadable)
+        );
+        assert_eq!(store::load(&current).unwrap(), expected.book);
+        assert_eq!(
+            repository::transactions(&current).unwrap(),
+            expected.entries
+        );
+    }
 
     #[test]
     fn migrations_run_once_and_record_the_version() {

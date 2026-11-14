@@ -71,7 +71,15 @@ pub fn keep(name: &str, jpeg: &[u8]) {
 /// The kept photo `name`'s bytes (a small file, read in place), to send
 /// again.
 pub fn bytes(name: &str) -> Option<Vec<u8>> {
-    path_of(name).and_then(|path| std::fs::read(path).ok())
+    path_of(name)
+        .and_then(|path| std::fs::read(path).ok())
+        .or_else(|| {
+            cache().with_untracked(|c| {
+                c.0.get(name)
+                    .and_then(|uri| uri.strip_prefix("data:image/jpeg;base64,"))
+                    .and_then(|data| base64::engine::general_purpose::STANDARD.decode(data).ok())
+            })
+        })
 }
 
 /// The kept photos meals and favorites refer to, as names and bytes, for a
@@ -141,6 +149,7 @@ pub async fn sweep_orphans() {
     let mut referenced = super::meals::photo_names();
     referenced.extend(super::favorites::photo_names());
     referenced.extend(super::pending::photo_names());
+    referenced.extend(super::capture::photo_names());
     let _ = blocking(move || {
         let Ok(entries) = std::fs::read_dir(&dir) else {
             return;

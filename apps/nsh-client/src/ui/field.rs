@@ -97,7 +97,7 @@ fn styled(input: Input) -> Input {
     input
         .typo(Type::Body)
         .text_color(color::INK)
-        .placeholder_color(|| nsh_core::prelude::color(color::FAINT))
+        .placeholder_color(|| nsh_core::prelude::color(color::MUTED))
         .caret_color(|| nsh_core::prelude::color(color::INK))
         .selection_color(|| nsh_core::prelude::color(color::AI_TO.opacity(0.3)))
 }

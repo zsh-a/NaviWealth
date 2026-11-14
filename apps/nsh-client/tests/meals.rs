@@ -8,7 +8,7 @@ use common::*;
 #[test]
 fn an_empty_day_explains_what_to_do() -> Result<(), String> {
     let (app, _) = start(Vec::new(), None);
-    assert!(app.shows("No meals logged today"));
+    assert!(app.shows("Nothing recorded today"));
     assert!(app.shows("Connect a vision model"));
     assert!(app.shows("Nothing logged yet"));
     Ok(())
@@ -18,11 +18,8 @@ fn an_empty_day_explains_what_to_do() -> Result<(), String> {
 fn logging_without_an_account_explains_the_setup() -> Result<(), String> {
     let (mut app, _) = start(Vec::new(), None);
     app.press("label:New entry")?;
-    app.press("Log a meal")?;
-    app.wait_until("the setup sheet", GONE, |screen| {
-        screen.count("text:Set up…").unwrap_or(0) == 2
-    })?;
-    assert!(app.picks().is_empty(), "no picker without an account");
+    app.wait_for("Connect your model to create a draft. Manual entry is available below.")?;
+    assert!(app.picks().is_empty());
     Ok(())
 }
 
@@ -30,8 +27,7 @@ fn logging_without_an_account_explains_the_setup() -> Result<(), String> {
 fn a_meal_added_by_hand_counts_toward_today() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
-    app.press("label:New entry")?;
-    app.press("label:Add manually")?;
+    open_manual(&mut app, "Manual meal")?;
     app.wait_for("text:e.g. Beef noodle soup")?;
     app.type_text("text:e.g. Beef noodle soup", "Rice")?;
     app.type_text("label:Amount eaten", "250")?;
@@ -54,17 +50,15 @@ fn a_meal_added_by_hand_counts_toward_today() -> Result<(), String> {
 
 #[test]
 fn a_photo_is_sent_only_after_consent_and_becomes_editable_foods() -> Result<(), String> {
-    let stub = network(200, estimate());
+    let stub = network(200, record_reply(vec![meal_record()]));
     let dir = tempfile::tempdir().unwrap();
     let (mut app, _) = start_in(Some(dir.path()), account(false), Some(stub.clone()));
-    picks_a_photo(&mut app);
-    app.press("label:New entry")?;
-    app.press("Log a meal")?;
-    app.wait_for("Send this photo for analysis?")?;
-    assert!(app.shows("api.anthropic.com"));
+    attach_capture(&mut app)?;
+    app.wait_for("Create a draft with your model")?;
+    app.wait_for("text:/api.anthropic.com/")?;
     assert!(stub.requests().is_empty(), "nothing is sent before consent");
 
-    app.press("Send photo")?;
+    app.press("Create draft")?;
     app.wait_for("text:White rice")?;
     let requests = stub.requests();
     assert_eq!(requests.len(), 1);
@@ -92,31 +86,30 @@ fn a_photo_is_sent_only_after_consent_and_becomes_editable_foods() -> Result<(),
 
     // 480 g × 92 + 150 g × 130 (the catalog's rice, not the model's 1) per 100 g;
     // the total counts up to it.
-    app.wait_for("text:637")?;
-    app.press("text:/^Save meal/")?;
+    app.wait_for("text:637 kcal")?;
+    assert!(stored_meals(dir.path()).is_empty());
+    app.press("Confirm and save")?;
     app.wait_for("text:1 meal")?;
     app.wait_for("text:Beef noodle soup")?;
     app.wait_for("text:637")?;
     let saved = stored_meals(dir.path());
     assert_eq!(
         saved[0]["prompt_version"],
-        health_core::recognition::PROMPT_VERSION
+        nsh_app_naviwealth_health::domain::capture::PROMPT_VERSION
     );
     Ok(())
 }
 
 #[test]
 fn declining_consent_sends_nothing() -> Result<(), String> {
-    let stub = network(200, estimate());
+    let stub = network(200, record_reply(vec![meal_record()]));
     let (mut app, _) = start(account(false), Some(stub.clone()));
-    picks_a_photo(&mut app);
-    app.press("label:New entry")?;
-    app.press("Log a meal")?;
-    app.wait_for("Send this photo for analysis?")?;
-    app.press("Cancel")?;
-    app.wait_for("Photo not sent")?;
+    attach_capture(&mut app)?;
+    app.wait_for("Create a draft with your model")?;
+    app.press("Done")?;
+    app.wait_for("Attach image")?;
     assert!(stub.requests().is_empty());
-    assert!(app.shows("Send photo…"));
+    assert!(app.shows("Create draft"));
     Ok(())
 }
 
@@ -124,12 +117,10 @@ fn declining_consent_sends_nothing() -> Result<(), String> {
 fn a_rejected_key_points_to_settings() -> Result<(), String> {
     let stub = network(401, json!({ "error": { "message": "invalid x-api-key" } }));
     let (mut app, _) = start(account(true), Some(stub));
-    picks_a_photo(&mut app);
-    app.press("label:New entry")?;
-    app.press("Log a meal")?;
+    attach_capture(&mut app)?;
     app.wait_for("The API key was rejected")?;
     assert!(app.shows("Open settings…"));
-    assert!(app.shows("Add manually"));
+    assert!(app.shows("Enter manually"));
     Ok(())
 }
 
@@ -139,9 +130,7 @@ fn a_failed_whole_body_fetch_is_not_automatically_replayed() -> Result<(), Strin
     reply.error = Some("Connection reset while receiving the reply".into());
     let stub = Arc::new(StubNetwork::new([(MESSAGES.to_owned(), reply)]));
     let (mut app, _) = start(account(true), Some(stub.clone()));
-    picks_a_photo(&mut app);
-    app.press("label:New entry")?;
-    app.press("Log a meal")?;
+    attach_capture(&mut app)?;
     app.wait_for("Can't reach the model")?;
     assert_eq!(stub.requests().len(), 1);
     app.wait(Duration::from_secs(3))?;
@@ -177,7 +166,7 @@ fn deleting_a_meal_can_be_undone() -> Result<(), String> {
     app.wait_for("Edit meal")?;
     app.press("label:Delete meal")?;
     app.wait_for("Meal deleted")?;
-    app.wait_for("No meals logged today")?;
+    app.wait_for("Nothing recorded today")?;
     app.press("Undo")?;
     app.wait_for("Tomato pasta")?;
     app.wait_for_gone("Meal deleted", GONE)?;
@@ -238,8 +227,7 @@ fn a_recent_food_fills_the_new_food() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
     let (mut app, _) = start_in(Some(dir.path()), pasta_today(), None);
     app.wait_for("text:300")?;
-    app.press("label:New entry")?;
-    app.press("label:Add manually")?;
+    open_manual(&mut app, "Manual meal")?;
     app.wait_for("Recent")?;
     app.press("text:Pasta")?;
     app.press("Done")?;
@@ -285,8 +273,7 @@ fn the_api_key_is_kept_apart_from_the_settings() -> Result<(), String> {
 #[test]
 fn a_food_without_nutrition_is_not_saved_as_zero() -> Result<(), String> {
     let (mut app, _) = start(Vec::new(), None);
-    app.press("label:New entry")?;
-    app.press("label:Add manually")?;
+    open_manual(&mut app, "Manual meal")?;
     app.wait_for("text:e.g. Beef noodle soup")?;
     app.type_text("text:e.g. Beef noodle soup", "Tea")?;
     app.type_text("label:Amount eaten", "300")?;

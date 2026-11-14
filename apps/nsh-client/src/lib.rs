@@ -19,10 +19,11 @@ use nsh_core::prelude::*;
 
 use crate::{
     data::{
-        backup, clock, db, favorites, garmin, meals, notes, pending, photos, settings, tasks,
-        weights,
+        backup, capture, clock, db, favorites, finance, garmin, meals, notes, pending, photos,
+        settings, tasks, weights,
     },
-    ui::color,
+    i18n::s,
+    ui::{Type, Typo, color, space},
 };
 
 /// The app's UI set (`nsh.json` `"rust"`).
@@ -36,7 +37,29 @@ fn native(registry: &mut Registry) {
 #[component]
 pub fn App() -> impl IntoElement {
     tasks::mark_root();
-    db::open();
+    if let Err(error) = db::open()
+        .and_then(|()| finance::load())
+        .and_then(|()| capture::load())
+    {
+        log::error!("startup: local data unavailable: {error}");
+        return view()
+            .flex_1()
+            .bg(color::CANVAS)
+            .p(px(space::GUTTER))
+            .pt_safe_area_plus(px(40.0))
+            .gap_4()
+            .child(
+                text(|| s().storage_unavailable)
+                    .typo(Type::Title)
+                    .text_color(color::INK),
+            )
+            .child(
+                text(|| s().storage_unavailable_body)
+                    .typo(Type::Body)
+                    .text_color(color::BODY),
+            )
+            .into_element();
+    }
     meals::load();
     favorites::load();
     pending::load();
@@ -82,4 +105,5 @@ pub fn App() -> impl IntoElement {
         .bg(color::CANVAS)
         .text_color(color::BODY)
         .child(shell::shell())
+        .into_element()
 }

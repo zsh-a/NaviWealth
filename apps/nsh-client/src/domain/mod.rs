@@ -99,3 +99,5 @@ mod tests {
         assert!(!VisionFailure::Refused.is_retryable());
     }
 }
+
+pub mod capture;

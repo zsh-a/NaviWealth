@@ -1,8 +1,11 @@
-//! The home (three tabs), the pages pushed over it, and the parts they
+//! The home (four tabs), the pages pushed over it, and the parts they
 //! share.
 
+pub(crate) mod assets;
 mod capture;
 mod drafts;
+pub(crate) mod finance;
+pub(crate) mod holdings;
 pub(crate) mod home;
 mod parts;
 mod records;

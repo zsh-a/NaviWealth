@@ -22,6 +22,10 @@ pub struct Settings {
     /// Account fingerprints the user chose not to be asked about again.
     #[serde(default)]
     pub trusted: Vec<String>,
+    #[serde(default)]
+    pub ledger: LedgerDefaults,
+    #[serde(default)]
+    pub trusted_capture: Vec<String>,
 }
 
 fn settings() -> Signal<Settings> {
@@ -107,6 +111,54 @@ pub fn save_account(account: ModelAccount) {
 pub fn save_goal(goal_kcal: Option<f64>) {
     settings().update(|s| {
         s.goal_kcal = goal_kcal.filter(|goal| GOAL_RANGE.contains(goal));
+        persist(s);
+    });
+}
+
+/// Last confirmed choices are preferences, not ledger truth. Accounts are
+/// checked against the current ledger before the editor uses them.
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct LedgerDefaults {
+    pub own: Option<String>,
+    pub other: Option<String>,
+    pub expense: Option<String>,
+    pub income: Option<String>,
+}
+
+pub fn save_ledger_defaults(defaults: LedgerDefaults) {
+    settings().update(|s| {
+        s.ledger = defaults;
+        persist(s);
+    });
+}
+
+pub fn capture_trusted(account: &ModelAccount) -> bool {
+    settings().with(|s| s.trusted_capture.contains(&account.fingerprint()))
+}
+
+pub fn trust_capture(account: &ModelAccount) {
+    settings().update(|s| {
+        let key = account.fingerprint();
+        if !s.trusted_capture.contains(&key) {
+            s.trusted_capture.push(key);
+        }
+        persist(s);
+    });
+}
+
+pub fn all_recognition_trusted(account: &ModelAccount) -> bool {
+    is_trusted(account) && capture_trusted(account)
+}
+
+pub fn set_all_recognition_trusted(account: &ModelAccount, trusted: bool) {
+    let key = account.fingerprint();
+    settings().update(|s| {
+        s.trusted.retain(|v| v != &key);
+        s.trusted_capture.retain(|v| v != &key);
+        if trusted {
+            s.trusted.push(key.clone());
+            s.trusted_capture.push(key.clone());
+        }
         persist(s);
     });
 }

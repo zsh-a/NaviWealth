@@ -6,7 +6,7 @@ use nsh_core::prelude::*;
 
 use super::today::slot_name;
 use crate::{
-    data::{pending, photos},
+    data::{capture, pending, photos},
     domain::pending::{PendingMeal, PendingStatus},
     i18n::s,
     nav::{self, Route},
@@ -30,7 +30,7 @@ pub fn drafts_section(heading: bool) -> impl IntoElement {
         }
     });
     when(
-        move || list.with(|l| !l.is_empty()),
+        move || list.with(|l| !l.is_empty()) || !capture::all().is_empty(),
         move || {
             view()
                 .gap(px(10.0))
@@ -47,11 +47,61 @@ pub fn drafts_section(heading: bool) -> impl IntoElement {
                                 .role(AccessibilityRole::Header),
                         )
                         .child(
-                            text(move || list.with(Vec::len).to_string())
+                            text(move || (list.with(Vec::len) + capture::all().len()).to_string())
                                 .typo(Type::Subhead)
                                 .tabular_nums()
                                 .text_color(color::MUTED),
                         )
+                }))
+                .child(dynamic(move || {
+                    let drafts = capture::all();
+                    untracked(move || {
+                        view().gap_2().children(drafts.into_iter().map(|draft| {
+                            let sheets = super::home::Sheets::get();
+                            let title = match draft.status {
+                                crate::domain::capture::Status::Analyzing => s().capture_reading,
+                                crate::domain::capture::Status::Failed => s().capture_failed,
+                                crate::domain::capture::Status::Editing => s().capture_prompt,
+                                crate::domain::capture::Status::Ready => s().capture_review,
+                            };
+                            let detail = if draft.input.is_empty() {
+                                s().capture_photo.to_owned()
+                            } else {
+                                draft.input.clone()
+                            };
+                            crate::ui::surface::row_button(move || {
+                                sheets.capture_draft.set(Some(draft.id.clone()));
+                                sheets.capture.set(true);
+                            })
+                            .accessibility_label(move || Some(title.into()))
+                            .rounded(px(radius::CARD))
+                            .bg(color::SURFACE)
+                            .child(icon(Icon::Sparkle, 22.0, color::AI_FROM))
+                            .child(
+                                view()
+                                    .gap_1()
+                                    .flex_1()
+                                    .min_w(px(0.0))
+                                    .child(
+                                        text(title)
+                                            .typo(Type::Headline)
+                                            .text_color(color::INK)
+                                            .number_of_lines(1),
+                                    )
+                                    .child(
+                                        text(detail)
+                                            .typo(Type::Subhead)
+                                            .text_color(color::MUTED)
+                                            .number_of_lines(1),
+                                    ),
+                            )
+                            .child(icon(
+                                Icon::ChevronRight,
+                                18.0,
+                                color::MUTED,
+                            ))
+                        }))
+                    })
                 }))
                 .child(each(
                     move || list.get(),

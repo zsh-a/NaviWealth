@@ -28,13 +28,17 @@ pub enum Source {
         provider: String,
         id: String,
     },
-    /// A payment screenshot read by the owner's model.
-    Screenshot {
+    /// Text or an image interpreted by the owner's model.
+    Recognition {
         model: String,
         prompt_version: String,
     },
     /// A confirmed balance-check difference.
     BalanceCheck,
+    /// Cash and cost postings generated only from a confirmed investment trade.
+    Investment {
+        trade_id: String,
+    },
 }
 
 /// A balanced entry in the journal.
@@ -278,7 +282,7 @@ pub fn balance_difference<'a>(
     day: Date,
     actual: Minor,
 ) -> Minor {
-    money::sum([actual, -balance_on(transactions, account, day)])
+    money::saturate(i128::from(actual) - i128::from(balance_on(transactions, account, day)))
 }
 
 /// The adjustment that brings `account` to a stated balance, `difference`

@@ -191,3 +191,83 @@ fn llm_failure(error: LlmError) -> VisionFailure {
     };
     VisionFailure::Provider(problem)
 }
+
+pub async fn recognize_record(
+    account: ModelAccount,
+    draft: crate::domain::capture::Draft,
+    jpeg: Option<Vec<u8>>,
+    lang: Lang,
+    consent: Consent,
+    context: serde_json::Value,
+) -> Result<(Vec<crate::domain::capture::Record>, String, String), VisionFailure> {
+    use crate::domain::capture;
+    use llm_protocol::{
+        ContentBlock, LlmFinishReason, LlmMessage, LlmResponseFormat, LlmRole, PROTOCOL_VERSION,
+    };
+    consent
+        .check(&upload_target(&account))
+        .map_err(|_| VisionFailure::Refused)?;
+    let mut content = Vec::new();
+    if let Some(jpeg) = jpeg {
+        content.push(ContentBlock::image("image/jpeg", jpeg));
+    }
+    content.push(ContentBlock::Text {
+        text: json!({
+            "input":draft.input,"correction":draft.correction,"previous_draft":draft.records,
+            "context":context
+        })
+        .to_string(),
+    });
+    let request = LlmRequest {
+        protocol_version: PROTOCOL_VERSION.into(),
+        provider: upload_target(&account).provider,
+        model: account.model.clone(),
+        messages: vec![
+            LlmMessage {
+                role: LlmRole::System,
+                content: capture::instructions(lang).into(),
+                name: None,
+                metadata: json!({}),
+            },
+            LlmMessage {
+                role: LlmRole::User,
+                content: content.into(),
+                name: None,
+                metadata: json!({}),
+            },
+        ],
+        temperature: None,
+        effort: None,
+        max_output_tokens: Some(8000),
+        tools: Vec::new(),
+        response_format: Some(LlmResponseFormat::JsonSchema {
+            name: "record_draft".into(),
+            schema: capture::schema(),
+            strict: Some(true),
+        }),
+        metadata: json!({"prompt_version":capture::PROMPT_VERSION}),
+    };
+    let client = Client::new(endpoint(&account)?, NshTransport::new())
+        .with_capability_cache(CAPABILITIES.get_or_init(CapabilityCache::default).clone())
+        .with_timeouts(Timeouts {
+            total: RECOGNIZE_TIMEOUT,
+            ..Timeouts::default()
+        });
+    let response = client.complete(request).await.map_err(llm_failure)?;
+    match response.finish_reason {
+        LlmFinishReason::Stop => {}
+        LlmFinishReason::Length => return Err(VisionFailure::Truncated),
+        LlmFinishReason::ContentFilter => return Err(VisionFailure::Refused),
+        _ => return Err(VisionFailure::Unreadable),
+    }
+    let answer = response
+        .object
+        .map(|v| v.to_string())
+        .unwrap_or(response.content);
+    let (records, question) = capture::parse(&answer).map_err(|_| VisionFailure::Unreadable)?;
+    Ok((
+        records,
+        question,
+        response.model.chars().take(200).collect(),
+    ))
+}

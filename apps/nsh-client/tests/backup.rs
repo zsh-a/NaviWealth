@@ -155,7 +155,7 @@ fn encrypted_backup_creates_the_folder_and_restores_on_a_fresh_install() -> Resu
     let dav = Dav::new();
     backed_up(&dav)?;
     let (mut app, _, dir) = fresh_with(&dav, "correct horse battery", false);
-    assert!(app.shows("No meals logged today"));
+    assert!(app.shows("Nothing recorded today"));
     restore_latest(&mut app, &dav)?;
     app.wait_for("text:Backup restored")?;
     app.press("label:Back")?;

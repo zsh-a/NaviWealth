@@ -76,6 +76,12 @@ pub fn toast_host(bottom: impl Fn() -> f32 + 'static) -> impl IntoElement {
             });
         }
     });
+    toast_view(bottom)
+}
+
+/// Renders the current toast in a modal surface; the long-lived host owns
+/// its timer so opening/closing a sheet cannot extend or cancel Undo.
+pub fn toast_view(bottom: impl Fn() -> f32 + 'static) -> impl IntoElement {
     view()
         .absolute()
         .left_0()

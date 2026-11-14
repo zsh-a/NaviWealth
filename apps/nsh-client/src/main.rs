@@ -21,7 +21,10 @@ fn main() -> impl std::process::Termination {
             // A phone-sized window: the layout this client is designed for
             // (`NW_PREVIEW_HEIGHT` makes it taller to capture a whole page).
             size: (
-                390,
+                std::env::var("NW_PREVIEW_WIDTH")
+                    .ok()
+                    .and_then(|w| w.parse().ok())
+                    .unwrap_or(390),
                 std::env::var("NW_PREVIEW_HEIGHT")
                     .ok()
                     .and_then(|h| h.parse().ok())

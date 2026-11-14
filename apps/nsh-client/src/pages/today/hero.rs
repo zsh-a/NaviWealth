@@ -5,7 +5,7 @@
 use nsh_core::prelude::*;
 
 use crate::{
-    data::{meals, settings},
+    data::{finance, meals, settings},
     domain::{format, meal::Day, nutrition::Nutrients},
     i18n::s,
     ui::{
@@ -68,6 +68,7 @@ pub fn hero(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                 )
                 .child(
                     view()
+                        .style_when(|| !finance::transactions().is_empty(), |s| s.hidden())
                         .size(px(RING))
                         .child(energy_ring(RING, STROKE, ring))
                         .child(
@@ -89,7 +90,41 @@ pub fn hero(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                                     .text_color(color::INK),
                                 ),
                         ),
-                ),
+                )
+                .child(when(
+                    || !finance::transactions().is_empty(),
+                    move || {
+                        view()
+                            .flex_1()
+                            .min_w(px(0.0))
+                            .gap(px(6.0))
+                            .child(
+                                text(|| s().recorded_spending)
+                                    .typo(Type::Caption)
+                                    .font_weight(FontWeight::SEMIBOLD)
+                                    .text_color(color::MUTED),
+                            )
+                            .child(stat(
+                                move || {
+                                    let transactions = finance::transactions();
+                                    let day = day().0;
+                                    let recorded = transactions.iter().any(|t| t.at.date() == day);
+                                    recorded.then(|| {
+                                        finance_core::money::format(finance_core::money::sum(
+                                            finance_core::journal::spending(
+                                                &transactions,
+                                                day,
+                                                day,
+                                            )
+                                            .into_values(),
+                                        ))
+                                    })
+                                },
+                                || "CNY".into(),
+                                Scale::Tile,
+                            ))
+                    },
+                )),
         )
         .child(
             view()

@@ -2,7 +2,7 @@
 
 Status: active product SSOT for the NSH client.
 
-Last reviewed: 2026-11-14.
+Last reviewed: 2026-11-15.
 
 ## Document Contract
 
@@ -26,8 +26,10 @@ whether the owner uses a feature every day or every week.
 1. It answers a question asked daily or weekly. Otherwise it is not built.
 2. Four tabs at most, no nested secondary navigation. Settings is a page
    reached from a corner action, not a tab.
-3. AI only turns a photo or screenshot into a draft. The user confirms before
-   anything is saved. No chat, named agents, proposals, or background agents.
+3. AI turns a short description and/or image into record drafts. The user
+   confirms before anything is saved. A correction is another short description
+   applied to the current draft, not a chat timeline. No named agents or
+   autonomous/background agents.
 4. Anything derivable is derived, not entered: net worth, positions, monthly
    balance, averages.
 5. Adding a new kind of record requires removing one or a written reason.
@@ -46,15 +48,29 @@ whether the owner uses a feature every day or every week.
 
 ## Interaction Model
 
-Decided 2026-11-13; screens in `.impeccable/mocks/2026-11-13-lifeos-ia/`.
+Updated 2026-11-14: the owner chose text-or-image capture with fewer forms.
 
-- A floating tab bar beside one capture button. The capture sheet holds
-  every way to record: log a meal from a photo (the system picker also takes
-  photos), weight, favorites, manual meal, and later a transaction and a
-  receipt. No record type gets its own permanent button.
-- Recognition never blocks. The owner may leave the review page while a
-  photo is analyzed; an unconfirmed result becomes a draft pinned on Today
-  and in Records. Nothing is saved before confirmation.
+- A floating tab bar beside one capture button. Capture opens one composer:
+  describe what happened or attach an image. Recognition routes to money,
+  meals or body weight; the owner need not choose a domain or entry method.
+  Explicitly requested multiple records are reviewed together, with their
+  count on the confirmation action. A purchase description alone does not
+  also create a meal. Unsupported or ambiguous input asks for clarification.
+- The result is a readable summary, with a short correction box. Missing
+  money fields stay missing and prevent confirmation; a named new account
+  is shown as new and created only when confirmed. AI never selects a funding
+  account merely because a payment app appears in a screenshot.
+- Recognition never blocks navigation. Input and results are local drafts,
+  shared between Today and Records. Leaving while recognition runs keeps it
+  running under the app root; a run interrupted by restart can be retried.
+  Confirmation writes the entire batch and removes its draft atomically.
+- Manual meal, money and weight entry are secondary actions under "Enter
+  manually"; favorites retain one-tap logging with Undo. Manual money uses
+  one compact editor: amount, category/account, a calendar date and optional
+  details. Selection views replace the editor body; header and actions stay
+  fixed above the keyboard. Only successful saves update remembered choices.
+- The model/server consent names the text, attached image and account names
+  being sent. It is remembered only for that model account when requested.
 - Today shows today. Past days are reached in Records; logging for another
   day changes the date on the review page.
 - Today keeps one layout from health-only to finance: the summary card shows
@@ -103,12 +119,25 @@ and screenshots fill gaps.
   Opening balances are postings against `权益:期初`.
 - Manual entry is a bottom sheet: amount, expense or income account, the own
   account it came from or went to, or a transfer between two own accounts.
-- Receipt or payment-screenshot recognition into a transaction draft through
-  the owner's own model account (after statement import).
+- Short descriptions, receipts or payment screenshots become reviewable
+  transaction drafts through the owner's own model account. This capture
+  path was brought forward by the owner's 2026-11-14 AI-native direction;
+  statement import remains the primary bulk ingestion path.
 - One optional monthly budget against total expenses. No per-category
   budgets.
 
 ### Holdings (detail required)
+
+Initial delivery (2026-11-15, owner: keep it simple): holdings appear directly
+on Assets. A compact editor accepts a name/code, quantity and unit cost for an
+existing position; purchases/sales/dividends also choose a cash account. Date
+and fees are optional details. Derived quantities, average cost, gains and
+cash balances come from confirmed trades. Prices are dated manual inputs,
+CNY only; unpriced positions are explicitly valued at cost. Trade records are
+necessary to answer what is owned and how its cost changes; editable standalone
+position totals would conflict with the journal. AI trade capture is deferred.
+
+The fuller target below remains pending:
 
 - Securities from the existing catalog shipped via GitHub Releases.
 - Trades: buy, sell, dividend, fee. Positions, average cost, realized and

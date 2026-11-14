@@ -41,8 +41,8 @@ pub mod color {
     /// Copy.
     pub const BODY: AdaptiveColor = c(0x2C2C30, 0xE2E2E6);
     /// Secondary text.
-    pub const MUTED: AdaptiveColor = c(0x76767C, 0x9C9CA4);
-    /// Tertiary marks: chevrons, placeholders.
+    pub const MUTED: AdaptiveColor = c(0x6B6B72, 0x9C9CA4);
+    /// Tertiary non-text marks, such as chevrons.
     pub const FAINT: AdaptiveColor = c(0xABABB0, 0x606066);
 
     /// The primary action's fill: ink.

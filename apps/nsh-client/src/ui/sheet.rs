@@ -15,6 +15,66 @@ pub fn bottom_sheet(
     close: impl Fn() + 'static,
     content: impl IntoElement,
 ) -> impl IntoElement {
+    shell(
+        open,
+        close,
+        scroll().flex_shrink(1.0).child(
+            view()
+                .px(px(space::GUTTER))
+                .pt_2()
+                .pb_safe_area_plus(px(16.0))
+                .gap_4()
+                .child(content),
+        ),
+    )
+}
+
+/// A task sheet with a fixed header and actions; only its body scrolls.
+/// The available height excludes the keyboard, including on small phones.
+pub fn task_sheet(
+    open: impl Fn() -> bool + 'static,
+    close: impl Fn() + 'static,
+    header: impl IntoElement,
+    body: impl IntoElement,
+    actions: impl IntoElement,
+) -> impl IntoElement {
+    shell(
+        open,
+        close,
+        view()
+            .h(move || {
+                px((window().height.0 * 0.92 - keyboard_height().0 - 20.0).clamp(120.0, 540.0))
+            })
+            .child(
+                view()
+                    .flex_shrink(0.0)
+                    .px(px(space::GUTTER))
+                    .py_2()
+                    .child(header),
+            )
+            .child(
+                scroll()
+                    .flex_1()
+                    .min_h(px(0.0))
+                    .child(view().px(px(space::GUTTER)).py_2().child(body)),
+            )
+            .child(
+                view()
+                    .flex_shrink(0.0)
+                    .px(px(space::GUTTER))
+                    .pt_3()
+                    .pb_safe_area_plus(px(12.0))
+                    .child(actions)
+                    .child(super::toast::toast_view(|| 68.0)),
+            ),
+    )
+}
+
+fn shell(
+    open: impl Fn() -> bool + 'static,
+    close: impl Fn() + 'static,
+    content: impl IntoElement,
+) -> impl IntoElement {
     sheet()
         .open(move || Some(open()))
         .on_open_change(move |event: &SheetEvent| {
@@ -31,7 +91,7 @@ pub fn bottom_sheet(
         })
         .child(
             view()
-                .max_h(move || px(window().height.0 * 0.92))
+                .max_h(move || px((window().height.0 * 0.92 - keyboard_height().0).max(140.0)))
                 .mb_keyboard()
                 .child(
                     view()
@@ -44,15 +104,6 @@ pub fn bottom_sheet(
                         .bg(color::LINE_STRONG)
                         .accessibility_elements_hidden(true),
                 )
-                .child(
-                    scroll().flex_shrink(1.0).child(
-                        view()
-                            .px(px(space::GUTTER))
-                            .pt_2()
-                            .pb_safe_area_plus(px(16.0))
-                            .gap_4()
-                            .child(content),
-                    ),
-                ),
+                .child(content),
         )
 }
