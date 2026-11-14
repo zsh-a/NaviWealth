@@ -66,30 +66,6 @@ pub fn row_button(press: impl Fn() + 'static) -> ButtonElement {
         .focus_visible(|s| s.bg(color::SURFACE_2))
 }
 
-/// A pressable card: it sinks a little under the finger.
-pub fn card_button(press: impl Fn() + 'static) -> ButtonElement {
-    let scale = animated_value(1.0);
-    button()
-        .on_press_down(move || {
-            if !reduce_motion() {
-                scale.spring(motion::PRESS_SCALE_CARD, motion::PRESS);
-            }
-        })
-        .on_press_up(move || {
-            scale.spring(1.0, motion::PRESS);
-        })
-        .on_press(press)
-        .bind_scale(&scale)
-        .bg(color::SURFACE)
-        .rounded(px(radius::CARD))
-        .lift(&shadow::CARD)
-        .dark(|s| s.border_1().border_color(color::LINE))
-        .transition_colors()
-        .duration(motion::INSTANT)
-        .active(|s| s.bg(color::SURFACE_2))
-        .focus_visible(|s| s.outline(px(2.0)).outline_color(color::INK))
-}
-
 /// A row that shows or hides the content under it; its chevron turns as
 /// it opens.
 pub fn disclosure(open: Signal<bool>, label: impl Fn() -> SharedString + 'static) -> ButtonElement {

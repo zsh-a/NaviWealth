@@ -81,6 +81,7 @@ pub struct Strings {
     pub draft_add: &'static str,
     pub this_week: &'static str,
     pub this_month: &'static str,
+    pub go_to_day: &'static str,
     pub previous_month: &'static str,
     pub next_month: &'static str,
     pub daily_intake: &'static str,

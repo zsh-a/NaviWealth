@@ -2,8 +2,14 @@
 //! meals add up to; all, meals only or weights only. Older days come on
 //! request so a long history stays light.
 
-use std::collections::BTreeMap;
+use std::{
+    cell::RefCell,
+    collections::{BTreeMap, HashMap},
+    rc::Rc,
+    time::Duration,
+};
 
+use nsh_base::button;
 use nsh_core::prelude::*;
 
 use super::{
@@ -20,12 +26,12 @@ use crate::{
     },
     i18n::s,
     ui::{
-        Btn, Icon, Type, Typo, color,
+        Btn, Icon, IconBtn, Type, Typo, Variant, color,
         feedback::empty_state,
         icon,
         segmented::{Segment, segmented},
         space,
-        surface::{card, hairline, row_button},
+        surface::{card, hairline},
     },
 };
 
@@ -60,6 +66,37 @@ pub fn records_tab() -> impl IntoElement {
     let filter = signal(Filter::All);
     let shown = signal(PAGE);
     let days = computed(move || group(meals::all(), weights::all(), filter.get()));
+    let sheets = Sheets::get();
+    // Each shown day's section, for the calendar to scroll to.
+    let sections: Sections = Rc::new(RefCell::new(HashMap::new()));
+    {
+        let sections = sections.clone();
+        effect(move || {
+            let Some(day) = sheets.jump_to.get() else {
+                return;
+            };
+            untracked(|| sheets.jump_to.set(None));
+            // A day only a weight was logged on is hidden under Meals.
+            let listed = |f| {
+                group(meals::all(), weights::all(), f)
+                    .iter()
+                    .any(|d| d.day == day)
+            };
+            if !untracked(|| listed(filter.get())) {
+                filter.set(Filter::All);
+            }
+            if let Some(at) = untracked(|| days.with(|d| d.iter().position(|d| d.day == day))) {
+                shown.update(|n| *n = (*n).max(at + 1));
+            }
+            let sections = sections.clone();
+            // Once the day's section is laid out.
+            set_timeout(Duration::from_millis(60), move || {
+                if let Some(section) = sections.borrow().get(&day) {
+                    section.reveal(RevealOptions::default());
+                }
+            });
+        });
+    }
     effect(move || {
         let names: Vec<String> = days.with(|days| {
             days.iter()
@@ -83,19 +120,32 @@ pub fn records_tab() -> impl IntoElement {
             .gap_5()
             .child(
                 view()
+                    .flex_row()
+                    .items_center()
+                    .gap_3()
                     .px(px(4.0))
                     .pt_2()
-                    .gap(px(2.0))
                     .child(
-                        text(|| s().history)
-                            .typo(Type::Subhead)
-                            .text_color(color::MUTED),
+                        view()
+                            .flex_1()
+                            .min_w(px(0.0))
+                            .gap(px(2.0))
+                            .child(
+                                text(|| s().history)
+                                    .typo(Type::Subhead)
+                                    .text_color(color::MUTED),
+                            )
+                            .child(
+                                text(|| s().records)
+                                    .typo(Type::LargeTitle)
+                                    .text_color(color::INK)
+                                    .role(AccessibilityRole::Header),
+                            ),
                     )
                     .child(
-                        text(|| s().records)
-                            .typo(Type::LargeTitle)
-                            .text_color(color::INK)
-                            .role(AccessibilityRole::Header),
+                        IconBtn::new(Icon::Calendar, || s().go_to_day.into())
+                            .variant(Variant::Secondary)
+                            .on_press(move || sheets.jump.set(true)),
                     ),
             )
             .child(segmented(
@@ -129,11 +179,16 @@ pub fn records_tab() -> impl IntoElement {
                                 })
                             },
                             |d: &DayRecords| d.day,
-                            |d, _| {
-                                dynamic(move || {
-                                    let d = d.get();
-                                    untracked(move || day_section(d))
-                                })
+                            {
+                                let sections = sections.clone();
+                                move |d, _| {
+                                    let sections = sections.clone();
+                                    dynamic(move || {
+                                        let d = d.get();
+                                        let sections = sections.clone();
+                                        untracked(move || day_section(d, sections))
+                                    })
+                                }
                             },
                         ))
                         .child(when(
@@ -149,7 +204,12 @@ pub fn records_tab() -> impl IntoElement {
     )
 }
 
-fn day_section(records: DayRecords) -> impl IntoElement {
+/// The shown days' sections by day.
+type Sections = Rc<RefCell<HashMap<Day, ElementRef>>>;
+
+fn day_section(records: DayRecords, sections: Sections) -> impl IntoElement {
+    let section = element_ref();
+    sections.borrow_mut().insert(records.day, section);
     let sheets = Sheets::get();
     let today = untracked(clock::today);
     let title = match today.days_since(records.day) {
@@ -157,28 +217,18 @@ fn day_section(records: DayRecords) -> impl IntoElement {
         1 => s().yesterday.to_owned(),
         _ => s().long_date(records.day),
     };
-    let mut summary = Vec::new();
-    if records.meals > 0 {
-        summary.push(format!(
-            "{} {} · {}",
-            format::kcal(records.kcal),
-            s().kcal,
-            s().meal_count(records.meals)
-        ));
-    }
-    if let Some(w) = records.weight {
-        summary.push(format!("{} kg", s().kg(w.kg)));
-    }
-    let summary = summary.join(" · ");
-    let has_summary = !summary.is_empty();
-    let summary_text = text(summary)
-        .typo(Type::Subhead)
-        .tabular_nums()
-        .text_color(color::MUTED);
-    let summary = match records.weight {
-        Some(w) => row_button(move || sheets.weight.set(Some(w.day)))
-            .min_h(px(48.0))
-            .gap_2()
+    let kcal = (records.meals > 0).then(|| format!("{} {}", format::kcal(records.kcal), s().kcal));
+    let weight = records.weight.map(|w| {
+        button()
+            .on_press(move || sheets.weight.set(Some(w.day)))
+            .flex_row()
+            .items_center()
+            .gap(px(4.0))
+            .h(px(28.0))
+            .px(px(10.0))
+            .rounded_full()
+            .bg(color::SURFACE_2)
+            .active(|s| s.bg(color::SUNKEN))
             .accessibility_label({
                 let label = format!(
                     "{}, {}, {} kg",
@@ -188,24 +238,40 @@ fn day_section(records: DayRecords) -> impl IntoElement {
                 );
                 move || Some(label.clone().into())
             })
-            .child(summary_text.flex_1())
-            .child(icon(Icon::ChevronRight, 16.0, color::MUTED))
-            .into_element(),
-        None => summary_text.into_element(),
-    };
+            .child(icon(Icon::Scale, 13.0, color::MUTED))
+            .child(
+                text(format!("{} kg", s().kg(w.kg)))
+                    .typo(Type::Caption)
+                    .tabular_nums()
+                    .text_color(color::BODY),
+            )
+    });
     view()
+        .element_ref(&section)
         .gap_3()
         .child(
             view()
-                .gap(px(2.0))
+                .flex_row()
+                .items_center()
+                .gap_2()
+                .min_h(px(32.0))
                 .px(px(4.0))
                 .child(
                     text(title)
                         .typo(Type::Headline)
                         .text_color(color::INK)
+                        .number_of_lines(1)
+                        .flex_1()
                         .role(AccessibilityRole::Header),
                 )
-                .child(has_summary.then_some(summary)),
+                .child(kcal.map(|kcal| {
+                    text(kcal)
+                        .typo(Type::Subhead)
+                        .tabular_nums()
+                        .text_color(color::MUTED)
+                        .number_of_lines(1)
+                }))
+                .child(weight),
         )
         .child((!records.entries.is_empty()).then(|| {
             card()

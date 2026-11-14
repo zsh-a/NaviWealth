@@ -1,5 +1,6 @@
-//! Figures: numbers that count to their new value, and the macro tiles that
-//! show where the energy comes from.
+//! Figures: the one way numbers are shown (whole part, quieter decimals,
+//! muted unit), numbers that count to their new value, and the macro tiles
+//! that show where the energy comes from.
 
 use std::time::Duration;
 
@@ -11,9 +12,9 @@ use super::{
 };
 use crate::domain::{format, nutrition::Nutrients};
 
-/// A text of `value` (written by `format`) that counts from what it showed
-/// to each new value, easing out; it jumps with reduced motion.
-pub fn counting(value: impl Fn() -> f64 + 'static, format: fn(f64) -> String) -> Text {
+/// A number that eases from what it showed to each new `value`; it jumps
+/// with reduced motion.
+pub fn counted(value: impl Fn() -> f64 + 'static) -> Signal<f64> {
     let target = computed(value);
     let shown = signal(0.0_f64);
     effect(move || {
@@ -38,7 +39,103 @@ pub fn counting(value: impl Fn() -> f64 + 'static, format: fn(f64) -> String) ->
             }
         });
     });
-    text(move || format(shown.get())).tabular_nums()
+    shown
+}
+
+/// How large a [`stat`] is.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Scale {
+    /// The one headline number of a card or page.
+    Hero,
+    /// A number among others in a row or grid.
+    Tile,
+}
+
+impl Scale {
+    fn number(self) -> Type {
+        match self {
+            Scale::Hero => Type::Display,
+            Scale::Tile => Type::Figure,
+        }
+    }
+
+    fn unit(self) -> Type {
+        match self {
+            Scale::Hero => Type::Callout,
+            Scale::Tile => Type::Caption,
+        }
+    }
+}
+
+/// Splits a written number into its whole part and its decimals
+/// (`72.9` → `72`, `.9`); grouping commas stay with the whole part.
+pub fn split_decimals(written: &str) -> (&str, &str) {
+    match written.rfind('.') {
+        Some(at)
+            if written[at + 1..].chars().all(|c| c.is_ascii_digit()) && at + 1 < written.len() =>
+        {
+            written.split_at(at)
+        }
+        _ => (written, ""),
+    }
+}
+
+/// Every number the app shows on its own: the whole part in ink, decimals
+/// one step quieter, the unit muted on the same baseline. A faint dash and
+/// no unit when there is no value, so a missing record never reads as zero.
+pub fn stat(
+    value: impl Fn() -> Option<String> + Copy + 'static,
+    unit: impl Fn() -> String + Copy + 'static,
+    scale: Scale,
+) -> View {
+    let part = move |decimals: bool| {
+        move || match value() {
+            Some(written) => {
+                let (whole, rest) = split_decimals(&written);
+                if decimals {
+                    rest.to_owned()
+                } else {
+                    whole.to_owned()
+                }
+            }
+            None if decimals => String::new(),
+            None => "—".to_owned(),
+        }
+    };
+    view()
+        .flex_row()
+        .items_baseline()
+        .min_w(px(0.0))
+        .child(
+            text(part(false))
+                .typo(scale.number())
+                .tabular_nums()
+                .number_of_lines(1)
+                .text_color(move || {
+                    if value().is_some() {
+                        color::INK
+                    } else {
+                        color::FAINT
+                    }
+                }),
+        )
+        .child(
+            text(part(true))
+                .typo(scale.number())
+                .tabular_nums()
+                .number_of_lines(1)
+                .text_color(color::MUTED),
+        )
+        .child(
+            text(move || match value() {
+                Some(_) => unit(),
+                None => String::new(),
+            })
+            .typo(scale.unit())
+            .text_color(color::MUTED)
+            .number_of_lines(1)
+            .ml(px(4.0)),
+        )
 }
 
 /// The macronutrients of `total` as three tiles: grams, share of the

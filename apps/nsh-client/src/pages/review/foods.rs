@@ -22,7 +22,7 @@ use crate::{
     ui::{
         Btn, Icon, Size, Type, Typo, color,
         feedback::{Tone, appear, badge, shimmer, skeleton},
-        figures::{counting, macro_tiles},
+        figures::{Scale, counted, macro_tiles, stat},
         icon, space,
         surface::{card, hairline, row_button, section_header},
     },
@@ -60,23 +60,14 @@ fn summary(draft: Draft) -> impl IntoElement {
                             .typo(Type::Subhead)
                             .text_color(color::MUTED),
                     )
-                    .child(
-                        view()
-                            .flex_row()
-                            .items_end()
-                            .gap(px(6.0))
-                            .child(
-                                counting(move || sum.get().kcal, format::kcal)
-                                    .typo(Type::Display)
-                                    .text_color(color::INK),
-                            )
-                            .child(
-                                text(|| s().kcal)
-                                    .typo(Type::Headline)
-                                    .text_color(color::MUTED)
-                                    .pb(px(6.0)),
-                            ),
-                    ),
+                    .child({
+                        let shown = counted(move || sum.get().kcal);
+                        stat(
+                            move || Some(format::kcal(shown.get())),
+                            || s().kcal.to_owned(),
+                            Scale::Hero,
+                        )
+                    }),
             )
             .child(macro_tiles(
                 [|| s().protein, || s().carbs, || s().fat],

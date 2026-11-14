@@ -1,13 +1,15 @@
 //! The Review tab: a week or a calendar month in review. The daily average
 //! intake and its change from the period before, a bar per day against the
-//! goal (days past it in amber, today in ink, nothing for a day without
-//! meals), the weight's change and line, and Garmin's averages. Earlier
-//! periods are a step back; a short personal note is kept on its day.
+//! goal for a week (days past it in amber, today in ink, nothing for a day
+//! without meals) or a calendar for a month, the weight's change and line,
+//! and Garmin's averages. Earlier periods are a step back; a short personal
+//! note is kept on its day.
 
 use nsh_core::prelude::*;
 
 use super::{
     home::dock_clearance,
+    review_calendar::{calendar, month_days},
     review_charts::{chart, macros, trend},
 };
 use crate::{
@@ -20,6 +22,7 @@ use crate::{
     i18n::s,
     ui::{
         Icon, IconBtn, Type, Typo, color,
+        figures::{Scale, stat},
         segmented::{Segment, segmented},
         space,
         surface::card,
@@ -29,6 +32,10 @@ use crate::{
 /// The Review tab's content.
 pub fn review_tab() -> impl IntoElement {
     let period = signal(Period::Week);
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
+    if crate::preview::review_month() {
+        period.set(Period::Month);
+    }
     // Periods back from the current one.
     let back = signal(0_i32);
     let days = computed(move || {
@@ -175,31 +182,14 @@ fn intake_card(
                 .justify_between()
                 .gap_3()
                 .child(
-                    view().gap(px(6.0)).child(label(|| s().daily_intake)).child(
-                        view()
-                            .flex_row()
-                            .items_baseline()
-                            .gap_1()
-                            .child(
-                                text(move || {
-                                    average().map(format::kcal).unwrap_or_else(|| "—".into())
-                                })
-                                .typo(Type::Display)
-                                .tabular_nums()
-                                .text_color(move || {
-                                    if average().is_some() {
-                                        color::INK
-                                    } else {
-                                        color::FAINT
-                                    }
-                                }),
-                            )
-                            .child(
-                                text(|| s().kcal)
-                                    .typo(Type::Callout)
-                                    .text_color(color::MUTED),
-                            ),
-                    ),
+                    view()
+                        .gap(px(6.0))
+                        .child(label(|| s().daily_intake))
+                        .child(stat(
+                            move || average().map(format::kcal),
+                            || s().kcal.to_owned(),
+                            Scale::Hero,
+                        )),
                 )
                 .child(when(
                     move || delta().is_some(),
@@ -219,7 +209,17 @@ fn intake_card(
                         .child(dynamic(move || {
                             let kcal = intake.with(|i| i.kcal.clone());
                             let (days, goal) = (days.get(), goal.get());
-                            untracked(move || chart(days, kcal, goal))
+                            if period.get() == Period::Month {
+                                let weighed: Vec<bool> =
+                                    days.iter().map(|&d| weights::on(d).is_some()).collect();
+                                let start = s().week_start();
+                                untracked(move || {
+                                    calendar(month_days(&days, &kcal, &weighed), goal, start, None)
+                                        .into_element()
+                                })
+                            } else {
+                                untracked(move || chart(days, kcal, goal).into_element())
+                            }
                         }))
                         .child(
                             text(move || {
@@ -259,8 +259,9 @@ fn weight_card(days: Memo<Vec<Day>>) -> impl IntoElement {
     when(
         move || latest().is_some(),
         move || {
-            card()
-                .p(px(space::CARD))
+            view()
+                .px(px(4.0))
+                .pt_2()
                 .gap_3()
                 .child(
                     view()
@@ -278,19 +279,11 @@ fn weight_card(days: Memo<Vec<Day>>) -> impl IntoElement {
                             },
                         )),
                 )
-                .child(
-                    view()
-                        .flex_row()
-                        .items_baseline()
-                        .gap_1()
-                        .child(
-                            text(move || latest().map(|w| s().kg(w.kg)).unwrap_or_default())
-                                .typo(Type::Display)
-                                .tabular_nums()
-                                .text_color(color::INK),
-                        )
-                        .child(text("kg").typo(Type::Callout).text_color(color::MUTED)),
-                )
+                .child(stat(
+                    move || latest().map(|w| s().kg(w.kg)),
+                    || "kg".to_owned(),
+                    Scale::Hero,
+                ))
                 .child(dynamic(move || {
                     let history = weights::all();
                     let (first, points) = days.with(|d| {
@@ -322,22 +315,22 @@ fn recovery_card(days: Memo<Vec<Day>>) -> impl IntoElement {
         review::recovery(&measured)
     });
     let tile = |name: fn() -> &'static str,
-                value: Box<dyn Fn() -> Option<String>>,
+                value: Box<dyn Fn() -> Option<(String, String)>>,
                 detail: Box<dyn Fn() -> Option<String>>| {
-        card()
+        view()
             .flex_1()
             .min_w(px(0.0))
-            .px(px(14.0))
-            .py(px(13.0))
+            .py(px(10.0))
             .gap(px(6.0))
             .child(label(name))
-            .child(
-                text(move || value().unwrap_or_else(|| "—".into()))
-                    .typo(Type::Figure)
-                    .tabular_nums()
-                    .text_color(color::INK)
-                    .number_of_lines(1),
-            )
+            .child({
+                let value = computed(value);
+                stat(
+                    move || value.get().map(|(v, _)| v),
+                    move || value.get().map(|(_, u)| u).unwrap_or_default(),
+                    Scale::Tile,
+                )
+            })
             .child(
                 text(move || detail().unwrap_or_default())
                     .typo(Type::Caption)
@@ -358,7 +351,10 @@ fn recovery_card(days: Memo<Vec<Day>>) -> impl IntoElement {
                         .child(tile(
                             || s().avg_sleep,
                             Box::new(move || {
-                                averages.with(|a| a.sleep_seconds.map(|v| s().sleep_time(v as u32)))
+                                averages.with(|a| {
+                                    a.sleep_seconds
+                                        .map(|v| (s().sleep_time(v as u32), String::new()))
+                                })
                             }),
                             Box::new(move || {
                                 averages.with(|a| {
@@ -369,7 +365,9 @@ fn recovery_card(days: Memo<Vec<Day>>) -> impl IntoElement {
                         .child(tile(
                             || s().resting_hr,
                             Box::new(move || {
-                                averages.with(|a| a.resting_hr.map(|v| format!("{v:.0} bpm")))
+                                averages.with(|a| {
+                                    a.resting_hr.map(|v| (format!("{v:.0}"), "bpm".to_owned()))
+                                })
                             }),
                             Box::new(|| None),
                         )),
@@ -381,13 +379,17 @@ fn recovery_card(days: Memo<Vec<Day>>) -> impl IntoElement {
                         .child(tile(
                             || s().hrv,
                             Box::new(move || {
-                                averages.with(|a| a.hrv_ms.map(|v| format!("{v:.0} ms")))
+                                averages.with(|a| {
+                                    a.hrv_ms.map(|v| (format!("{v:.0}"), "ms".to_owned()))
+                                })
                             }),
                             Box::new(|| None),
                         ))
                         .child(tile(
                             || s().steps,
-                            Box::new(move || averages.with(|a| a.steps.map(format::kcal))),
+                            Box::new(move || {
+                                averages.with(|a| a.steps.map(|v| (format::kcal(v), String::new())))
+                            }),
                             Box::new(|| None),
                         )),
                 )

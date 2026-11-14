@@ -67,14 +67,18 @@ pub mod color {
     /// Done, connected.
     pub const POSITIVE: AdaptiveColor = c(0x1E9A55, 0x4CC38A);
 
-    /// Energy from protein.
-    pub const PROTEIN: AdaptiveColor = c(0xFF5A5F, 0xFF6E72);
-    /// Energy from carbohydrates.
-    pub const CARBS: AdaptiveColor = c(0xFFAA1C, 0xFFBF45);
-    /// Energy from fat.
-    pub const FAT: AdaptiveColor = c(0x3D8BFF, 0x5C9DFF);
+    /// Energy from protein: the darkest step of the one warm-stone ramp the
+    /// macronutrients share, so the ring reads as one quiet figure.
+    pub const PROTEIN: AdaptiveColor = c(0x1F1E1B, 0xF2F1EE);
+    /// Energy from carbohydrates: the middle step.
+    pub const CARBS: AdaptiveColor = c(0x7A766E, 0xA6A29A);
+    /// Energy from fat: the light step.
+    pub const FAT: AdaptiveColor = c(0xB5B0A6, 0x6E6A63);
     /// Energy the macronutrients do not explain.
-    pub const OTHER: AdaptiveColor = c(0xCCCAC4, 0x4A4A50);
+    pub const OTHER: AdaptiveColor = c(0xDAD7D0, 0x45433F);
+    /// A logged day in the month calendar at its fullest, from the same
+    /// stone ramp; lighter days fade it toward the surface.
+    pub const HEAT: AdaptiveColor = c(0xC4BFB5, 0x5E5A54);
     /// The ring's empty track.
     pub const TRACK: AdaptiveColor = c(0xEFEEEA, 0x1E1E22);
 

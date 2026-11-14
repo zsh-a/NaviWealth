@@ -30,24 +30,15 @@ pub fn note_editor(days: Memo<Vec<Day>>) -> impl IntoElement {
                         }),
                 )
                 .child(field(
-                    || s().review_note,
+                    move || format!("{} · {}", s().review_note, s().long_date(day)),
                     text_input(value)
                         .label(|| s().review_note)
+                        .placeholder(|| s().review_note_hint)
                         .on_change(move |text: &str| {
                             value.set(text.to_owned());
                             notes::set(day, text);
                         }),
                 ))
-                .child(
-                    text(move || s().long_date(day))
-                        .typo(Type::Caption)
-                        .text_color(color::MUTED),
-                )
-                .child(
-                    text(|| s().review_note_hint)
-                        .typo(Type::Caption)
-                        .text_color(color::MUTED),
-                )
         })
     })
 }

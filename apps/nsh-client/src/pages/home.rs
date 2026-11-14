@@ -16,6 +16,7 @@ use super::{
     capture::capture_sheet,
     parts::status_bar,
     records::records_tab,
+    records_jump::jump_sheet,
     today::{garmin_sheet, setup_sheet, today_tab, weight_editor},
     week_review::review_tab,
 };
@@ -49,6 +50,10 @@ pub struct Sheets {
     /// The day whose weight the editor shows.
     pub weight: Signal<Option<Day>>,
     pub garmin: Signal<bool>,
+    /// The Records calendar for going to a day.
+    pub jump: Signal<bool>,
+    /// The day Records should scroll to, set by the calendar.
+    pub jump_to: Signal<Option<Day>>,
 }
 
 impl Sheets {
@@ -95,10 +100,12 @@ pub fn home_page() -> Screen {
         setup: signal(false),
         weight: signal(None),
         garmin: signal(false),
+        jump: signal(false),
+        jump_to: signal(None),
     };
     provide_context(sheets);
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
-    crate::preview::home_opened(sheets.capture);
+    crate::preview::home_opened(sheets.capture, sheets.jump);
     nav_page()
         .title(|| SharedString::from(tab_name(nav::tab())))
         .header_visible(false)
@@ -128,6 +135,11 @@ pub fn home_page() -> Screen {
                     move || sheets.garmin.get(),
                     move || sheets.garmin.set(false),
                     garmin_sheet(),
+                ))
+                .child(bottom_sheet(
+                    move || sheets.jump.get(),
+                    move || sheets.jump.set(false),
+                    jump_sheet(sheets),
                 )),
         )
 }

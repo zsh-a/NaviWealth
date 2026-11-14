@@ -10,7 +10,7 @@ use crate::{
     i18n::s,
     ui::{
         Type, Typo, color,
-        figures::counting,
+        figures::{Scale, counted, stat},
         ring::{RingData, energy_ring},
         space,
         surface::card,
@@ -115,24 +115,12 @@ fn figure(
     total: impl Fn() -> Nutrients + Copy + 'static,
     logged: impl Fn() -> bool + Copy + 'static,
 ) -> impl IntoElement {
-    view()
-        .flex_row()
-        .items_baseline()
-        .gap_1()
-        .child(
-            when(logged, move || {
-                counting(move || total().kcal, format::kcal)
-                    .typo(Type::Display)
-                    .text_color(color::INK)
-                    .number_of_lines(1)
-            })
-            .otherwise(|| text("—").typo(Type::Display).text_color(color::FAINT)),
-        )
-        .child(
-            text(|| s().kcal)
-                .typo(Type::Callout)
-                .text_color(color::MUTED),
-        )
+    let shown = counted(move || total().kcal);
+    stat(
+        move || logged().then(|| format::kcal(shown.get())),
+        || s().kcal.to_owned(),
+        Scale::Hero,
+    )
 }
 
 /// What is left of the goal (the ring shows how much of it is eaten), or

@@ -113,7 +113,7 @@ NW_PREVIEW_ROUTE=new:/path/to/meal.jpg cargo run
 
 `NW_PREVIEW` also takes `dark`/`light`, `drafts` (two recognition drafts) and `favorites` (the first seeded meals
 saved as favorites); `NW_PREVIEW_ROUTE` takes `manual`,
-`edit`, `settings`, `review`, `records` and `capture`; `NW_PREVIEW_PHOTOS` lists photos for the seeded meals;
+`edit`, `settings`, `review`, `review-month`, `records`, `records-jump` and `capture`; `NW_PREVIEW_PHOTOS` lists photos for the seeded meals;
 `NW_PREVIEW_EDITOR=1` opens the first food's editor once results arrive.
 
 Review notes are single lines (up to 280 characters), saved automatically on

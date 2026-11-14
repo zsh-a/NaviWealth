@@ -6,7 +6,7 @@
 //! NW_PREVIEW=account,trust,meals,goal,weights,dark   # what to seed
 //! NW_PREVIEW_BASE_URL=http://127.0.0.1:8799/v1
 //! NW_PREVIEW_PHOTOS=/a.jpg:/b.jpg:/c.jpg     # photos of the seeded meals
-//! NW_PREVIEW_ROUTE=new:/meal.jpg | manual | edit | settings | review
+//! NW_PREVIEW_ROUTE=new:/meal.jpg | manual | edit | settings | review | review-month | records-jump
 //! NW_PREVIEW_EDITOR=1                        # open the first food once foods arrive
 //! NW_PREVIEW_GARMIN_KEY_FILE=/path/garmin.key # connect a real Garmin key
 //! ```
@@ -100,7 +100,7 @@ pub fn apply() {
             }
         }
         Some("settings") => nav::push(Route::Settings),
-        Some("review") => nav::select(nav::Tab::Review),
+        Some("review" | "review-month") => nav::select(nav::Tab::Review),
         Some("records") => nav::select(nav::Tab::Records),
         _ => {}
     }
@@ -144,14 +144,20 @@ fn seed_drafts() {
     }
 }
 
-/// Opens the capture sheet once the home is up, when asked
-/// (`NW_PREVIEW_ROUTE=capture`).
-pub fn home_opened(capture: Signal<bool>) {
-    if env::var("NW_PREVIEW_ROUTE").is_ok_and(|route| route == "capture") {
-        set_timeout(std::time::Duration::from_millis(600), move || {
-            capture.set(true)
-        });
-    }
+/// Opens the capture sheet (`NW_PREVIEW_ROUTE=capture`) or the Records
+/// calendar (`records-jump`) once the home is up.
+pub fn home_opened(capture: Signal<bool>, jump: Signal<bool>) {
+    let sheet = match env::var("NW_PREVIEW_ROUTE").as_deref() {
+        Ok("capture") => capture,
+        Ok("records-jump") => {
+            nav::select(nav::Tab::Records);
+            jump
+        }
+        _ => return,
+    };
+    set_timeout(std::time::Duration::from_millis(600), move || {
+        sheet.set(true)
+    });
 }
 
 /// Whether to open the first food's editor once foods arrive.
@@ -281,4 +287,9 @@ fn seed_meals() {
             prompt_version: None,
         });
     }
+}
+
+/// Whether Review opens on the month (`NW_PREVIEW_ROUTE=review-month`).
+pub fn review_month() -> bool {
+    env::var("NW_PREVIEW_ROUTE").is_ok_and(|route| route == "review-month")
 }

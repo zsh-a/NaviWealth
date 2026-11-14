@@ -3,6 +3,7 @@
 //! pressing a Garmin vital shows all of the day's Garmin data, or Settings
 //! before a key is connected.
 
+use nsh_base::button;
 use nsh_core::prelude::*;
 
 use crate::{
@@ -11,7 +12,13 @@ use crate::{
     i18n::s,
     nav::{self, Route},
     pages::home::Sheets,
-    ui::{Icon, Type, Typo, color, icon, surface::card_button},
+    ui::{
+        Icon, Type, Typo, color,
+        figures::{Scale, stat},
+        icon,
+        surface::HAIRLINE,
+        theme::{motion, radius},
+    },
 };
 
 pub fn vitals(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
@@ -29,7 +36,7 @@ pub fn vitals(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
     let latest = move || weights::latest_until(day());
     view()
         .flex_row()
-        .gap(px(10.0))
+        .items_stretch()
         .child(when(has_garmin, move || {
             tile(
                 Icon::Moon,
@@ -41,6 +48,7 @@ pub fn vitals(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                             .map(|v| s().sleep_time(v))
                     })
                 },
+                || "",
                 move || {
                     summary
                         .with(|d| {
@@ -53,10 +61,12 @@ pub fn vitals(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                 open_garmin,
             )
         }))
+        .child(when(has_garmin, divider))
         .child(tile(
             Icon::Scale,
             || s().weight,
-            move || latest().map(|entry| format!("{} kg", s().kg(entry.kg))),
+            move || latest().map(|entry| s().kg(entry.kg)),
+            || "kg",
             move || match latest() {
                 None => s().tap_to_log.to_owned(),
                 Some(entry) if entry.day == day() => weights::weekly_change(entry)
@@ -66,6 +76,7 @@ pub fn vitals(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
             },
             move || sheets.weight.set(Some(day())),
         ))
+        .child(when(has_garmin, divider))
         .child(when(has_garmin, move || {
             tile(
                 Icon::Bolt,
@@ -77,6 +88,7 @@ pub fn vitals(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                             .map(|v| v.to_string())
                     })
                 },
+                || "",
                 move || {
                     summary
                         .with(|d| {
@@ -91,22 +103,36 @@ pub fn vitals(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
         }))
 }
 
+/// A hairline between two vitals.
+fn divider() -> impl IntoElement {
+    view().w(px(HAIRLINE)).my(px(10.0)).bg(color::LINE)
+}
+
+/// One vital laid flat on the canvas: its name, its figure and a caption.
+/// It shades softly while pressed instead of sitting on a card.
 fn tile(
     glyph: Icon,
     name: fn() -> &'static str,
     value: impl Fn() -> Option<String> + Copy + 'static,
+    unit: fn() -> &'static str,
     caption: impl Fn() -> String + Copy + 'static,
     press: impl Fn() + 'static,
 ) -> impl IntoElement {
-    card_button(press)
+    button()
+        .on_press(press)
         .flex_1()
         .min_w(px(0.0))
-        .px(px(14.0))
-        .pt(px(14.0))
-        .pb(px(13.0))
-        .gap(px(8.0))
+        .px(px(6.0))
+        .py(px(8.0))
+        .gap(px(6.0))
+        .rounded(px(radius::WELL))
+        .transition_colors()
+        .duration(motion::INSTANT)
+        .active(|s| s.bg(color::SUNKEN))
+        .focus_visible(|s| s.bg(color::SURFACE_2))
         .accessibility_label(move || {
-            Some(format!("{}, {}", name(), value().unwrap_or_else(|| "—".into())).into())
+            let value = value().map_or_else(|| "—".to_owned(), |v| format!("{v} {}", unit()));
+            Some(format!("{}, {value}", name()).into())
         })
         .child(
             view()
@@ -122,19 +148,7 @@ fn tile(
                         .number_of_lines(1),
                 ),
         )
-        .child(
-            text(move || value().unwrap_or_else(|| "—".into()))
-                .typo(Type::Figure)
-                .tabular_nums()
-                .text_color(move || {
-                    if value().is_some() {
-                        color::INK
-                    } else {
-                        color::FAINT
-                    }
-                })
-                .number_of_lines(1),
-        )
+        .child(stat(value, move || unit().to_owned(), Scale::Tile))
         .child(
             text(caption)
                 .typo(Type::Caption)

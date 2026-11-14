@@ -25,12 +25,12 @@ fn todays_weight_is_logged_kept_and_checked() -> Result<(), String> {
     // Typing appends: the field now reads 52.44, kept to one decimal.
     app.type_text("label:Weight", "2.44")?;
     app.press("Save weight")?;
-    app.wait_for("text:52.4 kg")?;
+    app.wait_for("label:Weight, 52.4 kg")?;
     assert_eq!(stored_weights(dir.path()), [(today().to_string(), 52.4)]);
     drop(app);
 
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
-    app.wait_for("text:52.4 kg")?;
+    app.wait_for("label:Weight, 52.4 kg")?;
     Ok(())
 }
 
@@ -41,13 +41,13 @@ fn deleting_a_weight_can_be_undone() -> Result<(), String> {
     app.press("text:Tap to log")?;
     app.type_text("label:Weight", "70")?;
     app.press("Save weight")?;
-    app.wait_for("text:70.0 kg")?;
-    app.press("text:70.0 kg")?;
+    app.wait_for("label:Weight, 70.0 kg")?;
+    app.press("label:Weight, 70.0 kg")?;
     app.press("Delete")?;
     app.wait_for("Weight deleted")?;
     assert!(stored_weights(dir.path()).is_empty());
     app.press("Undo")?;
-    app.wait_for("text:70.0 kg")?;
+    app.wait_for("label:Weight, 70.0 kg")?;
     assert_eq!(stored_weights(dir.path()).len(), 1);
     Ok(())
 }
