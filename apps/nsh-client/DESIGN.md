@@ -31,7 +31,8 @@ AI only to turn a photo into a draft, the owner's own model account.
 - **Records:** every day newest first, its header on one line (date, the
   day's kcal, a weight chip that opens the weight editor), its meals as rows
   of one card; all / meals / weight; 21 days at a time. The calendar button
-  opens a month calendar to go to any day with records.
+  opens a month calendar; a chosen day is shown alone, under a bar with its
+  date, steps to the days with records before and after it, and All days.
 - **Review:** a calendar week (Monday first in Chinese and ISO locales) or
   month, stepped back with a labelled stepper. It leads with one sentence of
   what changed (daily average against the period before, weight trend),
@@ -130,7 +131,6 @@ still.
 | Today | Day's energy changes | Ring segments sweep to their new ends, `slower`; the figure eases to its new value | Set at once |
 | Today | Meals arrive (open, save, undo) | Rows rise 14 pt and fade in, staggered | Shown at once |
 | All | Toast | Slides up and fades, `slow`; its action (Undo) restores | Shown at once |
-| Records | Go to a day | The list scrolls to the day (animated reveal) | Jumps |
 | Meal page | Scrolling | Photo drifts at half speed; the top bar frosts in once the panel slides under it | Bar switches at once |
 | Meal page | Analyzing | The AI's light passes over the photo (2 s loop); placeholders shimmer | No light, no shimmer |
 | Meal page | Results arrive | Rows rise in, staggered; the total eases up | Shown at once |

@@ -2,15 +2,10 @@
 //! meals add up to; all, meals only or weights only. Older days come on
 //! request so a long history stays light.
 
-use std::{
-    cell::RefCell,
-    collections::{BTreeMap, HashMap},
-    rc::Rc,
-    time::Duration,
-};
+use std::collections::BTreeMap;
 
 use nsh_base::button;
-use nsh_core::prelude::*;
+use nsh_core::{geometry::Point, prelude::*};
 
 use super::{
     drafts::drafts_section,
@@ -26,7 +21,7 @@ use crate::{
     },
     i18n::s,
     ui::{
-        Btn, Icon, IconBtn, Type, Typo, Variant, color,
+        Btn, Icon, IconBtn, Size, Type, Typo, Variant, color,
         feedback::empty_state,
         icon,
         segmented::{Segment, segmented},
@@ -67,40 +62,42 @@ pub fn records_tab() -> impl IntoElement {
     let shown = signal(PAGE);
     let days = computed(move || group(meals::all(), weights::all(), filter.get()));
     let sheets = Sheets::get();
-    // Each shown day's section, for the calendar to scroll to.
-    let sections: Sections = Rc::new(RefCell::new(HashMap::new()));
-    {
-        let sections = sections.clone();
-        effect(move || {
-            let Some(day) = sheets.jump_to.get() else {
-                return;
-            };
-            untracked(|| sheets.jump_to.set(None));
-            // A day only a weight was logged on is hidden under Meals.
-            let listed = |f| {
-                group(meals::all(), weights::all(), f)
-                    .iter()
-                    .any(|d| d.day == day)
-            };
-            if !untracked(|| listed(filter.get())) {
-                filter.set(Filter::All);
-            }
-            if let Some(at) = untracked(|| days.with(|d| d.iter().position(|d| d.day == day))) {
-                shown.update(|n| *n = (*n).max(at + 1));
-            }
-            let sections = sections.clone();
-            // Once the day's section is laid out.
-            set_timeout(Duration::from_millis(60), move || {
-                if let Some(section) = sections.borrow().get(&day) {
-                    section.reveal(RevealOptions::default());
-                }
-            });
-        });
-    }
+    // The one day the calendar opened, shown alone until All days.
+    let focus = signal(None::<Day>);
+    let list = element_ref();
     effect(move || {
-        let names: Vec<String> = days.with(|days| {
+        let Some(day) = sheets.jump_to.get() else {
+            return;
+        };
+        untracked(|| {
+            sheets.jump_to.set(None);
+            filter.set(Filter::All);
+            focus.set(Some(day));
+        });
+        list.scroll_to(
+            Point {
+                x: px(0.0),
+                y: px(0.0),
+            },
+            false,
+        );
+    });
+    // A focused day whose records are all gone falls back to every day.
+    effect(move || {
+        if let Some(day) = focus.get()
+            && !days.with(|d| d.iter().any(|r| r.day == day))
+        {
+            untracked(|| focus.set(None));
+        }
+    });
+    // The days the list shows: the focused day, or the filter's days.
+    let listed = computed(move || match focus.get() {
+        Some(day) => days.with(|d| d.iter().filter(|d| d.day == day).cloned().collect()),
+        None => days.with(|d| d.iter().take(shown.get()).cloned().collect::<Vec<_>>()),
+    });
+    effect(move || {
+        let names: Vec<String> = listed.with(|days| {
             days.iter()
-                .take(shown.get())
                 .flat_map(|d| d.entries.iter())
                 .filter_map(|e| match e {
                     Entry::Meal(meal) => meal.photo.clone(),
@@ -112,7 +109,7 @@ pub fn records_tab() -> impl IntoElement {
             spawn(photos::load(names));
         }
     });
-    scroll().flex_1().child(
+    scroll().flex_1().element_ref(&list).child(
         view()
             .px(px(space::GUTTER))
             .pt_safe_area_plus(px(10.0))
@@ -148,15 +145,23 @@ pub fn records_tab() -> impl IntoElement {
                             .on_press(move || sheets.jump.set(true)),
                     ),
             )
-            .child(segmented(
-                vec![
-                    Segment::new(Filter::All, || s().all_records.into()),
-                    Segment::new(Filter::Meals, || s().meals.into()),
-                    Segment::new(Filter::Weight, || s().weight.into()),
-                ],
-                move || filter.get(),
-                move |f| filter.set(f),
-            ))
+            .child(
+                when(
+                    move || focus.get().is_some(),
+                    move || focus_bar(focus, days),
+                )
+                .otherwise(move || {
+                    segmented(
+                        vec![
+                            Segment::new(Filter::All, || s().all_records.into()),
+                            Segment::new(Filter::Meals, || s().meals.into()),
+                            Segment::new(Filter::Weight, || s().weight.into()),
+                        ],
+                        move || filter.get(),
+                        move |f| filter.set(f),
+                    )
+                }),
+            )
             .child(drafts_section(true))
             .child(
                 when(
@@ -173,26 +178,17 @@ pub fn records_tab() -> impl IntoElement {
                     view()
                         .gap_5()
                         .child(each(
-                            move || {
-                                days.with(|d| {
-                                    d.iter().take(shown.get()).cloned().collect::<Vec<_>>()
-                                })
-                            },
+                            move || listed.get(),
                             |d: &DayRecords| d.day,
-                            {
-                                let sections = sections.clone();
-                                move |d, _| {
-                                    let sections = sections.clone();
-                                    dynamic(move || {
-                                        let d = d.get();
-                                        let sections = sections.clone();
-                                        untracked(move || day_section(d, sections))
-                                    })
-                                }
+                            |d, _| {
+                                dynamic(move || {
+                                    let d = d.get();
+                                    untracked(move || day_section(d))
+                                })
                             },
                         ))
                         .child(when(
-                            move || days.with(Vec::len) > shown.get(),
+                            move || focus.get().is_none() && days.with(Vec::len) > shown.get(),
                             move || {
                                 Btn::secondary()
                                     .label(|| s().show_earlier.into())
@@ -204,12 +200,61 @@ pub fn records_tab() -> impl IntoElement {
     )
 }
 
-/// The shown days' sections by day.
-type Sections = Rc<RefCell<HashMap<Day, ElementRef>>>;
+/// Over a focused day: its short date, steps to the days with records before and after it,
+/// and All days back to the whole list.
+fn focus_bar(focus: Signal<Option<Day>>, days: Memo<Vec<DayRecords>>) -> impl IntoElement {
+    // Days are newest first: the next index is the earlier day.
+    let step = move |earlier: bool| {
+        let day = focus.get()?;
+        days.with(|d| {
+            let at = d.iter().position(|r| r.day == day)?;
+            let to = if earlier {
+                at.checked_add(1)?
+            } else {
+                at.checked_sub(1)?
+            };
+            d.get(to).map(|r| r.day)
+        })
+    };
+    view()
+        .flex_row()
+        .items_center()
+        .gap_2()
+        .child(
+            IconBtn::new(Icon::ChevronLeft, || s().previous_day.into())
+                .on_press(move || {
+                    if let Some(day) = untracked(|| step(true)) {
+                        focus.set(Some(day));
+                    }
+                })
+                .disabled(move || step(true).is_none()),
+        )
+        .child(
+            text(move || focus.get().map(|d| s().short_date(d)).unwrap_or_default())
+                .typo(Type::Headline)
+                .text_color(color::INK)
+                .text_center()
+                .number_of_lines(1)
+                .flex_1(),
+        )
+        .child(
+            IconBtn::new(Icon::ChevronRight, || s().next_day.into())
+                .on_press(move || {
+                    if let Some(day) = untracked(|| step(false)) {
+                        focus.set(Some(day));
+                    }
+                })
+                .disabled(move || step(false).is_none()),
+        )
+        .child(
+            Btn::tonal()
+                .size(Size::Small)
+                .label(|| s().all_days.into())
+                .on_press(move || focus.set(None)),
+        )
+}
 
-fn day_section(records: DayRecords, sections: Sections) -> impl IntoElement {
-    let section = element_ref();
-    sections.borrow_mut().insert(records.day, section);
+fn day_section(records: DayRecords) -> impl IntoElement {
     let sheets = Sheets::get();
     let today = untracked(clock::today);
     let title = match today.days_since(records.day) {
@@ -247,7 +292,6 @@ fn day_section(records: DayRecords, sections: Sections) -> impl IntoElement {
             )
     });
     view()
-        .element_ref(&section)
         .gap_3()
         .child(
             view()

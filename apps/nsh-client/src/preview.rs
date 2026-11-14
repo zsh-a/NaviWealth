@@ -6,7 +6,7 @@
 //! NW_PREVIEW=account,trust,meals,goal,weights,dark   # what to seed
 //! NW_PREVIEW_BASE_URL=http://127.0.0.1:8799/v1
 //! NW_PREVIEW_PHOTOS=/a.jpg:/b.jpg:/c.jpg     # photos of the seeded meals
-//! NW_PREVIEW_ROUTE=new:/meal.jpg | manual | edit | settings | model | review | review-month | records-jump
+//! NW_PREVIEW_ROUTE=new:/meal.jpg | manual | edit | settings | model | review | review-month | records-jump | records-day
 //! NW_PREVIEW_EDITOR=1                        # open the first food once foods arrive
 //! NW_PREVIEW_GARMIN_KEY_FILE=/path/garmin.key # connect a real Garmin key
 //! ```
@@ -151,9 +151,17 @@ fn seed_drafts() {
 
 /// Opens the capture sheet (`NW_PREVIEW_ROUTE=capture`) or the Records
 /// calendar (`records-jump`) once the home is up.
-pub fn home_opened(capture: Signal<bool>, jump: Signal<bool>) {
+pub fn home_opened(capture: Signal<bool>, jump: Signal<bool>, jump_to: Signal<Option<Day>>) {
     let sheet = match env::var("NW_PREVIEW_ROUTE").as_deref() {
         Ok("capture") => capture,
+        Ok("records-day") => {
+            nav::select(nav::Tab::Records);
+            let day = untracked(clock::today).plus_days(-1);
+            set_timeout(std::time::Duration::from_millis(600), move || {
+                jump_to.set(Some(day))
+            });
+            return;
+        }
         Ok("records-jump") => {
             nav::select(nav::Tab::Records);
             jump

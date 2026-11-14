@@ -63,7 +63,7 @@ Decided 2026-11-13; screens in `.impeccable/mocks/2026-11-13-lifeos-ia/`.
   a long press. Settings keep each change as it is made; there is no Save.
 - Review leads with one sentence of what changed against the period before;
   a month is a calendar whose days open in Records, which has the same
-  calendar to go to any day.
+  calendar; a chosen day is shown alone, stepping to neighbouring days.
 
 ## Kept Features
 

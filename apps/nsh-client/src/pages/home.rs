@@ -105,7 +105,7 @@ pub fn home_page() -> Screen {
     };
     provide_context(sheets);
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
-    crate::preview::home_opened(sheets.capture, sheets.jump);
+    crate::preview::home_opened(sheets.capture, sheets.jump, sheets.jump_to);
     nav_page()
         .title(|| SharedString::from(tab_name(nav::tab())))
         .header_visible(false)

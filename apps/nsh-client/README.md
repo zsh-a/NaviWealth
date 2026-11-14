@@ -4,7 +4,7 @@ NaviWealth's native client, written in Rust on [NSH](https://github.com/longbrid
 0.5.0. Its first page is HealthOS meal logging: choose a photo of a meal, allow
 it to be sent to your own vision model, review the estimated foods and amounts,
 and save. The home has three tabs: Today (the day's energy, macros and
-vitals), Records (all history, with a calendar to go to any day) and Review
+vitals), Records (all history; its calendar opens any day on its own) and Review
 (the week or month, led by what changed). Settings keep each change as it is
 made; there is no Save. Manual entry works without any account. Design standards and the motion inventory: `DESIGN.md`.
 
@@ -114,7 +114,7 @@ NW_PREVIEW_ROUTE=new:/path/to/meal.jpg cargo run
 
 `NW_PREVIEW` also takes `dark`/`light`, `drafts` (two recognition drafts) and `favorites` (the first seeded meals
 saved as favorites); `NW_PREVIEW_ROUTE` takes `manual`,
-`edit`, `settings`, `model`, `review`, `review-month`, `records`, `records-jump` and `capture`; `NW_PREVIEW_PHOTOS` lists photos for the seeded meals;
+`edit`, `settings`, `model`, `review`, `review-month`, `records`, `records-jump`, `records-day` and `capture`; `NW_PREVIEW_PHOTOS` lists photos for the seeded meals;
 `NW_PREVIEW_EDITOR=1` opens the first food's editor once results arrive.
 
 Review notes are single lines (up to 280 characters), saved automatically on

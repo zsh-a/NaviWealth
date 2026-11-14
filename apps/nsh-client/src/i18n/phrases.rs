@@ -26,6 +26,26 @@ impl Strings {
         }
     }
 
+    /// A day in brief (`Fri, Nov 13`, `11月13日 周五`).
+    pub fn short_date(&self, day: Day) -> String {
+        let date = day.0;
+        if self.zh() {
+            format!(
+                "{}月{}日 {}",
+                date.month(),
+                date.day(),
+                self.weekday_short(day)
+            )
+        } else {
+            format!(
+                "{}, {} {}",
+                self.weekday_short(day),
+                self.month_short(date.month()),
+                date.day()
+            )
+        }
+    }
+
     /// Chinese uses Monday; other locales follow the platform, ISO by default.
     pub fn week_start(&self) -> crate::domain::review::WeekStart {
         use crate::domain::review::WeekStart;
