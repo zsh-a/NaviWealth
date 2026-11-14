@@ -5,7 +5,18 @@ mod dav;
 
 use common::*;
 use dav::Dav;
-use nsh_app_naviwealth_health::domain::backup::{self, BackupError};
+use nsh_app_naviwealth_health::domain::{
+    backup::{self, BackupError},
+    backup_bundle::Bundle,
+};
+
+/// A bundle of the database `bytes` alone.
+fn only(database: Vec<u8>) -> Bundle {
+    Bundle {
+        database,
+        photos: Vec::new(),
+    }
+}
 use nsh_testing::DialogAnswer;
 
 #[test]
@@ -81,9 +92,15 @@ fn backed_up(dav: &Dav) -> Result<Vec<u8>, String> {
             .windows(b"Tomato pasta".len())
             .any(|w| w == b"Tomato pasta")
     );
-    let (_, database) = backup::open(body, "correct horse battery").unwrap();
+    let (_, bundle) = backup::open(body, "correct horse battery").unwrap();
     assert!(
-        !database
+        bundle.photos.is_empty(),
+        "the daily backup carries no photos"
+    );
+    assert!(!backup::has_photos(name));
+    assert!(
+        !bundle
+            .database
             .windows(b"sk-test-key".len())
             .any(|w| w == b"sk-test-key")
     );
@@ -127,9 +144,9 @@ fn restore_latest(app: &mut Headless, dav: &Dav) -> Result<(), String> {
     app.press("label:Settings")?;
     app.press("Restore…")?;
     let name = dav.files().last_key_value().unwrap().0.clone();
-    app.wait_for(&format!("text:{name}"))?;
+    app.wait_for(&format!("id:{name} >> text:/./"))?;
     app.on_dialog(|_| DialogAnswer::Press("Restore".into()));
-    app.press(&format!("text:{name}"))?;
+    app.press(&format!("id:{name} >> text:/./"))?;
     Ok(())
 }
 
@@ -237,7 +254,7 @@ fn corrupted_and_newer_databases_leave_existing_records_untouched() -> Result<()
         let bytes = std::fs::read(path.path()).unwrap();
         dav.put(
             "naviwealth-2026-11-13.nwbk",
-            backup::seal(&bytes, "correct horse battery", 3, 42).unwrap(),
+            backup::seal(&only(bytes), "correct horse battery", 3, 42).unwrap(),
         );
         let (mut app, _, dir) = fresh_with(&dav, "correct horse battery", true);
         let before = stored_meals(dir.path());
@@ -288,7 +305,7 @@ fn failure_while_copying_rows_rolls_back_the_whole_restore() -> Result<(), Strin
     dav.put(
         "naviwealth-2026-11-13.nwbk",
         backup::seal(
-            &std::fs::read(path.path()).unwrap(),
+            &only(std::fs::read(path.path()).unwrap()),
             "correct horse battery",
             3,
             42,
@@ -330,5 +347,60 @@ fn dav_authentication_errors_and_redirects_are_visible_without_sending_credentia
         })?;
         assert!(destination.requests().is_empty());
     }
+    Ok(())
+}
+
+/// The app's photo folder beside its database under `dir`.
+fn photo_dir(dir: &Path) -> PathBuf {
+    database_in(dir).parent().unwrap().join("meal-photos")
+}
+
+#[test]
+fn a_backup_made_by_hand_carries_the_photos_back_to_a_fresh_install() -> Result<(), String> {
+    let dav = Dav::new();
+    // A meal with a kept photo, backed up by hand.
+    let dir = tempfile::tempdir().unwrap();
+    let mut entries = backups(&dav, "correct horse battery", Some(today().to_string()));
+    let mut meals: Value = serde_json::from_str(&pasta_today()[0].1).unwrap();
+    meals["meals"][0]["photo"] = json!("m1.jpg");
+    entries.push(("meals.v1".into(), meals.to_string()));
+    // The app's data directory is where it put its database.
+    let (app, storage) = start_in(Some(dir.path()), entries, None);
+    drop(app);
+    let photos = photo_dir(dir.path());
+    std::fs::create_dir_all(&photos).unwrap();
+    std::fs::write(photos.join("m1.jpg"), photo()).unwrap();
+    let (mut app, _) = start_in(
+        Some(dir.path()),
+        storage.entries().into_iter().collect(),
+        None,
+    );
+    app.press("label:Settings")?;
+    app.press("Save and back up")?;
+    let made = app.wait_until("a backup with photos", GONE, |_| {
+        dav.files().keys().any(|name| backup::has_photos(name))
+    });
+    assert!(
+        made.is_ok(),
+        "files: {:?}",
+        dav.files().keys().collect::<Vec<_>>()
+    );
+    let (name, body) = dav.files().into_iter().next_back().unwrap();
+    let (_, bundle) = backup::open(&body, "correct horse battery").unwrap();
+    assert_eq!(bundle.photos, vec![("m1.jpg".to_owned(), photo())]);
+    drop(app);
+
+    let (mut app, _, fresh) = fresh_with(&dav, "correct horse battery", false);
+    app.press("label:Settings")?;
+    app.press("Restore…")?;
+    app.wait_for(&format!("id:{name} >> text:/./"))?;
+    app.wait_for("text:/· With photos$/")?;
+    app.on_dialog(|_| DialogAnswer::Press("Restore".into()));
+    app.press(&format!("id:{name} >> text:/./"))?;
+    app.wait_for("text:Backup restored")?;
+    assert_eq!(
+        std::fs::read(photo_dir(fresh.path()).join("m1.jpg")).unwrap(),
+        photo()
+    );
     Ok(())
 }

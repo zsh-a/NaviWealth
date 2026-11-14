@@ -1,20 +1,25 @@
 //! Backups to the user's own WebDAV folder: once a day when the app starts
 //! or comes back, or when asked, the database is copied, encrypted with
 //! the user's passphrase off the engine thread, and put as
-//! `naviwealth-<day>-<timestamp>.nwbk`. Restoring
-//! gets one, decrypts it and replaces meals, favorites, weights and Garmin days in one
-//! transaction. Keys, passwords and the passphrase never enter a backup;
+//! `naviwealth-<day>-<timestamp>.nwbk`. A backup made by hand also carries
+//! the meal photos (`…-photos.nwbk`); the daily one does not, so it stays
+//! small. Restoring gets one, decrypts it, replaces meals, favorites,
+//! notes, weights and Garmin days in one transaction and writes back the
+//! photos it carries (photos already on the device stay). Keys, passwords and the passphrase never enter a backup;
 //! the password and passphrase are kept under their own storage entries.
 
 use nsh_core::{prelude::*, storage::Storage};
 use serde::{Deserialize, Serialize};
 
 use super::{
-    clock, db, favorites, garmin, meals, notes,
+    clock, db, favorites, garmin, meals, notes, photos,
     webdav::{DavError, Folder},
     weights,
 };
-use crate::domain::backup::{self, BackupError};
+use crate::domain::{
+    backup::{self, BackupError},
+    backup_bundle::Bundle,
+};
 
 const KEY: &str = "backup.v1";
 const KEY_PASSWORD: &str = "secret.webdav-password.v1";
@@ -191,12 +196,20 @@ pub async fn backup_now(force: bool) -> Result<(), Failure> {
             log::error!("backup: no snapshot: {error}");
             Failure::Storage
         })?;
+        let photos = if force {
+            photos::read_for_backup().await
+        } else {
+            Vec::new()
+        };
+        let with_photos = !photos.is_empty();
         let now = clock::now_ms();
-        let sealed =
-            background(async move { backup::seal(&database, &passphrase, db::SCHEMA, now) })
-                .await
-                .map_err(|_| Failure::Storage)??;
-        folder.put(&backup::file_name(&today, now), sealed).await?;
+        let bundle = Bundle { database, photos };
+        let sealed = background(async move { backup::seal(&bundle, &passphrase, db::SCHEMA, now) })
+            .await
+            .map_err(|_| Failure::Storage)??;
+        folder
+            .put(&backup::file_name(&today, now, with_photos), sealed)
+            .await?;
         state().update(|s| {
             s.kept.last_backup_ms = Some(clock::now_ms());
             s.kept.last_backup_day = Some(today.clone());
@@ -217,20 +230,22 @@ pub async fn list() -> Result<Vec<String>, Failure> {
     Ok(folder.list().await?)
 }
 
-/// Replaces meals, favorites, weights and Garmin days with the backup `name`.
+/// Replaces meals, favorites, notes, weights and Garmin days with the
+/// backup `name`, and writes back the photos it carries.
 pub async fn restore(name: String) -> Result<(), Failure> {
     let (folder, passphrase) = begin()?;
     state().update(|s| s.status = Status::Running);
     let result = async {
         let file = folder.get(&name).await?;
-        let (_, database) = background(async move { backup::open(&file, &passphrase) })
+        let (_, bundle) = background(async move { backup::open(&file, &passphrase) })
             .await
             .map_err(|_| Failure::Storage)??;
-        db::replace_with(&database).map_err(|error| match error {
+        db::replace_with(&bundle.database).map_err(|error| match error {
             db::RestoreError::Newer => Failure::Newer,
             db::RestoreError::Unreadable => Failure::NotABackup,
             db::RestoreError::Storage => Failure::Storage,
         })?;
+        photos::restore(bundle.photos).await;
         meals::load();
         favorites::load();
         notes::load();

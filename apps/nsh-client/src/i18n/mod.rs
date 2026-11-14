@@ -134,6 +134,7 @@ pub struct Strings {
     pub backup_passphrase_kept: &'static str,
     pub backup_passphrase_note: &'static str,
     pub backup_note: &'static str,
+    pub with_photos: &'static str,
     pub backup_save: &'static str,
     pub restore: &'static str,
     pub backup_never: &'static str,

@@ -93,7 +93,8 @@ Decided 2026-11-13; screens in `.impeccable/mocks/2026-11-13-lifeos-ia/`.
 - Meal logging as in the current NSH client: photo recognition with consent,
   editable consumed grams, local catalog nutrition, manual entry.
 - Favorites: a saved meal kept as a favorite (its own copy, photo shared)
-  logs again on any day with one tap and Undo, or after adjusting. It
+  logs again on any day with one tap and Undo; the logged meal is adjusted
+  like any other. It
   replaced "log again today", which could only copy a meal still in the
   four-week strip onto today (Rule 5).
 - Weight: manual entry plus Garmin body composition when available.
@@ -112,8 +113,9 @@ Decided 2026-11-13; screens in `.impeccable/mocks/2026-11-13-lifeos-ia/`.
 - Automatic local backups plus manual export/restore of a passphrase-encrypted
   backup file to a location the owner picks; meal photos optional in the export.
   The current Health increment uses an owner-configured WebDAV folder for
-  daily foreground backups and manual backup/restore, excluding photos and
-  credentials. System-picker local export and photo archives remain planned.
+  daily foreground backups (without photos) and manual backup/restore
+  (with meal photos), excluding credentials. Local file export waits for a
+  save or share dialog on Android in NSH.
 - A one-time import of kept records from the Flutter client.
 
 ## Removed

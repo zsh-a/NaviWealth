@@ -74,6 +74,64 @@ pub fn bytes(name: &str) -> Option<Vec<u8>> {
     path_of(name).and_then(|path| std::fs::read(path).ok())
 }
 
+/// The kept photos meals and favorites refer to, as names and bytes, for a
+/// backup; read off the engine thread. Missing files are left out.
+pub async fn read_for_backup() -> Vec<(String, Vec<u8>)> {
+    let mut names: Vec<String> = super::meals::photo_names()
+        .into_iter()
+        .chain(super::favorites::photo_names())
+        .collect();
+    names.sort();
+    names.dedup();
+    let paths: Vec<(String, PathBuf)> = names
+        .into_iter()
+        .filter_map(|name| path_of(&name).map(|path| (name, path)))
+        .collect();
+    blocking(move || {
+        paths
+            .into_iter()
+            .filter_map(|(name, path)| std::fs::read(path).ok().map(|bytes| (name, bytes)))
+            .collect()
+    })
+    .await
+    .unwrap_or_default()
+}
+
+/// Writes the restored `photos` in place of any with the same names, off
+/// the engine thread, and forgets their shown copies so they load anew.
+pub async fn restore(photos: Vec<(String, Vec<u8>)>) {
+    if photos.is_empty() {
+        return;
+    }
+    let names: Vec<String> = photos.iter().map(|(name, _)| name.clone()).collect();
+    let writes: Vec<(PathBuf, Vec<u8>)> = photos
+        .into_iter()
+        .filter_map(|(name, bytes)| path_of(&name).map(|path| (path, bytes)))
+        .collect();
+    let _ = blocking(move || {
+        for (path, bytes) in writes {
+            let written = path
+                .parent()
+                .map(std::fs::create_dir_all)
+                .transpose()
+                .and_then(|_| {
+                    let partial = path.with_extension("part");
+                    std::fs::write(&partial, &bytes)?;
+                    std::fs::rename(&partial, &path)
+                });
+            if let Err(error) = written {
+                log::error!("photos: a restored photo was not kept: {error}");
+            }
+        }
+    })
+    .await;
+    cache().update(|cache| {
+        for name in &names {
+            cache.0.remove(name);
+        }
+    });
+}
+
 /// Deletes kept photos no meal, favorite or draft refers to (meals deleted
 /// earlier, after their Undo window). Runs off the engine thread.
 pub async fn sweep_orphans() {

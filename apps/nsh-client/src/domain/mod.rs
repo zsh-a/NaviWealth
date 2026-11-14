@@ -4,6 +4,7 @@
 
 pub mod account;
 pub mod backup;
+pub mod backup_bundle;
 pub mod favorite;
 pub mod format;
 pub mod meal;

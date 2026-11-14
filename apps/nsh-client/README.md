@@ -80,11 +80,17 @@ is a foreground task, not an Android scheduled background job. Manual backups
 can be made any time. Each file has a new timestamped name and a conditional
 PUT prevents replacing an existing file. No automatic remote deletion occurs.
 
-Backups contain the SQLite database: meals, weights and imported Garmin days.
-**Photos, model/Garmin keys, settings, WebDAV credentials and the passphrase
-are excluded.** The passphrase is kept in app-private storage and must also be
+Backups contain the SQLite database: meals, favorites, notes, weights and
+imported Garmin days. Save and back up (by hand) also carries the meal photos
+of meals and favorites, named `…-photos.nwbk` and marked "With photos" in the
+restore list; the daily automatic backup leaves photos out so it stays small.
+Restoring writes back the photos a backup carries and keeps photos already on
+the device. **Model/Garmin keys, settings, WebDAV credentials and the
+passphrase are excluded.** The passphrase is kept in app-private storage and must also be
 saved elsewhere to restore on a fresh install. The `NWBK` format uses Argon2id
 (32 MiB, three passes) and XChaCha20-Poly1305 with an authenticated header.
+Version 2 encrypts a bundle (database plus photos); version 1 files, the
+database alone, still restore.
 
 Restore lists the ten newest files and asks before replacing records. Decryption,
 schema and record validation happen before one transaction replaces the data.
@@ -97,8 +103,8 @@ Android `HttpURLConnection` and default headless transport restrict WebDAV
 extension methods. TLS uses WebPKI roots; redirects never carry credentials
 onward. Plain HTTP is limited to loopback for isolated tests. The backup flows
 start their own HTTP server and exercise real PUT/MKCOL/PROPFIND/GET requests;
-they need no live service or personal key. System-picker file export and
-photo archives are not implemented in this increment.
+they need no live service or personal key. Local file export is not
+implemented: NSH 0.5.0 has no save or share dialog on Android.
 
 ## Desktop previews
 

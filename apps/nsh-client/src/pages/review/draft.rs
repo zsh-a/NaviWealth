@@ -17,7 +17,9 @@ use crate::{
         pending::{PendingMeal, PendingStatus},
         recognition::Lang,
     },
-    nav,
+    i18n::s,
+    nav::{self, Route, Tab},
+    ui::toast::show_toast,
 };
 
 /// Where the review is.
@@ -219,6 +221,8 @@ impl Draft {
             self.phase.set(Phase::Failed(VisionFailure::Refused));
             return;
         };
+        // A photo picked just now (not a draft tried again).
+        let fresh = self.pending.get_untracked().is_none();
         let id = self
             .pending
             .get_untracked()
@@ -264,6 +268,9 @@ impl Draft {
         pending::recognize(draft, account, upload, lang, consent);
         self.pending.set(Some(id));
         self.started.replace(true);
+        if fresh {
+            leave_for_today(self);
+        }
         spawn(async move {
             timer(Duration::from_secs(15)).await;
             if self.phase.get_untracked() == Phase::Analyzing {
@@ -272,7 +279,7 @@ impl Draft {
         });
     }
 
-    /// Analyzes again after a failure.
+    /// Analyzes again after a failure (on the draft's page: it stays).
     pub fn retry(self) {
         self.begin();
     }
@@ -373,4 +380,30 @@ impl Draft {
             prompt_version: self.prompt_version.get_untracked(),
         })
     }
+}
+
+/// Once a new photo is sent there is nothing to wait for on its page: back
+/// to Today, where the draft is read and then confirmed. The page has just
+/// slid in; it slides back once it has, if it is still on top and still
+/// reading (a result or a failure that came first is shown right there).
+fn leave_for_today(draft: Draft) {
+    set_timeout(Duration::from_millis(450), move || {
+        let on_top = untracked(nav::open).last().is_some_and(|route| {
+            matches!(
+                route,
+                Route::NewMeal {
+                    capture: Some(_),
+                    ..
+                }
+            )
+        });
+        let reading = draft.pending.get_untracked().is_some_and(|id| {
+            untracked(|| pending::get(&id)).is_some_and(|d| d.status == PendingStatus::Analyzing)
+        });
+        if on_top && reading {
+            nav::pop();
+            nav::select(Tab::Today);
+            show_toast(s().draft_kept, None);
+        }
+    });
 }

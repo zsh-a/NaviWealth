@@ -25,8 +25,9 @@ AI only to turn a photo into a draft, the owner's own model account.
   the macro ring) and, laid flat beneath it, the vitals: weight, plus sleep
   and Body Battery once Garmin is connected (a Garmin vital opens all of the
   day's Garmin data). Then today's meals. Past days are in Records.
-- **Drafts:** a sent photo becomes a draft; leaving the meal page never
-  loses it. Drafts are edged in the AI's light, pinned on Today and atop
+- **Drafts:** a new photo, once sent, returns to Today by itself and is
+  read there as a draft (a result or failure that comes within half a
+  second stays on the meal page); leaving the meal page never loses it. Drafts are edged in the AI's light, pinned on Today and atop
   Records: being read (shimmer), ready (Confirm), no food found or failed.
 - **Records:** every day newest first, its header on one line (date, the
   day's kcal, a weight chip that opens the weight editor), its meals as rows

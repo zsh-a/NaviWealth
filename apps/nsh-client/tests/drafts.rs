@@ -1,5 +1,5 @@
-//! Recognition drafts: leaving the review page while the photo is read
-//! keeps it as a draft on Today and in Records; it can be confirmed later,
+//! Recognition drafts: a new photo, once sent, returns to Today by itself
+//! and is read there as a draft (also in Records); it can be confirmed later,
 //! discarded (with Undo), and survives a restart, where a recognition cut
 //! short can be tried again with the kept photo.
 
@@ -24,14 +24,14 @@ fn stored_drafts(dir: &Path) -> usize {
         .unwrap()
 }
 
-/// Picks a photo, sends it (trusted account) and leaves the page at once.
+/// Picks a photo and sends it (trusted account): the page returns to Today
+/// by itself while the photo is read.
 fn leave_while_reading(app: &mut Headless) -> Result<(), String> {
     picks_a_photo(app);
     app.press("label:New entry")?;
     app.press("Log a meal")?;
-    app.wait_for("label:Back")?;
-    app.press("label:Back")?;
-    app.wait_for("Kept on Today to confirm")?;
+    app.wait_for("text:/^Reading the photo/")?;
+    app.wait_for("text:Today's records")?;
     Ok(())
 }
 
@@ -73,7 +73,7 @@ fn leaving_while_reading_keeps_a_draft_to_confirm_later() -> Result<(), String> 
 #[test]
 fn a_discarded_draft_can_be_brought_back() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
-    let stub = slow_network(Duration::from_millis(300));
+    let stub = slow_network(Duration::from_secs(1));
     let (mut app, _) = start_in(Some(dir.path()), account(true), Some(stub));
     leave_while_reading(&mut app)?;
     app.wait_for(READY)?;
@@ -113,5 +113,21 @@ fn a_recognition_cut_short_by_a_restart_can_be_tried_again() -> Result<(), Strin
     assert_eq!(stub.requests().len(), 1, "the kept photo is sent again");
     app.press("label:Back")?;
     app.wait_for(READY)?;
+    Ok(())
+}
+
+#[test]
+fn a_result_that_comes_first_stays_on_the_page() -> Result<(), String> {
+    let (mut app, _) = start(account(true), Some(network(200, estimate())));
+    picks_a_photo(&mut app);
+    app.press("label:New entry")?;
+    app.press("Log a meal")?;
+    app.wait_for("text:White rice")?;
+    app.wait(Duration::from_millis(800))?;
+    app.wait_for("text:/^Save meal/")?;
+    assert!(
+        !app.shows("text:Today's records"),
+        "no jump away from a result"
+    );
     Ok(())
 }

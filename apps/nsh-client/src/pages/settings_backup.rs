@@ -13,7 +13,7 @@ use crate::{
         clock, tasks,
         webdav::Folder,
     },
-    domain::backup::MIN_PASSPHRASE,
+    domain::backup::{self as backup_file, MIN_PASSPHRASE},
     i18n::s,
     ui::{
         Btn, Size, Type, Typo, color,
@@ -216,9 +216,26 @@ fn restore_list(
     }
     view()
         .children(names.into_iter().map(|name| {
-            let label = name.clone();
-            row_button(move || confirm_restore(name.clone(), listed, message))
-                .child(text(label).typo(Type::Body).text_color(color::INK).flex_1())
+            // `11月13日 星期五 21:04 · 含照片`, or the name when it is not ours.
+            let when = backup_file::created_ms(&name)
+                .map(|ms| {
+                    format!(
+                        "{} {}",
+                        s().long_date(clock::day_of(ms)),
+                        clock::time_label(ms)
+                    )
+                })
+                .unwrap_or_else(|| name.clone());
+            let label = if backup_file::has_photos(&name) {
+                format!("{when} · {}", s().with_photos)
+            } else {
+                when
+            };
+            let id = name.clone();
+            view().test_id(&id).child(
+                row_button(move || confirm_restore(name.clone(), listed, message))
+                    .child(text(label).typo(Type::Body).text_color(color::INK).flex_1()),
+            )
         }))
         .into_element()
 }
