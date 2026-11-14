@@ -22,9 +22,10 @@ use crate::{
     ui::{
         Btn, Icon, Type, Typo, color,
         feedback::empty_state,
+        icon,
         segmented::{Segment, segmented},
         space,
-        surface::{card, hairline},
+        surface::{card, hairline, row_button},
     },
 };
 
@@ -42,7 +43,7 @@ enum Filter {
 #[derive(Clone, PartialEq)]
 enum Entry {
     Meal(Meal),
-    Weight(Weight, Option<f64>),
+    Weight(Weight),
 }
 
 /// A day with entries, newest entry first.
@@ -51,6 +52,7 @@ struct DayRecords {
     day: Day,
     kcal: f64,
     meals: usize,
+    weight: Option<Weight>,
     entries: Vec<Entry>,
 }
 
@@ -155,22 +157,47 @@ fn day_section(records: DayRecords) -> impl IntoElement {
         1 => s().yesterday.to_owned(),
         _ => s().long_date(records.day),
     };
-    let summary = (records.meals > 0).then(|| {
-        format!(
+    let mut summary = Vec::new();
+    if records.meals > 0 {
+        summary.push(format!(
             "{} {} · {}",
             format::kcal(records.kcal),
             s().kcal,
             s().meal_count(records.meals)
-        )
-    });
+        ));
+    }
+    if let Some(w) = records.weight {
+        summary.push(format!("{} kg", s().kg(w.kg)));
+    }
+    let summary = summary.join(" · ");
+    let has_summary = !summary.is_empty();
+    let summary_text = text(summary)
+        .typo(Type::Subhead)
+        .tabular_nums()
+        .text_color(color::MUTED);
+    let summary = match records.weight {
+        Some(w) => row_button(move || sheets.weight.set(Some(w.day)))
+            .min_h(px(48.0))
+            .gap_2()
+            .accessibility_label({
+                let label = format!(
+                    "{}, {}, {} kg",
+                    s().edit_weight,
+                    s().long_date(w.day),
+                    s().kg(w.kg)
+                );
+                move || Some(label.clone().into())
+            })
+            .child(summary_text.flex_1())
+            .child(icon(Icon::ChevronRight, 16.0, color::MUTED))
+            .into_element(),
+        None => summary_text.into_element(),
+    };
     view()
         .gap_3()
         .child(
             view()
-                .flex_row()
-                .items_baseline()
-                .justify_between()
-                .gap_3()
+                .gap(px(2.0))
                 .px(px(4.0))
                 .child(
                     text(title)
@@ -178,14 +205,9 @@ fn day_section(records: DayRecords) -> impl IntoElement {
                         .text_color(color::INK)
                         .role(AccessibilityRole::Header),
                 )
-                .child(summary.map(|line| {
-                    text(line)
-                        .typo(Type::Subhead)
-                        .tabular_nums()
-                        .text_color(color::MUTED)
-                })),
+                .child(has_summary.then_some(summary)),
         )
-        .child(
+        .child((!records.entries.is_empty()).then(|| {
             card()
                 .overflow_hidden()
                 .children(
@@ -196,19 +218,18 @@ fn day_section(records: DayRecords) -> impl IntoElement {
                         .map(move |(i, entry)| {
                             let row = match entry {
                                 Entry::Meal(meal) => meal_row(meal).into_element(),
-                                Entry::Weight(w, change) => {
-                                    weight_row(w, change, move || sheets.weight.set(Some(w.day)))
+                                Entry::Weight(w) => {
+                                    weight_row(w, move || sheets.weight.set(Some(w.day)))
                                         .into_element()
                                 }
                             };
                             view().child((i > 0).then(|| hairline(INSET))).child(row)
                         }),
-                ),
-        )
+                )
+        }))
 }
 
-/// The records by day, newest first; each weight with its change since the
-/// entry before it.
+/// Newest days first. All folds weight into the header; Weight keeps editable rows.
 fn group(meals: Vec<Meal>, weights: Vec<Weight>, filter: Filter) -> Vec<DayRecords> {
     let mut days: BTreeMap<Day, DayRecords> = BTreeMap::new();
     fn at(days: &mut BTreeMap<Day, DayRecords>, day: Day) -> &mut DayRecords {
@@ -216,6 +237,7 @@ fn group(meals: Vec<Meal>, weights: Vec<Weight>, filter: Filter) -> Vec<DayRecor
             day,
             kcal: 0.0,
             meals: 0,
+            weight: None,
             entries: Vec::new(),
         })
     }
@@ -228,16 +250,18 @@ fn group(meals: Vec<Meal>, weights: Vec<Weight>, filter: Filter) -> Vec<DayRecor
         }
     }
     if filter != Filter::Meals {
-        let mut before: Option<f64> = None;
         for w in weights {
-            let change = before.map(|kg| crate::domain::weight::rounded(w.kg - kg));
-            before = Some(w.kg);
-            at(&mut days, w.day).entries.push(Entry::Weight(w, change));
+            let day = at(&mut days, w.day);
+            if filter == Filter::All {
+                day.weight = Some(w);
+            } else {
+                day.entries.push(Entry::Weight(w));
+            }
         }
     }
     let at_ms = |e: &Entry| match e {
         Entry::Meal(m) => m.logged_at_ms,
-        Entry::Weight(w, _) => w.logged_at_ms,
+        Entry::Weight(w) => w.logged_at_ms,
     };
     days.into_values()
         .rev()
@@ -291,7 +315,7 @@ mod tests {
     }
 
     #[test]
-    fn days_are_newest_first_with_totals_and_weight_changes() {
+    fn all_folds_weights_into_headers_and_retains_weight_only_days() {
         let meals = vec![
             meal("a", "2026-11-12", 1, 300.0),
             meal("b", "2026-11-13", 3, 500.0),
@@ -305,8 +329,11 @@ mod tests {
         );
         assert_eq!((days[0].kcal, days[0].meals), (700.0, 2));
         assert!(matches!(&days[0].entries[0], Entry::Meal(m) if m.id == "c"));
-        assert!(matches!(days[0].entries[1], Entry::Weight(_, Some(c)) if (c + 0.5).abs() < 1e-9));
-        assert!(matches!(days[2].entries[0], Entry::Weight(_, None)));
+        assert!(matches!(&days[0].entries[1], Entry::Meal(m) if m.id == "b"));
+        assert_eq!(days[0].entries.len(), 2);
+        assert_eq!(days[0].weight.unwrap().kg, 68.4);
+        assert!(days[2].entries.is_empty());
+        assert_eq!(days[2].weight.unwrap().kg, 68.9);
 
         assert_eq!(
             group(meals.clone(), weights.clone(), Filter::Meals).len(),
@@ -315,5 +342,13 @@ mod tests {
         let only_weights = group(meals, weights, Filter::Weight);
         assert_eq!(only_weights.len(), 2);
         assert_eq!(only_weights[0].meals, 0);
+        assert!(only_weights[0].weight.is_none());
+        assert!(matches!(only_weights[0].entries[0], Entry::Weight(w) if w.kg == 68.4));
+        let only_meals = group(
+            vec![meal("a", "2026-11-13", 1, 300.0)],
+            vec![weight("2026-11-13", 72.0, 0)],
+            Filter::Meals,
+        );
+        assert!(only_meals[0].weight.is_none());
     }
 }

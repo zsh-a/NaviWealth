@@ -67,7 +67,7 @@ pub fn latest_until(day: Day) -> Option<Weight> {
 
 /// The change over about a week to `latest` (tracked).
 pub fn weekly_change(latest: Weight) -> Option<f64> {
-    weights().with(|w| weight::change_since(&w.0, latest, 7))
+    weights().with(|w| weight::trend_change(&w.0, latest.day.plus_days(-7), latest.day))
 }
 
 /// Every entry in day order (tracked).

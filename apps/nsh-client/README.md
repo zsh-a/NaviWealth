@@ -60,10 +60,15 @@ device upgrade and restore acceptance remains separate from CI signing checks.
 
 ## Health review and backups
 
-The Review tab shows seven days ending today or a calendar month (up to
-today), with earlier periods one step back; the daily average is compared
+The Review tab shows a locale-aligned calendar week (Monday for Chinese and
+ISO locales) or a calendar month, up to today, with earlier periods one step back; the daily average is compared
 with the period before and each day's bar with the goal. Intake and macros average only days with logged meals; missing
-days are unknown. Weight compares the first and last measurements in the window.
+days are unknown. Weight change compares trailing seven-calendar-day means at the period's start
+and end; Today uses the same comparison seven days apart. Each mean requires
+at least three measured days and a measurement in the last three days. Sparse
+or stale windows and gaps longer than a week produce no delta. Missing days
+are never filled in. Records All folds weight into its editable day summary;
+the Weight filter keeps individual measurements without deltas.
 Garmin averages each measurement over the days that contain it.
 
 Settings → Backup accepts an HTTPS WebDAV folder (for example Jianguoyun,

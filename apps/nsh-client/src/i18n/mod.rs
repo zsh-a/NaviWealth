@@ -65,7 +65,6 @@ pub struct Strings {
     pub log_weight: &'static str,
     pub tap_to_log: &'static str,
     pub resting: &'static str,
-    pub connect_garmin: &'static str,
     pub todays_records: &'static str,
     pub all_records: &'static str,
     pub history: &'static str,
@@ -93,6 +92,7 @@ pub struct Strings {
     pub adjust_then_log: &'static str,
     pub recent_foods: &'static str,
     pub weight: &'static str,
+    pub edit_weight: &'static str,
     pub error_weight: &'static str,
     pub weight_deleted: &'static str,
     pub delete_weight: &'static str,
@@ -120,6 +120,7 @@ pub struct Strings {
     pub previous_week: &'static str,
     pub next_week: &'static str,
     pub intake: &'static str,
+    pub trend_average: &'static str,
     pub weight_week: &'static str,
     pub avg_sleep: &'static str,
     pub no_week_data: &'static str,
@@ -284,28 +285,6 @@ impl Strings {
             format!("已连接 · {host}")
         } else {
             format!("Connected · {host}")
-        }
-    }
-
-    /// The seven days' span: `Nov 7 – Nov 13`.
-    pub fn week_span(&self, first: Day, last: Day) -> String {
-        let (a, b) = (first.0, last.0);
-        if self.zh() {
-            format!(
-                "{}月{}日 – {}月{}日",
-                a.month(),
-                a.day(),
-                b.month(),
-                b.day()
-            )
-        } else {
-            format!(
-                "{} {} – {} {}",
-                self.month_short(a.month()),
-                a.day(),
-                self.month_short(b.month()),
-                b.day()
-            )
         }
     }
 

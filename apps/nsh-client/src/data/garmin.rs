@@ -131,11 +131,6 @@ pub fn on(day: Day) -> Option<GarminDay> {
     state().with(|s| s.days.get(&day).cloned())
 }
 
-/// Whether any day was imported (tracked).
-pub fn has_days() -> bool {
-    state().with(|s| !s.days.is_empty())
-}
-
 /// Connects `key`: finds its region by exchanging it for a token and keeps
 /// it. The root's [`refresh`] then pulls the last 30 days. Both tasks live
 /// under the app root so closing Settings does not interrupt them. Nothing is

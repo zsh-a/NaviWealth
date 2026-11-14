@@ -7,7 +7,7 @@ use health_core::garmin::GarminDay;
 use super::{
     meal::{Day, DaySummary},
     nutrition::Nutrients,
-    weight::{Weight, rounded},
+    weight::{self, Weight},
 };
 
 /// Days in a review.
@@ -21,19 +21,44 @@ pub fn days_ending(last: Day) -> Vec<Day> {
 /// The span a review covers.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Period {
-    /// Seven days ending on a day.
+    /// A calendar week, up to today while it is the current one.
     #[default]
     Week,
     /// A calendar month, up to today while it is the current one.
     Month,
 }
 
+/// First weekday for calendar reviews. ISO Monday is the fallback.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum WeekStart {
+    #[default]
+    Monday,
+    Sunday,
+}
+
 /// The days of the `period` that is `back` periods before the current one
-/// (`today` ends the current week; the current month stops at `today`),
-/// oldest first.
+/// (the current period stops at `today`), oldest first.
 pub fn period_days(period: Period, today: Day, back: i32) -> Vec<Day> {
+    period_days_starting(period, today, back, WeekStart::Monday)
+}
+
+/// Locale-aligned calendar periods; negative offsets cannot show the future.
+pub fn period_days_starting(period: Period, today: Day, back: i32, start: WeekStart) -> Vec<Day> {
+    let back = back.max(0);
     match period {
-        Period::Week => days_ending(today.plus_days(-DAYS * back)),
+        Period::Week => {
+            let offset = i32::from(today.0.weekday().to_monday_zero_offset());
+            let offset = if start == WeekStart::Sunday {
+                (offset + 1) % 7
+            } else {
+                offset
+            };
+            let first = today.plus_days(-offset - DAYS * back);
+            let last = first.plus_days(6).min(today);
+            (0..=last.days_since(first))
+                .map(|d| first.plus_days(d))
+                .collect()
+        }
         Period::Month => {
             let month = today
                 .0
@@ -85,11 +110,10 @@ pub fn intake(summaries: &[DaySummary]) -> Intake {
     }
 }
 
-/// The first and last weight of the week and the change between them.
-pub fn weight_change(weights: &[Weight]) -> Option<(Weight, Weight, f64)> {
-    let first = *weights.first()?;
-    let last = *weights.last()?;
-    (first.day != last.day).then(|| (first, last, rounded(last.kg - first.kg)))
+/// The same trend comparison as Today, anchored at the period's start.
+/// Pass full history so the first day's trailing average includes earlier days.
+pub fn weight_change(weights: &[Weight], first: Day, last: Day) -> Option<f64> {
+    weight::trend_change(weights, first, last)
 }
 
 /// Garmin's week: averages over the days it measured.
@@ -146,8 +170,61 @@ mod tests {
         assert_eq!(october.len(), 31);
         assert_eq!(october[30], day("2026-10-31"));
         let week = period_days(Period::Week, today, 1);
-        assert_eq!((week[0], week[6]), (day("2026-10-31"), day("2026-11-06")));
+        assert_eq!((week[0], week[6]), (day("2026-11-02"), day("2026-11-08")));
         assert_eq!(over_goal(&[Some(2100.0), None, Some(1900.0)], 2000.0), 1);
+    }
+
+    #[test]
+    fn calendar_weeks_use_monday_by_default_and_sunday_when_requested() {
+        let today = day("2026-11-14");
+        let iso = period_days(Period::Week, today, 0);
+        assert_eq!((iso[0], *iso.last().unwrap()), (day("2026-11-09"), today));
+        let sunday = period_days_starting(Period::Week, today, 0, WeekStart::Sunday);
+        assert_eq!((sunday[0], sunday[6]), (day("2026-11-08"), today));
+        let monday = period_days(Period::Week, day("2026-11-09"), 0);
+        assert_eq!(monday, [day("2026-11-09")]);
+        let year = period_days(Period::Week, day("2027-01-01"), 1);
+        assert_eq!((year[0], year[6]), (day("2026-12-21"), day("2026-12-27")));
+        assert_eq!(period_days(Period::Week, today, -1), iso);
+    }
+
+    #[test]
+    fn review_and_today_share_the_trend_and_need_history_before_the_period() {
+        let first = day("2026-11-01");
+        let weights: Vec<_> = (0..21)
+            .map(|d| Weight {
+                day: first.plus_days(d),
+                kg: 80.0 - f64::from(d) * 0.1,
+                logged_at_ms: 0,
+            })
+            .collect();
+        let start = first.plus_days(7);
+        let end = start.plus_days(7);
+        assert_eq!(weight_change(&weights, start, end), Some(-0.7));
+        assert_eq!(
+            weight_change(&weights, start, end),
+            weight::trend_change(&weights, start, end)
+        );
+        assert_eq!(weight_change(&weights[7..], start, end), None);
+    }
+
+    #[test]
+    fn month_start_trend_uses_previous_month_and_leap_month_is_complete() {
+        let february = period_days(Period::Month, day("2024-03-10"), 1);
+        assert_eq!(february.len(), 29);
+        assert_eq!(february[28], day("2024-02-29"));
+        let first = day("2026-10-26");
+        let weights: Vec<_> = (0..20)
+            .map(|d| Weight {
+                day: first.plus_days(d),
+                kg: 80.0 - f64::from(d) * 0.1,
+                logged_at_ms: 0,
+            })
+            .collect();
+        assert_eq!(
+            weight_change(&weights, day("2026-11-01"), day("2026-11-14")),
+            Some(-1.3)
+        );
     }
 
     #[test]
@@ -175,16 +252,7 @@ mod tests {
     }
 
     #[test]
-    fn weight_and_garmin_use_what_was_measured() {
-        let w = |text: &str, kg: f64| Weight {
-            day: day(text),
-            kg,
-            logged_at_ms: 0,
-        };
-        let change = weight_change(&[w("2026-11-08", 73.0), w("2026-11-13", 72.4)]).unwrap();
-        assert_eq!(change.2, -0.6);
-        assert_eq!(weight_change(&[w("2026-11-13", 72.4)]), None);
-
+    fn garmin_uses_what_was_measured() {
         let g = |sleep: Option<u32>, hr: Option<u16>| GarminDay {
             sleep_seconds: sleep,
             resting_hr: hr,

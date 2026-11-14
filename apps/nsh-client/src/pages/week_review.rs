@@ -19,7 +19,7 @@ use crate::{
     },
     i18n::s,
     ui::{
-        Icon, IconBtn, Type, Typo, Variant, color,
+        Icon, IconBtn, Type, Typo, color,
         segmented::{Segment, segmented},
         space,
         surface::card,
@@ -31,9 +31,17 @@ pub fn review_tab() -> impl IntoElement {
     let period = signal(Period::Week);
     // Periods back from the current one.
     let back = signal(0_i32);
-    let days = computed(move || review::period_days(period.get(), clock::today(), back.get()));
-    let before =
-        computed(move || review::period_days(period.get(), clock::today(), back.get() + 1));
+    let days = computed(move || {
+        review::period_days_starting(period.get(), clock::today(), back.get(), s().week_start())
+    });
+    let before = computed(move || {
+        review::period_days_starting(
+            period.get(),
+            clock::today(),
+            back.get() + 1,
+            s().week_start(),
+        )
+    });
     scroll().flex_1().child(
         view()
             .px(px(space::GUTTER))
@@ -53,9 +61,9 @@ pub fn review_tab() -> impl IntoElement {
                 },
             ))
             .child(intake_card(period, days, before))
+            .child(super::review_note::note_editor(days))
             .child(weight_card(days))
-            .child(recovery_card(days))
-            .child(super::review_note::note_editor(days)),
+            .child(recovery_card(days)),
     )
 }
 
@@ -63,16 +71,31 @@ pub fn review_tab() -> impl IntoElement {
 fn header(period: Signal<Period>, back: Signal<i32>, days: Memo<Vec<Day>>) -> impl IntoElement {
     let month = move || period.get() == Period::Month;
     view()
-        .flex_row()
-        .items_end()
         .gap_2()
         .px(px(4.0))
         .pt_2()
         .child(
+            text(|| s().review)
+                .typo(Type::LargeTitle)
+                .text_color(color::INK)
+                .role(AccessibilityRole::Header),
+        )
+        .child(
             view()
-                .flex_1()
-                .min_w(px(0.0))
-                .gap(px(2.0))
+                .flex_row()
+                .items_center()
+                .gap_2()
+                .child(
+                    IconBtn::new(Icon::ChevronLeft, move || {
+                        if month() {
+                            s().previous_month
+                        } else {
+                            s().previous_week
+                        }
+                        .into()
+                    })
+                    .on_press(move || back.update(|b| *b += 1)),
+                )
                 .child(
                     text(move || {
                         days.with(|d| {
@@ -83,45 +106,25 @@ fn header(period: Signal<Period>, back: Signal<i32>, days: Memo<Vec<Day>>) -> im
                             }
                         })
                     })
+                    .flex_1()
+                    .text_center()
                     .typo(Type::Subhead)
                     .tabular_nums()
-                    .text_color(color::MUTED),
+                    .text_color(color::BODY),
                 )
                 .child(
-                    text(|| s().review)
-                        .typo(Type::LargeTitle)
-                        .text_color(color::INK)
-                        .role(AccessibilityRole::Header),
+                    IconBtn::new(Icon::ChevronRight, move || {
+                        if month() {
+                            s().next_month
+                        } else {
+                            s().next_week
+                        }
+                        .into()
+                    })
+                    .on_press(move || back.update(|b| *b = (*b - 1).max(0)))
+                    .disabled(move || back.get() == 0),
                 ),
         )
-        .child(
-            IconBtn::new(Icon::ChevronLeft, move || {
-                if month() {
-                    s().previous_month
-                } else {
-                    s().previous_week
-                }
-                .into()
-            })
-            .variant(Variant::Secondary)
-            .on_press(move || back.update(|b| *b += 1)),
-        )
-        .child(when(
-            // No later period than the current one.
-            move || back.get() > 0,
-            move || {
-                IconBtn::new(Icon::ChevronRight, move || {
-                    if month() {
-                        s().next_month
-                    } else {
-                        s().next_week
-                    }
-                    .into()
-                })
-                .variant(Variant::Secondary)
-                .on_press(move || back.update(|b| *b = (*b - 1).max(0)))
-            },
-        ))
 }
 
 fn label(title: fn() -> &'static str) -> impl IntoElement {
@@ -132,10 +135,7 @@ fn label(title: fn() -> &'static str) -> impl IntoElement {
 }
 
 /// A quiet pill with a change.
-fn delta_pill(
-    text_of: impl Fn() -> String + 'static,
-    good: impl Fn() -> bool + 'static,
-) -> impl IntoElement {
+fn delta_pill(text_of: impl Fn() -> String + 'static) -> impl IntoElement {
     view()
         .px(px(10.0))
         .py(px(4.0))
@@ -146,13 +146,7 @@ fn delta_pill(
                 .typo(Type::Caption)
                 .font_weight(FontWeight::SEMIBOLD)
                 .tabular_nums()
-                .text_color(move || {
-                    if good() {
-                        color::POSITIVE
-                    } else {
-                        color::MUTED
-                    }
-                }),
+                .text_color(color::MUTED),
         )
 }
 
@@ -210,15 +204,9 @@ fn intake_card(
                 .child(when(
                     move || delta().is_some(),
                     move || {
-                        delta_pill(
-                            move || {
-                                s().vs_previous(
-                                    delta().unwrap_or(0.0),
-                                    period.get() == Period::Month,
-                                )
-                            },
-                            || false,
-                        )
+                        delta_pill(move || {
+                            s().vs_previous(delta().unwrap_or(0.0), period.get() == Period::Month)
+                        })
                     },
                 )),
         )
@@ -264,7 +252,9 @@ fn weight_card(days: Memo<Vec<Day>>) -> impl IntoElement {
         let (first, last) = days.with(|d| (d[0], d[d.len() - 1]));
         weights::window(last, last.days_since(first) + 1)
     });
-    let change = computed(move || review::weight_change(&entries.get()));
+    let change = computed(move || {
+        days.with(|d| review::weight_change(&weights::all(), d[0], d[d.len() - 1]))
+    });
     let latest = move || entries.with(|e| e.last().copied());
     when(
         move || latest().is_some(),
@@ -281,13 +271,10 @@ fn weight_card(days: Memo<Vec<Day>>) -> impl IntoElement {
                         .child(when(
                             move || change.with(Option::is_some),
                             move || {
-                                delta_pill(
-                                    move || {
-                                        let d = change.with(|c| c.map_or(0.0, |c| c.2));
-                                        format!("{} kg", s().signed_kg(d))
-                                    },
-                                    move || change.with(|c| c.is_some_and(|c| c.2 < 0.0)),
-                                )
+                                delta_pill(move || {
+                                    let d = change.with(|c| c.unwrap_or(0.0));
+                                    format!("{} kg", s().signed_kg(d))
+                                })
                             },
                         )),
                 )
@@ -305,7 +292,23 @@ fn weight_card(days: Memo<Vec<Day>>) -> impl IntoElement {
                         .child(text("kg").typo(Type::Callout).text_color(color::MUTED)),
                 )
                 .child(dynamic(move || {
-                    let (first, points) = days.with(|d| (d[0], entries.get()));
+                    let history = weights::all();
+                    let (first, points) = days.with(|d| {
+                        (
+                            d[0],
+                            d.iter()
+                                .filter_map(|&day| {
+                                    crate::domain::weight::trend_weight(&history, day).map(|kg| {
+                                        crate::domain::weight::Weight {
+                                            day,
+                                            kg,
+                                            logged_at_ms: 0,
+                                        }
+                                    })
+                                })
+                                .collect(),
+                        )
+                    });
                     let span = days.with(|d| d.len()) as f64;
                     untracked(move || trend(first, span, points))
                 }))

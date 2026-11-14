@@ -136,7 +136,7 @@ pub fn trend(first: Day, span: f64, points: Vec<Weight>) -> AnyElement {
     // At least 1 kg of range, so a flat week stays flat.
     let pad = ((1.0 - (high - low)) / 2.0).max(0.0) + 0.2;
     let rows = Rows::from_columns(days.len(), [("day".into(), days), ("kg".into(), kgs)]);
-    plot()
+    let line = plot()
         .h(px(64.0))
         .data(rows)
         .x(Some(RowAccessor::from("day")))
@@ -150,6 +150,22 @@ pub fn trend(first: Day, span: f64, points: Vec<Weight>) -> AnyElement {
             reverse: false,
         })
         .interactive(false)
-        .child(line().text_color(color::INK).stroke_width(px(2.0)))
+        .child(line().text_color(color::INK).stroke_width(px(2.0)));
+    let caption = |kg| {
+        text(format!("{} kg", s().kg(kg)))
+            .typo(Type::Caption)
+            .tabular_nums()
+            .text_color(color::MUTED)
+    };
+    view()
+        .gap_1()
+        .child(
+            text(|| s().trend_average)
+                .typo(Type::Caption)
+                .text_color(color::MUTED),
+        )
+        .child(caption(high))
+        .child(line)
+        .child(caption(low))
         .into_element()
 }

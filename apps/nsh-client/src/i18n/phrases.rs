@@ -4,6 +4,42 @@ use super::Strings;
 use crate::domain::{format, meal::Day};
 
 impl Strings {
+    /// The seven days' span: `Nov 7 – Nov 13`.
+    pub fn week_span(&self, first: Day, last: Day) -> String {
+        let (a, b) = (first.0, last.0);
+        if self.zh() {
+            format!(
+                "{}月{}日 – {}月{}日",
+                a.month(),
+                a.day(),
+                b.month(),
+                b.day()
+            )
+        } else {
+            format!(
+                "{} {} – {} {}",
+                self.month_short(a.month()),
+                a.day(),
+                self.month_short(b.month()),
+                b.day()
+            )
+        }
+    }
+
+    /// Chinese uses Monday; other locales follow the platform, ISO by default.
+    pub fn week_start(&self) -> crate::domain::review::WeekStart {
+        use crate::domain::review::WeekStart;
+        if !self.zh()
+            && nsh_core::prelude::locale().region().is_some()
+            && nsh_core::prelude::locale_settings().first_day_of_week
+                == nsh_core::platform::Weekday::Sunday
+        {
+            WeekStart::Sunday
+        } else {
+            WeekStart::Monday
+        }
+    }
+
     /// `n` foods.
     /// Beside the favorites' title: what a tap and a hold do.
     pub fn favorites_hint(&self) -> &'static str {
@@ -86,12 +122,20 @@ impl Strings {
         logged: usize,
         of: usize,
     ) -> String {
+        let enough = logged >= 3;
         let logged = if self.zh() {
             format!("记录 {logged}/{of} 天")
         } else {
             format!("{logged} of {of} days logged")
         };
         match goal {
+            Some(goal) if !enough => {
+                if self.zh() {
+                    format!("目标 {} · {logged}", format::kcal(goal))
+                } else {
+                    format!("Goal {} · {logged}", format::kcal(goal))
+                }
+            }
             Some(goal) if self.zh() => {
                 format!("目标 {} · 超出 {over} 天 · {logged}", format::kcal(goal))
             }
@@ -136,9 +180,9 @@ impl Strings {
     /// The change over about a week, short enough for a vital's caption.
     pub fn week_change(&self, delta: f64) -> String {
         if self.zh() {
-            format!("本周 {}", self.signed_kg(delta))
+            format!("7天 {}", self.signed_kg(delta))
         } else {
-            format!("{} this week", self.signed_kg(delta))
+            format!("{} · 7d", self.signed_kg(delta))
         }
     }
 
@@ -152,5 +196,34 @@ impl Strings {
             "±"
         };
         format!("{sign}{:.1}", delta.abs())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{domain::recognition::Lang, i18n::strings};
+
+    #[test]
+    fn goal_counts_need_three_logged_days_in_both_languages() {
+        for lang in [Lang::En, Lang::Zh] {
+            let s = strings(lang);
+            for logged in 1..=2 {
+                let caption = s.intake_caption(Some(2000.0), logged, logged, 7);
+                assert!(!caption.contains("over"));
+                assert!(!caption.contains("超出"));
+            }
+            let caption = s.intake_caption(Some(2000.0), 2, 3, 7);
+            assert!(caption.contains(if lang == Lang::En {
+                "2 over"
+            } else {
+                "超出 2 天"
+            }));
+        }
+    }
+
+    #[test]
+    fn vital_captions_are_compact_in_both_languages() {
+        assert_eq!(strings(Lang::En).week_change(-0.1), "−0.1 · 7d");
+        assert_eq!(strings(Lang::Zh).week_change(-0.1), "7天 −0.1");
     }
 }

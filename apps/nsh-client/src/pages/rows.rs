@@ -61,13 +61,8 @@ pub fn meal_row(meal: Meal) -> impl IntoElement {
         .child(figure(format::kcal(total.kcal), s().kcal))
 }
 
-/// A weight entry with its change since the entry before; pressing it
-/// opens it in `open`.
-pub fn weight_row(
-    entry: Weight,
-    change: Option<f64>,
-    open: impl Fn() + 'static,
-) -> impl IntoElement {
+/// A weight entry; pressing it opens its editor.
+pub fn weight_row(entry: Weight, open: impl Fn() + 'static) -> impl IntoElement {
     let kg = s().kg(entry.kg);
     row_button(open)
         .pl(px(12.0))
@@ -101,17 +96,6 @@ pub fn weight_row(
                     .text_color(color::MUTED),
                 ),
         )
-        .child(change.map(|delta| {
-            text(s().signed_kg(delta))
-                .typo(Type::Callout)
-                .font_weight(FontWeight::SEMIBOLD)
-                .tabular_nums()
-                .text_color(if delta <= 0.0 {
-                    color::POSITIVE
-                } else {
-                    color::MUTED
-                })
-        }))
 }
 
 fn figure(value: String, unit: &'static str) -> impl IntoElement {

@@ -30,12 +30,22 @@ pub fn latest_until(weights: &[Weight], day: Day) -> Option<Weight> {
     weights.iter().rev().find(|w| w.day <= day).copied()
 }
 
-/// The change from the latest entry at least `days` days before `latest`
-/// to `latest`, if there is one within twice that span (an old entry says
-/// nothing about this week).
-pub fn change_since(weights: &[Weight], latest: Weight, days: i32) -> Option<f64> {
-    let before = latest_until(weights, latest.day.plus_days(-days))?;
-    (latest.day.days_since(before.day) <= days * 2).then(|| rounded(latest.kg - before.kg))
+/// The trailing seven-day trend, requiring at least three recent measurements.
+pub fn trend_weight(weights: &[Weight], day: Day) -> Option<f64> {
+    health_core::weight::trend_weight(&offsets(weights, day), 0)
+}
+
+/// One definition of change for Today and Review: the difference between
+/// trailing seven-day means at `start` and `end`, rounded to 0.1 kg.
+pub fn trend_change(weights: &[Weight], start: Day, end: Day) -> Option<f64> {
+    health_core::weight::trend_change(&offsets(weights, start), 0, end.days_since(start))
+}
+
+fn offsets(weights: &[Weight], origin: Day) -> Vec<(i32, f64)> {
+    weights
+        .iter()
+        .map(|w| (w.day.days_since(origin), w.kg))
+        .collect()
 }
 
 /// The entries in the `days` days ending on `day`, in day order.
@@ -74,21 +84,22 @@ mod tests {
     }
 
     #[test]
-    fn the_latest_entry_and_the_weekly_change() {
-        let weights = [
-            w("2026-11-01", 74.0),
-            w("2026-11-06", 73.0),
-            w("2026-11-13", 72.4),
-        ];
-        let latest = latest_until(&weights, day("2026-11-13")).unwrap();
-        assert_eq!(latest.kg, 72.4);
-        assert_eq!(latest_until(&weights, day("2026-11-05")).unwrap().kg, 74.0);
-        assert_eq!(latest_until(&weights, day("2026-10-31")), None);
-        // Seven days back is Nov 6.
-        assert_eq!(change_since(&weights, latest, 7), Some(-0.6));
-        // Nothing within two weeks before an entry on Dec 13.
-        let later = w("2026-12-13", 71.0);
-        assert_eq!(change_since(&weights, later, 7), None);
+    fn dates_adapt_to_the_shared_trend_without_losing_prior_history() {
+        let first = day("2026-10-26");
+        let weights: Vec<_> = (0..14)
+            .map(|d| Weight {
+                day: first.plus_days(d),
+                kg: 80.0 - f64::from(d) * 0.1,
+                logged_at_ms: 0,
+            })
+            .collect();
+        assert_eq!(latest_until(&weights, first).unwrap().kg, 80.0);
+        assert_eq!(latest_until(&weights, first.plus_days(-1)), None);
+        assert_eq!(
+            trend_change(&weights, first.plus_days(6), first.plus_days(13)),
+            Some(-0.7)
+        );
+        assert!((trend_weight(&weights, first.plus_days(6)).unwrap() - 79.7).abs() < 1e-9);
     }
 
     #[test]

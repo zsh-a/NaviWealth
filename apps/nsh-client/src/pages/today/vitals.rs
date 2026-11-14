@@ -17,7 +17,8 @@ use crate::{
 pub fn vitals(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
     let sheets = Sheets::get();
     let summary = computed(move || garmin::on(day()));
-    let has_garmin = || garmin::connected() || garmin::has_days();
+    let has_garmin =
+        move || garmin::connected() || summary.with(|d| d.as_ref().is_some_and(|d| !d.is_empty()));
     let open_garmin = move || {
         if has_garmin() {
             sheets.garmin.set(true);
@@ -25,36 +26,33 @@ pub fn vitals(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
             nav::push(Route::Settings);
         }
     };
-    let garmin_caption = move |value: Option<String>| -> String {
-        match value {
-            Some(value) => value,
-            None if !has_garmin() => s().connect_garmin.to_owned(),
-            None => String::new(),
-        }
-    };
     let latest = move || weights::latest_until(day());
     view()
         .flex_row()
         .gap(px(10.0))
-        .child(tile(
-            Icon::Moon,
-            || s().sleep,
-            move || {
-                summary.with(|d| {
-                    d.as_ref()
-                        .and_then(|d| d.sleep_seconds)
-                        .map(|v| s().sleep_time(v))
-                })
-            },
-            move || {
-                garmin_caption(summary.with(|d| {
-                    d.as_ref()
-                        .and_then(|d| d.sleep_score)
-                        .map(|v| s().sleep_score(v))
-                }))
-            },
-            open_garmin,
-        ))
+        .child(when(has_garmin, move || {
+            tile(
+                Icon::Moon,
+                || s().sleep,
+                move || {
+                    summary.with(|d| {
+                        d.as_ref()
+                            .and_then(|d| d.sleep_seconds)
+                            .map(|v| s().sleep_time(v))
+                    })
+                },
+                move || {
+                    summary
+                        .with(|d| {
+                            d.as_ref()
+                                .and_then(|d| d.sleep_score)
+                                .map(|v| s().sleep_score(v))
+                        })
+                        .unwrap_or_default()
+                },
+                open_garmin,
+            )
+        }))
         .child(tile(
             Icon::Scale,
             || s().weight,
@@ -68,25 +66,29 @@ pub fn vitals(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
             },
             move || sheets.weight.set(Some(day())),
         ))
-        .child(tile(
-            Icon::Bolt,
-            || s().body_battery,
-            move || {
-                summary.with(|d| {
-                    d.as_ref()
-                        .and_then(|d| d.body_battery_high)
-                        .map(|v| v.to_string())
-                })
-            },
-            move || {
-                garmin_caption(summary.with(|d| {
-                    d.as_ref()
-                        .and_then(|d| d.resting_hr)
-                        .map(|v| format!("{} {v}", s().resting))
-                }))
-            },
-            open_garmin,
-        ))
+        .child(when(has_garmin, move || {
+            tile(
+                Icon::Bolt,
+                || s().body_battery,
+                move || {
+                    summary.with(|d| {
+                        d.as_ref()
+                            .and_then(|d| d.body_battery_high)
+                            .map(|v| v.to_string())
+                    })
+                },
+                move || {
+                    summary
+                        .with(|d| {
+                            d.as_ref()
+                                .and_then(|d| d.resting_hr)
+                                .map(|v| format!("{} {v}", s().resting))
+                        })
+                        .unwrap_or_default()
+                },
+                open_garmin,
+            )
+        }))
 }
 
 fn tile(
@@ -138,6 +140,6 @@ fn tile(
                 .typo(Type::Caption)
                 .tabular_nums()
                 .text_color(color::MUTED)
-                .number_of_lines(1),
+                .number_of_lines(2),
         )
 }
