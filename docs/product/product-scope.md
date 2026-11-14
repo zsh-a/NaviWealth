@@ -67,17 +67,46 @@ Decided 2026-11-13; screens in `.impeccable/mocks/2026-11-13-lifeos-ia/`.
 
 ## Kept Features
 
-### Ledger
+### Ledger (double-entry)
 
-- Accounts with balances; a liability is an account with a negative balance.
-- Transactions: expense, income, transfer between own accounts; category,
-  account, note. Manual entry is a bottom sheet.
-- Statement import for the existing Alipay, WeChat XLSX and CMB credit-card
-  parsers, with duplicate detection and per-row confirmation. Reuse the
-  statement corpus fixtures.
+The ledger is double-entry: every transaction is a balanced set of postings,
+so balances, spending and net worth are all derived from one journal and
+must agree. Statement import is the main way money is recorded; manual entry
+and screenshots fill gaps.
+
+- **Accounts** of five types: Assets (cash, debit cards, Alipay and WeChat
+  balances), Liabilities (credit cards, Huabei), Expenses and Income (these
+  are the categories), and Equity (opening balances, adjustments). Names are
+  `type:name` (`资产:招行储蓄卡`, `支出:餐饮`). A default set of expense and
+  income accounts ships; the owner's own asset and liability accounts are
+  created as statements first mention them.
+- **Transactions:** a date and time, payee, note, source (statement row,
+  manual, screenshot) and two or more postings in CNY minor units whose sum
+  is zero. A purchase is `支出:餐饮 +31.50 / 资产:支付宝余额 −31.50`; a
+  credit-card purchase posts to `负债:…`; a repayment or top-up moves money
+  between own accounts; a refund reverses its purchase.
+- **Statement import (primary):** the system file picker opens an Alipay CSV,
+  WeChat XLSX or CMB credit-card statement; the existing Flutter parsers move
+  to `finance-core` and must match the statement corpus fixtures exactly.
+  Each row's payment method (`余额`, `花呗`, `招商银行储蓄卡(1234)`) maps to an
+  asset or liability account, asked once and remembered; its category hint
+  and payee map to an expense or income account through remembered rules.
+  A review page shows new, possible-duplicate and skipped rows; nothing is
+  kept before confirmation.
+- **Duplicates across sources:** a statement row repeats an earlier one when
+  it carries the same provider transaction id, or posts the same amount to
+  the same own account within a day (an Alipay purchase paid by credit card
+  also appears on the card's statement). Possible duplicates start
+  unselected.
+- **Balance checks:** the owner states an account's real balance on a date;
+  a difference is shown and can be posted to `权益:调整` with confirmation.
+  Opening balances are postings against `权益:期初`.
+- Manual entry is a bottom sheet: amount, expense or income account, the own
+  account it came from or went to, or a transfer between two own accounts.
 - Receipt or payment-screenshot recognition into a transaction draft through
-  the owner's own model account.
-- One optional monthly budget total. No per-category budgets.
+  the owner's own model account (after statement import).
+- One optional monthly budget against total expenses. No per-category
+  budgets.
 
 ### Holdings (detail required)
 
@@ -138,6 +167,9 @@ and keep it as an archive file.
 
 ## Records In Scope
 
-Account, Transaction, Category, Budget (optional), Security, Trade, Quote,
+Account (assets, liabilities, expenses, income, equity), Transaction with
+its postings, Import mapping rule, Balance check, Budget (optional),
+Security, Trade, Quote,
 Meal (with food snapshots and local photos), Favorite meal, Weight, Garmin daily summary,
-Review note. Positions and net worth are derived and not stored as truth.
+Review note. Balances, spending, positions and net worth are derived and not
+stored as truth.

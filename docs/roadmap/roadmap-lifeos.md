@@ -106,14 +106,33 @@ health-only Review; Assets arrives with Phase 3.
 - Exit: imported meal and weight counts and daily totals match the Flutter
   export; importing twice creates no duplicates.
 
-## Phase 3 — Ledger
+## Phase 3 — Ledger (double-entry)
 
-- Scope: `finance-core` accounts, transactions, categories, optional monthly
-  budget; Alipay, WeChat XLSX and CMB statement import with duplicate review;
-  receipt/screenshot recognition drafts in Records; the Assets tab with
-  account balances.
-- Exit: exact money and rounding tests; statement corpus fixtures pass with
-  pinned accepted/rejected counts; nothing is saved without confirmation.
+Started before Phase 2 by the owner's choice (2026-11-14): statements can
+bring months of history at once, so the ledger does not wait for the
+Flutter import.
+
+- Scope: `finance-core` double-entry journal (accounts of five types,
+  balanced postings in CNY minor units, derived balances), statement import
+  as the main input, cross-source duplicates, balance checks, an optional
+  monthly budget, the Assets tab, and screenshot drafts last.
+- Steps, each shippable:
+  1. `finance-core`: money, accounts, transactions and postings with the
+     zero-sum invariant, balances, duplicate matching, mapping rules; the
+     Alipay, WeChat XLSX and CMB parsers ported from Flutter.
+  2. SQLite tables (accounts, transactions, postings, mapping rules) in the
+     client, restored with backups; manual entry; Records and Today show
+     spending.
+  3. Statement import: file picker, account and category mapping asked once,
+     the review page, confirmation.
+  4. Review: spending by expense account against the period before, the
+     monthly budget.
+  5. Assets tab: asset and liability balances, net worth, balance checks.
+  6. Payment-screenshot recognition into transaction drafts.
+- Exit: every transaction balances (property tests); exact money and
+  rounding tests; statement corpus fixtures pass with pinned
+  accepted/rejected counts; importing a statement twice adds nothing;
+  nothing is saved without confirmation.
 
 ## Phase 4 — Holdings
 
