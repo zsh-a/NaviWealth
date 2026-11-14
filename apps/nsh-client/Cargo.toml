@@ -57,6 +57,11 @@ image = { version = "0.25", default-features = false, features = ["jpeg", "png",
 nsh-engine = { version = "0.5.0", default-features = false }
 nsh-testing = { version = "0.5.0", default-features = false }
 
+# Line tables keep backtraces readable while test binaries stay small; full
+# debug info grew the target directory to about 30 GB.
+[profile.dev]
+debug = "line-tables-only"
+
 [profile.release]
 opt-level = "s"
 lto = "thin"
