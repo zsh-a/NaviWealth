@@ -47,6 +47,8 @@ jobs:
       - run: cargo clippy --all-targets -- -D warnings
       - run: cargo test
       - run: cargo test --manifest-path ../../crates/health-core/Cargo.toml --locked
+      - run: cargo test --manifest-path ../../crates/finance-core/Cargo.toml --locked
+      - run: cargo clippy --manifest-path ../../crates/finance-core/Cargo.toml --all-targets --locked -- -D warnings
       - name: Signing failure and credential-handling checks
         run: python3 -m unittest discover -s ../../tool/tests -p test_nsh_signing.py
 

@@ -120,6 +120,11 @@ Flutter import.
   1. `finance-core`: money, accounts, transactions and postings with the
      zero-sum invariant, balances, duplicate matching, mapping rules; the
      Alipay, WeChat XLSX and CMB parsers ported from Flutter.
+     Implemented in `crates/finance-core`: the three corpus fixtures match
+     the Flutter parsers row for row; rows keep payee, item, provider type,
+     payment method and reference for mapping. Refunds, transfers and card
+     repayments are still skipped as the Flutter parsers did; step 3 turns
+     them into transfers and reversals and updates the manifests.
   2. SQLite tables (accounts, transactions, postings, mapping rules) in the
      client, restored with backups; manual entry; Records and Today show
      spending.

@@ -38,7 +38,7 @@ The frozen Flutter production domain inventory is `apps/mobile/lib/app/domain_pa
 The NSH client is a fixed four-tab composition (no `DomainPack` registry, per
 ADR 0002). `finance-core` and `health-core` own business truth; `lifeos-core`
 owns SQLite storage, backup/restore and the one-time Flutter import (today in `apps/nsh-client/src/data/db.rs`). These
-target crates are introduced by gated phases; only `health-core` exists today. Existing Dart path rules below apply
+target crates are introduced by gated phases; `health-core` and `finance-core` exist today. Existing Dart path rules below apply
 to Flutter maintenance only. Do not extend FRB for new client features.
 
 ## Repository Map
@@ -47,6 +47,7 @@ to Flutter maintenance only. Do not extend FRB for new client features.
 |---|---|---|
 | New native client | `apps/nsh-client/` | Rust, NSH |
 | Shared Health core | `crates/health-core/` | Rust |
+| Shared Finance core (double-entry ledger, statements) | `crates/finance-core/` | Rust |
 | Agent Runtime | `third_party/agent-runtime/` | Rust submodule |
 | Frozen mobile app | `apps/mobile/` | Dart, Flutter |
 | Native embedding runtime | `apps/mobile/native/lifeos_native/` | Rust, flutter_rust_bridge |
@@ -144,6 +145,7 @@ NSH client:
 ```bash
 rtk cargo test --manifest-path apps/nsh-client/Cargo.toml
 rtk cargo test --manifest-path crates/health-core/Cargo.toml --locked
+rtk cargo test --manifest-path crates/finance-core/Cargo.toml --locked
 ```
 
 Mobile maintenance:
