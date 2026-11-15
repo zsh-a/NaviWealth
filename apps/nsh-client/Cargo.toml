@@ -32,7 +32,7 @@ jiff = "0.2"
 # The app's database, SQLite compiled in (Personal Local Scope: private storage, not SQLCipher).
 rusqlite = { version = "0.37", features = ["bundled"] }
 # Backups: Argon2id from the passphrase, XChaCha20-Poly1305 over the database.
-argon2 = "0.5"
+argon2 = "0.6"
 chacha20poly1305 = "0.10"
 getrandom = "0.3"
 thiserror = "2"
