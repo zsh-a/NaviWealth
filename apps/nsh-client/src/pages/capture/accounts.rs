@@ -1,5 +1,5 @@
 //! Explicit local account selection updates only the draft, never the ledger.
-use finance_core::account::Account;
+use navi_finance::account::Account;
 use nsh_core::prelude::*;
 
 use crate::{
@@ -34,7 +34,7 @@ pub fn picker(
     };
     let currency = match current.records.get(choice.index) {
         Some(Record::Money { draft: money, .. }) => {
-            finance_core::currency::Currency::parse(&money.currency)
+            navi_finance::currency::Currency::parse(&money.currency)
         }
         _ => None,
     };

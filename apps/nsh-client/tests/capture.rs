@@ -61,16 +61,16 @@ fn transfer_completion_excludes_its_source_and_view_reveals_a_multi_day_batch() 
     app.press("View")?;
     app.wait_for("text:74.2 kg")?;
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
-    let entries = finance_core::repository::transactions(&db).unwrap();
+    let entries = navi_finance::repository::transactions(&db).unwrap();
     assert_eq!(entries.len(), 1);
     assert!(entries[0].validate().is_ok());
-    let balances = finance_core::journal::balances(&entries);
+    let balances = navi_finance::journal::balances(&entries);
     assert_eq!(
-        balances[&finance_core::account::Account::parse("资产:Cash").unwrap()],
+        balances[&navi_finance::account::Account::parse("资产:Cash").unwrap()],
         -2000
     );
     assert_eq!(
-        balances[&finance_core::account::Account::parse("资产:Bank").unwrap()],
+        balances[&navi_finance::account::Account::parse("资产:Bank").unwrap()],
         2000
     );
     assert_eq!(stub.requests().len(), 1);
@@ -99,7 +99,7 @@ fn account_completion_is_local_durable_and_never_posts_before_confirmation() -> 
     app.press("label:Cash")?;
     app.wait_for("Could not save changes. Check device storage and try again.")?;
     assert!(
-        finance_core::repository::transactions(&db)
+        navi_finance::repository::transactions(&db)
             .unwrap()
             .is_empty()
     );
@@ -124,7 +124,7 @@ fn account_completion_is_local_durable_and_never_posts_before_confirmation() -> 
     app.wait_for("Draft kept; no records saved")?;
     assert_eq!(stub.requests().len(), 1, "account selection never calls AI");
     assert!(
-        finance_core::repository::transactions(&db)
+        navi_finance::repository::transactions(&db)
             .unwrap()
             .is_empty()
     );
@@ -146,7 +146,7 @@ fn account_completion_is_local_durable_and_never_posts_before_confirmation() -> 
     app.press("View")?;
     app.wait_for("label:/^Lunch shop, −32.00 CNY/")?;
     assert_eq!(
-        finance_core::repository::transactions(&db).unwrap().len(),
+        navi_finance::repository::transactions(&db).unwrap().len(),
         1
     );
     assert!(quiet.requests().is_empty());
@@ -189,7 +189,7 @@ fn natural_correction_then_batch_confirmation_is_atomic_and_survives_restart() -
     assert!(app.screen().enabled("text:/^Confirm and save/")?);
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
     assert!(
-        finance_core::repository::transactions(&db)
+        navi_finance::repository::transactions(&db)
             .unwrap()
             .is_empty()
     );
@@ -198,7 +198,7 @@ fn natural_correction_then_batch_confirmation_is_atomic_and_survives_restart() -
     app.press("text:/^Confirm and save/")?;
     app.wait_for("Could not save changes. Check device storage and try again.")?;
     assert!(
-        finance_core::repository::transactions(&db)
+        navi_finance::repository::transactions(&db)
             .unwrap()
             .is_empty(),
         "earlier writes rolled back"
@@ -211,7 +211,7 @@ fn natural_correction_then_batch_confirmation_is_atomic_and_survives_restart() -
         1
     );
     assert!(
-        !finance_core::repository::accounts(&db)
+        !navi_finance::repository::accounts(&db)
             .unwrap()
             .iter()
             .any(|a| a.name() == "Cash")
@@ -225,7 +225,7 @@ fn natural_correction_then_batch_confirmation_is_atomic_and_survives_restart() -
         "an old receipt cannot navigate behind a new draft"
     );
     app.press("label:Close")?;
-    let entries = finance_core::repository::transactions(&db).unwrap();
+    let entries = navi_finance::repository::transactions(&db).unwrap();
     assert_eq!(entries.len(), 1);
     assert_eq!(entries[0].postings[0].amount, 3200);
     assert_eq!(stored_meals(dir.path()).len(), 1);
@@ -259,7 +259,7 @@ fn natural_correction_then_batch_confirmation_is_atomic_and_survives_restart() -
     );
     app.wait_for("label:/^Lunch shop, −32.00 CNY/")?;
     assert_eq!(
-        finance_core::repository::transactions(&db).unwrap(),
+        navi_finance::repository::transactions(&db).unwrap(),
         entries
     );
     Ok(())
@@ -291,7 +291,7 @@ fn interrupted_text_is_kept_and_malformed_model_money_cannot_be_saved() -> Resul
     assert!(!app.shows("text:/^Confirm and save/"));
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
     assert!(
-        finance_core::repository::transactions(&db)
+        navi_finance::repository::transactions(&db)
             .unwrap()
             .is_empty()
     );

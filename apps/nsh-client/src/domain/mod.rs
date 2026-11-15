@@ -11,7 +11,7 @@ pub mod meal;
 pub mod pending;
 pub mod review;
 pub mod weight;
-pub use health_core::{catalog, garmin, nutrition, recognition};
+pub use navi_health::{catalog, garmin, nutrition, recognition};
 
 /// Why a provider gave no usable reply.
 #[derive(Debug, Clone, PartialEq, Eq)]

@@ -1,7 +1,7 @@
 //! Financial entry flows across the editor, timeline, restart and disk failures.
 mod common;
 use common::*;
-use finance_core::{account::Account, journal, money, repository};
+use navi_finance::{account::Account, journal, money, repository};
 use nsh_testing::DialogAnswer;
 
 fn stored(dir: &Path) -> Vec<journal::Transaction> {

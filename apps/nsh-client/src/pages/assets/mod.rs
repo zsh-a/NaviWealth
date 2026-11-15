@@ -17,7 +17,7 @@ use crate::{
         toast::toast_view,
     },
 };
-use finance_core::{
+use navi_finance::{
     account::{Account, AccountKind, defaults},
     assets,
     journal::{self, Transaction},
@@ -32,15 +32,15 @@ fn display_money(value: i64) -> String {
 }
 
 pub(super) fn amount(value: i64, style: Type) -> impl IntoElement {
-    amount_in(value, style, finance_core::currency::Currency::CNY)
+    amount_in(value, style, navi_finance::currency::Currency::CNY)
 }
 
 pub(super) fn amount_in(
     value: i64,
     style: Type,
-    currency: finance_core::currency::Currency,
+    currency: navi_finance::currency::Currency,
 ) -> impl IntoElement {
-    text(if currency == finance_core::currency::Currency::CNY {
+    text(if currency == navi_finance::currency::Currency::CNY {
         format!("¥{}", display_money(value))
     } else {
         format!("{} {}", currency.code(), display_money(value))

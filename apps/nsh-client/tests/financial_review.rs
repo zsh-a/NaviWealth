@@ -1,7 +1,7 @@
 //! The review category opens the matching journal and edits the original row.
 mod common;
 use common::*;
-use finance_core::{
+use navi_finance::{
     account::{Account, AccountKind, defaults},
     journal::{self, Entry, Source},
     repository,

@@ -1,7 +1,7 @@
 //! Currency is explicit at input and presentation boundaries.
 use super::segmented::{Segment, segmented};
 use super::{Type, Typo};
-use finance_core::{account::Account, currency::Currency, money};
+use navi_finance::{account::Account, currency::Currency, money};
 use nsh_core::prelude::*;
 
 pub fn picker(selected: Signal<Currency>) -> impl IntoElement {
@@ -27,7 +27,7 @@ pub fn format(amount: i64, currency: Currency) -> String {
 }
 
 /// Exact minor units, grouped for reading only. Editors and serialization
-/// continue to use `finance_core::money` without grouping separators.
+/// continue to use `navi_finance::money` without grouping separators.
 pub fn grouped(amount: i64) -> String {
     let written = money::format(amount);
     let (whole, fraction) = written

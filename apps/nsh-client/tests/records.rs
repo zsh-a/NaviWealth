@@ -9,7 +9,7 @@ use nsh_app_naviwealth_health::domain::meal::decode_meals;
 
 #[test]
 fn today_summarizes_spending_with_its_records_at_large_text() -> Result<(), String> {
-    use finance_core::{
+    use navi_finance::{
         account::{Account, AccountKind, defaults},
         journal::{self, Entry, Source},
         repository,

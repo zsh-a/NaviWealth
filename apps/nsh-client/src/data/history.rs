@@ -1,11 +1,11 @@
 //! Bounded, single-flight backfill. Only dated market observations are persisted.
 use super::{db, finance, market};
-use finance_core::{
+use jiff::{Timestamp, civil::Date};
+use navi_finance::{
     catalog,
     currency::{self, Currency},
     history as store, history_provider as provider,
 };
-use jiff::{Timestamp, civil::Date};
 use nsh_core::{prelude::*, storage::Storage};
 use std::time::Duration;
 #[derive(Debug, Clone, Default, PartialEq, Eq)]

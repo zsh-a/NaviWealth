@@ -4,7 +4,7 @@
 
 use std::collections::BTreeMap;
 
-use finance_core::{journal::Transaction, money};
+use navi_finance::{journal::Transaction, money};
 use nsh_base::button;
 use nsh_core::{geometry::Point, prelude::*};
 
@@ -59,7 +59,7 @@ struct DayRecords {
     meals: usize,
     weight: Option<Weight>,
     spending: Option<money::Minor>,
-    foreign_spending: Vec<(finance_core::currency::Currency, i64)>,
+    foreign_spending: Vec<(navi_finance::currency::Currency, i64)>,
     entries: Vec<Entry>,
 }
 
@@ -483,12 +483,12 @@ fn group(
                 .any(|e| matches!(e, Entry::Transaction(_)))
             {
                 day.foreign_spending = [
-                    finance_core::currency::Currency::HKD,
-                    finance_core::currency::Currency::USD,
+                    navi_finance::currency::Currency::HKD,
+                    navi_finance::currency::Currency::USD,
                 ]
                 .into_iter()
                 .filter_map(|currency| {
-                    let spending = finance_core::review::spending_in(
+                    let spending = navi_finance::review::spending_in(
                         &transactions,
                         day.day.0,
                         day.day.0,
@@ -497,11 +497,11 @@ fn group(
                     (spending.records > 0).then_some((currency, spending.total))
                 })
                 .collect();
-                let cny = finance_core::review::spending_in(
+                let cny = navi_finance::review::spending_in(
                     &transactions,
                     day.day.0,
                     day.day.0,
-                    finance_core::currency::Currency::CNY,
+                    navi_finance::currency::Currency::CNY,
                 );
                 day.spending =
                     (cny.records > 0 || day.foreign_spending.is_empty()).then_some(cny.total);
@@ -536,7 +536,7 @@ mod tests {
         meal::MealSlot,
         nutrition::{Food, FoodSource, Nutrients},
     };
-    use finance_core::journal;
+    use navi_finance::journal;
 
     fn day(text: &str) -> Day {
         text.parse().unwrap()
@@ -632,7 +632,7 @@ mod tests {
     }
     #[test]
     fn mixed_days_sort_by_local_time_and_only_expense_postings_count_as_spending() {
-        use finance_core::{
+        use navi_finance::{
             account::{Account, AccountKind, defaults},
             journal::{Entry as JournalEntry, Source},
         };

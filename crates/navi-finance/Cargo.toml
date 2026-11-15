@@ -1,0 +1,31 @@
+[package]
+name = "navi-finance"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.96"
+publish = false
+description = "Host-independent double-entry ledger and statement parsing for NaviWealth."
+
+[workspace]
+
+[dependencies]
+navi-storage = { path = "../navi-storage" }
+serde_json = { version = "1", features = ["arbitrary_precision"] }
+# Statement times and days, as written (civil, no time zone).
+jiff = { version = "0.2", default-features = false, features = ["std", "serde", "tzdb-bundle-always"] }
+serde = { version = "1", features = ["derive"] }
+thiserror = "2"
+regex = { version = "1", default-features = false, features = ["std", "unicode-perl", "unicode-case"] }
+# Alipay exports CSV in GB18030 when it is not UTF-8.
+encoding_rs = "0.8"
+# WeChat Pay exports XLSX: a ZIP of XML parts.
+zip = { version = "9", default-features = false, features = ["deflate-flate2"] }
+flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
+roxmltree = "0.21"
+sha2 = "0.10"
+
+[dev-dependencies]
+tempfile = "3"
+
+[lints.rust]
+unsafe_code = "forbid"

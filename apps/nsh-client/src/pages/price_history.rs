@@ -10,7 +10,7 @@ use crate::{
         surface::{hairline, row_button},
     },
 };
-use finance_core::{
+use navi_finance::{
     catalog,
     history::{AuditRevision, DailyBar},
     holdings::format_units,
@@ -37,8 +37,8 @@ pub fn page(security: Option<String>) -> Screen {
                     untracked(move || {
                         let result = db::with(|c| {
                             let bindings = catalog::bindings(c).map_err(|e|e.to_string())?;
-                            let bars = finance_core::history::all_daily_revisions(c).map_err(|e|e.to_string())?;
-                            let changes = finance_core::history::audit(c).map_err(|e|e.to_string())?;
+                            let bars = navi_finance::history::all_daily_revisions(c).map_err(|e|e.to_string())?;
+                            let changes = navi_finance::history::audit(c).map_err(|e|e.to_string())?;
                             Ok::<_, String>((bindings, bars, changes))
                         }).unwrap_or_else(||Err("database unavailable".into()));
                         let Ok((bindings,bars,changes)) = result else {
@@ -55,7 +55,7 @@ pub fn page(security: Option<String>) -> Screen {
                         } else {
                             let mut groups:BTreeMap<_,Vec<DailyBar>>=BTreeMap::new();
                             for bar in bars {
-                                if selected.is_some() && !binding.is_some_and(|b| b.market==bar.market && b.currency==bar.currency && finance_core::market::canonical_binding(b).as_ref()==Some(&bar.symbol)) {continue}
+                                if selected.is_some() && !binding.is_some_and(|b| b.market==bar.market && b.currency==bar.currency && navi_finance::market::canonical_binding(b).as_ref()==Some(&bar.symbol)) {continue}
                                 groups.entry((bar.day,bar.market.clone(),bar.symbol.clone(),bar.currency.clone())).or_default().push(bar);
                             }
                             total=groups.len();

@@ -1020,23 +1020,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "finance-core"
-version = "0.1.0"
-dependencies = [
- "encoding_rs",
- "flate2",
- "jiff",
- "lifeos-core",
- "regex",
- "roxmltree 0.21.2",
- "serde",
- "serde_json",
- "sha2",
- "thiserror",
- "zip",
-]
-
-[[package]]
 name = "find-msvc-tools"
 version = "0.1.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1767,18 +1750,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "health-core"
-version = "0.1.0"
-dependencies = [
- "image",
- "llm-client",
- "llm-protocol",
- "serde",
- "serde_json",
- "thiserror",
-]
-
-[[package]]
 name = "heck"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2378,14 +2349,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lifeos-core"
-version = "0.1.0"
-dependencies = [
- "rusqlite",
- "thiserror",
-]
-
-[[package]]
 name = "linux-raw-sys"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2619,6 +2582,43 @@ dependencies = [
 ]
 
 [[package]]
+name = "navi-finance"
+version = "0.1.0"
+dependencies = [
+ "encoding_rs",
+ "flate2",
+ "jiff",
+ "navi-storage",
+ "regex",
+ "roxmltree 0.21.2",
+ "serde",
+ "serde_json",
+ "sha2",
+ "thiserror",
+ "zip",
+]
+
+[[package]]
+name = "navi-health"
+version = "0.1.0"
+dependencies = [
+ "image",
+ "llm-client",
+ "llm-protocol",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "navi-storage"
+version = "0.1.0"
+dependencies = [
+ "rusqlite",
+ "thiserror",
+]
+
+[[package]]
 name = "new_debug_unreachable"
 version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2659,17 +2659,17 @@ dependencies = [
  "base64 0.22.1",
  "chacha20poly1305",
  "env_logger",
- "finance-core",
  "futures",
  "getrandom 0.3.4",
- "health-core",
  "image",
  "jiff",
- "lifeos-core",
  "llm-client",
  "llm-protocol",
  "log",
  "market-data-rs",
+ "navi-finance",
+ "navi-health",
+ "navi-storage",
  "nsh-base",
  "nsh-core",
  "nsh-engine",

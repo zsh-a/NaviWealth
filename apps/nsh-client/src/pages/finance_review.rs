@@ -9,7 +9,7 @@ use crate::{
         surface::{card, hairline, row_button},
     },
 };
-use finance_core::{account::Account, currency::Currency, review};
+use navi_finance::{account::Account, currency::Currency, review};
 use nsh_base::nav_page;
 use nsh_core::{element::Screen, prelude::*};
 

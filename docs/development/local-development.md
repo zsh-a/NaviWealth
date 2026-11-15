@@ -1,13 +1,14 @@
 # Local Development Guide
 
-Rust environment setup for the native client and domain cores.
+Rust environment setup for the native client and domain crates.
 
-## Rust environment (native client and domain cores)
+## Rust environment (native client and domain crates)
 
 The repository defaults to the rolling `nightly` channel in
-`rust-toolchain.toml`, matching the NSH client. It installs rustfmt, Clippy
-and the Android arm64 target using the minimal profile; the NSH
-client's own file additionally carries the emulator's `x86_64-linux-android`.
+`rust-toolchain.toml`, matching the NSH client. It installs rustfmt and
+Clippy using the minimal profile; the NSH client's own file carries the
+Android targets (`aarch64-linux-android` for devices, the emulator's
+`x86_64-linux-android` for debugging).
 CI uses
 these files too. Run `rtk rustup update nightly` to refresh nightly locally;
 keep the root and NSH channel settings aligned. For an exact compiler
@@ -22,14 +23,14 @@ From the repository root:
 rtk rustup toolchain install
 rtk rustup show active-toolchain
 rtk git submodule update --init --recursive
-rtk cargo fmt --manifest-path crates/finance-core/Cargo.toml --all -- --check
-rtk cargo clippy --manifest-path crates/finance-core/Cargo.toml --all-targets --locked -- -D warnings
-rtk cargo test --manifest-path crates/finance-core/Cargo.toml --locked
+rtk cargo fmt --manifest-path crates/navi-finance/Cargo.toml --all -- --check
+rtk cargo clippy --manifest-path crates/navi-finance/Cargo.toml --all-targets --locked -- -D warnings
+rtk cargo test --manifest-path crates/navi-finance/Cargo.toml --locked
 ```
 
-Repeat the last three commands for `crates/health-core/Cargo.toml` and
+Repeat the last three commands for `crates/navi-health/Cargo.toml` and
 `apps/nsh-client/Cargo.toml`. These are independent Cargo workspaces; there is
-no root `Cargo.toml`. CI checks both domain cores on relevant pushes and PRs;
+no root `Cargo.toml`. CI checks both domain crates on relevant pushes and PRs;
 the NSH workflow remains manually dispatched. Keep each workspace's
 `Cargo.lock` committed and use `--locked` for checks. Dependency updates are
 explicit `cargo update` changes reviewed with their lockfile diffs.
@@ -64,7 +65,7 @@ One-time setup:
 - `nsh component add android` installs the NSH Android runtime.
 - `apps/nsh-client/rust-toolchain.toml` carries `aarch64-linux-android`
   (devices) and `x86_64-linux-android` (emulator); the repository root keeps
-  arm64.
+  no cross-compilation targets.
 
 Daily loop from `apps/nsh-client/`:
 

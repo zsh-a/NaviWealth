@@ -1,7 +1,7 @@
 //! The day's meals, oldest first, as rows of one card led by each meal's
 //! photo; a calm empty state when the day has none.
 
-use finance_core::journal::Transaction;
+use navi_finance::journal::Transaction;
 use nsh_core::prelude::*;
 
 use crate::{
@@ -75,10 +75,10 @@ pub fn meal_list(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
     let spent = computed(move || {
         let entries = finance::transactions_snapshot();
         let date = day().0;
-        finance_core::currency::Currency::ALL
+        navi_finance::currency::Currency::ALL
             .into_iter()
             .filter_map(|currency| {
-                let spending = finance_core::review::spending_in(&entries, date, date, currency);
+                let spending = navi_finance::review::spending_in(&entries, date, date, currency);
                 (spending.records > 0)
                     .then(|| crate::ui::currency::format(spending.total, currency))
             })

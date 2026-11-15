@@ -6,7 +6,7 @@
 
 use std::collections::BTreeMap;
 
-use health_core::garmin::{self, GarminDay, Region};
+use navi_health::garmin::{self, GarminDay, Region};
 use nsh_core::{platform::HttpRequest, prelude::*, storage::Storage};
 use rusqlite::{Connection, params};
 use serde::{Deserialize, Serialize};

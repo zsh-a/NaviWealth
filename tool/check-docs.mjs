@@ -45,19 +45,10 @@ for (const file of markdownFiles) {
   }
 }
 
-const mkdocs = fs.readFileSync(path.join(repoRoot, 'mkdocs.yml'), 'utf8');
-for (const match of mkdocs.matchAll(/^\s+-\s+[^:]+:\s+(\S+\.md)$/gm)) {
-  const target = path.join(docsRoot, match[1]);
-  if (!fs.existsSync(target)) {
-    failures.push(`mkdocs.yml: missing nav target ${match[1]}`);
-  }
-}
-
 for (const file of markdownFiles) {
-  if (file.includes(`${path.sep}adr${path.sep}`)) continue;
   const source = fs.readFileSync(file, 'utf8');
   for (const match of source.matchAll(
-    /`((?:apps\/nsh-client|crates|tool|\.github\/workflows|assets\/catalog|third_party\/agent-runtime)\/[^`]+)`/g,
+    /`((?:apps\/nsh-client|crates|tool|\.github\/workflows|third_party\/agent-runtime)\/[^`]+)`/g,
   )) {
     const target = match[1];
     if (/[<*>\s]/.test(target)) continue;

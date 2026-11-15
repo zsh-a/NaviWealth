@@ -5,7 +5,7 @@ use super::{
     recognition::{Lang, Recognition},
     weight::valid_kg,
 };
-use finance_core::recognition::MoneyDraft;
+use navi_finance::recognition::MoneyDraft;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
@@ -51,14 +51,14 @@ pub struct Draft {
 }
 
 pub fn schema() -> Value {
-    let meal = health_core::recognition::response_schema();
+    let meal = navi_health::recognition::response_schema();
     json!({"type":"object","additionalProperties":false,"required":["records","question"],"properties":{
         "question":{"type":"string"},
         "records":{"type":"array","items":{"type":"object","additionalProperties":false,
             "required":["kind","day","money","meal","slot","weight_kg"],"properties":{
                 "kind":{"type":"string","enum":["money","meal","weight"]},
                 "day":{"type":"string"},
-                "money":{"anyOf":[finance_core::recognition::schema(),{"type":"null"}]},
+                "money":{"anyOf":[navi_finance::recognition::schema(),{"type":"null"}]},
                 "meal":{"anyOf":[meal,{"type":"null"}]},
                 "slot":{"type":["string","null"],"enum":["breakfast","lunch","dinner","snack",null]},
                 "weight_kg":{"type":["number","null"]}
@@ -90,8 +90,8 @@ When nothing recordable is present, return an empty records array and a short qu
 For complete records question is empty; food nutrition remains an estimate.
 MONEY RULES: {} MEAL RULES (also apply to descriptions without images): {}
 The meal rules describe only the nested meal payload; the top-level output must ALWAYS use the record envelope schema, never bare title/foods JSON."#,
-        finance_core::recognition::INSTRUCTIONS,
-        health_core::recognition::system_prompt(lang)
+        navi_finance::recognition::INSTRUCTIONS,
+        navi_health::recognition::system_prompt(lang)
     )
 }
 
@@ -144,7 +144,7 @@ pub fn parse(answer: &str) -> Result<(Vec<Record>, String), InvalidCapture> {
             Some("meal") if item["money"].is_null() && item["weight_kg"].is_null() => {
                 let slot: MealSlot =
                     serde_json::from_value(item["slot"].clone()).map_err(|_| InvalidCapture)?;
-                let estimate = health_core::recognition::parse_recognition(
+                let estimate = navi_health::recognition::parse_recognition(
                     &item["meal"].to_string(),
                     &mut || {
                         id += 1;
@@ -193,7 +193,7 @@ mod tests {
     use super::*;
     #[test]
     fn foreign_capture_preserves_currency_and_accepts_only_matching_local_account() {
-        use finance_core::{
+        use navi_finance::{
             account::Account,
             journal::{Entry, Source},
         };
@@ -221,7 +221,7 @@ mod tests {
             .unwrap();
         assert_eq!(
             t.postings[0].account.currency(),
-            finance_core::currency::Currency::USD
+            navi_finance::currency::Currency::USD
         );
         assert!(t.validate().is_ok());
         assert_eq!(t.postings[0].amount, 3150);

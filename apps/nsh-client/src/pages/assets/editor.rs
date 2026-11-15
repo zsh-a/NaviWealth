@@ -12,7 +12,7 @@ use crate::{
         toast::show_toast,
     },
 };
-use finance_core::{
+use navi_finance::{
     account::{Account, AccountKind},
     assets,
     currency::Currency,

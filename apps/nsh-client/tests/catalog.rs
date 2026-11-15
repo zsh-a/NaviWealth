@@ -1,11 +1,12 @@
 //! Explicit catalog links never infer a symbol from a manual holding's name.
 mod common;
 use common::*;
-use finance_core::{catalog, holdings::store, repository};
+use navi_finance::{catalog, holdings::store, repository};
 use nsh_testing::DialogAnswer;
 #[test]
 fn search_create_and_existing_holding_binding_preserve_identity() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
+    seed_catalog(dir.path());
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
     app.press("label:Assets")?;
     app.press("Add holding")?;
@@ -56,6 +57,7 @@ fn search_create_and_existing_holding_binding_preserve_identity() -> Result<(), 
 #[test]
 fn catalog_selection_saves_binding_and_trade_together() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
+    seed_catalog(dir.path());
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
     app.press("label:Assets")?;
     app.press("Add holding")?;
@@ -87,6 +89,7 @@ fn catalog_selection_saves_binding_and_trade_together() -> Result<(), String> {
 #[test]
 fn foreign_catalog_selection_sets_currency_and_preserves_native_price() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
+    seed_catalog(dir.path());
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
     app.press("label:Assets")?;
     app.press("Add holding")?;
@@ -102,7 +105,7 @@ fn foreign_catalog_selection_sets_currency_and_preserves_native_price() -> Resul
     let book = store::load(&c).unwrap();
     assert_eq!(
         book.securities[0].currency(),
-        finance_core::currency::Currency::USD
+        navi_finance::currency::Currency::USD
     );
     assert_eq!(
         book.position(&book.securities[0], today().0).unwrap().cost,

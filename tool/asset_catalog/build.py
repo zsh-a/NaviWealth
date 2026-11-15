@@ -2,7 +2,7 @@
 """FIR-76 securities catalog NDJSON builder.
 
 Reads curated CSVs from a source directory and emits the bundled NDJSON
-that the NSH client bundles at build time and ``finance-core`` exercises
+that the NSH client bundles at build time and ``finance`` exercises
 in its tests. Pinyin/initials columns are precomputed offline so the
 client never has to ship a Chinese-romanisation library.
 
@@ -24,7 +24,7 @@ Usage:
         --output assets/catalog/securities.v1.ndjson
 
 The output format and tokenisation rules are implemented by the
-``finance-core`` catalog parser bundled via
+``finance`` catalog parser bundled via
 ``apps/nsh-client/src/data/catalog.rs``.
 The header line carries ``version`` + a deterministic FNV-1a checksum
 over the canonicalised entry list.

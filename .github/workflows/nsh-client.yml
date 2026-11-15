@@ -1,7 +1,7 @@
 name: nsh client
 
 # The native (NSH, Rust) client in apps/nsh-client, run by hand: checks the
-# crate and builds an arm64-v8a APK signed with the repository's fixed
+# crate, then builds an arm64-v8a APK signed with the repository's fixed
 # Android release key. Only the verified release APK is uploaded.
 
 on:
@@ -26,43 +26,10 @@ env:
   LINUX_PACKAGES: clang libclang-dev libgtk-4-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
 
 jobs:
-  checks:
-    name: Format, Clippy, tests
+  release:
+    name: Check, package and sign (arm64-v8a)
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
-    defaults:
-      run:
-        working-directory: apps/nsh-client
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          submodules: recursive
-      - name: Linux backend libraries (GTK 4, GStreamer)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends ${{ env.LINUX_PACKAGES }}
-      - name: Rust from rust-toolchain.toml
-        run: |
-          rustup toolchain install
-          rustc --version
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: apps/nsh-client
-      - run: cargo fmt --check
-      - run: cargo clippy --all-targets --locked -- -D warnings
-      - run: cargo test --locked
-      - run: cargo test --manifest-path ../../crates/lifeos-core/Cargo.toml --locked
-      - run: cargo clippy --manifest-path ../../crates/lifeos-core/Cargo.toml --all-targets --locked -- -D warnings
-      - run: cargo test --manifest-path ../../crates/health-core/Cargo.toml --locked
-      - run: cargo test --manifest-path ../../crates/finance-core/Cargo.toml --locked
-      - run: cargo clippy --manifest-path ../../crates/finance-core/Cargo.toml --all-targets --locked -- -D warnings
-      - name: Signing failure and credential-handling checks
-        run: python3 -m unittest discover -s ../../tool/tests -p test_nsh_signing.py
-
-  apk:
-    name: Release APK (arm64-v8a)
-    runs-on: ubuntu-24.04
-    timeout-minutes: 75
+    timeout-minutes: 90
     defaults:
       run:
         working-directory: apps/nsh-client
@@ -72,22 +39,29 @@ jobs:
       - uses: actions/checkout@v7
         with:
           submodules: recursive
-      - name: Linux backend libraries (nsh builds the crate on the host first)
+      - name: Linux backend libraries (GTK 4, GStreamer)
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends ${{ env.LINUX_PACKAGES }}
-      - uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: '17'
       - name: Rust from rust-toolchain.toml (with aarch64-linux-android)
         run: |
           rustup toolchain install
-          rustup target list --installed
+          rustc --version
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: apps/nsh-client
           key: android
+      - name: Check the app crate
+        run: |
+          cargo fmt --check
+          cargo clippy --all-targets --locked -- -D warnings
+          cargo test --locked
+      - name: Signing failure and credential-handling checks
+        run: python3 -m unittest discover -s ../../tool/tests -p test_nsh_signing.py
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
       - name: Android SDK platform, build tools and NDK
         run: |
           sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"

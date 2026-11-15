@@ -7,12 +7,12 @@
 
 <p align="center">
   <a href="https://github.com/zsh-a/NaviWealth/releases/latest"><img src="https://img.shields.io/github/v/release/zsh-a/NaviWealth?style=flat-square&label=release" alt="Latest release"></a>
-  <a href="https://github.com/zsh-a/NaviWealth/actions/workflows/rust-core.yml"><img src="https://github.com/zsh-a/NaviWealth/actions/workflows/rust-core.yml/badge.svg" alt="Rust domain cores CI"></a>
+  <a href="https://github.com/zsh-a/NaviWealth/actions/workflows/crates.yml"><img src="https://github.com/zsh-a/NaviWealth/actions/workflows/crates.yml/badge.svg" alt="Rust domain crates CI"></a>
 </p>
 
 ---
 
-NaviWealth 是一个本地优先的个人应用：复式记账、证券持仓、拍照记餐和 Garmin 身体数据。客户端是 Rust 编写的 [NSH](https://github.com/longbridge/nsh) 应用，业务真相在 `finance-core` 与 `health-core` 两个 Rust crate 里。没有账号、没有后端、没有同步——只有设备上的 SQLite 和口令加密的本地备份。
+NaviWealth 是一个本地优先的个人应用：复式记账、证券持仓、拍照记餐和 Garmin 身体数据。客户端是 Rust 编写的 [NSH](https://github.com/longbridge/nsh) 应用，业务真相在 `navi-finance` 与 `navi-health` 两个 Rust crate 里。没有账号、没有后端、没有同步——只有设备上的 SQLite 和口令加密的本地备份。
 
 | 本地优先 | 设备端 AI | 为确认而设计 |
 |---|---|---|
@@ -29,12 +29,11 @@ NaviWealth 是一个本地优先的个人应用：复式记账、证券持仓、
 
 ```text
 apps/nsh-client/            NSH (Rust) 客户端：界面、存储、页面与无头测试
-crates/finance-core/        复式账本、持仓与证券目录的业务真相
-crates/health-core/         餐食识别、营养与 Garmin 数据解析
+crates/navi-finance/        复式账本、持仓与证券目录的业务真相
+crates/navi-health/         餐食识别、营养与 Garmin 数据解析
 third_party/agent-runtime/  模型协议与客户端（git submodule）
 third_party/market-data-rs/ 行情 SDK（腾讯源）
-assets/catalog/             内置证券目录数据
-tool/asset_catalog/         目录构建、校验与发布工具链
+tool/asset_catalog/         证券目录源数据与构建、校验、发布工具链
 ```
 
 ## 快速开始
@@ -45,8 +44,8 @@ cd NaviWealth
 rustup toolchain install
 
 rtk cargo test --manifest-path apps/nsh-client/Cargo.toml --locked
-rtk cargo test --manifest-path crates/finance-core/Cargo.toml --locked
-rtk cargo test --manifest-path crates/health-core/Cargo.toml --locked
+rtk cargo test --manifest-path crates/navi-finance/Cargo.toml --locked
+rtk cargo test --manifest-path crates/navi-health/Cargo.toml --locked
 ```
 
 Android 调试（含 WSL2 + Windows 模拟器拓扑）见 [Local Development](docs/development/local-development.md)；发布 APK 由 `nsh client` 手动工作流构建签名，使用 `nsh-vX.Y.Z` 标签。
@@ -58,13 +57,13 @@ Android 调试（含 WSL2 + Windows 模拟器拓扑）见 [Local Development](do
 | 项目总览 | [Documentation Index](docs/index.md) |
 | Agent 任务路由 | [Agent Task Map](docs/agent-map.md) |
 | 产品范围 | [Product Scope](docs/product/product-scope.md) |
-| 路线图 | [NSH Roadmap](docs/roadmap/roadmap-lifeos.md) |
-| 架构决策 | [ADR 0001](docs/architecture/adr/0001-nsh-client-migration.md) · [ADR 0002](docs/architecture/adr/0002-personal-local-scope.md) · [ADR 0003](docs/architecture/adr/0003-flutter-retirement.md) |
+| 路线图 | [NSH Roadmap](docs/roadmap/roadmap-nsh.md) |
+| 范围决策 | [Personal Local Scope](docs/architecture/personal-local-scope.md) |
 | Agent Runtime | [Current Architecture](docs/architecture/agent-runtime-current.md) |
 | 证券目录 | [Catalog Pipeline](tool/asset_catalog/README.md) |
 | 本地开发 | [Local Development](docs/development/local-development.md) |
 
-> 历史上的 Flutter 客户端与 Sync v3 后端已于 2026-11-15 退役（ADR 0003），源码保留在 `flutter-final` 标签。
+> 历史上的 Flutter 客户端与 Sync v3 后端已于 2026-11-15 退役，源码保留在 `flutter-final` 标签。
 
 ## 参与项目
 

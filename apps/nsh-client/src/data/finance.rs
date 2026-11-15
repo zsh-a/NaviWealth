@@ -1,7 +1,7 @@
-//! Thin reactive adapter over finance-core's confirmed ledger repository.
+//! Thin reactive adapter over finance's confirmed ledger repository.
 //! SQLite commits before a signal changes. Failure never looks like a save.
 
-use finance_core::{account::Account, journal::Transaction, repository};
+use navi_finance::{account::Account, journal::Transaction, repository};
 use nsh_core::prelude::*;
 use std::{rc::Rc, time::Instant};
 
@@ -14,8 +14,8 @@ struct Ledger {
     transactions: Rc<Vec<Transaction>>,
     accounts: Rc<Vec<Account>>,
     checks: Rc<Vec<repository::BalanceCheck>>,
-    holdings: Rc<finance_core::holdings::Book>,
-    rates: Rc<Vec<finance_core::currency::FxRate>>,
+    holdings: Rc<navi_finance::holdings::Book>,
+    rates: Rc<Vec<navi_finance::currency::FxRate>>,
 }
 macro_rules! slice {
     ($name:ident, $ty:ty, $snapshot:ident) => {
@@ -29,8 +29,8 @@ macro_rules! slice {
 slice!(Transactions, Vec<Transaction>, transactions_snapshot);
 slice!(Accounts, Vec<Account>, accounts_snapshot);
 slice!(Checks, Vec<repository::BalanceCheck>, checks_snapshot);
-slice!(Holdings, finance_core::holdings::Book, holdings_snapshot);
-slice!(Rates, Vec<finance_core::currency::FxRate>, rates_snapshot);
+slice!(Holdings, navi_finance::holdings::Book, holdings_snapshot);
+slice!(Rates, Vec<navi_finance::currency::FxRate>, rates_snapshot);
 
 fn snapshot() -> Ledger {
     untracked(|| Ledger {
@@ -75,15 +75,15 @@ pub fn load() -> Result<(), String> {
         repository::validate(c)?;
         repository::ensure_defaults(c)?;
         Ok(Ledger {
-            rates: finance_core::currency::rates(c)
+            rates: navi_finance::currency::rates(c)
                 .map_err(|_| repository::Error::Invalid("exchange rates"))?
                 .into(),
             transactions: repository::transactions(c)?.into(),
             accounts: repository::accounts(c)?.into(),
             checks: repository::balance_checks(c)?.into(),
-            holdings: finance_core::market::valued_book(
+            holdings: navi_finance::market::valued_book(
                 c,
-                finance_core::holdings::store::load(c)
+                navi_finance::holdings::store::load(c)
                     .map_err(|_| repository::Error::Invalid("holdings"))?,
             )
             .map_err(|_| repository::Error::Invalid("market quotes"))?
@@ -110,25 +110,25 @@ pub fn accounts() -> Vec<Account> {
     (*accounts_snapshot()).clone()
 }
 
-pub fn holdings() -> finance_core::holdings::Book {
+pub fn holdings() -> navi_finance::holdings::Book {
     (*holdings_snapshot()).clone()
 }
-pub fn rates() -> Vec<finance_core::currency::FxRate> {
+pub fn rates() -> Vec<navi_finance::currency::FxRate> {
     (*rates_snapshot()).clone()
 }
-pub fn save_rate(rate: finance_core::currency::FxRate) -> Result<(), String> {
-    db::with(|c| finance_core::currency::save_rate(c, &rate))
+pub fn save_rate(rate: navi_finance::currency::FxRate) -> Result<(), String> {
+    db::with(|c| navi_finance::currency::save_rate(c, &rate))
         .ok_or("database unavailable")?
         .map_err(|e| e.to_string())?;
-    let rates = db::with(finance_core::currency::rates)
+    let rates = db::with(navi_finance::currency::rates)
         .ok_or("database unavailable")?
         .map_err(|e| e.to_string())?;
     update(|s| s.rates = rates.into());
     Ok(())
 }
-fn reflect(saved: finance_core::holdings::store::Saved) {
+fn reflect(saved: navi_finance::holdings::store::Saved) {
     let started = Instant::now();
-    let book = db::with(|c| finance_core::market::valued_book(c, saved.book.clone()))
+    let book = db::with(|c| navi_finance::market::valued_book(c, saved.book.clone()))
         .and_then(Result::ok)
         .unwrap_or(saved.book);
     update(|s| {
@@ -142,18 +142,18 @@ fn reflect(saved: finance_core::holdings::store::Saved) {
     );
 }
 pub fn add_trade(
-    security: Option<&finance_core::holdings::Security>,
-    trade: &finance_core::holdings::Trade,
-) -> Result<(), finance_core::holdings::Error> {
+    security: Option<&navi_finance::holdings::Security>,
+    trade: &navi_finance::holdings::Trade,
+) -> Result<(), navi_finance::holdings::Error> {
     add_trade_bound(security, trade, None)
 }
 pub fn add_trade_bound(
-    security: Option<&finance_core::holdings::Security>,
-    trade: &finance_core::holdings::Trade,
-    binding: Option<&finance_core::catalog::SecurityBinding>,
-) -> Result<(), finance_core::holdings::Error> {
+    security: Option<&navi_finance::holdings::Security>,
+    trade: &navi_finance::holdings::Trade,
+    binding: Option<&navi_finance::catalog::SecurityBinding>,
+) -> Result<(), navi_finance::holdings::Error> {
     let saved = db::with(|c| {
-        finance_core::holdings::store::add_trade_bound(
+        navi_finance::holdings::store::add_trade_bound(
             c,
             security,
             trade,
@@ -161,22 +161,22 @@ pub fn add_trade_bound(
             binding,
         )
     })
-    .ok_or(finance_core::holdings::Error::Invalid)??;
+    .ok_or(navi_finance::holdings::Error::Invalid)??;
     reflect(saved);
     Ok(())
 }
-pub fn remove_trade(id: &str) -> Result<(), finance_core::holdings::Error> {
-    let saved = db::with(|c| finance_core::holdings::store::remove_trade(c, id))
-        .ok_or(finance_core::holdings::Error::Invalid)??;
+pub fn remove_trade(id: &str) -> Result<(), navi_finance::holdings::Error> {
+    let saved = db::with(|c| navi_finance::holdings::store::remove_trade(c, id))
+        .ok_or(navi_finance::holdings::Error::Invalid)??;
     reflect(saved);
     Ok(())
 }
 pub fn set_quote(
-    quote: &finance_core::holdings::Quote,
-) -> Result<(), finance_core::holdings::Error> {
+    quote: &navi_finance::holdings::Quote,
+) -> Result<(), navi_finance::holdings::Error> {
     let saved =
-        db::with(|c| finance_core::holdings::store::set_quote(c, quote, super::clock::today().0))
-            .ok_or(finance_core::holdings::Error::Invalid)??;
+        db::with(|c| navi_finance::holdings::store::set_quote(c, quote, super::clock::today().0))
+            .ok_or(navi_finance::holdings::Error::Invalid)??;
     reflect(saved);
     Ok(())
 }
@@ -374,8 +374,8 @@ mod tests {
             .child(text("same").on_press(|| publish(snapshot())))
             .child(text("rate").on_press(|| {
                 update(|s| {
-                    s.rates = vec![finance_core::currency::FxRate {
-                        currency: finance_core::currency::Currency::USD,
+                    s.rates = vec![navi_finance::currency::FxRate {
+                        currency: navi_finance::currency::Currency::USD,
                         day: jiff::civil::date(2026, 11, 15),
                         rate: 7_000_000,
                         source: "manual".into(),
@@ -386,13 +386,13 @@ mod tests {
             .child(text("pair").on_press(|| {
                 update(|s| {
                     let own = Account::parse("资产:Cash").unwrap();
-                    let entry = finance_core::journal::opening(
-                        finance_core::journal::Entry {
+                    let entry = navi_finance::journal::opening(
+                        navi_finance::journal::Entry {
                             id: "one".into(),
                             at: jiff::civil::date(2026, 11, 15).at(12, 0, 0, 0),
                             payee: String::new(),
                             note: String::new(),
-                            source: finance_core::journal::Source::Manual,
+                            source: navi_finance::journal::Source::Manual,
                         },
                         &own,
                         100,

@@ -326,7 +326,7 @@ fn account_group(
     kind: AccountKind,
     accounts: &[Account],
     balances: &std::collections::BTreeMap<Account, i64>,
-    checks: &[finance_core::repository::BalanceCheck],
+    checks: &[navi_finance::repository::BalanceCheck],
 ) -> Option<AnyElement> {
     let own: Vec<_> = accounts.iter().filter(|a| a.kind() == kind).collect();
     if own.is_empty() {

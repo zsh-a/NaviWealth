@@ -1,6 +1,6 @@
 //! SQLite-backed import drafts; signals change only after successful writes.
 use super::{db, finance};
-use finance_core::{
+use navi_finance::{
     import::store::{self, Draft},
     repository,
 };
@@ -8,14 +8,14 @@ use nsh_core::prelude::*;
 #[derive(Clone, Default, PartialEq)]
 struct State {
     draft: Option<Draft>,
-    report: Option<finance_core::statement::Report>,
-    rows: Vec<finance_core::import::Candidate>,
+    report: Option<navi_finance::statement::Report>,
+    rows: Vec<navi_finance::import::Candidate>,
 }
 impl State {
     fn new(draft: Option<Draft>) -> Self {
         let report = draft
             .as_ref()
-            .map(|d| finance_core::statement::review(&d.text, "CNY"));
+            .map(|d| navi_finance::statement::review(&d.text, "CNY"));
         let rows = draft
             .as_ref()
             .zip(report.as_ref())
@@ -37,10 +37,10 @@ pub fn has_draft() -> bool {
 pub fn current() -> Option<Draft> {
     state().with(|s| s.draft.clone())
 }
-pub fn report() -> Option<finance_core::statement::Report> {
+pub fn report() -> Option<navi_finance::statement::Report> {
     state().with(|s| s.report.clone())
 }
-pub fn rows() -> Vec<finance_core::import::Candidate> {
+pub fn rows() -> Vec<navi_finance::import::Candidate> {
     state().with(|s| s.rows.clone())
 }
 pub fn selected_count() -> usize {

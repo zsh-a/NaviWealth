@@ -1,7 +1,7 @@
 //! Portfolio ownership through the real UI, exact cash coupling and recovery.
 mod common;
 use common::*;
-use finance_core::{
+use navi_finance::{
     account::Account,
     holdings::{self, store},
     journal, repository,
@@ -191,7 +191,7 @@ fn manual_hkd_holding_keeps_currency_when_recording_later_trades() -> Result<(),
     let book = store::load(&c).unwrap();
     assert_eq!(
         book.securities[0].currency(),
-        finance_core::currency::Currency::HKD
+        navi_finance::currency::Currency::HKD
     );
     assert_eq!(book.trades.len(), 1);
     Ok(())
@@ -200,6 +200,7 @@ fn manual_hkd_holding_keeps_currency_when_recording_later_trades() -> Result<(),
 #[test]
 fn security_search_back_preserves_values_query_and_one_fixed_task_viewport() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
+    seed_catalog(dir.path());
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
     app.press("label:Assets")?;
     app.press("Add holding")?;
@@ -289,14 +290,14 @@ fn security_search_back_preserves_values_query_and_one_fixed_task_viewport() -> 
     let book = store::load(&db).unwrap();
     assert_eq!(
         book.securities[0].currency(),
-        finance_core::currency::Currency::USD
+        navi_finance::currency::Currency::USD
     );
     assert_eq!(
         book.position(&book.securities[0], today().0).unwrap().cost,
         20000
     );
     assert_eq!(
-        finance_core::catalog::bindings(&db).unwrap()[0].symbol,
+        navi_finance::catalog::bindings(&db).unwrap()[0].symbol,
         "AAPL"
     );
     Ok(())

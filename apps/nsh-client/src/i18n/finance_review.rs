@@ -1,6 +1,6 @@
 //! Review copy kept together for both supported languages.
 use super::Strings;
-use finance_core::money;
+use navi_finance::money;
 impl Strings {
     pub fn recorded_spending(&self) -> &'static str {
         if self.zh() {

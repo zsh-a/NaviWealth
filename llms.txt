@@ -1,8 +1,8 @@
 # NaviWealth
 
 > Local-first personal finance and health app for one Android phone. The
-> client is NSH (Rust); business truth lives in the `finance-core` and
-> `health-core` crates. Local-only: no backend, no sync, no account system;
+> client is NSH (Rust); business truth lives in the `navi-finance` and
+> `navi-health` crates. Local-only: no backend, no sync, no account system;
 > passphrase-encrypted local backups. AI recognition runs on device against
 > user-owned LLM profiles through the `third_party/agent-runtime` submodule.
 
@@ -11,10 +11,8 @@
 - [Documentation Index](docs/index.md): Human and AI entry point for the docs tree.
 - [Agent Guide](AGENTS.md): Build commands, architecture rules, and coding conventions for AI agents.
 - [Product Scope](docs/product/product-scope.md): What the NSH client builds and deliberately omits.
-- [NSH Client Roadmap](docs/roadmap/roadmap-lifeos.md): Active delivery gates.
-- [NSH Migration ADR](docs/architecture/adr/0001-nsh-client-migration.md): NSH direction, Android only.
-- [Personal Local Scope ADR](docs/architecture/adr/0002-personal-local-scope.md): Personal, local-only reduced rewrite.
-- [Flutter Retirement ADR](docs/architecture/adr/0003-flutter-retirement.md): Flutter and Sync backend retirement, catalog relocation, D1 archive ids.
+- [NSH Client Roadmap](docs/roadmap/roadmap-nsh.md): Active delivery gates.
+- [Personal Local Scope](docs/architecture/personal-local-scope.md): Personal, local-only scope policy.
 - [Agent Runtime Current Architecture](docs/architecture/agent-runtime-current.md): Current Rust runtime code map, invariants, and maintenance guide.
 - [Local Development](docs/development/local-development.md): Rust toolchain, crates checks, NSH Android debugging.
 - [Branch Protection](docs/operations/branch-protection.md): CI checks and NSH release policy.
@@ -22,15 +20,14 @@
 ## Current Code Roots
 
 - `apps/nsh-client/`: NSH (Rust) UI client and its headless tests.
-- `crates/finance-core/`: Double-entry ledger, holdings, securities catalog truth.
-- `crates/health-core/`: Meal recognition, nutrition, Garmin daily summaries.
+- `crates/navi-finance/`: Double-entry ledger, holdings, securities catalog truth.
+- `crates/navi-health/`: Meal recognition, nutrition, Garmin daily summaries.
 - `third_party/agent-runtime/`: Provider-neutral LLM protocol and client (submodule).
 - `third_party/market-data-rs/`: Market-data SDK (Tencent quotes).
-- `assets/catalog/` + `tool/asset_catalog/`: Securities catalog bundle and its build/publish pipeline.
+- `tool/asset_catalog/`: Securities catalog source CSVs and its bake/publish pipeline (the client downloads the bundle from the rolling release).
 
 ## Documentation Policy
 
 Documentation describes the current implementation. Superseded documents are
-removed rather than archived, except the explicitly archived Finance roadmap
-and product-direction study, which are retained historical context. Retired
-Flutter-era documents and code remain reachable at the `flutter-final` tag.
+removed rather than archived. Retired Flutter-era documents and code remain
+reachable at the `flutter-final` tag.

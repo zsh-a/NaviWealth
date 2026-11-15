@@ -34,7 +34,7 @@ pub enum Route {
         from: Day,
         to: Day,
         category: Option<String>,
-        currency: finance_core::currency::Currency,
+        currency: navi_finance::currency::Currency,
     },
 }
 

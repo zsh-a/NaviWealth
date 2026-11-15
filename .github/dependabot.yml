@@ -23,7 +23,7 @@ updates:
       prefix: 'chore(nsh-deps)'
 
   - package-ecosystem: cargo
-    directory: /crates/finance-core
+    directory: /crates/navi-finance
     schedule:
       interval: weekly
       day: monday
@@ -34,7 +34,7 @@ updates:
       prefix: 'chore(finance-deps)'
 
   - package-ecosystem: cargo
-    directory: /crates/health-core
+    directory: /crates/navi-health
     schedule:
       interval: weekly
       day: monday

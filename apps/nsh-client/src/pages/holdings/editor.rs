@@ -5,7 +5,7 @@ use crate::ui::{
     sheet::{initial_focus, retained, task_sheet},
     surface::disclosure,
 };
-use finance_core::{
+use navi_finance::{
     account::{Account, AccountKind},
     currency::Currency,
     holdings::{Quote, Trade},
@@ -128,7 +128,7 @@ pub fn trade_task(
                         .map(Security::currency)
                         .unwrap_or(Currency::CNY),
                 );
-                let listing = signal(None::<finance_core::catalog::Entry>);
+                let listing = signal(None::<navi_finance::catalog::Entry>);
                 let embedded = crate::ui::sheet::is_task_panel();
                 let search = crate::pages::security_picker::Search::new();
                 let manual = signal(false);

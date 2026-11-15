@@ -1,11 +1,11 @@
 //! Foreground-only public multi-market refresh. Network work stays off the UI thread.
 use super::{clock, db, finance};
-use finance_core::{
-    catalog, holdings,
-    market::{self, MarketQuote},
-};
 use market_data_rs::{
     FetchOptions, MarketData, Symbol, Tencent, cache::NoCache, transport::HttpClient,
+};
+use navi_finance::{
+    catalog, holdings,
+    market::{self, MarketQuote},
 };
 use nsh_core::prelude::*;
 use std::{
@@ -253,8 +253,8 @@ fn fetch(bindings: Vec<catalog::SecurityBinding>) -> Result<Vec<QuoteResult>, St
 }
 fn fetch_fx(
     today: jiff::civil::Date,
-) -> Result<Vec<Result<finance_core::currency::FxRate, String>>, String> {
-    use finance_core::currency::Currency;
+) -> Result<Vec<Result<navi_finance::currency::FxRate, String>>, String> {
+    use navi_finance::currency::Currency;
     let client = client()?;
     client.runtime.block_on(async {
         let mut rows = Vec::new();
@@ -307,7 +307,7 @@ pub async fn refresh(force: bool) {
         && bindings.is_empty()
         && !finance::accounts()
             .iter()
-            .any(|a| a.currency() != finance_core::currency::Currency::CNY)
+            .any(|a| a.currency() != navi_finance::currency::Currency::CNY)
     {
         if !finance::transactions().is_empty()
             && let Err(error) = super::valuation::capture(false)
@@ -352,7 +352,7 @@ pub async fn refresh(force: bool) {
                 match result {
                     Ok(rate) => {
                         let saved = db::with(|c| {
-                            use finance_core::currency;
+                            use navi_finance::currency;
                             if currency::rates(c)?.iter().any(|r| {
                                 r.currency == rate.currency
                                     && r.day == rate.day
