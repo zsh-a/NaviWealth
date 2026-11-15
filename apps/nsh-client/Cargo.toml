@@ -33,7 +33,7 @@ jiff = "0.2"
 rusqlite = { version = "0.37", features = ["bundled"] }
 # Backups: Argon2id from the passphrase, XChaCha20-Poly1305 over the database.
 argon2 = "0.6"
-chacha20poly1305 = "0.10"
+chacha20poly1305 = "0.11"
 getrandom = "0.3"
 thiserror = "2"
 # NSH 0.5's Android HttpURLConnection rejects WebDAV extension methods.
