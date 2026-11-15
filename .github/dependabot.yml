@@ -43,3 +43,14 @@ updates:
     labels: [dependencies, health]
     commit-message:
       prefix: 'chore(health-deps)'
+
+  - package-ecosystem: cargo
+    directory: /crates/navi-storage
+    schedule:
+      interval: weekly
+      day: monday
+      time: '04:00'
+    open-pull-requests-limit: 5
+    labels: [dependencies, storage]
+    commit-message:
+      prefix: 'chore(storage-deps)'
