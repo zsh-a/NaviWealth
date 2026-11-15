@@ -305,7 +305,7 @@ pub(super) static STRINGS: Strings = Strings {
     backup_passphrase: "备份密码",
     backup_passphrase_kept: "已保存在本机，留空则不修改",
     backup_passphrase_note: "至少 8 位。没有它任何备份都打不开，请妥善保存。",
-    backup_note: "每天打开或返回 App 时，将餐食、体重和 Garmin 数据加密备份到你的 WebDAV 文件夹；点「保存并备份」时会连同餐食照片一起备份。不包含密钥和密码，已有备份会保留。",
+    backup_note: "每天打开或返回 App 时，将餐食、体重、体成分和 Garmin 数据加密备份到你的 WebDAV 文件夹；点「保存并备份」时会连同餐食照片一起备份。行情和日线不备份，App 会自动重新获取。不包含密钥和密码，已有备份会保留。",
     with_photos: "含照片",
     backup_save: "保存并备份",
     restore: "恢复…",

@@ -47,7 +47,11 @@ pub fn note(
                 .child(
                     text(move || content().unwrap_or_default())
                         .typo(Type::Subhead)
-                        .text_color(move || if error() { color::DANGER } else { color::MUTED }),
+                        .text_color(move || if error() { color::DANGER } else { color::MUTED })
+                        // The row must constrain the text, or long notes
+                        // run off the edge instead of wrapping.
+                        .flex_1()
+                        .min_w(px(0.0)),
                 )
         },
     )

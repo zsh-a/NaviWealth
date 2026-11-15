@@ -309,7 +309,7 @@ pub(super) static STRINGS: Strings = Strings {
     backup_passphrase: "Backup passphrase",
     backup_passphrase_kept: "Kept on this device; leave empty to keep it",
     backup_passphrase_note: "At least 8 characters. Without it no backup can be opened — keep it somewhere safe.",
-    backup_note: "Once a day on open or resume, meals, weights and Garmin data are encrypted and saved to your WebDAV folder; Save and back up also includes meal photos. Keys and passwords are excluded. Existing backups are kept.",
+    backup_note: "Once a day on open or resume, meals, weights, body composition and Garmin data are encrypted and saved to your WebDAV folder; Save and back up also includes meal photos. Market quotes and daily bars are not saved — the app re-fetches them. Keys and passwords are excluded; existing backups are kept.",
     with_photos: "With photos",
     backup_save: "Save and back up",
     restore: "Restore…",
