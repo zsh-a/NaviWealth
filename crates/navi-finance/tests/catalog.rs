@@ -4,7 +4,7 @@ use navi_finance::{
     repository,
 };
 use navi_storage::sqlite::Connection;
-use sha2::{Digest, Sha256};
+
 use std::io::Write;
 const SAMPLE: &str =
     include_str!("../../../tool/asset_catalog/tests/fixtures/catalog-sample.ndjson");
@@ -60,7 +60,7 @@ fn update_verification_and_atomic_install_retain_old_catalog() {
     let mut gz = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
     gz.write_all(SAMPLE.as_bytes()).unwrap();
     let gz = gz.finish().unwrap();
-    let json = serde_json::json!({"schema":1,"version":old.header.version,"checksum":old.header.checksum,"count":old.header.count,"sha256":format!("{:x}",Sha256::digest(SAMPLE)),"asset":"securities.ndjson.gz","gzip_sha256":format!("{:x}",Sha256::digest(&gz)),"gzip_size":gz.len()});
+    let json = serde_json::json!({"schema":1,"version":old.header.version,"checksum":old.header.checksum,"count":old.header.count,"sha256":navi_finance::sha256_hex(SAMPLE.as_bytes()),"asset":"securities.ndjson.gz","gzip_sha256":navi_finance::sha256_hex(&gz),"gzip_size":gz.len()});
     let m = Manifest::parse(&json.to_string()).unwrap();
     assert_eq!(m.verify(&gz).unwrap(), SAMPLE);
     let mut corrupt = gz.clone();

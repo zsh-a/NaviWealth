@@ -4,6 +4,16 @@
 //! and the import that turns statement rows into balanced transactions.
 //! Domain calculations are pure Rust; the repository owns confirmed SQLite writes.
 
+/// The SHA-256 of `bytes` as lowercase hex — the integrity-fingerprint
+/// form every persisted digest uses.
+pub fn sha256_hex(bytes: &[u8]) -> String {
+    use sha2::{Digest, Sha256};
+    Sha256::digest(bytes)
+        .iter()
+        .map(|byte| format!("{byte:02x}"))
+        .collect()
+}
+
 pub mod account;
 pub mod assets;
 pub mod catalog;

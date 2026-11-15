@@ -1,7 +1,6 @@
 //! Verified public listing data and explicit links to the owner's stable securities.
 use navi_storage::sqlite::{Connection, params};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use std::{collections::BTreeSet, io::Read};
 
 pub const SCHEMA: &str = "CREATE TABLE finance_security_bindings(security TEXT PRIMARY KEY NOT NULL REFERENCES finance_securities(id),market TEXT NOT NULL,symbol TEXT NOT NULL,currency TEXT NOT NULL); CREATE TABLE securities_catalog(singleton INTEGER PRIMARY KEY CHECK(singleton=1),version TEXT NOT NULL,checksum TEXT NOT NULL,body TEXT NOT NULL);";
@@ -456,8 +455,7 @@ impl Manifest {
     }
     /// Verify download, decompression, catalog schema and manifest identity once.
     pub fn prepare(&self, gzip: &[u8]) -> Result<Prepared, Error> {
-        if gzip.len() != self.gzip_size || format!("{:x}", Sha256::digest(gzip)) != self.gzip_sha256
-        {
+        if gzip.len() != self.gzip_size || crate::sha256_hex(gzip) != self.gzip_sha256 {
             return Err(Error::Invalid);
         }
         let mut bytes = Vec::new();
@@ -465,7 +463,7 @@ impl Manifest {
             .take((MAX_BYTES + 1) as u64)
             .read_to_end(&mut bytes)
             .map_err(|_| Error::Invalid)?;
-        if bytes.len() > MAX_BYTES || format!("{:x}", Sha256::digest(&bytes)) != self.sha256 {
+        if bytes.len() > MAX_BYTES || crate::sha256_hex(&bytes) != self.sha256 {
             return Err(Error::Invalid);
         }
         let raw = String::from_utf8(bytes).map_err(|_| Error::Invalid)?;

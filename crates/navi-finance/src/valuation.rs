@@ -8,7 +8,6 @@ use crate::{
 use jiff::{Timestamp, civil::Date};
 use navi_storage::sqlite::{Connection, params};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
 
 pub const SCHEMA: &str = "CREATE TABLE finance_valuation_snapshots(id INTEGER PRIMARY KEY AUTOINCREMENT,day TEXT NOT NULL,captured_at TEXT NOT NULL,body TEXT NOT NULL);";
@@ -70,15 +69,12 @@ pub struct Snapshot {
     pub body: Body,
 }
 fn fingerprint(entries: &[Transaction]) -> Result<String, Error> {
-    Ok(format!(
-        "{:x}",
-        Sha256::digest(serde_json::to_vec(entries)?)
-    ))
+    Ok(crate::sha256_hex(&serde_json::to_vec(entries)?))
 }
 fn integrity(body: &Body) -> Result<String, Error> {
     let mut body = body.clone();
     body.integrity.clear();
-    Ok(format!("{:x}", Sha256::digest(serde_json::to_vec(&body)?)))
+    Ok(crate::sha256_hex(&serde_json::to_vec(&body)?))
 }
 type Derived = (i64, i64, i64, Vec<Currency>, Vec<Balance>, Vec<Holding>);
 fn derive(body: &Body) -> Result<Derived, Error> {
