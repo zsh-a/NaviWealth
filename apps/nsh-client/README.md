@@ -44,8 +44,14 @@ cargo test                                  # unit tests and headless flows
 cargo clippy --all-targets -- -D warnings
 cargo fmt --check
 nsh run                                     # GTK desktop window (phone-sized)
-nsh package --target android --abi arm64-v8a   # needs the Android SDK, NDK and a JDK
+nsh run --target android                    # emulator/device dev host: build, debug-sign, install, launch
+nsh package --target android --abi arm64-v8a   # device APK; needs the Android SDK, NDK and a JDK
+nsh package --target android --abi x86_64   # x86_64 emulator APK; --run also installs and launches
 ```
+
+Debugging on Android from WSL2 against a Windows-side emulator (adb over
+mirrored loopback, SDK layout, pitfalls): see *NSH Android debugging from
+WSL2* in `../../docs/development/local-development.md`.
 
 The Android release APK is built by the manual GitHub Actions workflow
 `nsh client` (`.github/workflows/nsh-client.yml`), uploaded as an artifact and

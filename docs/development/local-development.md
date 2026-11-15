@@ -7,7 +7,9 @@ the maintenance setup for the frozen backend + Flutter app.
 
 The repository defaults to the rolling `nightly` channel in
 `rust-toolchain.toml`, matching the NSH client. It installs rustfmt, Clippy,
-Android arm64 and the backend's Wasm target using the minimal profile. CI uses
+Android arm64 and the backend's Wasm target using the minimal profile; the NSH
+client's own file additionally carries the emulator's `x86_64-linux-android`.
+CI uses
 these files too. Run `rtk rustup update nightly` to refresh nightly locally;
 keep the root and NSH channel settings aligned. For an exact compiler
 reproduction, record `rustc -Vv` and select the corresponding dated nightly
@@ -38,6 +40,61 @@ packages (Ubuntu: `clang libclang-dev libgtk-4-dev libgstreamer1.0-dev
 libgstreamer-plugins-base1.0-dev`). Android packaging additionally needs Java
 17, the Android SDK, NDK and NSH CLI; see the pinned versions in
 `.github/workflows/nsh-client.yml`.
+
+### NSH Android debugging from WSL2 (emulator on Windows)
+
+The supported debugging topology cross-compiles in WSL2 and runs the emulator
+— and therefore the adb server — on Windows. WSL reaches that adb server over
+WSL2 mirrored networking loopback (`wslinfo --networking-mode` must print
+`mirrored`).
+
+One-time setup:
+
+- Windows: Android Studio → Device Manager → create an AVD with an API 35+
+  **Google APIs x86_64** image (not a Google Play image: it hides adb root)
+  and start it before the first adb call from WSL.
+- WSL: JDK 17 and an Android SDK with `cmdline-tools/latest`,
+  `platform-tools`, `platforms;android-35`, `build-tools;35.0.1` and
+  `ndk;27.2.12479018` — mirror the versions pinned in
+  `.github/workflows/nsh-client.yml`. This workstation installs them in user
+  space without sudo (JDK at `~/sdk/jdk-17.0.21+9`, SDK at
+  `~/sdk/android-sdk`). Export `JAVA_HOME`, `ANDROID_HOME`,
+  `ANDROID_SDK_ROOT`, `ANDROID_NDK_HOME` and add `$JAVA_HOME/bin`,
+  `$ANDROID_HOME/platform-tools` and `$ANDROID_HOME/cmdline-tools/latest/bin`
+  to `PATH` in `~/.zshenv`.
+- `nsh component add android` installs the NSH Android runtime.
+- `apps/nsh-client/rust-toolchain.toml` carries `aarch64-linux-android`
+  (devices) and `x86_64-linux-android` (emulator); the repository root keeps
+  arm64 + Wasm.
+
+Daily loop from `apps/nsh-client/`:
+
+```sh
+adb devices                                       # lists emulator-5554 over loopback
+nsh run --target android                          # build, debug-sign, install, launch
+nsh package --target android --abi x86_64 --run   # one-shot: package + install + launch
+adb logcat
+```
+
+Rules and known pitfalls:
+
+- The adb server must live on Windows. Under mirrored networking a WSL-side
+  `adb start-server` hangs indefinitely, and a stuck WSL adb server blocks the
+  Windows one from binding 5037. Start the emulator first; if a WSL adb
+  server lingers, kill it with `pgrep -x adb | xargs -r kill`. The explicit
+  client form `adb -H 127.0.0.1 -P 5037 devices` bypasses server spawning.
+- Non-interactive shells do not source `~/.zshenv`; scripts must export the
+  Android/Java variables themselves. Symptom: `apksigner: exec: java: not
+  found` right after a successful `libnsh.so` build.
+- Drive Android builds through `nsh run` / `nsh package`; they configure the
+  NDK linker and cc environment. Bare `cargo check --target
+  x86_64-linux-android` fails in cc-rs with `failed to find tool
+  "x86_64-linux-android-clang"`.
+- CI's release APK is `arm64-v8a`-only and will not install on an x86_64
+  emulator; package locally with `--abi x86_64` instead.
+- Emulator evidence covers UI and flow debugging. Roadmap items marked as
+  physical-device verification (Keystore, real TLS, upgrade/migration) still
+  need hardware.
 
 `.cargo/config.toml` provides backtraces and debug logs for first-party crates
 while respecting existing `RUST_BACKTRACE` and `RUST_LOG` environment values.
