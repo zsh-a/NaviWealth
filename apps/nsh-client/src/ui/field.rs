@@ -9,6 +9,7 @@ use nsh_core::{
 
 use super::{
     Typo,
+    icons::{Icon, icon},
     theme::{Type, color, radius, size},
 };
 
@@ -27,7 +28,7 @@ pub fn field(label: impl IntoReactive<SharedString>, control: impl IntoElement) 
 }
 
 /// A line under a field while `content` has one: an error in the danger
-/// color when `error` reads true, else a description.
+/// color, marked with an alert glyph, else a quiet description.
 pub fn note(
     content: impl Fn() -> Option<SharedString> + Copy + 'static,
     error: impl Fn() -> bool + Copy + 'static,
@@ -35,10 +36,19 @@ pub fn note(
     when(
         move || content().is_some(),
         move || {
-            text(move || content().unwrap_or_default())
-                .typo(Type::Subhead)
-                .text_color(move || if error() { color::DANGER } else { color::MUTED })
+            view()
+                .flex_row()
+                .items_start()
+                .gap_1()
                 .pl(px(4.0))
+                .child(when(error, || {
+                    icon(Icon::Alert, 14.0, color::DANGER).into_element()
+                }))
+                .child(
+                    text(move || content().unwrap_or_default())
+                        .typo(Type::Subhead)
+                        .text_color(move || if error() { color::DANGER } else { color::MUTED }),
+                )
         },
     )
 }

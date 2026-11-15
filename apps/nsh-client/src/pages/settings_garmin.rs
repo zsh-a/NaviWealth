@@ -8,7 +8,7 @@ use crate::{
     domain::garmin::Region,
     i18n::s,
     ui::{
-        Btn, Size, color,
+        Btn, Icon, Size, color,
         field::{field, note, text_input},
     },
 };
@@ -41,6 +41,7 @@ pub fn garmin_section() -> impl IntoElement {
         });
     };
     super::settings::setting_details(
+        Icon::Server,
         || s().garmin,
         || {
             if garmin::connected() {
@@ -50,6 +51,13 @@ pub fn garmin_section() -> impl IntoElement {
                 })
             } else {
                 s().garmin_disconnected.into()
+            }
+        },
+        || {
+            if garmin::connected() {
+                color::POSITIVE
+            } else {
+                color::MUTED
             }
         },
         view().gap_4().child(

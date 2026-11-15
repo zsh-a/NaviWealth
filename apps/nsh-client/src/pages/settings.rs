@@ -1,6 +1,8 @@
-//! Settings, kept as they change (there is no Save): the recognition model (its
-//! own page), the optional daily goal, whether to ask before each photo,
-//! the Garmin connection and backups.
+//! Settings, kept as they change (there is no Save): the recognition model
+//! (its own page), the optional daily goal, the body profile, the Garmin
+//! connection and backups (its own page). Every row leads with its icon and
+//! carries its state as a tinted summary, so what needs the owner shows
+//! before anything opens.
 
 use nsh_base::nav_page;
 use nsh_core::{element::Screen, prelude::*};
@@ -19,6 +21,7 @@ use crate::{
         field::{note, number_input},
         icon, space,
         surface::{card, group_label, hairline, row_button},
+        theme::motion,
         toggle::switch_row,
     },
 };
@@ -57,20 +60,72 @@ pub fn settings_page() -> Screen {
                                 .child(super::settings_garmin::garmin_section())
                                 .child(view().h_3())
                                 .child(group_label(|| s().backup))
-                                .child(super::settings_backup::backup_section())
+                                .child(super::settings_backup::backup_row())
                                 .child(keyboard_diagnostics()),
                         ),
                 ),
         )
 }
 
+/// An icon in its well: the fixed anchor every settings row leads with.
+pub(super) fn icon_well(glyph: Icon) -> impl IntoElement {
+    view()
+        .size(px(36.0))
+        .items_center()
+        .justify_center()
+        .rounded(px(12.0))
+        .bg(color::SURFACE_2)
+        .child(icon(glyph, 18.0, color::MUTED))
+}
+
+/// A row that opens another page: icon, name, tinted summary, chevron.
+pub(super) fn entry_row(
+    glyph: Icon,
+    title: impl Fn() -> &'static str + Copy + 'static,
+    summary: impl Fn() -> String + Copy + 'static,
+    tint: impl Fn() -> AdaptiveColor + Copy + 'static,
+    press: impl Fn() + 'static,
+) -> impl IntoElement {
+    card().overflow_hidden().child(
+        row_button(press)
+            .accessibility_label(move || Some(format!("{}, {}", title(), summary()).into()))
+            .child(icon_well(glyph))
+            .child(
+                view()
+                    .flex_1()
+                    .min_w(px(0.0))
+                    .gap(px(2.0))
+                    .child(text(title).typo(Type::Headline).text_color(color::INK))
+                    .child(
+                        text(summary)
+                            .typo(Type::Subhead)
+                            .text_color(tint)
+                            .number_of_lines(1),
+                    ),
+            )
+            .child(icon(Icon::ChevronRight, 18.0, color::MUTED)),
+    )
+}
+
 /// Low-frequency configuration opens in place, retaining entered values.
+/// The reveal is the page's one authored motion: content fades in and rises
+/// under the turning chevron.
 pub(super) fn setting_details(
+    glyph: Icon,
     label: impl Fn() -> &'static str + Copy + 'static,
     summary: impl Fn() -> String + Copy + 'static,
+    tint: impl Fn() -> AdaptiveColor + Copy + 'static,
     content: impl IntoElement,
 ) -> impl IntoElement {
     let open = signal(false);
+    let still = reduce_motion();
+    let reveal = animated_value(if still { 1.0 } else { 0.0 });
+    effect(move || {
+        if open.get() && !still {
+            reveal.set(0.0);
+            reveal.timing_with(1.0, motion::ENTER);
+        }
+    });
     card()
         .overflow_hidden()
         .child(
@@ -79,11 +134,19 @@ pub(super) fn setting_details(
                 open.update(|v| *v = !*v);
             })
             .accessibility_label(move || Some(format!("{}, {}", label(), summary()).into()))
+            .child(icon_well(glyph))
             .child(
-                text(summary)
-                    .typo(Type::Body)
-                    .text_color(color::INK)
-                    .flex_1(),
+                view()
+                    .flex_1()
+                    .min_w(px(0.0))
+                    .gap(px(2.0))
+                    .child(text(label).typo(Type::Headline).text_color(color::INK))
+                    .child(
+                        text(summary)
+                            .typo(Type::Subhead)
+                            .text_color(tint)
+                            .number_of_lines(1),
+                    ),
             )
             .child(
                 view()
@@ -99,6 +162,8 @@ pub(super) fn setting_details(
         )
         .child(
             view()
+                .bind_opacity(&reveal)
+                .bind_translate_y(&reveal.interpolate(&[0.0, 1.0], &[motion::RISE, 0.0]))
                 .style_when(move || !open.get(), |s| s.hidden())
                 .accessibility_elements_hidden(move || !open.get())
                 .child(hairline(space::CARD))
@@ -137,6 +202,13 @@ fn recognition() -> impl IntoElement {
         }
         None => s().not_set_up.to_owned(),
     };
+    let tint = move || {
+        if settings::ready_account().is_some() {
+            color::MUTED
+        } else {
+            color::CAUTION
+        }
+    };
     card()
         .overflow_hidden()
         .child(
@@ -144,6 +216,7 @@ fn recognition() -> impl IntoElement {
                 .accessibility_label(move || {
                     Some(format!("{}, {}", s().vision_model, summary()).into())
                 })
+                .child(icon_well(Icon::Eye))
                 .child(
                     view()
                         .flex_1()
@@ -157,13 +230,7 @@ fn recognition() -> impl IntoElement {
                         .child(
                             text(summary)
                                 .typo(Type::Subhead)
-                                .text_color(move || {
-                                    if settings::ready_account().is_some() {
-                                        color::MUTED
-                                    } else {
-                                        color::CAUTION
-                                    }
-                                })
+                                .text_color(tint)
                                 .number_of_lines(1),
                         ),
                 )
@@ -216,14 +283,16 @@ fn goal() -> impl IntoElement {
             })
     };
     setting_details(
+        Icon::Chart,
         || s().daily_goal,
         || {
             settings::goal()
                 .map(|goal| format!("{} {}", field_number(goal), s().kcal))
                 .unwrap_or_else(|| s().goal_unset.into())
         },
+        || color::MUTED,
         view()
-            .gap_2()
+            .gap_3()
             .child(number_input(text_of, || s().kcal, || s().daily_goal))
             .child(note(
                 move || {

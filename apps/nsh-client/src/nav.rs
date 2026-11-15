@@ -22,6 +22,8 @@ pub enum Route {
     Settings,
     /// The vision model account, from Settings.
     ModelSettings,
+    /// Backup and restore, from Settings.
+    BackupSettings,
     /// An own financial account.
     Account(String),
     Holding(String),

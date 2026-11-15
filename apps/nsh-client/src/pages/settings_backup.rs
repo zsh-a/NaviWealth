@@ -1,12 +1,17 @@
-//! Settings' Backup section: the WebDAV folder, its account, the backup
-//! passphrase, the last backup and restoring one. It acts at once.
+//! Backup and restore: a WebDAV folder, its account, the backup passphrase,
+//! and the restore list. It lives on its own page; Settings carries one row
+//! that says whether the day is protected and when it was last backed up.
 
-use nsh_base::alert_dialog;
+use nsh_base::{alert_dialog, nav_page};
 use nsh_core::{
-    element::{AutoCapitalize, KeyboardType},
+    element::{AutoCapitalize, KeyboardType, Screen},
     prelude::*,
 };
 
+use super::{
+    parts::{status_bar, top_bar},
+    settings::entry_row,
+};
 use crate::{
     data::{
         backup::{self, Failure, Status},
@@ -15,8 +20,10 @@ use crate::{
     },
     domain::backup::{self as backup_file, MIN_PASSPHRASE},
     i18n::s,
+    nav::{self, Route},
     ui::{
-        Btn, Size, Type, Typo, color,
+        Btn, Icon, Size, Type, Typo, color,
+        feedback::{Tone, badge},
         field::{field, note, text_input},
         space,
         surface::{card, row_button},
@@ -40,7 +47,79 @@ pub fn failure_copy(failure: Failure) -> String {
     }
 }
 
-pub fn backup_section() -> impl IntoElement {
+/// The backup's state, as Settings' one row carries it: what happened last,
+/// tinted so an unprotected day shows without opening anything.
+fn summary() -> String {
+    match backup::status() {
+        Status::Running => s().backup_running.to_owned(),
+        Status::Failed(failure) => failure_copy(failure),
+        Status::Idle => match backup::last_backup_ms() {
+            Some(ms) => {
+                let when = format!(
+                    "{} {}",
+                    s().long_date(clock::day_of(ms)),
+                    clock::time_label(ms)
+                );
+                s().backup_last(&when)
+            }
+            None => s().backup_never.to_owned(),
+        },
+    }
+}
+
+fn tint() -> AdaptiveColor {
+    match backup::status() {
+        Status::Failed(_) => color::DANGER,
+        Status::Idle if backup::last_backup_ms().is_none() => color::CAUTION,
+        _ => color::MUTED,
+    }
+}
+
+/// Settings' backup entry: one row, one state, onto its own page.
+pub fn backup_row() -> impl IntoElement {
+    entry_row(
+        Icon::Lock,
+        || s().backup,
+        summary,
+        tint,
+        || nav::push(Route::BackupSettings),
+    )
+}
+
+/// What the last restore or listing came to, said under the buttons.
+#[derive(Clone, PartialEq)]
+struct Note {
+    text: String,
+    ok: bool,
+}
+
+/// The backup page: the WebDAV folder, the passphrase, and the restore list.
+pub fn backup_page() -> Screen {
+    nav_page()
+        .title(|| SharedString::from(s().backup))
+        .header_visible(false)
+        .status_bar(status_bar)
+        .child(
+            view()
+                .flex_1()
+                .bg(color::CANVAS)
+                .child(top_bar(|| s().backup.into(), nav::pop, None))
+                .child(
+                    scroll()
+                        .flex_1()
+                        .keyboard_dismiss_mode(KeyboardDismissMode::OnDrag)
+                        .child(
+                            view()
+                                .px(px(space::GUTTER))
+                                .pt_2()
+                                .pb(move || px(safe_area().bottom.0 + 32.0))
+                                .child(form()),
+                        ),
+                ),
+        )
+}
+
+fn form() -> impl IntoElement {
     let kept = untracked(backup::folder);
     let url = signal(kept.url.clone());
     let username = signal(kept.username.clone());
@@ -49,8 +128,7 @@ pub fn backup_section() -> impl IntoElement {
     // Backups in the folder, once listed for a restore.
     let listed = signal(None::<Vec<String>>);
     let listing = signal(false);
-    // What the last restore or listing came to, said under the buttons.
-    let message = signal(None::<String>);
+    let message = signal(None::<Note>);
 
     let save = move || {
         let folder = Folder {
@@ -66,7 +144,10 @@ pub fn backup_section() -> impl IntoElement {
                 .is_some_and(|p| p.chars().count() < MIN_PASSPHRASE)
             || (new_passphrase.is_none() && !untracked(backup::has_passphrase))
         {
-            message.set(Some(s().backup_not_configured.to_owned()));
+            message.set(Some(Note {
+                text: s().backup_not_configured.to_owned(),
+                ok: false,
+            }));
             return;
         }
         backup::configure(folder, new_passphrase);
@@ -86,7 +167,10 @@ pub fn backup_section() -> impl IntoElement {
             listing.set(false);
             match found {
                 Ok(names) => listed.set(Some(names.into_iter().take(LISTED).collect())),
-                Err(failure) => message.set(Some(failure_copy(failure))),
+                Err(failure) => message.set(Some(Note {
+                    text: failure_copy(failure),
+                    ok: false,
+                })),
             }
         });
     };
@@ -147,7 +231,8 @@ pub fn backup_section() -> impl IntoElement {
                 .flex_wrap()
                 .gap_2()
                 .child(
-                    Btn::tonal()
+                    // The page's main action: protect the day.
+                    Btn::primary()
                         .size(Size::Small)
                         .label(|| s().backup_save.into())
                         .busy(|| backup::status() == Status::Running)
@@ -174,9 +259,12 @@ pub fn backup_section() -> impl IntoElement {
         .child(when(
             move || message.with(Option::is_some),
             move || {
-                text(move || message.get().unwrap_or_default())
+                text(move || message.get().map(|note| note.text).unwrap_or_default())
                     .typo(Type::Subhead)
-                    .text_color(color::INK)
+                    .text_color(move || match message.get() {
+                        Some(note) if note.ok => color::POSITIVE,
+                        _ => color::INK,
+                    })
             },
         ))
         .child(dynamic(move || {
@@ -206,7 +294,7 @@ fn status_line() -> String {
 fn restore_list(
     names: Vec<String>,
     listed: Signal<Option<Vec<String>>>,
-    message: Signal<Option<String>>,
+    message: Signal<Option<Note>>,
 ) -> impl IntoElement {
     if names.is_empty() {
         return text(|| s().no_backups)
@@ -216,8 +304,8 @@ fn restore_list(
     }
     view()
         .children(names.into_iter().map(|name| {
-            // `11月13日 星期五 21:04 · 含照片`, or the name when it is not ours.
-            let when = backup_file::created_ms(&name)
+            // `11月13日 星期五 21:04`, or the name when it is not ours.
+            let when_text = backup_file::created_ms(&name)
                 .map(|ms| {
                     format!(
                         "{} {}",
@@ -226,15 +314,22 @@ fn restore_list(
                     )
                 })
                 .unwrap_or_else(|| name.clone());
-            let label = if backup_file::has_photos(&name) {
-                format!("{when} · {}", s().with_photos)
-            } else {
-                when
-            };
             let id = name.clone();
+            let photos = backup_file::has_photos(&name);
             view().test_id(&id).child(
-                row_button(move || confirm_restore(name.clone(), listed, message))
-                    .child(text(label).typo(Type::Body).text_color(color::INK).flex_1()),
+                row_button(move || confirm_restore(name.clone(), listed, message)).child(
+                    view()
+                        .flex_1()
+                        .min_w(px(0.0))
+                        .flex_row()
+                        .items_center()
+                        .gap_2()
+                        .child(text(when_text).typo(Type::Body).text_color(color::INK))
+                        .child(when(
+                            move || photos,
+                            move || badge(s().with_photos, Tone::Neutral, None),
+                        )),
+                ),
             )
         }))
         .into_element()
@@ -243,7 +338,7 @@ fn restore_list(
 fn confirm_restore(
     name: String,
     listed: Signal<Option<Vec<String>>>,
-    message: Signal<Option<String>>,
+    message: Signal<Option<Note>>,
 ) {
     let answer = alert_dialog()
         .title(s().restore_title)
@@ -262,7 +357,10 @@ fn confirm_restore(
             // The page may have closed meanwhile.
             Ok(()) => {
                 listed.try_set(None);
-                message.try_set(Some(s().restored.to_owned()));
+                message.try_set(Some(Note {
+                    text: s().restored.to_owned(),
+                    ok: true,
+                }));
             }
             // The status line says why.
             Err(_) => {

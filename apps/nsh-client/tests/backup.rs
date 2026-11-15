@@ -19,10 +19,17 @@ fn only(database: Vec<u8>) -> Bundle {
 }
 use nsh_testing::DialogAnswer;
 
+/// Settings now carries backup as one row; its form lives on its own page.
+fn open_backup(app: &mut Headless) -> Result<(), String> {
+    app.press("label:Settings")?;
+    app.press("label:/^Backup, /")?;
+    app.wait_for("text:WebDAV folder")
+}
+
 #[test]
 fn incomplete_settings_explain_what_is_missing_without_saving_them() -> Result<(), String> {
     let (mut app, storage) = start(vec![], None);
-    app.press("label:Settings")?;
+    open_backup(&mut app)?;
     app.press("Save and back up")?;
     app.wait_for(
         "text:Fill in the folder, account, password and a passphrase of at least 8 characters.",
@@ -151,7 +158,7 @@ fn fresh_with(
 }
 
 fn restore_latest(app: &mut Headless, dav: &Dav) -> Result<(), String> {
-    app.press("label:Settings")?;
+    open_backup(app)?;
     app.press("Restore…")?;
     let name = dav.files().last_key_value().unwrap().0.clone();
     app.wait_for(&format!("id:{name} >> text:/./"))?;
@@ -168,6 +175,8 @@ fn encrypted_backup_creates_the_folder_and_restores_on_a_fresh_install() -> Resu
     assert!(app.shows("Nothing recorded today"));
     restore_latest(&mut app, &dav)?;
     app.wait_for("text:Backup restored")?;
+    // Restore happened on the backup page, over Settings; both go.
+    app.press("label:Back")?;
     app.press("label:Back")?;
     app.wait_for("Tomato pasta")?;
     assert_eq!(stored_meals(dir.path()).len(), 1);
@@ -392,7 +401,7 @@ fn a_backup_made_by_hand_carries_the_photos_back_to_a_fresh_install() -> Result<
         storage.entries().into_iter().collect(),
         None,
     );
-    app.press("label:Settings")?;
+    open_backup(&mut app)?;
     app.press("Save and back up")?;
     let made = app.wait_until("a backup with photos", GONE, |_| {
         dav.files().keys().any(|name| backup::has_photos(name))
@@ -408,10 +417,10 @@ fn a_backup_made_by_hand_carries_the_photos_back_to_a_fresh_install() -> Result<
     drop(app);
 
     let (mut app, _, fresh) = fresh_with(&dav, "correct horse battery", false);
-    app.press("label:Settings")?;
+    open_backup(&mut app)?;
     app.press("Restore…")?;
     app.wait_for(&format!("id:{name} >> text:/./"))?;
-    app.wait_for("text:/· With photos$/")?;
+    app.wait_for("text:With photos")?;
     app.on_dialog(|_| DialogAnswer::Press("Restore".into()));
     app.press(&format!("id:{name} >> text:/./"))?;
     app.wait_for("text:Backup restored")?;

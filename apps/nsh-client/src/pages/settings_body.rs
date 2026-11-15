@@ -8,7 +8,7 @@ use crate::{
     domain::format::{field_number, parse_number},
     i18n::s,
     ui::{
-        color,
+        Icon, color,
         field::{field, note, number_input},
         segmented::{Segment, segmented},
     },
@@ -81,10 +81,12 @@ fn profile() -> impl IntoElement {
         }
     };
     super::settings::setting_details(
+        Icon::Sliders,
         || s().body_profile,
         summary,
+        || color::MUTED,
         view()
-            .gap_2()
+            .gap_3()
             .child(
                 field(
                     || s().height,
@@ -160,14 +162,16 @@ fn goal_weight() -> impl IntoElement {
             })
     };
     super::settings::setting_details(
+        Icon::Scale,
         || s().goal_weight,
         || {
             settings::goal_kg()
                 .map(|goal| format!("{} kg", field_number(goal)))
                 .unwrap_or_else(|| s().goal_unset.into())
         },
+        || color::MUTED,
         view()
-            .gap_2()
+            .gap_3()
             .child(number_input(text_of, || "kg", || s().goal_weight))
             .child(note(
                 move || {

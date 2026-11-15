@@ -25,6 +25,7 @@ pub fn shell() -> impl IntoElement {
                     Route::Pending(id) => pending_meal_page(&id),
                     Route::Settings => settings_page(),
                     Route::ModelSettings => model_page(),
+                    Route::BackupSettings => crate::pages::settings_backup::backup_page(),
                     Route::Account(name) => crate::pages::assets::account_page(&name),
                     Route::Holding(id) => crate::pages::holdings::holding_page(&id),
                     Route::AssetHistory => crate::pages::assets::history_page(),

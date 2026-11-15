@@ -16,7 +16,7 @@ mod review_calendar;
 mod review_charts;
 pub(crate) mod rows;
 mod settings;
-mod settings_backup;
+pub(crate) mod settings_backup;
 mod settings_body;
 mod settings_garmin;
 mod settings_model;

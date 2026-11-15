@@ -102,6 +102,7 @@ pub fn group_label(title: impl IntoReactive<SharedString>) -> impl IntoElement {
         .typo(Type::Subhead)
         .font_weight(FontWeight::SEMIBOLD)
         .text_color(color::MUTED)
-        .px(px(6.0))
+        // Aligned with the card row titles it names, not the card edge.
+        .px(px(space::CARD))
         .role(AccessibilityRole::Header)
 }
