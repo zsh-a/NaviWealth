@@ -20,6 +20,7 @@ pub(crate) mod settings_backup;
 mod settings_body;
 mod settings_garmin;
 mod settings_model;
+mod settings_updates;
 mod today;
 mod week_review;
 

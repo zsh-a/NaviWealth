@@ -216,6 +216,33 @@ impl Strings {
         }
     }
 
+    /// A newer release found, by its version.
+    pub fn update_found(&self, version: &str) -> String {
+        if self.zh() {
+            format!("发现新版本 v{version}")
+        } else {
+            format!("Update available · v{version}")
+        }
+    }
+
+    /// When the last check ran.
+    pub fn update_checked_at(&self, when: &str) -> String {
+        if self.zh() {
+            format!("上次检查 {when}")
+        } else {
+            format!("Last checked {when}")
+        }
+    }
+
+    /// Running the newest release.
+    pub fn update_uptodate(&self, version: &str) -> String {
+        if self.zh() {
+            format!("已是最新 v{version}")
+        } else {
+            format!("Up to date · v{version}")
+        }
+    }
+
     /// The signed distance from a weight to the goal weight; positive is
     /// above the goal, negative below.
     pub fn to_goal(&self, delta_kg: f64) -> String {

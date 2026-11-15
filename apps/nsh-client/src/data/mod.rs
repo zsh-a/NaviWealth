@@ -18,6 +18,7 @@ pub mod photos;
 pub mod settings;
 pub mod statement_import;
 pub mod tasks;
+pub mod updates;
 pub mod vision;
 pub mod webdav;
 pub mod weights;

@@ -20,7 +20,7 @@ use nsh_core::prelude::*;
 use crate::{
     data::{
         backup, body_metrics, capture, clock, db, favorites, finance, garmin, meals, notes,
-        pending, photos, settings, tasks, weights,
+        pending, photos, settings, tasks, updates, weights,
     },
     i18n::s,
     ui::{Type, Typo, color, space},
@@ -37,6 +37,13 @@ fn native(registry: &mut Registry) {
 #[doc(hidden)]
 pub fn disable_live_market_data() {
     data::market::disable_live();
+}
+
+/// For headless tests: whether update checks may reach the public
+/// releases API.
+#[doc(hidden)]
+pub fn set_live_updates(live: bool) {
+    data::updates::set_live(live);
 }
 
 /// The root: loads what the device keeps, keeps "today" current, and shows
@@ -77,6 +84,7 @@ pub fn App() -> impl IntoElement {
     notes::load();
     weights::load();
     body_metrics::load();
+    updates::load();
     garmin::load();
     backup::load();
     // At start, and as soon as a key is connected. The memo re-runs the
@@ -106,6 +114,7 @@ pub fn App() -> impl IntoElement {
         if lifecycle() == nsh_core::platform::Lifecycle::Active {
             untracked(clock::tick);
             tasks::spawn_app(garmin::refresh(false));
+            data::updates::check(false);
             tasks::spawn_app(data::market::refresh(false));
             tasks::spawn_app(async {
                 let _ = backup::backup_now(false).await;

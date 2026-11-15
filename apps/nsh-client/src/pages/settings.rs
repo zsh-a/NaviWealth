@@ -61,6 +61,9 @@ pub fn settings_page() -> Screen {
                                 .child(view().h_3())
                                 .child(group_label(|| s().backup))
                                 .child(super::settings_backup::backup_row())
+                                .child(view().h_3())
+                                .child(group_label(|| s().update))
+                                .child(super::settings_updates::updates_section())
                                 .child(keyboard_diagnostics()),
                         ),
                 ),

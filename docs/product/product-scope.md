@@ -228,6 +228,10 @@ The full target is:
   Provider market quotes and daily bars are re-fetchable caches, not records:
   snapshots leave them out, and a restored install rebuilds them from each
   holding's first trade.
+- Update checks read the app's own public GitHub releases — read-only, no
+  credentials, nothing sent — at most daily on open and on demand from
+  Settings. A newer `nsh-v*` release shows its notes and a link to its
+  release page; downloading and installing stay the owner's steps.
   The current Health increment uses an owner-configured WebDAV folder for
   daily foreground backups (without photos) and manual backup/restore
   (with meal photos), excluding credentials. Local file export waits for a

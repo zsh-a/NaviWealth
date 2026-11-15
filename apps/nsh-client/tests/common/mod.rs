@@ -39,8 +39,10 @@ pub fn start_in(
     entries: Vec<(String, String)>,
     network: Option<Arc<StubNetwork>>,
 ) -> (Headless, Arc<MemoryStorage>) {
-    // Tests never depend on reaching the public quote and FX providers.
+    // Tests never depend on reaching the public quote and FX providers,
+    // nor on the releases API the update check reads.
     naviwealth_app::disable_live_market_data();
+    naviwealth_app::set_live_updates(false);
     let storage = MemoryStorage::new(entries);
     let mut config = EngineConfig::new(Root::of::<App>());
     config.storage = Some(storage.clone());

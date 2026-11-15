@@ -42,6 +42,13 @@ stop publication. `tool/sign-nsh-apk.sh` keeps passwords out of command
 arguments and removes temporary key material. Do not replace this with
 freshly generated debug keys.
 
+A build of an `nsh-v*` tag publishes its own release: the verified APK as
+`NaviWealth.apk`, a `SHA256SUMS` of it, and notes taken from the release
+commit plus links to the full changes and the build. Releases are titled
+after the tag's subject, `NaviWealth NSH vX.Y.Z (build N)` — the earlier
+`NaviWealth Health NSH` wording is retired with v0.9.0. Dispatches on a
+branch verify without publishing.
+
 The package id is `com.naviwealth.app` (2026-11-15; the earlier
 `com.naviwealth.health.nsh` installs migrate by clean-install restore from a
 WebDAV backup). Releases use `nsh-vX.Y.Z` tags: build the exact tag with the
