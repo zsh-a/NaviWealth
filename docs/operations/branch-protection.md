@@ -7,15 +7,15 @@ choose to use pull requests.
 
 ## CI checks
 
-- `Rust domain cores`: fmt, clippy and tests for `lifeos-core`, `finance-core`
-  and `health-core`
-- `agent-runtime / runtime-submodule`: fmt and tests for the
-  `third_party/agent-runtime` submodule
-- `securities-catalog`: republishes the rolling catalog release when
-  `assets/catalog/securities.v1.ndjson` changes
+- `Rust domain crates`: fmt, clippy and tests for `navi-storage`, `navi-finance`
+  and `navi-health`, plus fmt and tests for the `third_party/agent-runtime`
+  submodule
+- `securities-catalog`: bakes the catalog from `tool/asset_catalog/sources/`
+  and republishes the rolling catalog release when they change
 
 Workflows use path filters, so unrelated areas do not start each other's
-checks. The `nsh client` workflow runs only on manual dispatch.
+checks. The `nsh client` workflow runs only on manual dispatch and checks
+the app crate before packaging.
 
 ## Optional protected-main setup
 

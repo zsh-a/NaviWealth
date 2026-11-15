@@ -56,7 +56,7 @@ pub fn apply() {
         seed_meals();
     }
     if has("finance") && untracked(finance::transactions).is_empty() {
-        use finance_core::{
+        use navi_finance::{
             account::{Account, AccountKind, defaults},
             journal::{self, Entry, Source},
         };
@@ -105,7 +105,7 @@ pub fn apply() {
         let _ = finance::save(t);
     }
     if has("assets") {
-        use finance_core::{
+        use navi_finance::{
             account::{Account, AccountKind},
             repository::BalanceCheck,
         };
@@ -130,7 +130,7 @@ pub fn apply() {
         }
     }
     if has("holdings") && finance::holdings().securities.is_empty() {
-        use finance_core::holdings::{Kind, Quote, Security, Trade};
+        use navi_finance::holdings::{Kind, Quote, Security, Trade};
         let name = if crate::i18n::s().lang == Lang::Zh {
             "沪深300ETF"
         } else {
@@ -168,7 +168,7 @@ pub fn apply() {
                     kind: Kind::Sell,
                     quantity: opening.quantity,
                     price: 4_380_000,
-                    cash: Some(finance_core::account::Account::parse("资产:Bank").unwrap()),
+                    cash: Some(navi_finance::account::Account::parse("资产:Bank").unwrap()),
                     ..opening
                 },
             )
@@ -177,7 +177,7 @@ pub fn apply() {
     }
     if route.as_deref().is_some_and(|r| r.starts_with("capture-")) {
         use crate::domain::capture::{Record, Status};
-        use finance_core::{
+        use navi_finance::{
             account::{Account, defaults},
             recognition::{Kind, MoneyDraft},
         };
@@ -232,7 +232,7 @@ pub fn apply() {
         }
     }
     if has("multicurrency") {
-        use finance_core::{
+        use navi_finance::{
             account::{Account, AccountKind},
             currency::{Currency, FxRate},
             holdings::{Kind, Quote, Security, Trade},
@@ -283,7 +283,7 @@ pub fn apply() {
         }
     }
     if has("history") {
-        use finance_core::{
+        use navi_finance::{
             catalog::{self, SecurityBinding},
             history::{self, DailyBar},
         };

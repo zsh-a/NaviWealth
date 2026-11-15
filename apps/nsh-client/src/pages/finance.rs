@@ -6,13 +6,13 @@ use std::{
     sync::atomic::{AtomicU64, Ordering},
 };
 
-use finance_core::{
+use jiff::civil::{Date, Time};
+use navi_finance::{
     account::{Account, AccountKind, defaults},
     currency::Currency,
     journal::{self, Entry, Source, Transaction},
     money,
 };
-use jiff::civil::{Date, Time};
 use nsh_base::{CalendarEntry, CalendarItemKind, alert_dialog, calendar};
 use nsh_core::prelude::*;
 

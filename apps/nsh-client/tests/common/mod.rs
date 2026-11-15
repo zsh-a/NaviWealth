@@ -294,3 +294,16 @@ pub fn attach_capture(app: &mut Headless) -> Result<(), String> {
     app.press("Recognize")?;
     Ok(())
 }
+
+/// The sample catalog shipped with the tests; a data dir seeded with it
+/// installs the catalog offline so search and link flows work.
+pub const CATALOG_SAMPLE: &str =
+    include_str!("../../../../tool/asset_catalog/tests/fixtures/catalog-sample.ndjson");
+
+/// Writes the sample catalog seed beside the database under `dir` (the
+/// engine nests instance data, and so the seed, below `default/`).
+pub fn seed_catalog(dir: &Path) {
+    let seed = dir.join("default").join("catalog-seed.ndjson");
+    std::fs::create_dir_all(seed.parent().unwrap()).expect("the instance dir");
+    std::fs::write(seed, CATALOG_SAMPLE).expect("the catalog seed is written");
+}

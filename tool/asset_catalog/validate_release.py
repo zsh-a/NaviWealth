@@ -1,8 +1,8 @@
-"""Validate the committed securities catalog.
+"""Validate the baked securities catalog.
 
-The catalog committed to Git is bundled into the NSH client and published
-out-of-band on the rolling ``securities-catalog`` release. This validator is
-the gate that makes that policy safe:
+The catalog is baked from ``tool/asset_catalog/sources`` and distributed
+through the rolling ``securities-catalog`` release; the NSH client downloads
+and installs it. This validator is the gate that makes that policy safe:
 
 * verify NDJSON structure, row count, uniqueness, ordering, and FNV checksum;
 * reject future-dated or suspiciously small per-market catalogs.

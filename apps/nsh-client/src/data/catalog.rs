@@ -1,9 +1,8 @@
 //! Replaceable public catalog cache, independent from the owner’s holding identities.
 use super::{clock, db};
-use finance_core::catalog::{self, Catalog, Entry, SecurityBinding};
+use navi_finance::catalog::{self, Catalog, Entry, SecurityBinding};
 use nsh_core::{platform::HttpRequest, prelude::*, storage::Storage};
 use std::rc::Rc;
-const BUNDLE: &str = include_str!("../../../../assets/catalog/securities.v1.ndjson");
 const BASE: &str = "https://github.com/zsh-a/NaviWealth/releases/download/securities-catalog/";
 const CHECKED: &str = "catalog.checked.v1";
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -31,19 +30,23 @@ fn state() -> Signal<State> {
     global::<State>()
 }
 pub fn load() -> Result<(), String> {
-    let catalog = db::with(|c| {
-        // Only the header decides; the full bundle is parsed and indexed just
-        // when it must be installed, so a launch indexes one catalog, not two.
-        let bundled = catalog::header(BUNDLE)?;
-        match catalog::current(c) {
-            Ok(Some(current)) if current.header.version >= bundled.version => Ok(current),
-            _ => catalog::install_prepared(c, catalog::prepare(BUNDLE.to_owned())?),
-        }
+    // Read the seed before entering the database thread: the ambient data
+    // directory is not available there.
+    let seed = db::catalog_seed();
+    let catalog = db::with(|c| match catalog::current(c) {
+        Ok(Some(current)) => Ok(Some(current)),
+        // A seed beside the database bootstraps an empty install — tests and
+        // manual recovery drop one there; the rolling release replaces it.
+        Ok(None) => match seed {
+            Some(body) => catalog::install_prepared(c, catalog::prepare(body)?).map(Some),
+            None => Ok(None),
+        },
+        Err(e) => Err(e),
     })
     .ok_or("database is not open")?
     .map_err(|e: catalog::Error| e.to_string())?;
     state().update(|s| {
-        s.catalog = Some(Rc::new(catalog));
+        s.catalog = catalog.map(Rc::new);
         s.revision = s.revision.wrapping_add(1);
         // A restore/reload invalidates any in-flight download or worker.
         s.generation = s.generation.wrapping_add(1);
@@ -220,7 +223,7 @@ mod tests {
         app.wait_for("text:/catalog Idle/").unwrap();
     }
     #[test]
-    fn failed_verification_retains_offline_catalog_and_manual_retry() {
+    fn failed_verification_keeps_the_manual_retry_available() {
         let manifest = serde_json::json!({
             "schema": 1, "version": "v1.20990101", "checksum": "0000000000000000", "count": 1,
             "sha256": "0".repeat(64), "gzip_sha256": "0".repeat(64), "gzip_size": 1,
@@ -240,14 +243,11 @@ mod tests {
             (format!("GET {BASE}catalog.gz"), corrupt),
         ])));
         let mut app = Headless::start(config).unwrap();
-        let header: catalog::Header = serde_json::from_str(BUNDLE.lines().next().unwrap()).unwrap();
-        app.wait_for(&format!("catalog Idle {}", header.version))
-            .unwrap();
+        app.wait_for("text:/catalog Idle/").unwrap();
         for _ in 0..2 {
             app.press("refresh").unwrap();
             app.wait_for("text:/catalog Updating/").unwrap();
-            app.wait_for(&format!("catalog Failed {}", header.version))
-                .unwrap();
+            app.wait_for("text:/catalog Failed/").unwrap();
         }
     }
 }

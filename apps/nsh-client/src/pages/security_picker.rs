@@ -9,7 +9,7 @@ use crate::{
         surface::{hairline, row_button},
     },
 };
-use finance_core::catalog::Entry;
+use navi_finance::catalog::Entry;
 use nsh_core::prelude::*;
 use std::time::Duration;
 

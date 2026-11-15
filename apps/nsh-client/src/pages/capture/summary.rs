@@ -8,7 +8,7 @@ use crate::{
     i18n::s,
     ui::{Icon, Type, Typo, color, icon, surface::hairline},
 };
-use finance_core::{
+use navi_finance::{
     account::Account,
     journal::{Entry, Source},
     recognition::{Kind, Missing},

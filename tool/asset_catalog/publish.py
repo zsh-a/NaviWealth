@@ -1,4 +1,4 @@
-"""Package the committed securities catalog for out-of-band distribution.
+"""Package the baked securities catalog for distribution.
 
 The NSH client polls ``catalog-manifest.json`` on the rolling
 ``securities-catalog`` GitHub Release and downloads the gzip asset it

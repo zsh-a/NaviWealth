@@ -110,3 +110,9 @@ def test_rejects_duplicate_unsorted_and_too_small_markets(tmp_path):
     assert "duplicate market/symbol" in message
     assert "not in canonical market/symbol order" in message
     assert "release minimum is 4" in message
+
+
+def test_sample_catalog_fixture_is_valid():
+    path = pathlib.Path("tool/asset_catalog/tests/fixtures/catalog-sample.ndjson")
+    report = validate_catalog(path, policy=ReleasePolicy(min_market_counts=()))
+    assert report.row_count == 45

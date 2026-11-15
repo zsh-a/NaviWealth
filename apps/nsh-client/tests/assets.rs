@@ -1,7 +1,7 @@
 //! Owner-visible account lifecycle, balance confirmation and storage recovery.
 mod common;
 use common::*;
-use finance_core::{account::Account, assets, journal, repository};
+use navi_finance::{account::Account, assets, journal, repository};
 use nsh_core::geometry::{Points, Size};
 
 fn create(app: &mut Headless, name: &str, debt: bool) -> Result<(), String> {

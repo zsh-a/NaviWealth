@@ -2,11 +2,10 @@
 
 NaviWealth is a local-first personal finance and health app for one Android
 phone. The client is NSH (Rust) in `apps/nsh-client/`; business truth lives in
-`crates/finance-core/` and `crates/health-core/`. The Flutter client and the
-Sync v3 backend were retired on 2026-11-15 (ADR 0003); their source is
+`crates/navi-finance/` and `crates/navi-health/`. The Flutter client and the
+Sync v3 backend were retired on 2026-11-15; their source is
 archived at the `flutter-final` git tag. Read
-`docs/architecture/adr/0003-flutter-retirement.md`,
-`docs/product/product-scope.md` and `docs/roadmap/roadmap-lifeos.md` before
+`docs/product/product-scope.md` and `docs/roadmap/roadmap-nsh.md` before
 planning work. Start with `docs/agent-map.md`, which routes each task to the
 smallest authoritative context.
 
@@ -15,12 +14,12 @@ smallest authoritative context.
 | Area | Path | Language |
 |---|---|---|
 | NSH client | `apps/nsh-client/` | Rust, NSH |
-| Finance core (double-entry ledger, holdings, catalog) | `crates/finance-core/` | Rust |
-| Health core (meal recognition, nutrition, Garmin) | `crates/health-core/` | Rust |
-| Neutral SQLite/backup infrastructure | `crates/lifeos-core/` | Rust |
+| Finance (ledger, holdings, catalog) | `crates/navi-finance/` | Rust |
+| Health (meals, nutrition, Garmin) | `crates/navi-health/` | Rust |
+| Neutral SQLite/backup infrastructure | `crates/navi-storage/` | Rust |
 | Agent Runtime | `third_party/agent-runtime/` | Rust submodule |
 | Market data SDK | `third_party/market-data-rs/` | Rust |
-| Securities catalog bundle | `assets/catalog/` | NDJSON |
+| Catalog source CSVs | `tool/asset_catalog/sources/` | CSV |
 | Catalog build/publish pipeline | `tool/asset_catalog/` | Python |
 | Project docs | `docs/` | Markdown |
 | CI/CD | `.github/workflows/` | GitHub Actions |
@@ -29,7 +28,7 @@ NSH client layout:
 
 ```text
 apps/nsh-client/src/
-  domain/   host-owned meals/account and shared health-core domain exports
+  domain/   host-owned meals/account and shared health domain exports
   data/     device storage, photos, local time, thin NSH fetch Transport
   ui/       styled components over nsh-base and its tokens
   pages/    home (Today, Records, Assets, Review tabs, capture sheet), meal
@@ -40,14 +39,14 @@ tests/      headless meal, weight, Garmin, review and backup flows
 
 ## Architecture Rules
 
-- Domain truth lives in Rust crates. `finance-core` owns the ledger, holdings
-  and catalog repositories; `health-core` owns meals, nutrition and Garmin
-  parsing; `lifeos-core` owns SQLite storage, migrations and backup/restore.
+- Domain truth lives in Rust crates. `navi-finance` owns the ledger, holdings
+  and catalog repositories; `navi-health` owns meals, nutrition and Garmin
+  parsing; `navi-storage` owns SQLite storage, migrations and backup/restore.
   `apps/nsh-client/` is UI, composition and device storage only.
 - The client is local-only: no Sync, no login, no backend calls. Business
   data lives in SQLite (`rusqlite`, bundled) in the app's private directory;
   NSH KV is a 5 MB preferences store. Only exported backups are
-  passphrase-encrypted (ADR 0002).
+  passphrase-encrypted (Personal Local Scope).
 - Features follow `docs/product/product-scope.md`: personal use, four tabs,
   AI for recognition drafts only. Do not port removed features or re-add the
   retired Flutter features (Knowledge, Execution, AI chat/agents, FIRE,
@@ -76,8 +75,8 @@ rtk cargo clippy --manifest-path <crate>/Cargo.toml --all-targets --locked -- -D
 rtk cargo test --manifest-path <crate>/Cargo.toml --locked
 ```
 
-Run the three commands for `apps/nsh-client`, `crates/finance-core` and
-`crates/health-core`; CI runs fmt, clippy (`-D warnings`) and `--locked`
+Run the three commands for `apps/nsh-client`, `crates/navi-finance` and
+`crates/navi-health`; CI runs fmt, clippy (`-D warnings`) and `--locked`
 tests.
 
 Securities catalog and docs:
@@ -114,8 +113,8 @@ Use `rg` for exact strings, comments, config literals, and generated-file checks
   never touches accounting truth; postings sum to zero separately within
   each currency.
 - Documentation: update the owning SSOT (see `docs/agent-map.md`); run
-  `node tool/check-docs.mjs` after doc changes; keep `README.md`, `llms.txt`
-  and the mkdocs nav consistent with the docs tree.
+  `node tool/check-docs.mjs` after doc changes; keep `README.md` and
+  `llms.txt` consistent with the docs tree.
 
 ## Testing Rules
 
@@ -137,8 +136,10 @@ Use `rg` for exact strings, comments, config literals, and generated-file checks
 - Local development defaults: nightly toolchain per workspace; the WSL2 +
   Windows emulator topology is documented in
   `docs/development/local-development.md`.
-- `.nsh/` and `apps/client/` are local-only development data and are
-  gitignored; never commit them.
+- NSH generates its dev workspace at `.nsh/` inside the app dir and caches
+  builds under `target/`; both are gitignored. UI acceptance tests live in
+  `apps/nsh-client/tests/` (`*.test.ts`, run with `nsh test tests`); never
+  commit generated `.nsh/` state.
 
 ## Documentation Index
 
@@ -146,16 +147,12 @@ Use `rg` for exact strings, comments, config literals, and generated-file checks
 |---|---|
 | `docs/agent-map.md` | Task → SSOT router |
 | `docs/product/product-scope.md` | Product scope SSOT |
-| `docs/roadmap/roadmap-lifeos.md` | Active phases and exit gates |
-| `docs/architecture/adr/0001-nsh-client-migration.md` | NSH direction |
-| `docs/architecture/adr/0002-personal-local-scope.md` | Personal, local-only scope |
-| `docs/architecture/adr/0003-flutter-retirement.md` | Flutter/backend retirement, catalog move, D1 ids |
+| `docs/roadmap/roadmap-nsh.md` | Active phases and exit gates |
+| `docs/architecture/personal-local-scope.md` | Personal, local-only scope policy |
 | `docs/architecture/agent-runtime-current.md` | Rust runtime code map and invariants |
 | `docs/development/local-development.md` | Local setup and Android debugging |
 | `docs/operations/branch-protection.md` | CI checks and release policy |
 | `tool/asset_catalog/README.md` | Securities catalog pipeline |
-| `docs/roadmap/roadmap-finance.md` | Archived FinanceOS roadmap (historical) |
-| `docs/roadmap/product-direction-and-demand-validation.md` | Archived product-direction study (historical) |
 
 <!-- headroom:rtk-instructions -->
 # RTK (Rust Token Killer) - Token-Optimized Commands

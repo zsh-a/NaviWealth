@@ -2,7 +2,7 @@
 //! averaged over the days that have them. A day without records is
 //! unknown: it is left out of averages, never counted as zero.
 
-use health_core::garmin::GarminDay;
+use navi_health::garmin::GarminDay;
 
 use super::{
     meal::{Day, DaySummary},

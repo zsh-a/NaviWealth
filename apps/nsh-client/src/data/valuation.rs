@@ -1,5 +1,5 @@
 //! Reactive mirror of committed immutable valuation observations.
-use finance_core::valuation::{self, Snapshot};
+use navi_finance::valuation::{self, Snapshot};
 use nsh_core::prelude::*;
 #[derive(Clone, Default, PartialEq)]
 struct State(Vec<Snapshot>);

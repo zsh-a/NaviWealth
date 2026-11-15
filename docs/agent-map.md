@@ -7,27 +7,26 @@ router, not a second source of product or architecture truth.
 
 ## Client Direction
 
-[Product Scope](product/product-scope.md), [ADR 0001](architecture/adr/0001-nsh-client-migration.md),
-[ADR 0002](architecture/adr/0002-personal-local-scope.md),
-[ADR 0003](architecture/adr/0003-flutter-retirement.md) and the
-[roadmap](roadmap/roadmap-lifeos.md) govern new work. The NSH client is
-personal and local-only: `lifeos-core` supplies shared SQLite infrastructure,
-`finance-core` owns the ledger and catalog repositories, and `health-core`
+[Product Scope](product/product-scope.md),
+[Personal Local Scope](architecture/personal-local-scope.md) and the
+[roadmap](roadmap/roadmap-nsh.md) govern new work. The NSH client is
+personal and local-only: `navi-storage` supplies shared SQLite infrastructure,
+`navi-finance` owns the ledger and catalog repositories, and `navi-health`
 owns meals, nutrition and Garmin parsing. Android is the only release target;
 desktop builds exist for development. Web and iOS are out of scope, and the
-Flutter client and Sync backend are retired (ADR 0003).
+Flutter client and Sync backend are retired (2026-11-15).
 
 ## Task Routing
 
 | Task | Read first | Code authority | Minimum verification |
 |---|---|---|---|
-| Plan or scope product work | [Product Scope](product/product-scope.md), [roadmap](roadmap/roadmap-lifeos.md), ADRs | `docs/product/`, `docs/roadmap/` | Phase exit evidence; archived plans do not authorize work |
+| Plan or scope product work | [Product Scope](product/product-scope.md), [roadmap](roadmap/roadmap-nsh.md), ADRs | `docs/product/`, `docs/roadmap/` | Phase exit evidence; archived plans do not authorize work |
 | Change NSH UI or pages | [`apps/nsh-client/README.md`](../apps/nsh-client/README.md), `apps/nsh-client/DESIGN.md` | `apps/nsh-client/src/` | Headless `nsh-testing` flows; device evidence where the roadmap requires it |
-| Change ledger, holdings or catalog behavior | `crates/finance-core/` tests | `crates/finance-core/src/` | Focused `cargo test` fixtures; exact money/rounding invariants |
-| Change meals, nutrition or Garmin behavior | `crates/health-core/` tests | `crates/health-core/src/` | Focused `cargo test` fixtures |
+| Change ledger, holdings or catalog behavior | `crates/navi-finance/` tests | `crates/navi-finance/src/` | Focused `cargo test` fixtures; exact money/rounding invariants |
+| Change meals, nutrition or Garmin behavior | `crates/navi-health/` tests | `crates/navi-health/src/` | Focused `cargo test` fixtures |
 | Change persistence, migrations or backup | `apps/nsh-client/src/data/db.rs`, owning crate tests | `apps/nsh-client/src/data/` | Migration, backup roundtrip and restore atomicity tests |
-| Change AI recognition or provider calls | [Agent Runtime Current Architecture](architecture/agent-runtime-current.md) | `third_party/agent-runtime/`, `crates/health-core/` | Adapter tests with fixed wire fixtures |
-| Change the securities catalog | [`tool/asset_catalog/README.md`](../tool/asset_catalog/README.md) | `tool/asset_catalog/`, `assets/catalog/` | `python3 -m pytest tool/asset_catalog/tests`, catalog validator |
+| Change AI recognition or provider calls | [Agent Runtime Current Architecture](architecture/agent-runtime-current.md) | `third_party/agent-runtime/`, `crates/navi-health/` | Adapter tests with fixed wire fixtures |
+| Change the securities catalog | [`tool/asset_catalog/README.md`](../tool/asset_catalog/README.md) | `tool/asset_catalog/` | `python3 -m pytest tool/asset_catalog/tests`, catalog validator |
 | Change CI or release flow | [Branch Protection](operations/branch-protection.md) | `.github/workflows/` | The affected workflow's own gate |
 | Rust toolchain or workspace setup | [Local Development](development/local-development.md) | `rust-toolchain.toml`, `.cargo/config.toml` | `rtk cargo test` in the touched workspace |
 

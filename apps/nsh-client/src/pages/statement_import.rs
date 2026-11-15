@@ -11,7 +11,7 @@ use crate::{
         surface::{hairline, row_button},
     },
 };
-use finance_core::{
+use navi_finance::{
     account::{Account, AccountKind, defaults},
     currency::Currency,
     import::{Status, store::Correction},

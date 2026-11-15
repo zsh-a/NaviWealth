@@ -2,7 +2,7 @@
 //! heart rate, Body Battery, steps and stress, in a sheet opened from the
 //! vitals. A failed update keeps the last data and says so.
 
-use health_core::garmin::GarminDay;
+use navi_health::garmin::GarminDay;
 use nsh_core::prelude::*;
 
 use crate::{

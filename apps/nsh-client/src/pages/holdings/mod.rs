@@ -13,7 +13,7 @@ use crate::{
     },
 };
 pub use editor::{trade_editor, trade_task};
-use finance_core::{
+use navi_finance::{
     currency::Currency,
     holdings::{self, Kind, Security},
     money,
@@ -22,7 +22,7 @@ use nsh_base::{alert_dialog, nav_page};
 use nsh_core::{element::Screen, prelude::*};
 
 fn quote_caption(q: &holdings::Quote, currency: Currency) -> String {
-    if let Some(bar) = crate::data::db::with(|c| finance_core::history::effective_bar(c, q))
+    if let Some(bar) = crate::data::db::with(|c| navi_finance::history::effective_bar(c, q))
         .and_then(Result::ok)
         .flatten()
     {

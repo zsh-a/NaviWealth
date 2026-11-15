@@ -3,13 +3,13 @@
 use std::{future::Future, pin::Pin, rc::Rc, sync::OnceLock, time::Duration};
 
 use futures::stream::{self, Iter};
-use health_core::{
+use llm_client::{Bytes, CapabilityCache, Client, HttpResponse, Timeouts, Transport};
+use llm_protocol::{Endpoint, HttpRequest, LlmError, LlmRequest, Protocol};
+use navi_health::{
     consent::{Consent, UploadTarget},
     photo::{MealPhoto, PhotoRole},
     recognition::{Lang, MealEstimate, RecognitionError, recognize_meal},
 };
-use llm_client::{Bytes, CapabilityCache, Client, HttpResponse, Timeouts, Transport};
-use llm_protocol::{Endpoint, HttpRequest, LlmError, LlmRequest, Protocol};
 use nsh_core::prelude::{fetch, timer};
 use serde_json::json;
 

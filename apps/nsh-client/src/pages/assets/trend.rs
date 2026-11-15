@@ -3,7 +3,7 @@ use crate::{
     i18n::s,
     ui::{Type, Typo, color},
 };
-use finance_core::{assets, journal::Transaction, money};
+use navi_finance::{assets, journal::Transaction, money};
 use nsh_base::plot::{Curve, Scale, line, plot};
 use nsh_core::{
     element::{RowAccessor, Rows},
@@ -80,7 +80,7 @@ pub fn history_page() -> nsh_core::element::Screen {
 
 pub fn chart(
     entries: &[Transaction],
-    portfolio: &finance_core::holdings::Book,
+    portfolio: &navi_finance::holdings::Book,
     today: Day,
 ) -> AnyElement {
     let rates = crate::data::finance::rates();
@@ -227,7 +227,7 @@ fn recorded_panel(notice: Signal<String>, shown: Signal<usize>) -> AnyElement {
             )
             .into_element();
     }
-    let daily = finance_core::valuation::daily_latest(&snapshots);
+    let daily = navi_finance::valuation::daily_latest(&snapshots);
     // A partial observation must never appear on the chart as a full net worth.
     if daily.iter().all(|s| s.body.missing.is_empty()) && daily.len() >= 2 {
         let last = Day(daily.last().unwrap().body.day);
@@ -332,14 +332,14 @@ fn recorded_panel(notice: Signal<String>, shown: Signal<usize>) -> AnyElement {
                                         .map(|s| format!("{} ({})", s.name, s.currency()))
                                         .unwrap_or_else(|| h.security.clone()),
                                     copy("Quantity", "数量"),
-                                    finance_core::holdings::format_units(h.quantity),
+                                    navi_finance::holdings::format_units(h.quantity),
                                     copy("Cost", "成本"),
                                     crate::ui::currency::grouped(h.cost),
                                     h.price_day
                                         .map(|d| format!(
                                             "{d} / {} / {}",
                                             h.price
-                                                .map(finance_core::holdings::format_units)
+                                                .map(navi_finance::holdings::format_units)
                                                 .unwrap_or_default(),
                                             source_name(&h.source)
                                         ))
@@ -355,7 +355,7 @@ fn recorded_panel(notice: Signal<String>, shown: Signal<usize>) -> AnyElement {
                                     "{} / {} / {} / {}",
                                     r.currency,
                                     r.day,
-                                    finance_core::holdings::format_units(r.rate),
+                                    navi_finance::holdings::format_units(r.rate),
                                     source_name(&r.source)
                                 ))
                                 .typo(Type::Caption)

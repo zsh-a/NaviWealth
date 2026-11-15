@@ -20,7 +20,7 @@ Completions API); there is no NaviWealth relay.
 
 ```text
 src/
-  domain/   host-owned meals/account and shared health-core domain exports
+  domain/   host-owned meals/account and shared health domain exports
   data/     device storage, photos, local time, thin NSH fetch Transport
   ui/       the app's styled components over nsh-base, and its tokens
   pages/    the home (Today, Records, Assets, Review tabs, capture sheet), meal
@@ -31,7 +31,7 @@ tests/      headless meal, weight, Garmin, review and backup flows
 ```
 
 Meal recognition, catalog nutrition, photo normalization and destination-bound
-consent live in `../../crates/health-core`. Provider wire
+consent live in `../../crates/navi-health`. Provider wire
 formats live in `../../third_party/agent-runtime/crates/llm-protocol`; request
 policy lives in `llm-client`. NSH supplies its platform fetch transport rather
 than the reqwest adapter. NSH 0.5.0 returns whole response bodies; recognition does not require
@@ -160,8 +160,8 @@ beside intake once the ledger has records. Income and transfers do not count as
 spending. Records groups both kinds by date, offers a Money filter, and
 its calendar includes days containing only transactions.
 
-`crates/lifeos-core` provides neutral SQLite opening, versioned migrations,
-snapshots and atomic table replacement. `finance-core::repository` owns account,
+`crates/navi-storage` provides neutral SQLite opening, versioned migrations,
+snapshots and atomic table replacement. `finance::repository` owns account,
 transaction, posting and mapping-rule SQL, validation and confirmed writes. The
 client's `data::finance` only mirrors successfully committed records into UI
 signals. Opening an unreadable/unwritable or newer database blocks startup;
@@ -190,7 +190,7 @@ updates the complete draft without creating a chat history. Manual entry is a
 secondary disclosure. A purchase with a price does not imply food consumption.
 
 - `domain/capture.rs` composes the envelope and delegates money, nutrition and
-  weight validation to their owning domains. `finance-core::recognition`
+  weight validation to their owning domains. `finance::recognition`
   rejects unsupported currencies, imprecise money and wrong account kinds;
   missing fields remain editable, unconfirmed values.
 - `data/capture.rs` keeps input/results in SQLite `capture_drafts` (schema 8),
@@ -250,8 +250,8 @@ balance checks never change income/spending. Confirmed balance entries can be
 inspected from all timelines. Corrections use another balance check.
 
 Schema 9 adds `finance_balance_checks` to encrypted backup/restore and validation.
-`finance-core::assets` owns book totals and debt presentation;
-`finance-core::holdings` replaces security book cost with dated market values.
+`finance::assets` owns book totals and debt presentation;
+`finance::holdings` replaces security book cost with dated market values.
 The NSH pages only display those values.
 
 Previews: `NW_PREVIEW=account,meals,finance,assets,light` with
@@ -285,7 +285,7 @@ visibly excluded from the known total; incomplete historical rates prevent a
 misleading full trend. Schema 14 includes exchange rates in backups. Other
 currencies and crypto are not supported; AI trade recognition remains excluded.
 
-`finance-core::holdings` owns six-decimal integer quantities/prices, cent rounding,
+`finance::holdings` owns six-decimal integer quantities/prices, cent rounding,
 moving-average cost, realized gains, dividends and journal postings. Buy fees
 enter cost; sale/dividend fees reduce proceeds. Existing positions do not deduct
 cash. Trade and cash writes commit together. Internal security cost accounts

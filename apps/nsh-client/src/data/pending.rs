@@ -10,7 +10,7 @@ use std::{
     rc::Rc,
 };
 
-use health_core::consent::Consent;
+use navi_health::consent::Consent;
 use nsh_core::{Haptic, HapticNotification, prelude::*};
 use rusqlite::params;
 

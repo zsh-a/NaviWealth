@@ -21,9 +21,9 @@ fn recorded_mode_starts_empty_and_manual_capture_appends_revisions() -> Result<(
     app.press("Record current valuation")?;
     app.wait_for("Valuation recorded")?;
     let c = rusqlite::Connection::open(database_in(dir.path())).unwrap();
-    assert_eq!(finance_core::valuation::load(&c).unwrap().len(), 1);
+    assert_eq!(navi_finance::valuation::load(&c).unwrap().len(), 1);
     app.press("Record current valuation")?;
-    assert_eq!(finance_core::valuation::load(&c).unwrap().len(), 2);
+    assert_eq!(navi_finance::valuation::load(&c).unwrap().len(), 2);
     app.press("Recalculated")?;
     app.wait_for("History recalculated from current records and dated prices. Edits can change these values.")?;
     app.press("Recorded")?;
@@ -33,7 +33,7 @@ fn recorded_mode_starts_empty_and_manual_capture_appends_revisions() -> Result<(
 
 #[test]
 fn price_history_exposes_daily_revisions_and_fx_audit() -> Result<(), String> {
-    use finance_core::{
+    use navi_finance::{
         catalog::{self, SecurityBinding},
         currency::{self, Currency, FxRate},
         history::{self, DailyBar},

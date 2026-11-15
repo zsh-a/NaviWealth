@@ -23,7 +23,7 @@ use crate::{
         toggle::checkbox_row,
     },
 };
-use health_core::consent::Consent;
+use navi_health::consent::Consent;
 use nsh_core::{
     geometry::{DevicePixels, Percentage},
     picker::PickRequest,

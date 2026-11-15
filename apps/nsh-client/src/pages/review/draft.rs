@@ -4,7 +4,7 @@
 
 use std::{rc::Rc, time::Duration};
 
-use health_core::consent::Consent;
+use navi_health::consent::Consent;
 use nsh_core::prelude::*;
 
 use crate::{

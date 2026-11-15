@@ -1,7 +1,7 @@
 //! Currency boundaries through the actual editors, valuation and restart.
 mod common;
 use common::*;
-use finance_core::{
+use navi_finance::{
     account::{Account, AccountKind, defaults},
     currency::{self, Currency},
     journal::{self, Entry, Source},

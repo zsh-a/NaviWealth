@@ -19,21 +19,19 @@ Thumbs.db
 # Rust build output
 target/
 
-# NSH local development data (dev database, emulator and signing scratch)
+# NSH local development data (dev workspaces, emulator and signing scratch)
 .nsh/
-apps/client/
+
+# Baked catalog output; the committed source of truth is tool/asset_catalog/sources
+assets/catalog/
 
 # Agent / platform
 .agent_context/
+.serena/
 
-# Impeccable local decision pages, captures and engine state.
-.impeccable/questions/
-.impeccable/mocks/
-.impeccable/review/
-.impeccable/build/
-.impeccable/data/
-.impeccable/direction-options.json
-.impeccable/config.local.json
+# Local agent tool state (not committed)
+.impeccable/
+.zcode/
 
 .codegraph
 

@@ -1,6 +1,6 @@
 //! The app's SQLite database, `naviwealth.sqlite` in its data directory.
 //! The file sits in the app's private storage, which Android encrypts at
-//! rest; the database itself is not encrypted (ADR 0002). Hosts that keep
+//! rest; the database itself is not encrypted (Personal Local Scope). Hosts that keep
 //! no files for the app (headless tests without a data directory) get an
 //! in-memory database instead.
 //!
@@ -30,7 +30,7 @@ const MIGRATIONS: &[&str] = &[
         kg REAL NOT NULL,
         logged_at_ms INTEGER NOT NULL
     );",
-    // 3: Garmin daily summaries, one JSON body per day (`health_core::garmin`).
+    // 3: Garmin daily summaries, one JSON body per day (`navi_health::garmin`).
     "CREATE TABLE garmin_days (
         day TEXT PRIMARY KEY NOT NULL,
         body TEXT NOT NULL,
@@ -56,25 +56,25 @@ const MIGRATIONS: &[&str] = &[
         updated_at_ms INTEGER NOT NULL
     );",
     // 7: the confirmed double-entry ledger and remembered import rules.
-    finance_core::repository::SCHEMA,
+    navi_finance::repository::SCHEMA,
     // 8: text/image recognition drafts, consumed atomically on confirmation.
     "CREATE TABLE capture_drafts (id TEXT PRIMARY KEY NOT NULL, created_at_ms INTEGER NOT NULL, body TEXT NOT NULL);",
     // 9: confirmed balance observations, including zero-difference checks.
-    finance_core::repository::BALANCE_SCHEMA,
+    navi_finance::repository::BALANCE_SCHEMA,
     // 10: securities, exact trades and dated manual prices.
-    finance_core::holdings::store::SCHEMA,
+    navi_finance::holdings::store::SCHEMA,
     // 11: resumable statement review.
-    finance_core::import::store::SCHEMA,
+    navi_finance::import::store::SCHEMA,
     // 12: explicit security bindings and verified catalog cache.
-    finance_core::catalog::SCHEMA,
+    navi_finance::catalog::SCHEMA,
     // 13: dated public quotes, separate from manual prices.
-    finance_core::market::SCHEMA,
+    navi_finance::market::SCHEMA,
     // 14: dated currency conversion rates, with explicit provenance.
-    finance_core::currency::SCHEMA,
+    navi_finance::currency::SCHEMA,
     // 15: immutable daily bars and price revisions.
-    finance_core::history::SCHEMA,
+    navi_finance::history::SCHEMA,
     // 16: immutable observed valuations.
-    finance_core::valuation::SCHEMA,
+    navi_finance::valuation::SCHEMA,
 ];
 
 #[derive(Clone, Default)]
@@ -101,7 +101,7 @@ pub fn open() -> Result<(), String> {
     }
     let connection = match data_dir() {
         Some(dir) => open_file(&dir),
-        None => lifeos_core::memory(MIGRATIONS),
+        None => navi_storage::memory(MIGRATIONS),
     }
     .map_err(|error| {
         log::error!("db: cannot open {FILE}: {error}");
@@ -111,12 +111,19 @@ pub fn open() -> Result<(), String> {
     Ok(())
 }
 
-fn open_file(dir: &Path) -> Result<Connection, lifeos_core::Error> {
-    lifeos_core::open(&dir.join(FILE), MIGRATIONS)
+fn open_file(dir: &Path) -> Result<Connection, navi_storage::Error> {
+    navi_storage::open(&dir.join(FILE), MIGRATIONS)
 }
 
-fn migrate(connection: &mut Connection) -> Result<(), lifeos_core::Error> {
-    lifeos_core::migrate(connection, MIGRATIONS)
+/// A seed catalog beside the database, installed once when none is stored.
+/// The offline bootstrap for tests and manual recovery; a downloaded
+/// release replaces it afterwards.
+pub fn catalog_seed() -> Option<String> {
+    std::fs::read_to_string(data_dir()?.join("catalog-seed.ndjson")).ok()
+}
+
+fn migrate(connection: &mut Connection) -> Result<(), navi_storage::Error> {
+    navi_storage::migrate(connection, MIGRATIONS)
 }
 
 /// The schema version this app writes: how many migrations exist.
@@ -159,7 +166,7 @@ fn remove_scratch(path: &Path) {
 pub fn snapshot() -> Result<Vec<u8>, String> {
     let path = scratch("snapshot");
     remove_scratch(&path);
-    let result = with(|c| lifeos_core::snapshot(c, &path))
+    let result = with(|c| navi_storage::snapshot(c, &path))
         .ok_or("the database is not open")?
         .map_err(|error| error.to_string());
     remove_scratch(&path);
@@ -200,12 +207,12 @@ fn restore_file(connection: &Connection, path: &Path) -> Result<(), RestoreError
     drop(restored);
     let mut tables = HEALTH_TABLES.to_vec();
     if version >= 7 {
-        tables.extend_from_slice(finance_core::repository::TABLES);
+        tables.extend_from_slice(navi_finance::repository::TABLES);
     }
-    lifeos_core::replace_tables(connection, path, &tables).map_err(|error| {
+    navi_storage::replace_tables(connection, path, &tables).map_err(|error| {
         log::error!("db: restore failed: {error}");
         match error {
-            lifeos_core::Error::Sql(rusqlite::Error::SqliteFailure(error, _))
+            navi_storage::Error::Sql(rusqlite::Error::SqliteFailure(error, _))
                 if error.code == rusqlite::ErrorCode::ConstraintViolation =>
             {
                 RestoreError::Unreadable
@@ -219,7 +226,7 @@ fn restore_file(connection: &Connection, path: &Path) -> Result<(), RestoreError
 /// skips bad rows; doing that during restore would silently lose data.
 fn validate_restored(connection: &Connection) -> Result<(), String> {
     use crate::domain::{meal::Meal, weight::valid_kg};
-    for (table, _) in HEALTH_TABLES.iter().chain(finance_core::repository::TABLES) {
+    for (table, _) in HEALTH_TABLES.iter().chain(navi_finance::repository::TABLES) {
         let kind: String = connection
             .query_row(
                 "SELECT type FROM sqlite_schema WHERE name = ?1",
@@ -278,7 +285,7 @@ fn validate_restored(connection: &Connection) -> Result<(), String> {
         })?;
         for row in rows {
             let (day, body, _) = row?;
-            let value: health_core::garmin::GarminDay =
+            let value: navi_health::garmin::GarminDay =
                 serde_json::from_str(&body).map_err(|_| rusqlite::Error::InvalidQuery)?;
             if day.parse::<crate::domain::meal::Day>().is_err() || value.day != day {
                 return Err(rusqlite::Error::InvalidQuery);
@@ -310,7 +317,7 @@ fn validate_restored(connection: &Connection) -> Result<(), String> {
         Ok(())
     };
     read().map_err(|e| e.to_string())?;
-    finance_core::repository::validate(connection).map_err(|e| e.to_string())
+    navi_finance::repository::validate(connection).map_err(|e| e.to_string())
 }
 
 /// Runs `f` on the open database; `None` before [`open`].
@@ -323,8 +330,8 @@ pub fn with<R>(f: impl FnOnce(&Connection) -> R) -> Option<R> {
 mod tests {
     use super::*;
 
-    fn spending(id: &str, amount: i64) -> finance_core::journal::Transaction {
-        use finance_core::{
+    fn spending(id: &str, amount: i64) -> navi_finance::journal::Transaction {
+        use navi_finance::{
             account::{Account, defaults},
             journal::{self, Entry, Source},
         };
@@ -347,18 +354,18 @@ mod tests {
     fn health_only_restore_preserves_the_current_ledger() {
         let dir = tempfile::tempdir().unwrap();
         let source = dir.path().join("health.sqlite");
-        let old = lifeos_core::open(&source, &MIGRATIONS[..6]).unwrap();
+        let old = navi_storage::open(&source, &MIGRATIONS[..6]).unwrap();
         old.execute("INSERT INTO weights VALUES ('2026-11-14', 70.0, 1)", [])
             .unwrap();
         drop(old);
-        let current = lifeos_core::memory(MIGRATIONS).unwrap();
-        finance_core::repository::save(&current, &spending("current", 3150)).unwrap();
+        let current = navi_storage::memory(MIGRATIONS).unwrap();
+        navi_finance::repository::save(&current, &spending("current", 3150)).unwrap();
         current
             .execute("INSERT INTO weights VALUES ('2026-11-14', 80.0, 1)", [])
             .unwrap();
         restore_file(&current, &source).unwrap();
         assert_eq!(
-            finance_core::repository::transactions(&current).unwrap(),
+            navi_finance::repository::transactions(&current).unwrap(),
             [spending("current", 3150)]
         );
         assert_eq!(
@@ -373,9 +380,9 @@ mod tests {
     fn financial_restore_replaces_both_domains_and_rejects_unbalanced_backup() {
         let dir = tempfile::tempdir().unwrap();
         let source = dir.path().join("both.sqlite");
-        let backup = lifeos_core::open(&source, MIGRATIONS).unwrap();
-        finance_core::repository::save(&backup, &spending("backup", 4150)).unwrap();
-        let check = finance_core::repository::BalanceCheck {
+        let backup = navi_storage::open(&source, MIGRATIONS).unwrap();
+        navi_finance::repository::save(&backup, &spending("backup", 4150)).unwrap();
+        let check = navi_finance::repository::BalanceCheck {
             id: "verified".into(),
             account: spending("backup", 4150)
                 .own_postings()
@@ -387,12 +394,12 @@ mod tests {
             actual: -4150,
             checked_at: jiff::civil::date(2026, 11, 14).at(16, 0, 0, 0),
         };
-        finance_core::repository::confirm_balance(&backup, &check, -4150).unwrap();
+        navi_finance::repository::confirm_balance(&backup, &check, -4150).unwrap();
         backup
             .execute("INSERT INTO weights VALUES ('2026-11-14', 70.0, 1)", [])
             .unwrap();
-        let current = lifeos_core::memory(MIGRATIONS).unwrap();
-        finance_core::repository::save(&current, &spending("current", 3150)).unwrap();
+        let current = navi_storage::memory(MIGRATIONS).unwrap();
+        navi_finance::repository::save(&current, &spending("current", 3150)).unwrap();
         current
             .execute("INSERT INTO weights VALUES ('2026-11-14', 80.0, 1)", [])
             .unwrap();
@@ -404,7 +411,7 @@ mod tests {
             Err(RestoreError::Unreadable)
         );
         assert_eq!(
-            finance_core::repository::transactions(&current).unwrap(),
+            navi_finance::repository::transactions(&current).unwrap(),
             [spending("current", 3150)]
         );
         assert_eq!(
@@ -413,15 +420,15 @@ mod tests {
                 .unwrap(),
             80.0
         );
-        finance_core::repository::save(&backup, &spending("backup", 4150)).unwrap();
+        navi_finance::repository::save(&backup, &spending("backup", 4150)).unwrap();
         drop(backup);
         restore_file(&current, &source).unwrap();
         assert_eq!(
-            finance_core::repository::balance_checks(&current).unwrap(),
+            navi_finance::repository::balance_checks(&current).unwrap(),
             vec![check]
         );
         assert_eq!(
-            finance_core::repository::transactions(&current).unwrap(),
+            navi_finance::repository::transactions(&current).unwrap(),
             [spending("backup", 4150)]
         );
         assert_eq!(
@@ -434,13 +441,13 @@ mod tests {
 
     #[test]
     fn holdings_restore_keeps_prices_and_rejects_trade_ledger_mismatch() {
-        use finance_core::{
+        use navi_finance::{
             holdings::{Kind, Quote, Security, Trade, store},
             repository,
         };
         let dir = tempfile::tempdir().unwrap();
         let source = dir.path().join("holdings.sqlite");
-        let backup = lifeos_core::open(&source, MIGRATIONS).unwrap();
+        let backup = navi_storage::open(&source, MIGRATIONS).unwrap();
         let day = jiff::civil::date(2026, 11, 15);
         let security = Security::new("etf", "ETF").unwrap();
         store::add_trade(
@@ -470,14 +477,14 @@ mod tests {
             day,
         )
         .unwrap();
-        let binding = finance_core::catalog::SecurityBinding {
+        let binding = navi_finance::catalog::SecurityBinding {
             security: security.id.clone(),
             market: "cn_a".into(),
             symbol: "510300".into(),
             currency: "CNY".into(),
         };
-        finance_core::catalog::bind(&backup, &binding).unwrap();
-        let quote = finance_core::market::MarketQuote {
+        navi_finance::catalog::bind(&backup, &binding).unwrap();
+        let quote = navi_finance::market::MarketQuote {
             security: security.id.clone(),
             symbol: "510300.SH".into(),
             currency: "CNY".into(),
@@ -487,37 +494,37 @@ mod tests {
             fetched_at: "2026-11-13T07:01:00Z".parse().unwrap(),
             previous_close_only: false,
         };
-        finance_core::market::save(&backup, &quote, jiff::Timestamp::now()).unwrap();
-        let rate = finance_core::currency::FxRate {
-            currency: finance_core::currency::Currency::USD,
+        navi_finance::market::save(&backup, &quote, jiff::Timestamp::now()).unwrap();
+        let rate = navi_finance::currency::FxRate {
+            currency: navi_finance::currency::Currency::USD,
             day,
             rate: 7_000_000,
             source: "manual".into(),
         };
-        finance_core::currency::save_rate(&backup, &rate).unwrap();
-        let import = finance_core::import::store::create(
+        navi_finance::currency::save_rate(&backup, &rate).unwrap();
+        let import = navi_finance::import::store::create(
             &backup,
             "card.txt",
             "招商银行信用卡对账单 2026年07月\n交易明细\n07/02 07/03 晚餐 68.00 1234 68.00\n"
                 .as_bytes(),
         )
         .unwrap();
-        let current = lifeos_core::memory(MIGRATIONS).unwrap();
+        let current = navi_storage::memory(MIGRATIONS).unwrap();
         restore_file(&current, &source).unwrap();
         assert_eq!(
-            finance_core::currency::rates(&current).unwrap().as_slice(),
+            navi_finance::currency::rates(&current).unwrap().as_slice(),
             std::slice::from_ref(&rate)
         );
         assert_eq!(
-            finance_core::catalog::bindings(&current).unwrap(),
+            navi_finance::catalog::bindings(&current).unwrap(),
             [binding]
         );
         assert_eq!(
-            finance_core::market::load(&current).unwrap().as_slice(),
+            navi_finance::market::load(&current).unwrap().as_slice(),
             std::slice::from_ref(&quote)
         );
         assert_eq!(
-            finance_core::import::store::active(&current).unwrap(),
+            navi_finance::import::store::active(&current).unwrap(),
             Some(import)
         );
         assert_eq!(store::load(&current).unwrap(), expected.book);
@@ -536,7 +543,7 @@ mod tests {
             restore_file(&current, &source),
             Err(RestoreError::Unreadable)
         );
-        assert_eq!(finance_core::currency::rates(&current).unwrap(), [rate]);
+        assert_eq!(navi_finance::currency::rates(&current).unwrap(), [rate]);
         backup
             .execute("UPDATE finance_fx_rates SET currency='USD'", [])
             .unwrap();
@@ -547,7 +554,7 @@ mod tests {
             restore_file(&current, &source),
             Err(RestoreError::Unreadable)
         );
-        assert_eq!(finance_core::market::load(&current).unwrap(), [quote]);
+        assert_eq!(navi_finance::market::load(&current).unwrap(), [quote]);
         backup
             .execute("UPDATE finance_market_quotes SET currency='CNY'", [])
             .unwrap();
@@ -565,8 +572,8 @@ mod tests {
         );
     }
 
-    fn seed_legacy_prices(c: &Connection) -> finance_core::catalog::SecurityBinding {
-        use finance_core::{
+    fn seed_legacy_prices(c: &Connection) -> navi_finance::catalog::SecurityBinding {
+        use navi_finance::{
             catalog, currency,
             holdings::{Kind, Quote, Security, Trade, store},
             market,
@@ -637,7 +644,7 @@ mod tests {
 
     /// Exact persisted rows catch accidental audit generation, ID changes and body rewriting.
     fn finance_rows(c: &Connection) -> Vec<(&'static str, Vec<Vec<rusqlite::types::Value>>)> {
-        finance_core::repository::TABLES
+        navi_finance::repository::TABLES
             .iter()
             .map(|&(table, columns)| {
                 let mut q = c
@@ -656,10 +663,10 @@ mod tests {
 
     #[test]
     fn schema14_price_baselines_migrate_once_and_history_restores_exactly() {
-        use finance_core::{history, valuation};
+        use navi_finance::{history, valuation};
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("legacy14.sqlite");
-        let mut old = lifeos_core::open(&path, &MIGRATIONS[..14]).unwrap();
+        let mut old = navi_storage::open(&path, &MIGRATIONS[..14]).unwrap();
         let binding = seed_legacy_prices(&old);
         migrate(&mut old).unwrap();
         let baseline = history::audit(&old).unwrap();
@@ -696,11 +703,11 @@ mod tests {
         let source = dir.path().join("snapshot16.sqlite");
         std::fs::write(
             &source,
-            lifeos_core::snapshot(&old, &dir.path().join("copy.sqlite")).unwrap(),
+            navi_storage::snapshot(&old, &dir.path().join("copy.sqlite")).unwrap(),
         )
         .unwrap();
-        let current = lifeos_core::memory(MIGRATIONS).unwrap();
-        finance_core::repository::save(&current, &spending("replaced", 3150)).unwrap();
+        let current = navi_storage::memory(MIGRATIONS).unwrap();
+        navi_finance::repository::save(&current, &spending("replaced", 3150)).unwrap();
         restore_file(&current, &source).unwrap();
         assert_eq!(finance_rows(&current), expected);
         // Corrupt each immutable record family independently. Failed restore keeps every

@@ -7,8 +7,8 @@ use crate::domain::{
     meal::{Meal, encode_meal},
     recognition::Lang,
 };
-use finance_core::journal::{Entry, Source};
-use health_core::consent::Consent;
+use navi_finance::journal::{Entry, Source};
+use navi_health::consent::Consent;
 use nsh_core::prelude::*;
 use rusqlite::params;
 use std::{
@@ -141,7 +141,7 @@ pub fn recognize(
     let now = clock::zoned(clock::now_ms()).datetime();
     let context = serde_json::json!({"local_date":now.date().to_string(),"local_time":now.time().to_string(),
         "known_accounts":finance::accounts().iter().filter(|a| a.is_cash()).map(ToString::to_string).collect::<Vec<_>>(),
-        "known_categories":finance_core::currency::Currency::ALL.into_iter().flat_map(|currency| finance_core::account::defaults::all().into_iter().filter(|a| matches!(a.kind(),finance_core::account::AccountKind::Expenses|finance_core::account::AccountKind::Income)).map(move |a|a.in_currency(currency).to_string())).collect::<Vec<_>>()});
+        "known_categories":navi_finance::currency::Currency::ALL.into_iter().flat_map(|currency| navi_finance::account::defaults::all().into_iter().filter(|a| matches!(a.kind(),navi_finance::account::AccountKind::Expenses|navi_finance::account::AccountKind::Income)).map(move |a|a.in_currency(currency).to_string())).collect::<Vec<_>>()});
     tasks::spawn_app(async move {
         let response =
             vision::recognize_record(account, draft.clone(), jpeg, lang, consent, context).await;
@@ -223,7 +223,7 @@ pub fn confirm(id: &str) -> Result<(), String> {
             match record {
                 Record::Money { day, draft:money } => {
                     let t = money.transaction(entry(&draft,index,*day),day.0).map_err(|e| e.to_string())?;
-                    finance_core::repository::save_in_transaction(&tx,&t).map_err(|e| e.to_string())?;
+                    navi_finance::repository::save_in_transaction(&tx,&t).map_err(|e| e.to_string())?;
                 }
                 Record::Meal { day, slot, estimate } => {
                     let meal = Meal { id:format!("{}-{index}",draft.id), day:*day, logged_at_ms:draft.created_at_ms,
@@ -250,13 +250,13 @@ pub fn confirm(id: &str) -> Result<(), String> {
             has_money = true;
             preferences.own = money.account.as_ref().map(ToString::to_string);
             match money.kind {
-                finance_core::recognition::Kind::Expense => {
+                navi_finance::recognition::Kind::Expense => {
                     preferences.expense = money.category.as_ref().map(ToString::to_string)
                 }
-                finance_core::recognition::Kind::Income => {
+                navi_finance::recognition::Kind::Income => {
                     preferences.income = money.category.as_ref().map(ToString::to_string)
                 }
-                finance_core::recognition::Kind::Transfer => {
+                navi_finance::recognition::Kind::Transfer => {
                     preferences.other = money.other_account.as_ref().map(ToString::to_string)
                 }
             }

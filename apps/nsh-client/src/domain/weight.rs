@@ -32,13 +32,13 @@ pub fn latest_until(weights: &[Weight], day: Day) -> Option<Weight> {
 
 /// The trailing seven-day trend, requiring at least three recent measurements.
 pub fn trend_weight(weights: &[Weight], day: Day) -> Option<f64> {
-    health_core::weight::trend_weight(&offsets(weights, day), 0)
+    navi_health::weight::trend_weight(&offsets(weights, day), 0)
 }
 
 /// One definition of change for Today and Review: the difference between
 /// trailing seven-day means at `start` and `end`, rounded to 0.1 kg.
 pub fn trend_change(weights: &[Weight], start: Day, end: Day) -> Option<f64> {
-    health_core::weight::trend_change(&offsets(weights, start), 0, end.days_since(start))
+    navi_health::weight::trend_change(&offsets(weights, start), 0, end.days_since(start))
 }
 
 fn offsets(weights: &[Weight], origin: Day) -> Vec<(i32, f64)> {

@@ -7,10 +7,8 @@ Last reviewed: 2026-11-15.
 ## Document Contract
 
 Owns what the NSH client is for, which features exist, and which are
-deliberately absent. [ADR 0002](../architecture/adr/0002-personal-local-scope.md)
-records the architectural consequences and
-[ADR 0003](../architecture/adr/0003-flutter-retirement.md) records the Flutter
-retirement; the [roadmap](../roadmap/roadmap-lifeos.md) owns delivery order.
+deliberately absent. [Personal Local Scope](../architecture/personal-local-scope.md)
+records the scope decisions; the [roadmap](../roadmap/roadmap-nsh.md) owns delivery order.
 The retired Flutter client's feature inventory is not a parity target.
 
 ## Promise
@@ -114,7 +112,7 @@ and screenshots fill gaps.
   between own accounts; a refund reverses its purchase.
 - **Statement import (primary):** the system file picker opens an Alipay CSV,
   WeChat XLSX or CMB credit-card statement text (PDF is not decoded); the
-  `finance-core` parsers match the statement corpus fixtures exactly.
+  `navi-finance` parsers match the statement corpus fixtures exactly.
   Each row's payment method (`余额`, `花呗`, `招商银行储蓄卡(1234)`) maps to an
   asset or liability account, asked once and remembered; its category hint
   and payee map to an expense or income account through remembered rules.
@@ -152,7 +150,8 @@ necessary to answer what is owned and how its cost changes; editable standalone
 position totals would conflict with the journal. AI trade capture is deferred.
 
 The catalog and quote increment is implemented: code/name/pinyin/alias search
-uses the verified bundled catalog, with lazy GitHub Releases updates. Linking
+uses the catalog downloaded from the rolling GitHub release, checked lazily.
+Linking
 an existing holding requires confirmation and preserves its identity and trades.
 Initial supported markets are mainland China, Hong Kong and US stocks and
 ETFs, in CNY, HKD and USD. A holding’s currency is immutable; buy, sell and
@@ -197,7 +196,7 @@ The full target is:
 ### Data
 
 - A local SQLite database in the app's private storage (Android sandbox and
-  file-based encryption; no SQLCipher, see ADR 0002).
+  file-based encryption; no SQLCipher, see Personal Local Scope).
 - Automatic local backups plus manual export/restore of a passphrase-encrypted
   backup file to a location the owner picks; meal photos optional in the export.
   The current Health increment uses an owner-configured WebDAV folder for
@@ -219,10 +218,10 @@ The full target is:
 | Sync v3, accounts/login, backend dependency | Local backups only |
 | Domain opt-in, `DomainPack` registry, command palette, Life signals | Fixed composition of four tabs |
 | Web and iOS | Decided 2026-11-13 |
-| Flutter client and the Sync v3 backend | Retired 2026-11-15 (ADR 0003); archive at the `flutter-final` tag |
+| Flutter client and the Sync v3 backend | Retired 2026-11-15; archive at the `flutter-final` tag |
 | Allocation display by asset class and currency | Answers no daily or weekly question; net worth and holdings answer "what do I own" |
 | Broker statement import for trades | Fewer than ten trades a year; holdings stay manual entry |
-| One-time Flutter data import | Flutter retires directly after archiving its backup (ADR 0003) |
+| One-time Flutter data import | Flutter retires directly after archiving its backup  |
 
 Removed data is not lost: the owner exports the full Flutter backup before
 uninstalling, and the retired source stays reachable at the `flutter-final`

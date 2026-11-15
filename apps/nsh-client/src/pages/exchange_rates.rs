@@ -12,7 +12,7 @@ use crate::{
         surface::row_button,
     },
 };
-use finance_core::{
+use navi_finance::{
     currency::{self, Currency, FxRate},
     holdings,
 };

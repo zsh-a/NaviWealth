@@ -15,7 +15,7 @@ use nsh_core::prelude::*;
 
 /// Image decoding, orientation and metadata stripping are shared with Flutter.
 pub fn prepare(bytes: &[u8]) -> Option<(Vec<u8>, Vec<u8>)> {
-    health_core::photo::prepare(bytes).ok()
+    navi_health::photo::prepare(bytes).ok()
 }
 
 /// `jpeg` as a `data:` URI an image shows without a request.

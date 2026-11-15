@@ -63,14 +63,14 @@ openapi/            agent-runtime-api.yaml — HTTP API contract for server-firs
 
 ## How NaviWealth Uses It
 
-- `crates/health-core` performs meal recognition through `llm-protocol` wire
+- `crates/navi-health` performs meal recognition through `llm-protocol` wire
   types and `llm-client` request policy; the NSH client supplies its platform
   fetch as the Host Transport. Recognition is a single-shot draft operation;
   there is no chat loop, proposal seam or durable resume in the NSH client.
-- Domain truth in `crates/finance-core` and `crates/health-core` never imports
+- Domain truth in `crates/navi-finance` and `crates/navi-health` never imports
   runtime crates; only recognition paths do.
 - CI runs `cargo fmt --check` and `cargo test --workspace --locked` inside the
-  submodule (`.github/workflows/agent-runtime.yml`).
+  submodule (`.github/workflows/crates.yml`).
 
 ## Invariants
 
@@ -98,7 +98,7 @@ rtk cargo run -p agent-cli -- validate schemas/run-request.schema.json fixtures/
 |---|---|---|
 | Add or change a wire field | `schemas/`, submodule `third_party/agent-runtime/crates/agent-core/`, fixtures | schema validation tests |
 | Change LLM provider behavior | submodule `third_party/agent-runtime/crates/llm-protocol/`, `third_party/agent-runtime/crates/llm-client/` | `rtk cargo test` in the submodule |
-| Change recognition prompts or parsing | `crates/health-core/` | health-core fixtures and adapter tests |
+| Change recognition prompts or parsing | `crates/navi-health/` | health fixtures and adapter tests |
 
 ## Current Limitations
 

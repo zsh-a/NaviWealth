@@ -1,7 +1,7 @@
 //! File picker, durable review, confirmation and repeat imports.
 mod common;
 use common::*;
-use finance_core::{
+use navi_finance::{
     import::{Rules, store},
     repository,
 };

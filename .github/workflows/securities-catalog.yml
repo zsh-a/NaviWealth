@@ -1,7 +1,7 @@
 name: securities-catalog
 
-# Publishes the committed securities catalog to the rolling
-# `securities-catalog` GitHub Release. Installed apps poll its
+# Bakes the catalog from the committed source CSVs and publishes it to the
+# rolling `securities-catalog` GitHub Release. Installed apps poll its
 # catalog-manifest.json, so listing refreshes ship without a new app release.
 # The tag does not match the app release trigger (v*) and the release is a
 # prerelease that is never marked latest, so the APK self-update manifest at
@@ -10,7 +10,8 @@ on:
   push:
     branches: [main]
     paths:
-      - assets/catalog/securities.v1.ndjson
+      - tool/asset_catalog/sources/**
+      - .github/workflows/securities-catalog.yml
   workflow_dispatch:
 
 permissions:
@@ -35,7 +36,9 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: '3.13'
-      - name: Validate and package committed catalog
+      - name: Bake the catalog from committed sources
+        run: ./tool/build-asset-catalog.sh
+      - name: Validate and package the baked catalog
         run: python3 -m tool.asset_catalog.publish --output "$RUNNER_TEMP/catalog"
       - name: Upload to rolling release
         env:
