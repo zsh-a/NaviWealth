@@ -27,10 +27,10 @@ fn backdrop_available() -> bool {
 
 pub fn glass<E: Styled>(element: E, kind: Glass) -> E {
     if matches!(kind, Glass::Sheet) {
-        return element
-            .bg(color::SURFACE)
-            .backdrop_filter_none()
-            .lift(&shadow::SHEET);
+        // No shadow: the opaque surface over the scrim separates it, and a
+        // large blurred shadow is costly to redraw while the sheet moves
+        // with the keyboard.
+        return element.bg(color::SURFACE).backdrop_filter_none();
     }
     let element = if backdrop_available() {
         element

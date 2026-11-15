@@ -90,6 +90,7 @@ pub fn App() -> impl IntoElement {
         }
     });
     settings::load();
+    data::keyboard::track();
     spawn(photos::sweep_orphans());
     // Midnight, and coming back to the app, move "today" on.
     set_interval(Duration::from_secs(30), clock::tick);

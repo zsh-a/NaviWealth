@@ -8,6 +8,7 @@ pub mod db;
 pub mod favorites;
 pub mod finance;
 pub mod garmin;
+pub mod keyboard;
 pub mod market;
 pub mod meals;
 pub mod notes;

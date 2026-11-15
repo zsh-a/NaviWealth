@@ -296,3 +296,33 @@ fn saving_resets_the_task_and_a_swipe_leaves_the_whole_task() -> Result<(), Stri
     );
     Ok(())
 }
+
+#[test]
+fn a_showing_keyboard_lifts_a_task_sheet_without_resizing_it() -> Result<(), String> {
+    let (mut app, _) = start(Vec::new(), None);
+    app.set_viewport(Size::new(Points(390.0), Points(844.0)))?;
+    app.set_environment("still", |e| e.reduce_motion = true)?;
+    app.press("label:Assets")?;
+    app.press("text:Manage")?;
+    app.press("task-sheet >> Add holding")?;
+    app.wait_for("security-search")?;
+    let frame = |app: &Headless| {
+        app.screen()
+            .layout_nodes()
+            .into_iter()
+            .find(|n| n.test_id.as_deref() == Some("task-sheet"))
+            .map(|n| n.bounds)
+            .unwrap()
+    };
+    let before = frame(&app);
+    // Within the planned height (38% of the window before any keyboard).
+    app.set_environment("IME", |e| e.keyboard_height = Points(300.0))?;
+    let after = frame(&app);
+    assert_eq!(after.size, before.size, "the panel keeps its size");
+    assert!(
+        after.origin.y.0 + after.size.height.0 <= 844.0 - 300.0 + 0.5,
+        "the sheet sits above the keyboard: {after:?}"
+    );
+    assert!(after.origin.y.0 >= 0.0, "and stays on screen: {after:?}");
+    Ok(())
+}

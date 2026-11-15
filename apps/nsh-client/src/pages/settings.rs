@@ -54,7 +54,8 @@ pub fn settings_page() -> Screen {
                                 .child(super::settings_garmin::garmin_section())
                                 .child(view().h_3())
                                 .child(group_label(|| s().backup))
-                                .child(super::settings_backup::backup_section()),
+                                .child(super::settings_backup::backup_section())
+                                .child(keyboard_diagnostics()),
                         ),
                 ),
         )
@@ -235,4 +236,59 @@ fn goal() -> impl IntoElement {
                 error,
             )),
     )
+}
+
+/// Diagnostic builds only (`NW_DIAG=1`): what showing the keyboard cost, to
+/// tell whether the environment reports it once or on every frame, and
+/// whether frames came late while it moved. Show it a few times, then read.
+fn keyboard_diagnostics() -> Option<impl IntoElement> {
+    use crate::{data::keyboard, i18n::catalog::copy};
+    keyboard::DIAGNOSTICS.then(|| {
+        let line = |label: &'static str, value: Box<dyn Fn(keyboard::Report) -> String>| {
+            view()
+                .flex_row()
+                .justify_between()
+                .gap_3()
+                .child(text(label).typo(Type::Subhead).text_color(color::MUTED))
+                .child(
+                    text(move || value(keyboard::current()))
+                        .typo(Type::Subhead)
+                        .tabular_nums()
+                        .text_color(color::INK),
+                )
+        };
+        view()
+            .gap_3()
+            .child(view().h_3())
+            .child(group_label(|| copy("Keyboard diagnostics", "键盘诊断")))
+            .child(
+                card()
+                    .p(px(space::CARD))
+                    .gap_2()
+                    .child(line(
+                        copy("Shows", "弹出次数"),
+                        Box::new(|r| r.shows.to_string()),
+                    ))
+                    .child(line(
+                        copy("Height changes", "键盘高度变化"),
+                        Box::new(|r| r.keyboard_changes.to_string()),
+                    ))
+                    .child(line(
+                        copy("Window size changes", "窗口尺寸变化"),
+                        Box::new(|r| r.window_changes.to_string()),
+                    ))
+                    .child(line(
+                        copy("Safe area changes", "安全区变化"),
+                        Box::new(|r| r.inset_changes.to_string()),
+                    ))
+                    .child(line(
+                        copy("Last show: late frames", "上次弹出：迟到帧"),
+                        Box::new(|r| format!("{} / {}", r.late, r.frames)),
+                    ))
+                    .child(line(
+                        copy("Worst frame / refresh", "最长帧 / 刷新间隔"),
+                        Box::new(|r| format!("{:.0} / {:.1} ms", r.worst_ms, r.refresh_ms)),
+                    )),
+            )
+    })
 }

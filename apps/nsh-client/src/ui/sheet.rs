@@ -207,7 +207,8 @@ fn task_layout(
     fill: bool,
 ) -> impl IntoElement {
     // One height calculation, shared with the outer shell. The grabber uses 20pt.
-    let available = move || (sheet_height() - 20.0).max(100.0);
+    let planned = untracked(planned_keyboard);
+    let available = move || (sheet_height(planned) - 20.0).max(100.0);
     let layout = view()
         .max_h(move || px(available()))
         .style_when(
@@ -247,13 +248,35 @@ fn task_layout(
     }
 }
 
-fn keyboard_inset() -> f32 {
-    let keyboard = keyboard_height().0;
-    keyboard + if keyboard > 0.0 { 20.0 } else { 0.0 }
+/// Space kept between a sheet and the keyboard above it.
+const KEYBOARD_GAP: f32 = 20.0;
+/// Before the keyboard has ever shown, the share of the window it is
+/// assumed to cover.
+const KEYBOARD_GUESS: f32 = 0.38;
+
+/// The keyboard height a sheet plans for, read once when it opens so the
+/// sheet keeps its size: the last height the keyboard reached, if it has
+/// shown. Without one, [`sheet_height`] guesses from the current window.
+fn planned_keyboard() -> Option<f32> {
+    Some(crate::data::keyboard::last_height()).filter(|h| *h > 0.0)
 }
 
-fn sheet_height() -> f32 {
-    (window().height.0 * 0.92 - keyboard_inset()).max(140.0)
+/// A sheet's height limit. It already leaves room for the planned keyboard,
+/// so showing the keyboard only moves the sheet (its margin follows the
+/// keyboard natively) instead of resizing its panel, scroll area and
+/// actions on every frame of the keyboard's motion. Only a keyboard taller
+/// than planned (a larger input method) still shrinks it.
+fn sheet_height(planned: Option<f32>) -> f32 {
+    let window = window().height.0;
+    let top = window * 0.92;
+    let planned = planned.unwrap_or(window * KEYBOARD_GUESS);
+    let keyboard = keyboard_height().0;
+    let live = if keyboard > 0.0 {
+        top - keyboard - KEYBOARD_GAP
+    } else {
+        top
+    };
+    (top - planned - KEYBOARD_GAP).min(live).max(140.0)
 }
 
 fn shell(
@@ -263,6 +286,7 @@ fn shell(
 ) -> impl IntoElement {
     let lifecycle = use_context::<Lifecycle>();
     let opened = lifecycle.as_ref().map(|l| l.opened);
+    let planned = untracked(planned_keyboard);
     sheet()
         .open(move || Some(open()))
         .on_open(move |_: &()| {
@@ -287,12 +311,14 @@ fn shell(
             material::glass(s, Glass::Sheet)
                 .rounded_t(px(radius::SHEET))
                 .border_curve(BorderCurve::Continuous)
+                // The whole panel rides above the keyboard (a native env()
+                // term); its size does not change while the keyboard moves.
+                .mb_keyboard()
         })
         .child(
             view()
                 .test_id("task-sheet")
-                .max_h(move || px(sheet_height()))
-                .mb(move || px(keyboard_inset()))
+                .max_h(move || px(sheet_height(planned)))
                 .child(
                     view()
                         .w(px(36.0))

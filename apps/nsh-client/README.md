@@ -61,6 +61,12 @@ updates. Older debug-signed APKs use different certificates and cannot be
 overwritten by this release; preserve their data before migrating. Android
 device upgrade and restore acceptance remains separate from CI signing checks.
 
+The workflow's `diagnostics` input builds a diagnostic APK instead
+(`NW_DIAG=1` at build time, artifact named `…-diagnostic-…`). Its Settings end
+with keyboard diagnostics: shows, keyboard height, window and safe-area
+changes, and late frames during the last keyboard motion. Release builds
+compile none of it.
+
 ## Health review and backups
 
 The Review tab shows a locale-aligned calendar week (Monday for Chinese and
@@ -191,7 +197,9 @@ secondary disclosure. A purchase with a price does not imply food consumption.
 - Today and Records expose the same drafts. Interrupted runs can be retried
   after restart. Photos are re-encoded before use; inputs are never logged.
 - Manual money has in-sheet selection views, a calendar, secondary details,
-  and last-confirmed choices. Task sheets keep their action above the keyboard.
+  and last-confirmed choices. Task sheets keep their action above the keyboard:
+  they plan for it when they open, so it lifts the whole sheet natively
+  without resizing it.
 
 `tests/capture.rs` exercises natural-language correction, missing-account
 blocking, atomic multi-domain confirmation, a real SQLite failure and retry,

@@ -51,8 +51,11 @@ AI only to turn text and images into drafts, using the owner's model account.
   Capture uses `fitted_task_sheet`: short content determines its height,
   while longer results scroll at the available-height limit. The management
   menu and compact account editor also fit their content. Other task
-  editors retain `task_sheet`'s filled height, capped at 540 pt. Both exclude
-  the keyboard from available height. Toasts belong to the active sheet while
+  editors retain `task_sheet`'s filled height, capped at 540 pt. Both plan
+  for the keyboard when they open (the last height it reached, else 38% of
+  the window), so a showing keyboard only lifts the whole panel through a
+  native `env()` margin; the panel, its scroll area and actions keep their
+  size. Only a keyboard taller than planned still shrinks the sheet. Toasts belong to the active sheet while
   it is open, so Undo cannot be covered by its backdrop. Opening capture clears
   old informational notices and saved receipts; Undo messages keep their normal
   lifetime. A receipt's View cannot navigate behind a newly opened draft.
@@ -249,7 +252,7 @@ existing meanings.
 | Material | Surface | Edge and light | Lift |
 |---|---|---|---|
 | Dock | `SURFACE` at 0.80 opacity, 20 pt backdrop blur | 0.75 pt `GLASS_EDGE` around the pill | `shadow::DOCK` |
-| Sheet | Opaque `SURFACE`, no backdrop blur or highlight wash | Tone separates content from a 0.32 black scrim | `shadow::SHEET` |
+| Sheet | Opaque `SURFACE`, no backdrop blur or highlight wash | Tone separates content from a 0.32 black scrim | None: a large blurred shadow is costly to redraw while the sheet moves with the keyboard |
 | Media controls and captions | `MEDIA_SCRIM` at 0.64 opacity, 18 pt backdrop blur; pressed buttons use 0.74 opacity | White `ON_MEDIA`; caption secondary text at 0.8 opacity | No additional shadow |
 
 The glass edge is white at `#B8` alpha in light appearance and `#20`
@@ -280,7 +283,6 @@ dark appearance.
 | `CARD` | `(0, 1, 2, 0, #1A14080A)`; `(0, 6, 20, -5, #1A140814)` | Content cards and secondary raised buttons |
 | `FLOAT` | `(0, 2, 6, 0, #0A0A0B1F)`; `(0, 8, 20, -6, #0A0A0B30)` | Primary buttons, including the round capture action |
 | `DOCK` | `(0, 1, 3, 0, #1A14080A)`; `(0, 5, 18, -5, #1A14081F)` | Floating tab bar |
-| `SHEET` | `(0, -1, 3, 0, #1A14080A)`; `(0, -8, 32, -8, #1A140829)` | Sheet top edge |
 | `SEGMENT` | `(0, 2, 6, 0, #1A140814)` | Selected segments and pressed primary buttons |
 
 ## Components (`src/ui/`)

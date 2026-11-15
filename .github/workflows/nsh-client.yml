@@ -6,6 +6,11 @@ name: nsh client
 
 on:
   workflow_dispatch:
+    inputs:
+      diagnostics:
+        description: Build a diagnostic APK (NW_DIAG=1 shows keyboard and frame diagnostics in Settings)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -94,8 +99,12 @@ jobs:
           curl -fsSL "https://github.com/longbridge/nsh/releases/download/${NSH_VERSION}/install.sh" | sh
           echo "$HOME/.nsh/bin" >> "$GITHUB_PATH"
       - name: Package the NSH app
+        env:
+          DIAGNOSTICS: ${{ inputs.diagnostics }}
         run: |
           nsh --version
+          # option_env! sees any value, even an empty one: set it only when asked.
+          if [ "$DIAGNOSTICS" = "true" ]; then export NW_DIAG=1; fi
           nsh package --target android --abi arm64-v8a -o "$RUNNER_TEMP/packaged"
       - name: Sign with the fixed Android release key
         env:
@@ -120,7 +129,7 @@ jobs:
           unzip -l "$apk" | grep -E "lib/|classes" || true
       - uses: actions/upload-artifact@v4
         with:
-          name: naviwealth-health-nsh-release-arm64-v8a
+          name: naviwealth-health-nsh-${{ inputs.diagnostics && 'diagnostic' || 'release' }}-arm64-v8a
           path: ${{ runner.temp }}/release-apk/*.apk
           if-no-files-found: error
           retention-days: 14

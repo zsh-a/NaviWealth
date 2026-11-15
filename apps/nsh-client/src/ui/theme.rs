@@ -216,11 +216,6 @@ pub mod shadow {
         layer(1.0, 3.0, 0.0, 0x1A14080A),
         layer(5.0, 18.0, -5.0, 0x1A14081F),
     ];
-    /// A sheet lifted toward the user from the bottom edge.
-    pub const SHEET: [BoxShadow; 2] = [
-        layer(-1.0, 3.0, 0.0, 0x1A14080A),
-        layer(-8.0, 32.0, -8.0, 0x1A140829),
-    ];
     /// The selected segment on its track.
     pub const SEGMENT: [BoxShadow; 1] = [layer(2.0, 6.0, 0.0, 0x1A140814)];
     /// Dark appearance: depth comes from the surfaces' tone, not shadows.
