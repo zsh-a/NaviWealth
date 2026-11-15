@@ -304,7 +304,9 @@ mod tests {
             "https://github.com/zsh-a/NaviWealth/releases/tag/nsh-v0.10.0"
         );
         assert_eq!(newest.notes, "the newest");
-        assert!(newest.is_newer_than(current()));
+        // Compared against an explicit version: the fixture must not
+        // depend on what the running build happens to be.
+        assert!(newest.is_newer_than("0.9.0"));
         assert!(
             parse_releases("[]").is_none(),
             "no NSH release means no answer"

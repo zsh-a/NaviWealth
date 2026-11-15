@@ -18,7 +18,7 @@ fn releases() -> serde_json::Value {
         },
         {
             // Newer than the running 0.9.0.
-            "tag_name": "nsh-v0.10.0",
+            "tag_name": "nsh-v0.11.0",
             "prerelease": false,
             "draft": false,
             "published_at": "2026-11-14T07:00:00Z",
@@ -51,7 +51,7 @@ fn settings_offers_a_newer_release_with_its_page() -> Result<(), String> {
     app.press("Update, Never checked")?;
     app.wait_for("text:Never checked")?;
     app.press("Check for updates")?;
-    app.wait_for("text:/Update available \u{b7} v0\\.10\\.0/")?;
+    app.wait_for("text:/Update available \u{b7} v0\\.11\\.0/")?;
     app.wait_for("text:A newer release, with notes worth reading.")?;
     app.wait_for("text:Open the release page")?;
     Ok(())
