@@ -738,10 +738,10 @@ mod tests {
         let mut connection = Connection::open_in_memory().unwrap();
         migrate(&mut connection).unwrap();
         migrate(&mut connection).unwrap();
-        let version: usize = connection
+        let version: i64 = connection
             .pragma_query_value(None, "user_version", |row| row.get(0))
             .unwrap();
-        assert_eq!(version, MIGRATIONS.len());
+        assert_eq!(version as usize, MIGRATIONS.len());
         connection
             .execute(
                 "INSERT INTO meals (id, day, logged_at_ms, body) VALUES ('a', '2026-11-13', 1, '{}')",

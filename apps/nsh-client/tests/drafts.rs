@@ -20,8 +20,10 @@ fn slow_network(delay: Duration) -> Arc<StubNetwork> {
 fn stored_drafts(dir: &Path) -> usize {
     let connection = rusqlite::Connection::open(database_in(dir)).expect("the database opens");
     connection
-        .query_row("SELECT COUNT(*) FROM capture_drafts", [], |row| row.get(0))
-        .unwrap()
+        .query_row("SELECT COUNT(*) FROM capture_drafts", [], |row| {
+            row.get::<_, i64>(0)
+        })
+        .unwrap() as usize
 }
 
 /// Picks a photo and sends it (trusted account): the page returns to Today

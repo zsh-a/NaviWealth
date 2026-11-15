@@ -38,7 +38,8 @@ pub fn memory(migrations: &[&str]) -> Result<Connection, Error> {
 }
 
 fn check_version(connection: &Connection, supported: usize) -> Result<usize, Error> {
-    let found: usize = connection.pragma_query_value(None, "user_version", |r| r.get(0))?;
+    let found =
+        connection.pragma_query_value(None, "user_version", |r| r.get::<_, i64>(0))? as usize;
     if found > supported {
         return Err(Error::Newer { found, supported });
     }
@@ -51,7 +52,7 @@ pub fn migrate(connection: &mut Connection, migrations: &[&str]) -> Result<(), E
     for (index, sql) in migrations.iter().enumerate().skip(done) {
         let tx = connection.transaction()?;
         tx.execute_batch(sql)?;
-        tx.pragma_update(None, "user_version", index + 1)?;
+        tx.pragma_update(None, "user_version", (index + 1) as i64)?;
         tx.commit()?;
     }
     Ok(())
