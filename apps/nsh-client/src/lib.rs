@@ -32,6 +32,13 @@ fn native(registry: &mut Registry) {
     registry.register::<App>();
 }
 
+/// For headless tests: no quotes or exchange rates from the public
+/// providers, whose transport the engine's stub network cannot intercept.
+#[doc(hidden)]
+pub fn disable_live_market_data() {
+    data::market::disable_live();
+}
+
 /// The root: loads what the device keeps, keeps "today" current, and shows
 /// the navigation stack on the canvas.
 #[component]

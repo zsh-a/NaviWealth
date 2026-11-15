@@ -5,7 +5,7 @@ use nsh_core::prelude::*;
 
 use crate::{
     i18n::s,
-    ui::{Icon, IconBtn, Type, Typo, Variant, color, space, theme::size},
+    ui::{Icon, IconBtn, Type, Typo, color, space, theme::size},
 };
 
 /// The height a [`bottom_bar`]'s controls take above the safe area.
@@ -14,10 +14,15 @@ pub const BOTTOM_BAR: f32 = 56.0 + 14.0;
 /// The fade over the content just above a [`bottom_bar`]'s controls.
 const FADE: f32 = 40.0;
 
-/// A pushed page's top bar: a raised round Back, the title centered, and
-/// an optional trailing action (or the room one takes, so the title stays
-/// centered). The page's system header is hidden, so this is what every
-/// platform shows; the system back gesture and button still pop the page.
+/// The fade under a [`top_bar`]: content scrolling up dissolves into the
+/// canvas instead of being cut by a hard edge.
+const TOP_FADE: f32 = 12.0;
+
+/// A pushed page's top bar: a quiet round Back (no surface or shadow; it is
+/// a frequent, low-weight action), the title centered, and an optional
+/// trailing action (or the room one takes, so the title stays centered).
+/// The page's system header is hidden, so this is what every platform
+/// shows; the system back gesture and button still pop the page.
 pub fn top_bar(
     title: impl Fn() -> SharedString + 'static,
     back: impl Fn() + 'static,
@@ -31,11 +36,22 @@ pub fn top_bar(
         .pb_2()
         .px_3()
         .bg(color::CANVAS)
+        // Above the page's scroll view, so the fade lies over its content.
+        .z_index(1)
         .child(
-            IconBtn::new(Icon::ChevronLeft, || s().back.into())
-                .variant(Variant::Secondary)
-                .on_press(back),
+            view()
+                .absolute()
+                .left_0()
+                .right_0()
+                .bottom(px(-TOP_FADE))
+                .h(px(TOP_FADE))
+                .pointer_events(PointerEvents::None)
+                .accessibility_elements_hidden(true)
+                .bg_linear_to_b()
+                .gradient_from(color::CANVAS)
+                .gradient_to(color::CANVAS.opacity(0.0)),
         )
+        .child(IconBtn::new(Icon::ChevronLeft, || s().back.into()).on_press(back))
         .child(
             text(title)
                 .typo(Type::Headline)

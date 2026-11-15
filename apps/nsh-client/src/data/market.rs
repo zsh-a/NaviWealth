@@ -9,7 +9,10 @@ use market_data_rs::{
 };
 use nsh_core::prelude::*;
 use std::{
-    sync::{Arc, OnceLock},
+    sync::{
+        Arc, OnceLock,
+        atomic::{AtomicBool, Ordering},
+    },
     time::Duration,
 };
 
@@ -70,7 +73,21 @@ pub(super) struct Client {
     service: MarketData,
     pub(super) http: reqwest::Client,
 }
+/// Whether quotes and exchange rates may come from the public providers.
+static LIVE: AtomicBool = AtomicBool::new(true);
+
+/// Turns the public providers off for this process. The market transport is
+/// its own HTTP client, outside the engine's network, so a headless test's
+/// stub network cannot answer it; without this a test's result would depend
+/// on whether the machine can reach the providers.
+pub fn disable_live() {
+    LIVE.store(false, Ordering::Relaxed);
+}
+
 pub(super) fn client() -> Result<&'static Client, String> {
+    if !LIVE.load(Ordering::Relaxed) {
+        return Err("live market data disabled".to_owned());
+    }
     static CLIENT: OnceLock<Result<Client, String>> = OnceLock::new();
     CLIENT
         .get_or_init(|| {
