@@ -94,8 +94,56 @@ fn backed_up(dav: &Dav) -> Result<Vec<u8>, String> {
         [today().to_string()],
     )
     .unwrap();
+    // Market-cache rows: present on the device, absent from the backup.
+    // The most recent weekday: quotes and bars only make sense on trading
+    // days, and a bar's day must precede its fetch date.
+    let mut day = today().0.checked_sub(jiff::Span::new().days(1)).unwrap();
+    while matches!(
+        day.weekday(),
+        jiff::civil::Weekday::Saturday | jiff::civil::Weekday::Sunday
+    ) {
+        day = day.checked_sub(jiff::Span::new().days(1)).unwrap();
+    }
+    let quote_day = day.to_string();
+    let fetched_day = day
+        .checked_add(jiff::Span::new().days(1))
+        .unwrap()
+        .to_string();
+    db.execute(
+        "INSERT INTO finance_accounts (name) VALUES ('资产:现金'),('资产:持仓·sec1')",
+        [],
+    )
+    .unwrap();
+    db.execute(
+        "INSERT INTO finance_securities (id,name,name_key,account) VALUES ('sec1','ETF','etf','资产:持仓·sec1')",
+        [],
+    )
+    .unwrap();
+    db.execute(
+        "INSERT INTO finance_quotes (security,day,price) VALUES ('sec1', ?1, 4500000)",
+        [&quote_day],
+    )
+    .unwrap();
+    db.execute(
+        "INSERT INTO finance_security_bindings (security,market,symbol,currency) VALUES ('sec1','cn_a','510300','CNY')",
+        [],
+    )
+    .unwrap();
+    db.execute(
+        "INSERT INTO finance_market_quotes (security,symbol,currency,provider,price,observed_at,fetched_at,previous_close_only,day)
+         VALUES ('sec1','510300.SH','CNY','tencent',5000000,?2,?2,0,?1)",
+        rusqlite::params![quote_day, format!("{quote_day}T07:00:00Z")],
+    )
+    .unwrap();
+    db.execute(
+        "INSERT INTO finance_daily_bars (market,symbol,currency,provider,day,open,high,low,close,volume,fetched_at,received_at)
+         VALUES ('cn_a','510300.SH','CNY','tencent_raw',?1,4900000,5200000,4800000,5100000,12345,?2,?2)",
+        rusqlite::params![quote_day, format!("{fetched_day}T01:00:00Z")],
+    )
+    .unwrap();
     drop(db);
     let mut entries = backups(dav, "correct horse battery", None);
+
     entries.extend(account(false));
     let (mut app, storage) = start_in(Some(dir.path()), entries, None);
     app.wait_for("Tomato pasta")?;
@@ -115,6 +163,20 @@ fn backed_up(dav: &Dav) -> Result<Vec<u8>, String> {
         "the daily backup carries no photos"
     );
     assert!(!backup::has_photos(name));
+    // Market caches ride along in no backup: they are re-fetched on demand.
+    let cache_db = dir.path().join("bundle-db.sqlite");
+    std::fs::write(&cache_db, &bundle.database).unwrap();
+    let copy = rusqlite::Connection::open(&cache_db).unwrap();
+    for table in ["finance_market_quotes", "finance_daily_bars"] {
+        let n: i64 = copy
+            .query_row(&format!("SELECT COUNT(*) FROM {table}"), [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(n, 0, "{table} is a cache, not a record");
+    }
+    let manual: i64 = copy
+        .query_row("SELECT COUNT(*) FROM finance_quotes", [], |r| r.get(0))
+        .unwrap();
+    assert_eq!(manual, 1, "manual prices are records");
     assert!(
         !bundle
             .database

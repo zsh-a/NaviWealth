@@ -1,7 +1,9 @@
 //! Backups to the user's own WebDAV folder: once a day when the app starts
 //! or comes back, or when asked, the database is copied, encrypted with
 //! the user's passphrase off the engine thread, and put as
-//! `naviwealth-<day>-<timestamp>.nwbk`. A backup made by hand also carries
+//! `naviwealth-<day>-<timestamp>.nwbk`. The snapshot carries no market
+//! caches: provider quotes and daily bars are re-fetched on demand, so a
+//! restored install rebuilds them from each holding's first trade. A backup made by hand also carries
 //! the meal photos (`…-photos.nwbk`); the daily one does not, so it stays
 //! small. Restoring gets one, decrypts it, replaces meals, favorites,
 //! notes, weights, Garmin days and the ledger in one transaction and writes back the

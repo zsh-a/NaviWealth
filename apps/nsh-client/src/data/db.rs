@@ -170,15 +170,33 @@ fn remove_scratch(path: &Path) {
     }
 }
 
-/// A consistent copy of the whole database, as file bytes.
+/// The market tables a snapshot empties: provider quotes and daily bars
+/// are caches the app re-fetches on demand (history refreshes from each
+/// holding's first trade), not records. Manual dated prices, valuations
+/// and FX rates stay: the owner entered or kept them.
+const MARKET_CACHES: &[&str] = &["finance_market_quotes", "finance_daily_bars"];
+
+/// A consistent copy of the whole database, as file bytes, with the market
+/// caches emptied and their pages reclaimed.
 pub fn snapshot() -> Result<Vec<u8>, String> {
     let path = scratch("snapshot");
     remove_scratch(&path);
-    let result = with(|c| navi_storage::snapshot(c, &path))
-        .ok_or("the database is not open")?
-        .map_err(|error| error.to_string());
+    let result = with(|c| snapshot_file(c, &path)).ok_or("the database is not open")?;
     remove_scratch(&path);
     result
+}
+
+fn snapshot_file(connection: &Connection, path: &Path) -> Result<Vec<u8>, String> {
+    navi_storage::snapshot(connection, path).map_err(|error| error.to_string())?;
+    let copy = Connection::open(path).map_err(|error| error.to_string())?;
+    for table in MARKET_CACHES {
+        copy.execute(&format!("DELETE FROM {table}"), [])
+            .map_err(|error| error.to_string())?;
+    }
+    copy.execute("VACUUM", [])
+        .map_err(|error| error.to_string())?;
+    drop(copy);
+    std::fs::read(path).map_err(|error| error.to_string())
 }
 
 /// Health-only backups (schema 1–6) replace Health records and preserve the
@@ -751,6 +769,89 @@ mod tests {
             );
             assert_eq!(finance_rows(&current), expected);
         }
+    }
+
+    #[test]
+    fn snapshots_empty_market_caches_and_keep_the_records() {
+        // The most recent weekday, and the weekday before it: quotes and
+        // bars only make sense on trading days.
+        let mut day = jiff::Timestamp::now()
+            .to_zoned(jiff::tz::TimeZone::UTC)
+            .date()
+            .checked_sub(jiff::Span::new().days(1))
+            .unwrap();
+        while matches!(
+            day.weekday(),
+            jiff::civil::Weekday::Saturday | jiff::civil::Weekday::Sunday
+        ) {
+            day = day.checked_sub(jiff::Span::new().days(1)).unwrap();
+        }
+        let connection = navi_storage::memory(MIGRATIONS).unwrap();
+        connection
+            .execute(
+                "INSERT INTO finance_accounts (name) VALUES ('资产:现金'),('资产:持仓·sec1')",
+                [],
+            )
+            .unwrap();
+        connection
+            .execute(
+                "INSERT INTO finance_securities (id,name,name_key,account) VALUES ('sec1','ETF','etf','资产:持仓·sec1')",
+                [],
+            )
+            .unwrap();
+        connection
+            .execute(
+                "INSERT INTO finance_quotes (security,day,price) VALUES ('sec1', ?1, 4500000)",
+                [day.to_string()],
+            )
+            .unwrap();
+        connection
+            .execute(
+                "INSERT INTO finance_security_bindings (security,market,symbol,currency) VALUES ('sec1','cn_a','510300','CNY')",
+                [],
+            )
+            .unwrap();
+        connection
+            .execute(
+                "INSERT INTO finance_market_quotes (security,symbol,currency,provider,price,observed_at,fetched_at,previous_close_only,day)
+                 VALUES ('sec1','510300.SH','CNY','tencent',5000000,?1,?1,0,?2)",
+                rusqlite::params![format!("{day}T07:00:00Z"), day.to_string()],
+            )
+            .unwrap();
+        connection
+            .execute(
+                "INSERT INTO finance_daily_bars (market,symbol,currency,provider,day,open,high,low,close,volume,fetched_at,received_at)
+                 VALUES ('cn_a','510300.SH','CNY','tencent_raw',?1,4900000,5200000,4800000,5100000,12345,?2,?2)",
+                rusqlite::params![
+                    day.to_string(),
+                    format!(
+                        "{}T01:00:00Z",
+                        day.checked_add(jiff::Span::new().days(1)).unwrap()
+                    )
+                ],
+            )
+            .unwrap();
+        match navi_finance::repository::validate(&connection) {
+            Ok(()) => {}
+            Err(error) => panic!("seed is invalid: {error}"),
+        }
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("copy.sqlite");
+        snapshot_file(&connection, &path).unwrap();
+        let copy = Connection::open(&path).unwrap();
+        let count = |table: &str| -> i64 {
+            copy.query_row(&format!("SELECT COUNT(*) FROM {table}"), [], |row| {
+                row.get(0)
+            })
+            .unwrap()
+        };
+        assert_eq!(
+            count("finance_market_quotes"),
+            0,
+            "market quotes are caches"
+        );
+        assert_eq!(count("finance_daily_bars"), 0, "daily bars are caches");
+        assert_eq!(count("finance_quotes"), 1, "manual prices are records");
     }
 
     #[test]

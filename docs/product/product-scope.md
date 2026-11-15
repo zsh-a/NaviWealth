@@ -225,6 +225,9 @@ The full target is:
   file-based encryption; no SQLCipher, see Personal Local Scope).
 - Automatic local backups plus manual export/restore of a passphrase-encrypted
   backup file to a location the owner picks; meal photos optional in the export.
+  Provider market quotes and daily bars are re-fetchable caches, not records:
+  snapshots leave them out, and a restored install rebuilds them from each
+  holding's first trade.
   The current Health increment uses an owner-configured WebDAV folder for
   daily foreground backups (without photos) and manual backup/restore
   (with meal photos), excluding credentials. Local file export waits for a
