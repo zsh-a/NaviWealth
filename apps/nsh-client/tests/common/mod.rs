@@ -271,7 +271,7 @@ pub fn garmin_cn_with_delay(delay: Duration) -> Arc<StubNetwork> {
 }
 
 pub fn record_reply(records: Vec<Value>) -> Value {
-    json!({"model":"test-model","stop_reason":"end_turn","content":[{"type":"text","text":json!({"records":records,"question":""}).to_string()}]})
+    json!({"model":"test-model","stop_reason":"end_turn","content":[{"type":"text","text":json!({"records":records,"questions":[]}).to_string()}]})
 }
 
 pub fn meal_record() -> Value {
@@ -298,7 +298,7 @@ pub fn attach_capture(app: &mut Headless) -> Result<(), String> {
     app.press("label:New entry")?;
     app.press("Attach image")?;
     app.wait_for("Remove image")?;
-    app.press("Recognize")?;
+    app.press("label:Send")?;
     Ok(())
 }
 

@@ -109,7 +109,7 @@ fn declining_consent_sends_nothing() -> Result<(), String> {
     app.press("label:Back")?;
     app.wait_for("Attach image")?;
     assert!(stub.requests().is_empty());
-    assert!(app.shows("Recognize"));
+    assert!(app.screen().enabled("label:Send")?);
     Ok(())
 }
 

@@ -3,7 +3,7 @@
 use super::{clock, db, finance, meals, photos, tasks, vision, weights};
 use crate::domain::{
     account::ModelAccount,
-    capture::{Draft, MAX_INPUT, PROMPT_VERSION, Record, Status},
+    capture::{Draft, MAX_INPUT, PROMPT_VERSION, Record, Status, Turn},
     meal::{Meal, encode_meal},
     recognition::Lang,
 };
@@ -44,6 +44,7 @@ pub fn new() -> Draft {
         photo: None,
         records: Vec::new(),
         question: String::new(),
+        transcript: Vec::new(),
         status: Status::Editing,
         model: String::new(),
     }
@@ -64,7 +65,7 @@ pub fn load() -> Result<(), String> {
             if draft.status == Status::Analyzing {
                 draft.status = Status::Failed;
             }
-            list.push(draft);
+            list.push(draft.migrated());
         }
         Ok(list)
     })
@@ -117,10 +118,25 @@ pub fn recognize(
     if draft.input.chars().count() > MAX_INPUT || draft.correction.chars().count() > MAX_INPUT {
         return Err("input too long".into());
     }
-    if draft.input.trim().is_empty() && draft.correction.trim().is_empty() && draft.photo.is_none()
-    {
-        return Err("empty input".into());
+    // The composed message joins the thread as an owner turn; a retry
+    // (nothing composed) re-asks the last one. The first send turns the
+    // composer's text and photo into the thread's first message.
+    let message = draft.correction.trim().to_owned();
+    if draft.transcript.is_empty() {
+        if draft.input.trim().is_empty() && draft.photo.is_none() {
+            return Err("empty input".into());
+        }
+        draft.transcript.push(Turn::Owner {
+            text: draft.input.clone(),
+            photo: draft.photo.is_some(),
+        });
+    } else if !message.is_empty() {
+        draft.transcript.push(Turn::Owner {
+            text: message,
+            photo: false,
+        });
     }
+    draft.correction.clear();
     consent
         .check(&vision::upload_target(&account))
         .map_err(|e| e.to_string())?;
@@ -151,13 +167,17 @@ pub fn recognize(
             return;
         }
         match response {
-            Ok((records, question, model)) => {
+            Ok((records, questions, reply, model)) => {
+                let proposed = records.len();
                 draft.records = records;
-                draft.question = question;
                 draft.model = model;
-                // The current structured draft carries accepted corrections. Keep
-                // the original input for provenance, but don't replay a correction.
-                draft.correction.clear();
+                // The whole reply is kept so the next request replays the
+                // conversation as it happened.
+                draft.transcript.push(Turn::Assistant {
+                    reply,
+                    records: proposed,
+                    questions,
+                });
                 draft.status = Status::Ready;
             }
             Err(error) => {

@@ -58,7 +58,7 @@ fn accounts_balances_rename_and_net_worth_survive_restart() -> Result<(), String
         "label:What would you like to record?",
         "Lunch 31.50 yuan from Cash",
     )?;
-    app.press("Recognize")?;
+    app.press("label:Send")?;
     app.wait_for("Confirm and save")?;
     app.press("label:Close")?;
     app.press("label:/^Cash, 1000.00 CNY/")?;

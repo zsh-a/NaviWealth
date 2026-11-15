@@ -277,6 +277,19 @@ Recommended sequence; this is planning, not a claim these items are implemented.
    it; the packaged APK cannot add permissions). When it lands: scan and read
    behind a draft/confirm write, with real-device evidence (emulator evidence
    does not close the item).
+4. **Conversational capture thread.** Implemented ahead of its gates
+   ([capture conversation](../architecture/capture-conversation.md)): the
+   composer's text or photo opens the thread as the first message; results,
+   structured questions with tap-first options and corrections are turns
+   inside the capture sheet, with the input pinned above the keyboard and
+   confirm fixed. Requests carry the real message history; questions carry
+   text and options in the client-local schema (`PROMPT_VERSION` bump); the
+   transcript persists with the draft in `capture_drafts`. Confirmation,
+   consent, draft durability and backup exclusion are unchanged. Product
+   Scope's Interaction Model and `apps/nsh-client/DESIGN.md` describe the
+   thread. Headless flows cover chip answering, multi-turn correction,
+   reopen after restart and degraded bare-string questions. Remaining:
+   real-model quality and Android keyboard/device verification.
 
 ## Operating Rules
 

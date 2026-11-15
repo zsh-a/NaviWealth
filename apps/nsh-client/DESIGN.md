@@ -16,28 +16,47 @@ AI only to turn text and images into drafts, using the owner's model account.
   Settings is the corner action on Today.
   Pages pushed over the home cover the bar. Hidden tabs stay alive (their
   scroll position stays) and are hidden from screen readers.
-- **Capture:** one text/image composer. The result is a readable receipt-like
-  summary, with one correction box. No domain selection before input and no
-  prefilled form as the main result. Missing values ask a concrete question;
-  proposed new accounts are marked. Multiple records show their count on
-  confirmation. Manual meal/money/weight actions are secondary under one
-  disclosure; favorites remain directly available with Undo. Close is a
-  labelled cross, separate from Confirm and save; closing a nonempty draft
-  reports that the draft is kept and no records were saved.
-  The editing composer has one input, an accessible photo icon and Recognize
-  / 识别. It omits the repeated prompt label and generic instructions; the
-  input retains its accessible name. Only an editing draft requests initial
-  focus after the sheet opens; a ready result stays readable.
+- **Capture:** one bounded conversation
+  ([Capture Conversation](../../docs/architecture/capture-conversation.md)). The
+  description or photo is the thread's first message on the right, in an ink
+  pill; the model's turns sit on the left behind a 2 pt iris-to-sky
+  hairline. A turn carries the record summaries inline (the same readable
+  cards as before), one to three clarifying questions as quiet wells, and —
+  while an answer is still wanted — the question's tap-first options as
+  chips of known accounts and categories. A turn that revised records
+  collapses, once superseded, to an "Updated n records" badge. While the
+  model works the thread shows a spinner in its light with "Reading your
+  entry…"; a failure is a turn with Try again, Open settings and Keep
+  previous result. No domain selection before input and no prefilled form
+  as the main result. Missing values ask a concrete question; proposed new
+  accounts are marked. Multiple records show their count on confirmation.
+  Manual meal/money/weight actions are secondary under one disclosure;
+  favorites remain directly available with Undo. Close is a labelled cross,
+  separate from Confirm and save; Discard draft is a header action with
+  Undo; closing a nonempty draft reports that the draft is kept and no
+  records were saved.
+  The composer is the one stable input, pinned in the task actions above the
+  keyboard: an accessible photo icon before the first message, the input
+  (labelled What would you like to record? / 想记下什么？) and a round send
+  button. The action row above it swaps the task's current action:
+  Recognize on the consent sheet, Review later while the model works,
+  Set up without a model, and Confirm and save once the records are ready.
+  Only a draft with no thread yet requests initial focus after the sheet
+  opens; a ready result stays readable.
   Account rows in a ready result open an existing-account picker in the same
   sheet. Transfer source and destination lists exclude the other account;
   internal holding accounts are never offered. Selection first persists the
   draft, then returns to the result, without calling the model or posting a
   transaction. With no eligible account, the picker explains how to name a
-  proposed account through the correction box. Back returns from the account
+  proposed account through the composer. Back returns from the account
   picker or recognition consent; the cross closes the capture task.
   A successful confirmation reports the single record's kind and value, or
   the batch count. Its View action opens the common day in Records, or the
   unfiltered all-days timeline when the batch spans days.
+  The thread is kept with its draft and never outlives it: confirming
+  consumes it, discarding deletes it, and reopening a draft shows the whole
+  conversation. An older single-question draft migrates into the thread as
+  a plain question turn.
 - **Task sheets:** header and actions stay fixed; only the body scrolls.
   Manage, account creation and holding creation share one native sheet;
   changing panels does not replay its entrance. Nested pickers return to the
@@ -405,6 +424,7 @@ still.
 | Meal page | Scrolling | Photo drifts at half speed; the top bar frosts in once the panel slides under it | Bar switches at once |
 | Meal page | Analyzing | The AI's light passes over the photo (2 s loop); placeholders shimmer | No light, no shimmer |
 | Meal page | Results arrive | Rows rise in, staggered; the total eases up | Shown at once |
+| Capture | A turn arrives | It rises 14 pt and fades in, staggered; while the model works its turn shows the spinner in the AI's light | Shown at once |
 | Segmented | Choice | Raised pill slides to the segment (spring) | Jumps |
 | Sheets | Open / close | Slide from the bottom over a fading scrim; swipe down to close | Appear / disappear |
 | Toggles | Checkbox / switch | Fill `instant`; knob slides `fast` | Instant |

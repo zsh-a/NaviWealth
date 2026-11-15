@@ -36,6 +36,7 @@ pub enum Icon {
     Calendar,
     ChevronDown,
     Close,
+    Send,
 }
 
 impl Icon {
@@ -110,6 +111,7 @@ impl Icon {
                 r#"<rect x="4" y="5" width="16" height="15" rx="3.5"/><path d="M4 10h16M8.5 3.5v3M15.5 3.5v3"/>"#
             }
             Icon::ChevronDown => r#"<path d="M6.5 9.5L12 15l5.5-5.5"/>"#,
+            Icon::Send => r#"<path d="M12 19V5M5.5 11.5L12 5l6.5 6.5"/>"#,
             Icon::BookmarkFilled => {
                 r#"<path fill="currentColor" d="M7 3.5h10a1.5 1.5 0 0 1 1.5 1.5v15.5L12 16.5l-6.5 4V5A1.5 1.5 0 0 1 7 3.5z"/>"#
             }
