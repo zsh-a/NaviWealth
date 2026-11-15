@@ -2,8 +2,150 @@
 //! back, swipe down) in the app's surface, with a grabber, the safe area
 //! and the keyboard taken into account.
 
-use nsh_base::{SheetEvent, sheet};
+use nsh_base::{OpenChangeReason, SheetEvent, sheet};
 use nsh_core::prelude::*;
+use std::rc::Rc;
+
+#[derive(Clone)]
+struct Lifecycle {
+    opened: Signal<bool>,
+    closed: Rc<dyn Fn()>,
+}
+
+#[derive(Clone)]
+struct TaskHost {
+    /// The active panel's step back (its Back button and the system back).
+    close: Stored<Option<Rc<dyn Fn()>>>,
+    /// The active panel's guarded exit from the whole task (swipe, backdrop).
+    dismiss: Stored<Option<Rc<dyn Fn()>>>,
+    open: Rc<dyn Fn() -> bool>,
+}
+
+/// Inside a task host, how a swipe or a backdrop press leaves the whole task
+/// from the current panel (after its own discard guard). Back still steps
+/// back. Cleared when the panel unmounts; outside a host it does nothing.
+pub fn task_dismiss(dismiss: impl Fn() + 'static) {
+    let Some(host) = use_context::<TaskHost>() else {
+        return;
+    };
+    let dismiss: Rc<dyn Fn()> = Rc::new(dismiss);
+    host.dismiss.replace(Some(dismiss.clone()));
+    cleanup(move || {
+        if host
+            .dismiss
+            .with(|d| d.as_ref().is_some_and(|d| Rc::ptr_eq(d, &dismiss)))
+        {
+            host.dismiss.replace(None);
+        }
+    });
+}
+
+/// Retain the task and its reactive scope until the native sheet has finished
+/// leaving. Closing the requested value must never remove its animation owner.
+pub fn retained<T: Clone + PartialEq + 'static>(
+    requested: impl Fn() -> Option<T> + 'static,
+    render: impl Fn(T) -> AnyElement + 'static,
+) -> impl IntoElement {
+    let requested = Rc::new(requested);
+    let render = Rc::new(render);
+    let mounted = signal(None::<T>);
+    let watch = requested.clone();
+    let host = use_context::<TaskHost>();
+    let embedded = host.is_some();
+    effect(move || {
+        if let Some(next) = watch() {
+            mounted.set(Some(next));
+        } else if host.as_ref().is_some_and(|h| (h.open)()) {
+            // Inner Back changes only the frame; closing the host retains it.
+            mounted.set(None);
+        }
+    });
+    dynamic(move || {
+        let Some(value) = mounted.get() else {
+            return view().into_element();
+        };
+        let requested = requested.clone();
+        let render = render.clone();
+        untracked(move || {
+            if !embedded {
+                provide_context(Lifecycle {
+                    opened: signal(false),
+                    closed: Rc::new(move || {
+                        if requested().is_none() {
+                            mounted.set(None);
+                        }
+                    }),
+                });
+            }
+            render(value)
+        })
+    })
+}
+
+/// Focus only after the real Sheet Open lifecycle, never during its entrance.
+/// Inner task panels already have an open host, so focus follows their mount.
+pub fn initial_focus() -> nsh_core::element::ElementRef {
+    let target = element_ref();
+    if let Some(lifecycle) = use_context::<Lifecycle>() {
+        effect(move || {
+            if lifecycle.opened.get() {
+                spawn(async move {
+                    next_frame().await;
+                    if lifecycle.opened.get_untracked() {
+                        target.focus();
+                    }
+                });
+            }
+        });
+    }
+    target
+}
+
+pub fn is_task_panel() -> bool {
+    use_context::<TaskHost>().is_some()
+}
+
+/// One native sheet for a menu and all of its task panels. Embedded task sheets
+/// contribute their layout and dismissal guard without making another overlay.
+pub fn task_host(
+    open: impl Fn() -> bool + Copy + 'static,
+    close: impl Fn() + Copy + 'static,
+    content: impl Fn() -> AnyElement + 'static,
+) -> impl IntoElement {
+    retained(
+        move || open().then_some(()),
+        move |_| {
+            let host = TaskHost {
+                close: stored(None),
+                dismiss: stored(None),
+                open: Rc::new(open),
+            };
+            provide_context(host.clone());
+            shell(
+                open,
+                move |reason| {
+                    // A swipe or backdrop press means "leave"; declining it
+                    // would bounce the sheet back up with a different panel.
+                    let leave = matches!(
+                        reason,
+                        OpenChangeReason::Swipe | OpenChangeReason::BackdropPress
+                    );
+                    let handler = if leave {
+                        host.dismiss.with(|f| f.clone())
+                    } else {
+                        host.close.with(|f| f.clone())
+                    };
+                    match handler {
+                        Some(handler) => handler(),
+                        None => close(),
+                    }
+                },
+                content(),
+            )
+            .into_element()
+        },
+    )
+}
 
 use super::{
     material::{self, Glass},
@@ -20,7 +162,7 @@ pub fn bottom_sheet(
 ) -> impl IntoElement {
     shell(
         open,
-        close,
+        move |_| close(),
         scroll().flex_shrink(1.0).child(
             view()
                 .px(px(space::GUTTER))
@@ -64,56 +206,83 @@ fn task_layout(
     actions: impl IntoElement,
     fill: bool,
 ) -> impl IntoElement {
-    let available = move || (window().height.0 * 0.92 - keyboard_height().0 - 20.0).max(120.0);
-    shell(
-        open,
-        close,
-        view()
-            .max_h(move || px(available()))
-            .style_when(
-                move || fill,
-                move |s| s.h(move || px(available().min(540.0))),
-            )
-            .child(
-                view()
-                    .flex_shrink(0.0)
-                    .px(px(space::GUTTER))
-                    .py_2()
-                    .child(header),
-            )
-            .child(
-                scroll()
-                    .flex_shrink(1.0)
-                    .style_when(move || fill, |s| s.flex_1())
-                    .min_h(px(0.0))
-                    .child(view().px(px(space::GUTTER)).py_2().child(body)),
-            )
-            .child(
-                view()
-                    .flex_shrink(0.0)
-                    .px(px(space::GUTTER))
-                    .pt_3()
-                    .pb_safe_area_plus(px(12.0))
-                    .child(actions)
-                    .child(super::toast::toast_view(|| 68.0)),
-            ),
-    )
+    // One height calculation, shared with the outer shell. The grabber uses 20pt.
+    let available = move || (sheet_height() - 20.0).max(100.0);
+    let layout = view()
+        .max_h(move || px(available()))
+        .style_when(
+            move || fill,
+            move |s| s.h(move || px(available().min(540.0))),
+        )
+        .child(
+            view()
+                .test_id("task-header")
+                .flex_shrink(0.0)
+                .px(px(space::GUTTER))
+                .py_2()
+                .child(header),
+        )
+        .child(
+            scroll()
+                .flex_shrink(1.0)
+                .style_when(move || fill, |s| s.flex_1())
+                .min_h(px(0.0))
+                .child(view().px(px(space::GUTTER)).py_2().child(body)),
+        )
+        .child(
+            view()
+                .test_id("task-actions")
+                .flex_shrink(0.0)
+                .px(px(space::GUTTER))
+                .pt_3()
+                .pb_safe_area_plus(px(12.0))
+                .child(actions)
+                .child(super::toast::toast_view(|| 68.0)),
+        );
+    if let Some(host) = use_context::<TaskHost>() {
+        host.close.replace(Some(Rc::new(close)));
+        layout.into_element()
+    } else {
+        shell(open, move |_| close(), layout).into_element()
+    }
+}
+
+fn keyboard_inset() -> f32 {
+    let keyboard = keyboard_height().0;
+    keyboard + if keyboard > 0.0 { 20.0 } else { 0.0 }
+}
+
+fn sheet_height() -> f32 {
+    (window().height.0 * 0.92 - keyboard_inset()).max(140.0)
 }
 
 fn shell(
     open: impl Fn() -> bool + 'static,
-    close: impl Fn() + 'static,
+    close: impl Fn(OpenChangeReason) + 'static,
     content: impl IntoElement,
 ) -> impl IntoElement {
+    let lifecycle = use_context::<Lifecycle>();
+    let opened = lifecycle.as_ref().map(|l| l.opened);
     sheet()
         .open(move || Some(open()))
+        .on_open(move |_: &()| {
+            if let Some(opened) = opened {
+                opened.set(true);
+            }
+        })
+        .on_close(move |_: &()| {
+            if let Some(lifecycle) = &lifecycle {
+                lifecycle.opened.set(false);
+                (lifecycle.closed)();
+            }
+        })
         .on_open_change(move |event: &SheetEvent| {
-            if let SheetEvent::OpenChange(false, _) = event {
-                close();
+            if let SheetEvent::OpenChange(false, reason) = event {
+                close(*reason);
             }
         })
         .close_on_swipe(true)
-        .backdrop_style(|s| s.bg(color::SCRIM.opacity(0.42)))
+        .backdrop_style(|s| s.bg(color::SCRIM.opacity(0.32)))
         .popup_style(|s| {
             material::glass(s, Glass::Sheet)
                 .rounded_t(px(radius::SHEET))
@@ -121,8 +290,9 @@ fn shell(
         })
         .child(
             view()
-                .max_h(move || px((window().height.0 * 0.92 - keyboard_height().0).max(140.0)))
-                .mb_keyboard()
+                .test_id("task-sheet")
+                .max_h(move || px(sheet_height()))
+                .mb(move || px(keyboard_inset()))
                 .child(
                     view()
                         .w(px(36.0))

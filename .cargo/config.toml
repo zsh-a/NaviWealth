@@ -1,0 +1,10 @@
+# Portable defaults only: keep Cargo's host target, job count and linker.
+# Each independent workspace retains its own target directory.
+[env]
+RUST_BACKTRACE = { value = "1", force = false }
+RUST_LOG = { value = "info,nsh_app_naviwealth_health=debug,health_core=debug,finance_core=debug", force = false }
+
+# Retain source locations in backtraces without the large full-debug artifacts.
+# Test inherits dev; override with CARGO_PROFILE_DEV_DEBUG=2 for variable inspection.
+[profile.dev]
+debug = "line-tables-only"

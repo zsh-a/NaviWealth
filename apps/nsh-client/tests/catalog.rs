@@ -9,6 +9,7 @@ fn search_create_and_existing_holding_binding_preserve_identity() -> Result<(), 
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
     app.press("label:Assets")?;
     app.press("Add holding")?;
+    app.press("Enter manually")?;
     app.type_text("label:Name or code", "My bank shares")?;
     app.type_text("label:Quantity", "10")?;
     app.type_text("label:Cost per unit", "12")?;
@@ -21,12 +22,14 @@ fn search_create_and_existing_holding_binding_preserve_identity() -> Result<(), 
     app.press("Link a listed security")?;
     app.type_text("label:Code, name or pinyin", "payh")?;
     app.on_dialog(|_| DialogAnswer::Press("Cancel".into()));
+    app.wait_for("label:/^平安银行, Mainland China · 000001/")?;
     app.press("label:/^平安银行, Mainland China · 000001/")?;
     app.wait_for("Link a listed security")?;
     assert!(catalog::bindings(&c).unwrap().is_empty());
     app.press("Link a listed security")?;
     app.type_text("label:Code, name or pinyin", "000001")?;
     app.on_dialog(|_| DialogAnswer::Press("Confirm link".into()));
+    app.wait_for("label:/^平安银行, Mainland China · 000001/")?;
     app.press("label:/^平安银行, Mainland China · 000001/")?;
     app.wait_for("Mainland China · 000001 · CNY")?;
     assert_eq!(store::load(&c).unwrap(), before);
@@ -38,7 +41,6 @@ fn search_create_and_existing_holding_binding_preserve_identity() -> Result<(), 
     app.press("label:Back")?;
     app.press("text:Manage")?;
     app.press("Add holding")?;
-    app.press("Search securities")?;
     app.type_text("label:Code, name or pinyin", "aapl")?;
     app.wait_for("label:/^Apple Inc., United States · AAPL/")?;
     app.press("Enter manually")?;
@@ -57,8 +59,8 @@ fn catalog_selection_saves_binding_and_trade_together() -> Result<(), String> {
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
     app.press("label:Assets")?;
     app.press("Add holding")?;
-    app.press("Search securities")?;
     app.type_text("label:Code, name or pinyin", "600000")?;
+    app.wait_for("label:/^浦发银行, Mainland China · 600000/")?;
     app.press("label:/^浦发银行, Mainland China · 600000/")?;
     app.type_text("label:Quantity", "10")?;
     app.type_text("label:Cost per unit", "12")?;
@@ -88,8 +90,8 @@ fn foreign_catalog_selection_sets_currency_and_preserves_native_price() -> Resul
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
     app.press("label:Assets")?;
     app.press("Add holding")?;
-    app.press("Search securities")?;
     app.type_text("label:Code, name or pinyin", "aapl")?;
+    app.wait_for("label:/^Apple Inc., United States · AAPL/")?;
     app.press("label:/^Apple Inc., United States · AAPL/")?;
     app.type_text("label:Quantity", "2")?;
     app.type_text("label:Cost per unit", "100")?;

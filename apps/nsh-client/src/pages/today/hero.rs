@@ -5,7 +5,7 @@
 use nsh_core::prelude::*;
 
 use crate::{
-    data::{finance, meals, settings},
+    data::{meals, settings},
     domain::{format, meal::Day, nutrition::Nutrients},
     i18n::s,
     ui::{
@@ -20,17 +20,10 @@ use crate::{
 const RING: f32 = 84.0;
 const STROKE: f32 = 9.0;
 
-/// The glance card of `day`.
+/// The glance card of `day`: one domain, one headline number. Spending is
+/// summarized beside the records it adds up, not here.
 pub fn hero(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
     let summary = computed(move || meals::summary(day()));
-    let spending_currency = computed(move || {
-        let entries = finance::transactions();
-        let date = day().0;
-        finance_core::currency::Currency::ALL
-            .into_iter()
-            .find(|c| finance_core::review::spending_in(&entries, date, date, *c).records > 0)
-            .unwrap_or_default()
-    });
     let goal = computed(settings::goal);
     let total = move || summary.with(|summary| summary.total);
     let logged = move || summary.with(|summary| summary.meals > 0);
@@ -51,9 +44,10 @@ pub fn hero(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
         .child(
             view()
                 .flex_row()
-                .items_start()
+                .items_center()
                 .justify_between()
                 .gap_4()
+                .style_when(|| font_scale() > 1.2, |s| s.flex_col().items_start())
                 .child(
                     view()
                         .flex_1()
@@ -66,18 +60,20 @@ pub fn hero(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                                 .text_color(color::MUTED),
                         )
                         .child(figure(total, logged))
-                        .child(
-                            text(move || caption(total(), logged(), goal.get()))
-                                .typo(Type::Subhead)
-                                .tabular_nums()
-                                .text_color(color::MUTED)
-                                .number_of_lines(1),
-                        ),
+                        .child(when(
+                            move || !logged() || goal.get().is_some_and(|goal| goal > 0.0),
+                            move || {
+                                text(move || caption(total(), logged(), goal.get()))
+                                    .typo(Type::Subhead)
+                                    .tabular_nums()
+                                    .text_color(color::MUTED)
+                            },
+                        )),
                 )
                 .child(
                     view()
-                        .style_when(|| !finance::transactions().is_empty(), |s| s.hidden())
                         .size(px(RING))
+                        .flex_shrink_0()
                         .child(energy_ring(RING, STROKE, ring))
                         .child(
                             view()
@@ -98,84 +94,31 @@ pub fn hero(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                                     .text_color(color::INK),
                                 ),
                         ),
-                )
-                .child(when(
-                    || !finance::transactions().is_empty(),
-                    move || {
-                        view()
-                            .flex_1()
-                            .min_w(px(0.0))
-                            .gap(px(6.0))
-                            .child(
-                                text(|| s().recorded_spending)
-                                    .typo(Type::Caption)
-                                    .font_weight(FontWeight::SEMIBOLD)
-                                    .text_color(color::MUTED),
-                            )
-                            .child(stat(
-                                move || {
-                                    let entries = finance::transactions();
-                                    let date = day().0;
-                                    entries.iter().any(|t| t.at.date() == date).then(|| {
-                                        finance_core::money::format(
-                                            finance_core::review::spending_in(
-                                                &entries,
-                                                date,
-                                                date,
-                                                spending_currency.get(),
-                                            )
-                                            .total,
-                                        )
-                                    })
-                                },
-                                move || spending_currency.get().code().into(),
-                                Scale::Tile,
-                            ))
-                            .child(dynamic(move || {
-                                let entries = finance::transactions();
-                                let date = day().0;
-                                view().gap_1().children(
-                                    [
-                                        finance_core::currency::Currency::HKD,
-                                        finance_core::currency::Currency::USD,
-                                    ]
-                                    .into_iter()
-                                    .filter_map(|currency| {
-                                        let spending = finance_core::review::spending_in(
-                                            &entries, date, date, currency,
-                                        );
-                                        (spending.records > 0
-                                            && currency != spending_currency.get())
-                                        .then(|| {
-                                            text(crate::ui::currency::format(
-                                                spending.total,
-                                                currency,
-                                            ))
-                                            .typo(Type::Subhead)
-                                            .tabular_nums()
-                                            .text_color(color::INK)
-                                        })
-                                    }),
-                                )
-                            }))
-                    },
-                )),
+                ),
         )
         .child(
             view()
                 .flex_row()
                 .gap_4()
+                .flex_wrap()
                 .child(macro_mark(
                     color::PROTEIN,
                     || s().protein,
                     move || total().protein,
+                    logged,
                 ))
                 .child(macro_mark(
                     color::CARBS,
                     || s().carbs,
                     move || total().carbs,
+                    logged,
                 ))
-                .child(macro_mark(color::FAT, || s().fat, move || total().fat)),
+                .child(macro_mark(
+                    color::FAT,
+                    || s().fat,
+                    move || total().fat,
+                    logged,
+                )),
         )
 }
 
@@ -207,6 +150,7 @@ fn macro_mark(
     tint: AdaptiveColor,
     name: fn() -> &'static str,
     grams: impl Fn() -> f64 + 'static,
+    logged: impl Fn() -> bool + 'static,
 ) -> impl IntoElement {
     view()
         .flex_row()
@@ -214,9 +158,15 @@ fn macro_mark(
         .gap(px(6.0))
         .child(view().size(px(6.0)).rounded_full().bg(tint))
         .child(
-            text(move || format!("{} {}g", name(), format::grams(grams())))
-                .typo(Type::Caption)
-                .tabular_nums()
-                .text_color(color::MUTED),
+            text(move || {
+                if logged() {
+                    format!("{} {}g", name(), format::grams(grams()))
+                } else {
+                    format!("{} —", name())
+                }
+            })
+            .typo(Type::Caption)
+            .tabular_nums()
+            .text_color(color::MUTED),
         )
 }

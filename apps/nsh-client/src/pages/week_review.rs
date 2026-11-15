@@ -70,10 +70,10 @@ pub fn review_tab() -> impl IntoElement {
                     back.set(0);
                 },
             ))
+            .child(summary(period, days, before))
             .child(super::finance_review::spending_section(
                 days, before, period,
             ))
-            .child(summary(period, days, before))
             .child(intake_card(period, days))
             .child(super::review_note::note_editor(days))
             .child(weight_card(days))
@@ -280,7 +280,7 @@ fn weight_card(days: Memo<Vec<Day>>) -> impl IntoElement {
                 .child(stat(
                     move || latest().map(|w| s().kg(w.kg)),
                     || "kg".to_owned(),
-                    Scale::Hero,
+                    Scale::Tile,
                 ))
                 .child(dynamic(move || {
                     let history = weights::all();

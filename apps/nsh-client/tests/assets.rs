@@ -8,6 +8,7 @@ fn create(app: &mut Headless, name: &str, debt: bool) -> Result<(), String> {
     app.press("label:Assets")?;
     app.press("text:Add account")?;
     if debt {
+        app.press("label:Account type")?;
         app.press("Credit / debt")?;
     }
     app.type_text("label:Account name", name)?;
@@ -17,6 +18,13 @@ fn create(app: &mut Headless, name: &str, debt: bool) -> Result<(), String> {
 }
 fn verify(app: &mut Headless, value: &str, debt: bool) -> Result<(), String> {
     app.press("Check balance")?;
+    // Creation's receipt opens the balance editor directly; account details
+    // use their own Check balance action.
+    app.wait_for(if debt {
+        "label:Actual debt"
+    } else {
+        "label:Actual balance"
+    })?;
     app.type_text(
         if debt {
             "label:Actual debt"
@@ -50,7 +58,7 @@ fn accounts_balances_rename_and_net_worth_survive_restart() -> Result<(), String
         "label:What would you like to record?",
         "Lunch 31.50 yuan from Cash",
     )?;
-    app.press("Create draft")?;
+    app.press("Recognize")?;
     app.wait_for("Confirm and save")?;
     app.press("label:Close")?;
     app.press("label:/^Cash, 1000.00 CNY/")?;
@@ -64,6 +72,7 @@ fn accounts_balances_rename_and_net_worth_survive_restart() -> Result<(), String
     // Creation stays available from the overview management menu.
     app.press("text:Manage")?;
     app.press("text:Add account")?;
+    app.press("label:Account type")?;
     app.press("Credit / debt")?;
     app.type_text("label:Account name", "Card")?;
     app.press("Create account")?;
@@ -145,5 +154,145 @@ fn failed_balance_confirmation_preserves_preview_and_can_retry_once() -> Result<
     app.wait_for(
         "This is a confirmed balance entry. Check the account balance again to correct it.",
     )?;
+    Ok(())
+}
+
+#[test]
+fn manage_back_dirty_changes_and_account_receipt_share_one_sheet() -> Result<(), String> {
+    use nsh_testing::DialogAnswer;
+    let (mut app, _) = start(Vec::new(), None);
+    app.press("label:Assets")?;
+    app.press("text:Manage")?;
+    let sheet = app
+        .screen()
+        .layout_nodes()
+        .into_iter()
+        .find(|n| n.test_id.as_deref() == Some("task-sheet"))
+        .unwrap()
+        .id;
+    app.press("task-sheet >> Add account")?;
+    assert_eq!(app.screen().count("task-sheet")?, 1);
+    app.set_viewport(Size::new(Points(360.0), Points(640.0)))?;
+    app.set_environment("IME and large text", |e| {
+        e.font_scale = 1.3;
+        e.keyboard_height = Points(280.0);
+    })?;
+    // Currency and kind alone are meaningful draft changes.
+    app.press("label:Currency")?;
+    app.press("USD")?;
+    app.press("label:Account type")?;
+    app.press("Credit / debt")?;
+    app.on_dialog(|_| DialogAnswer::Press("Keep editing".into()));
+    app.back()?;
+    app.wait_for("Create account")?;
+    assert!(app.shows("USD"));
+    app.type_text("label:Account name", "Card")?;
+    for id in ["task-header", "task-actions"] {
+        let node = app
+            .screen()
+            .layout_nodes()
+            .into_iter()
+            .find(|n| n.test_id.as_deref() == Some(id))
+            .unwrap();
+        assert!(node.bounds.origin.y.0 >= 0.0, "{id} stays on screen");
+        assert!(
+            node.bounds.origin.y.0 + node.bounds.size.height.0 <= 360.5,
+            "{id} stays above the IME: {:?}",
+            node.bounds
+        );
+    }
+    app.on_dialog(|_| DialogAnswer::Press("Discard".into()));
+    app.press("Back")?;
+    app.wait_for("task-sheet >> Add holding")?;
+    assert_eq!(
+        app.screen()
+            .layout_nodes()
+            .into_iter()
+            .find(|n| n.test_id.as_deref() == Some("task-sheet"))
+            .unwrap()
+            .id,
+        sheet,
+        "Back replaces a frame in the existing sheet"
+    );
+    app.press("task-sheet >> Add holding")?;
+    app.wait_for("security-search")?;
+    app.back()?;
+    app.wait_for("task-sheet >> Add account")?;
+    app.back()?;
+    app.wait_for_gone("task-sheet", GONE)?;
+    app.set_environment("IME dismissed", |e| {
+        e.font_scale = 1.0;
+        e.keyboard_height = Points(0.0);
+        e.reduce_motion = true;
+    })?;
+    app.press("Manage")?;
+    app.press("task-sheet >> Add account")?;
+    assert_eq!(app.screen().input_text("label:Account name")?, Some(""));
+    app.type_text("label:Account name", "Wallet")?;
+    app.press("Create account")?;
+    app.wait_for("Account added")?;
+    app.wait_for_gone("task-sheet", GONE)?;
+    app.wait_for("text:Manage")?;
+    app.press("Check balance")?;
+    app.wait_for("label:Actual balance")?;
+    Ok(())
+}
+
+#[test]
+fn saving_resets_the_task_and_a_swipe_leaves_the_whole_task() -> Result<(), String> {
+    use nsh_core::{geometry::Point, time::Clock};
+    use nsh_testing::DialogAnswer;
+    use std::time::{Duration, SystemTime};
+    let motion = Duration::from_millis(500);
+    let mut config = EngineConfig::new(Root::of::<App>());
+    config.clock = Clock::manual(SystemTime::now());
+    config.storage = Some(MemoryStorage::new(Vec::new()));
+    let mut app = Headless::start(config).expect("the app starts");
+    app.wait_for("label:New entry")?;
+    app.press("label:Assets")?;
+    app.press("text:Manage")?;
+    app.run_for(motion)?;
+    app.press("task-sheet >> Add account")?;
+    app.type_text("label:Account name", "Wallet")?;
+    app.press("Create account")?;
+    app.run_for(motion)?;
+    assert_eq!(app.screen().count("task-sheet")?, 0);
+    // The saved panel does not linger as task state: Manage opens its menu.
+    app.press("text:Manage")?;
+    app.run_for(motion)?;
+    app.wait_for("task-sheet >> Add holding")?;
+    app.back()?;
+    app.run_for(motion)?;
+    assert_eq!(app.screen().count("task-sheet")?, 0);
+
+    // A swipe from a panel leaves the task instead of bouncing to the menu.
+    app.press("text:Manage")?;
+    app.run_for(motion)?;
+    app.press("task-sheet >> Add account")?;
+    app.drag("task-sheet", Point::new(Points(0.0), Points(500.0)))?;
+    app.run_for(motion)?;
+    assert_eq!(
+        app.screen().count("task-sheet")?,
+        0,
+        "a clean panel leaves with the swipe"
+    );
+
+    // A dirty panel asks first; keeping the edit keeps the panel.
+    app.press("text:Manage")?;
+    app.run_for(motion)?;
+    app.press("task-sheet >> Add account")?;
+    app.type_text("label:Account name", "Card")?;
+    app.on_dialog(|_| DialogAnswer::Press("Keep editing".into()));
+    app.drag("task-sheet", Point::new(Points(0.0), Points(500.0)))?;
+    app.run_for(motion)?;
+    assert!(app.shows("Create account"), "the edit is kept");
+    app.on_dialog(|_| DialogAnswer::Press("Discard".into()));
+    app.drag("task-sheet", Point::new(Points(0.0), Points(500.0)))?;
+    app.run_for(motion)?;
+    assert_eq!(
+        app.screen().count("task-sheet")?,
+        0,
+        "discarding leaves the whole task"
+    );
     Ok(())
 }

@@ -37,6 +37,7 @@ pub fn vitals(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
     view()
         .flex_row()
         .items_stretch()
+        .style_when(|| font_scale() > 1.2, |s| s.flex_col())
         .child(when(has_garmin, move || {
             tile(
                 Icon::Moon,
@@ -105,7 +106,14 @@ pub fn vitals(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
 
 /// A hairline between two vitals.
 fn divider() -> impl IntoElement {
-    view().w(px(HAIRLINE)).my(px(10.0)).bg(color::LINE)
+    view()
+        .w(px(HAIRLINE))
+        .my(px(10.0))
+        .style_when(
+            || font_scale() > 1.2,
+            |s| s.w_full().h(px(HAIRLINE)).my(px(2.0)),
+        )
+        .bg(color::LINE)
 }
 
 /// One vital laid flat on the canvas: its name, its figure and a caption.
@@ -120,7 +128,7 @@ fn tile(
 ) -> impl IntoElement {
     button()
         .on_press(press)
-        .flex_1()
+        .flex_grow(move || if font_scale() > 1.2 { 0.0_f32 } else { 1.0_f32 })
         .min_w(px(0.0))
         .px(px(6.0))
         .py(px(8.0))

@@ -1,14 +1,34 @@
 //! The asset overview is a scan of current values. History and maintenance
 //! have explicit entries so neither interrupts the account/position list.
 use super::*;
-use crate::ui::{sheet::bottom_sheet, surface::card};
+use crate::ui::{
+    sheet::{fitted_task_sheet, task_host},
+    surface::card,
+};
 
 pub fn assets_tab() -> impl IntoElement {
     let manage = signal(false);
     let create = signal(false);
     let holding = signal(None::<String>);
+    let task = signal(0u8);
+    effect(move || {
+        if manage.get() {
+            task.set(if create.get() {
+                1
+            } else if holding.get().is_some() {
+                2
+            } else {
+                0
+            });
+        }
+    });
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
-    crate::preview::assets_opened(manage, holding);
+    {
+        crate::preview::assets_opened(manage, holding);
+        if holding.get_untracked().is_some() {
+            manage.set(true);
+        }
+    }
     view()
         .flex_1()
         .child(
@@ -37,58 +57,15 @@ pub fn assets_tab() -> impl IntoElement {
                                     .px_0(),
                             ),
                     )
-                    .child(when(
-                        || {
-                            let book = finance::holdings();
-                            let today = clock::today();
-                            crate::data::catalog::bindings().iter().any(|b| {
-                                book.securities
-                                    .iter()
-                                    .find(|sec| sec.id == b.security)
-                                    .is_some_and(|sec| {
-                                        book.position(sec, today.0).is_ok_and(|p| p.quantity > 0)
-                                    })
-                            })
-                        },
-                        || {
-                            view()
-                                .gap_1()
-                                .child(
-                                    Btn::ghost()
-                                        .label(|| {
-                                            if crate::data::market::status().refreshing {
-                                                s().refreshing_quotes()
-                                            } else {
-                                                s().refresh_quotes()
-                                            }
-                                            .into()
-                                        })
-                                        .disabled(|| crate::data::market::status().refreshing)
-                                        .on_press(|| {
-                                            crate::data::tasks::spawn_app(
-                                                crate::data::market::refresh(true),
-                                            );
-                                        }),
-                                )
-                                .child(when(
-                                    || crate::data::market::status().failed > 0,
-                                    || {
-                                        text(|| s().quotes_failed())
-                                            .typo(Type::Caption)
-                                            .text_color(color::MUTED)
-                                    },
-                                ))
-                        },
-                    ))
                     .child(dynamic(move || {
                         let accounts: Vec<_> = finance::accounts()
                             .into_iter()
                             .filter(Account::is_cash)
                             .collect();
-                        let entries = finance::transactions();
-                        let portfolio = finance::holdings();
-                        let checks = finance::checks();
-                        let rates = finance::rates();
+                        let entries = finance::transactions_snapshot();
+                        let portfolio = finance::holdings_snapshot();
+                        let checks = finance::checks_snapshot();
+                        let rates = finance::rates_snapshot();
                         let today = clock::today();
                         untracked(move || {
                             if accounts.is_empty() && portfolio.securities.is_empty() {
@@ -106,14 +83,20 @@ pub fn assets_tab() -> impl IntoElement {
                                             .text_color(color::MUTED),
                                     )
                                     .child(
-                                        Btn::primary()
-                                            .label(|| s().add_account.into())
-                                            .on_press(move || create.set(true)),
+                                        Btn::primary().label(|| s().add_account.into()).on_press(
+                                            move || {
+                                                create.set(true);
+                                                manage.set(true);
+                                            },
+                                        ),
                                     )
                                     .child(
-                                        Btn::secondary()
-                                            .label(|| s().add_holding.into())
-                                            .on_press(move || holding.set(Some(String::new()))),
+                                        Btn::secondary().label(|| s().add_holding.into()).on_press(
+                                            move || {
+                                                holding.set(Some(String::new()));
+                                                manage.set(true);
+                                            },
+                                        ),
                                     )
                                     .into_element();
                             }
@@ -160,6 +143,7 @@ pub fn assets_tab() -> impl IntoElement {
                                             .text_color(color::MUTED),
                                         )
                                         .child(net_figure(snapshot.net))
+                                        .child(quote_refresh_row())
                                         .child(incomplete.then(|| {
                                             row_button(|| nav::push(Route::ExchangeRates))
                                                 .px_0()
@@ -178,6 +162,13 @@ pub fn assets_tab() -> impl IntoElement {
                                         .child(
                                             view()
                                                 .flex_row()
+                                                .style_when(
+                                                    || {
+                                                        font_scale() > 1.2
+                                                            || window().width.0 < 350.0
+                                                    },
+                                                    |s| s.flex_col(),
+                                                )
                                                 .gap_4()
                                                 .py_2()
                                                 .child(total(s().total_assets, snapshot.assets))
@@ -243,65 +234,80 @@ pub fn assets_tab() -> impl IntoElement {
                     })),
             ),
         )
-        .child(bottom_sheet(
+        .child(task_host(
             move || manage.get(),
             move || manage.set(false),
-            view()
-                .gap_2()
-                .child(
-                    view()
-                        .flex_row()
-                        .items_center()
-                        .child(
-                            text(|| s().manage_assets)
-                                .typo(Type::Title)
-                                .text_color(color::INK)
-                                .flex_1(),
+            move || {
+                dynamic(move || {
+                    let panel = task.get();
+                    untracked(move || match panel {
+                        1 => editor::account_task(create, None, move || manage.set(false))
+                            .into_element(),
+                        2 => super::super::holdings::trade_task(holding, move || manage.set(false))
+                            .into_element(),
+                        _ => fitted_task_sheet(
+                            move || manage.get(),
+                            move || manage.set(false),
+                            view()
+                                .flex_row()
+                                .items_center()
+                                .child(
+                                    text(|| s().manage_assets)
+                                        .typo(Type::Title)
+                                        .text_color(color::INK)
+                                        .flex_1(),
+                                )
+                                .child(
+                                    Btn::ghost()
+                                        .label(|| s().close.into())
+                                        .on_press(move || manage.set(false)),
+                                ),
+                            view()
+                                .gap_2()
+                                .child(menu_row(|| s().add_account, move || create.set(true)))
+                                .child(menu_row(
+                                    || s().add_holding,
+                                    move || holding.set(Some(String::new())),
+                                ))
+                                .child(menu_row(
+                                    || {
+                                        crate::i18n::statement_import::copy(
+                                            "Exchange rates",
+                                            "汇率",
+                                        )
+                                    },
+                                    move || {
+                                        manage.set(false);
+                                        nav::push(Route::ExchangeRates);
+                                    },
+                                ))
+                                .child(menu_row(
+                                    || {
+                                        crate::i18n::statement_import::copy(
+                                            "Price history",
+                                            "价格与汇率记录",
+                                        )
+                                    },
+                                    move || {
+                                        manage.set(false);
+                                        nav::push(Route::PriceHistory(None));
+                                    },
+                                ))
+                                .child(menu_row(
+                                    || s().closed_holdings,
+                                    move || {
+                                        manage.set(false);
+                                        nav::push(Route::ClosedHoldings);
+                                    },
+                                )),
+                            view(),
                         )
-                        .child(
-                            Btn::ghost()
-                                .label(|| s().close.into())
-                                .on_press(move || manage.set(false)),
-                        ),
-                )
-                .child(menu_row(
-                    || s().add_account,
-                    move || {
-                        manage.set(false);
-                        create.set(true);
-                    },
-                ))
-                .child(menu_row(
-                    || s().add_holding,
-                    move || {
-                        manage.set(false);
-                        holding.set(Some(String::new()));
-                    },
-                ))
-                .child(menu_row(
-                    || crate::i18n::statement_import::copy("Exchange rates", "汇率"),
-                    move || {
-                        manage.set(false);
-                        nav::push(Route::ExchangeRates);
-                    },
-                ))
-                .child(menu_row(
-                    || crate::i18n::statement_import::copy("Price history", "价格与汇率记录"),
-                    move || {
-                        manage.set(false);
-                        nav::push(Route::PriceHistory(None));
-                    },
-                ))
-                .child(menu_row(
-                    || s().closed_holdings,
-                    move || {
-                        manage.set(false);
-                        nav::push(Route::ClosedHoldings);
-                    },
-                )),
+                        .into_element(),
+                    })
+                })
+                .into_element()
+            },
         ))
-        .child(editor::account_editor(create, None))
-        .child(super::super::holdings::trade_editor(holding))
 }
 
 fn menu_row(
@@ -377,20 +383,42 @@ fn account_group(
                             view()
                                 .flex_1()
                                 .min_w(px(0.0))
-                                .gap_1()
-                                .child(
-                                    text(name)
-                                        .typo(Type::Headline)
-                                        .text_color(color::INK)
-                                        .number_of_lines(1),
+                                .flex_row()
+                                .items_center()
+                                .gap_3()
+                                .style_when(
+                                    || font_scale() > 1.2 || window().width.0 < 350.0,
+                                    |s| s.flex_col().items_start().gap_1(),
                                 )
-                                .child(checked.is_none().then(|| {
-                                    text(|| s().account_unchecked)
-                                        .typo(Type::Caption)
-                                        .text_color(color::MUTED)
-                                })),
+                                .child(
+                                    view()
+                                        .flex_1()
+                                        .min_w(px(0.0))
+                                        .gap_1()
+                                        .style_when(
+                                            || font_scale() > 1.2 || window().width.0 < 350.0,
+                                            |s| s.w_full(),
+                                        )
+                                        .child(
+                                            text(name)
+                                                .typo(Type::Headline)
+                                                .text_color(color::INK)
+                                                .number_of_lines(1),
+                                        )
+                                        .child(checked.is_none().then(|| {
+                                            text(|| s().account_unchecked)
+                                                .typo(Type::Caption)
+                                                .text_color(color::MUTED)
+                                        })),
+                                )
+                                .child(
+                                    view().min_w(px(0.0)).flex_shrink(1.0_f32).child(amount_in(
+                                        value,
+                                        Type::Headline,
+                                        a.currency(),
+                                    )),
+                                ),
                         )
-                        .child(amount_in(value, Type::Headline, a.currency()))
                         .child(icon(Icon::ChevronRight, 16.0, color::MUTED)),
                 )
             }))
@@ -413,6 +441,7 @@ fn net_figure(value: i64) -> impl IntoElement {
     view()
         .flex_row()
         .items_baseline()
+        .flex_wrap()
         .min_w(px(0.0))
         .accessible(true)
         .label(move || format!("¥{}", money::format(value)))
@@ -420,6 +449,10 @@ fn net_figure(value: i64) -> impl IntoElement {
         .child(
             text(whole.to_owned())
                 .typo(Type::Display)
+                .min_w(px(0.0))
+                .flex_shrink(1.0_f32)
+                .number_of_lines(1)
+                .shrink_to_fit(0.35)
                 .tabular_nums()
                 .text_color(color::INK),
         )
@@ -429,4 +462,55 @@ fn net_figure(value: i64) -> impl IntoElement {
                 .tabular_nums()
                 .text_color(color::MUTED),
         )
+}
+
+fn quote_refresh_row() -> impl IntoElement {
+    when(
+        || {
+            let book = finance::holdings_snapshot();
+            crate::data::catalog::bindings().iter().any(|b| {
+                book.securities
+                    .iter()
+                    .find(|s| s.id == b.security)
+                    .is_some_and(|s| {
+                        book.position(s, clock::today().0)
+                            .is_ok_and(|p| p.quantity > 0)
+                    })
+            })
+        },
+        || {
+            view()
+                .flex_row()
+                .items_center()
+                .gap_3()
+                .child(
+                    text(|| {
+                        if crate::data::market::status().failed > 0 {
+                            s().quotes_failed()
+                        } else {
+                            crate::i18n::catalog::copy("Market prices", "市场行情")
+                        }
+                    })
+                    .typo(Type::Caption)
+                    .text_color(color::MUTED)
+                    .flex_1(),
+                )
+                .child(
+                    Btn::ghost()
+                        .size(crate::ui::Size::Small)
+                        .label(|| {
+                            if crate::data::market::status().refreshing {
+                                s().refreshing_quotes()
+                            } else {
+                                s().refresh_quotes()
+                            }
+                            .into()
+                        })
+                        .disabled(|| crate::data::market::status().refreshing)
+                        .on_press(|| {
+                            crate::data::tasks::spawn_app(crate::data::market::refresh(true))
+                        }),
+                )
+        },
+    )
 }

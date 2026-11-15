@@ -55,18 +55,12 @@ pub mod color {
     pub const ON_ACTION: AdaptiveColor = c(0xFFFFFF, 0x1C1D1A);
 
     /// Secondary navigation text over translucent material (not ordinary surfaces).
-    pub const ON_GLASS_MUTED: AdaptiveColor = c(0x5C5D58, 0xB4B6AE);
+    pub const ON_GLASS_MUTED: AdaptiveColor = c(0x545550, 0xBDBFB7);
     /// Reflected light on the edge of a floating material.
     pub const GLASS_EDGE: AdaptiveColor = AdaptiveColor {
         light: super::rgba(0xFFFFFFB8).to_hsla(),
         dark: super::rgba(0xFFFFFF20).to_hsla(),
     };
-    /// A restrained highlight across a sheet's upper surface.
-    pub const GLASS_WASH: AdaptiveColor = AdaptiveColor {
-        light: super::rgba(0xFFFFFF10).to_hsla(),
-        dark: super::rgba(0xFFFFFF04).to_hsla(),
-    };
-
     /// The AI's light, from iris to sky: analysis, estimates.
     pub const AI_FROM: AdaptiveColor = c(0x7B61FF, 0x9B87FF);
     pub const AI_TO: AdaptiveColor = c(0x22B8F0, 0x48C9F5);
@@ -143,10 +137,8 @@ pub mod size {
 
 /// Translucent layers; content cards and fields remain opaque.
 pub mod material {
-    pub const DOCK_OPACITY: f32 = 0.88;
+    pub const DOCK_OPACITY: f32 = 0.80;
     pub const DOCK_BLUR: f32 = 20.0;
-    pub const SHEET_OPACITY: f32 = 0.97;
-    pub const SHEET_BLUR: f32 = 24.0;
     /// Readable even over an entirely white photo, with or without blur.
     pub const MEDIA_OPACITY: f32 = 0.64;
     pub const MEDIA_PRESSED_OPACITY: f32 = 0.74;
@@ -160,7 +152,7 @@ pub enum Type {
     Display,
     /// A page's title.
     LargeTitle,
-    /// Section and sheet titles.
+    /// Sheet titles and empty-state headings (sections use Headline).
     Title,
     /// Figures in cards and tiles.
     Figure,
@@ -182,13 +174,13 @@ impl Type {
         match self {
             Type::Display => (44.0, 48.0, 700, -1.6),
             Type::LargeTitle => (34.0, 40.0, 700, -1.0),
-            Type::Title => (22.0, 28.0, 700, -0.4),
-            Type::Figure => (20.0, 24.0, 700, -0.4),
-            Type::Headline => (17.0, 22.0, 600, -0.2),
+            Type::Title => (20.0, 26.0, 600, -0.2),
+            Type::Figure => (20.0, 24.0, 600, -0.2),
+            Type::Headline => (17.0, 25.0, 600, 0.0),
             Type::Body => (16.0, 23.0, 400, 0.0),
             Type::Callout => (15.0, 21.0, 400, 0.0),
-            Type::Subhead => (14.0, 19.0, 500, 0.0),
-            Type::Caption => (12.5, 16.0, 600, 0.0),
+            Type::Subhead => (14.0, 21.0, 500, 0.0),
+            Type::Caption => (12.5, 18.0, 500, 0.0),
         }
     }
 }

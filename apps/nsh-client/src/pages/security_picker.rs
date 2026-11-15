@@ -1,144 +1,243 @@
-//! Compact, offline-first listing selection, with explicit supported-market states.
+//! Offline listing search shared by the holding task and explicit link flow.
 use crate::{
     data::catalog,
     i18n::{catalog as copy, s},
     ui::{
-        Btn, Type, Typo, color,
-        field::{field, text_input},
-        sheet::task_sheet,
+        Btn, Icon, IconBtn, Type, Typo, Variant, color,
+        field::text_input,
+        sheet::{initial_focus, retained, task_sheet},
         surface::{hairline, row_button},
     },
 };
 use finance_core::catalog::Entry;
 use nsh_core::prelude::*;
-pub fn selector(open: Signal<bool>, choose: impl Fn(Entry) + Copy + 'static) -> impl IntoElement {
-    dynamic(move || {
-        if !open.get() {
-            return view().into_element();
+use std::time::Duration;
+
+#[derive(Clone, Copy)]
+pub struct Search {
+    pub query: Signal<String>,
+    settled: Signal<String>,
+    limit: Signal<usize>,
+}
+impl Search {
+    pub fn new() -> Self {
+        let query = signal(String::new());
+        let settled = signal(String::new());
+        let limit = signal(16);
+        let generation = stored(0u64);
+        effect(move || {
+            let next = query.get();
+            let revision = generation.with(|n| *n + 1);
+            generation.replace(revision);
+            if next.trim().is_empty() {
+                batch(|| {
+                    settled.set(String::new());
+                    limit.set(16);
+                });
+                return;
+            }
+            spawn(async move {
+                timer(Duration::from_millis(120)).await;
+                if generation.with(|n| *n) == revision && query.get_untracked() == next {
+                    batch(|| {
+                        settled.set(next);
+                        limit.set(16);
+                    });
+                }
+            });
+        });
+        Self {
+            query,
+            settled,
+            limit,
         }
-        untracked(move || {
-            crate::data::tasks::spawn_app(async { catalog::refresh(false).await });
-            let query = signal(String::new());
-            let close = move || {
-                dismiss_keyboard();
-                open.set(false)
-            };
-            let header = view()
-                .flex_row()
-                .items_center()
-                .child(
-                    text(copy::title)
-                        .typo(Type::Title)
-                        .text_color(color::INK)
-                        .flex_1(),
-                )
-                .child(Btn::ghost().label(|| s().cancel.into()).on_press(close));
-            let body = view()
-                .gap_3()
-                .child(field(
-                    copy::search,
-                    text_input(query)
-                        .label(copy::search)
-                        .placeholder(copy::search),
-                ))
-                .child(
+    }
+    pub fn input(self) -> impl IntoElement {
+        crate::data::tasks::spawn_app(async { catalog::refresh(false).await });
+        let focus = initial_focus();
+        text_input(self.query)
+            .test_id("security-search")
+            .label(copy::search)
+            .placeholder(copy::search)
+            .element_ref(&focus)
+    }
+    pub fn results(self, choose: impl Fn(Entry) + Copy + 'static) -> impl IntoElement {
+        let entries = signal(Vec::<Entry>::new());
+        effect(move || {
+            let query = self.settled.get();
+            entries.set(if query.trim().is_empty() {
+                Vec::new()
+            } else {
+                catalog::search_page(&query, 0, self.limit.get() + 1)
+            });
+        });
+        view()
+            .gap_2()
+            .child(when(
+                move || self.settled.get().trim().is_empty(),
+                || {
                     text(copy::hint)
                         .typo(Type::Subhead)
-                        .text_color(color::MUTED),
-                )
-                .child(dynamic(move || {
-                    let q = query.get();
-                    let entries = catalog::search(&q);
-                    untracked(move || {
-                        if q.trim().is_empty() {
-                            return view().into_element();
-                        }
-                        if entries.is_empty() {
-                            return text(copy::empty)
-                                .typo(Type::Body)
-                                .text_color(color::MUTED)
-                                .into_element();
-                        }
-                        view()
-                            .children(entries.into_iter().map(move |entry| {
-                                let label = format!(
-                                    "{} · {} · {}",
-                                    copy::market(&entry.market),
-                                    entry.symbol,
-                                    entry.currency
-                                );
-                                let supported = entry.supported();
-                                let name = entry.name().to_owned();
-                                let chosen = entry.clone();
-                                view()
+                        .text_color(color::MUTED)
+                },
+            ))
+            .child(when(
+                move || !self.settled.get().trim().is_empty() && entries.get().is_empty(),
+                || text(copy::empty).typo(Type::Body).text_color(color::MUTED),
+            ))
+            .child(each(
+                move || {
+                    entries
+                        .get()
+                        .into_iter()
+                        .take(self.limit.get())
+                        .collect::<Vec<_>>()
+                },
+                |entry: &Entry| format!("{}:{}", entry.market, entry.symbol),
+                move |entry, _| {
+                    dynamic(move || {
+                        let entry = entry.get();
+                        untracked(move || {
+                            let label = format!(
+                                "{} · {} · {}",
+                                copy::market(&entry.market),
+                                entry.symbol,
+                                entry.currency
+                            );
+                            let name = entry.name().to_owned();
+                            let supported = entry.supported();
+                            let chosen = entry.clone();
+                            view()
+                                .child(
+                                    row_button(move || {
+                                        if supported {
+                                            choose(chosen.clone());
+                                        }
+                                    })
+                                    .accessibility_label(move || {
+                                        Some(format!("{name}, {label}").into())
+                                    })
+                                    .disabled(!supported)
+                                    .px_0()
+                                    .min_h(px(56.0))
                                     .child(
-                                        row_button(move || {
-                                            if supported {
-                                                choose(chosen.clone());
-                                                close()
-                                            }
-                                        })
-                                        .accessibility_label(move || {
-                                            Some(format!("{name}, {label}").into())
-                                        })
-                                        .disabled(!supported)
-                                        .px_0()
-                                        .min_h(px(56.0))
-                                        .child(
-                                            view()
-                                                .flex_1()
-                                                .min_w(px(0.0))
-                                                .gap_1()
-                                                .child(
-                                                    text(entry.name().to_owned())
-                                                        .typo(Type::Headline)
-                                                        .text_color(color::INK),
-                                                )
-                                                .child(
-                                                    text(format!(
-                                                        "{} · {} · {}",
-                                                        copy::market(&entry.market),
-                                                        entry.symbol,
-                                                        entry.currency
-                                                    ))
+                                        view()
+                                            .flex_1()
+                                            .min_w(px(0.0))
+                                            .gap_1()
+                                            .child(
+                                                text(entry.name().to_owned())
+                                                    .typo(Type::Headline)
+                                                    .text_color(color::INK),
+                                            )
+                                            .child(
+                                                text(format!(
+                                                    "{} · {} · {}",
+                                                    copy::market(&entry.market),
+                                                    entry.symbol,
+                                                    entry.currency
+                                                ))
+                                                .typo(Type::Caption)
+                                                .text_color(color::MUTED),
+                                            )
+                                            .child((!supported).then(|| {
+                                                text(copy::unsupported)
                                                     .typo(Type::Caption)
-                                                    .text_color(color::MUTED),
-                                                )
-                                                .child((!supported).then(|| {
-                                                    text(copy::unsupported)
-                                                        .typo(Type::Caption)
-                                                        .text_color(color::MUTED)
-                                                })),
-                                        ),
-                                    )
-                                    .child(hairline(0.0))
-                            }))
-                            .into_element()
+                                                    .text_color(color::MUTED)
+                                            })),
+                                    ),
+                                )
+                                .child(hairline(0.0))
+                        })
                     })
-                }));
-            let action = view()
-                .gap_2()
-                .child(
-                    text(move || {
-                        format!(
-                            "{} · {}",
-                            catalog::version(),
-                            copy::status(catalog::status())
-                        )
-                    })
-                    .typo(Type::Caption)
-                    .text_color(color::MUTED),
-                )
-                .child(
-                    Btn::tonal()
-                        .label(|| copy::refresh().into())
-                        .disabled(move || catalog::status() == catalog::Status::Updating)
-                        .on_press(|| {
-                            spawn(async { catalog::refresh(true).await });
-                        }),
-                )
-                .child(Btn::ghost().label(|| copy::manual().into()).on_press(close));
-            task_sheet(move || open.get(), close, header, body, action).into_element()
-        })
-    })
+                },
+            ))
+            .child(when(
+                move || entries.get().len() > self.limit.get(),
+                move || {
+                    Btn::ghost()
+                        .label(|| copy::copy("Show more", "显示更多").into())
+                        .on_press(move || self.limit.update(|n| *n += 16))
+                },
+            ))
+    }
+}
+pub fn catalog_status() -> impl IntoElement {
+    view()
+        .flex_row()
+        .items_center()
+        .gap_2()
+        .child(
+            text(move || {
+                if catalog::status() == catalog::Status::Failed {
+                    copy::copy("Offline · update failed", "离线可用 · 更新失败")
+                } else if catalog::status() == catalog::Status::Updating {
+                    copy::copy("Updating…", "正在更新…")
+                } else {
+                    copy::copy("Offline catalog", "离线目录")
+                }
+            })
+            .label(|| copy::status(catalog::status()))
+            .typo(Type::Caption)
+            .text_color(color::MUTED)
+            .flex_1()
+            .min_w(px(0.0)),
+        )
+        .child(
+            IconBtn::new(Icon::Refresh, || copy::refresh().into())
+                .variant(Variant::Ghost)
+                .on_press(|| {
+                    crate::data::tasks::spawn_app(async { catalog::refresh(true).await });
+                })
+                .disabled(|| catalog::status() == catalog::Status::Updating),
+        )
+}
+pub fn search_actions(manual: impl Fn() + Copy + 'static) -> impl IntoElement {
+    view()
+        .flex_row()
+        .items_center()
+        .gap_2()
+        .child(
+            Btn::ghost()
+                .label(|| copy::manual().into())
+                .on_press(manual),
+        )
+        .child(view().flex_1().min_w(px(0.0)).child(catalog_status()))
+}
+pub fn selector(open: Signal<bool>, choose: impl Fn(Entry) + Copy + 'static) -> impl IntoElement {
+    retained(
+        move || open.get().then_some(()),
+        move |_| {
+            let search = Search::new();
+            let close = move || {
+                dismiss_keyboard();
+                open.set(false);
+            };
+            task_sheet(
+                move || open.get(),
+                close,
+                view()
+                    .gap_3()
+                    .child(
+                        view()
+                            .flex_row()
+                            .items_center()
+                            .child(
+                                text(copy::title)
+                                    .typo(Type::Title)
+                                    .text_color(color::INK)
+                                    .flex_1(),
+                            )
+                            .child(Btn::ghost().label(|| s().cancel.into()).on_press(close)),
+                    )
+                    .child(search.input()),
+                search.results(move |entry| {
+                    choose(entry);
+                    close();
+                }),
+                search_actions(close),
+            )
+            .into_element()
+        },
+    )
 }

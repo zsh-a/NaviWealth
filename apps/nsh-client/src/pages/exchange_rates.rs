@@ -7,7 +7,7 @@ use crate::{
     ui::{
         Btn, Type, Typo, color,
         field::{field, text_input},
-        sheet::task_sheet,
+        sheet::{retained, task_sheet},
         space,
         surface::row_button,
     },
@@ -32,8 +32,7 @@ pub fn page() -> Screen {
                         .child(text(move||format!("{} → CNY",c.code())).typo(Type::Headline).text_color(color::INK))
                         .child(text(move||currency::rate_in(&finance::rates(),c,clock::today().0).map(|r|format!("1 {} = {} CNY · {} · {}",c.code(),holdings::format_units(r.rate),r.day,if r.source=="manual"{copy("Manual","手动")}else{r.source.as_str()})).unwrap_or_else(||copy("Missing rate · tap to enter", "缺少汇率 · 点按填写").into())).typo(Type::Subhead).text_color(color::MUTED)))
                 }))))
-            .child(dynamic(move||{
-                let Some(currency)=edit.get() else{return view().into_element()};
+            .child(retained(move||edit.get(),move|currency|{
                 untracked(move||{
                     let value=signal(String::new());let date=signal(clock::today().to_string());let calendar=signal(false);let error=signal(false);
                     let asking=signal(false);

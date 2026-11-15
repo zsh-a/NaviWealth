@@ -11,12 +11,12 @@ use crate::{
     pages::{
         finance::transaction_row,
         home::Sheets,
-        rows::{INSET, meal_row},
+        rows::{TEXT_INSET, divider, meal_row},
     },
     ui::{
         Icon, Type, Typo, color,
         feedback::{appear, empty_state},
-        surface::{card, hairline, section_header},
+        surface::{card, section_header},
     },
 };
 
@@ -43,9 +43,10 @@ pub fn meal_list(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
             .into_iter()
             .map(Record::Meal)
             .chain(
-                finance::transactions()
-                    .into_iter()
+                finance::transactions_snapshot()
+                    .iter()
                     .filter(|t| t.at.date() == day().0)
+                    .cloned()
                     .map(Record::Transaction),
             )
             .collect();
@@ -69,6 +70,20 @@ pub fn meal_list(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
             spawn(photos::load(names));
         }
     });
+    // The day's spending sits with the records it adds up (exact amounts in
+    // each currency; opening balances and adjustments are not spending).
+    let spent = computed(move || {
+        let entries = finance::transactions_snapshot();
+        let date = day().0;
+        finance_core::currency::Currency::ALL
+            .into_iter()
+            .filter_map(|currency| {
+                let spending = finance_core::review::spending_in(&entries, date, date, currency);
+                (spending.records > 0)
+                    .then(|| crate::ui::currency::format(spending.total, currency))
+            })
+            .collect::<Vec<_>>()
+    });
     let count = move || list.with(Vec::len);
     view()
         .gap_3()
@@ -78,15 +93,16 @@ pub fn meal_list(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                 text(move || {
                     let n = count();
                     if n == 0 {
-                        String::new()
-                    } else if list.with(|l| l.iter().all(|r| matches!(r, Record::Meal(_)))) {
-                        s().meal_count(n)
-                    } else {
-                        n.to_string()
+                        return String::new();
                     }
+                    let meals_only = list.with(|l| l.iter().all(|r| matches!(r, Record::Meal(_))));
+                    spent.with(|spent| s().records_summary(n, meals_only, spent))
                 })
                 .typo(Type::Subhead)
+                .tabular_nums()
                 .text_color(color::MUTED)
+                .flex_shrink(1.0_f32)
+                .min_w(px(0.0))
                 .into_element(),
             ),
         ))
@@ -101,7 +117,7 @@ pub fn meal_list(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                             appear(
                                 index.get_untracked() as u32,
                                 view()
-                                    .child(when(move || index.get() > 0, || hairline(INSET)))
+                                    .child(when(move || index.get() > 0, || divider(TEXT_INSET)))
                                     .child(dynamic(move || {
                                         let meal = meal.get();
                                         untracked(move || match meal {

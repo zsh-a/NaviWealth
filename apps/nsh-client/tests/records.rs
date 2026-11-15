@@ -7,6 +7,70 @@ mod common;
 use common::*;
 use nsh_app_naviwealth_health::domain::meal::decode_meals;
 
+#[test]
+fn today_summarizes_spending_with_its_records_at_large_text() -> Result<(), String> {
+    use finance_core::{
+        account::{Account, AccountKind, defaults},
+        journal::{self, Entry, Source},
+        repository,
+    };
+    use nsh_core::{
+        geometry::{Points, Size},
+        platform::{Locale, LocaleSettings},
+    };
+    let dir = tempfile::tempdir().unwrap();
+    let (app, _) = start_in(Some(dir.path()), pasta_today(), None);
+    drop(app);
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    let cash = Account::new(AccountKind::Assets, "Cash").unwrap();
+    let entry = |id: &str, hour| Entry {
+        id: id.into(),
+        at: today().0.at(hour, 0, 0, 0),
+        payee: id.into(),
+        note: String::new(),
+        source: Source::Manual,
+    };
+    repository::save(
+        &db,
+        &journal::opening(entry("Initial funds", 8), &cash, 10_000_000).unwrap(),
+    )
+    .unwrap();
+    repository::save(
+        &db,
+        &journal::spend(
+            entry("Groceries", 9),
+            &cash,
+            &defaults::expense("餐饮"),
+            123_456,
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    drop(db);
+    let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
+    app.set_viewport(Size::new(Points(360.0), Points(640.0)))?;
+    app.set_environment("large text", |e| e.font_scale = 2.0)?;
+    app.wait_for("Intake")?;
+    // Spending is summarized beside the records it adds up; the opening
+    // balance is listed but is not spending.
+    app.wait_for("text:/3 records · Spent ¥1,234.56/")?;
+    app.wait_for("text:300")?;
+    app.wait_for("label:/^Initial funds, 100,000.00 CNY/")?;
+    app.wait_for("label:/^Groceries, −1,234.56 CNY/")?;
+    let locale = Locale::parse("zh-CN").unwrap();
+    app.set_environment("Chinese", |e| {
+        e.locale = locale;
+        e.locale_settings = LocaleSettings::of(locale);
+    })?;
+    app.wait_for("text:/3 条 · 支出 ¥1,234.56/")?;
+    app.press("label:记录")?;
+    app.wait_for("label:/^Initial funds, 100,000.00 CNY/")?;
+    app.press("label:/^Groceries, −1,234.56 CNY/")?;
+    app.wait_for("label:金额")?;
+    app.wait_for("1234.56")?;
+    Ok(())
+}
+
 /// The day strip names a day by its full date ("Thursday, November 12").
 fn long_date(day: Day) -> String {
     day.0.strftime("%A, %B %-d").to_string()

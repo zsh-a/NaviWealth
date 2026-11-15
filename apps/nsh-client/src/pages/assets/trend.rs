@@ -288,7 +288,7 @@ fn recorded_panel(notice: Signal<String>, shown: Signal<usize>) -> AnyElement {
                                         } else {
                                             copy("Known value", "已知金额")
                                         },
-                                        money::format(b.net),
+                                        crate::ui::currency::grouped(b.net),
                                         partial
                                     ))
                                     .typo(Type::Body)
@@ -303,9 +303,9 @@ fn recorded_panel(notice: Signal<String>, shown: Signal<usize>) -> AnyElement {
                             text(format!(
                                 "{} ¥{} · {} ¥{}",
                                 copy("Assets", "资产"),
-                                money::format(b.assets),
+                                crate::ui::currency::grouped(b.assets),
                                 copy("Debt", "负债"),
-                                money::format(b.debt)
+                                crate::ui::currency::grouped(b.debt)
                             ))
                             .typo(Type::Caption)
                             .text_color(color::MUTED),
@@ -316,7 +316,7 @@ fn recorded_panel(notice: Signal<String>, shown: Signal<usize>) -> AnyElement {
                                     "{} {} {}",
                                     a.account.name(),
                                     a.account.currency(),
-                                    money::format(a.native)
+                                    crate::ui::currency::grouped(a.native)
                                 ))
                                 .typo(Type::Caption)
                                 .text_color(color::MUTED),
@@ -334,7 +334,7 @@ fn recorded_panel(notice: Signal<String>, shown: Signal<usize>) -> AnyElement {
                                     copy("Quantity", "数量"),
                                     finance_core::holdings::format_units(h.quantity),
                                     copy("Cost", "成本"),
-                                    money::format(h.cost),
+                                    crate::ui::currency::grouped(h.cost),
                                     h.price_day
                                         .map(|d| format!(
                                             "{d} / {} / {}",

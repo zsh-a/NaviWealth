@@ -13,6 +13,7 @@ fn add_holding(app: &mut Headless, name: &str, qty: &str, cost: &str) -> Result<
     app.press("label:Assets")?;
     app.press("text:Manage")?;
     app.press("Add holding")?;
+    app.press("Enter manually")?;
     app.type_text("label:Name or code", name)?;
     app.type_text("label:Quantity", qty)?;
     app.type_text("label:Cost per unit", cost)?;
@@ -29,7 +30,7 @@ fn opening_price_partial_sale_and_cash_survive_restart_without_double_counting()
     app.press("text:Add account")?;
     app.type_text("label:Account name", "Broker cash")?;
     app.press("Create account")?;
-    app.press("label:Back")?;
+    app.wait_for("Account added")?;
     add_holding(&mut app, "Index ETF", "100", "4")?;
     app.press("label:Update price")?;
     app.type_text("label:Price", "5")?;
@@ -131,6 +132,7 @@ fn failed_new_position_keeps_input_and_overselling_never_changes_the_ledger() ->
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
     app.press("label:Assets")?;
     app.press("Add holding")?;
+    app.press("Enter manually")?;
     app.set_viewport(Size::new(Points(360.0), Points(640.0)))?;
     app.type_text("label:Name or code", "Fund")?;
     app.type_text("label:Quantity", "10.5")?;
@@ -171,6 +173,7 @@ fn manual_hkd_holding_keeps_currency_when_recording_later_trades() -> Result<(),
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
     app.press("label:Assets")?;
     app.press("Add holding")?;
+    app.press("Enter manually")?;
     app.press("text:HKD")?;
     app.type_text("label:Name or code", "Hong Kong fund")?;
     app.type_text("label:Quantity", "10")?;
@@ -191,5 +194,110 @@ fn manual_hkd_holding_keeps_currency_when_recording_later_trades() -> Result<(),
         finance_core::currency::Currency::HKD
     );
     assert_eq!(book.trades.len(), 1);
+    Ok(())
+}
+
+#[test]
+fn security_search_back_preserves_values_query_and_one_fixed_task_viewport() -> Result<(), String> {
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
+    app.press("label:Assets")?;
+    app.press("Add holding")?;
+    app.press("Enter manually")?;
+    app.type_text("label:Quantity", "2")?;
+    app.type_text("label:Cost per unit", "100")?;
+    let sheet = app
+        .screen()
+        .layout_nodes()
+        .into_iter()
+        .find(|n| n.test_id.as_deref() == Some("task-sheet"))
+        .unwrap()
+        .id;
+    app.press("label:Search securities")?;
+    app.set_viewport(Size::new(Points(360.0), Points(640.0)))?;
+    app.set_environment("search with IME", |e| {
+        e.font_scale = 1.3;
+        e.keyboard_height = Points(280.0);
+    })?;
+    app.type_text("security-search", "aapl")?;
+    app.wait_for("label:/^Apple Inc., United States · AAPL/")?;
+    assert_eq!(app.screen().count("task-sheet")?, 1);
+    let search = app
+        .screen()
+        .layout_nodes()
+        .into_iter()
+        .find(|n| n.test_id.as_deref() == Some("security-search"))
+        .unwrap();
+    let search_frame = search.bounds;
+    for id in ["task-header", "task-actions"] {
+        let node = app
+            .screen()
+            .layout_nodes()
+            .into_iter()
+            .find(|n| n.test_id.as_deref() == Some(id))
+            .unwrap();
+        assert!(node.bounds.origin.y.0 >= 0.0);
+        assert!(
+            node.bounds.origin.y.0 + node.bounds.size.height.0 <= 360.5,
+            "{id} stays above the IME: {:?}",
+            node.bounds
+        );
+    }
+    app.clear("security-search")?;
+    app.wait_for_gone("label:/^Apple Inc., United States · AAPL/", GONE)?;
+    app.type_text("security-search", "600000")?;
+    app.wait_for("label:/^浦发银行, Mainland China · 600000/")?;
+    let after = app
+        .screen()
+        .layout_nodes()
+        .into_iter()
+        .find(|n| n.test_id.as_deref() == Some("security-search"))
+        .unwrap();
+    assert_eq!(
+        (after.id, after.bounds),
+        (search.id, search_frame),
+        "search field stays fixed while only results change"
+    );
+    app.back()?;
+    app.wait_for("Save holding")?;
+    assert_eq!(app.screen().input_text("label:Quantity")?, Some("2"));
+    assert_eq!(app.screen().input_text("label:Cost per unit")?, Some("100"));
+    app.press("label:Search securities")?;
+    assert_eq!(app.screen().input_text("security-search")?, Some("600000"));
+    app.clear("security-search")?;
+    app.type_text("security-search", "aapl")?;
+    app.wait_for("label:/^Apple Inc., United States · AAPL/")?;
+    app.press("label:/^Apple Inc., United States · AAPL/")?;
+    app.set_environment("IME dismissed", |e| {
+        e.keyboard_height = Points(0.0);
+        e.font_scale = 1.0;
+    })?;
+    app.wait_for("United States · AAPL · USD")?;
+    assert_eq!(
+        app.screen()
+            .layout_nodes()
+            .into_iter()
+            .find(|n| n.test_id.as_deref() == Some("task-sheet"))
+            .unwrap()
+            .id,
+        sheet
+    );
+    assert_eq!(app.screen().input_text("label:Quantity")?, Some("2"));
+    app.press("Save holding")?;
+    app.wait_for("Record trade")?;
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    let book = store::load(&db).unwrap();
+    assert_eq!(
+        book.securities[0].currency(),
+        finance_core::currency::Currency::USD
+    );
+    assert_eq!(
+        book.position(&book.securities[0], today().0).unwrap().cost,
+        20000
+    );
+    assert_eq!(
+        finance_core::catalog::bindings(&db).unwrap()[0].symbol,
+        "AAPL"
+    );
     Ok(())
 }

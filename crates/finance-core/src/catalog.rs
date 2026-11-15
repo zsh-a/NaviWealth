@@ -209,6 +209,28 @@ pub struct Header {
 pub struct Catalog {
     pub header: Header,
     pub entries: Vec<Entry>,
+    search_index: Vec<SearchEntry>,
+}
+#[derive(Debug, Clone)]
+struct SearchEntry {
+    text: String,
+    symbol_end: usize,
+}
+impl SearchEntry {
+    fn new(e: &Entry) -> Self {
+        let mut text = e.symbol.to_lowercase();
+        let symbol_end = text.len();
+        for field in [&e.chinese, &e.english, &e.pinyin, &e.initials, &e.aliases] {
+            // Catalog fields cannot contain controls, so this boundary can never
+            // create a match that crosses two fields.
+            text.push('\0');
+            text.push_str(&field.to_lowercase());
+        }
+        Self { text, symbol_end }
+    }
+    fn symbol(&self) -> &str {
+        &self.text[..self.symbol_end]
+    }
 }
 fn version(v: &str) -> Option<u32> {
     let date = v.strip_prefix("v1.")?;
@@ -223,6 +245,16 @@ fn version(v: &str) -> Option<u32> {
 }
 fn valid_text(v: &str) -> bool {
     v.len() <= 512 && !v.chars().any(char::is_control)
+}
+/// The catalog's header line alone, validated like a full parse validates it.
+/// Comparing versions this way avoids parsing and indexing every entry.
+pub fn header(raw: &str) -> Result<Header, Error> {
+    let header: Header = serde_json::from_str(raw.lines().next().ok_or(Error::Invalid)?)
+        .map_err(|_| Error::Invalid)?;
+    if version(&header.version).is_none() || header.count == 0 || header.count > 100_000 {
+        return Err(Error::Invalid);
+    }
+    Ok(header)
 }
 pub fn parse(raw: &str) -> Result<Catalog, Error> {
     if raw.len() > MAX_BYTES {
@@ -243,7 +275,7 @@ pub fn parse(raw: &str) -> Result<Catalog, Error> {
             return Err(Error::Invalid);
         }
         let object: serde_json::Value = serde_json::from_str(line).map_err(|_| Error::Invalid)?;
-        let entry: Entry = serde_json::from_value(object.clone()).map_err(|_| Error::Invalid)?;
+        let entry: Entry = Entry::deserialize(&object).map_err(|_| Error::Invalid)?;
         if !["cn_a", "hk_stock", "us_stock", "crypto", "fx", "unknown"]
             .contains(&entry.market.as_str())
             || !["stock", "etf", "mutualFund", "bond", "crypto"].contains(&entry.kind.as_str())
@@ -291,48 +323,77 @@ pub fn parse(raw: &str) -> Result<Catalog, Error> {
     if entries.len() != header.count || format!("{hash:016x}") != header.checksum {
         return Err(Error::Invalid);
     }
-    Ok(Catalog { header, entries })
+    let search_index = entries.iter().map(SearchEntry::new).collect();
+    Ok(Catalog {
+        header,
+        entries,
+        search_index,
+    })
 }
 impl Catalog {
     pub fn search(&self, query: &str, limit: usize) -> Vec<Entry> {
+        self.search_page(query, 0, limit.min(50))
+    }
+    /// A stable ranked window. Only returned entries are cloned; fields are
+    /// normalized once at parse time, never on a keystroke.
+    pub fn search_page(&self, query: &str, offset: usize, limit: usize) -> Vec<Entry> {
         let q = query.trim().to_lowercase();
-        if q.is_empty() || q.len() > 128 {
+        if q.is_empty() || q.len() > 128 || q.chars().any(char::is_control) || limit == 0 {
             return Vec::new();
         }
-        let mut found: Vec<_> = self
-            .entries
-            .iter()
-            .filter(|e| {
-                [
-                    &e.symbol,
-                    &e.chinese,
-                    &e.english,
-                    &e.pinyin,
-                    &e.initials,
-                    &e.aliases,
-                ]
-                .iter()
-                .any(|v| v.to_lowercase().contains(&q))
-            })
-            .collect();
-        found.sort_by_key(|e| {
-            (
-                e.symbol.to_lowercase() != q,
-                !e.symbol.to_lowercase().starts_with(&q),
-                e.market.clone(),
-                e.symbol.clone(),
-            )
-        });
-        found.into_iter().take(limit.min(50)).cloned().collect()
+        let take = offset.saturating_add(limit).min(self.entries.len());
+        let mut buckets = [Vec::new(), Vec::new(), Vec::new()];
+        // Parsing verifies market/symbol order. Within each rank, scanning in
+        // that order is the same as sorting every match, without its allocations.
+        for (i, indexed) in self.search_index.iter().enumerate() {
+            let symbol = indexed.symbol();
+            let rank = if symbol == q {
+                0
+            } else if symbol.starts_with(&q) {
+                1
+            } else {
+                2
+            };
+            if buckets[rank].len() < take && indexed.text.contains(&q) {
+                buckets[rank].push(i);
+            }
+        }
+        buckets
+            .into_iter()
+            .flatten()
+            .skip(offset)
+            .take(limit)
+            .map(|i| self.entries[i].clone())
+            .collect()
     }
 }
-pub fn install(c: &Connection, raw: &str) -> Result<Catalog, Error> {
-    let catalog = parse(raw)?;
+/// Validated bytes and their already parsed search index. Private fields prevent
+/// callers from installing unverified data through the short database path.
+pub struct Prepared {
+    raw: String,
+    catalog: Catalog,
+}
+impl Prepared {
+    pub fn header(&self) -> &Header {
+        &self.catalog.header
+    }
+}
+pub fn prepare(raw: String) -> Result<Prepared, Error> {
+    let catalog = parse(&raw)?;
+    Ok(Prepared { raw, catalog })
+}
+pub fn install_prepared(c: &Connection, prepared: Prepared) -> Result<Catalog, Error> {
+    let Prepared { raw, catalog } = prepared;
     let tx = c.unchecked_transaction()?;
     tx.execute("INSERT INTO securities_catalog VALUES(1,?1,?2,?3) ON CONFLICT(singleton) DO UPDATE SET version=excluded.version,checksum=excluded.checksum,body=excluded.body",params![catalog.header.version,catalog.header.checksum,raw])?;
     tx.commit()?;
     Ok(catalog)
 }
+
+pub fn install(c: &Connection, raw: &str) -> Result<Catalog, Error> {
+    install_prepared(c, prepare(raw.to_owned())?)
+}
+
 pub fn current(c: &Connection) -> Result<Option<Catalog>, Error> {
     use lifeos_core::sqlite::OptionalExtension;
     let raw: Option<String> = c
@@ -391,6 +452,10 @@ impl Manifest {
             || (self.version == h.version && self.checksum != h.checksum)
     }
     pub fn verify(&self, gzip: &[u8]) -> Result<String, Error> {
+        self.prepare(gzip).map(|p| p.raw)
+    }
+    /// Verify download, decompression, catalog schema and manifest identity once.
+    pub fn prepare(&self, gzip: &[u8]) -> Result<Prepared, Error> {
         if gzip.len() != self.gzip_size || format!("{:x}", Sha256::digest(gzip)) != self.gzip_sha256
         {
             return Err(Error::Invalid);
@@ -411,6 +476,6 @@ impl Manifest {
         {
             return Err(Error::Invalid);
         }
-        Ok(raw)
+        Ok(Prepared { raw, catalog: c })
     }
 }

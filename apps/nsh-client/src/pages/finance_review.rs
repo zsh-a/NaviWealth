@@ -21,7 +21,7 @@ pub fn spending_section(
     let more = signal(false);
     let selected = signal(Currency::CNY);
     when(
-        || !finance::transactions().is_empty(),
+        || !finance::transactions_snapshot().is_empty(),
         move || {
             dynamic(move || {
                 let d = days.get();
@@ -40,7 +40,7 @@ pub fn spending_section(
                     clock::today().0,
                 );
                 let currency = selected.get();
-                let entries = finance::transactions();
+                let entries = finance::transactions_snapshot();
                 let current = review::spending_in(&entries, from.0, to.0, currency);
                 let previous = review::spending_in(&entries, p[0].0, previous_to, currency);
                 let expanded = more.get();
@@ -70,6 +70,27 @@ pub fn spending_section(
                             view()
                                 .gap_3()
                                 .child(
+                                    text(
+                                        s().spending_comparison(
+                                            current.total,
+                                            (previous.records > 0).then_some(previous.total),
+                                        )
+                                        .replace("¥", &format!("{} ", currency.code())),
+                                    )
+                                    .typo(Type::Body)
+                                    .text_color(color::BODY),
+                                )
+                                .child((previous.records > 0).then(|| {
+                                    text(format!(
+                                        "{} · {} – {}",
+                                        crate::i18n::catalog::copy("Compared with", "对比时段"),
+                                        s().short_date(p[0]),
+                                        s().short_date(Day(previous_to))
+                                    ))
+                                    .typo(Type::Caption)
+                                    .text_color(color::MUTED)
+                                }))
+                                .child(
                                     row_button(move || {
                                         nav::push(Route::Spending {
                                             from,
@@ -78,32 +99,15 @@ pub fn spending_section(
                                             currency,
                                         })
                                     })
+                                    .min_h(px(48.0))
+                                    .px(px(0.0))
+                                    .py(px(4.0))
                                     .child(
                                         text(crate::ui::currency::format(current.total, currency))
                                             .typo(Type::LargeTitle)
                                             .tabular_nums()
                                             .text_color(color::INK),
                                     ),
-                                )
-                                .child(
-                                    text(
-                                        s().spending_comparison(
-                                            current.total,
-                                            (previous.records > 0).then_some(previous.total),
-                                        )
-                                        .replace("¥", &format!("{} ", currency.code())),
-                                    )
-                                    .typo(Type::Subhead)
-                                    .text_color(color::BODY),
-                                )
-                                .child(
-                                    text(format!(
-                                        "{} – {}",
-                                        s().short_date(p[0]),
-                                        s().short_date(Day(previous_to))
-                                    ))
-                                    .typo(Type::Caption)
-                                    .text_color(color::MUTED),
                                 )
                                 .children(
                                     current
@@ -125,6 +129,9 @@ pub fn spending_section(
                                             .flex_row()
                                             .items_center()
                                             .justify_between()
+                                            .min_h(px(48.0))
+                                            .px(px(0.0))
+                                            .py(px(8.0))
                                             .gap_3()
                                             .child(
                                                 text(title).typo(Type::Body).text_color(color::INK),

@@ -289,6 +289,6 @@ pub fn attach_capture(app: &mut Headless) -> Result<(), String> {
     app.press("label:New entry")?;
     app.press("Attach image")?;
     app.wait_for("Remove image")?;
-    app.press("Create draft")?;
+    app.press("Recognize")?;
     Ok(())
 }

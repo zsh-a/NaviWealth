@@ -24,7 +24,7 @@ use crate::{
     i18n::s,
     nav::{self, Route},
     ui::{
-        Btn, Icon, IconBtn, Size, Type, Typo, Variant, color, icon, sheet::bottom_sheet, space,
+        Btn, Icon, IconBtn, Size, Type, Typo, color, icon, sheet::bottom_sheet, space,
         surface::card,
     },
 };
@@ -37,13 +37,15 @@ pub fn today_tab() -> impl IntoElement {
             .px(px(space::GUTTER))
             .pt_safe_area_plus(px(10.0))
             .pb(move || px(dock_clearance()))
-            .gap_5()
+            // Groups breathe more than their parts: 24 pt between the summary
+            // groups, 32 pt before the day's records.
+            .gap_6()
             .child(header())
             .child(drafts_section(false))
             .child(setup_card())
             .child(hero::hero(day))
             .child(vitals::vitals(day))
-            .child(meal_list::meal_list(day)),
+            .child(view().mt_2().child(meal_list::meal_list(day))),
     )
 }
 
@@ -75,7 +77,7 @@ fn header() -> impl IntoElement {
         )
         .child(
             IconBtn::new(Icon::Sliders, || s().settings.into())
-                .variant(Variant::Secondary)
+                .side(48.0)
                 .on_press(|| nav::push(Route::Settings)),
         )
 }

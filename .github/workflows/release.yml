@@ -64,9 +64,10 @@ jobs:
             apps/mobile/android/**/*.gradle*
             apps/mobile/android/gradle/wrapper/gradle-wrapper.properties
             apps/mobile/pubspec.lock
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-linux-android
+      - name: Install configured Rust toolchain
+        run: |
+          rustup toolchain install
+          rustc -Vv
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: apps/mobile/native/lifeos_native

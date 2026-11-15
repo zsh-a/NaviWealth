@@ -12,7 +12,7 @@ use crate::{
         toast::{show_toast, toast_view},
     },
 };
-pub use editor::trade_editor;
+pub use editor::{trade_editor, trade_task};
 use finance_core::{
     currency::Currency,
     holdings::{self, Kind, Security},
@@ -515,14 +515,10 @@ pub fn holding_page(id: &str) -> Screen {
                 ))
                 .child(trade_editor(trade))
                 .child(editor::price_editor(price, security))
-                .child(dynamic(move || {
-                    let chosen = receipt.get();
-                    untracked(move || {
-                        chosen
-                            .map(|chosen| trade_receipt(&chosen, move || receipt.set(None)))
-                            .unwrap_or_else(|| view().into_element())
-                    })
-                })),
+                .child(crate::ui::sheet::retained(
+                    move || receipt.get(),
+                    move |chosen| trade_receipt(&chosen, move || receipt.set(None)),
+                )),
         )
 }
 

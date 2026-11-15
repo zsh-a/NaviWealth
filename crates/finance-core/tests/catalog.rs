@@ -44,6 +44,15 @@ fn bundled_catalog_has_verified_count_identity_and_offline_aliases() {
     assert!(apple.iter().any(|e| e.symbol == "AAPL" && e.supported()));
 }
 #[test]
+fn header_alone_matches_the_full_parse_and_rejects_bad_headers() {
+    let full = catalog::parse(BUNDLE).unwrap();
+    let header = catalog::header(BUNDLE).unwrap();
+    assert_eq!(header.version, full.header.version);
+    assert_eq!(header.count, full.header.count);
+    assert!(catalog::header("").is_err());
+    assert!(catalog::header("{\"version\":\"bad\",\"checksum\":\"0\",\"count\":1}").is_err());
+}
+#[test]
 fn update_verification_and_atomic_install_retain_old_catalog() {
     let c = db();
     let old = catalog::install(&c, BUNDLE).unwrap();
@@ -201,4 +210,87 @@ fn market_currency_and_numeric_identities_are_unambiguous() {
         wrong.currency = if currency == "CNY" { "HKD" } else { "CNY" }.into();
         assert!(wrong.validate().is_err());
     }
+}
+
+#[test]
+fn indexed_search_preserves_ranking_unicode_aliases_and_page_boundaries() {
+    let c = catalog::parse(BUNDLE).unwrap();
+    for query in [
+        "a",
+        "60",
+        "000001",
+        "aApL",
+        "  pinganyinhang  ",
+        "payh",
+        "zero-gravity",
+        "平安",
+        "É",
+        "İ",
+        "00700",
+        "zzzzzz",
+        "\0",
+    ] {
+        let q = query.trim().to_lowercase();
+        let mut expected = c
+            .entries
+            .iter()
+            .filter(|e| {
+                [
+                    &e.symbol,
+                    &e.chinese,
+                    &e.english,
+                    &e.pinyin,
+                    &e.initials,
+                    &e.aliases,
+                ]
+                .iter()
+                .any(|field| field.to_lowercase().contains(&q))
+            })
+            .collect::<Vec<_>>();
+        expected.sort_by_key(|e| {
+            (
+                e.symbol.to_lowercase() != q,
+                !e.symbol.to_lowercase().starts_with(&q),
+                &e.market,
+                &e.symbol,
+            )
+        });
+        assert_eq!(
+            c.search(query, 40),
+            expected
+                .iter()
+                .take(40)
+                .map(|e| (*e).clone())
+                .collect::<Vec<_>>(),
+            "{query}"
+        );
+        // Page past the legacy 50-row cap without hiding unsupported listings.
+        for offset in [0, 16, 48, 80] {
+            assert_eq!(
+                c.search_page(query, offset, 16),
+                expected
+                    .iter()
+                    .skip(offset)
+                    .take(16)
+                    .map(|e| (*e).clone())
+                    .collect::<Vec<_>>(),
+                "{query} at {offset}"
+            );
+        }
+    }
+    assert!(c.search_page("a", 0, 0).is_empty());
+    assert!(c.search_page("a", usize::MAX, 16).is_empty());
+}
+
+#[test]
+fn verified_prepared_install_is_atomic_on_write_failure() {
+    let c = db();
+    let before = catalog::install(&c, BUNDLE).unwrap();
+    let prepared = catalog::prepare(BUNDLE.to_owned()).unwrap();
+    c.execute_batch("CREATE TRIGGER fail_catalog BEFORE UPDATE ON securities_catalog BEGIN SELECT RAISE(ABORT,'storage full'); END;").unwrap();
+    assert!(catalog::install_prepared(&c, prepared).is_err());
+    assert_eq!(
+        catalog::current(&c).unwrap().unwrap().header.checksum,
+        before.header.checksum
+    );
 }

@@ -44,8 +44,10 @@ jobs:
         with:
           workspaces: apps/nsh-client
       - run: cargo fmt --check
-      - run: cargo clippy --all-targets -- -D warnings
-      - run: cargo test
+      - run: cargo clippy --all-targets --locked -- -D warnings
+      - run: cargo test --locked
+      - run: cargo test --manifest-path ../../crates/lifeos-core/Cargo.toml --locked
+      - run: cargo clippy --manifest-path ../../crates/lifeos-core/Cargo.toml --all-targets --locked -- -D warnings
       - run: cargo test --manifest-path ../../crates/health-core/Cargo.toml --locked
       - run: cargo test --manifest-path ../../crates/finance-core/Cargo.toml --locked
       - run: cargo clippy --manifest-path ../../crates/finance-core/Cargo.toml --all-targets --locked -- -D warnings

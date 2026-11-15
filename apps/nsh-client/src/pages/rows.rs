@@ -1,6 +1,7 @@
 //! Rows shared by Today and Records: a meal led by its photo when it has
 //! one, and a weight entry, grouped in one card with hairlines between
-//! them. A row without a photo starts with its text: no placeholder art.
+//! them. Without a photo, meals use the same leading footprint with the
+//! semantic meal icon.
 
 use nsh_core::prelude::*;
 
@@ -9,15 +10,40 @@ use crate::{
     domain::{format, meal::Meal, weight::Weight},
     i18n::s,
     nav::{self, Route},
-    ui::{Type, Typo, color, radius, space, surface::row_button},
+    ui::{
+        Icon, Type, Typo, color, radius, space,
+        surface::{HAIRLINE, row_button},
+    },
 };
 
 use super::today::{meal_title, slot_name};
 
 /// A row's thumbnail side.
 pub const THUMB: f32 = 52.0;
-/// A row's leading padding without a photo, and where hairlines start.
+/// A row's leading padding without a leading footprint (weight rows).
 pub const INSET: f32 = space::CARD;
+/// A row's leading padding before its photo or icon.
+pub const LEAD: f32 = 12.0;
+/// Where the text of a row with a leading footprint starts; its divider
+/// starts here too, so hairlines underline text rather than icons.
+pub const TEXT_INSET: f32 = LEAD + THUMB + 14.0;
+
+/// The leading footprint of a row without a photo: its semantic icon, small
+/// and quiet, so the column aligns without reading as a column of icons.
+pub fn glyph(icon: Icon, height: f32) -> View {
+    view()
+        .w(px(THUMB))
+        .h(px(height))
+        .flex_shrink_0()
+        .items_center()
+        .justify_center()
+        .child(crate::ui::icon(icon, 20.0, color::MUTED))
+}
+
+/// The divider between rows of one card, from `leading` to the card's edge.
+pub fn divider(leading: f32) -> View {
+    view().h(px(HAIRLINE)).ml(px(leading)).bg(color::LINE)
+}
 
 /// A saved meal; pressing it opens it.
 pub fn meal_row(meal: Meal) -> impl IntoElement {
@@ -31,12 +57,15 @@ pub fn meal_row(meal: Meal) -> impl IntoElement {
     );
     let photo = meal.photo.clone();
     row_button(move || nav::push(Route::EditMeal(id.clone())))
-        .pl(px(if photo.is_some() { 12.0 } else { INSET }))
+        .pl(px(LEAD))
         .pr(px(18.0))
         .py(px(10.0))
         .gap(px(14.0))
         .accessibility_label(move || Some(label.clone().into()))
-        .child(photo.map(thumbnail))
+        .child(match photo {
+            Some(photo) => thumbnail(photo).into_element(),
+            None => glyph(Icon::Utensils, THUMB).into_element(),
+        })
         .child(
             view()
                 .flex_1()
@@ -58,9 +87,16 @@ pub fn meal_row(meal: Meal) -> impl IntoElement {
                     .tabular_nums()
                     .text_color(color::MUTED)
                     .number_of_lines(1),
-                ),
+                )
+                .child(when(
+                    || font_scale() > 1.2,
+                    move || figure(format::kcal(total.kcal), s().kcal),
+                )),
         )
-        .child(figure(format::kcal(total.kcal), s().kcal))
+        .child(when(
+            || font_scale() <= 1.2,
+            move || figure(format::kcal(total.kcal), s().kcal),
+        ))
 }
 
 /// A weight entry; pressing it opens its editor.
@@ -101,7 +137,9 @@ pub fn weight_row(entry: Weight, open: impl Fn() + 'static) -> impl IntoElement 
 
 fn figure(value: String, unit: &'static str) -> impl IntoElement {
     view()
-        .items_end()
+        .flex_row()
+        .items_baseline()
+        .gap(px(4.0))
         .child(
             text(value)
                 .typo(Type::Figure)

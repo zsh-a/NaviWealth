@@ -24,6 +24,10 @@ AI only to turn text and images into drafts, using the owner's model account.
   disclosure; favorites remain directly available with Undo. Close is a
   labelled cross, separate from Confirm and save; closing a nonempty draft
   reports that the draft is kept and no records were saved.
+  The editing composer has one input, an accessible photo icon and Recognize
+  / 识别. It omits the repeated prompt label and generic instructions; the
+  input retains its accessible name. Only an editing draft requests initial
+  focus after the sheet opens; a ready result stays readable.
   Account rows in a ready result open an existing-account picker in the same
   sheet. Transfer source and destination lists exclude the other account;
   internal holding accounts are never offered. Selection first persists the
@@ -35,8 +39,18 @@ AI only to turn text and images into drafts, using the owner's model account.
   the batch count. Its View action opens the common day in Records, or the
   unfiltered all-days timeline when the batch spans days.
 - **Task sheets:** header and actions stay fixed; only the body scrolls.
+  Manage, account creation and holding creation share one native sheet;
+  changing panels does not replay its entrance. Nested pickers return to the
+  entered draft before Back leaves the task. Closing retains the mounted
+  scope until the native exit completes. Initial focus follows the native
+  Open event and a committed frame, rather than racing the entrance.
+  Back (the button or the system back) steps back one panel; a swipe down
+  or a backdrop press leaves the whole task, after the panel's discard
+  guard. Saving closes the shared sheet before its panel resets, so the
+  sheet leaves with the form rather than swapping the menu in.
   Capture uses `fitted_task_sheet`: short content determines its height,
-  while longer results scroll at the available-height limit. Other task
+  while longer results scroll at the available-height limit. The management
+  menu and compact account editor also fit their content. Other task
   editors retain `task_sheet`'s filled height, capped at 540 pt. Both exclude
   the keyboard from available height. Toasts belong to the active sheet while
   it is open, so Undo cannot be covered by its backdrop. Opening capture clears
@@ -48,10 +62,16 @@ AI only to turn text and images into drafts, using the owner's model account.
   update remembered account/category choices.
 - **No hidden gestures.** Every action is a visible control; nothing
   depends on a long press.
-- **Today shows today:** the intake card (figure, what is left of the goal,
-  the macro ring) and, laid flat beneath it, the vitals: weight, plus sleep
+- **Today shows today:** the main card is health only: intake as the one
+  Display figure, what is left of the goal, and the macro ring (below the
+  figure at large text). Flat beneath it are weight, plus sleep
   and Body Battery once Garmin is connected (a Garmin vital opens all of the
-  day's Garmin data). Then today's meals. Past days are in Records.
+  day's Garmin data). Then today's records, whose header carries the count
+  and the day's spending in each currency ("3 条 · 支出 ¥12.00"): spending
+  is summarized beside the records it adds up. Opening balances and
+  adjustments remain in the timeline with quieter labels and amounts; they
+  are not spending. Groups are 24 pt apart, the records 32 pt below the
+  vitals. Past days are in Records.
 - **Drafts:** text/image inputs and recognition results are kept on device,
   pinned on Today and atop Records from one shared source. They can be left,
   reopened, corrected in a sentence, retried, confirmed or discarded with
@@ -94,9 +114,10 @@ AI only to turn text and images into drafts, using the owner's model account.
   Back preserves the draft. Unsaved trade input has a discard guard. Prices
   have their own compact amount-and-date sheet. Activity opens a receipt
   with an explicit, confirmed remove action.
-- **Own accounts:** creation asks only for asset/liability type and name;
-  the balance can be checked later. Creating an account opens its detail
-  page. Account rows open the book balance or debt, latest check status and
+- **Own accounts:** creation leads with the name and compact type/currency
+  choices; the balance can be checked later. Creation stays on Assets and
+  offers Check balance in the confirmation notice. Account rows open the
+  book balance or debt, latest check status and
   newest-first activity, with Show earlier for more history. Rename is a
   visible pencil action; it edits the name, not the account type.
 - **Balance checks:** one compact task sheet asks for amount and date.
@@ -145,7 +166,7 @@ graphite with white ink, surfaces separated by tone and a hairline.
 | Text | `INK` (titles, figures), `BODY`, `MUTED` |
 | Decorative / inactive | `FAINT` (tertiary marks such as chevrons, disabled controls and unavailable dates) |
 | Action | `ACTION` (ink), `ACTION_PRESSED`, `ACTION_SHEEN`, `ON_ACTION` |
-| Floating material | `ON_GLASS_MUTED` (dock labels), `GLASS_EDGE`, `GLASS_WASH` (sheet highlight) |
+| Floating material | `ON_GLASS_MUTED` (dock labels), `GLASS_EDGE` |
 | AI | `AI_FROM` → `AI_TO` (analysis light, estimate marks) |
 | Status | `DANGER(_SOFT)`, `CAUTION(_SOFT)` (past a goal, estimates to check), `POSITIVE` |
 | Data | `PROTEIN` / `CARBS` / `FAT` (dark / middle / light stone), `OTHER`, `TRACK`, `HEAT` (calendar shade) |
@@ -184,9 +205,11 @@ Status color conveys meaning: `DANGER` for errors and destructive actions,
 completed connection. Soft status fills hold their matching foreground.
 Financial values, including gains and losses, stay in neutral ink.
 
-- **Type** (`Type`): Display 44, LargeTitle 34, Title 22, Figure 20,
-  Headline 17, Body 16, Callout 15, Subhead 14, Caption 12.5; tabular
-  numerals everywhere numbers move.
+- **Type** (`Type`): Display 44/700, LargeTitle 34/700, Title 20/600
+  (sheet titles, empty states), Figure 20/24 600, Headline 17/600 (rows and
+  section headers), Body 16, Callout 15, Subhead 14, Caption 12.5; tabular
+  numerals everywhere numbers move. Headline is 600; Subhead and Caption
+  use 500 so supporting text does not compete with figures.
 - **Numbers:** every standalone number is a `stat`: the whole part in ink,
   decimals one step quieter, the unit muted on the same baseline, a
   dash and no unit without a value. `Scale::Hero` (Display) is the one
@@ -197,13 +220,19 @@ Financial values, including gains and losses, stay in neutral ink.
   intake, Assets' net worth), repeated rows, sheets and framed tools.
   Secondary figures (vitals, Review's weight and Garmin averages) lie flat
   on the canvas, grouped by hairlines and space. Cards never nest.
-- **Rows** for meals lead with the photo when present; otherwise the text
-  starts at the card's inset. No placeholder art. Asset overview rows use
+- **Rows** for meals and money share a 52 pt leading footprint. A meal without
+  a photo uses the semantic food icon; financial rows use their semantic
+  icon (Check for opening balances and adjustments; Sliders stays Settings).
+  Footprint icons are 20 pt and muted so the column aligns without reading
+  as a column of icons. Dividers start where row text starts and run to the
+  card's edge (weight rows, without a footprint, at the card inset). Amount
+  and currency share a baseline,
+  with a stacked layout for large text or long exact amounts. Asset rows use
   existing semantic icons: Wallet for cash accounts, Minus for debt accounts
   and Chart for holdings, without inferring account subtypes from names.
 - **Shape:** controls are pills; sheet 32 > card 24 > well 18 > field 16 >
   thumbnail 16 > badge 8. Cards and sheet top corners use continuous curves.
-- **Depth:** matte content with local frosted navigation and sheets;
+- **Depth:** matte content and task sheets, with local frosted navigation;
   light appearance uses the shared shadow vocabulary below, dark uses tone
   and edges without shadows.
 - **Spacing:** the 4 pt scale; page gutter 20, card inset 20.
@@ -219,17 +248,20 @@ existing meanings.
 
 | Material | Surface | Edge and light | Lift |
 |---|---|---|---|
-| Dock | `SURFACE` at 0.88 opacity, 20 pt backdrop blur | 0.75 pt `GLASS_EDGE` around the pill | `shadow::DOCK` |
-| Sheet | `SURFACE` at 0.97 opacity, 24 pt backdrop blur | 0.75 pt top `GLASS_EDGE`; `GLASS_WASH` fades downward to transparent | `shadow::SHEET` |
+| Dock | `SURFACE` at 0.80 opacity, 20 pt backdrop blur | 0.75 pt `GLASS_EDGE` around the pill | `shadow::DOCK` |
+| Sheet | Opaque `SURFACE`, no backdrop blur or highlight wash | Tone separates content from a 0.32 black scrim | `shadow::SHEET` |
 | Media controls and captions | `MEDIA_SCRIM` at 0.64 opacity, 18 pt backdrop blur; pressed buttons use 0.74 opacity | White `ON_MEDIA`; caption secondary text at 0.8 opacity | No additional shadow |
 
-The shared glass edge is white at `#B8` alpha in light appearance and `#20`
-in dark; the sheet wash is white at `#10` and `#04` alpha respectively.
-Inactive dock labels use `ON_GLASS_MUTED` (`#5C5D58` light / `#B4B6AE` dark)
-for legibility through the tint. Media readability comes from the dark mask
+The glass edge is white at `#B8` alpha in light appearance and `#20`
+in dark. No canvas-colored fade covers the content beneath the dock;
+scroll clearance still lets the final row move fully above it.
+Inactive dock labels use `ON_GLASS_MUTED` (`#545550` light / `#BDBFB7` dark)
+for legibility through the tint. The chosen tab's indicator is `INK` at 7%,
+a tint that reads on glass in both appearances (an opaque well read as a
+grey patch). Media readability comes from the dark mask
 even when backdrop blur is unavailable.
 
-Dock and sheet materials fall back to fully opaque `SURFACE`, with no
+The dock falls back to fully opaque `SURFACE`, with no
 backdrop filter, on Linux and Android below API 31. NSH 0.5's GTK renderer
 does not render backdrop filters. Android API 31 and above takes the blur
 path; its rendering and performance remain unverified on a real device.
@@ -292,18 +324,24 @@ money formatting and come from the domain calculation. Quantity, average
 unit cost and unit price retain up to six decimal places.
 
 Holding creation offers offline code/name/pinyin search before quantity and
-unit cost, with manual naming still available. The listing sheet shows market,
+unit cost, with manual naming still available. Search replaces the body of
+the same task sheet at a stable height and shows market,
 code and currency; unsupported currencies and instrument types are visibly
 unavailable. Existing holdings require a separate link confirmation: catalog
 identity never replaces the holding's internal id, label, account or trades.
-The bundled GitHub Releases catalog checks for updates when the picker opens,
+Results settle after 120 ms and grow in batches of 16. The catalog keeps a
+normalized search index; decoding and verification of downloaded updates run
+off the engine thread before a short atomic installation. Stale refreshes
+cannot replace a newly loaded catalog. The bundled GitHub Releases catalog
+checks for updates when the picker opens,
 at most once per 24 hours, with a manual retry and an explicit offline fallback.
 Mainland China, Hong Kong and US stocks and ETFs can be linked in their
 CNY, HKD and USD trading currencies. Manual creation offers compact currency
 choices; catalog selection sets currency automatically. Existing holdings keep
 their currency, and trade cash choices include only matching asset accounts.
 
-Assets has one visible quote refresh action. Tencent marks refresh in the
+Assets has one visible quote refresh action inside its overview card.
+Tencent marks refresh in the
 foreground with a five-minute automatic throttle; manual refresh bypasses the
 throttle. Holding price captions distinguish manual input, Tencent observations,
 previous close and earlier dates. A manual mark wins on the same or a newer
@@ -369,6 +407,10 @@ still.
 | Sheets | Open / close | Slide from the bottom over a fading scrim; swipe down to close | Appear / disappear |
 | Toggles | Checkbox / switch | Fill `instant`; knob slides `fast` | Instant |
 
+Numbers display their actual value on first appearance, including a delayed
+initial load. Subsequent changes between present values ease over 180 ms;
+they do not count from an invented zero.
+
 Verified on the GTK desktop build with the previews in `src/preview.rs`;
 holdings review captures are in `.impeccable/review/holdings/` at the repository
 root. The simplified Assets overview, Manage sheet, Asset changes, closed
@@ -392,9 +434,9 @@ those checked token pairs, not a whole-app WCAG conformance claim.
 
 Material review captures in `.impeccable/review/materials/` are GTK desktop
 evidence of the opaque dock/sheet fallback, not proof of Android blur.
-Source-token compositing over black and white backdrops, including the
-sheet wash, gives checked text minima of 5.05:1 light / 5.81:1 dark for the
-dock and 5.12:1 light / 5.22:1 dark for sheets. Over a white photo, the media
+The current 0.80-opacity dock and revised label colors have calculated
+text minima of 4.68:1 light / 4.83:1 dark over black and white backdrops.
+Sheets now use the opaque surface text palette. Over a white photo, the media
 mask gives 4.79:1 for secondary caption text and 6.38:1 for white text.
 These calculations cover the specified material/text combinations only;
 they do not establish whole-app accessibility or device performance.
@@ -404,6 +446,12 @@ Capture and settings refinement previews in
 review and collapsed settings in GTK, including light/dark and a narrow
 360 × 640 capture review. These are desktop development captures; Android
 keyboard, system Back, rendering and performance still need device evidence.
+
+The November 15 refinement is captured in
+`.impeccable/review/ui-polish-2026-11-15/`: Today, Records, Assets, Review,
+capture and management in desktop light/dark and narrow viewports. Large-text
+layout is additionally covered by headless flows with an explicit font-scale
+environment; desktop captures do not prove Android blur or frame timing.
 
 
 Historical financial data stays below the Assets overview. Asset changes uses

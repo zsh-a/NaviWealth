@@ -213,6 +213,10 @@ grouping for scanning. Without holdings, totals use book balances.
 
 Manage opens account/holding creation and closed-holding history. Fully closed
 positions leave the overview automatically and return after another purchase.
+Account and holding creation replace the content of the same management sheet;
+security search stays inside the holding task. Back preserves the current
+draft when leaving a picker. Saving a new account stays on Assets and offers
+Check balance in the confirmation notice.
 The global capture action is a 56-point ink circle with a line plus, centered
 beside the dock. Its accessible name remains New entry / 新记录.
 Asset changes opens the full 30-day dated valuation chart and basis notes;

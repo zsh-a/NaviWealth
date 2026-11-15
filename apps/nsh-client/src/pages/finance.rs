@@ -24,7 +24,7 @@ use crate::{
         field::{field, note, text_input},
         icon,
         segmented::{Segment, segmented},
-        sheet::task_sheet,
+        sheet::{initial_focus, retained, task_sheet},
         surface::{hairline, row_button},
         toast::show_toast,
     },
@@ -254,10 +254,10 @@ fn parts(t: &Transaction) -> Option<(Kind, Account, Account, i64)> {
 
 /// Owns its sheet, including dirty dismissal. `Some("")` starts a new entry.
 pub fn finance_editor(open: Signal<Option<String>>) -> impl IntoElement {
-    dynamic(move || match open.get() {
-        None => view().into_element(),
-        Some(id) => untracked(move || editor(id, open).into_element()),
-    })
+    retained(
+        move || open.get(),
+        move |id| editor(id, open).into_element(),
+    )
 }
 
 static NEXT: AtomicU64 = AtomicU64::new(0);
@@ -482,8 +482,11 @@ fn editor(id: String, open: Signal<Option<String>>) -> impl IntoElement {
         let selected = panel.get();
         untracked(move || match selected {
             Panel::Main => {
-                let focus = autofocus.with(|v| *v);
-                autofocus.replace(false);
+                let focus = if autofocus.replace(false) {
+                    initial_focus()
+                } else {
+                    element_ref()
+                };
                 view()
                     .gap_3()
                     .child(segmented(
@@ -528,7 +531,7 @@ fn editor(id: String, open: Signal<Option<String>>) -> impl IntoElement {
                                 text_input(form.amount)
                                     .label(|| s().money_amount)
                                     .placeholder("0.00")
-                                    .auto_focus(focus)
+                                    .element_ref(&focus)
                                     .keyboard_type(nsh_core::element::KeyboardType::Decimal)
                                     .typo(Type::LargeTitle)
                                     .tabular_nums()
@@ -1088,8 +1091,9 @@ pub(super) fn transaction_title(t: &Transaction) -> String {
 /// never acquire a spending sign merely because money leaves one own account.
 pub fn transaction_row(t: Transaction, on_press: impl Fn() + 'static) -> impl IntoElement {
     let investment = matches!(t.source, Source::Investment { .. });
+    let system_record = super::assets::balance_title(&t).is_some();
     let investment_cash = match &t.source {
-        Source::Investment { trade_id } => finance::holdings()
+        Source::Investment { trade_id } => finance::holdings_snapshot()
             .trades
             .iter()
             .find(|trade| trade.id == *trade_id)
@@ -1108,12 +1112,12 @@ pub fn transaction_row(t: Transaction, on_press: impl Fn() + 'static) -> impl In
                     Kind::Income => "+",
                     Kind::Transfer => "",
                 },
-                money::format(p.3)
+                crate::ui::currency::grouped(p.3)
             )
         })
         .unwrap_or_else(|| {
             if let Some(cash) = &investment_cash {
-                return money::format(
+                return crate::ui::currency::grouped(
                     t.postings
                         .iter()
                         .find(|p| p.account == *cash)
@@ -1122,7 +1126,7 @@ pub fn transaction_row(t: Transaction, on_press: impl Fn() + 'static) -> impl In
             }
             t.own_postings()
                 .next()
-                .map(|p| money::format(p.amount))
+                .map(|p| crate::ui::currency::grouped(p.amount))
                 .unwrap_or_else(|| "—".into())
         });
     let kind = parsed.as_ref().map_or_else(
@@ -1164,8 +1168,49 @@ pub fn transaction_row(t: Transaction, on_press: impl Fn() + 'static) -> impl In
         .next()
         .map_or(Currency::CNY, |p| p.account.currency());
     let accessibility = format!("{title}, {amount} {}, {sub}", currency.code());
+    // Keep the amount with its native currency on one baseline when it
+    // fits. Larger system text moves it below the record's metadata.
+    let amount_chars = amount.len();
+    let stacked = move || font_scale() > 1.2 || window().width.0 < 360.0 || amount_chars > 12;
+    let inline_amount = amount.clone();
+    let amount_style = if system_record {
+        Type::Body
+    } else {
+        Type::Figure
+    };
+    let title_style = if system_record {
+        Type::Callout
+    } else {
+        Type::Headline
+    };
+    let tint = if system_record {
+        color::MUTED
+    } else {
+        color::INK
+    };
+    // A balance check, not a setting: Sliders already names Settings.
+    let glyph = if system_record {
+        crate::ui::Icon::Check
+    } else if investment {
+        crate::ui::Icon::Chart
+    } else {
+        crate::ui::Icon::Wallet
+    };
     row_button(on_press)
+        .pl(px(super::rows::LEAD))
+        .pr(px(18.0))
+        .py(px(if system_record { 8.0 } else { 10.0 }))
+        .min_h(px(if system_record { 60.0 } else { 72.0 }))
+        .gap(px(14.0))
         .accessibility_label(move || Some(accessibility.clone().into()))
+        .child(super::rows::glyph(
+            glyph,
+            if system_record {
+                36.0
+            } else {
+                super::rows::THUMB
+            },
+        ))
         .child(
             view()
                 .flex_1()
@@ -1173,8 +1218,8 @@ pub fn transaction_row(t: Transaction, on_press: impl Fn() + 'static) -> impl In
                 .gap(px(3.0))
                 .child(
                     text(title)
-                        .typo(Type::Headline)
-                        .text_color(color::INK)
+                        .typo(title_style)
+                        .text_color(tint)
                         .number_of_lines(1),
                 )
                 .child(
@@ -1182,23 +1227,19 @@ pub fn transaction_row(t: Transaction, on_press: impl Fn() + 'static) -> impl In
                         .typo(Type::Subhead)
                         .text_color(color::MUTED)
                         .number_of_lines(1),
-                ),
-        )
-        .child(
-            view()
-                .items_end()
-                .child(
-                    text(amount)
-                        .typo(Type::Figure)
-                        .tabular_nums()
-                        .text_color(color::INK),
                 )
-                .child(
-                    text(currency.code())
-                        .typo(Type::Caption)
-                        .text_color(color::MUTED),
-                ),
+                .child(when(stacked, move || {
+                    crate::ui::currency::amount(amount.clone(), currency, amount_style, tint)
+                })),
         )
+        .child(when(
+            move || !stacked(),
+            move || {
+                crate::ui::currency::amount(inline_amount.clone(), currency, amount_style, tint)
+                    .justify_end()
+                    .max_w(px(156.0))
+            },
+        ))
 }
 
 #[cfg(test)]

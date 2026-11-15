@@ -23,9 +23,9 @@ pub fn card() -> View {
         .dark(|s| s.border_1().border_color(color::LINE))
 }
 
-/// A hairline between rows, inset from the leading edge by `inset`.
+/// A hairline between rows, with the same inset at both edges.
 pub fn hairline(inset: f32) -> View {
-    view().h(px(HAIRLINE)).ml(px(inset)).bg(color::LINE)
+    view().h(px(HAIRLINE)).mx(px(inset)).bg(color::LINE)
 }
 
 /// A section's title, a header for screen readers, with an optional
@@ -39,10 +39,11 @@ pub fn section_header(
         .items_center()
         .justify_between()
         .min_h(px(36.0))
+        .gap_3()
         .px(px(2.0))
         .child(
             text(title)
-                .typo(Type::Title)
+                .typo(Type::Headline)
                 .text_color(color::INK)
                 .role(AccessibilityRole::Header),
         )

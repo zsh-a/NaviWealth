@@ -17,7 +17,7 @@ use crate::{
         Btn, Icon, IconBtn, Type, Typo, Variant, color,
         feedback::spinner,
         field::{note, text_input},
-        sheet::fitted_task_sheet,
+        sheet::{fitted_task_sheet, initial_focus, retained},
         surface::{disclosure, hairline},
         toast::{show_receipt, show_toast},
         toggle::checkbox_row,
@@ -32,18 +32,17 @@ use nsh_core::{
 use std::rc::Rc;
 
 pub fn capture_editor(sheets: Sheets) -> impl IntoElement {
-    dynamic(move || {
-        if !sheets.capture.get() {
-            return view().into_element();
-        }
-        let id = sheets.capture_draft.get();
-        untracked(move || {
-            let kept = id
-                .and_then(|id| capture::get(&id))
-                .unwrap_or_else(capture::new);
-            editor(sheets, kept).into_element()
-        })
-    })
+    retained(
+        move || sheets.capture.get().then(|| sheets.capture_draft.get()),
+        move |id| {
+            untracked(move || {
+                let kept = id
+                    .and_then(|id| capture::get(&id))
+                    .unwrap_or_else(capture::new);
+                editor(sheets, kept).into_element()
+            })
+        },
+    )
 }
 
 fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
@@ -243,7 +242,7 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                         .child(checkbox_row(remember, || s().dont_ask_again.into()))
                         .into_element()
                 } else {
-                    content(draft, input, manual, picking, attach, close, choosing).into_element()
+                    content(draft, input, manual, close, choosing).into_element()
                 }
             })
         }))
@@ -332,23 +331,42 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                     })
                     .into_element();
             }
-            Btn::primary()
-                .label(move || {
-                    if status == Status::Failed {
-                        s().capture_retry
-                    } else if has_records {
-                        s().capture_update
-                    } else {
-                        s().capture_generate
-                    }
-                    .into()
-                })
-                .disabled(move || {
-                    picking.get()
-                        || (input.get().trim().is_empty()
-                            && draft.with(|d| d.photo.is_none() && d.input.trim().is_empty()))
-                })
-                .on_press(send)
+            view()
+                .flex_row()
+                .items_center()
+                .gap_2()
+                .child(when(
+                    move || draft.with(|d| d.status == Status::Editing),
+                    move || {
+                        IconBtn::new(Icon::Photo, || s().capture_photo.into())
+                            .variant(Variant::Tonal)
+                            .on_press(attach)
+                            .disabled(move || picking.get())
+                    },
+                ))
+                .child(
+                    view().flex_1().child(
+                        Btn::primary()
+                            .label(move || {
+                                if status == Status::Failed {
+                                    s().capture_retry
+                                } else if has_records {
+                                    s().capture_update
+                                } else {
+                                    s().capture_generate
+                                }
+                                .into()
+                            })
+                            .disabled(move || {
+                                picking.get()
+                                    || (input.get().trim().is_empty()
+                                        && draft.with(|d| {
+                                            d.photo.is_none() && d.input.trim().is_empty()
+                                        }))
+                            })
+                            .on_press(send),
+                    ),
+                )
                 .into_element()
         })
     });
@@ -372,12 +390,15 @@ fn content(
     draft: Signal<Draft>,
     input: Signal<String>,
     manual: Signal<bool>,
-    picking: Signal<bool>,
-    attach: impl Fn() + Copy + 'static,
     close: impl Fn() + Copy + 'static,
     choosing: Signal<Option<accounts::Choice>>,
 ) -> impl IntoElement {
     let sheets = Sheets::get();
+    let focus = if draft.with_untracked(|d| d.status == Status::Editing) {
+        initial_focus()
+    } else {
+        element_ref()
+    };
     view()
         .gap_4()
         .child(
@@ -489,19 +510,17 @@ fn content(
                                 .text_color(color::INK)
                         },
                     ))
-                    .child(
-                        text(move || {
-                            if draft.with(|d| d.status == Status::Editing) {
-                                s().capture_prompt
-                            } else {
-                                s().capture_correction
-                            }
-                        })
-                        .typo(Type::Headline)
-                        .text_color(color::INK),
-                    )
+                    .child(when(
+                        move || draft.with(|d| d.status != Status::Editing),
+                        || {
+                            text(|| s().capture_correction)
+                                .typo(Type::Headline)
+                                .text_color(color::INK)
+                        },
+                    ))
                     .child(
                         text_input(input)
+                            .element_ref(&focus)
                             .multiline(true)
                             .h(px(96.0))
                             .label(|| s().capture_prompt)
@@ -548,24 +567,14 @@ fn content(
                                             )
                                     },
                                 ))
-                                .child(
-                                    Btn::tonal()
-                                        .icon(Icon::Photo)
-                                        .label(|| s().capture_photo.into())
-                                        .disabled(move || picking.get())
-                                        .on_press(attach),
-                                )
-                                .child(
-                                    text(move || {
-                                        if settings::ready_account().is_some() {
-                                            s().capture_hint
-                                        } else {
-                                            s().capture_setup
-                                        }
-                                    })
-                                    .typo(Type::Subhead)
-                                    .text_color(color::MUTED),
-                                )
+                                .child(when(
+                                    || settings::ready_account().is_none(),
+                                    || {
+                                        text(|| s().capture_setup)
+                                            .typo(Type::Subhead)
+                                            .text_color(color::MUTED)
+                                    },
+                                ))
                         },
                     ))
             }),

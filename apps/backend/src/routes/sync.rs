@@ -24,58 +24,6 @@ fn caller_owns_prefix(wire_table: &str, claim_domains: &[String]) -> bool {
         .is_some_and(|domain| claim_domains.iter().any(|candidate| candidate == domain))
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn s(v: &str) -> String {
-        v.to_string()
-    }
-
-    #[test]
-    fn finance_only_claim_accepts_fin_rows() {
-        let claim = vec![s("finance")];
-        assert!(caller_owns_prefix("fin:accounts", &claim));
-        assert!(caller_owns_prefix("fin:journal_entries", &claim));
-    }
-
-    #[test]
-    fn finance_only_claim_rejects_health_rows() {
-        let claim = vec![s("finance")];
-        assert!(!caller_owns_prefix("health:sleep_session", &claim));
-    }
-
-    #[test]
-    fn health_claim_accepts_health_rows() {
-        let claim = vec![s("finance"), s("health")];
-        assert!(caller_owns_prefix("health:hrv_daily", &claim));
-        assert!(caller_owns_prefix("fin:accounts", &claim));
-    }
-
-    #[test]
-    fn knowledge_claim_accepts_knowledge_rows() {
-        let claim = vec![s("finance"), s("knowledge")];
-        assert!(caller_owns_prefix("know:knowledge_notes", &claim));
-        assert!(caller_owns_prefix("fin:accounts", &claim));
-    }
-
-    #[test]
-    fn unprefixed_rows_are_always_rejected() {
-        let claim = vec![s("finance"), s("health")];
-        assert!(!caller_owns_prefix("accounts", &claim));
-        assert!(!caller_owns_prefix("", &claim));
-    }
-
-    #[test]
-    fn unknown_prefix_is_rejected_even_if_claim_contains_it() {
-        // The recognised-domain set is curated server-side; a claim
-        // can't grow it by listing a name that the server doesn't
-        // already accept.
-        let claim = vec![s("finance"), s("time")];
-        assert!(!caller_owns_prefix("time:slot", &claim));
-    }
-}
-
 const SYNC_BODY_LIMIT: usize = 1024 * 1024;
 const SYNC_MAX_CHANGES: usize = 500;
 const PER_ROW_PAYLOAD_LIMIT: usize = 64 * 1024;
@@ -313,4 +261,56 @@ fn log_request(status: u16, code: &str, started_ms: i64, metrics: &SyncMetrics) 
         metrics.dropped_push,
         metrics.dropped_pull,
     );
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn s(v: &str) -> String {
+        v.to_string()
+    }
+
+    #[test]
+    fn finance_only_claim_accepts_fin_rows() {
+        let claim = vec![s("finance")];
+        assert!(caller_owns_prefix("fin:accounts", &claim));
+        assert!(caller_owns_prefix("fin:journal_entries", &claim));
+    }
+
+    #[test]
+    fn finance_only_claim_rejects_health_rows() {
+        let claim = vec![s("finance")];
+        assert!(!caller_owns_prefix("health:sleep_session", &claim));
+    }
+
+    #[test]
+    fn health_claim_accepts_health_rows() {
+        let claim = vec![s("finance"), s("health")];
+        assert!(caller_owns_prefix("health:hrv_daily", &claim));
+        assert!(caller_owns_prefix("fin:accounts", &claim));
+    }
+
+    #[test]
+    fn knowledge_claim_accepts_knowledge_rows() {
+        let claim = vec![s("finance"), s("knowledge")];
+        assert!(caller_owns_prefix("know:knowledge_notes", &claim));
+        assert!(caller_owns_prefix("fin:accounts", &claim));
+    }
+
+    #[test]
+    fn unprefixed_rows_are_always_rejected() {
+        let claim = vec![s("finance"), s("health")];
+        assert!(!caller_owns_prefix("accounts", &claim));
+        assert!(!caller_owns_prefix("", &claim));
+    }
+
+    #[test]
+    fn unknown_prefix_is_rejected_even_if_claim_contains_it() {
+        // The recognised-domain set is curated server-side; a claim
+        // can't grow it by listing a name that the server doesn't
+        // already accept.
+        let claim = vec![s("finance"), s("time")];
+        assert!(!caller_owns_prefix("time:slot", &claim));
+    }
 }

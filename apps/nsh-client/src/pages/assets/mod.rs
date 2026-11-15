@@ -28,17 +28,7 @@ use nsh_core::{element::Screen, prelude::*};
 
 /// Group display digits without changing exact minor units or editable input.
 fn display_money(value: i64) -> String {
-    let raw = money::format(value);
-    let (whole, fraction) = raw.split_once('.').expect("money has two decimal places");
-    let (sign, digits) = whole.strip_prefix('-').map_or(("", whole), |d| ("-", d));
-    let mut grouped = String::from(sign);
-    for (i, ch) in digits.chars().enumerate() {
-        if i > 0 && (digits.len() - i).is_multiple_of(3) {
-            grouped.push(',');
-        }
-        grouped.push(ch);
-    }
-    format!("{grouped}.{fraction}")
+    crate::ui::currency::grouped(value)
 }
 
 pub(super) fn amount(value: i64, style: Type) -> impl IntoElement {
@@ -56,13 +46,17 @@ pub(super) fn amount_in(
         format!("{} {}", currency.code(), display_money(value))
     })
     .typo(style)
+    .number_of_lines(1)
+    .shrink_to_fit(0.65)
+    .min_w(px(0.0))
+    .flex_shrink(1.0_f32)
     .tabular_nums()
     .text_color(color::INK)
 }
 
 pub fn account_page(name: &str) -> Screen {
     let own = signal(Account::parse(name).expect("account route created from a valid account"));
-    let balance = signal(false);
+    let balance = signal(editor::take_created_check(name));
     let rename = signal(false);
     let transaction = signal(None::<String>);
     let shown = signal(50usize);

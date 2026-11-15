@@ -15,7 +15,6 @@ use finance_core::{
     account::{Account, AccountKind, defaults},
     currency::Currency,
     import::{Status, store::Correction},
-    money,
     statement::{self, Kind},
 };
 use nsh_base::nav_page;
@@ -86,7 +85,7 @@ pub fn statement_import_page() -> Screen {
                 for (i,c) in rows.into_iter().enumerate().take(shown.get()){
                     let selected=draft.is_selected(i,&c);
                     let status=match c.status{Status::New=>tr::ready(),Status::Duplicate=>tr::duplicate(),Status::PossibleDuplicate=>tr::possible(),Status::NeedsAccount=>tr::method(),Status::NeedsAttention=>tr::attention()};
-                    let title=format!("{} · {} {}",c.row.payee.clone().unwrap_or_else(||c.row.description.clone()),money::format(c.row.amount),c.row.currency);
+                    let title=format!("{} · {} {}",c.row.payee.clone().unwrap_or_else(||c.row.description.clone()),crate::ui::currency::grouped(c.row.amount),c.row.currency);
                     let detail=format!("{} · {} · {}",c.row.at.date(),status,super::finance::category_label(&c.category));
                     let selectable=matches!(c.status,Status::New|Status::PossibleDuplicate)&&c.transaction.is_some();
                     let mut row=view().gap_1().py_2().child(text(title).typo(Type::Headline).text_color(color::INK)).child(text(detail).typo(Type::Subhead).text_color(color::MUTED));

@@ -108,7 +108,6 @@ pub struct Strings {
     pub account_exists: &'static str,
     pub rename_running: &'static str,
     pub account_created: &'static str,
-    pub account_create_hint: &'static str,
     pub assets_trend: &'static str,
     pub assets_trend_empty: &'static str,
     pub balance_readonly: &'static str,
@@ -122,7 +121,6 @@ pub struct Strings {
     pub capture_payee: &'static str,
     pub capture_prompt: &'static str,
     pub capture_placeholder: &'static str,
-    pub capture_hint: &'static str,
     pub capture_photo: &'static str,
     pub capture_remove_photo: &'static str,
     pub capture_generate: &'static str,
@@ -150,7 +148,6 @@ pub struct Strings {
     pub capture_consent_body: &'static str,
     pub capture_too_long: &'static str,
     pub capture_weight_replace: &'static str,
-    pub recorded_spending: &'static str,
     pub transaction_details: &'static str,
     pub add_details: &'static str,
     pub error_time: &'static str,
@@ -510,6 +507,26 @@ impl Strings {
         }
     }
 
+    /// Today's records header: how many, and the day's spending when any
+    /// (one exact amount per currency, never converted).
+    pub fn records_summary(&self, n: usize, meals_only: bool, spent: &[String]) -> String {
+        let count = match (meals_only, self.zh(), n) {
+            (true, _, _) => self.meal_count(n),
+            (false, true, _) => format!("{n} 条"),
+            (false, false, 1) => "1 record".to_owned(),
+            (false, false, _) => format!("{n} records"),
+        };
+        if spent.is_empty() {
+            return count;
+        }
+        let spent = spent.join(" / ");
+        if self.zh() {
+            format!("{count} · 支出 {spent}")
+        } else {
+            format!("{count} · Spent {spent}")
+        }
+    }
+
     pub fn food_count(&self, n: usize) -> String {
         match (self.zh(), n) {
             (true, _) => format!("{n} 种食物"),
@@ -661,6 +678,11 @@ mod tests {
         let (en, zh) = (strings(Lang::En), strings(Lang::Zh));
         assert_eq!(en.meal_count(1), "1 meal");
         assert_eq!(en.meal_count(3), "3 meals");
+        assert_eq!(en.records_summary(1, false, &[]), "1 record");
+        assert_eq!(
+            en.records_summary(3, false, &["¥12.00".into(), "USD 3.00".into()]),
+            "3 records · Spent ¥12.00 / USD 3.00"
+        );
         assert_eq!(zh.meal_count(3), "3 餐");
         assert_eq!(en.goal_status(1240.0, 2000.0), "760 kcal left");
         assert_eq!(zh.goal_status(2120.0, 2000.0), "超出 120 千卡");

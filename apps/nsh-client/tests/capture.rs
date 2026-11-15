@@ -26,10 +26,7 @@ fn transfer_completion_excludes_its_source_and_view_reveals_a_multi_day_batch() 
         app.press("Add account")?;
         app.type_text("label:Account name", name)?;
         app.press("Create account")?;
-        // Observe the completed navigation before leaving; a quiet frame on a
-        // loaded runner does not guarantee the engine has applied the save.
-        app.wait_for("Check balance")?;
-        app.press("label:Back")?;
+        app.wait_for("Account added")?;
     }
     app.press("label:Records")?;
     app.press("Meals")?;
@@ -46,7 +43,7 @@ fn transfer_completion_excludes_its_source_and_view_reveals_a_multi_day_batch() 
         "label:What would you like to record?",
         "Transfer 20 yuan and yesterday's weight 74.2 kg",
     )?;
-    app.press("Create draft")?;
+    app.press("Recognize")?;
     app.set_environment("IME dismissed", |e| {
         e.keyboard_height = nsh_core::geometry::Points(0.0)
     })?;
@@ -91,11 +88,10 @@ fn account_completion_is_local_durable_and_never_posts_before_confirmation() -> 
     app.press("Add account")?;
     app.type_text("label:Account name", "Cash")?;
     app.press("Create account")?;
-    app.wait_for("Check balance")?;
-    app.press("label:Back")?;
+    app.wait_for("Account added")?;
     app.press("label:New entry")?;
     app.type_text("label:What would you like to record?", "Lunch 32 yuan")?;
-    app.press("Create draft")?;
+    app.press("Recognize")?;
     app.wait_for("Which account was used?")?;
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
     db.execute_batch("CREATE TRIGGER reject_draft BEFORE UPDATE ON capture_drafts BEGIN SELECT RAISE(ABORT,'disk failure'); END;").unwrap();
@@ -181,7 +177,7 @@ fn natural_correction_then_batch_confirmation_is_atomic_and_survives_restart() -
         "label:What would you like to record?",
         "Record lunch spending, the meal and today's weight 74.2 kg",
     )?;
-    app.press("Create draft")?;
+    app.press("Recognize")?;
     app.wait_for("Which account was used?")?;
     assert!(!app.screen().enabled("text:/^Confirm and save/")?);
     app.type_text(
@@ -290,7 +286,7 @@ fn interrupted_text_is_kept_and_malformed_model_money_cannot_be_saved() -> Resul
         Some(network(200, record_reply(vec![bad]))),
     );
     app.press("label:What would you like to record?")?;
-    app.press("Create draft")?;
+    app.press("Recognize")?;
     app.wait_for("Open settings…")?;
     assert!(!app.shows("text:/^Confirm and save/"));
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
@@ -298,6 +294,77 @@ fn interrupted_text_is_kept_and_malformed_model_money_cannot_be_saved() -> Resul
         finance_core::repository::transactions(&db)
             .unwrap()
             .is_empty()
+    );
+    Ok(())
+}
+
+#[test]
+fn compact_photo_and_text_composer_keeps_the_same_draft_across_back_and_reopen()
+-> Result<(), String> {
+    use nsh_core::geometry::{Points, Size};
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, _) = start_in(Some(dir.path()), account(true), None);
+    app.set_viewport(Size::new(Points(360.0), Points(640.0)))?;
+    app.set_environment("small phone with IME", |e| {
+        e.font_scale = 1.3;
+        e.keyboard_height = Points(280.0);
+    })?;
+    app.press("label:New entry")?;
+    app.type_text(
+        "label:What would you like to record?",
+        "Lunch with a receipt",
+    )?;
+    picks_a_photo(&mut app);
+    app.press("Attach image")?;
+    app.wait_for("Remove image")?;
+    let action = app
+        .screen()
+        .layout_nodes()
+        .into_iter()
+        .find(|n| n.test_id.as_deref() == Some("task-actions"))
+        .unwrap();
+    assert!(
+        action.bounds.origin.y.0 + action.bounds.size.height.0 <= 360.5,
+        "recognition and photo actions stay above the IME: {:?}",
+        action.bounds
+    );
+    assert!(app.screen().enabled("Recognize")?);
+    app.back()?;
+    app.wait_for_gone("task-sheet", GONE)?;
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    let before: (String, String) = db
+        .query_row("SELECT id,body FROM capture_drafts", [], |r| {
+            Ok((r.get(0)?, r.get(1)?))
+        })
+        .unwrap();
+    let kept: nsh_app_naviwealth_health::domain::capture::Draft =
+        serde_json::from_str(&before.1).unwrap();
+    assert_eq!(kept.input, "Lunch with a receipt");
+    assert!(kept.photo.is_some());
+    app.set_environment("IME dismissed", |e| e.keyboard_height = Points(0.0))?;
+    app.press("label:What would you like to record?")?;
+    assert_eq!(
+        app.screen()
+            .input_text("label:What would you like to record?")?,
+        Some("Lunch with a receipt")
+    );
+    app.wait_for("Remove image")?;
+    app.press("label:Close")?;
+    app.wait_for_gone("task-sheet", GONE)?;
+    let after: (String, String) = db
+        .query_row("SELECT id,body FROM capture_drafts", [], |r| {
+            Ok((r.get(0)?, r.get(1)?))
+        })
+        .unwrap();
+    assert_eq!(
+        before, after,
+        "reopening and closing preserves the durable draft identity and data"
+    );
+    assert_eq!(
+        db.query_row("SELECT COUNT(*) FROM capture_drafts", [], |r| r
+            .get::<_, i64>(0))
+            .unwrap(),
+        1
     );
     Ok(())
 }

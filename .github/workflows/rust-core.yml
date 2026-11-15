@@ -1,0 +1,48 @@
+name: Rust domain cores
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'crates/**'
+      - 'third_party/agent-runtime'
+      - 'rust-toolchain.toml'
+      - '.cargo/config.toml'
+      - '.github/workflows/rust-core.yml'
+  pull_request:
+    paths:
+      - 'crates/**'
+      - 'third_party/agent-runtime'
+      - 'rust-toolchain.toml'
+      - '.cargo/config.toml'
+      - '.github/workflows/rust-core.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rust-core-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        crate: [lifeos-core, finance-core, health-core]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - name: Install configured Rust toolchain
+        run: |
+          rustup toolchain install
+          rustc -Vv
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: crates/${{ matrix.crate }}
+      - run: cargo fmt --manifest-path crates/${{ matrix.crate }}/Cargo.toml --all -- --check
+      - run: cargo clippy --manifest-path crates/${{ matrix.crate }}/Cargo.toml --all-targets --locked -- -D warnings
+      - run: cargo test --manifest-path crates/${{ matrix.crate }}/Cargo.toml --locked

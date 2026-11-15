@@ -107,7 +107,6 @@ pub fn home_page() -> Screen {
                 .child(pane(Tab::Records, records_tab()))
                 .child(pane(Tab::Assets, super::assets::assets_tab()))
                 .child(pane(Tab::Review, review_tab()))
-                .child(fade())
                 .child(dock(sheets))
                 .child(
                     view()
@@ -160,21 +159,6 @@ fn pane(tab: Tab, content: impl IntoElement) -> impl IntoElement {
         .child(content)
 }
 
-/// The content fades into the canvas under the bar.
-fn fade() -> impl IntoElement {
-    view()
-        .absolute()
-        .left_0()
-        .right_0()
-        .bottom_0()
-        .h(move || px(DOCK + DOCK_GAP + safe_area().bottom.0))
-        .pointer_events(PointerEvents::None)
-        .bg_linear_to_t()
-        .gradient_from(color::CANVAS)
-        .gradient_via(color::CANVAS.opacity(0.35))
-        .gradient_to(color::CANVAS.opacity(0.0))
-}
-
 fn dock(sheets: Sheets) -> impl IntoElement {
     view()
         .absolute()
@@ -209,7 +193,9 @@ fn dock(sheets: Sheets) -> impl IntoElement {
                     s.top(px(6.0))
                         .bottom(px(6.0))
                         .rounded_full()
-                        .bg(color::SURFACE_2)
+                        // An ink tint reads on translucent glass in both
+                        // appearances; an opaque well read as a grey patch.
+                        .bg(color::INK.opacity(0.07))
                 })
                 .children(Tab::ALL.map(tab_item)),
         )

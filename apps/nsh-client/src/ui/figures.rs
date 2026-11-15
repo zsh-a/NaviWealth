@@ -16,11 +16,13 @@ use crate::domain::{format, nutrition::Nutrients};
 /// with reduced motion.
 pub fn counted(value: impl Fn() -> f64 + 'static) -> Signal<f64> {
     let target = computed(value);
-    let shown = signal(0.0_f64);
+    // Existing data must be readable on the first frame. Only a later edit
+    // earns a brief transition; mounting a page never counts up from zero.
+    let shown = signal(untracked(|| target.get()));
     effect(move || {
         let to = target.get();
         let from = shown.get_untracked();
-        if untracked(reduce_motion) || (to - from).abs() < 0.5 {
+        if untracked(reduce_motion) || from == 0.0 || (to - from).abs() < 0.5 {
             shown.set(to);
             return;
         }
@@ -30,7 +32,7 @@ pub fn counted(value: impl Fn() -> f64 + 'static) -> Signal<f64> {
             loop {
                 timer(Duration::from_millis(16)).await;
                 let t =
-                    (started.elapsed().as_secs_f64() * 1000.0 / f64::from(motion::SLOWER)).min(1.0);
+                    (started.elapsed().as_secs_f64() * 1000.0 / f64::from(motion::FAST)).min(1.0);
                 let eased = 1.0 - (1.0 - t).powi(3);
                 shown.set(from + (to - from) * eased);
                 if t >= 1.0 {

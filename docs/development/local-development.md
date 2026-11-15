@@ -1,6 +1,62 @@
 # Local Development Guide
 
-End-to-end setup for running NaviWealth locally (backend + Flutter app).
+Rust environment setup for the native client and domain cores, followed by
+the maintenance setup for the frozen backend + Flutter app.
+
+## Rust environment (native client and domain cores)
+
+The repository defaults to the rolling `nightly` channel in
+`rust-toolchain.toml`, matching the NSH client. It installs rustfmt, Clippy,
+Android arm64 and the backend's Wasm target using the minimal profile. CI uses
+these files too. Run `rtk rustup update nightly` to refresh nightly locally;
+keep the root and NSH channel settings aligned. For an exact compiler
+reproduction, record `rustc -Vv` and select the corresponding dated nightly
+with `cargo +nightly-YYYY-MM-DD`. `rust-version` in package manifests is a
+minimum supported version, not the selected development channel.
+Third-party submodules retain their own toolchain files.
+
+From the repository root:
+
+```bash
+rtk rustup toolchain install
+rtk rustup show active-toolchain
+rtk git submodule update --init --recursive
+rtk cargo fmt --manifest-path crates/finance-core/Cargo.toml --all -- --check
+rtk cargo clippy --manifest-path crates/finance-core/Cargo.toml --all-targets --locked -- -D warnings
+rtk cargo test --manifest-path crates/finance-core/Cargo.toml --locked
+```
+
+Repeat the last three commands for `crates/health-core/Cargo.toml` and
+`apps/nsh-client/Cargo.toml`. These are independent Cargo workspaces; there is
+no root `Cargo.toml`. CI checks both domain cores on relevant pushes and PRs;
+the NSH workflow remains manually dispatched. Keep each workspace's
+`Cargo.lock` committed and use `--locked` for checks. Dependency updates are
+explicit `cargo update` changes reviewed with their lockfile diffs.
+
+The NSH Linux host needs Clang/libclang, GTK 4 and GStreamer development
+packages (Ubuntu: `clang libclang-dev libgtk-4-dev libgstreamer1.0-dev
+libgstreamer-plugins-base1.0-dev`). Android packaging additionally needs Java
+17, the Android SDK, NDK and NSH CLI; see the pinned versions in
+`.github/workflows/nsh-client.yml`.
+
+`.cargo/config.toml` provides backtraces and debug logs for first-party crates
+while respecting existing `RUST_BACKTRACE` and `RUST_LOG` environment values.
+Development and test builds retain line tables to limit disk usage. For
+debugger variable inspection, set `CARGO_PROFILE_DEV_DEBUG=2`; for compiler
+diagnostics, use `rtk cargo build -vv --manifest-path <path>`. Release profiles
+remain owned by each application manifest.
+
+Cargo discovers configuration from the command's current directory, not the
+`--manifest-path` directory. Run backend commands from `apps/backend` so its
+Wasm-specific rustflags are loaded. Toolchain selection also follows the
+current directory; enter a third-party submodule to use its own pin.
+Avoid global target/linker flags or `target-cpu=native` in shared config;
+let NSH configure Android linking and Cargo select parallelism. Optional
+machine-specific caches can be enabled with `RUSTC_WRAPPER=sccache` after
+installing sccache. See the official [Cargo configuration reference](https://doc.rust-lang.org/cargo/reference/config.html)
+and [rustup toolchain selection](https://rust-lang.github.io/rustup/overrides.html).
+
+## Frozen Flutter and backend maintenance
 
 NaviWealth is a Personal LifeOS with FinanceOS always on and HealthOS,
 KnowledgeOS, and ExecutionOS available as opt-in domains. AI runs device-only

@@ -12,7 +12,7 @@ use super::{
     drafts::drafts_section,
     finance::transaction_row,
     home::{Sheets, dock_clearance},
-    rows::{INSET, meal_row, weight_row},
+    rows::{INSET, TEXT_INSET, divider, meal_row, weight_row},
 };
 use crate::{
     data::{clock, finance, meals, photos, weights},
@@ -28,7 +28,7 @@ use crate::{
         icon,
         segmented::{Segment, segmented},
         space,
-        surface::{card, hairline},
+        surface::card,
     },
 };
 
@@ -172,7 +172,7 @@ pub fn records_tab() -> impl IntoElement {
                     )
                     .child(
                         IconBtn::new(Icon::Calendar, || s().go_to_day.into())
-                            .variant(Variant::Secondary)
+                            .variant(Variant::Ghost)
                             .on_press(move || sheets.jump.set(true)),
                     ),
             )
@@ -366,10 +366,14 @@ fn day_section(records: DayRecords) -> impl IntoElement {
                 .px(px(4.0))
                 .mt(px(-8.0))
                 .child(
-                    text(format!("{} ¥{}", s().spending, money::format(amount)))
-                        .typo(Type::Subhead)
-                        .tabular_nums()
-                        .text_color(color::MUTED),
+                    text(format!(
+                        "{} ¥{}",
+                        s().spending,
+                        crate::ui::currency::grouped(amount)
+                    ))
+                    .typo(Type::Subhead)
+                    .tabular_nums()
+                    .text_color(color::MUTED),
                 )
                 .child(kcal.map(|kcal| {
                     text(kcal)
@@ -402,6 +406,12 @@ fn day_section(records: DayRecords) -> impl IntoElement {
                         .into_iter()
                         .enumerate()
                         .map(move |(i, entry)| {
+                            // Weight rows have no leading footprint.
+                            let inset = if matches!(entry, Entry::Weight(_)) {
+                                INSET
+                            } else {
+                                TEXT_INSET
+                            };
                             let row = match entry {
                                 Entry::Meal(meal) => meal_row(meal).into_element(),
                                 Entry::Transaction(transaction) => {
@@ -416,7 +426,7 @@ fn day_section(records: DayRecords) -> impl IntoElement {
                                         .into_element()
                                 }
                             };
-                            view().child((i > 0).then(|| hairline(INSET))).child(row)
+                            view().child((i > 0).then(|| divider(inset))).child(row)
                         }),
                 )
         }))

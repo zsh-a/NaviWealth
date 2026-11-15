@@ -58,7 +58,7 @@ fn a_photo_is_sent_only_after_consent_and_becomes_editable_foods() -> Result<(),
     app.wait_for("text:/api.anthropic.com/")?;
     assert!(stub.requests().is_empty(), "nothing is sent before consent");
 
-    app.press("Create draft")?;
+    app.press("Recognize")?;
     app.wait_for("text:White rice")?;
     let requests = stub.requests();
     assert_eq!(requests.len(), 1);
@@ -109,7 +109,7 @@ fn declining_consent_sends_nothing() -> Result<(), String> {
     app.press("label:Back")?;
     app.wait_for("Attach image")?;
     assert!(stub.requests().is_empty());
-    assert!(app.shows("Create draft"));
+    assert!(app.shows("Recognize"));
     Ok(())
 }
 
