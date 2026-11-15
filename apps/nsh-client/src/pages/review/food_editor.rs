@@ -9,7 +9,9 @@ use crate::{
     data::meals,
     domain::{
         format::{self, field_number, parse_number},
-        nutrition::{Food, FoodSource, MAX_GRAMS, Nutrients, clean_name, valid_grams},
+        nutrition::{
+            ExtraNutrients, Food, FoodSource, MAX_GRAMS, Nutrients, clean_name, valid_grams,
+        },
     },
     i18n::s,
     ui::{
@@ -61,11 +63,20 @@ pub fn FoodEditor() -> impl IntoElement {
             field_number(value)
         }
     };
+    // Fields 0-3 are the core per-100 g nutrients; 4-7 the extras (sodium
+    // is typed and shown in mg, stored in grams like every other nutrient).
+    let extras = base.per_100g.extra;
     let initial = [
         number(base.per_100g.kcal),
         number(base.per_100g.protein),
         number(base.per_100g.carbs),
         number(base.per_100g.fat),
+        extras.map(|e| number(e.fiber)).unwrap_or_default(),
+        extras.map(|e| number(e.sugars)).unwrap_or_default(),
+        extras
+            .map(|e| number(e.sodium * 1000.0))
+            .unwrap_or_default(),
+        extras.map(|e| number(e.sat_fat)).unwrap_or_default(),
     ];
     let name = signal(base.name.clone());
     let grams = signal(if is_new {
@@ -75,10 +86,11 @@ pub fn FoodEditor() -> impl IntoElement {
     });
     let fields = initial.clone().map(signal);
     let details_open = signal(is_new);
+    let extras_open = signal(!is_new && base.per_100g.extra.is_some());
     let attempted = signal(false);
     // A recent food the user picked: kept as it was (its source and exact
     // nutrients) unless its nutrients are then changed.
-    let picked: Stored<Option<(Food, [String; 4])>> = stored(None);
+    let picked: Stored<Option<(Food, [String; 8])>> = stored(None);
     let recent = if is_new {
         let in_meal: Vec<String> = draft
             .foods
@@ -92,11 +104,18 @@ pub fn FoodEditor() -> impl IntoElement {
         Vec::new()
     };
     let pick = move |food: &Food| {
+        let extras = food.per_100g.extra;
         let values = [
             field_number(food.per_100g.kcal),
             field_number(food.per_100g.protein),
             field_number(food.per_100g.carbs),
             field_number(food.per_100g.fat),
+            extras.map(|e| field_number(e.fiber)).unwrap_or_default(),
+            extras.map(|e| field_number(e.sugars)).unwrap_or_default(),
+            extras
+                .map(|e| field_number(e.sodium * 1000.0))
+                .unwrap_or_default(),
+            extras.map(|e| field_number(e.sat_fat)).unwrap_or_default(),
         ];
         batch(|| {
             name.set(food.name.clone());
@@ -105,17 +124,31 @@ pub fn FoodEditor() -> impl IntoElement {
                 field.set(value.clone());
             }
             details_open.set(false);
+            extras_open.set(false);
         });
         picked.replace(Some((food.clone(), values)));
     };
 
     let parsed_grams = move || grams.with(|g| parse_number(g));
+    let parsed_extras = move || {
+        let value = |index: usize| fields[index + 4].with(|f| parse_number(f));
+        if (0..4).all(|index| value(index).is_none()) {
+            return None;
+        }
+        Some(ExtraNutrients {
+            fiber: value(0).unwrap_or(0.0),
+            sugars: value(1).unwrap_or(0.0),
+            sodium: value(2).map(|mg| mg / 1000.0).unwrap_or(0.0),
+            sat_fat: value(3).unwrap_or(0.0),
+        })
+    };
     let per_100g = move || {
         let value = |index: usize| fields[index].with(|f| parse_number(f)).unwrap_or(0.0);
         let mut nutrients = Nutrients::new(value(0), value(1), value(2), value(3));
         if fields[0].with(|f| f.trim().is_empty()) && nutrients.macro_kcal() > 0.0 {
             nutrients.kcal = nutrients.macro_kcal().round();
         }
+        nutrients.extra = parsed_extras();
         nutrients
     };
     let name_error = move || attempted.get() && name.with(|n| n.trim().is_empty());
@@ -138,6 +171,9 @@ pub fn FoodEditor() -> impl IntoElement {
         let nutrients_valid = untracked(nutrients_ok);
         if !nutrients_valid {
             details_open.set(true);
+            if nutrients.extra.is_some() {
+                extras_open.set(true);
+            }
         }
         let (Some(grams_value), false, true) = (grams_value, clean.is_empty(), nutrients_valid)
         else {
@@ -337,6 +373,19 @@ pub fn FoodEditor() -> impl IntoElement {
                         .tabular_nums()
                         .text_color(color::MUTED),
                     )
+                    .child(when(
+                        move || {
+                            parsed_grams().is_some_and(|g| g > 0.0) && per_100g().extra.is_some()
+                        },
+                        move || {
+                            let eaten = per_100g().for_grams(parsed_grams().unwrap_or(0.0));
+                            let extra = eaten.extra.unwrap_or_default();
+                            text(s().extras_line(&extra, true))
+                                .typo(Type::Subhead)
+                                .tabular_nums()
+                                .text_color(color::MUTED)
+                        },
+                    ))
             },
         ))
         .child(
@@ -364,6 +413,29 @@ pub fn FoodEditor() -> impl IntoElement {
                             move || nutrients_error().then(|| s().error_nutrients.into()),
                             || true,
                         ))
+                })),
+        )
+        .child(
+            view()
+                .gap_3()
+                .child(disclosure(extras_open, || s().more_nutrition.into()))
+                .child(when(extras_open, move || {
+                    view()
+                        .gap_3()
+                        .child(
+                            view()
+                                .flex_row()
+                                .gap_3()
+                                .child(nutrient(fields[4], || s().fiber, || "g"))
+                                .child(nutrient(fields[5], || s().sugars, || "g")),
+                        )
+                        .child(
+                            view()
+                                .flex_row()
+                                .gap_3()
+                                .child(nutrient(fields[6], || s().sodium, || s().mg_unit))
+                                .child(nutrient(fields[7], || s().sat_fat, || "g")),
+                        )
                 })),
         )
         .child(

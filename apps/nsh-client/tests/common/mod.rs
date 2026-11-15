@@ -14,7 +14,7 @@ pub use naviwealth_app::{
     App,
     domain::{
         meal::{Day, Meal, MealSlot, encode_meals},
-        nutrition::{Food, FoodSource, Nutrients},
+        nutrition::{ExtraNutrients, Food, FoodSource, Nutrients},
     },
 };
 pub use nsh_core::{ImageData, picker::PickedFile, platform::HttpRequest};
@@ -88,9 +88,11 @@ pub fn estimate() -> Value {
         "title": "Beef noodle soup",
         "foods": [
             { "name": "Beef noodle soup", "grams": 480, "catalog_id": null, "confidence": "medium",
-              "per_100g": { "kcal": 92, "protein": 5.6, "carbs": 11.8, "fat": 2.6 } },
+              "per_100g": { "kcal": 92, "protein": 5.6, "carbs": 11.8, "fat": 2.6,
+                            "fiber": 1.2, "sugars": 1.5, "sat_fat": 1.0, "sodium_mg": 480.0 } },
             { "name": "White rice", "grams": 150, "catalog_id": "168878", "confidence": "high",
-              "per_100g": { "kcal": 1, "protein": 1, "carbs": 1, "fat": 1 } }
+              "per_100g": { "kcal": 1, "protein": 1, "carbs": 1, "fat": 1,
+                            "fiber": null, "sugars": null, "sat_fat": null, "sodium_mg": null } }
         ]
     });
     json!({
@@ -180,7 +182,12 @@ pub fn pasta_today() -> Vec<(String, String)> {
             id: 1,
             name: "Pasta".to_owned(),
             grams: 300.0,
-            per_100g: Nutrients::new(100.0, 4.0, 20.0, 1.0),
+            per_100g: Nutrients::new(100.0, 4.0, 20.0, 1.0).with_extra(ExtraNutrients {
+                fiber: 2.5,
+                sugars: 1.2,
+                sodium: 0.004,
+                sat_fat: 0.3,
+            }),
             source: FoodSource::Catalog {
                 fdc_id: "168927".to_owned(),
             },

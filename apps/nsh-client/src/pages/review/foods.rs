@@ -15,7 +15,7 @@ use crate::{
     data::photos,
     domain::{
         ProviderError, VisionFailure, format,
-        nutrition::{Food, FoodSource, total},
+        nutrition::{Food, FoodSource, extras_complete, total},
     },
     i18n::{Strings, s},
     nav::{self, Route},
@@ -73,6 +73,17 @@ fn summary(draft: Draft) -> impl IntoElement {
                 [|| s().protein, || s().carbs, || s().fat],
                 move || sum.get(),
                 || true,
+            ))
+            .child(when(
+                move || sum.get().extra.is_some(),
+                move || {
+                    let extra = sum.get().extra.unwrap_or_default();
+                    let complete = draft.foods.with(|foods| extras_complete(foods));
+                    text(s().extras_line(&extra, complete))
+                        .typo(Type::Caption)
+                        .tabular_nums()
+                        .text_color(color::MUTED)
+                },
             )),
     )
 }

@@ -12,7 +12,7 @@ mod zh;
 
 use nsh_core::prelude::*;
 
-use crate::domain::{format, meal::Day, recognition::Lang};
+use crate::domain::{format, meal::Day, nutrition::ExtraNutrients, recognition::Lang};
 
 /// Every string of the interface.
 pub struct Strings {
@@ -362,6 +362,12 @@ pub struct Strings {
     pub increase: &'static str,
     pub per_100g: &'static str,
     pub energy: &'static str,
+    pub fiber: &'static str,
+    pub sugars: &'static str,
+    pub sodium: &'static str,
+    pub sat_fat: &'static str,
+    pub mg_unit: &'static str,
+    pub more_nutrition: &'static str,
     pub source_manual: &'static str,
     pub edit: &'static str,
     pub done: &'static str,
@@ -587,6 +593,39 @@ impl Strings {
             format!("{} 克 · {} 千卡", format::grams(grams), format::kcal(kcal))
         } else {
             format!("{} g · {} kcal", format::grams(grams), format::kcal(kcal))
+        }
+    }
+
+    /// The fibre, sugars, sodium and saturated fat a food or meal holds,
+    /// for the review pages. `complete` is false when some of the foods
+    /// keep no extra values, so the sum is partial.
+    pub fn extras_line(&self, extra: &ExtraNutrients, complete: bool) -> String {
+        let partial: &str = if complete {
+            ""
+        } else if self.zh() {
+            "（部分记录）"
+        } else {
+            " (partial)"
+        };
+        let mg = extra.sodium.max(0.0) * 1000.0;
+        if self.zh() {
+            format!(
+                "膳食纤维 {} 克 · 糖 {} 克 · 钠 {} 毫克 · 饱和脂肪 {} 克{}",
+                format::grams(extra.fiber),
+                format::grams(extra.sugars),
+                format::grams(mg),
+                format::grams(extra.sat_fat),
+                partial
+            )
+        } else {
+            format!(
+                "Fiber {} g · Sugars {} g · Sodium {} mg · Sat. fat {} g{}",
+                format::grams(extra.fiber),
+                format::grams(extra.sugars),
+                format::grams(mg),
+                format::grams(extra.sat_fat),
+                partial
+            )
         }
     }
 

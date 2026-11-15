@@ -262,6 +262,17 @@ fn record_view(
                         .tabular_nums()
                         .text_color(color::INK),
                 )
+                .child((total.extra.is_some()).then(|| {
+                    let extra = total.extra.unwrap_or_default();
+                    let complete = estimate
+                        .foods
+                        .iter()
+                        .all(|food| food.per_100g.extra.is_some());
+                    text(s().extras_line(&extra, complete))
+                        .typo(Type::Subhead)
+                        .tabular_nums()
+                        .text_color(color::MUTED)
+                }))
                 .children(estimate.foods.iter().map(|food| {
                     line(
                         food.name.clone(),

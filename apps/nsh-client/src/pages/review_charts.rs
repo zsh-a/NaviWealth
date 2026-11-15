@@ -91,14 +91,17 @@ pub fn chart(days: Vec<Day>, kcal: Vec<Option<f64>>, goal: Option<f64>) -> impl 
 }
 
 pub fn macros(intake: Memo<Intake>) -> impl IntoElement {
-    let mark = |tint: AdaptiveColor, name: fn() -> &'static str, grams: Box<dyn Fn() -> f64>| {
+    let mark = |tint: AdaptiveColor,
+                name: fn() -> &'static str,
+                unit: fn() -> &'static str,
+                grams: Box<dyn Fn() -> f64>| {
         view()
             .flex_row()
             .items_center()
             .gap(px(6.0))
             .child(view().size(px(6.0)).rounded_full().bg(tint))
             .child(
-                text(move || format!("{} {}g", name(), format::grams(grams())))
+                text(move || format!("{} {}{}", name(), format::grams(grams()), unit()))
                     .typo(Type::Caption)
                     .tabular_nums()
                     .text_color(color::MUTED),
@@ -106,19 +109,64 @@ pub fn macros(intake: Memo<Intake>) -> impl IntoElement {
     };
     let avg = move || intake.with(|i| i.average.unwrap_or_default());
     view()
-        .flex_row()
-        .gap_4()
-        .child(mark(
-            color::PROTEIN,
-            || s().protein,
-            Box::new(move || avg().protein),
+        .flex_col()
+        .gap(px(8.0))
+        .child(
+            view()
+                .flex_row()
+                .gap_4()
+                .child(mark(
+                    color::PROTEIN,
+                    || s().protein,
+                    || "g",
+                    Box::new(move || avg().protein),
+                ))
+                .child(mark(
+                    color::CARBS,
+                    || s().carbs,
+                    || "g",
+                    Box::new(move || avg().carbs),
+                ))
+                .child(mark(
+                    color::FAT,
+                    || s().fat,
+                    || "g",
+                    Box::new(move || avg().fat),
+                )),
+        )
+        .child(when(
+            move || avg().extra.is_some(),
+            move || {
+                let extra = avg().extra.unwrap_or_default();
+                view()
+                    .flex_row()
+                    .gap_4()
+                    .child(mark(
+                        color::MUTED,
+                        || s().fiber,
+                        || "g",
+                        Box::new(move || extra.fiber),
+                    ))
+                    .child(mark(
+                        color::MUTED,
+                        || s().sugars,
+                        || "g",
+                        Box::new(move || extra.sugars),
+                    ))
+                    .child(mark(
+                        color::MUTED,
+                        || s().sodium,
+                        || s().mg_unit,
+                        Box::new(move || extra.sodium * 1000.0),
+                    ))
+                    .child(mark(
+                        color::MUTED,
+                        || s().sat_fat,
+                        || "g",
+                        Box::new(move || extra.sat_fat),
+                    ))
+            },
         ))
-        .child(mark(
-            color::CARBS,
-            || s().carbs,
-            Box::new(move || avg().carbs),
-        ))
-        .child(mark(color::FAT, || s().fat, Box::new(move || avg().fat)))
 }
 
 /// The period's weights as a line, each at its day; nothing with fewer

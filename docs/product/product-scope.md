@@ -178,7 +178,11 @@ The full target is:
 ### Health
 
 - Meal logging as in the current NSH client: photo recognition with consent,
-  editable consumed grams, local catalog nutrition, manual entry.
+  editable consumed grams, local catalog nutrition, manual entry. The
+  catalog nutrition covers energy and macros plus fibre, sugars, sodium and
+  saturated fat; the model's estimate may add these and the owner edits them
+  in the food editor. Foods without these values still save; sums show them
+  as partial.
 - Favorites: a saved meal kept as a favorite (its own copy, photo shared)
   logs again on any day with one tap and Undo; the logged meal is adjusted
   like any other. It

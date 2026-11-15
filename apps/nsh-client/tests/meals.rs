@@ -288,6 +288,76 @@ fn a_food_without_nutrition_is_not_saved_as_zero() -> Result<(), String> {
 }
 
 #[test]
+fn more_nutrition_edits_save_and_persist() -> Result<(), String> {
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
+    open_manual(&mut app, "Manual meal")?;
+    app.wait_for("text:e.g. Beef noodle soup")?;
+    app.type_text("text:e.g. Beef noodle soup", "Oats")?;
+    app.type_text("label:Amount eaten", "100")?;
+    app.type_text("label:Energy", "379")?;
+    app.type_text("label:Protein", "13.2")?;
+    app.type_text("label:Carbs", "67.7")?;
+    app.type_text("label:Fat", "6.5")?;
+    app.press("text:More nutrition")?;
+    app.type_text("label:Fiber", "10.1")?;
+    app.type_text("label:Sugars", "1")?;
+    app.type_text("label:Sodium", "6")?;
+    app.type_text("label:Sat. fat", "1.1")?;
+    app.press("Done")?;
+    app.wait_for("text:Fiber 10 g · Sugars 1 g · Sodium 6 mg · Sat. fat 1.1 g")?;
+    app.press("text:/^Save meal/")?;
+    app.wait_for("text:1 meal")?;
+    let kept = stored_meals(dir.path());
+    let extra = &kept[0]["foods"][0]["per_100g"]["extra"];
+    assert_eq!(extra["fiber"], 10.1);
+    assert_eq!(extra["sugars"], 1.0);
+    assert_eq!(extra["sodium"], 0.006, "the sodium was typed in mg");
+    assert_eq!(extra["sat_fat"], 1.1);
+    Ok(())
+}
+
+#[test]
+fn a_meal_with_more_nutrition_shows_its_sums_and_editor() -> Result<(), String> {
+    // 200 g of pasta whose per-100 g extras are fibre 3, sugars 1,
+    // sodium 0.005 g and saturated fat 0.2 g.
+    let meal = Meal {
+        id: "m1".into(),
+        day: today(),
+        logged_at_ms: jiff::Timestamp::now().as_millisecond(),
+        slot: MealSlot::Lunch,
+        title: Some("Tomato pasta".into()),
+        foods: vec![Food {
+            id: 7,
+            name: "Pasta".into(),
+            grams: 200.0,
+            per_100g: Nutrients::new(150.0, 5.0, 30.0, 1.0).with_extra(ExtraNutrients {
+                fiber: 3.0,
+                sugars: 1.0,
+                sodium: 0.005,
+                sat_fat: 0.2,
+            }),
+            source: FoodSource::Manual,
+            confidence: None,
+            estimated_grams: None,
+        }],
+        photo: None,
+        model: None,
+        prompt_version: None,
+    };
+    let (mut app, _) = start(vec![("meals.v1".to_owned(), encode_meals(&[meal]))], None);
+    app.wait_for("text:300")?;
+    app.press("Tomato pasta")?;
+    app.wait_for("Edit meal")?;
+    app.wait_for("text:Fiber 6 g · Sugars 2 g · Sodium 10 mg · Sat. fat 0.4 g")?;
+    app.press("text:Pasta")?;
+    app.wait_for("More nutrition")?;
+    // The editor's own preview counts the eaten 200 g, same numbers.
+    app.wait_for("text:200 g · 300 kcal")?;
+    Ok(())
+}
+
+#[test]
 fn settings_keep_the_goal_as_typed_without_save() -> Result<(), String> {
     let (mut app, storage) = start(Vec::new(), None);
     app.press("label:Settings")?;
