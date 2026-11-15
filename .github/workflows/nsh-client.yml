@@ -79,7 +79,7 @@ jobs:
           nsh --version
           # option_env! sees any value, even an empty one: set it only when asked.
           if [ "$DIAGNOSTICS" = "true" ]; then export NW_DIAG=1; fi
-          nsh package --target android --abi arm64-v8a -o "$RUNNER_TEMP/packaged"
+          nsh package --target android --abi arm64-v8a --icon icon.png -o "$RUNNER_TEMP/packaged"
       - name: Sign with the fixed Android release key
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
@@ -88,10 +88,10 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           apk=$(find "$RUNNER_TEMP/packaged" -maxdepth 1 -name '*.apk' -print -quit)
-          bash ../../tool/sign-nsh-apk.sh "$apk" "$RUNNER_TEMP/release-apk/NaviWealth Health.apk"
+          bash ../../tool/sign-nsh-apk.sh "$apk" "$RUNNER_TEMP/release-apk/NaviWealth.apk"
       - name: Verify the APK (release signature, package, ABI)
         run: |
-          apk="$RUNNER_TEMP/release-apk/NaviWealth Health.apk"
+          apk="$RUNNER_TEMP/release-apk/NaviWealth.apk"
           tools="$ANDROID_HOME/build-tools/35.0.1"
           "$tools/apksigner" verify --verbose --print-certs "$apk"
           badging=$("$tools/aapt2" dump badging "$apk")
@@ -103,7 +103,7 @@ jobs:
           unzip -l "$apk" | grep -E "lib/|classes" || true
       - uses: actions/upload-artifact@v4
         with:
-          name: naviwealth-health-nsh-${{ inputs.diagnostics && 'diagnostic' || 'release' }}-arm64-v8a
+          name: naviwealth-${{ inputs.diagnostics && 'diagnostic' || 'release' }}-arm64-v8a
           path: ${{ runner.temp }}/release-apk/*.apk
           if-no-files-found: error
           retention-days: 14

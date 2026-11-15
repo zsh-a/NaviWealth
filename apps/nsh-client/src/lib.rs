@@ -27,7 +27,7 @@ use crate::{
 };
 
 /// The app's UI set (`nsh.json` `"rust"`).
-#[native_module("naviwealth-health/native")]
+#[native_module("naviwealth/native")]
 fn native(registry: &mut Registry) {
     registry.register::<App>();
 }

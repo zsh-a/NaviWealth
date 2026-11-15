@@ -2,7 +2,7 @@
 # Each independent workspace retains its own target directory.
 [env]
 RUST_BACKTRACE = { value = "1", force = false }
-RUST_LOG = { value = "info,nsh_app_naviwealth_health=debug,navi_health=debug,navi_finance=debug", force = false }
+RUST_LOG = { value = "info,naviwealth_app=debug,navi_health=debug,navi_finance=debug", force = false }
 
 # Retain source locations in backtraces without the large full-debug artifacts.
 # Test inherits dev; override with CARGO_PROFILE_DEV_DEBUG=2 for variable inspection.

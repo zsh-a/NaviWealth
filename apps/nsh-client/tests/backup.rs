@@ -5,7 +5,7 @@ mod dav;
 
 use common::*;
 use dav::Dav;
-use nsh_app_naviwealth_health::domain::{
+use naviwealth_app::domain::{
     backup::{self, BackupError},
     backup_bundle::Bundle,
 };

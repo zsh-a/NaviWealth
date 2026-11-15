@@ -10,7 +10,7 @@ pub use std::{
 };
 
 pub use image::{ImageFormat, RgbImage};
-pub use nsh_app_naviwealth_health::{
+pub use naviwealth_app::{
     App,
     domain::{
         meal::{Day, Meal, MealSlot, encode_meals},
@@ -40,7 +40,7 @@ pub fn start_in(
     network: Option<Arc<StubNetwork>>,
 ) -> (Headless, Arc<MemoryStorage>) {
     // Tests never depend on reaching the public quote and FX providers.
-    nsh_app_naviwealth_health::disable_live_market_data();
+    naviwealth_app::disable_live_market_data();
     let storage = MemoryStorage::new(entries);
     let mut config = EngineConfig::new(Root::of::<App>());
     config.storage = Some(storage.clone());

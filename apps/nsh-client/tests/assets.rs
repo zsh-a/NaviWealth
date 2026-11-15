@@ -96,10 +96,8 @@ fn accounts_balances_rename_and_net_worth_survive_restart() -> Result<(), String
     let body: String = c
         .query_row("SELECT body FROM capture_drafts", [], |r| r.get(0))
         .unwrap();
-    let draft: nsh_app_naviwealth_health::domain::capture::Draft =
-        serde_json::from_str(&body).unwrap();
-    let nsh_app_naviwealth_health::domain::capture::Record::Money { draft: money, .. } =
-        &draft.records[0]
+    let draft: naviwealth_app::domain::capture::Draft = serde_json::from_str(&body).unwrap();
+    let naviwealth_app::domain::capture::Record::Money { draft: money, .. } = &draft.records[0]
     else {
         panic!("money draft")
     };
