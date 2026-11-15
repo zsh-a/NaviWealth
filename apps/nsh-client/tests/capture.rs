@@ -26,6 +26,9 @@ fn transfer_completion_excludes_its_source_and_view_reveals_a_multi_day_batch() 
         app.press("Add account")?;
         app.type_text("label:Account name", name)?;
         app.press("Create account")?;
+        // Observe the completed navigation before leaving; a quiet frame on a
+        // loaded runner does not guarantee the engine has applied the save.
+        app.wait_for("Check balance")?;
         app.press("label:Back")?;
     }
     app.press("label:Records")?;
@@ -88,6 +91,7 @@ fn account_completion_is_local_durable_and_never_posts_before_confirmation() -> 
     app.press("Add account")?;
     app.type_text("label:Account name", "Cash")?;
     app.press("Create account")?;
+    app.wait_for("Check balance")?;
     app.press("label:Back")?;
     app.press("label:New entry")?;
     app.type_text("label:What would you like to record?", "Lunch 32 yuan")?;
