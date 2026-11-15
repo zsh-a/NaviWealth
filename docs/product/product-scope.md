@@ -26,9 +26,12 @@ whether the owner uses a feature every day or every week.
 2. Four tabs at most, no nested secondary navigation. Settings is a page
    reached from a corner action, not a tab.
 3. AI turns a short description and/or image into record drafts. The user
-   confirms before anything is saved. A correction is another short description
-   applied to the current draft, not a chat timeline. No named agents or
-   autonomous/background agents.
+   confirms before anything is saved. Capture is a bounded conversation
+   ([Capture Conversation](../architecture/capture-conversation.md)):
+   clarifications and corrections are turns inside one capture draft's
+   thread, and the model only ever answers owner-initiated turns. There are
+   no free-form chats, named agents, or autonomous/background agents, and no
+   memory across drafts.
 4. Anything derivable is derived, not entered: net worth, positions, monthly
    balance, averages.
 5. Adding a new kind of record requires removing one or a written reason.
@@ -55,9 +58,14 @@ Updated 2026-11-14: the owner chose text-or-image capture with fewer forms.
   Explicitly requested multiple records are reviewed together, with their
   count on the confirmation action. A purchase description alone does not
   also create a meal. Unsupported or ambiguous input asks for clarification.
-- The result is a readable summary, with a short correction box. Missing
-  money fields stay missing and prevent confirmation; a named new account
-  is shown as new and created only when confirmed. AI never selects a funding
+- Capture is a bounded conversation
+  ([Capture Conversation](../architecture/capture-conversation.md)): the
+  description or photo is the thread's first message, results and
+  clarifying questions are the model's turns, and a correction is the next
+  message. Questions that name an account or category offer tap-first
+  options. The thread lives inside one capture draft and ends with it.
+  Missing money fields stay missing and prevent confirmation; a named new
+  account is shown as new and created only when confirmed. AI never selects a funding
   account merely because a payment app appears in a screenshot.
 - Recognition never blocks navigation. Input and results are local drafts,
   shared between Today and Records. Leaving while recognition runs keeps it
@@ -232,7 +240,7 @@ The full target is:
 | Recovery score/verdict, health check-ins, trend explorer, HealthKit, Health Connect | Garmin and manual data cover the owner's needs |
 | KnowledgeOS (notes, decisions, relations, BCR library) | Whole domain |
 | ExecutionOS (plans, actions, progress) | Whole domain |
-| AI chat, the seven named agents, Memory Runtime, proposals, voice | AI is recognition only |
+| AI chat, the seven named agents, Memory Runtime, proposals, voice | AI is recognition only; the capture thread is a bounded clarification surface inside recognition ([Capture Conversation](../architecture/capture-conversation.md)), not chat |
 | Sync v3, accounts/login, backend dependency | Local backups only |
 | Domain opt-in, `DomainPack` registry, command palette, Life signals | Fixed composition of four tabs |
 | Web and iOS | Decided 2026-11-13 |

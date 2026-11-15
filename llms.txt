@@ -13,6 +13,7 @@
 - [Product Scope](docs/product/product-scope.md): What the NSH client builds and deliberately omits.
 - [NSH Client Roadmap](docs/roadmap/roadmap-nsh.md): Active delivery gates.
 - [Personal Local Scope](docs/architecture/personal-local-scope.md): Personal, local-only scope policy.
+- [Capture Conversation](docs/architecture/capture-conversation.md): Bounded conversation direction for capture.
 - [Agent Runtime Current Architecture](docs/architecture/agent-runtime-current.md): Current Rust runtime code map, invariants, and maintenance guide.
 - [Local Development](docs/development/local-development.md): Rust toolchain, crates checks, NSH Android debugging.
 - [Branch Protection](docs/operations/branch-protection.md): CI checks and NSH release policy.
