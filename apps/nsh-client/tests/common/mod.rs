@@ -39,6 +39,8 @@ pub fn start_in(
     entries: Vec<(String, String)>,
     network: Option<Arc<StubNetwork>>,
 ) -> (Headless, Arc<MemoryStorage>) {
+    // Tests never depend on reaching the public quote and FX providers.
+    nsh_app_naviwealth_health::disable_live_market_data();
     let storage = MemoryStorage::new(entries);
     let mut config = EngineConfig::new(Root::of::<App>());
     config.storage = Some(storage.clone());
