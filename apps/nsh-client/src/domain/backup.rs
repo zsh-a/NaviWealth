@@ -109,7 +109,7 @@ pub fn seal(
     let header_bytes = serde_json::to_vec(&header).map_err(|_| BackupError::NotABackup)?;
     let ciphertext = cipher(passphrase, &salt, MEMORY_KIB, PASSES, 1)?
         .encrypt(
-            XNonce::from_slice(&nonce),
+            &XNonce::from(nonce),
             Payload {
                 msg: &backup_bundle::pack(bundle),
                 aad: &associated(VERSION, &header_bytes),
@@ -160,12 +160,12 @@ pub fn open(file: &[u8], passphrase: &str) -> Result<(Header, Bundle), BackupErr
     let salt = B64
         .decode(&header.salt)
         .map_err(|_| BackupError::NotABackup)?;
-    let nonce = B64
-        .decode(&header.nonce)
-        .map_err(|_| BackupError::NotABackup)?;
-    if nonce.len() != 24 {
-        return Err(BackupError::NotABackup);
-    }
+    let nonce = XNonce::try_from(
+        B64.decode(&header.nonce)
+            .map_err(|_| BackupError::NotABackup)?
+            .as_slice(),
+    )
+    .map_err(|_| BackupError::NotABackup)?;
     let plain = cipher(
         passphrase,
         &salt,
@@ -174,7 +174,7 @@ pub fn open(file: &[u8], passphrase: &str) -> Result<(Header, Bundle), BackupErr
         header.lanes,
     )?
     .decrypt(
-        XNonce::from_slice(&nonce),
+        &nonce,
         Payload {
             msg: ciphertext,
             aad: &associated(file[4], header_bytes),
@@ -298,7 +298,7 @@ mod tests {
         let ciphertext = cipher("correct horse", &salt, header.memory_kib, header.passes, 1)
             .unwrap()
             .encrypt(
-                XNonce::from_slice(&nonce),
+                &XNonce::try_from(nonce.as_slice()).unwrap(),
                 Payload {
                     msg: b"old database",
                     aad: &associated(1, &header_bytes),
