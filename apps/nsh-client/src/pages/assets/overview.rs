@@ -37,6 +37,49 @@ pub fn assets_tab() -> impl IntoElement {
                                     .px_0(),
                             ),
                     )
+                    .child(when(
+                        || {
+                            let book = finance::holdings();
+                            let today = clock::today();
+                            crate::data::catalog::bindings().iter().any(|b| {
+                                book.securities
+                                    .iter()
+                                    .find(|sec| sec.id == b.security)
+                                    .is_some_and(|sec| {
+                                        book.position(sec, today.0).is_ok_and(|p| p.quantity > 0)
+                                    })
+                            })
+                        },
+                        || {
+                            view()
+                                .gap_1()
+                                .child(
+                                    Btn::ghost()
+                                        .label(|| {
+                                            if crate::data::market::status().refreshing {
+                                                s().refreshing_quotes()
+                                            } else {
+                                                s().refresh_quotes()
+                                            }
+                                            .into()
+                                        })
+                                        .disabled(|| crate::data::market::status().refreshing)
+                                        .on_press(|| {
+                                            crate::data::tasks::spawn_app(
+                                                crate::data::market::refresh(true),
+                                            );
+                                        }),
+                                )
+                                .child(when(
+                                    || crate::data::market::status().failed > 0,
+                                    || {
+                                        text(|| s().quotes_failed())
+                                            .typo(Type::Caption)
+                                            .text_color(color::MUTED)
+                                    },
+                                ))
+                        },
+                    ))
                     .child(dynamic(move || {
                         let accounts: Vec<_> = finance::accounts()
                             .into_iter()
@@ -45,6 +88,7 @@ pub fn assets_tab() -> impl IntoElement {
                         let entries = finance::transactions();
                         let portfolio = finance::holdings();
                         let checks = finance::checks();
+                        let rates = finance::rates();
                         let today = clock::today();
                         untracked(move || {
                             if accounts.is_empty() && portfolio.securities.is_empty() {
@@ -73,9 +117,24 @@ pub fn assets_tab() -> impl IntoElement {
                                     )
                                     .into_element();
                             }
-                            let snapshot = portfolio
-                                .overview(&entries, today.0)
-                                .expect("validated holdings valuation");
+                            let valued = portfolio.overview_with_rates(&entries, today.0, &rates);
+                            let Ok(valued) = valued else {
+                                return text(crate::i18n::statement_import::copy(
+                                    "Cannot convert these amounts. Check exchange rates.",
+                                    "无法折算这些金额，请检查汇率。",
+                                ))
+                                .typo(Type::Body)
+                                .text_color(color::DANGER)
+                                .into_element();
+                            };
+                            let snapshot = valued.snapshot;
+                            let incomplete = !valued.missing.is_empty();
+                            let missing = valued
+                                .missing
+                                .iter()
+                                .map(|c| c.code())
+                                .collect::<Vec<_>>()
+                                .join(" / ");
                             let has_holdings = !portfolio.securities.is_empty();
                             let balances = journal::balances(
                                 entries.iter().filter(|t| t.at.date() <= today.0),
@@ -87,11 +146,35 @@ pub fn assets_tab() -> impl IntoElement {
                                         .p_5()
                                         .gap_3()
                                         .child(
-                                            text(|| s().portfolio_net)
-                                                .typo(Type::Subhead)
-                                                .text_color(color::MUTED),
+                                            text(move || {
+                                                if incomplete {
+                                                    crate::i18n::statement_import::copy(
+                                                        "Known value · CNY",
+                                                        "已折算净值 · CNY",
+                                                    )
+                                                } else {
+                                                    s().portfolio_net
+                                                }
+                                            })
+                                            .typo(Type::Subhead)
+                                            .text_color(color::MUTED),
                                         )
                                         .child(net_figure(snapshot.net))
+                                        .child(incomplete.then(|| {
+                                            row_button(|| nav::push(Route::ExchangeRates))
+                                                .px_0()
+                                                .child(
+                                                text(format!(
+                                                    "{}: {missing}",
+                                                    crate::i18n::statement_import::copy(
+                                                        "Missing rates; these assets are excluded",
+                                                        "缺少汇率，以下币种未计入"
+                                                    )
+                                                ))
+                                                .typo(Type::Subhead)
+                                                .text_color(color::DANGER),
+                                            )
+                                        }))
                                         .child(
                                             view()
                                                 .flex_row()
@@ -196,6 +279,20 @@ pub fn assets_tab() -> impl IntoElement {
                     },
                 ))
                 .child(menu_row(
+                    || crate::i18n::statement_import::copy("Exchange rates", "汇率"),
+                    move || {
+                        manage.set(false);
+                        nav::push(Route::ExchangeRates);
+                    },
+                ))
+                .child(menu_row(
+                    || crate::i18n::statement_import::copy("Price history", "价格与汇率记录"),
+                    move || {
+                        manage.set(false);
+                        nav::push(Route::PriceHistory(None));
+                    },
+                ))
+                .child(menu_row(
                     || s().closed_holdings,
                     move || {
                         manage.set(false);
@@ -252,10 +349,14 @@ fn account_group(
                 let detail = checked
                     .map(|c| format!("{} · {}", s().account_checked, s().short_date(Day(c.day))))
                     .unwrap_or_else(|| s().account_unchecked.into());
-                let name = a.name().to_owned();
+                let name = crate::ui::currency::account_label(a);
                 let route = a.to_string();
                 let value = assets::displayed(a, balance);
-                let label = format!("{name}, {} CNY, {detail}", money::format(value));
+                let label = format!(
+                    "{name}, {} {}, {detail}",
+                    money::format(value),
+                    a.currency().code()
+                );
                 view().child(
                     row_button(move || nav::push(Route::Account(route.clone())))
                         .accessibility_label(move || Some(label.clone().into()))
@@ -289,7 +390,7 @@ fn account_group(
                                         .text_color(color::MUTED)
                                 })),
                         )
-                        .child(amount(value, Type::Headline))
+                        .child(amount_in(value, Type::Headline, a.currency()))
                         .child(icon(Icon::ChevronRight, 16.0, color::MUTED)),
                 )
             }))

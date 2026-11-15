@@ -4,10 +4,7 @@
 
 use std::collections::BTreeMap;
 
-use finance_core::{
-    journal::{self, Transaction},
-    money,
-};
+use finance_core::{journal::Transaction, money};
 use nsh_base::button;
 use nsh_core::{geometry::Point, prelude::*};
 
@@ -62,6 +59,7 @@ struct DayRecords {
     meals: usize,
     weight: Option<Weight>,
     spending: Option<money::Minor>,
+    foreign_spending: Vec<(finance_core::currency::Currency, i64)>,
     entries: Vec<Entry>,
 }
 
@@ -197,6 +195,12 @@ pub fn records_tab() -> impl IntoElement {
                 }),
             )
             .child(drafts_section(true))
+            .child(
+                Btn::ghost()
+                    .size(Size::Small)
+                    .label(|| crate::i18n::statement_import::title().into())
+                    .on_press(|| crate::nav::push(crate::nav::Route::StatementImport)),
+            )
             .child(
                 when(
                     move || days.with(Vec::is_empty),
@@ -374,6 +378,21 @@ fn day_section(records: DayRecords) -> impl IntoElement {
                         .text_color(color::MUTED)
                 }))
         }))
+        .children(
+            records
+                .foreign_spending
+                .into_iter()
+                .map(|(currency, amount)| {
+                    text(format!(
+                        "{} {}",
+                        s().spending,
+                        crate::ui::currency::format(amount, currency)
+                    ))
+                    .typo(Type::Subhead)
+                    .tabular_nums()
+                    .text_color(color::MUTED)
+                }),
+        )
         .child((!records.entries.is_empty()).then(|| {
             card()
                 .overflow_hidden()
@@ -419,6 +438,7 @@ fn group(
             meals: 0,
             weight: None,
             spending: None,
+            foreign_spending: Vec::new(),
             entries: Vec::new(),
         })
     }
@@ -452,9 +472,29 @@ fn group(
                 .iter()
                 .any(|e| matches!(e, Entry::Transaction(_)))
             {
-                day.spending = Some(money::sum(
-                    journal::spending(&transactions, day.day.0, day.day.0).into_values(),
-                ));
+                day.foreign_spending = [
+                    finance_core::currency::Currency::HKD,
+                    finance_core::currency::Currency::USD,
+                ]
+                .into_iter()
+                .filter_map(|currency| {
+                    let spending = finance_core::review::spending_in(
+                        &transactions,
+                        day.day.0,
+                        day.day.0,
+                        currency,
+                    );
+                    (spending.records > 0).then_some((currency, spending.total))
+                })
+                .collect();
+                let cny = finance_core::review::spending_in(
+                    &transactions,
+                    day.day.0,
+                    day.day.0,
+                    finance_core::currency::Currency::CNY,
+                );
+                day.spending =
+                    (cny.records > 0 || day.foreign_spending.is_empty()).then_some(cny.total);
             }
         }
     }
@@ -486,6 +526,7 @@ mod tests {
         meal::MealSlot,
         nutrition::{Food, FoodSource, Nutrients},
     };
+    use finance_core::journal;
 
     fn day(text: &str) -> Day {
         text.parse().unwrap()

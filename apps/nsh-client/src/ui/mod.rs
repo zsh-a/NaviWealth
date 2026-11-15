@@ -3,6 +3,7 @@
 //! themselves. A look a feature needs becomes a variant here first.
 
 pub mod button;
+pub mod currency;
 pub mod feedback;
 pub mod field;
 pub mod figures;

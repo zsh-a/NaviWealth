@@ -7,6 +7,9 @@
 //! a day, as when an Alipay purchase paid by card is also on the card's
 //! statement). Nothing is kept here; the client keeps what is confirmed.
 
+pub mod store;
+use crate::currency::Currency;
+
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 use jiff::civil::DateTime;
@@ -68,17 +71,17 @@ pub fn category_of(rules: &Rules, row: &Row) -> Account {
         .filter(|a| {
             a.kind()
                 == match row.kind {
-                    Kind::Expense => AccountKind::Expenses,
                     Kind::Income => AccountKind::Income,
+                    _ => AccountKind::Expenses,
                 }
         });
     if let Some(account) = remembered {
-        return account.clone();
+        return account.in_currency(Currency::parse(&row.currency).unwrap_or_default());
     }
-    match (row.kind, row.category_hint) {
+    let category = match (row.kind, row.category_hint) {
         (Kind::Income, Some("salary")) => defaults::income("工资"),
         (Kind::Income, _) => defaults::other_income(),
-        (Kind::Expense, Some(hint)) => defaults::expense(match hint {
+        (_, Some(hint)) => defaults::expense(match hint {
             "dining" | "coffee" => "餐饮",
             "groceries" => "买菜日用",
             "housing" | "utilities" => "居住",
@@ -87,8 +90,9 @@ pub fn category_of(rules: &Rules, row: &Row) -> Account {
             "transport" => "交通",
             _ => "其他",
         }),
-        (Kind::Expense, None) => defaults::other_expense(),
-    }
+        (_, None) => defaults::other_expense(),
+    };
+    category.in_currency(Currency::parse(&row.currency).unwrap_or_default())
 }
 
 /// Where a candidate stands.
@@ -101,6 +105,8 @@ pub enum Status {
     PossibleDuplicate,
     /// Its payment method is not mapped to an account yet.
     NeedsAccount,
+    /// Requires an explicit local direction or counter-account.
+    NeedsAttention,
 }
 
 /// One row, ready for review.
@@ -158,9 +164,23 @@ pub fn prepare(report: &Report, rules: &Rules, journal: &[Transaction]) -> Vec<C
             let transaction = own
                 .as_ref()
                 .and_then(|own| transaction(provider, row, &id, own, &category));
-            let duplicate = kept.contains(id.as_str()) || !in_file.insert(id.clone());
+            let duplicate = kept.contains(id.as_str())
+                || journal
+                    .iter()
+                    .any(|t| t.id == format!("{}:{id}", provider.key()))
+                || !in_file.insert(id.clone());
             let status = if duplicate {
                 Status::Duplicate
+            } else if Currency::parse(&row.currency).is_none()
+                || own
+                    .as_ref()
+                    .is_some_and(|a| a.currency().code() != row.currency)
+                || matches!(
+                    row.kind,
+                    Kind::TransferIn | Kind::TransferOut | Kind::NeedsDirection
+                )
+            {
+                Status::NeedsAttention
             } else if own.is_none() {
                 Status::NeedsAccount
             } else if transaction.as_ref().is_some_and(|t| looks_kept(t, journal)) {
@@ -188,6 +208,9 @@ pub fn transaction(
     own: &Account,
     category: &Account,
 ) -> Option<Transaction> {
+    if own.currency().code() != row.currency || category.currency() != own.currency() {
+        return None;
+    }
     let entry = Entry {
         id: format!("{}:{id}", provider.key()),
         at: row.at,
@@ -202,6 +225,14 @@ pub fn transaction(
     match row.kind {
         Kind::Expense => journal::spend(entry, own, category, amount).ok(),
         Kind::Income => journal::receive(entry, own, category, amount).ok(),
+        Kind::Refund => {
+            let mut t = journal::spend(entry, own, category, amount).ok()?;
+            for p in &mut t.postings {
+                p.amount = -p.amount;
+            }
+            Some(t)
+        }
+        _ => None,
     }
 }
 
@@ -234,6 +265,22 @@ mod tests {
 
     fn acct(full: &str) -> Account {
         Account::parse(full).unwrap()
+    }
+
+    #[test]
+    fn foreign_rows_require_matching_accounts_and_categories() {
+        let mut report = statement::parse(ALIPAY, "CNY");
+        report.rows[0].currency = "USD".into();
+        let mut rules = Rules::default();
+        rules.remember_method(Provider::Alipay, "余额", acct("资产:人民币"));
+        let mismatch = prepare(&report, &rules, &[]);
+        assert_eq!(mismatch[0].status, Status::NeedsAttention);
+        assert!(mismatch[0].transaction.is_none());
+        rules.remember_method(Provider::Alipay, "余额", acct("资产/USD:美元"));
+        let matched = prepare(&report, &rules, &[]);
+        assert_eq!(matched[0].status, Status::New);
+        assert_eq!(matched[0].category.currency(), Currency::USD);
+        assert!(matched[0].transaction.as_ref().unwrap().validate().is_ok());
     }
 
     #[test]

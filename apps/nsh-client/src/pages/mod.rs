@@ -5,6 +5,7 @@ pub(crate) mod assets;
 mod capture;
 mod drafts;
 pub(crate) mod finance;
+pub(crate) mod finance_review;
 pub(crate) mod holdings;
 pub(crate) mod home;
 mod parts;
@@ -28,4 +29,9 @@ pub use review::{
 pub use settings::settings_page;
 pub use settings_model::model_page;
 
+pub(crate) mod exchange_rates;
 mod review_note;
+pub(crate) mod security_picker;
+pub(crate) mod statement_import;
+
+pub mod price_history;

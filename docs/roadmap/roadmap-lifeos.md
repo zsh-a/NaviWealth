@@ -2,7 +2,7 @@
 
 Status: active sequencing SSOT; replaces the previous Now/Next plans.
 
-Last reviewed: 2026-11-14.
+Last reviewed: 2026-11-15.
 
 ## Contract And Baseline
 
@@ -122,9 +122,10 @@ Flutter import.
      Alipay, WeChat XLSX and CMB parsers ported from Flutter.
      Implemented in `crates/finance-core`: the three corpus fixtures match
      the Flutter parsers row for row; rows keep payee, item, provider type,
-     payment method and reference for mapping. Refunds, transfers and card
-     repayments are still skipped as the Flutter parsers did; step 3 turns
-     them into transfers and reversals and updates the manifests.
+     payment method and reference for mapping. The original corpus parser
+     contract stays pinned; the ledger-review path additionally retains refunds,
+     transfers and repayments for explicit classification and counter-account
+     correction instead of silently posting them as spending.
   2. SQLite tables (accounts, transactions, postings, mapping rules) in the
      client, restored with backups; manual entry; Records and Today show
      spending.
@@ -140,8 +141,19 @@ Flutter import.
      upgrade, editor/keyboard and mixed-domain backup/restore verification.
   3. Statement import: file picker, account and category mapping asked once,
      the review page, confirmation.
+     Implemented: local CSV/XLSX/text files open a durable SQLite review with
+     account creation/mapping, row selection, category/direction corrections,
+     explicit transfer counterparties and refund review. Duplicate and skipped
+     reasons remain visible; possible duplicates start unselected. Schema 11
+     keeps the review across restart. Confirmation rechecks the journal and
+     atomically posts selected rows plus mapping rules; a stale review must
+     be confirmed again. No model or backend receives statement files.
   4. Review: spending by expense account against the period before, the
      monthly budget.
+     Implemented: recorded-spending total, largest categories and transaction
+     drill-down/editing. Partial current weeks/months compare the same elapsed
+     days of the previous period; missing previous records remain explicit.
+     Remaining: the optional monthly budget.
   5. Assets tab: asset and liability balances, net worth, balance checks.
      Implemented by owner request (2026-11-14): fourth tab, account details,
      standalone account creation/rename, book net worth and 30-day trend,
@@ -154,8 +166,9 @@ Flutter import.
      on 2026-11-14). Implemented: one composer for money, meals and weight,
      natural-language corrections, shared durable drafts, explicit consent and
      atomic batch confirmation. Manual entry is secondary and its money
-     editor has in-sheet pickers, a calendar and fixed actions. Statement
-     import in step 3 remains pending. Remaining: real-model quality and
+     editor has in-sheet pickers, a calendar and fixed actions. Structured
+     statement files use the separate deterministic review in step 3.
+     Remaining: real-model quality and
      Android keyboard/device verification.
 - Exit: every transaction balances (property tests); exact money and
   rounding tests; statement corpus fixtures pass with pinned
@@ -175,9 +188,50 @@ Flutter import.
   unsafe deletion/backdated trades roll back. Core fixtures, headless flows,
   restart/restore and GTK light/dark small-screen checks cover this increment.
   Android device, system Back and real IME verification remain outstanding.
-- Remaining: catalog lookup, a quote provider, FX and allocation. AI trade
-  recognition is not included in this increment; the existing capture rejects
-  trades. This initial implementation does not close the full phase.
+- Catalog and quote increment implemented (2026-11-15): offline code/name/pinyin
+  lookup uses the existing verified securities bundle; GitHub Releases updates
+  check lazily on picker use at most every 24 hours, with manual refresh.
+  Schema 12 separates replaceable listing data from explicit holding bindings.
+  Existing manual holdings require confirmation; links preserve internal ids,
+  accounts, labels, trades and cost. This first catalog increment supported
+  mainland CNY stocks/ETFs; the multi-currency increment below extends it.
+  Compressed/content hashes, schema, size, header count and checksum are verified
+  before atomic catalog replacement; failures retain the offline catalog.
+- Tencent is the single quote provider, through the shared market-data SDK.
+  Foreground refresh has a five-minute throttle and Assets offers a manual
+  refresh. Schema 13 stores dated provider marks separately from manual marks.
+  Manual prices win on the same or newer day; stale/previous-close marks retain
+  their provenance. Failed refreshes keep prior prices, and a changed binding
+  atomically archives marks for the previous symbol before clearing the active
+  cache, without touching manual data.
+  Holdings, journal and net-worth calculations share the effective dated marks.
+- Multi-currency increment implemented (2026-11-15): initial markets are
+  mainland China, Hong Kong and US stocks/ETFs in CNY, HKD and USD. Account
+  identity includes currency; holdings derive immutable currency from their
+  accounts. Native trade prices, fees, cost and gains remain exact, with
+  matching-currency cash settlement. Cross-currency transfers require both
+  native amounts and balance each currency separately. Schema 14 adds dated
+  HKD/CNY and USD/CNY rates to validated local backups. Manual rates take
+  precedence over network observations on the same day. CNY overview conversion
+  uses rates known by the valuation date; missing currencies are explicitly
+  excluded from known value, and incomplete history is not plotted as complete.
+  Other foreign markets/currencies and crypto remain unsupported.
+- Historical observations increment implemented (2026-11-15): schema 15 keeps
+  immutable raw OHLCV revisions and transactional price/FX audit; schema 16
+  keeps immutable valuation observations. CN/HK/US daily history and HKD/USD
+  reference rates backfill 30 days after successful updates, with manual retry,
+  per-market dates, bounded requests and durable throttling. Daily closes and
+  intraday marks retain distinct provenance; same-day manual values win.
+  Rebinding preserves archived observations. Asset changes separates current
+  recalculation from observations captured at an actual instant, with missing
+  FX explicit. All new data participates in validated atomic backup/restore;
+  tests cover baseline migration, exact roundtrip, malformed backups, revision
+  precedence and capture immutability. These are daily prices and observed
+  valuations, not minute/tick bars, adjusted returns or retroactive snapshots.
+- Remaining: allocation, plus Android TLS/physical-device, system Back, keyboard
+  and migration verification. Android TLS and physical-device behavior remain
+  unverified. AI trade recognition is not included; the existing
+  capture rejects trades. This increment does not close the full phase.
 - Scope: securities catalog, trades (buy, sell, dividend, fee), derived
   positions, average cost and gains, one quote provider, FX, allocation and
   net worth on Assets.
@@ -192,6 +246,33 @@ Flutter import.
 - Exit: imported balances and position quantities match the Flutter export;
   restore from an NSH export on a clean install succeeds; two weeks of NSH as
   the only app.
+
+## Next increments after NSH 0.7.0
+
+Recommended sequence; this is planning, not a claim these items are implemented.
+
+1. **Prove the daily Android path.** Upgrade from the released 0.6.0 APK on a
+   physical device; verify schema 16 migration, real statement picking, mixed
+   currency settlement, CN/HK/US TLS refresh, background/resume and keyboard/Back
+   behavior. Restore an encrypted backup into a clean install and compare
+   balances, quantities, prices and recorded valuations. Supply a native local
+   export/share path so recovery does not require WebDAV configuration.
+2. **Close one financial month.** Extend the existing Review with recorded
+   spending, net-worth change and a drill-down explaining deposits/withdrawals,
+   price changes, FX and balance adjustments. State missing data instead of
+   labeling all net-worth movement as investment return. Keep four tabs and
+   expose detail on demand; a monthly budget is lower priority.
+3. **Reduce holding maintenance.** Reuse import review for an explicitly
+   supported broker statement format: trades, fees and cash dividends, with
+   symbol/currency matching, duplicate review and atomic confirmation. Add
+   explicit split/consolidation handling before treating raw price history
+   across those events as comparable performance. Validate ending quantities,
+   native cost and cash against the statement. This expands the current parser
+   scope; it does not introduce automatic trade execution or an AI agent.
+4. **Migrate and retire deliberately.** Implement the one-time kept-data import
+   from Flutter with a preview, source archive and idempotent reruns. Verify
+   Health counts/totals and Finance balances/quantities, then complete the
+   two-week NSH-only use gate before retiring Flutter and its infrastructure.
 
 ## Operating Rules
 

@@ -63,6 +63,18 @@ const MIGRATIONS: &[&str] = &[
     finance_core::repository::BALANCE_SCHEMA,
     // 10: securities, exact trades and dated manual prices.
     finance_core::holdings::store::SCHEMA,
+    // 11: resumable statement review.
+    finance_core::import::store::SCHEMA,
+    // 12: explicit security bindings and verified catalog cache.
+    finance_core::catalog::SCHEMA,
+    // 13: dated public quotes, separate from manual prices.
+    finance_core::market::SCHEMA,
+    // 14: dated currency conversion rates, with explicit provenance.
+    finance_core::currency::SCHEMA,
+    // 15: immutable daily bars and price revisions.
+    finance_core::history::SCHEMA,
+    // 16: immutable observed valuations.
+    finance_core::valuation::SCHEMA,
 ];
 
 #[derive(Clone, Default)]
@@ -458,8 +470,56 @@ mod tests {
             day,
         )
         .unwrap();
+        let binding = finance_core::catalog::SecurityBinding {
+            security: security.id.clone(),
+            market: "cn_a".into(),
+            symbol: "510300".into(),
+            currency: "CNY".into(),
+        };
+        finance_core::catalog::bind(&backup, &binding).unwrap();
+        let quote = finance_core::market::MarketQuote {
+            security: security.id.clone(),
+            symbol: "510300.SH".into(),
+            currency: "CNY".into(),
+            provider: "tencent".into(),
+            price: 6_000_000,
+            observed_at: "2026-11-13T07:00:00Z".parse().unwrap(),
+            fetched_at: "2026-11-13T07:01:00Z".parse().unwrap(),
+            previous_close_only: false,
+        };
+        finance_core::market::save(&backup, &quote, jiff::Timestamp::now()).unwrap();
+        let rate = finance_core::currency::FxRate {
+            currency: finance_core::currency::Currency::USD,
+            day,
+            rate: 7_000_000,
+            source: "manual".into(),
+        };
+        finance_core::currency::save_rate(&backup, &rate).unwrap();
+        let import = finance_core::import::store::create(
+            &backup,
+            "card.txt",
+            "招商银行信用卡对账单 2026年07月\n交易明细\n07/02 07/03 晚餐 68.00 1234 68.00\n"
+                .as_bytes(),
+        )
+        .unwrap();
         let current = lifeos_core::memory(MIGRATIONS).unwrap();
         restore_file(&current, &source).unwrap();
+        assert_eq!(
+            finance_core::currency::rates(&current).unwrap().as_slice(),
+            std::slice::from_ref(&rate)
+        );
+        assert_eq!(
+            finance_core::catalog::bindings(&current).unwrap(),
+            [binding]
+        );
+        assert_eq!(
+            finance_core::market::load(&current).unwrap().as_slice(),
+            std::slice::from_ref(&quote)
+        );
+        assert_eq!(
+            finance_core::import::store::active(&current).unwrap(),
+            Some(import)
+        );
         assert_eq!(store::load(&current).unwrap(), expected.book);
         assert_eq!(
             repository::transactions(&current).unwrap(),
@@ -469,6 +529,28 @@ mod tests {
             expected.book.overview(&expected.entries, day).unwrap().net,
             50000
         );
+        backup
+            .execute("UPDATE finance_fx_rates SET currency='EUR'", [])
+            .unwrap();
+        assert_eq!(
+            restore_file(&current, &source),
+            Err(RestoreError::Unreadable)
+        );
+        assert_eq!(finance_core::currency::rates(&current).unwrap(), [rate]);
+        backup
+            .execute("UPDATE finance_fx_rates SET currency='USD'", [])
+            .unwrap();
+        backup
+            .execute("UPDATE finance_market_quotes SET currency='USD'", [])
+            .unwrap();
+        assert_eq!(
+            restore_file(&current, &source),
+            Err(RestoreError::Unreadable)
+        );
+        assert_eq!(finance_core::market::load(&current).unwrap(), [quote]);
+        backup
+            .execute("UPDATE finance_market_quotes SET currency='CNY'", [])
+            .unwrap();
         backup
             .execute("UPDATE finance_trades SET quantity=200000000", [])
             .unwrap();
@@ -481,6 +563,167 @@ mod tests {
             repository::transactions(&current).unwrap(),
             expected.entries
         );
+    }
+
+    fn seed_legacy_prices(c: &Connection) -> finance_core::catalog::SecurityBinding {
+        use finance_core::{
+            catalog, currency,
+            holdings::{Kind, Quote, Security, Trade, store},
+            market,
+        };
+        let day = jiff::civil::date(2026, 11, 1);
+        let security = Security::new("history-etf", "History ETF").unwrap();
+        store::add_trade(
+            c,
+            Some(&security),
+            &Trade {
+                id: "history-opening".into(),
+                security: security.id.clone(),
+                at: day.at(12, 0, 0, 0),
+                kind: Kind::Opening,
+                quantity: 100_000_000,
+                price: 4_000_000,
+                amount: 0,
+                fee: 0,
+                cash: None,
+            },
+            day,
+        )
+        .unwrap();
+        let binding = catalog::SecurityBinding {
+            security: security.id.clone(),
+            market: "cn_a".into(),
+            symbol: "510300".into(),
+            currency: "CNY".into(),
+        };
+        catalog::bind(c, &binding).unwrap();
+        store::set_quote(
+            c,
+            &Quote {
+                security: security.id.clone(),
+                day,
+                price: 4_500_000,
+            },
+            day,
+        )
+        .unwrap();
+        currency::save_rate(
+            c,
+            &currency::FxRate {
+                currency: currency::Currency::USD,
+                day,
+                rate: 7_100_000,
+                source: "manual".into(),
+            },
+        )
+        .unwrap();
+        market::save(
+            c,
+            &market::MarketQuote {
+                security: security.id,
+                symbol: "510300.SH".into(),
+                currency: "CNY".into(),
+                provider: "tencent".into(),
+                price: 5_000_000,
+                observed_at: "2026-11-02T07:00:00Z".parse().unwrap(),
+                fetched_at: "2026-11-02T07:01:00Z".parse().unwrap(),
+                previous_close_only: false,
+            },
+            jiff::Timestamp::now(),
+        )
+        .unwrap();
+        binding
+    }
+
+    /// Exact persisted rows catch accidental audit generation, ID changes and body rewriting.
+    fn finance_rows(c: &Connection) -> Vec<(&'static str, Vec<Vec<rusqlite::types::Value>>)> {
+        finance_core::repository::TABLES
+            .iter()
+            .map(|&(table, columns)| {
+                let mut q = c
+                    .prepare(&format!("SELECT {columns} FROM {table} ORDER BY {columns}"))
+                    .unwrap();
+                let width = q.column_count();
+                let rows = q
+                    .query_map([], |r| (0..width).map(|i| r.get(i)).collect())
+                    .unwrap()
+                    .collect::<Result<Vec<_>, _>>()
+                    .unwrap();
+                (table, rows)
+            })
+            .collect()
+    }
+
+    #[test]
+    fn schema14_price_baselines_migrate_once_and_history_restores_exactly() {
+        use finance_core::{history, valuation};
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("legacy14.sqlite");
+        let mut old = lifeos_core::open(&path, &MIGRATIONS[..14]).unwrap();
+        let binding = seed_legacy_prices(&old);
+        migrate(&mut old).unwrap();
+        let baseline = history::audit(&old).unwrap();
+        assert_eq!(baseline.len(), 3);
+        for kind in ["manual_quote", "fx_rate", "market_quote"] {
+            let row = baseline.iter().find(|r| r.kind == kind).unwrap();
+            let body: serde_json::Value = serde_json::from_str(&row.body).unwrap();
+            assert_eq!(body["baseline"], true);
+        }
+        let after_migration = finance_rows(&old);
+        migrate(&mut old).unwrap();
+        assert_eq!(finance_rows(&old), after_migration);
+        let now = jiff::Timestamp::now();
+        let mut bar = history::DailyBar {
+            market: binding.market.clone(),
+            symbol: "510300.SH".into(),
+            currency: binding.currency.clone(),
+            provider: "tencent_raw".into(),
+            day: jiff::civil::date(2026, 11, 3),
+            open: 4_900_000,
+            high: 5_200_000,
+            low: 4_800_000,
+            close: 5_100_000,
+            volume: Some(12345),
+            fetched_at: "2026-11-04T01:00:00Z".parse().unwrap(),
+        };
+        history::save_bars(&old, &binding, &[bar.clone()], now).unwrap();
+        bar.close = 5_200_000;
+        bar.fetched_at = "2026-11-05T01:00:00Z".parse().unwrap();
+        history::save_bars(&old, &binding, &[bar], now).unwrap();
+        let today = now.to_zoned(jiff::tz::TimeZone::UTC).date();
+        valuation::record_current(&old, today, now).unwrap();
+        let expected = finance_rows(&old);
+        let source = dir.path().join("snapshot16.sqlite");
+        std::fs::write(
+            &source,
+            lifeos_core::snapshot(&old, &dir.path().join("copy.sqlite")).unwrap(),
+        )
+        .unwrap();
+        let current = lifeos_core::memory(MIGRATIONS).unwrap();
+        finance_core::repository::save(&current, &spending("replaced", 3150)).unwrap();
+        restore_file(&current, &source).unwrap();
+        assert_eq!(finance_rows(&current), expected);
+        // Corrupt each immutable record family independently. Failed restore keeps every
+        // existing ledger, price revision and observation unchanged.
+        for (i, sql) in [
+            "UPDATE finance_price_audit SET item_key='wrong' WHERE kind='manual_quote'",
+            "UPDATE finance_daily_bars SET received_at='2020-01-01T00:00:00Z'",
+            "UPDATE finance_valuation_snapshots SET body=json_set(body,'$.net',123)",
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let corrupt = dir.path().join(format!("corrupt-{i}.sqlite"));
+            std::fs::copy(&source, &corrupt).unwrap();
+            let bad = Connection::open(&corrupt).unwrap();
+            bad.execute_batch(sql).unwrap();
+            drop(bad);
+            assert_eq!(
+                restore_file(&current, &corrupt),
+                Err(RestoreError::Unreadable)
+            );
+            assert_eq!(finance_rows(&current), expected);
+        }
     }
 
     #[test]

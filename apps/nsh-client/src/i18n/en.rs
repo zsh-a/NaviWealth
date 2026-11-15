@@ -20,7 +20,6 @@ pub(super) static STRINGS: Strings = Strings {
     add_holding: "Add holding",
     security_name: "Name or code",
     security_hint: "For example: CSI 300 ETF / 510300",
-    holding_scope: "CNY holdings. Prices are updated manually.",
     opening_holding: "Existing position",
     buy: "Buy",
     sell: "Sell",

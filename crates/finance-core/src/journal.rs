@@ -1,5 +1,5 @@
 //! The double-entry journal: every transaction is two or more postings in
-//! CNY minor units that sum to zero. Balances, spending and net worth are
+//! currency minor units that sum to zero within each currency. Balances, spending and net worth are
 //! derived from the postings, never stored, so they always agree.
 
 use std::collections::BTreeMap;
@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     account::{Account, AccountKind, defaults},
+    currency::Currency,
     money::{self, Minor},
 };
 
@@ -68,6 +69,8 @@ pub enum JournalError {
     WrongKind,
     #[error("money moves between two different accounts")]
     SameAccount,
+    #[error("account currencies do not match")]
+    CurrencyMismatch,
 }
 
 impl Transaction {
@@ -79,9 +82,16 @@ impl Transaction {
         if self.postings.iter().any(|p| p.amount == 0) {
             return Err(JournalError::ZeroPosting);
         }
-        let total: i128 = self.postings.iter().map(|p| i128::from(p.amount)).sum();
-        if total != 0 {
-            return Err(JournalError::Unbalanced(money::saturate(total)));
+        for currency in Currency::ALL {
+            let total: i128 = self
+                .postings
+                .iter()
+                .filter(|p| p.account.currency() == currency)
+                .map(|p| i128::from(p.amount))
+                .sum();
+            if total != 0 {
+                return Err(JournalError::Unbalanced(money::saturate(total)));
+            }
         }
         Ok(())
     }
@@ -133,6 +143,9 @@ fn two(
 ) -> Result<Transaction, JournalError> {
     if amount <= 0 {
         return Err(JournalError::NotPositive);
+    }
+    if into.currency() != from.currency() {
+        return Err(JournalError::CurrencyMismatch);
     }
     if into == from {
         return Err(JournalError::SameAccount);
@@ -190,6 +203,46 @@ pub fn transfer(
     two(entry, into, from, amount)
 }
 
+/// Exchange explicitly stated amounts, balancing each currency against equity.
+pub fn exchange(
+    entry: Entry,
+    from: &Account,
+    into: &Account,
+    from_amount: Minor,
+    to_amount: Minor,
+) -> Result<Transaction, JournalError> {
+    if !from.is_cash() || !into.is_cash() {
+        return Err(JournalError::WrongKind);
+    }
+    if from.currency() == into.currency() {
+        return Err(JournalError::CurrencyMismatch);
+    }
+    if from_amount <= 0 || to_amount <= 0 {
+        return Err(JournalError::NotPositive);
+    }
+    let bridge = Account::new(AccountKind::Equity, "换汇").expect("fixed account");
+    let t = entry.with(vec![
+        Posting {
+            account: from.clone(),
+            amount: -from_amount,
+        },
+        Posting {
+            account: bridge.in_currency(from.currency()),
+            amount: from_amount,
+        },
+        Posting {
+            account: into.clone(),
+            amount: to_amount,
+        },
+        Posting {
+            account: bridge.in_currency(into.currency()),
+            amount: -to_amount,
+        },
+    ]);
+    t.validate()?;
+    Ok(t)
+}
+
 /// An own account's opening balance (`balance` may be negative: a debt).
 pub fn opening(
     entry: Entry,
@@ -199,7 +252,12 @@ pub fn opening(
     if !account.kind().is_own() {
         return Err(JournalError::WrongKind);
     }
-    balance_against(entry, account, &defaults::opening(), balance)
+    balance_against(
+        entry,
+        account,
+        &defaults::opening().in_currency(account.currency()),
+        balance,
+    )
 }
 
 fn balance_against(
@@ -253,7 +311,7 @@ pub fn net_worth(balances: &BTreeMap<Account, Minor>) -> Minor {
     money::sum(
         balances
             .iter()
-            .filter(|(account, _)| account.kind().is_own())
+            .filter(|(account, _)| account.kind().is_own() && account.currency() == Currency::CNY)
             .map(|(_, amount)| *amount),
     )
 }
@@ -295,7 +353,12 @@ pub fn adjustment(
     if !account.kind().is_own() {
         return Err(JournalError::WrongKind);
     }
-    balance_against(entry, account, &defaults::adjustment(), difference)
+    balance_against(
+        entry,
+        account,
+        &defaults::adjustment().in_currency(account.currency()),
+        difference,
+    )
 }
 
 #[cfg(test)]

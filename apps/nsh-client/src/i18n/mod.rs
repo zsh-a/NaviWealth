@@ -3,8 +3,11 @@
 //! not translated word for word. Read it in bindings (`move || s().today`)
 //! so a language change follows.
 
+pub(crate) mod catalog;
 mod en;
+mod market;
 mod phrases;
+pub(crate) mod statement_import;
 mod zh;
 
 use nsh_core::prelude::*;
@@ -30,7 +33,6 @@ pub struct Strings {
     pub add_holding: &'static str,
     pub security_name: &'static str,
     pub security_hint: &'static str,
-    pub holding_scope: &'static str,
     pub opening_holding: &'static str,
     pub buy: &'static str,
     pub sell: &'static str,
@@ -678,3 +680,4 @@ mod tests {
         );
     }
 }
+pub mod finance_review;

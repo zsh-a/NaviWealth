@@ -31,7 +31,8 @@ pub fn load(c: &Connection) -> Result<Book, Error> {
         ))
     })? {
         let (id, name, key, account) = row?;
-        let security = Security::new(&id, &name)?;
+        let parsed = Account::parse(&account).map_err(|_| Error::Invalid)?;
+        let security = Security::new_in(&id, &name, parsed.currency())?;
         if key != name.to_lowercase() || security.account.as_str() != account {
             return Err(Error::Invalid);
         }
@@ -135,6 +136,18 @@ pub fn validate(c: &Connection) -> Result<(), Error> {
 fn saved(tx: &SqlTransaction<'_>) -> Result<Saved, Error> {
     let book = load(tx)?;
     book.validate_values()?;
+    // Retained network marks participate in valuation after every trade,
+    // including backdated changes. Reject overflow before committing either
+    // the trade or its cash postings. Older standalone stores lack this table.
+    let has_market: bool = tx.query_row(
+        "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name='finance_market_quotes')",
+        [], |r| r.get(0),
+    )?;
+    if has_market {
+        crate::market::valued_book(tx, book.clone())
+            .map_err(|_| Error::Invalid)?
+            .validate_values()?;
+    }
     Ok(Saved {
         book,
         entries: repository::transactions(tx)?,
@@ -172,12 +185,22 @@ pub fn add_trade(
     trade: &Trade,
     today: Date,
 ) -> Result<Saved, Error> {
+    add_trade_bound(c, new, trade, today, None)
+}
+
+pub fn add_trade_bound(
+    c: &Connection,
+    new: Option<&Security>,
+    trade: &Trade,
+    today: Date,
+    binding: Option<&crate::catalog::SecurityBinding>,
+) -> Result<Saved, Error> {
     if trade.at.date() > today {
         return Err(Error::Invalid);
     }
     let tx = c.unchecked_transaction()?;
     if let Some(s) = new {
-        if Security::new(&s.id, &s.name)? != *s || s.id != trade.security {
+        if Security::new_in(&s.id, &s.name, s.currency())? != *s || s.id != trade.security {
             return Err(Error::Invalid);
         }
         let book = load(&tx)?;
@@ -215,6 +238,15 @@ pub fn add_trade(
         .find(|s| s.id == trade.security)
         .ok_or(Error::Missing)?;
     rebuild(&tx, s, &book)?;
+    if let Some(binding) = binding {
+        if binding.security != trade.security {
+            return Err(Error::Invalid);
+        }
+        crate::catalog::bind(&tx, binding).map_err(|e| match e {
+            crate::catalog::Error::Sql(e) => Error::Sql(e),
+            _ => Error::Invalid,
+        })?;
+    }
     let result = saved(&tx)?;
     tx.commit()?;
     Ok(result)
@@ -254,6 +286,13 @@ pub fn set_quote(c: &Connection, quote: &Quote, today: Date) -> Result<Saved, Er
         return Err(Error::Missing);
     }
     tx.execute("INSERT INTO finance_quotes(security,day,price) VALUES(?1,?2,?3) ON CONFLICT(security,day) DO UPDATE SET price=excluded.price",params![quote.security,quote.day.to_string(),quote.price])?;
+    crate::history::record(
+        &tx,
+        "manual_quote",
+        &quote.security,
+        &quote.day.to_string(),
+        &serde_json::json!({"security":quote.security,"day":quote.day.to_string(),"price":quote.price}),
+    )?;
     let result = saved(&tx)?;
     // Validate mark-to-market arithmetic before committing a price.
     result.book.overview(&result.entries, today)?;

@@ -20,7 +20,6 @@ pub(super) static STRINGS: Strings = Strings {
     add_holding: "添加持仓",
     security_name: "名称或代码",
     security_hint: "例如：沪深300ETF / 510300",
-    holding_scope: "人民币持仓，价格手动更新。",
     opening_holding: "已有持仓",
     buy: "买入",
     sell: "卖出",

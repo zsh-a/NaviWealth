@@ -100,22 +100,27 @@ and screenshots fill gaps.
 - **Accounts** of five types: Assets (cash, debit cards, Alipay and WeChat
   balances), Liabilities (credit cards, Huabei), Expenses and Income (these
   are the categories), and Equity (opening balances, adjustments). Names are
-  `type:name` (`资产:招行储蓄卡`, `支出:餐饮`). A default set of expense and
+  `type:name` for CNY (`资产:招行储蓄卡`, `支出:餐饮`); foreign accounts
+  include currency (`资产/USD:Broker cash`). A default set of expense and
   income accounts ships; the owner's own asset and liability accounts are
   created as statements first mention them.
 - **Transactions:** a date and time, payee, note, source (statement row,
-  manual, screenshot) and two or more postings in CNY minor units whose sum
-  is zero. A purchase is `支出:餐饮 +31.50 / 资产:支付宝余额 −31.50`; a
+  manual, screenshot) and two or more postings in native currency minor units
+  whose sum is zero separately within each currency. Initial currencies are
+  CNY, HKD and USD. Cross-currency transfers record both sent and received
+  amounts with currency-specific equity bridge postings. A purchase is `支出:餐饮 +31.50 / 资产:支付宝余额 −31.50`; a
   credit-card purchase posts to `负债:…`; a repayment or top-up moves money
   between own accounts; a refund reverses its purchase.
 - **Statement import (primary):** the system file picker opens an Alipay CSV,
-  WeChat XLSX or CMB credit-card statement; the existing Flutter parsers move
+  WeChat XLSX or CMB credit-card statement text (PDF is not decoded); the existing Flutter parsers move
   to `finance-core` and must match the statement corpus fixtures exactly.
   Each row's payment method (`余额`, `花呗`, `招商银行储蓄卡(1234)`) maps to an
   asset or liability account, asked once and remembered; its category hint
   and payee map to an expense or income account through remembered rules.
   A review page shows new, possible-duplicate and skipped rows; nothing is
-  kept before confirmation.
+  posted before confirmation. The local review draft survives restart; refunds
+  and ambiguous movements require explicit correction. A changed journal is
+  reviewed again before committing the batch.
 - **Duplicates across sources:** a statement row repeats an earlier one when
   it carries the same provider transaction id, or posts the same amount to
   the same own account within a day (an Alipay purchase paid by credit card
@@ -139,12 +144,30 @@ Initial delivery (2026-11-15, owner: keep it simple): holdings appear directly
 on Assets. A compact editor accepts a name/code, quantity and unit cost for an
 existing position; purchases/sales/dividends also choose a cash account. Date
 and fees are optional details. Derived quantities, average cost, gains and
-cash balances come from confirmed trades. Prices are dated manual inputs,
-CNY only; unpriced positions are explicitly valued at cost. Trade records are
+cash balances come from confirmed trades. Prices are dated in each security’s
+CNY, HKD or USD trading currency;
+unpriced positions are explicitly valued at cost. Trade records are
 necessary to answer what is owned and how its cost changes; editable standalone
 position totals would conflict with the journal. AI trade capture is deferred.
 
-The fuller target below remains pending:
+The catalog and quote increment is implemented: code/name/pinyin/alias search
+uses the verified bundled catalog, with lazy GitHub Releases updates. Linking
+an existing holding requires confirmation and preserves its identity and trades.
+Initial supported markets are mainland China, Hong Kong and US stocks and
+ETFs, in CNY, HKD and USD. A holding’s currency is immutable; buy, sell and
+dividend cash accounts must match it. Costs and gains remain native amounts.
+Tencent quotes refresh at foreground entry and on demand; manual prices win on
+the same or newer day. Failed updates retain the previous dated mark.
+
+The asset overview converts to CNY using the latest rate dated on or before
+the valuation date. Missing rates exclude those currencies and visibly label
+the result as known value; history never presents a partial series as complete.
+HKD/CNY and USD/CNY rates can refresh or be entered manually; manual rates win
+on the same day. Schema 14 preserves dated rates in local backups. Other
+currencies and crypto remain unsupported; allocation remains pending. Android
+TLS and physical-device checks remain unverified.
+
+The full target is:
 
 - Securities from the existing catalog shipped via GitHub Releases.
 - Trades: buy, sell, dividend, fee. Positions, average cost, realized and
@@ -209,3 +232,11 @@ Security, Trade, Quote,
 Meal (with food snapshots and local photos), Favorite meal, Weight, Garmin daily summary,
 Review note. Balances, spending, positions and net worth are derived and not
 stored as truth.
+
+
+Historical prices remain a secondary Assets task: daily closes and corrections
+are inspectable beneath Manage or a holding detail. Asset changes distinguishes
+recalculated history from immutable observations captured at the shown time.
+Missing FX stays explicit; neither retroactive snapshots nor closing-net-worth
+claims are inferred from an ordinary foreground capture. Historical retrieval
+uses the existing public data providers and preserves native currencies.

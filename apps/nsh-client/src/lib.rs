@@ -39,7 +39,11 @@ pub fn App() -> impl IntoElement {
     tasks::mark_root();
     if let Err(error) = db::open()
         .and_then(|()| finance::load())
+        .and_then(|()| crate::data::valuation::load())
         .and_then(|()| capture::load())
+        .and_then(|()| data::statement_import::load())
+        .and_then(|()| data::catalog::load())
+        .and_then(|()| data::market::load())
     {
         log::error!("startup: local data unavailable: {error}");
         return view()
@@ -93,6 +97,7 @@ pub fn App() -> impl IntoElement {
         if lifecycle() == nsh_core::platform::Lifecycle::Active {
             untracked(clock::tick);
             tasks::spawn_app(garmin::refresh(false));
+            tasks::spawn_app(data::market::refresh(false));
             tasks::spawn_app(async {
                 let _ = backup::backup_now(false).await;
             });

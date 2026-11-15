@@ -3,6 +3,7 @@
 //! own accounts; expenses and income are the categories; equity holds
 //! opening balances and balance-check adjustments.
 
+use crate::currency::Currency;
 use std::fmt;
 
 use serde::{Deserialize, Serialize};
@@ -71,6 +72,10 @@ pub struct Account(String);
 impl Account {
     /// The account `name` of `kind` (the name trimmed).
     pub fn new(kind: AccountKind, name: &str) -> Result<Self, AccountError> {
+        Self::new_in(kind, name, Currency::CNY)
+    }
+
+    pub fn new_in(kind: AccountKind, name: &str, currency: Currency) -> Result<Self, AccountError> {
         let name = name.trim();
         let valid = !name.is_empty()
             && name.chars().count() <= MAX_NAME
@@ -80,24 +85,45 @@ impl Account {
         if !valid {
             return Err(AccountError::BadName);
         }
-        Ok(Account(format!("{}:{name}", kind.prefix())))
+        Ok(Account(if currency == Currency::CNY {
+            format!("{}:{name}", kind.prefix())
+        } else {
+            format!("{}/{currency}:{name}", kind.prefix())
+        }))
     }
 
     /// The account written as `type:name`.
     pub fn parse(full: &str) -> Result<Self, AccountError> {
         let (prefix, name) = full.split_once(':').ok_or(AccountError::Unnamed)?;
-        let kind = AccountKind::of_prefix(prefix.trim()).ok_or(AccountError::UnknownKind)?;
-        Self::new(kind, name)
+        let (prefix, currency) = match prefix.trim().split_once('/') {
+            Some((p, c)) => (p, Currency::parse(c).ok_or(AccountError::UnknownKind)?),
+            None => (prefix.trim(), Currency::CNY),
+        };
+        let kind = AccountKind::of_prefix(prefix).ok_or(AccountError::UnknownKind)?;
+        Self::new_in(kind, name, currency)
     }
 
     pub fn kind(&self) -> AccountKind {
         let prefix = self.0.split_once(':').map_or("", |(p, _)| p);
-        AccountKind::of_prefix(prefix).unwrap_or(AccountKind::Equity)
+        AccountKind::of_prefix(prefix.split('/').next().unwrap_or(prefix))
+            .unwrap_or(AccountKind::Equity)
     }
 
     /// The name after the type (`支付宝余额`).
     pub fn name(&self) -> &str {
         self.0.split_once(':').map_or("", |(_, n)| n)
+    }
+
+    pub fn currency(&self) -> Currency {
+        self.0
+            .split_once(':')
+            .and_then(|(p, _)| p.split_once('/'))
+            .and_then(|(_, c)| Currency::parse(c))
+            .unwrap_or(Currency::CNY)
+    }
+
+    pub fn in_currency(&self, currency: Currency) -> Self {
+        Self::new_in(self.kind(), self.name(), currency).expect("validated account")
     }
 
     pub fn as_str(&self) -> &str {

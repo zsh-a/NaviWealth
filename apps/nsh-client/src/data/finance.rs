@@ -12,6 +12,7 @@ struct Ledger {
     accounts: Vec<Account>,
     checks: Vec<repository::BalanceCheck>,
     holdings: finance_core::holdings::Book,
+    rates: Vec<finance_core::currency::FxRate>,
 }
 
 fn state() -> Signal<Ledger> {
@@ -24,11 +25,17 @@ pub fn load() -> Result<(), String> {
         repository::validate(c)?;
         repository::ensure_defaults(c)?;
         Ok(Ledger {
+            rates: finance_core::currency::rates(c)
+                .map_err(|_| repository::Error::Invalid("exchange rates"))?,
             transactions: repository::transactions(c)?,
             accounts: repository::accounts(c)?,
             checks: repository::balance_checks(c)?,
-            holdings: finance_core::holdings::store::load(c)
-                .map_err(|_| repository::Error::Invalid("holdings"))?,
+            holdings: finance_core::market::valued_book(
+                c,
+                finance_core::holdings::store::load(c)
+                    .map_err(|_| repository::Error::Invalid("holdings"))?,
+            )
+            .map_err(|_| repository::Error::Invalid("market quotes"))?,
         })
     })
     .ok_or("the database is not open")?
@@ -50,9 +57,25 @@ pub fn accounts() -> Vec<Account> {
 pub fn holdings() -> finance_core::holdings::Book {
     state().with(|s| s.holdings.clone())
 }
+pub fn rates() -> Vec<finance_core::currency::FxRate> {
+    state().with(|s| s.rates.clone())
+}
+pub fn save_rate(rate: finance_core::currency::FxRate) -> Result<(), String> {
+    db::with(|c| finance_core::currency::save_rate(c, &rate))
+        .ok_or("database unavailable")?
+        .map_err(|e| e.to_string())?;
+    let rates = db::with(finance_core::currency::rates)
+        .ok_or("database unavailable")?
+        .map_err(|e| e.to_string())?;
+    state().update(|s| s.rates = rates);
+    Ok(())
+}
 fn reflect(saved: finance_core::holdings::store::Saved) {
+    let book = db::with(|c| finance_core::market::valued_book(c, saved.book.clone()))
+        .and_then(Result::ok)
+        .unwrap_or(saved.book);
     state().update(|s| {
-        s.holdings = saved.book;
+        s.holdings = book;
         s.transactions = saved.entries;
         s.accounts = saved.accounts;
     });
@@ -61,8 +84,21 @@ pub fn add_trade(
     security: Option<&finance_core::holdings::Security>,
     trade: &finance_core::holdings::Trade,
 ) -> Result<(), finance_core::holdings::Error> {
+    add_trade_bound(security, trade, None)
+}
+pub fn add_trade_bound(
+    security: Option<&finance_core::holdings::Security>,
+    trade: &finance_core::holdings::Trade,
+    binding: Option<&finance_core::catalog::SecurityBinding>,
+) -> Result<(), finance_core::holdings::Error> {
     let saved = db::with(|c| {
-        finance_core::holdings::store::add_trade(c, security, trade, super::clock::today().0)
+        finance_core::holdings::store::add_trade_bound(
+            c,
+            security,
+            trade,
+            super::clock::today().0,
+            binding,
+        )
     })
     .ok_or(finance_core::holdings::Error::Invalid)??;
     reflect(saved);
@@ -176,6 +212,11 @@ pub fn rename_account(old: &Account, new: &Account) -> Result<(), repository::Er
         }
     });
     super::capture::replace_mirror(drafts);
+    // The repository renames references inside an unfinished statement review.
+    // The durable rename already succeeded; reload its UI mirror separately.
+    if let Err(error) = super::statement_import::load() {
+        log::error!("finance: cannot reload import after account rename: {error}");
+    }
     let mut defaults = super::settings::current().ledger;
     for a in [&mut defaults.own, &mut defaults.other] {
         if a.as_deref() == Some(old.as_str()) {

@@ -45,6 +45,16 @@ CREATE TABLE finance_mapping_rules (
 
 /// Parents before children, for atomic backup replacement.
 pub const TABLES: &[(&str, &str)] = &[
+    (
+        "finance_daily_bars",
+        "revision,market,symbol,currency,provider,day,open,high,low,close,volume,fetched_at,received_at",
+    ),
+    (
+        "finance_price_audit",
+        "id,kind,item_key,day,body,received_at",
+    ),
+    ("finance_valuation_snapshots", "id,day,captured_at,body"),
+    ("finance_fx_rates", "currency,day,rate,source"),
     ("finance_accounts", "name"),
     (
         "finance_transactions",
@@ -55,6 +65,7 @@ pub const TABLES: &[(&str, &str)] = &[
         "transaction_id, position, account, amount",
     ),
     ("finance_mapping_rules", "kind, provider, pattern, account"),
+    ("finance_import_drafts", "singleton, body"),
     (
         "finance_balance_checks",
         "id, account, day, actual, checked_at",
@@ -65,6 +76,14 @@ pub const TABLES: &[(&str, &str)] = &[
         "id,security,at,kind,quantity,price,amount,fee,cash",
     ),
     ("finance_quotes", "security,day,price"),
+    (
+        "finance_security_bindings",
+        "security,market,symbol,currency",
+    ),
+    (
+        "finance_market_quotes",
+        "security,symbol,currency,provider,price,observed_at,fetched_at,previous_close_only,day",
+    ),
 ];
 
 pub const BALANCE_SCHEMA: &str = "CREATE TABLE finance_balance_checks (
@@ -205,7 +224,11 @@ pub fn rename_account(
     old: &Account,
     new: &Account,
 ) -> Result<(), Error> {
-    if !old.is_cash() || !new.is_cash() || old.kind() != new.kind() {
+    if !old.is_cash()
+        || !new.is_cash()
+        || old.kind() != new.kind()
+        || old.currency() != new.currency()
+    {
         return Err(Error::Invalid("account type cannot change"));
     }
     if old == new {
@@ -230,6 +253,7 @@ pub fn rename_account(
             params![new.as_str(), old.as_str()],
         )?;
     }
+    crate::import::store::rename_account(tx, old, new)?;
     tx.execute("DELETE FROM finance_accounts WHERE name=?1", [old.as_str()])?;
     Ok(())
 }
@@ -482,13 +506,22 @@ pub fn rules(connection: &Connection) -> Result<Rules, Error> {
 /// Replaces the confirmed mapping rules in one transaction.
 pub fn save_rules(connection: &Connection, rules: &Rules) -> Result<(), Error> {
     let tx = connection.unchecked_transaction()?;
+    save_rules_in_transaction(&tx, rules)?;
+    tx.commit()?;
+    Ok(())
+}
+
+pub(crate) fn save_rules_in_transaction(
+    tx: &sqlite::Transaction<'_>,
+    rules: &Rules,
+) -> Result<(), Error> {
     tx.execute("DELETE FROM finance_mapping_rules", [])?;
     for (provider, methods) in &rules.methods {
         for (pattern, account) in methods {
             if provider.is_empty() || !account.is_cash() {
                 return Err(Error::Invalid("payment method account"));
             }
-            keep_account(&tx, account)?;
+            keep_account(tx, account)?;
             tx.execute(
                 "INSERT INTO finance_mapping_rules VALUES ('method', ?1, ?2, ?3)",
                 params![provider, pattern, account.as_str()],
@@ -499,21 +532,47 @@ pub fn save_rules(connection: &Connection, rules: &Rules) -> Result<(), Error> {
         if !matches!(account.kind(), AccountKind::Expenses | AccountKind::Income) {
             return Err(Error::Invalid("payee category"));
         }
-        keep_account(&tx, account)?;
+        keep_account(tx, account)?;
         tx.execute(
             "INSERT INTO finance_mapping_rules VALUES ('payee', '', ?1, ?2)",
             params![payee, account.as_str()],
         )?;
     }
-    tx.commit()?;
     Ok(())
 }
 
 /// Validates imported databases independently of their declared constraints.
 pub fn validate(connection: &Connection) -> Result<(), Error> {
     transactions(connection)?;
+    let has_fx: i64 = connection.query_row(
+        "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='finance_fx_rates'",
+        [],
+        |r| r.get(0),
+    )?;
+    if has_fx != 0 {
+        crate::currency::validate(connection).map_err(|_| Error::Invalid("exchange rate"))?;
+    }
+    crate::history::validate(connection).map_err(|_| Error::Invalid("price history"))?;
+    let has_snapshots: bool = connection.query_row("SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='table' AND name='finance_valuation_snapshots')", [], |r| r.get(0))?;
+    if has_snapshots {
+        crate::valuation::validate(connection)
+            .map_err(|_| Error::Invalid("valuation snapshots"))?;
+    }
     rules(connection)?;
+    crate::import::store::validate(connection)?;
+    let has_catalog: i64 = connection.query_row("SELECT count(*) FROM sqlite_master WHERE type='table' AND name='finance_security_bindings'", [], |r| r.get(0))?;
+    if has_catalog != 0 {
+        crate::catalog::validate(connection).map_err(|_| Error::Invalid("security binding"))?;
+    }
     balance_checks(connection)?;
+    let has_market: i64 = connection.query_row(
+        "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='finance_market_quotes'",
+        [],
+        |r| r.get(0),
+    )?;
+    if has_market != 0 {
+        crate::market::validate(connection).map_err(|_| Error::Invalid("market quote"))?;
+    }
     crate::holdings::store::validate(connection)
         .map_err(|_| Error::Invalid("holdings do not match the journal"))?;
     Ok(())

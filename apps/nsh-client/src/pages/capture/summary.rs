@@ -38,7 +38,7 @@ pub fn saved_message(draft: &Draft) -> String {
                 Kind::Income => s().income,
                 Kind::Transfer => s().transfer,
             },
-            format!("¥{}", draft.amount.as_deref().unwrap_or("—")),
+            amount_text(&draft.currency, draft.amount.as_deref().unwrap_or("—")),
         ),
         Record::Meal { estimate, .. } => (
             s().meals,
@@ -168,7 +168,7 @@ fn record_view(
                                 draft
                                     .amount
                                     .as_ref()
-                                    .map(|a| format!("¥{a}"))
+                                    .map(|a| amount_text(&draft.currency, a))
                                     .unwrap_or_else(|| "—".into()),
                             )
                             .typo(Type::LargeTitle)
@@ -307,5 +307,13 @@ fn record_view(
             }))
             .child(hairline(0.0))
             .into_element(),
+    }
+}
+
+fn amount_text(currency: &str, amount: &str) -> String {
+    if currency == "CNY" {
+        format!("¥{amount}")
+    } else {
+        format!("{currency} {amount}")
     }
 }

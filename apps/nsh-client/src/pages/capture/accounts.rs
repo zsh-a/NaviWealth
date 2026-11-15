@@ -32,9 +32,15 @@ pub fn picker(
         }
         _ => (None, None),
     };
+    let currency = match current.records.get(choice.index) {
+        Some(Record::Money { draft: money, .. }) => {
+            finance_core::currency::Currency::parse(&money.currency)
+        }
+        _ => None,
+    };
     let accounts: Vec<_> = finance::accounts()
         .into_iter()
-        .filter(|a| a.is_cash() && Some(a) != other.as_ref())
+        .filter(|a| a.is_cash() && Some(a.currency()) == currency && Some(a) != other.as_ref())
         .collect();
     view()
         .gap_2()
@@ -71,7 +77,10 @@ pub fn picker(
                 };
                 // Recheck against current state when the user taps, not just
                 // the list snapshot. A transfer cannot fund itself.
-                if other.as_ref() == Some(&account) || !finance::accounts().contains(&account) {
+                if other.as_ref() == Some(&account)
+                    || account.currency().code() != money.currency
+                    || !finance::accounts().contains(&account)
+                {
                     return;
                 }
                 let target: &mut Option<Account> = if choice.destination {

@@ -82,6 +82,7 @@ fn every_fixture_matches_its_manifest() {
             let kind = match row.kind {
                 Kind::Expense => "expense",
                 Kind::Income => "income",
+                _ => panic!("legacy corpus must not contain ledger review kinds"),
             };
             assert_eq!(kind, want["kind"], "{fixture}");
             assert_eq!(

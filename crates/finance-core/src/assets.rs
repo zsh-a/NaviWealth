@@ -1,4 +1,5 @@
 //! Account views and balance reconciliation derived from the journal.
+use crate::currency::Currency;
 use crate::{
     account::{Account, AccountKind},
     journal::{self, Transaction},
@@ -15,7 +16,14 @@ pub struct Snapshot {
 }
 
 pub fn snapshot(entries: &[Transaction], day: Date) -> Snapshot {
-    let balances = journal::balances(entries.iter().filter(|t| t.at.date() <= day));
+    snapshot_in(entries, day, Currency::CNY)
+}
+
+pub fn snapshot_in(entries: &[Transaction], day: Date, currency: Currency) -> Snapshot {
+    let balances = journal::balances(entries.iter().filter(|t| t.at.date() <= day))
+        .into_iter()
+        .filter(|(a, _)| a.currency() == currency)
+        .collect::<std::collections::BTreeMap<_, _>>();
     let assets = money::sum(
         balances
             .iter()
@@ -32,7 +40,12 @@ pub fn snapshot(entries: &[Transaction], day: Date) -> Snapshot {
     Snapshot {
         assets,
         debt,
-        net: journal::net_worth(&balances),
+        net: money::sum(
+            balances
+                .iter()
+                .filter(|(a, _)| a.kind().is_own())
+                .map(|(_, v)| *v),
+        ),
     }
 }
 

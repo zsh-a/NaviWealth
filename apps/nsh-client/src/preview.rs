@@ -231,6 +231,94 @@ pub fn apply() {
             weights::set(today.plus_days(-back), kg);
         }
     }
+    if has("multicurrency") {
+        use finance_core::{
+            account::{Account, AccountKind},
+            currency::{Currency, FxRate},
+            holdings::{Kind, Quote, Security, Trade},
+            journal::{self, Entry, Source},
+        };
+        let day = clock::today().0;
+        let usd = Account::new_in(AccountKind::Assets, "Broker cash", Currency::USD).unwrap();
+        if !finance::accounts().contains(&usd) {
+            let entry = Entry {
+                id: "preview-usd-cash".into(),
+                at: day.at(9, 0, 0, 0),
+                payee: String::new(),
+                note: String::new(),
+                source: Source::Manual,
+            };
+            finance::save(journal::opening(entry, &usd, 100000).unwrap()).unwrap();
+            let security = Security::new_in("preview-us", "Apple", Currency::USD).unwrap();
+            finance::add_trade(
+                Some(&security),
+                &Trade {
+                    id: "preview-us-open".into(),
+                    security: security.id.clone(),
+                    at: day.at(10, 0, 0, 0),
+                    kind: Kind::Opening,
+                    quantity: 10_000_000,
+                    price: 200_000_000,
+                    amount: 0,
+                    fee: 0,
+                    cash: None,
+                },
+            )
+            .unwrap();
+            finance::set_quote(&Quote {
+                security: security.id,
+                day,
+                price: 210_000_000,
+            })
+            .unwrap();
+        }
+        if has("fx") {
+            finance::save_rate(FxRate {
+                currency: Currency::USD,
+                day,
+                rate: 7_000_000,
+                source: "manual".into(),
+            })
+            .unwrap();
+        }
+    }
+    if has("history") {
+        use finance_core::{
+            catalog::{self, SecurityBinding},
+            history::{self, DailyBar},
+        };
+        crate::data::db::with(|c| {
+            let binding = SecurityBinding {
+                security: "preview-etf".into(),
+                market: "cn_a".into(),
+                symbol: "510300".into(),
+                currency: "CNY".into(),
+            };
+            catalog::bind(c, &binding).unwrap();
+            let now = jiff::Timestamp::now();
+            let day = clock::today().plus_days(-2).0;
+            let first = now.checked_sub(jiff::Span::new().minutes(5)).unwrap();
+            let mut bar = DailyBar {
+                market: "cn_a".into(),
+                symbol: "510300.SH".into(),
+                currency: "CNY".into(),
+                provider: "tencent:raw".into(),
+                day,
+                open: 4_020_000,
+                high: 4_120_000,
+                low: 3_990_000,
+                close: 4_080_000,
+                volume: Some(658140),
+                fetched_at: first,
+            };
+            history::save_bars(c, &binding, &[bar.clone()], now).unwrap();
+            bar.close = 4_090_000;
+            bar.fetched_at = now;
+            history::save_bars(c, &binding, &[bar], now).unwrap();
+        });
+        finance::load().unwrap();
+        crate::data::valuation::capture(true).unwrap();
+    }
     match route.as_deref() {
         Some(r) if r.starts_with("new:") => {
             if let Ok(bytes) = std::fs::read(&r[4..]) {
@@ -257,6 +345,24 @@ pub fn apply() {
         }
         Some("review" | "review-month") => nav::select(nav::Tab::Review),
         Some("records") => nav::select(nav::Tab::Records),
+        Some("price-history") => nav::push(Route::PriceHistory(None)),
+        Some("exchange-rates") => nav::push(Route::ExchangeRates),
+        Some("statement-import") => {
+            if let Ok(path) = env::var("NW_PREVIEW_STATEMENT")
+                && let Ok(bytes) = std::fs::read(&path)
+            {
+                crate::data::tasks::spawn_app(async move {
+                    let name = std::path::Path::new(&path)
+                        .file_name()
+                        .unwrap()
+                        .to_string_lossy()
+                        .into_owned();
+                    let _ = crate::data::statement_import::open_file(name, bytes).await;
+                });
+            }
+            nav::select(nav::Tab::Records);
+            nav::push(Route::StatementImport);
+        }
         Some("assets" | "assets-empty" | "assets-manage") => nav::select(nav::Tab::Assets),
         Some("asset-history") => {
             nav::select(nav::Tab::Assets);

@@ -14,7 +14,9 @@ use crate::{
 };
 use finance_core::{
     account::{Account, AccountKind},
-    assets, journal, money,
+    assets,
+    currency::Currency,
+    journal, money,
     repository::{BalanceCheck, Error},
 };
 use nsh_base::alert_dialog;
@@ -85,6 +87,7 @@ pub fn account_editor(open: Signal<bool>, own: Option<Signal<Account>>) -> impl 
                     .map(|a| a.kind())
                     .unwrap_or(AccountKind::Assets),
             );
+            let currency = signal(initial.as_ref().map_or(Currency::CNY, Account::currency));
             let error = signal(None::<String>);
             let close = guarded_close(open, move || {
                 name.get_untracked() != original.with(|v| v.clone())
@@ -116,6 +119,7 @@ pub fn account_editor(open: Signal<bool>, own: Option<Signal<Account>>) -> impl 
                         move |k| kind.set(k),
                     )
                 }))
+                .child(own.is_none().then(|| crate::ui::currency::picker(currency)))
                 .child(field(
                     || s().account_name,
                     text_input(name).label(|| s().account_name).auto_focus(true),
@@ -138,9 +142,11 @@ pub fn account_editor(open: Signal<bool>, own: Option<Signal<Account>>) -> impl 
                             }
                         })
                         .on_press(move || {
-                            let Ok(account) =
-                                Account::new(kind.get_untracked(), &name.get_untracked())
-                            else {
+                            let Ok(account) = Account::new_in(
+                                kind.get_untracked(),
+                                &name.get_untracked(),
+                                currency.get_untracked(),
+                            ) else {
                                 error.set(Some(s().error_account.into()));
                                 return;
                             };
@@ -263,7 +269,7 @@ pub fn balance_editor(open: Signal<bool>, own: Signal<Account>) -> impl IntoElem
                         return view()
                             .gap_4()
                             .child(
-                                text(a.name().to_owned())
+                                text(crate::ui::currency::account_label(&a))
                                     .typo(Type::Headline)
                                     .text_color(color::INK),
                             )
@@ -279,11 +285,13 @@ pub fn balance_editor(open: Signal<bool>, own: Signal<Account>) -> impl IntoElem
                                     s().account_balance
                                 },
                                 assets::displayed(&a, p.book),
+                                a.currency(),
                             ))
-                            .child(pair(title, assets::displayed(&a, p.actual)))
+                            .child(pair(title, assets::displayed(&a, p.actual), a.currency()))
                             .child(pair(
                                 s().balance_difference,
                                 assets::displayed(&a, difference),
+                                a.currency(),
                             ))
                             .child(
                                 text(if difference == 0 {
@@ -299,7 +307,7 @@ pub fn balance_editor(open: Signal<bool>, own: Signal<Account>) -> impl IntoElem
                     view()
                         .gap_4()
                         .child(
-                            text(a.name().to_owned())
+                            text(crate::ui::currency::account_label(&a))
                                 .typo(Type::Headline)
                                 .text_color(color::INK),
                         )
@@ -431,7 +439,7 @@ pub fn balance_editor(open: Signal<bool>, own: Signal<Account>) -> impl IntoElem
     })
 }
 
-fn pair(label: &'static str, value: i64) -> impl IntoElement {
+fn pair(label: &'static str, value: i64, currency: Currency) -> impl IntoElement {
     view()
         .flex_row()
         .items_baseline()
@@ -442,5 +450,5 @@ fn pair(label: &'static str, value: i64) -> impl IntoElement {
                 .text_color(color::MUTED)
                 .flex_1(),
         )
-        .child(super::amount(value, Type::Figure))
+        .child(super::amount_in(value, Type::Figure, currency))
 }

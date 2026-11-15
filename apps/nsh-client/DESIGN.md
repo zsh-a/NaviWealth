@@ -66,15 +66,19 @@ AI only to turn text and images into drafts, using the owner's model account.
 - **Assets:** one overview card leads with net worth, followed by asset and
   debt totals in two columns. Cash accounts, open holdings and debt accounts
   follow as flat rows on the canvas.
-  With holdings, values use dated manual CNY prices, falling back to cost
-  when unpriced; without holdings, the basis is book balances. The visible
+  With holdings, values use dated native-currency prices, falling back to cost
+  when unpriced; without holdings, the basis is book balances. CNY, HKD and
+  USD accounts and holdings retain their original amounts. The overview converts
+  to CNY using the latest rate on or before its date; missing rates label the
+  figure as known value and name the excluded currencies. A history with missing
+  dated rates shows an explicit message instead of an incomplete chart. The visible
   short valuation basis links to Asset changes, which holds the 30-day chart,
   full valuation basis and a note that changes are not investment returns.
   Each holding keeps its manual price date or cost-fallback label. Unchecked
   accounts keep a visible label; ordinary last-check dates live in account
   details and remain in the row's accessible description. Internal holding
   cost accounts stay out of the account list. Manage opens one bottom sheet
-  with Add account, Add holding and Closed holdings. No accounts or holdings
+  with Add account, Add holding, Exchange rates and Closed holdings. No accounts or holdings
   shows a short empty state with Add account and Add holding. The global text/image
   capture button remains the main record entry.
 - **Holdings:** flat overview rows show name, value and price status; quantity
@@ -285,11 +289,48 @@ amounts and primary balance/value figures use grouped thousands and two
 decimal places through a display-only formatter that preserves exact minor
 units and editable input. Detailed cost and gain figures keep their existing
 money formatting and come from the domain calculation. Quantity, average
-unit cost and unit price retain up to six decimal places. The price basis is
-manual CNY, without live quotes, FX, catalog search or AI trade entry.
+unit cost and unit price retain up to six decimal places.
+
+Holding creation offers offline code/name/pinyin search before quantity and
+unit cost, with manual naming still available. The listing sheet shows market,
+code and currency; unsupported currencies and instrument types are visibly
+unavailable. Existing holdings require a separate link confirmation: catalog
+identity never replaces the holding's internal id, label, account or trades.
+The bundled GitHub Releases catalog checks for updates when the picker opens,
+at most once per 24 hours, with a manual retry and an explicit offline fallback.
+Mainland China, Hong Kong and US stocks and ETFs can be linked in their
+CNY, HKD and USD trading currencies. Manual creation offers compact currency
+choices; catalog selection sets currency automatically. Existing holdings keep
+their currency, and trade cash choices include only matching asset accounts.
+
+Assets has one visible quote refresh action. Tencent marks refresh in the
+foreground with a five-minute automatic throttle; manual refresh bypasses the
+throttle. Holding price captions distinguish manual input, Tencent observations,
+previous close and earlier dates. A manual mark wins on the same or a newer
+date; a failed network request keeps the last dated mark. Unpriced holdings
+remain visibly valued at cost. Exchange rates shows dated HKD/CNY and USD/CNY
+observations and a compact manual rate editor. Manual rates take precedence over
+network rates on the same day; no rate is applied before its recorded date.
+Cross-currency transfers require separate sent and received amounts and preserve
+both native values. Schema 14 backs up rates with the ledger. Other currencies,
+crypto, allocation and AI trade entry remain outside this increment. Android
+TLS and physical-device behavior remain unverified.
 Account, holding and price editors reuse `task_sheet` and the existing
 calendar picker, with actions fixed above the keyboard. Quantity and unit
 cost/price share one row; secondary trade details remain collapsed initially.
+
+Review calls the money panel “Recorded spending”: its total reflects confirmed
+journal entries, with the three largest expense categories initially visible.
+The total and category rows open the corresponding editable transactions.
+A current partial week or month compares the same elapsed days in the preceding
+period; missing earlier records show no comparison rather than invented zeroes.
+
+Statement files enter through the import action on Records.
+This opens a full review page rather than recognition: account
+mapping, selected rows, possible duplicates, corrections and skipped-line reasons
+stay on device through restart. Only confirmation posts selected entries, with
+mapping rules saved together. The fixed footer shows the selected count; long
+reviews reveal rows in batches of 50. A changed journal requires review again.
 
 ## Platform decisions
 
@@ -363,3 +404,18 @@ Capture and settings refinement previews in
 review and collapsed settings in GTK, including light/dark and a narrow
 360 × 640 capture review. These are desktop development captures; Android
 keyboard, system Back, rendering and performance still need device evidence.
+
+
+Historical financial data stays below the Assets overview. Asset changes uses
+one two-option segmented control for Recalculated / Recorded, with a single
+contextual action in each mode. Price history is a flat, paginated list under
+Manage or a holding detail; OHLC, source and revisions expand inline. Retain
+native currency beside security prices, show local observation times without
+raw timestamp precision, and suppress empty status messages. Partial FX
+observations never masquerade as complete net worth or closing-day values.
+
+History review captures are in `.impeccable/review/history/`, including the
+390 × 844 light and 360 × 640 dark price-history page, its corrections view,
+and both Asset changes modes. Headless flows cover expansion, mode switching
+and appending immutable observations. Desktop captures do not establish Android
+native behavior, rendering performance or physical-device TLS behavior.

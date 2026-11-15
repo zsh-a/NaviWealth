@@ -164,3 +164,32 @@ fn failed_new_position_keeps_input_and_overselling_never_changes_the_ledger() ->
     );
     Ok(())
 }
+
+#[test]
+fn manual_hkd_holding_keeps_currency_when_recording_later_trades() -> Result<(), String> {
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
+    app.press("label:Assets")?;
+    app.press("Add holding")?;
+    app.press("text:HKD")?;
+    app.type_text("label:Name or code", "Hong Kong fund")?;
+    app.type_text("label:Quantity", "10")?;
+    app.type_text("label:Cost per unit", "12")?;
+    app.press("Save holding")?;
+    app.wait_for("Record trade")?;
+    app.wait_for("text:HKD 120.00")?;
+    app.press("Record trade")?;
+    app.wait_for("Hong Kong fund · HKD")?;
+    app.type_text("label:Quantity", "1")?;
+    app.type_text("label:Price per unit", "13")?;
+    app.press("Save trade")?;
+    app.wait_for("Choose a cash account. Add one in Assets if needed.")?;
+    let c = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    let book = store::load(&c).unwrap();
+    assert_eq!(
+        book.securities[0].currency(),
+        finance_core::currency::Currency::HKD
+    );
+    assert_eq!(book.trades.len(), 1);
+    Ok(())
+}

@@ -212,3 +212,116 @@ fn dated_prices_replace_cost_in_net_worth_and_never_backfill_the_past() {
     assert!(journal::spending(&zero.entries, date(2026, 11, 1), today).is_empty());
     repository::validate(&c).unwrap();
 }
+
+#[test]
+fn foreign_trades_preserve_native_cost_and_reject_wrong_currency_atomically() {
+    use finance_core::currency::Currency;
+    let c = db();
+    let today = date(2026, 11, 15);
+    for currency in [Currency::HKD, Currency::USD] {
+        let native_cash = cash().in_currency(currency);
+        repository::create_account(&c, &native_cash).unwrap();
+        let s = Security::new_in(
+            &format!("etf-{currency}"),
+            &format!("ETF {currency}"),
+            currency,
+        )
+        .unwrap();
+        let make = |id: &str, kind, q, p, fee, day| Trade {
+            id: format!("{currency}-{id}"),
+            security: s.id.clone(),
+            cash: Some(native_cash.clone()),
+            ..trade(id, kind, q, p, fee, day)
+        };
+        let wrong = Trade {
+            cash: Some(cash()),
+            ..make("bad", Kind::Buy, "10", "20", 5, 1)
+        };
+        assert!(matches!(
+            store::add_trade(&c, Some(&s), &wrong, today),
+            Err(Error::Cash)
+        ));
+        assert!(!store::load(&c).unwrap().securities.contains(&s));
+        store::add_trade(
+            &c,
+            Some(&s),
+            &make("buy", Kind::Buy, "10", "20", 5, 1),
+            today,
+        )
+        .unwrap();
+        store::add_trade(&c, None, &make("sell", Kind::Sell, "5", "30", 2, 2), today).unwrap();
+        let dividend = Trade {
+            amount: 100,
+            ..make("div", Kind::Dividend, "0", "0", 1, 3)
+        };
+        let saved = store::add_trade(&c, None, &dividend, today).unwrap();
+        let p = saved.book.position(&s, today).unwrap();
+        assert_eq!(
+            (p.quantity, p.cost, p.realized, p.dividends),
+            (5_000_000, 10002, 4995, 99)
+        );
+        for entry in saved.entries.iter().filter(|t| match &t.source {
+            Source::Investment { trade_id } => trade_id.starts_with(currency.code()),
+            _ => false,
+        }) {
+            assert!(
+                entry
+                    .postings
+                    .iter()
+                    .all(|p| p.account.currency() == currency)
+            );
+        }
+        store::validate(&c).unwrap();
+    }
+}
+#[test]
+fn multi_currency_overview_converts_marks_and_exposes_dated_missing_rates() {
+    use finance_core::currency::{Currency, FxRate};
+    let c = db();
+    let day = date(2026, 11, 15);
+    let s = Security::new_in("etf", "US ETF", Currency::USD).unwrap();
+    let saved = store::add_trade(
+        &c,
+        Some(&s),
+        &trade("opening", Kind::Opening, "10", "20", 0, 1),
+        day,
+    )
+    .unwrap();
+    let missing = saved
+        .book
+        .overview_with_rates(&saved.entries, day, &[])
+        .unwrap();
+    assert_eq!(missing.snapshot.net, 0);
+    assert_eq!(missing.missing, vec![Currency::USD]);
+    let rate = FxRate {
+        currency: Currency::USD,
+        day,
+        rate: 7_000_000,
+        source: "manual".into(),
+    };
+    let past = saved
+        .book
+        .overview_with_rates(
+            &saved.entries,
+            date(2026, 11, 14),
+            std::slice::from_ref(&rate),
+        )
+        .unwrap();
+    assert_eq!(past.missing, vec![Currency::USD]);
+    let valued = store::set_quote(
+        &c,
+        &Quote {
+            security: s.id.clone(),
+            day,
+            price: 30_000_000,
+        },
+        day,
+    )
+    .unwrap();
+    let result = valued
+        .book
+        .overview_with_rates(&valued.entries, day, &[rate])
+        .unwrap();
+    assert_eq!(result.snapshot.net, 210000);
+    assert!(result.missing.is_empty());
+}

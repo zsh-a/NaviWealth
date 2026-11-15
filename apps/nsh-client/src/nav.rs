@@ -27,6 +27,15 @@ pub enum Route {
     Holding(String),
     AssetHistory,
     ClosedHoldings,
+    StatementImport,
+    ExchangeRates,
+    PriceHistory(Option<String>),
+    Spending {
+        from: Day,
+        to: Day,
+        category: Option<String>,
+        currency: finance_core::currency::Currency,
+    },
 }
 
 /// The home's tabs.

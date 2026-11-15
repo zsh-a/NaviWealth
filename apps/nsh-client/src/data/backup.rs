@@ -252,6 +252,10 @@ pub async fn restore(name: String) -> Result<(), Failure> {
         weights::load();
         garmin::load();
         finance::load().map_err(|_| Failure::Storage)?;
+        super::statement_import::load().map_err(|_| Failure::Storage)?;
+        super::catalog::load().map_err(|_| Failure::Storage)?;
+        super::market::load().map_err(|_| Failure::Storage)?;
+        super::valuation::load().map_err(|_| Failure::Storage)?;
         state().update(|s| {
             s.kept.last_backup_day = Some(clock::today().to_string());
             persist(&s.kept);

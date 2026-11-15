@@ -42,10 +42,22 @@ fn display_money(value: i64) -> String {
 }
 
 pub(super) fn amount(value: i64, style: Type) -> impl IntoElement {
-    text(format!("¥{}", display_money(value)))
-        .typo(style)
-        .tabular_nums()
-        .text_color(color::INK)
+    amount_in(value, style, finance_core::currency::Currency::CNY)
+}
+
+pub(super) fn amount_in(
+    value: i64,
+    style: Type,
+    currency: finance_core::currency::Currency,
+) -> impl IntoElement {
+    text(if currency == finance_core::currency::Currency::CNY {
+        format!("¥{}", display_money(value))
+    } else {
+        format!("{} {}", currency.code(), display_money(value))
+    })
+    .typo(style)
+    .tabular_nums()
+    .text_color(color::INK)
 }
 
 pub fn account_page(name: &str) -> Screen {
@@ -109,7 +121,11 @@ pub fn account_page(name: &str) -> Screen {
                                             .typo(Type::Headline)
                                             .text_color(color::BODY),
                                         )
-                                        .child(amount(assets::displayed(&a, book), Type::Display))
+                                        .child(amount_in(
+                                            assets::displayed(&a, book),
+                                            Type::Display,
+                                            a.currency(),
+                                        ))
                                         .child(
                                             text(
                                                 checked.unwrap_or_else(|| {
@@ -157,8 +173,11 @@ pub fn account_page(name: &str) -> Screen {
                                                 t.note
                                             );
                                             let title = super::finance::transaction_title(&t);
-                                            let label =
-                                                format!("{title}, {} CNY", money::format(value));
+                                            let label = format!(
+                                                "{title}, {} {}",
+                                                money::format(value),
+                                                a.currency().code()
+                                            );
                                             view()
                                                 .child(
                                                     row_button(move || {
@@ -192,7 +211,11 @@ pub fn account_page(name: &str) -> Screen {
                                                                 .number_of_lines(1),
                                                             ),
                                                     )
-                                                    .child(amount(value, Type::Figure)),
+                                                    .child(amount_in(
+                                                        value,
+                                                        Type::Figure,
+                                                        a.currency(),
+                                                    )),
                                                 )
                                                 .child(hairline(0.0))
                                         }))
@@ -224,12 +247,15 @@ pub fn account_page(name: &str) -> Screen {
 }
 
 pub(super) fn balance_title(t: &Transaction) -> Option<&'static str> {
-    if t.postings.iter().any(|p| p.account == defaults::opening()) {
+    if t.postings
+        .iter()
+        .any(|p| p.account == defaults::opening().in_currency(p.account.currency()))
+    {
         Some(s().opening_balance)
     } else if t
         .postings
         .iter()
-        .any(|p| p.account == defaults::adjustment())
+        .any(|p| p.account == defaults::adjustment().in_currency(p.account.currency()))
     {
         Some(s().balance_adjustment)
     } else {
@@ -269,9 +295,10 @@ pub(super) fn balance_entry(t: Transaction, open: Signal<Option<String>>) -> Any
                         .typo(Type::Headline)
                         .text_color(color::INK),
                 )
-                .child(amount(
+                .child(amount_in(
                     assets::displayed(&p.account, p.amount),
                     Type::LargeTitle,
+                    p.account.currency(),
                 ))
         }))
         .child(

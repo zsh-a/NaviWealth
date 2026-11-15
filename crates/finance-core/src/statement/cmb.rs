@@ -26,7 +26,11 @@ pub fn is_statement(raw: &str) -> bool {
     raw.contains("招商银行信用卡对账单") && raw.contains("交易明细") && PERIOD.is_match(raw)
 }
 
-pub(super) fn parse(raw: &str, default_currency: &str) -> (Vec<Row>, Vec<Issue>, usize) {
+pub(super) fn parse(
+    raw: &str,
+    default_currency: &str,
+    review: bool,
+) -> (Vec<Row>, Vec<Issue>, usize) {
     let Some(period) = PERIOD.captures(raw) else {
         return (Vec::new(), Vec::new(), 0);
     };
@@ -65,7 +69,7 @@ pub(super) fn parse(raw: &str, default_currency: &str) -> (Vec<Row>, Vec<Issue>,
         };
         match settled {
             0 => issues.push(issue(IssueCode::ZeroAmount)),
-            s if s < 0 => issues.push(issue(IssueCode::UnsupportedDirection)),
+            s if s < 0 && !review => issues.push(issue(IssueCode::UnsupportedDirection)),
             s => {
                 let description = m[5].trim().to_owned();
                 rows.push(Row {
@@ -78,7 +82,15 @@ pub(super) fn parse(raw: &str, default_currency: &str) -> (Vec<Row>, Vec<Issue>,
                     payment_method: Some(format!("招商银行信用卡({})", &m[7])),
                     amount: -s,
                     currency: default_currency.to_uppercase(),
-                    kind: Kind::Expense,
+                    kind: if s >= 0 {
+                        Kind::Expense
+                    } else if m[5].contains("退款") {
+                        Kind::Refund
+                    } else if m[5].contains("还款") {
+                        Kind::TransferIn
+                    } else {
+                        Kind::NeedsDirection
+                    },
                     category_hint: None,
                     reference: None,
                 });

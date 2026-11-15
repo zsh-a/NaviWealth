@@ -1,10 +1,11 @@
-//! A small CNY portfolio: exact quantities/prices, moving-average cost and
+//! A native-currency portfolio: exact quantities/prices, moving-average cost and
 //! confirmed trades. Cash and security cost share the double-entry journal.
 pub mod store;
 
 use crate::{
     account::{Account, AccountKind, defaults},
     assets,
+    currency::Currency,
     journal::{Posting, Source, Transaction},
     money::{self, Minor},
 };
@@ -22,6 +23,12 @@ pub struct Security {
 }
 impl Security {
     pub fn new(id: &str, name: &str) -> Result<Self, Error> {
+        Self::new_in(id, name, Currency::CNY)
+    }
+    pub fn currency(&self) -> Currency {
+        self.account.currency()
+    }
+    pub fn new_in(id: &str, name: &str, currency: Currency) -> Result<Self, Error> {
         let name = name.trim();
         if id.is_empty()
             || id.len() > 30
@@ -35,8 +42,12 @@ impl Security {
         Ok(Self {
             id: id.into(),
             name: name.into(),
-            account: Account::new(AccountKind::Assets, &format!("{ACCOUNT_PREFIX}{id}"))
-                .map_err(|_| Error::Invalid)?,
+            account: Account::new_in(
+                AccountKind::Assets,
+                &format!("{ACCOUNT_PREFIX}{id}"),
+                currency,
+            )
+            .map_err(|_| Error::Invalid)?,
         })
     }
 }
@@ -53,10 +64,10 @@ pub struct Trade {
     pub security: String,
     pub at: DateTime,
     pub kind: Kind,
-    /// Millionths of a share and millionths of CNY per share.
+    /// Millionths of a share and millionths of the security currency per share.
     pub quantity: i64,
     pub price: i64,
-    /// Dividend cash in fen (zero for other kinds).
+    /// Dividend cash in native minor units (zero for other kinds).
     pub amount: Minor,
     pub fee: Minor,
     pub cash: Option<Account>,
@@ -210,9 +221,9 @@ pub fn replay(
                     .filter(|v| *v > 0)
                     .ok_or(Error::Overflow)?;
                 let from = if t.kind == Kind::Opening {
-                    defaults::opening()
+                    defaults::opening().in_currency(security.currency())
                 } else {
-                    cash(t)?
+                    cash(t, security.currency())?
                 };
                 post(security.account.clone(), total);
                 post(from, -total);
@@ -239,9 +250,12 @@ pub fn replay(
                     )?
                 };
                 let gain = net.checked_sub(released).ok_or(Error::Overflow)?;
-                post(cash(t)?, net);
+                post(cash(t, security.currency())?, net);
                 post(security.account.clone(), -released);
-                post(defaults::other_income(), -gain);
+                post(
+                    defaults::other_income().in_currency(security.currency()),
+                    -gain,
+                );
                 p.quantity -= t.quantity;
                 p.cost -= released;
                 p.realized = p.realized.checked_add(gain).ok_or(Error::Overflow)?;
@@ -251,8 +265,11 @@ pub fn replay(
                     return Err(Error::Invalid);
                 }
                 let net = t.amount - t.fee;
-                post(cash(t)?, net);
-                post(defaults::other_income(), -net);
+                post(cash(t, security.currency())?, net);
+                post(
+                    defaults::other_income().in_currency(security.currency()),
+                    -net,
+                );
                 p.dividends = p.dividends.checked_add(net).ok_or(Error::Overflow)?;
             }
         }
@@ -271,12 +288,18 @@ pub fn replay(
     }
     Ok((p, entries))
 }
-fn cash(t: &Trade) -> Result<Account, Error> {
+fn cash(t: &Trade, currency: Currency) -> Result<Account, Error> {
     t.cash
         .as_ref()
-        .filter(|a| a.is_cash() && a.kind() == AccountKind::Assets)
+        .filter(|a| a.is_cash() && a.kind() == AccountKind::Assets && a.currency() == currency)
         .cloned()
         .ok_or(Error::Cash)
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ValuedOverview {
+    pub snapshot: assets::Snapshot,
+    pub missing: Vec<Currency>,
 }
 
 impl Book {
@@ -318,12 +341,73 @@ impl Book {
         };
         Ok(p)
     }
+    /// Convert native account balances and security marks using only rates known
+    /// by the valuation day. Missing rates exclude that currency explicitly.
+    pub fn overview_with_rates(
+        &self,
+        entries: &[Transaction],
+        day: Date,
+        rates: &[crate::currency::FxRate],
+    ) -> Result<ValuedOverview, Error> {
+        let mut balances = crate::journal::balances(entries.iter().filter(|t| t.at.date() <= day));
+        for security in &self.securities {
+            let p = self.position(security, day)?;
+            if let Some(value) = p.value {
+                let balance = balances.entry(security.account.clone()).or_default();
+                *balance = balance
+                    .checked_add(value.checked_sub(p.cost).ok_or(Error::Overflow)?)
+                    .ok_or(Error::Overflow)?;
+            }
+        }
+        let mut totals = std::collections::BTreeMap::<Currency, (i128, i128)>::new();
+        for (account, value) in balances {
+            let total = totals.entry(account.currency()).or_default();
+            match account.kind() {
+                AccountKind::Assets => total.0 += i128::from(value),
+                AccountKind::Liabilities => total.1 -= i128::from(value),
+                _ => {}
+            }
+        }
+        let (mut assets, mut debt) = (0_i128, 0_i128);
+        let mut missing = Vec::new();
+        for (currency, (a, d)) in totals {
+            if a == 0 && d == 0 {
+                continue;
+            }
+            let Some(rate) = crate::currency::rate_in(rates, currency, day) else {
+                missing.push(currency);
+                continue;
+            };
+            let convert = |v| {
+                crate::currency::convert_to_cny(
+                    i64::try_from(v).map_err(|_| Error::Overflow)?,
+                    rate.rate,
+                )
+                .map_err(|_| Error::Overflow)
+            };
+            assets += i128::from(convert(a)?);
+            debt += i128::from(convert(d)?);
+        }
+        Ok(ValuedOverview {
+            snapshot: assets::Snapshot {
+                assets: i64::try_from(assets).map_err(|_| Error::Overflow)?,
+                debt: i64::try_from(debt).map_err(|_| Error::Overflow)?,
+                net: i64::try_from(assets - debt).map_err(|_| Error::Overflow)?,
+            },
+            missing,
+        })
+    }
     /// Security cost is already an asset posting. Replace it with the known
     /// market value, not cost+market value. Unpriced positions remain at cost.
+    /// Legacy CNY-only view; use overview_with_rates for a multi-currency book.
     pub fn overview(&self, entries: &[Transaction], day: Date) -> Result<assets::Snapshot, Error> {
         let mut snap = assets::snapshot(entries, day);
         let mut delta = 0_i128;
-        for security in &self.securities {
+        for security in self
+            .securities
+            .iter()
+            .filter(|s| s.currency() == Currency::CNY)
+        {
             let p = self.position(security, day)?;
             if let Some(value) = p.value {
                 delta += i128::from(value) - i128::from(p.cost);

@@ -70,6 +70,9 @@ pub fn review_tab() -> impl IntoElement {
                     back.set(0);
                 },
             ))
+            .child(super::finance_review::spending_section(
+                days, before, period,
+            ))
             .child(summary(period, days, before))
             .child(intake_card(period, days))
             .child(super::review_note::note_editor(days))

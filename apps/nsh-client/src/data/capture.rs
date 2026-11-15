@@ -141,7 +141,7 @@ pub fn recognize(
     let now = clock::zoned(clock::now_ms()).datetime();
     let context = serde_json::json!({"local_date":now.date().to_string(),"local_time":now.time().to_string(),
         "known_accounts":finance::accounts().iter().filter(|a| a.is_cash()).map(ToString::to_string).collect::<Vec<_>>(),
-        "known_categories":finance::accounts().iter().filter(|a| matches!(a.kind(),finance_core::account::AccountKind::Expenses|finance_core::account::AccountKind::Income)).map(ToString::to_string).collect::<Vec<_>>()});
+        "known_categories":finance_core::currency::Currency::ALL.into_iter().flat_map(|currency| finance_core::account::defaults::all().into_iter().filter(|a| matches!(a.kind(),finance_core::account::AccountKind::Expenses|finance_core::account::AccountKind::Income)).map(move |a|a.in_currency(currency).to_string())).collect::<Vec<_>>()});
     tasks::spawn_app(async move {
         let response =
             vision::recognize_record(account, draft.clone(), jpeg, lang, consent, context).await;

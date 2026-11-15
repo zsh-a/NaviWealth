@@ -14,11 +14,53 @@ use crate::{
 };
 pub use editor::trade_editor;
 use finance_core::{
+    currency::Currency,
     holdings::{self, Kind, Security},
     money,
 };
 use nsh_base::{alert_dialog, nav_page};
 use nsh_core::{element::Screen, prelude::*};
+
+fn quote_caption(q: &holdings::Quote, currency: Currency) -> String {
+    if let Some(bar) = crate::data::db::with(|c| finance_core::history::effective_bar(c, q))
+        .and_then(Result::ok)
+        .flatten()
+    {
+        format!(
+            "{} {} {} · {}",
+            crate::i18n::statement_import::copy("Daily close", "日线收盘"),
+            currency,
+            holdings::format_units(bar.close),
+            bar.day
+        )
+    } else if let Some(network) = crate::data::market::effective_quote(q) {
+        let label = if network.previous_close_only {
+            crate::i18n::catalog::previous_close()
+        } else {
+            crate::i18n::catalog::market_price()
+        };
+        format!(
+            "{} {} {} · {}{}",
+            label,
+            currency,
+            holdings::format_units(q.price),
+            network.observed_at,
+            if q.day < clock::today().0 {
+                format!(" · {}", crate::i18n::catalog::stale())
+            } else {
+                String::new()
+            }
+        )
+    } else {
+        format!(
+            "{} {} {} · {}",
+            s().manual_price,
+            currency,
+            holdings::format_units(q.price),
+            s().short_date(Day(q.day))
+        )
+    }
+}
 
 pub(super) fn kind_label(kind: Kind) -> &'static str {
     match kind {
@@ -37,8 +79,11 @@ pub(super) fn failure(error: &holdings::Error) -> &'static str {
         _ => s().error_transaction_storage,
     }
 }
-pub(super) fn amount(value: i64, style: Type) -> impl IntoElement {
-    super::assets::amount(value, style)
+pub(super) fn amount(value: i64, currency: Currency, style: Type) -> impl IntoElement {
+    text(crate::ui::currency::format(value, currency))
+        .typo(style)
+        .tabular_nums()
+        .text_color(color::INK)
 }
 pub(super) fn pair(
     label: impl IntoReactive<SharedString>,
@@ -101,13 +146,17 @@ pub fn section(closed: bool) -> impl IntoElement {
                     } else {
                         p.quote
                             .as_ref()
-                            .map(|q| {
-                                format!("{} · {}", s().manual_price, s().short_date(Day(q.day)))
-                            })
+                            .map(|q| quote_caption(q, sec.currency()))
                             .unwrap_or_else(|| s().unpriced.into())
                     };
                     let value = p.value.unwrap_or(p.cost);
-                    let label = format!("{}, {} CNY, {}", sec.name, money::format(value), status);
+                    let label = format!(
+                        "{}, {} {}, {}",
+                        sec.name,
+                        money::format(value),
+                        sec.currency(),
+                        status
+                    );
                     view().child(
                         row_button(move || nav::push(Route::Holding(id.clone())))
                             .accessibility_label(move || Some(label.clone().into()))
@@ -131,7 +180,7 @@ pub fn section(closed: bool) -> impl IntoElement {
                                         text(status).typo(Type::Caption).text_color(color::MUTED),
                                     ),
                             )
-                            .child(amount(value, Type::Headline))
+                            .child(amount(value, sec.currency(), Type::Headline))
                             .child(crate::ui::icon(Icon::ChevronRight, 16.0, color::MUTED)),
                     )
                 }))
@@ -170,6 +219,8 @@ pub fn holding_page(id: &str) -> Screen {
     let id = stored(id.to_owned());
     let trade = signal(None::<String>);
     let price = signal(false);
+    let picker = signal(false);
+    let binding_error = signal(None::<String>);
     let receipt = signal(None::<String>);
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
     crate::preview::holding_detail_opened(trade, price);
@@ -215,19 +266,13 @@ pub fn holding_page(id: &str) -> Screen {
                                     let Some(sec) = sec else {
                                         return view().into_element();
                                     };
+                                    let currency = sec.currency();
                                     let p =
                                         book.position(&sec, today.0).expect("validated holdings");
                                     let caption = p
                                         .quote
                                         .as_ref()
-                                        .map(|q| {
-                                            format!(
-                                                "{} ¥{} · {}",
-                                                s().manual_price,
-                                                holdings::format_units(q.price),
-                                                s().short_date(Day(q.day))
-                                            )
-                                        })
+                                        .map(|q| quote_caption(q, currency))
                                         .unwrap_or_else(|| s().unpriced.into());
                                     view()
                                         .gap_3()
@@ -237,7 +282,11 @@ pub fn holding_page(id: &str) -> Screen {
                                                 .typo(Type::Headline)
                                                 .text_color(color::BODY),
                                         )
-                                        .child(amount(p.value.unwrap_or(p.cost), Type::Display))
+                                        .child(amount(
+                                            p.value.unwrap_or(p.cost),
+                                            currency,
+                                            Type::Display,
+                                        ))
                                         .child(
                                             row_button(move || price.set(true))
                                                 .accessibility_label(|| {
@@ -257,6 +306,33 @@ pub fn holding_page(id: &str) -> Screen {
                                                     color::INK,
                                                 )),
                                         )
+                                        .child(
+                                            Btn::ghost()
+                                                .label(move || {
+                                                    crate::data::catalog::bindings()
+                                                        .into_iter()
+                                                        .find(|b| id.with(|v| *v == b.security))
+                                                        .map(|b| {
+                                                            format!(
+                                                                "{} · {} · {}",
+                                                                crate::i18n::catalog::market(
+                                                                    &b.market
+                                                                ),
+                                                                b.symbol,
+                                                                b.currency
+                                                            )
+                                                            .into()
+                                                        })
+                                                        .unwrap_or_else(|| {
+                                                            crate::i18n::catalog::bind().into()
+                                                        })
+                                                })
+                                                .on_press(move || picker.set(true)),
+                                        )
+                                        .child(note(
+                                            move || binding_error.get().map(Into::into),
+                                            || true,
+                                        ))
                                         .child(pair(
                                             s().quantity,
                                             holdings::format_units(p.quantity),
@@ -264,17 +340,23 @@ pub fn holding_page(id: &str) -> Screen {
                                         .child(pair(
                                             s().unit_cost,
                                             p.average()
-                                                .map(|v| format!("¥{}", holdings::format_units(v)))
+                                                .map(|v| {
+                                                    format!(
+                                                        "{} {}",
+                                                        currency,
+                                                        holdings::format_units(v)
+                                                    )
+                                                })
                                                 .unwrap_or_else(|| "—".into()),
                                         ))
                                         .child(pair(
                                             s().holding_cost,
-                                            format!("¥{}", money::format(p.cost)),
+                                            crate::ui::currency::format(p.cost, currency),
                                         ))
                                         .child(pair(
                                             s().unrealized,
                                             p.unrealized()
-                                                .map(|v| format!("¥{}", money::format(v)))
+                                                .map(|v| crate::ui::currency::format(v, currency))
                                                 .unwrap_or_else(|| "—".into()),
                                         ))
                                         .child(
@@ -285,18 +367,31 @@ pub fn holding_page(id: &str) -> Screen {
                                         .child((p.realized != 0).then(|| {
                                             pair(
                                                 s().realized,
-                                                format!("¥{}", money::format(p.realized)),
+                                                crate::ui::currency::format(p.realized, currency),
                                             )
                                         }))
                                         .child((p.dividends != 0).then(|| {
                                             pair(
                                                 s().dividends,
-                                                format!("¥{}", money::format(p.dividends)),
+                                                crate::ui::currency::format(p.dividends, currency),
                                             )
                                         }))
                                         .into_element()
                                 })
                             }))
+                            .child(
+                                Btn::ghost()
+                                    .label(|| {
+                                        crate::i18n::statement_import::copy(
+                                            "Price history",
+                                            "价格记录",
+                                        )
+                                        .into()
+                                    })
+                                    .on_press(move || {
+                                        nav::push(Route::PriceHistory(Some(id.get())))
+                                    }),
+                            )
                             .child(
                                 text(|| s().holding_history)
                                     .typo(Type::Title)
@@ -304,6 +399,12 @@ pub fn holding_page(id: &str) -> Screen {
                             )
                             .child(dynamic(move || {
                                 let book = finance::holdings();
+                                let currency = book
+                                    .securities
+                                    .iter()
+                                    .find(|s| id.with(|id| *id == s.id))
+                                    .map(Security::currency)
+                                    .unwrap_or(Currency::CNY);
                                 let mut history: Vec<_> = book
                                     .trades
                                     .iter()
@@ -315,11 +416,12 @@ pub fn holding_page(id: &str) -> Screen {
                                     view().children(history.into_iter().map(|t| {
                                         let label = kind_label(t.kind);
                                         let detail = if t.kind == Kind::Dividend {
-                                            format!("¥{}", money::format(t.amount))
+                                            crate::ui::currency::format(t.amount, currency)
                                         } else {
                                             format!(
-                                                "{} × ¥{}",
+                                                "{} × {} {}",
                                                 holdings::format_units(t.quantity),
+                                                currency,
                                                 holdings::format_units(t.price)
                                             )
                                         };
@@ -374,6 +476,43 @@ pub fn holding_page(id: &str) -> Screen {
                         )
                         .child(toast_view(|| 24.0)),
                 )
+                .child(crate::pages::security_picker::selector(
+                    picker,
+                    move |entry| {
+                        let Some(sec) = security() else {
+                            return;
+                        };
+                        let binding = entry.binding(&sec.id);
+                        let answer = alert_dialog()
+                            .title(crate::i18n::catalog::confirm())
+                            .description(format!(
+                                "{} · {} · {} · {}\n{}",
+                                entry.name(),
+                                crate::i18n::catalog::market(&entry.market),
+                                entry.symbol,
+                                entry.currency,
+                                crate::i18n::catalog::body()
+                            ))
+                            .cancel("cancel", s().cancel)
+                            .action("bind", crate::i18n::catalog::confirm())
+                            .show();
+                        crate::data::tasks::spawn_app(async move {
+                            if answer
+                                .await
+                                .is_ok_and(|r| r.action.as_deref() == Some("bind"))
+                            {
+                                match crate::data::catalog::bind(&binding) {
+                                    Ok(()) => binding_error.set(None),
+                                    Err(e) => {
+                                        log::warn!("holding binding failed: {e}");
+                                        binding_error
+                                            .set(Some(crate::i18n::catalog::bind_failed().into()));
+                                    }
+                                }
+                            }
+                        });
+                    },
+                ))
                 .child(trade_editor(trade))
                 .child(editor::price_editor(price, security))
                 .child(dynamic(move || {
@@ -417,18 +556,25 @@ pub(super) fn trade_receipt(id: &str, close: impl Fn() + Copy + 'static) -> AnyE
                 .text_color(color::MUTED),
         )
         .child(if t.kind == Kind::Dividend {
-            pair(s().dividend_amount, format!("¥{}", money::format(t.amount))).into_element()
+            pair(
+                s().dividend_amount,
+                crate::ui::currency::format(t.amount, sec.currency()),
+            )
+            .into_element()
         } else {
             view()
                 .gap_3()
                 .child(pair(s().quantity, holdings::format_units(t.quantity)))
                 .child(pair(
                     s().trade_price,
-                    format!("¥{}", holdings::format_units(t.price)),
+                    format!("{} {}", sec.currency(), holdings::format_units(t.price)),
                 ))
                 .into_element()
         })
-        .child(pair(s().fee, format!("¥{}", money::format(t.fee))))
+        .child(pair(
+            s().fee,
+            crate::ui::currency::format(t.fee, sec.currency()),
+        ))
         .child(
             t.cash
                 .as_ref()

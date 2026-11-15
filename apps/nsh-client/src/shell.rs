@@ -29,6 +29,17 @@ pub fn shell() -> impl IntoElement {
                     Route::Holding(id) => crate::pages::holdings::holding_page(&id),
                     Route::AssetHistory => crate::pages::assets::history_page(),
                     Route::ClosedHoldings => crate::pages::holdings::closed_page(),
+                    Route::Spending {
+                        from,
+                        to,
+                        category,
+                        currency,
+                    } => crate::pages::finance_review::spending_page(from, to, category, currency),
+                    Route::StatementImport => {
+                        crate::pages::statement_import::statement_import_page()
+                    }
+                    Route::PriceHistory(id) => crate::pages::price_history::page(id),
+                    Route::ExchangeRates => crate::pages::exchange_rates::page(),
                 };
                 // Back on iOS and Android is the system's: it pops the page
                 // natively, and the routes follow.

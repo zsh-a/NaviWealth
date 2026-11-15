@@ -134,11 +134,14 @@ and are included in encrypted backups.
 ## Ledger: manual records and storage
 
 The capture sheet's **Log transaction** action records an expense, income or
-transfer. Amounts are exact CNY minor units; more than two decimal places are
+transfer. Amounts are exact CNY, HKD or USD minor units; more than two decimal places are
 rejected. Choose a category and an asset/liability account, or name a new own
 account within the draft. No account or posting is written until Save succeeds.
 The sheet edits the date/time, payee and note; dismissal asks before discarding
 changes. Existing rows open the editor; Delete offers Undo.
+Each own account has one currency. Cross-currency transfers record both sent
+and received amounts and balance each currency separately. Spending remains
+in its original currency in Today, Records and Review.
 
 Today combines meals and transactions in time order and shows today's spending
 beside intake once the ledger has records. Income and transfers do not count as
@@ -250,10 +253,19 @@ trade history. Buy, sell and cash dividend share one compact editor; date and
 fees are secondary details. Deleting a trade requires confirmation and replays
 later trades; a deletion or backdated sale that would oversell is rejected.
 
-This increment is CNY-only, with manually named securities and manual dated
-prices. Unpriced positions explicitly use cost; known prices replace cost in
-net worth and are never applied to earlier days. There is no live quote provider,
-catalog lookup, FX or AI trade recognition yet. Existing capture rejects trades.
+The supported markets are mainland China, Hong Kong and the US, with CNY, HKD
+and USD accounts and holdings. Offline catalog search supports code, name,
+pinyin and aliases; verified catalog updates come from GitHub Releases.
+Manual holdings remain available. Trades settle through matching-currency cash
+accounts; a holding's currency stays fixed after creation.
+
+Tencent provides dated quotes. Unpriced positions explicitly use native cost;
+known prices replace cost and are never applied to earlier days. Assets converts
+to CNY using dated Frankfurter ECB rates or manual rates under Manage → Exchange
+rates. Same-day manual quotes/rates take priority. Missing rates leave currencies
+visibly excluded from the known total; incomplete historical rates prevent a
+misleading full trend. Schema 14 includes exchange rates in backups. Other
+currencies and crypto are not supported; AI trade recognition remains excluded.
 
 `finance-core::holdings` owns six-decimal integer quantities/prices, cent rounding,
 moving-average cost, realized gains, dividends and journal postings. Buy fees
@@ -270,3 +282,48 @@ and routes `holdings`, `holding`, `holding-new`, `holding-trade`, `holding-price
 `closed-holdings` seeds a liquidated holding for the history page; adding
 `unpriced` to the preview flags leaves positions visibly valued at cost.
 These previews and headless checks are not Android device evidence.
+
+
+## Price history and recorded valuations
+
+Schemas 15–16 add local immutable raw daily OHLCV revisions, quote/FX audit
+records and observed valuation snapshots. Tencent supplies unadjusted daily
+bars for mainland China, Hong Kong and US listings; Frankfurter ECB supplies
+dated HKD/CNY and USD/CNY reference rates. Values remain integer millionths,
+with native currency retained. The day is the market's local trading date.
+Unfinished current-market days are excluded conservatively, even after the
+session closes; current quotes remain separately labeled. Historical raw daily
+closes supersede same-day intraday marks; same-day manual prices take priority.
+
+Successful foreground quote/rate updates also backfill the last 30 days.
+Asset changes offers a manual retry. Fetches are single-flight and bounded to
+one year plus a ten-day prior-price warm-up per request, with a six-hour success TTL and five-minute failure TTL;
+only used foreign currencies are fetched. A ten-day price/FX warm-up permits prior
+published rates across weekends without using future rates. Empty responses
+remain missing data, not a coverage guarantee. No minute/tick history or
+corporate-action-adjusted return series is implemented.
+
+Manage → Price history lists daily closes and saved corrections, with OHLC,
+source and revisions on expansion. Holding details offer a filtered entry.
+A changed binding clears only its active network marks: the old observations
+and symbol-keyed daily bars remain in the archive. Migration records existing
+marks/rates as baselines at migration time, never inventing original fetch times.
+Unchanged values add no audit revision. Manual FX rates keep same-day priority.
+
+Asset changes separates Recalculated (current ledger plus dated marks/rates)
+from Recorded (immutable observations at the shown instant). Automatic capture
+runs once per local day after a successful refresh, or on foreground entry for
+cash-only portfolios without a network request. Manual capture appends another
+observation. A snapshot copies native balances, positions, prices, actual rates,
+calculation inputs and integrity checksums; later edits never rewrite it.
+Missing FX is explicit and prevents a partial net-worth chart. Recorded values
+are not end-of-day closing values; past observations are never fabricated.
+
+Backups include all three new tables. Migration, exact roundtrip, malformed
+history/audit/snapshot rejection and atomic restore are checked alongside
+revision precedence, manual overrides and immutable valuation tests. Live
+public TLS checks cover CN 510300, HK 00700, US AAPL/BRK.B and both FX pairs;
+Android platform behavior still requires device verification.
+
+Desktop preview: add `history` to the existing `holdings,multicurrency,fx`
+flags and use `NW_PREVIEW_ROUTE=price-history` or `asset-history`.

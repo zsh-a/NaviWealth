@@ -23,6 +23,14 @@ const STROKE: f32 = 9.0;
 /// The glance card of `day`.
 pub fn hero(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
     let summary = computed(move || meals::summary(day()));
+    let spending_currency = computed(move || {
+        let entries = finance::transactions();
+        let date = day().0;
+        finance_core::currency::Currency::ALL
+            .into_iter()
+            .find(|c| finance_core::review::spending_in(&entries, date, date, *c).records > 0)
+            .unwrap_or_default()
+    });
     let goal = computed(settings::goal);
     let total = move || summary.with(|summary| summary.total);
     let logged = move || summary.with(|summary| summary.meals > 0);
@@ -106,23 +114,50 @@ pub fn hero(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                             )
                             .child(stat(
                                 move || {
-                                    let transactions = finance::transactions();
-                                    let day = day().0;
-                                    let recorded = transactions.iter().any(|t| t.at.date() == day);
-                                    recorded.then(|| {
-                                        finance_core::money::format(finance_core::money::sum(
-                                            finance_core::journal::spending(
-                                                &transactions,
-                                                day,
-                                                day,
+                                    let entries = finance::transactions();
+                                    let date = day().0;
+                                    entries.iter().any(|t| t.at.date() == date).then(|| {
+                                        finance_core::money::format(
+                                            finance_core::review::spending_in(
+                                                &entries,
+                                                date,
+                                                date,
+                                                spending_currency.get(),
                                             )
-                                            .into_values(),
-                                        ))
+                                            .total,
+                                        )
                                     })
                                 },
-                                || "CNY".into(),
+                                move || spending_currency.get().code().into(),
                                 Scale::Tile,
                             ))
+                            .child(dynamic(move || {
+                                let entries = finance::transactions();
+                                let date = day().0;
+                                view().gap_1().children(
+                                    [
+                                        finance_core::currency::Currency::HKD,
+                                        finance_core::currency::Currency::USD,
+                                    ]
+                                    .into_iter()
+                                    .filter_map(|currency| {
+                                        let spending = finance_core::review::spending_in(
+                                            &entries, date, date, currency,
+                                        );
+                                        (spending.records > 0
+                                            && currency != spending_currency.get())
+                                        .then(|| {
+                                            text(crate::ui::currency::format(
+                                                spending.total,
+                                                currency,
+                                            ))
+                                            .typo(Type::Subhead)
+                                            .tabular_nums()
+                                            .text_color(color::INK)
+                                        })
+                                    }),
+                                )
+                            }))
                     },
                 )),
         )

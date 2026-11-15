@@ -36,10 +36,14 @@ impl Provider {
 }
 
 /// Money in or out.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum Kind {
     Expense,
     Income,
+    Refund,
+    TransferIn,
+    TransferOut,
+    NeedsDirection,
 }
 
 /// Why a candidate line did not become a row.
@@ -140,15 +144,26 @@ pub fn detect(raw: &str) -> Provider {
 /// The rows of a statement's text, in `default_currency` unless a row
 /// says otherwise.
 pub fn parse(raw: &str, default_currency: &str) -> Report {
+    parse_mode(raw, default_currency, false)
+}
+
+/// Ledger review keeps refunds and transfers for explicit account correction.
+/// The legacy parser remains the frozen corpus compatibility contract.
+pub fn review(raw: &str, default_currency: &str) -> Report {
+    parse_mode(raw, default_currency, true)
+}
+
+fn parse_mode(raw: &str, default_currency: &str, review: bool) -> Report {
     let provider = detect(raw);
     let (rows, issues, candidates) = match provider {
-        Provider::CmbCreditCard => cmb::parse(raw, default_currency),
+        Provider::CmbCreditCard => cmb::parse(raw, default_currency, review),
         // Alipay's payment time, not its order creation time, is when the
         // money moved.
         Provider::Alipay => {
             let (rows, issues, candidates) = delimited::parse(
                 &raw.replacen("交易创建时间", "交易创建时间(平台)", 1),
                 default_currency,
+                review,
             );
             (
                 rows.into_iter().map(alipay_hint).collect(),
@@ -156,7 +171,7 @@ pub fn parse(raw: &str, default_currency: &str) -> Report {
                 candidates,
             )
         }
-        Provider::WechatPay | Provider::Generic => delimited::parse(raw, default_currency),
+        Provider::WechatPay | Provider::Generic => delimited::parse(raw, default_currency, review),
     };
     Report {
         provider,

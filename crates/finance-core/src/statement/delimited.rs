@@ -72,7 +72,11 @@ fn mapping(cells: &[String]) -> Option<Mapping> {
 }
 
 /// The rows of a delimited statement, numbered as lines of `raw`.
-pub(super) fn parse(raw: &str, default_currency: &str) -> (Vec<Row>, Vec<Issue>, usize) {
+pub(super) fn parse(
+    raw: &str,
+    default_currency: &str,
+    review: bool,
+) -> (Vec<Row>, Vec<Issue>, usize) {
     let lines: Vec<(usize, &str)> = raw
         .lines()
         .enumerate()
@@ -110,7 +114,7 @@ pub(super) fn parse(raw: &str, default_currency: &str) -> (Vec<Row>, Vec<Issue>,
         }
         candidates += 1;
         let cells = scalars::split_row(line, delimiter);
-        match row(&cells, &columns, default_currency) {
+        match row(&cells, &columns, default_currency, review) {
             Ok(row) => rows.push(row),
             Err(code) => issues.push(Issue { line: number, code }),
         }
@@ -118,7 +122,12 @@ pub(super) fn parse(raw: &str, default_currency: &str) -> (Vec<Row>, Vec<Issue>,
     (rows, issues, candidates)
 }
 
-fn row(cells: &[String], columns: &Mapping, default_currency: &str) -> Result<Row, IssueCode> {
+fn row(
+    cells: &[String],
+    columns: &Mapping,
+    default_currency: &str,
+    review: bool,
+) -> Result<Row, IssueCode> {
     let cell = |col: Col| -> Option<String> {
         columns
             .iter()
@@ -132,7 +141,15 @@ fn row(cells: &[String], columns: &Mapping, default_currency: &str) -> Result<Ro
         .as_deref()
         .and_then(scalars::date_time)
         .ok_or(IssueCode::InvalidDate)?;
-    if ignored_status(cell(Col::Status).as_deref()) {
+    let status = cell(Col::Status);
+    // A refunded purchase is not proof of a separate refund movement.
+    let refunded_status = status.as_deref().is_some_and(|s| s.contains("退款"));
+    let failed_status = status.as_deref().is_some_and(|s| {
+        ["失败", "关闭", "撤销", "取消"]
+            .iter()
+            .any(|w| s.contains(w))
+    });
+    if failed_status || (ignored_status(status.as_deref()) && !(review && refunded_status)) {
         return Err(IssueCode::IgnoredStatus);
     }
     let direction = cell(Col::Direction);
@@ -153,11 +170,54 @@ fn row(cells: &[String], columns: &Mapping, default_currency: &str) -> Result<Ro
         }
     }
     let description = parts.join(" · ");
-    if unsupported(direction.as_deref(), &description) {
+    if !review && unsupported(direction.as_deref(), &description) {
         return Err(IssueCode::UnsupportedDirection);
     }
-    let (kind, minor) =
-        resolve(amount, expense, income, direction.as_deref()).ok_or(IssueCode::InvalidAmount)?;
+    let explicit_type = provider_type.as_deref().unwrap_or("");
+    let (kind, minor) = if review && refunded_status && !explicit_type.contains("退款") {
+        (
+            Kind::NeedsDirection,
+            amount
+                .or(income)
+                .or(expense)
+                .ok_or(IssueCode::InvalidAmount)?,
+        )
+    } else if review && explicit_type.contains("退款") {
+        (
+            Kind::Refund,
+            amount.or(income).ok_or(IssueCode::InvalidAmount)?,
+        )
+    } else if review
+        && ["信用卡还款", "还款", "充值", "提现", "转账"]
+            .iter()
+            .any(|t| explicit_type.contains(t))
+    {
+        let dir = compact(direction.as_deref());
+        let kind = if dir.contains("收入") || dir == "收" {
+            Kind::TransferIn
+        } else if dir.contains("支出") || dir == "支" {
+            Kind::TransferOut
+        } else {
+            Kind::NeedsDirection
+        };
+        (
+            kind,
+            amount
+                .or(expense)
+                .or(income)
+                .ok_or(IssueCode::InvalidAmount)?,
+        )
+    } else if review && unsupported(direction.as_deref(), &description) {
+        (
+            Kind::NeedsDirection,
+            amount
+                .or(expense)
+                .or(income)
+                .ok_or(IssueCode::InvalidAmount)?,
+        )
+    } else {
+        resolve(amount, expense, income, direction.as_deref()).ok_or(IssueCode::InvalidAmount)?
+    };
     if minor == 0 {
         return Err(IssueCode::ZeroAmount);
     }
@@ -181,7 +241,7 @@ fn row(cells: &[String], columns: &Mapping, default_currency: &str) -> Result<Ro
         item,
         provider_type,
         payment_method,
-        amount: if kind == Kind::Income {
+        amount: if matches!(kind, Kind::Income | Kind::Refund | Kind::TransferIn) {
             magnitude
         } else {
             -magnitude

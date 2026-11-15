@@ -8,6 +8,7 @@ use std::{
 
 use finance_core::{
     account::{Account, AccountKind, defaults},
+    currency::Currency,
     journal::{self, Entry, Source, Transaction},
     money,
 };
@@ -52,11 +53,14 @@ struct Own {
     creating: Signal<bool>,
     kind: Signal<AccountKind>,
     name: Signal<String>,
+    currency: Signal<Currency>,
 }
 
 impl Own {
     fn new(account: Option<Account>) -> Self {
+        let currency = account.as_ref().map_or(Currency::CNY, Account::currency);
         Self {
+            currency: signal(currency),
             selected: signal(account.map(|a| a.to_string()).unwrap_or_default()),
             creating: signal(false),
             kind: signal(AccountKind::Assets),
@@ -66,7 +70,7 @@ impl Own {
 
     fn account(self) -> Option<Account> {
         if self.creating.get() {
-            Account::new(self.kind.get(), &self.name.get()).ok()
+            Account::new_in(self.kind.get(), &self.name.get(), self.currency.get()).ok()
         } else {
             Account::parse(&self.selected.get())
                 .ok()
@@ -74,12 +78,13 @@ impl Own {
         }
     }
 
-    fn snapshot(self) -> (String, bool, AccountKind, String) {
+    fn snapshot(self) -> (String, bool, AccountKind, String, Currency) {
         (
             self.selected.get(),
             self.creating.get(),
             self.kind.get(),
             self.name.get(),
+            self.currency.get(),
         )
     }
 }
@@ -88,6 +93,7 @@ impl Own {
 struct Form {
     kind: Signal<Kind>,
     amount: Signal<String>,
+    received: Signal<String>,
     day: Signal<String>,
     time: Signal<String>,
     own: Own,
@@ -101,10 +107,11 @@ struct Form {
 struct Values {
     kind: Kind,
     amount: String,
+    received: String,
     day: String,
     time: String,
-    own: (String, bool, AccountKind, String),
-    other: (String, bool, AccountKind, String),
+    own: (String, bool, AccountKind, String, Currency),
+    other: (String, bool, AccountKind, String, Currency),
     category: String,
     payee: String,
     memo: String,
@@ -115,6 +122,7 @@ impl Form {
         Values {
             kind: self.kind.get(),
             amount: self.amount.get(),
+            received: self.received.get(),
             day: self.day.get(),
             time: self.time.get(),
             own: self.own.snapshot(),
@@ -153,16 +161,26 @@ impl Form {
             Kind::Expense => {
                 let category =
                     Account::parse(&self.category.get()).map_err(|_| s().error_account)?;
-                journal::spend(entry, &own, &category, amount).map_err(|_| s().error_account)
+                journal::spend(entry, &own, &category.in_currency(own.currency()), amount)
+                    .map_err(|_| s().error_account)
             }
             Kind::Income => {
                 let category =
                     Account::parse(&self.category.get()).map_err(|_| s().error_account)?;
-                journal::receive(entry, &own, &category, amount).map_err(|_| s().error_account)
+                journal::receive(entry, &own, &category.in_currency(own.currency()), amount)
+                    .map_err(|_| s().error_account)
             }
             Kind::Transfer => {
                 let other = self.other.account().ok_or(s().error_account)?;
-                journal::transfer(entry, &own, &other, amount).map_err(|_| s().error_transfer)
+                if own.currency() == other.currency() {
+                    journal::transfer(entry, &own, &other, amount)
+                } else {
+                    let received = money::parse(&self.received.get(), false)
+                        .filter(|v| *v > 0)
+                        .ok_or(s().error_money)?;
+                    journal::exchange(entry, &own, &other, amount, received)
+                }
+                .map_err(|_| s().error_transfer)
             }
         }
     }
@@ -171,6 +189,41 @@ impl Form {
 /// The supported two-posting forms. Split postings and equity entries are never
 /// flattened into a two-posting transaction by merely opening the editor.
 fn parts(t: &Transaction) -> Option<(Kind, Account, Account, i64)> {
+    if t.validate().is_ok() && t.postings.len() == 4 {
+        let from = t.own_postings().find(|p| p.amount < 0)?;
+        let to = t.own_postings().find(|p| p.amount > 0)?;
+        let amount = from.amount.checked_neg()?;
+        let expected = journal::exchange(
+            Entry {
+                id: t.id.clone(),
+                at: t.at,
+                payee: t.payee.clone(),
+                note: t.note.clone(),
+                source: t.source.clone(),
+            },
+            &from.account,
+            &to.account,
+            amount,
+            to.amount,
+        )
+        .ok()?;
+        let sorted = |postings: &[journal::Posting]| {
+            let mut values: Vec<_> = postings
+                .iter()
+                .map(|p| (p.account.clone(), p.amount))
+                .collect();
+            values.sort();
+            values
+        };
+        if sorted(&expected.postings) == sorted(&t.postings) {
+            return Some((
+                Kind::Transfer,
+                from.account.clone(),
+                to.account.clone(),
+                amount,
+            ));
+        }
+    }
     if t.postings.len() != 2 || t.validate().is_err() {
         return None;
     }
@@ -239,6 +292,13 @@ fn editor(id: String, open: Signal<Option<String>>) -> impl IntoElement {
     let kind = parsed.as_ref().map_or(Kind::Expense, |p| p.0);
     let form = Form {
         kind: signal(kind),
+        received: signal(
+            existing
+                .as_ref()
+                .and_then(|t| t.own_postings().find(|p| p.amount > 0))
+                .map(|p| money::format(p.amount))
+                .unwrap_or_default(),
+        ),
         amount: signal(
             parsed
                 .as_ref()
@@ -454,7 +514,16 @@ fn editor(id: String, open: Signal<Option<String>>) -> impl IntoElement {
                             .flex_row()
                             .items_center()
                             .gap_2()
-                            .child(text("¥").typo(Type::Title).text_color(color::MUTED))
+                            .child(
+                                text(move || {
+                                    form.own
+                                        .account()
+                                        .map_or(Currency::CNY, |a| a.currency())
+                                        .code()
+                                })
+                                .typo(Type::Title)
+                                .text_color(color::MUTED),
+                            )
                             .child(
                                 text_input(form.amount)
                                     .label(|| s().money_amount)
@@ -484,7 +553,7 @@ fn editor(id: String, open: Signal<Option<String>>) -> impl IntoElement {
                                     move || {
                                         form.own
                                             .account()
-                                            .map(|a| a.name().to_owned())
+                                            .map(|a| crate::ui::currency::account_label(&a))
                                             .unwrap_or_else(|| s().choose_account.into())
                                     },
                                     move || {
@@ -508,7 +577,7 @@ fn editor(id: String, open: Signal<Option<String>>) -> impl IntoElement {
                                         if form.kind.get() == Kind::Transfer {
                                             form.other
                                                 .account()
-                                                .map(|a| a.name().to_owned())
+                                                .map(|a| crate::ui::currency::account_label(&a))
                                                 .unwrap_or_else(|| s().choose_account.into())
                                         } else {
                                             Account::parse(&form.category.get())
@@ -529,6 +598,34 @@ fn editor(id: String, open: Signal<Option<String>>) -> impl IntoElement {
                                 .min_w(px(0.0)),
                             ),
                     )
+                    .child(when(
+                        move || {
+                            form.kind.get() == Kind::Transfer
+                                && form
+                                    .own
+                                    .account()
+                                    .zip(form.other.account())
+                                    .is_some_and(|(a, b)| a.currency() != b.currency())
+                        },
+                        move || {
+                            field(
+                                || {
+                                    crate::i18n::statement_import::copy(
+                                        "Amount received",
+                                        "实际到账金额",
+                                    )
+                                },
+                                text_input(form.received)
+                                    .label(|| {
+                                        crate::i18n::statement_import::copy(
+                                            "Amount received",
+                                            "实际到账金额",
+                                        )
+                                    })
+                                    .keyboard_type(nsh_core::element::KeyboardType::Decimal),
+                            )
+                        },
+                    ))
                     .child(choice(
                         || s().transaction_date,
                         move || {
@@ -604,6 +701,13 @@ fn editor(id: String, open: Signal<Option<String>>) -> impl IntoElement {
                                     AccountKind::Expenses
                                 }
                         })
+                        .map(|a| {
+                            a.in_currency(
+                                form.own.account().map_or(Currency::CNY, |a| a.currency()),
+                            )
+                        })
+                        .collect::<std::collections::BTreeSet<_>>()
+                        .into_iter()
                         .map(move |a| {
                             let name = category_label(&a);
                             let chosen = form.category.get() == a.as_str();
@@ -780,6 +884,7 @@ fn accounts_panel(own: Own, panel: Signal<Panel>, other: bool) -> impl IntoEleme
 fn new_account(own: Own, panel: Signal<Panel>) -> impl IntoElement {
     let name = signal(own.name.get_untracked());
     let kind = signal(own.kind.get_untracked());
+    let currency = signal(own.currency.get_untracked());
     let invalid = signal(false);
     view()
         .gap_4()
@@ -791,6 +896,7 @@ fn new_account(own: Own, panel: Signal<Panel>) -> impl IntoElement {
             move || kind.get(),
             move |k| kind.set(k),
         ))
+        .child(crate::ui::currency::picker(currency))
         .child(
             text_input(name)
                 .auto_focus(true)
@@ -802,11 +908,12 @@ fn new_account(own: Own, panel: Signal<Panel>) -> impl IntoElement {
             || true,
         ))
         .child(Btn::primary().label(|| s().done.into()).on_press(move || {
-            if Account::new(kind.get(), &name.get()).is_err() {
+            if Account::new_in(kind.get(), &name.get(), currency.get()).is_err() {
                 invalid.set(true);
                 return;
             }
             own.kind.set(kind.get());
+            own.currency.set(currency.get());
             own.name.set(name.get());
             own.creating.set(true);
             dismiss_keyboard();
@@ -923,7 +1030,7 @@ fn account_label(account: &Account) -> String {
         AccountKind::Liabilities => s().liability_account,
         _ => return category_label(account),
     };
-    format!("{} · {kind}", account.name())
+    format!("{} · {kind}", crate::ui::currency::account_label(account))
 }
 
 pub(super) fn category_label(account: &Account) -> String {
@@ -1026,7 +1133,11 @@ pub fn transaction_row(t: Transaction, on_press: impl Fn() + 'static) -> impl In
         .as_ref()
         .map(|p| {
             if p.0 == Kind::Transfer {
-                format!("{} → {}", p.1.name(), p.2.name())
+                format!(
+                    "{} → {}",
+                    crate::ui::currency::account_label(&p.1),
+                    crate::ui::currency::account_label(&p.2)
+                )
             } else {
                 p.1.name().to_owned()
             }
@@ -1048,7 +1159,11 @@ pub fn transaction_row(t: Transaction, on_press: impl Fn() + 'static) -> impl In
         t.at.hour(),
         t.at.minute()
     );
-    let accessibility = format!("{title}, {amount} CNY, {sub}");
+    let currency = t
+        .own_postings()
+        .next()
+        .map_or(Currency::CNY, |p| p.account.currency());
+    let accessibility = format!("{title}, {amount} {}, {sub}", currency.code());
     row_button(on_press)
         .accessibility_label(move || Some(accessibility.clone().into()))
         .child(
@@ -1078,7 +1193,11 @@ pub fn transaction_row(t: Transaction, on_press: impl Fn() + 'static) -> impl In
                         .tabular_nums()
                         .text_color(color::INK),
                 )
-                .child(text("CNY").typo(Type::Caption).text_color(color::MUTED)),
+                .child(
+                    text(currency.code())
+                        .typo(Type::Caption)
+                        .text_color(color::MUTED),
+                ),
         )
 }
 

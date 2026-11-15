@@ -7,6 +7,7 @@ use crate::ui::{
 };
 use finance_core::{
     account::{Account, AccountKind},
+    currency::Currency,
     holdings::{Quote, Trade},
 };
 use nsh_core::element::KeyboardType;
@@ -74,6 +75,7 @@ enum Panel {
 #[derive(Clone, PartialEq)]
 struct Values {
     kind: Kind,
+    currency: Currency,
     name: String,
     quantity: String,
     price: String,
@@ -113,12 +115,24 @@ pub fn trade_editor(open: Signal<Option<String>>) -> impl IntoElement {
                     .map(|s| s.name.clone())
                     .unwrap_or_default(),
             );
+            let currency = signal(
+                existing
+                    .as_ref()
+                    .map(Security::currency)
+                    .unwrap_or(Currency::CNY),
+            );
+            let listing = signal(None::<finance_core::catalog::Entry>);
+            let picker = signal(false);
             let quantity = signal(String::new());
             let price = signal(String::new());
             let fee = signal(String::new());
             let accounts: Vec<_> = finance::accounts()
                 .into_iter()
-                .filter(|a| a.is_cash() && a.kind() == AccountKind::Assets)
+                .filter(|a| {
+                    a.is_cash()
+                        && a.kind() == AccountKind::Assets
+                        && a.currency() == currency.get_untracked()
+                })
                 .collect();
             let cash = signal((accounts.len() == 1).then(|| accounts[0].clone()));
             let day = signal(clock::today().to_string());
@@ -127,6 +141,7 @@ pub fn trade_editor(open: Signal<Option<String>>) -> impl IntoElement {
             let error = signal(None::<String>);
             let values = move || Values {
                 kind: kind.get_untracked(),
+                currency: currency.get_untracked(),
                 name: name.get_untracked(),
                 quantity: quantity.get_untracked(),
                 price: price.get_untracked(),
@@ -175,6 +190,7 @@ pub fn trade_editor(open: Signal<Option<String>>) -> impl IntoElement {
             let body = dynamic(move || {
                 let current_panel = panel.get();
                 let current_kind = kind.get();
+                let current_currency = currency.get();
                 untracked(move || {
                     if current_panel == Panel::Date {
                         return super::super::finance::date_picker(day, move || {
@@ -185,7 +201,11 @@ pub fn trade_editor(open: Signal<Option<String>>) -> impl IntoElement {
                     if current_panel == Panel::Cash {
                         let accounts: Vec<_> = finance::accounts()
                             .into_iter()
-                            .filter(|a| a.is_cash() && a.kind() == AccountKind::Assets)
+                            .filter(|a| {
+                                a.is_cash()
+                                    && a.kind() == AccountKind::Assets
+                                    && a.currency() == currency.get_untracked()
+                            })
                             .collect();
                         if accounts.is_empty() {
                             return text(|| s().holding_cash_error)
@@ -228,19 +248,59 @@ pub fn trade_editor(open: Signal<Option<String>>) -> impl IntoElement {
                             },
                         ))
                         .child(if new {
-                            field(
-                                || s().security_name,
-                                text_input(name)
-                                    .label(|| s().security_name)
-                                    .placeholder(|| s().security_hint),
-                            )
-                            .into_element()
+                            view()
+                                .gap_2()
+                                .child(
+                                    Btn::tonal()
+                                        .label(|| crate::i18n::catalog::choose().into())
+                                        .on_press(move || picker.set(true)),
+                                )
+                                .child(segmented(
+                                    [Currency::CNY, Currency::HKD, Currency::USD]
+                                        .into_iter()
+                                        .map(|c| Segment::new(c, move || c.to_string().into()))
+                                        .collect(),
+                                    move || currency.get(),
+                                    move |c| {
+                                        currency.set(c);
+                                        listing.set(None);
+                                        cash.set(None);
+                                    },
+                                ))
+                                .child(field(
+                                    || s().security_name,
+                                    text_input(name)
+                                        .label(|| s().security_name)
+                                        .placeholder(|| s().security_hint),
+                                ))
+                                .child(dynamic(move || {
+                                    listing
+                                        .get()
+                                        .map(|e| {
+                                            text(format!(
+                                                "{} · {} · {}",
+                                                crate::i18n::catalog::market(&e.market),
+                                                e.symbol,
+                                                e.currency
+                                            ))
+                                            .typo(Type::Caption)
+                                            .text_color(color::MUTED)
+                                            .into_element()
+                                        })
+                                        .unwrap_or_else(|| view().into_element())
+                                }))
+                                .into_element()
                         } else {
-                            text(move || name.get())
+                            text(move || format!("{} · {}", name.get(), current_currency))
                                 .typo(Type::Headline)
                                 .text_color(color::INK)
                                 .into_element()
                         })
+                        .child(
+                            text(current_currency.to_string())
+                                .typo(Type::Caption)
+                                .text_color(color::MUTED),
+                        )
                         .child(if current_kind == Kind::Dividend {
                             decimal(price, || s().dividend_amount).into_element()
                         } else {
@@ -334,11 +394,6 @@ pub fn trade_editor(open: Signal<Option<String>>) -> impl IntoElement {
                                     )
                             },
                         ))
-                        .child(new.then(|| {
-                            text(|| s().holding_scope)
-                                .typo(Type::Caption)
-                                .text_color(color::MUTED)
-                        }))
                         .into_element()
                 })
             });
@@ -363,8 +418,11 @@ pub fn trade_editor(open: Signal<Option<String>>) -> impl IntoElement {
                             }
                             let form = values();
                             let build = || -> Result<(Security, Trade), holdings::Error> {
-                                let security =
-                                    Security::new(&security_id.with(|v| v.clone()), &form.name)?;
+                                let security = Security::new_in(
+                                    &security_id.with(|v| v.clone()),
+                                    &form.name,
+                                    form.currency,
+                                )?;
                                 let day = form
                                     .day
                                     .parse::<Day>()
@@ -419,7 +477,12 @@ pub fn trade_editor(open: Signal<Option<String>>) -> impl IntoElement {
                                 ))
                             };
                             match build().and_then(|(sec, t)| {
-                                finance::add_trade(new.then_some(&sec), &t)?;
+                                let binding = listing.get_untracked().map(|e| e.binding(&sec.id));
+                                finance::add_trade_bound(
+                                    new.then_some(&sec),
+                                    &t,
+                                    binding.as_ref(),
+                                )?;
                                 Ok(sec)
                             }) {
                                 Ok(sec) => {
@@ -437,7 +500,26 @@ pub fn trade_editor(open: Signal<Option<String>>) -> impl IntoElement {
                             }
                         }),
                 );
-            task_sheet(move || open.get().is_some(), close, header, body, action).into_element()
+            view()
+                .child(task_sheet(
+                    move || open.get().is_some() && !picker.get(),
+                    close,
+                    header,
+                    body,
+                    action,
+                ))
+                .child(crate::pages::security_picker::selector(
+                    picker,
+                    move |entry| {
+                        if let Some(c) = Currency::parse(&entry.currency) {
+                            currency.set(c);
+                            cash.set(None);
+                        }
+                        name.set(entry.name().to_owned());
+                        listing.set(Some(entry));
+                    },
+                ))
+                .into_element()
         })
     })
 }
@@ -489,7 +571,7 @@ pub fn price_editor(
                         })
                         .on_press(close),
                 );
-            let title = stored(sec.name.clone());
+            let title = stored(format!("{} · {}", sec.name, sec.currency()));
             let body = dynamic(move || {
                 let show = calendar.get();
                 untracked(move || {
@@ -530,11 +612,6 @@ pub fn price_editor(
                                 .typo(Type::Body)
                                 .text_color(color::INK),
                             ),
-                        )
-                        .child(
-                            text(|| s().holding_scope)
-                                .typo(Type::Subhead)
-                                .text_color(color::MUTED),
                         )
                         .into_element()
                 })
