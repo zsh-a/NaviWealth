@@ -124,13 +124,12 @@ pub struct Strings {
     pub capture_photo: &'static str,
     pub capture_remove_photo: &'static str,
     pub capture_generate: &'static str,
-    pub capture_update: &'static str,
     pub capture_review: &'static str,
     pub capture_reading: &'static str,
     pub capture_background: &'static str,
     pub capture_later: &'static str,
-    pub capture_correction: &'static str,
-    pub capture_correction_hint: &'static str,
+    pub capture_send: &'static str,
+    pub capture_reply_hint: &'static str,
     pub capture_confirm: &'static str,
     pub capture_retained: &'static str,
     pub capture_choose_account: &'static str,
@@ -457,6 +456,15 @@ impl Strings {
             format!("已记{kind} · {value}")
         } else {
             format!("Saved {kind} · {value}")
+        }
+    }
+
+    /// A past thread turn whose records the current draft replaced.
+    pub fn capture_thread_updated(&self, n: usize) -> String {
+        if self.zh() {
+            format!("已更新 {n} 条记录")
+        } else {
+            format!("Updated {n} records")
         }
     }
 

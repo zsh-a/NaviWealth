@@ -199,43 +199,75 @@ pub async fn recognize_record(
     lang: Lang,
     consent: Consent,
     context: serde_json::Value,
-) -> Result<(Vec<crate::domain::capture::Record>, String, String), VisionFailure> {
-    use crate::domain::capture;
+) -> Result<
+    (
+        Vec<crate::domain::capture::Record>,
+        Vec<crate::domain::capture::Question>,
+        String,
+        String,
+    ),
+    VisionFailure,
+> {
+    use crate::domain::capture::{self, Turn};
     use llm_protocol::{
         ContentBlock, LlmFinishReason, LlmMessage, LlmResponseFormat, LlmRole, PROTOCOL_VERSION,
     };
     consent
         .check(&upload_target(&account))
         .map_err(|_| VisionFailure::Refused)?;
-    let mut content = Vec::new();
-    if let Some(jpeg) = jpeg {
-        content.push(ContentBlock::image("image/jpeg", jpeg));
+    // The thread replays as the conversation. The photo and the context ride
+    // only on the first message; the owner's answers are plain messages.
+    let mut turns = draft.transcript.clone();
+    if turns.is_empty() {
+        turns.push(Turn::Owner {
+            text: draft.input.clone(),
+            photo: draft.photo.is_some(),
+        });
     }
-    content.push(ContentBlock::Text {
-        text: json!({
-            "input":draft.input,"correction":draft.correction,"previous_draft":draft.records,
-            "context":context
-        })
-        .to_string(),
+    let mut messages = Vec::with_capacity(turns.len() + 1);
+    messages.push(LlmMessage {
+        role: LlmRole::System,
+        content: capture::instructions(lang).into(),
+        name: None,
+        metadata: json!({}),
     });
+    for (index, turn) in turns.iter().enumerate() {
+        let message = match turn {
+            Turn::Owner { text, photo: _ } => {
+                let mut content = Vec::new();
+                if index == 0 {
+                    if let Some(jpeg) = &jpeg {
+                        content.push(ContentBlock::image("image/jpeg", jpeg.clone()));
+                    }
+                    content.push(ContentBlock::Text {
+                        text: json!({"input":text,"context":&context}).to_string(),
+                    });
+                } else {
+                    content.push(ContentBlock::Text {
+                        text: json!({"message":text}).to_string(),
+                    });
+                }
+                LlmMessage {
+                    role: LlmRole::User,
+                    content: content.into(),
+                    name: None,
+                    metadata: json!({}),
+                }
+            }
+            Turn::Assistant { reply, .. } => LlmMessage {
+                role: LlmRole::Assistant,
+                content: reply.clone().into(),
+                name: None,
+                metadata: json!({}),
+            },
+        };
+        messages.push(message);
+    }
     let request = LlmRequest {
         protocol_version: PROTOCOL_VERSION.into(),
         provider: upload_target(&account).provider,
         model: account.model.clone(),
-        messages: vec![
-            LlmMessage {
-                role: LlmRole::System,
-                content: capture::instructions(lang).into(),
-                name: None,
-                metadata: json!({}),
-            },
-            LlmMessage {
-                role: LlmRole::User,
-                content: content.into(),
-                name: None,
-                metadata: json!({}),
-            },
-        ],
+        messages,
         temperature: None,
         effort: None,
         max_output_tokens: Some(8000),
@@ -264,10 +296,11 @@ pub async fn recognize_record(
         .object
         .map(|v| v.to_string())
         .unwrap_or(response.content);
-    let (records, question) = capture::parse(&answer).map_err(|_| VisionFailure::Unreadable)?;
+    let (records, questions) = capture::parse(&answer).map_err(|_| VisionFailure::Unreadable)?;
     Ok((
         records,
-        question,
+        questions,
+        answer,
         response.model.chars().take(200).collect(),
     ))
 }

@@ -19,7 +19,7 @@ pub mod toggle;
 
 use nsh_core::{LineHeight, element::BoxShadow, prelude::*};
 
-pub use button::{Btn, IconBtn, Size, Variant};
+pub use button::{Btn, IconBtn, Size, Variant, chip};
 pub use icons::{Icon, icon};
 pub use theme::{Type, color, motion, radius, space};
 

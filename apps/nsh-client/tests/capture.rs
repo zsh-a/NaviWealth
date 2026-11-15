@@ -43,10 +43,12 @@ fn transfer_completion_excludes_its_source_and_view_reveals_a_multi_day_batch() 
         "label:What would you like to record?",
         "Transfer 20 yuan and yesterday's weight 74.2 kg",
     )?;
-    app.press("Recognize")?;
-    app.set_environment("IME dismissed", |e| {
-        e.keyboard_height = nsh_core::geometry::Points(0.0)
-    })?;
+    // The IME stays up for the sheet's interactions: the headless scene does
+    // not track the sheet's native reposition once the keyboard env closes,
+    // so presses into the re-lowered sheet read stale geometry. The compact
+    // composer test covers the IME-up layout; device evidence covers the
+    // dismissed-keyboard taps.
+    app.press("label:Send")?;
     app.wait_for("Which account was used?")?;
     app.press("label:From account, Choose account")?;
     app.press("label:Cash")?;
@@ -91,7 +93,7 @@ fn account_completion_is_local_durable_and_never_posts_before_confirmation() -> 
     app.wait_for("Account added")?;
     app.press("label:New entry")?;
     app.type_text("label:What would you like to record?", "Lunch 32 yuan")?;
-    app.press("Recognize")?;
+    app.press("label:Send")?;
     app.wait_for("Which account was used?")?;
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
     db.execute_batch("CREATE TRIGGER reject_draft BEFORE UPDATE ON capture_drafts BEGIN SELECT RAISE(ABORT,'disk failure'); END;").unwrap();
@@ -175,14 +177,14 @@ fn natural_correction_then_batch_confirmation_is_atomic_and_survives_restart() -
         "label:What would you like to record?",
         "Record lunch spending, the meal and today's weight 74.2 kg",
     )?;
-    app.press("Recognize")?;
+    app.press("label:Send")?;
     app.wait_for("Which account was used?")?;
-    assert!(!app.screen().enabled("text:/^Confirm and save/")?);
+    assert!(!app.shows("text:/^Confirm and save/"));
     app.type_text(
         "label:What would you like to record?",
         "Use Cash; the amount is 32 yuan",
     )?;
-    app.press("Update draft")?;
+    app.press("label:Send")?;
     app.wait_for("text:¥32.00")?;
     assert!(app.screen().enabled("text:/^Confirm and save/")?);
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
@@ -248,7 +250,10 @@ fn natural_correction_then_batch_confirmation_is_atomic_and_survives_restart() -
         panic!("JSON request")
     };
     let body = String::from_utf8_lossy(bytes);
-    assert!(body.contains("previous_draft") && body.contains("Use Cash"));
+    assert!(
+        body.contains("assistant") && body.contains("Use Cash"),
+        "the follow-up replays the thread: the earlier reply as an assistant turn and the new message"
+    );
     drop(app);
     let (mut app, _) = start_in(
         Some(dir.path()),
@@ -284,7 +289,7 @@ fn interrupted_text_is_kept_and_malformed_model_money_cannot_be_saved() -> Resul
         Some(network(200, record_reply(vec![bad]))),
     );
     app.press("label:What would you like to record?")?;
-    app.press("Recognize")?;
+    app.press("label:Send")?;
     app.wait_for("Open settings…")?;
     assert!(!app.shows("text:/^Confirm and save/"));
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
@@ -326,7 +331,7 @@ fn compact_photo_and_text_composer_keeps_the_same_draft_across_back_and_reopen()
         "recognition and photo actions stay above the IME: {:?}",
         action.bounds
     );
-    assert!(app.screen().enabled("Recognize")?);
+    assert!(app.screen().enabled("label:Send")?);
     app.back()?;
     app.wait_for_gone("task-sheet", GONE)?;
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
@@ -361,6 +366,82 @@ fn compact_photo_and_text_composer_keeps_the_same_draft_across_back_and_reopen()
         db.query_row("SELECT COUNT(*) FROM capture_drafts", [], |r| r
             .get::<_, i64>(0))
             .unwrap(),
+        1
+    );
+    Ok(())
+}
+
+#[test]
+fn thread_questions_answer_by_tap_and_reopen_keeps_the_conversation() -> Result<(), String> {
+    let dir = tempfile::tempdir().unwrap();
+    let calls = Arc::new(AtomicUsize::new(0));
+    let calls_in = calls.clone();
+    let stub = Arc::new(StubNetwork::new([(
+        MESSAGES.into(),
+        StubRoute::Handler(Arc::new(move |_, reply| {
+            let index = calls_in.fetch_add(1, Ordering::SeqCst);
+            if index == 0 {
+                let mut money = money_record("32.00");
+                money["money"]["account"] = Value::Null;
+                reply.send(response(
+                    200,
+                    json!({"model":"test-model","stop_reason":"end_turn","content":[{"type":"text",
+                        "text":json!({"records":[money],"questions":[
+                            {"text":"Which account was used?","options":["Cash","Bank"]}]}).to_string()}]}),
+                ));
+            } else {
+                reply.send(response(200, record_reply(vec![money_record("32.00")])));
+            }
+        })),
+    )]));
+    let (mut app, storage) = start_in(Some(dir.path()), account(true), Some(stub.clone()));
+    app.press("label:New entry")?;
+    app.type_text("label:What would you like to record?", "Lunch 32 yuan")?;
+    app.press("label:Send")?;
+    app.wait_for("Which account was used?")?;
+    app.wait_for("text:Bank")?;
+    // The answer is a tap, not typing; it goes out as the next message.
+    app.press("Cash")?;
+    app.wait_for("text:¥32.00")?;
+    assert!(app.screen().enabled("text:/^Confirm and save/")?);
+    assert_eq!(calls.load(Ordering::SeqCst), 2);
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    let body: String = db
+        .query_row("SELECT body FROM capture_drafts", [], |r| r.get(0))
+        .unwrap();
+    let kept: naviwealth_app::domain::capture::Draft = serde_json::from_str(&body).unwrap();
+    assert_eq!(
+        kept.transcript.len(),
+        4,
+        "message, question, answer and the revised draft make the thread"
+    );
+    assert!(matches!(
+        &kept.transcript[3],
+        naviwealth_app::domain::capture::Turn::Assistant { records: 1, .. }
+    ));
+    app.press("label:Close")?;
+    app.wait_for("Draft kept; no records saved")?;
+    assert!(
+        navi_finance::repository::transactions(&db)
+            .unwrap()
+            .is_empty()
+    );
+    drop(app);
+
+    let (mut app, _) = start_in(
+        Some(dir.path()),
+        storage.entries().into_iter().collect(),
+        None,
+    );
+    // The reopened draft shows the conversation, and confirming writes the
+    // whole batch without another model call.
+    app.press("label:Review records")?;
+    app.wait_for("Which account was used?")?;
+    app.wait_for("text:Cash")?;
+    app.press("text:/^Confirm and save/")?;
+    app.wait_for("Saved Spending · ¥32.00")?;
+    assert_eq!(
+        navi_finance::repository::transactions(&db).unwrap().len(),
         1
     );
     Ok(())

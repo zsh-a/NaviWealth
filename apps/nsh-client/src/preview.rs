@@ -178,11 +178,12 @@ pub fn apply() {
         }
     }
     if route.as_deref().is_some_and(|r| r.starts_with("capture-")) {
-        use crate::domain::capture::{Record, Status};
+        use crate::domain::capture::{Question, Record, Status, Turn};
         use navi_finance::{
             account::{Account, defaults},
             recognition::{Kind, MoneyDraft},
         };
+        let missing = route.as_deref() == Some("capture-missing");
         let mut draft = crate::data::capture::new();
         draft.input = "Lunch 32 yuan, paid from Wallet".into();
         draft.model = "preview-model".into();
@@ -193,7 +194,7 @@ pub fn apply() {
                 kind: Kind::Expense,
                 amount: Some("32.00".into()),
                 currency: "CNY".into(),
-                account: if route.as_deref() == Some("capture-missing") {
+                account: if missing {
                     None
                 } else {
                     Some(Account::parse("资产:Wallet").unwrap())
@@ -205,6 +206,32 @@ pub fn apply() {
                 note: String::new(),
             },
         }];
+        // The thread the sheet shows: the owner's message, then the model's
+        // turn with the records and, while the account is missing, the
+        // question with its tap-first answers. The reply is a display stub;
+        // a preview never sends it back to a model.
+        let question = Question {
+            text: "Which account was used?".into(),
+            options: if missing {
+                vec!["Wallet".into(), "Cash".into(), "Bank".into()]
+            } else {
+                Vec::new()
+            },
+        };
+        draft.transcript = vec![
+            Turn::Owner {
+                text: draft.input.clone(),
+                photo: false,
+            },
+            Turn::Assistant {
+                reply: serde_json::json!({"records":[], "questions":[
+                    {"text": question.text, "options": question.options}
+                ]})
+                .to_string(),
+                records: draft.records.len(),
+                questions: vec![question],
+            },
+        ];
         let _ = crate::data::capture::put(draft);
     }
     if has("favorites") && !untracked(favorites::any) {

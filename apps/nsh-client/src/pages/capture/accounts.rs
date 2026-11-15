@@ -90,9 +90,6 @@ pub fn picker(
                 };
                 *target = Some(account.clone());
                 next.correction = input.get_untracked();
-                if capture::ready(&next) {
-                    next.question.clear();
-                }
                 match capture::put(next.clone()) {
                     Ok(()) => {
                         error.set(None);
