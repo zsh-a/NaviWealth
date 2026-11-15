@@ -361,11 +361,11 @@ not demand evidence:
   Action id. These are implemented lifecycle guarantees, not evidence that the
   source problem has cleared or that cross-device duplicate creation is impossible.
 - Health measurement, Execution blocker, and Knowledge edit/review submissions
-  lock pending work and retain failed inputs. Supported editors use the
-  [shared device-local recovery contract](../architecture/lifeos-shell.md).
+  lock pending work and retain failed inputs. Supported editors used the
+  shared device-local recovery contract of the retired Flutter shell.
   Source controls, Action detail, and Review share source outcome states and
-  observation time; unavailable detail counts and section retries follow the
-  [ExecutionOS contract](../domains/executionos-domain.md). These implementation
+  observation time; unavailable detail counts and section retries followed the
+  retired ExecutionOS contract. These implementation
   guarantees do not establish product adoption or causal action effectiveness.
 - Opt-in product evidence uses local 90-day daily buckets plus cumulative
   counters. Settings can explicitly copy the privacy-safe aggregate report;

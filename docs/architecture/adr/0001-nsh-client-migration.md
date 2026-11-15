@@ -1,10 +1,12 @@
 # ADR 0001: Migrate The Client To NSH
 
 Status: accepted direction; partially superseded by
-[ADR 0002](0002-personal-local-scope.md) (2026-11-13). ADR 0002 replaces the
+[ADR 0002](0002-personal-local-scope.md) (2026-11-13) and completed by
+[ADR 0003](0003-flutter-retirement.md) (2026-11-15). ADR 0002 replaced the
 target packages, Data Continuity (Sync v3 coexistence), the in-process Agent
-Runtime plan and the delivery gates below; the Flutter freeze, NSH direction
-and Android-only scope still hold.
+Runtime plan and the delivery gates below; ADR 0003 retired Flutter and the
+Sync backend directly, without a data import. The NSH direction and the
+Android-only, local-first scope still hold.
 
 Date: 2026-11-13.
 
@@ -138,7 +140,5 @@ local-only and imports Flutter data once).
 
 ## References
 
-- [Architecture Northstar](../lifeos-architecture-northstar.md)
-- [Flutter Shell implementation](../lifeos-shell.md)
-- [Sync v3](../../sync/sync-v3.md)
+- [Flutter Retirement](0003-flutter-retirement.md)
 - NSH client baseline: `apps/nsh-client/README.md`

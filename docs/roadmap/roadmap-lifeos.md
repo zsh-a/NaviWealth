@@ -9,11 +9,13 @@ Last reviewed: 2026-11-15.
 [Product Scope](../product/product-scope.md) owns what is built.
 [ADR 0002](../architecture/adr/0002-personal-local-scope.md) (personal,
 local-only, reduced rewrite) and [ADR 0001](../architecture/adr/0001-nsh-client-migration.md)
-(NSH direction, Flutter freeze, Android only) own the architecture. This
-roadmap owns delivery order and gates.
+(NSH direction, Android only) own the architecture; ADR 0003 records the
+Flutter retirement. This roadmap owns delivery order and gates.
 
-Flutter (`apps/mobile`) is frozen: bug fixes only. It is not a parity target.
-The NSH 0.5.0 meal client and shared `health-core` are the seed. The archived
+Flutter (`apps/mobile`) and the Sync v3 backend are retired (2026-11-15,
+[ADR 0003](../architecture/adr/0003-flutter-retirement.md)); their source is
+archived at the `flutter-final` tag and is not a parity target. The NSH 0.5.0
+meal client and shared `health-core` are the seed. The archived
 [Finance roadmap](roadmap-finance.md) and
 [product-direction study](product-direction-and-demand-validation.md) do not
 authorize work. Phases are dependency gates, not dates.
@@ -98,19 +100,16 @@ health-only Review; Assets arrives with Phase 3.
   rejected without touching current data; Garmin failures keep the last data
   visible; `nsh-testing` flows and an Android device run pass.
 
-## Phase 2 — Flutter Health Import
+## Phase 2 — Flutter Health Import (canceled)
 
-- Scope: decide whether Rust can read the Flutter backup archive or whether a
-  minimal Flutter exporter is needed; import meals (with photos where present)
-  and weight once into NSH.
-- Exit: imported meal and weight counts and daily totals match the Flutter
-  export; importing twice creates no duplicates.
+Canceled 2026-11-15 (ADR 0003): Flutter retires directly after archiving its
+backup; no data is imported. The owner keeps the full Flutter backup export
+and the cloud D1 archive as historical records.
 
 ## Phase 3 — Ledger (double-entry)
 
-Started before Phase 2 by the owner's choice (2026-11-14): statements can
-bring months of history at once, so the ledger does not wait for the
-Flutter import.
+Started before the (now canceled) Flutter import by the owner's choice
+(2026-11-14): statements bring months of history at once.
 
 - Scope: `finance-core` double-entry journal (accounts of five types,
   balanced postings in CNY minor units, derived balances), statement import
@@ -228,24 +227,30 @@ Flutter import.
   tests cover baseline migration, exact roundtrip, malformed backups, revision
   precedence and capture immutability. These are daily prices and observed
   valuations, not minute/tick bars, adjusted returns or retroactive snapshots.
-- Remaining: allocation, plus Android TLS/physical-device, system Back, keyboard
+- Remaining: Android TLS/physical-device, system Back, keyboard
   and migration verification. Android TLS and physical-device behavior remain
   unverified. AI trade recognition is not included; the existing
   capture rejects trades. This increment does not close the full phase.
 - Scope: securities catalog, trades (buy, sell, dividend, fee), derived
-  positions, average cost and gains, one quote provider, FX, allocation and
+  positions, average cost and gains, one quote provider, FX and
   net worth on Assets.
 - Exit: derived positions match hand-computed fixtures, including partial
   sells and dividends; quote failures leave last prices marked stale.
 
-## Phase 5 — Full Review, Finance Import, Retire Flutter
+## Phase 5 — Full Review, Archive, Retire Flutter
 
-- Scope: complete Review with spending and net worth; import kept Finance
-  records from Flutter; archive the full Flutter backup; retire Flutter,
-  FRB / `lifeos_native`, the Sync v3 backend and their CI.
-- Exit: imported balances and position quantities match the Flutter export;
-  restore from an NSH export on a clean install succeeds; two weeks of NSH as
-  the only app.
+Updated 2026-11-15 (ADR 0003): the finance import is cut; Flutter retires
+directly after archiving.
+
+- Done in the repository (2026-11-15): `apps/mobile`, `apps/backend`, their CI
+  and Flutter-only tooling removed; source archived at the `flutter-final`
+  tag; securities catalog moved to `assets/catalog/`.
+- Owner-side archive, before uninstalling the Flutter app: export the full
+  in-app backup and keep it in two places; export the cloud D1 database
+  (command in ADR 0003); then delete the Worker and D1.
+- Remaining: complete Review with spending and net worth.
+- Exit: restore from an NSH export on a clean install succeeds; two weeks of
+  NSH as the only app.
 
 ## Next increments after NSH 0.7.0
 
@@ -262,17 +267,6 @@ Recommended sequence; this is planning, not a claim these items are implemented.
    price changes, FX and balance adjustments. State missing data instead of
    labeling all net-worth movement as investment return. Keep four tabs and
    expose detail on demand; a monthly budget is lower priority.
-3. **Reduce holding maintenance.** Reuse import review for an explicitly
-   supported broker statement format: trades, fees and cash dividends, with
-   symbol/currency matching, duplicate review and atomic confirmation. Add
-   explicit split/consolidation handling before treating raw price history
-   across those events as comparable performance. Validate ending quantities,
-   native cost and cash against the statement. This expands the current parser
-   scope; it does not introduce automatic trade execution or an AI agent.
-4. **Migrate and retire deliberately.** Implement the one-time kept-data import
-   from Flutter with a preview, source archive and idempotent reruns. Verify
-   Health counts/totals and Finance balances/quantities, then complete the
-   two-week NSH-only use gate before retiring Flutter and its infrastructure.
 
 ## Operating Rules
 

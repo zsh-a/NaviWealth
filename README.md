@@ -1,186 +1,55 @@
-<p align="center">
-  <img src="apps/mobile/assets/svg/logo.svg" width="88" alt="NaviWealth logo">
-</p>
-
 <h1 align="center">NaviWealth</h1>
 
 <p align="center">
-  <strong>本地优先的个人 LifeOS</strong><br>
-  在一个由你掌控的数据系统中，连接财富、健康、知识与行动。
-</p>
-
-<p align="center">
-  Local-first · Device AI · Multi-domain · iOS / Android / Web
+  <strong>本地优先的个人财富与健康记录</strong><br>
+  一部 Android 手机：记账、持仓、饮食与身体数据，全部留在设备上。
 </p>
 
 <p align="center">
   <a href="https://github.com/zsh-a/NaviWealth/releases/latest"><img src="https://img.shields.io/github/v/release/zsh-a/NaviWealth?style=flat-square&label=release" alt="Latest release"></a>
-  <a href="https://github.com/zsh-a/NaviWealth/actions/workflows/mobile.yml"><img src="https://github.com/zsh-a/NaviWealth/actions/workflows/mobile.yml/badge.svg" alt="Mobile CI"></a>
-  <a href="https://github.com/zsh-a/NaviWealth/actions/workflows/backend.yml"><img src="https://github.com/zsh-a/NaviWealth/actions/workflows/backend.yml/badge.svg" alt="Backend CI"></a>
-</p>
-
-<p align="center">
-  <a href="https://naviwealth.pages.dev">在线体验 Web Demo</a>
-  ·
-  <a href="https://github.com/zsh-a/NaviWealth/releases/latest">下载最新版</a>
-  ·
-  <a href="#快速开始">本地运行</a>
-  ·
-  <a href="docs/index.md">阅读文档</a>
+  <a href="https://github.com/zsh-a/NaviWealth/actions/workflows/rust-core.yml"><img src="https://github.com/zsh-a/NaviWealth/actions/workflows/rust-core.yml/badge.svg" alt="Rust domain cores CI"></a>
 </p>
 
 ---
 
-## 一个系统，看见生活的全貌
+NaviWealth 是一个本地优先的个人应用：复式记账、证券持仓、拍照记餐和 Garmin 身体数据。客户端是 Rust 编写的 [NSH](https://github.com/longbridge/nsh) 应用，业务真相在 `finance-core` 与 `health-core` 两个 Rust crate 里。没有账号、没有后端、没有同步——只有设备上的 SQLite 和口令加密的本地备份。
 
-NaviWealth 从 FinanceOS 出发，但不止于记账。它把分散的生活数据组织成可以理解、追踪和行动的个人系统：数据优先保存在设备上，AI 出现在当前任务中，所有重要写入都由用户确认。
-
-<p align="center">
-  <a href="https://naviwealth.pages.dev">
-    <img src="docs/assets/readme/generated/smart-ingest.png" alt="NaviWealth 桌面端智能录入确认工作区" width="960">
-  </a>
-</p>
-
-<p align="center">
-  <sub>SMART INGEST · DESKTOP</sub><br>
-  <strong>从原始信息到可确认的结构化记录</strong><br>
-  <sub>文件、粘贴与截图只生成候选项；每一笔记录都由你确认后写入。</sub>
-</p>
-
-<table width="100%">
-  <tr>
-    <td width="40%" align="center" valign="top">
-      <img src="docs/assets/readme/generated/wealth-overview.png" alt="NaviWealth 资产总览，展示净资产、资产负债和一年趋势" width="100%">
-      <br><sub>WEALTH OVERVIEW</sub><br>
-      <strong>统一财富视图</strong><br>
-      <sub>净资产、资产负债与趋势集中呈现。</sub>
-    </td>
-    <td width="60%" align="center" valign="top">
-      <img src="docs/assets/readme/generated/fire-insight.png" alt="NaviWealth FIRE 状态，展示提取率、现金桶和下一步建议" width="100%">
-      <br><sub>FIRE INSIGHT</sub><br>
-      <strong>把长期目标变成下一步行动</strong><br>
-      <sub>解释安全提取率、现金缓冲和当前最重要的动作。</sub>
-    </td>
-  </tr>
-</table>
-
-<p align="center">
-  <img src="docs/assets/readme/generated/lifeos-domains.png" alt="NaviWealth LifeOS 三域工作台，展示 HealthOS 恢复信号、KnowledgeOS AI 知识入口与 ExecutionOS 今日行动" width="960">
-</p>
-
-<p align="center">
-  <sub>ONE LIFE · CONNECTED CONTEXT</sub><br>
-  <strong>健康、知识与行动，不再是彼此孤立的数据</strong><br>
-  <sub>恢复信号进入晨间简报，知识沉淀保留决策背景，承诺最终落到今天可以完成的行动。</sub>
-</p>
-
-<p align="center">
-  <sub>以上界面由生产 Widget 和固定演示数据自动生成，会随产品持续更新。</sub>
-</p>
-
-## 为什么是 NaviWealth
-
-| 本地优先 | 设备端 AI | 为行动而设计 |
+| 本地优先 | 设备端 AI | 为确认而设计 |
 |---|---|---|
-| 日常数据首先进入本机 Drift 数据库，离线也能浏览和编辑。 | 使用用户自己的模型密钥直连 Anthropic 或 OpenAI-compatible provider，不经过 NaviWealth 后端。 | AI 给出证据和建议；写入、转账与外部动作始终经过明确确认。 |
+| 业务数据保存在应用私有目录的 SQLite 中；备份是本地口令加密文件。 | 用你自己的模型密钥直连 Anthropic 或 OpenAI 兼容接口，识别结果只是草稿。 | AI 与导入都只生成待确认记录；写入永远由你确认。 |
 
-## 四个可组合的 LifeOS
+## 功能
 
-| Domain | 你可以用它做什么 | 状态 |
-|---|---|---|
-| **FinanceOS** | 管理账户、资产、现金流、预算、定投、FIRE 与期权收入 | 始终开启 |
-| **HealthOS** | 汇总睡眠、HRV、恢复信号和晨间简报 | 按需启用 |
-| **KnowledgeOS** | 沉淀决策、原则、假设、例程和知识回顾 | 按需启用 |
-| **ExecutionOS** | 连接行动、项目、承诺与进展复盘 | 按需启用 |
+- **记账**：复式分录（五类账户），支付宝 / 微信 / 招行账单导入，跨币种（CNY / HKD / USD），余额核对与可选月度预算。
+- **持仓**：手动录入买卖 / 分红，移动平均成本与损益，证券目录搜索（A股 / 港股 / 美股 / ETF），腾讯行情，历史价格与净资产趋势。
+- **健康**：拍照识别记餐、体重记录、Garmin 官方 Personal API（睡眠 / HRV / 静息心率 / 步数等）。
+- **回顾**：周 / 月视图、分类支出对比、净资产变化、摄入与体重趋势。
 
-每个域通过 `DomainPack` 注册自己的页面、Agent、AI 工具和命令入口。关闭某个域不会删除它的数据，也不会让领域逻辑渗透到其他模块。
-
-## 从日常收支到长期规划
-
-<p align="center">
-  <img src="docs/assets/readme/generated/planning-workspace.png" alt="NaviWealth 规划工作台，展示现金安全、目标与投入，以及展开的进阶投资工具" width="960">
-</p>
-
-FinanceOS 的规划页优先呈现需要处理的事项、现金安全与长期目标：
-
-| 你想做什么 | 使用入口 |
-|---|---|
-| 看清现金能支撑多久、近期有哪些收支 | **现金安全**：现金续航与预算 |
-| 比较收入变化、大额支出等影响 | **现金续航 → 模拟变化**：自定义压力测试与人生事件方案 |
-| 开始定期投入、追踪财务独立目标 | **目标与投入**：直接创建定投计划，查看 FIRE 进度 |
-| 管理再平衡与收入策略 | **进阶投资**：按需展开；已有活跃策略或待处理状态时自动展开 |
-
-创建定投计划无需先获取行情或运行回测。历史模拟是可选预览，预览失败也不影响保存当前计划；计划期限决定结束日期，预览使用相同年数的历史区间。到期的人生事件复盘仍会出现在规划页的待办提醒中。
-
-更多功能与行为说明见 [FinanceOS](docs/domains/financeos-domain.md)。
-
-## 清晰的隐私边界
+## 仓库结构
 
 ```text
-你的设备
-  ├─ Drift：业务数据真值
-  ├─ Rust Agent Runtime：模型调用、续轮与执行预算
-  ├─ Device Tools：读取本机数据并生成证据
-  └─ Secure Storage：保存用户自己的 LLM profile
-
-NaviWealth Backend
-  └─ Auth + Sync v3；不持有模型密钥，不转发 AI 请求
+apps/nsh-client/            NSH (Rust) 客户端：界面、存储、页面与无头测试
+crates/finance-core/        复式账本、持仓与证券目录的业务真相
+crates/health-core/         餐食识别、营养与 Garmin 数据解析
+third_party/agent-runtime/  模型协议与客户端（git submodule）
+third_party/market-data-rs/ 行情 SDK（腾讯源）
+assets/catalog/             内置证券目录数据
+tool/asset_catalog/         目录构建、校验与发布工具链
 ```
-
-- AI 仅在原生平台启用；Web 不加载 AI runtime 或 Health 平台集成。
-- Sync v3 使用行状态 LWW、accepted acknowledgements 和 domain generations。
-- AI trace、记忆向量、草稿和派生缓存默认只保存在本机。
-- 外部副作用不会由模型自动执行。
-
-## 平台支持
-
-<p>
-  <a href="https://naviwealth.pages.dev"><strong>打开 Web Demo →</strong></a>
-</p>
-
-Web Demo 可直接体验核心数据、FinanceOS 和跨端界面；受浏览器安全边界限制，不提供设备端 AI 与 Health 平台集成。
-
-| 平台 | 核心数据 | 云同步 | 设备端 AI | Health 集成 |
-|---|:---:|:---:|:---:|:---:|
-| iOS / Android | ✓ | ✓ | ✓ | ✓ |
-| Web | ✓ | ✓ | — | — |
-
-> NaviWealth 仍在积极开发中。升级前请关注 [Release Notes](https://github.com/zsh-a/NaviWealth/releases)，并为重要数据保留备份。
 
 ## 快速开始
 
-### 运行 Flutter App
-
 ```bash
-git clone https://github.com/zsh-a/NaviWealth.git
-cd NaviWealth/apps/mobile
+git clone --recursive https://github.com/zsh-a/NaviWealth.git
+cd NaviWealth
+rustup toolchain install
 
-flutter pub get
-flutter run --dart-define=BYPASS_AUTH=true
+rtk cargo test --manifest-path apps/nsh-client/Cargo.toml --locked
+rtk cargo test --manifest-path crates/finance-core/Cargo.toml --locked
+rtk cargo test --manifest-path crates/health-core/Cargo.toml --locked
 ```
 
-Web 首次运行还需要准备 Drift 和字体资源：
-
-```bash
-tool/setup-drift-web.sh
-tool/build-cn-fonts.sh
-tool/build-latin-fonts.sh
-flutter run -d chrome --dart-define=BYPASS_AUTH=true
-```
-
-完整环境、Backend 和设备调试说明见 [Local Development](docs/development/local-development.md)。
-
-## 技术轮廓
-
-| Layer | Stack |
-|---|---|
-| App | Flutter · Riverpod · go_router · Forui |
-| Local data | Drift · SQLite · secure storage |
-| Device runtime | Rust · flutter_rust_bridge · EmbeddingGemma ONNX |
-| Sync backend | Cloudflare Workers · Rust · D1 |
-| AI providers | Anthropic · OpenAI-compatible profiles |
-
-架构的核心原则很简单：`core/` 保持领域中立，业务能力属于各自 domain，`app/` 只负责组合。详细设计见 [Architecture Northstar](docs/architecture/lifeos-architecture-northstar.md) 和 [LifeOS Shell](docs/architecture/lifeos-shell.md)。
+Android 调试（含 WSL2 + Windows 模拟器拓扑）见 [Local Development](docs/development/local-development.md)；发布 APK 由 `nsh client` 手动工作流构建签名，使用 `nsh-vX.Y.Z` 标签。
 
 ## 文档导航
 
@@ -188,62 +57,18 @@ flutter run -d chrome --dart-define=BYPASS_AUTH=true
 |---|---|
 | 项目总览 | [Documentation Index](docs/index.md) |
 | Agent 任务路由 | [Agent Task Map](docs/agent-map.md) |
-| FinanceOS | [FinanceOS Domain](docs/domains/financeos-domain.md) |
-| 设备端 AI | [AI Architecture](docs/ai/ai-architecture.md) · [Runtime Contract](docs/ai/ai-protocol.md) |
+| 产品范围 | [Product Scope](docs/product/product-scope.md) |
+| 路线图 | [NSH Roadmap](docs/roadmap/roadmap-lifeos.md) |
+| 架构决策 | [ADR 0001](docs/architecture/adr/0001-nsh-client-migration.md) · [ADR 0002](docs/architecture/adr/0002-personal-local-scope.md) · [ADR 0003](docs/architecture/adr/0003-flutter-retirement.md) |
 | Agent Runtime | [Current Architecture](docs/architecture/agent-runtime-current.md) |
-| 数据同步 | [Sync v3](docs/sync/sync-v3.md) |
-| 测试策略 | [Testing Strategy](docs/development/testing-strategy.md) |
-| 客户端迁移 | [NSH Migration ADR](docs/architecture/adr/0001-nsh-client-migration.md) · [LifeOS Roadmap](docs/roadmap/roadmap-lifeos.md)（Flutter 冻结，仅修 bug；新功能进入 NSH/Rust） |
+| 证券目录 | [Catalog Pipeline](tool/asset_catalog/README.md) |
+| 本地开发 | [Local Development](docs/development/local-development.md) |
 
-<details>
-<summary><strong>开发者工作流</strong></summary>
-
-### 常用检查
-
-```bash
-cd apps/mobile
-dart format .
-flutter analyze --fatal-infos
-flutter test
-```
-
-```bash
-cd apps/backend
-cargo fmt --all -- --check
-cargo clippy --target wasm32-unknown-unknown --all-targets -- -D warnings
-cargo check --target wasm32-unknown-unknown
-```
-
-### 更新 README 效果图
-
-```bash
-cd apps/mobile
-./tool/update-readme-screenshots.sh --update
-```
-
-效果图使用固定 Flutter、字体、locale、viewport 和演示数据，按需在本地更新并审阅；产品 CI 保留普通单元、组件和任务流测试，golden 改为本地按需验证。无需每次 UI 变更重渲染 README 图片。详见 [Visual Baseline](docs/visual-baseline/README.md)。
-
-### 仓库入口
-
-```text
-apps/mobile/                     Flutter App
-apps/mobile/native/lifeos_native Rust 设备端运行时
-apps/backend/                    Cloudflare Workers Backend
-docs/                            当前架构、领域和开发文档
-tool/                            质量门禁与项目工具
-```
-
-安装 Git hooks：
-
-```bash
-./tool/install-hooks.sh
-```
-
-</details>
+> 历史上的 Flutter 客户端与 Sync v3 后端已于 2026-11-15 退役（ADR 0003），源码保留在 `flutter-final` 标签。
 
 ## 参与项目
 
-欢迎通过 Issue 提交问题、场景和设计建议。代码贡献请从 `main` 创建短分支，完成相关测试后提交 Pull Request；分支保护和必需检查见 [Branch Protection](docs/operations/branch-protection.md)。
+欢迎通过 Issue 提交问题与建议。代码贡献请从 `main` 创建短分支，完成相关测试后提交 Pull Request；分支保护与必需检查见 [Branch Protection](docs/operations/branch-protection.md)。
 
 <p align="center">
   <sub>Build a calmer, more private operating system for personal life.</sub>

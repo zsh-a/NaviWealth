@@ -2,7 +2,7 @@ name: securities-catalog
 
 # Publishes the committed securities catalog to the rolling
 # `securities-catalog` GitHub Release. Installed apps poll its
-# catalog-manifest.json, so listing refreshes ship without a new APK.
+# catalog-manifest.json, so listing refreshes ship without a new app release.
 # The tag does not match the app release trigger (v*) and the release is a
 # prerelease that is never marked latest, so the APK self-update manifest at
 # releases/latest is unaffected.
@@ -10,7 +10,7 @@ on:
   push:
     branches: [main]
     paths:
-      - apps/mobile/assets/catalog/securities.v1.ndjson
+      - assets/catalog/securities.v1.ndjson
   workflow_dispatch:
 
 permissions:

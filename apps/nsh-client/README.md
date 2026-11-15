@@ -31,7 +31,7 @@ tests/      headless meal, weight, Garmin, review and backup flows
 ```
 
 Meal recognition, catalog nutrition, photo normalization and destination-bound
-consent live in `../../crates/health-core`, shared with Flutter. Provider wire
+consent live in `../../crates/health-core`. Provider wire
 formats live in `../../third_party/agent-runtime/crates/llm-protocol`; request
 policy lives in `llm-client`. NSH supplies its platform fetch transport rather
 than the reqwest adapter. NSH 0.5.0 returns whole response bodies; recognition does not require

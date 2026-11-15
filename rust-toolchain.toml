@@ -3,4 +3,4 @@
 channel = "nightly"
 profile = "minimal"
 components = ["clippy", "rustfmt"]
-targets = ["aarch64-linux-android", "wasm32-unknown-unknown"]
+targets = ["aarch64-linux-android"]

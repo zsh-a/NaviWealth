@@ -1,8 +1,3 @@
 # Default owner for everything in this repository.
 # Branch protection should require this owner's review on PRs to main.
 *                       @zsh-a
-
-# Critical surfaces that should never change without owner sign-off.
-/.github/               @zsh-a
-/.github/CODEOWNERS     @zsh-a
-/apps/backend/wrangler.toml  @zsh-a

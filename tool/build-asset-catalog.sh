@@ -4,7 +4,7 @@
 # Modes:
 #   default          stub fast-path. Reads the curated CSVs already on
 #                    disk under tool/asset_catalog/sources/ and bakes
-#                    them into apps/mobile/assets/catalog/securities.v1.ndjson.
+#                    them into assets/catalog/securities.v1.ndjson.
 #                    No network. Useful in CI dry-runs and for editing
 #                    the stub set during development.
 #
@@ -37,7 +37,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-OUT_PATH="${ROOT_DIR}/apps/mobile/assets/catalog/securities.v1.ndjson"
+OUT_PATH="${ROOT_DIR}/assets/catalog/securities.v1.ndjson"
 SRC_DIR="${ROOT_DIR}/tool/asset_catalog/sources"
 VENV_DIR="${ROOT_DIR}/tool/asset_catalog/.venv"
 REQUIREMENTS="${ROOT_DIR}/tool/asset_catalog/requirements.txt"

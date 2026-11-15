@@ -2,15 +2,15 @@
 """FIR-76 securities catalog NDJSON builder.
 
 Reads curated CSVs from a source directory and emits the bundled NDJSON
-that ``SecuritiesCatalogLoader`` consumes at runtime. Pinyin/initials
-columns are precomputed offline so the Flutter app never has to ship a
-Chinese-romanisation library.
+that the NSH client bundles at build time and ``finance-core`` exercises
+in its tests. Pinyin/initials columns are precomputed offline so the
+client never has to ship a Chinese-romanisation library.
 
 Source CSV columns (all required, blank cells allowed where noted):
 
     symbol            — exchange ticker
     market            — wire form (cn_a | hk_stock | us_stock | crypto | fx)
-    type              — AssetType.name in Dart (stock | etf | mutualFund | bond | crypto)
+    type              — asset type (stock | etf | mutualFund | bond | crypto)
     currency          — ISO-ish currency code (CNY, HKD, USD, …)
     name_en           — optional English name
     name_cn           — optional Chinese name
@@ -21,10 +21,11 @@ Usage:
     python3 tool/asset_catalog/build.py \
         --sources tool/asset_catalog/sources \
         --version v1.20260501 \
-        --output apps/mobile/assets/catalog/securities.v1.ndjson
+        --output assets/catalog/securities.v1.ndjson
 
-The output format and tokenisation rules are documented in
-``apps/mobile/lib/data/securities_catalog/securities_catalog_loader.dart``.
+The output format and tokenisation rules are implemented by the
+``finance-core`` catalog parser bundled via
+``apps/nsh-client/src/data/catalog.rs``.
 The header line carries ``version`` + a deterministic FNV-1a checksum
 over the canonicalised entry list.
 """

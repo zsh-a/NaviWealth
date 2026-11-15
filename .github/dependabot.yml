@@ -11,45 +11,35 @@ updates:
     commit-message:
       prefix: 'ci(deps)'
 
-  - package-ecosystem: pub
-    directory: /apps/mobile
-    schedule:
-      interval: weekly
-      day: monday
-      time: '04:00'
-    open-pull-requests-limit: 10
-    labels: [dependencies, mobile]
-    commit-message:
-      prefix: 'chore(mobile-deps)'
-    groups:
-      flutter-dev:
-        patterns: ['flutter_lints', 'build_runner', 'freezed*', 'drift_dev']
-      drift:
-        patterns: ['drift', 'sqlite3*', 'sqlcipher*']
-
   - package-ecosystem: cargo
-    directory: /apps/backend
-    schedule:
-      interval: weekly
-      day: monday
-      time: '04:00'
-    open-pull-requests-limit: 10
-    labels: [dependencies, backend]
-    commit-message:
-      prefix: 'chore(backend-deps)'
-    groups:
-      worker:
-        patterns: ['worker', 'worker-*']
-      serde:
-        patterns: ['serde', 'serde_*']
-
-  - package-ecosystem: npm
-    directory: /apps/mobile/web_smoke
+    directory: /apps/nsh-client
     schedule:
       interval: weekly
       day: monday
       time: '04:00'
     open-pull-requests-limit: 5
-    labels: [dependencies, web]
+    labels: [dependencies, nsh]
     commit-message:
-      prefix: 'chore(web-deps)'
+      prefix: 'chore(nsh-deps)'
+
+  - package-ecosystem: cargo
+    directory: /crates/finance-core
+    schedule:
+      interval: weekly
+      day: monday
+      time: '04:00'
+    open-pull-requests-limit: 5
+    labels: [dependencies, finance]
+    commit-message:
+      prefix: 'chore(finance-deps)'
+
+  - package-ecosystem: cargo
+    directory: /crates/health-core
+    schedule:
+      interval: weekly
+      day: monday
+      time: '04:00'
+    open-pull-requests-limit: 5
+    labels: [dependencies, health]
+    commit-message:
+      prefix: 'chore(health-deps)'

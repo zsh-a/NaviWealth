@@ -6,7 +6,7 @@ use finance_core::{
 use lifeos_core::sqlite::Connection;
 use sha2::{Digest, Sha256};
 use std::io::Write;
-const BUNDLE: &str = include_str!("../../../apps/mobile/assets/catalog/securities.v1.ndjson");
+const BUNDLE: &str = include_str!("../../../assets/catalog/securities.v1.ndjson");
 fn db() -> Connection {
     let c = Connection::open_in_memory().unwrap();
     c.execute_batch("PRAGMA foreign_keys=ON").unwrap();
