@@ -26,7 +26,7 @@ use crate::{
         feedback::{Tone, badge},
         field::{field, note, text_input},
         space,
-        surface::{card, row_button},
+        surface::{card, group_label, row_button},
     },
 };
 
@@ -95,6 +95,7 @@ struct Note {
 
 /// The backup page: the WebDAV folder, the passphrase, and the restore list.
 pub fn backup_page() -> Screen {
+    let (folder, encryption, actions) = form();
     nav_page()
         .title(|| SharedString::from(s().backup))
         .header_visible(false)
@@ -113,13 +114,23 @@ pub fn backup_page() -> Screen {
                                 .px(px(space::GUTTER))
                                 .pt_2()
                                 .pb(move || px(safe_area().bottom.0 + 32.0))
-                                .child(form()),
+                                .gap_3()
+                                .child(group_label(|| s().backup_group_folder))
+                                .child(folder)
+                                .child(view().h_3())
+                                .child(group_label(|| s().backup_group_encryption))
+                                .child(encryption)
+                                .child(view().h_3())
+                                .child(group_label(|| s().backup_group_restore))
+                                .child(actions),
                         ),
                 ),
         )
 }
 
-fn form() -> impl IntoElement {
+/// The page's three groups, split out of one signal scope: the folder, the
+/// passphrase that encrypts, and the actions with the restore list.
+fn form() -> (impl IntoElement, impl IntoElement, impl IntoElement) {
     let kept = untracked(backup::folder);
     let url = signal(kept.url.clone());
     let username = signal(kept.username.clone());
@@ -175,7 +186,7 @@ fn form() -> impl IntoElement {
         });
     };
 
-    card()
+    let folder = card()
         .p(px(space::CARD))
         .gap_4()
         .child(field(
@@ -198,7 +209,10 @@ fn form() -> impl IntoElement {
                 .masked(|| true)
                 .auto_capitalize(AutoCapitalize::None)
                 .auto_correct(false),
-        ))
+        ));
+    let encryption = card()
+        .p(px(space::CARD))
+        .gap_3()
         .child(
             field(
                 || s().backup_passphrase,
@@ -224,7 +238,10 @@ fn form() -> impl IntoElement {
             text(|| s().backup_note)
                 .typo(Type::Caption)
                 .text_color(color::MUTED),
-        )
+        );
+    let actions = card()
+        .p(px(space::CARD))
+        .gap_3()
         .child(
             view()
                 .flex_row()
@@ -270,7 +287,8 @@ fn form() -> impl IntoElement {
         .child(dynamic(move || {
             let names = listed.get();
             untracked(move || names.map(|names| restore_list(names, listed, message)))
-        }))
+        }));
+    (folder, encryption, actions)
 }
 
 fn status_line() -> String {

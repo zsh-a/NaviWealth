@@ -24,7 +24,7 @@ use crate::{
         field::{field, note, text_input},
         segmented::{Segment, segmented},
         space,
-        surface::card,
+        surface::{card, group_label},
     },
 };
 
@@ -186,6 +186,27 @@ pub fn model_page() -> Screen {
         key_error,
     ));
 
+    let connection = card()
+        .p(px(space::CARD))
+        .gap_4()
+        .child(field(
+            || s().provider,
+            segmented(
+                vec![
+                    Segment::new(Provider::Anthropic, || s().anthropic.into()),
+                    Segment::new(Provider::OpenAiCompatible, || s().openai_compatible.into()),
+                ],
+                move || provider.get(),
+                choose_provider,
+            ),
+        ))
+        .child(url)
+        .child(model_field);
+    let credentials = card()
+        .p(px(space::CARD))
+        .gap_3()
+        .child(key)
+        .child(test_row(test, run_test));
     nav_page()
         .title(|| SharedString::from(s().vision_model))
         .header_visible(false)
@@ -204,31 +225,12 @@ pub fn model_page() -> Screen {
                                 .px(px(space::GUTTER))
                                 .pt_2()
                                 .pb(move || px(safe_area().bottom.0 + 32.0))
-                                .child(
-                                    card()
-                                        .p(px(space::CARD))
-                                        .gap_5()
-                                        .child(field(
-                                            || s().provider,
-                                            segmented(
-                                                vec![
-                                                    Segment::new(Provider::Anthropic, || {
-                                                        s().anthropic.into()
-                                                    }),
-                                                    Segment::new(
-                                                        Provider::OpenAiCompatible,
-                                                        || s().openai_compatible.into(),
-                                                    ),
-                                                ],
-                                                move || provider.get(),
-                                                choose_provider,
-                                            ),
-                                        ))
-                                        .child(url)
-                                        .child(model_field)
-                                        .child(key)
-                                        .child(test_row(test, run_test)),
-                                ),
+                                .gap_3()
+                                .child(group_label(|| s().model_group_connection))
+                                .child(connection)
+                                .child(view().h_3())
+                                .child(group_label(|| s().model_group_credentials))
+                                .child(credentials),
                         ),
                 ),
         )

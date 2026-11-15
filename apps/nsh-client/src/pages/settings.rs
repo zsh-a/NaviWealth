@@ -4,7 +4,7 @@
 //! carries its state as a tinted summary, so what needs the owner shows
 //! before anything opens.
 
-use nsh_base::nav_page;
+use nsh_base::{collapsible, nav_page};
 use nsh_core::{element::Screen, prelude::*};
 
 use super::parts::{status_bar, top_bar};
@@ -108,8 +108,8 @@ pub(super) fn entry_row(
 }
 
 /// Low-frequency configuration opens in place, retaining entered values.
-/// The reveal is the page's one authored motion: content fades in and rises
-/// under the turning chevron.
+/// The reveal springs the content's own height; the trigger carries the
+/// expanded state for screen readers.
 pub(super) fn setting_details(
     glyph: Icon,
     label: impl Fn() -> &'static str + Copy + 'static,
@@ -118,57 +118,65 @@ pub(super) fn setting_details(
     content: impl IntoElement,
 ) -> impl IntoElement {
     let open = signal(false);
-    let still = reduce_motion();
-    let reveal = animated_value(if still { 1.0 } else { 0.0 });
-    effect(move || {
-        if open.get() && !still {
-            reveal.set(0.0);
-            reveal.timing_with(1.0, motion::ENTER);
-        }
-    });
-    card()
-        .overflow_hidden()
-        .child(
-            row_button(move || {
-                dismiss_keyboard();
-                open.update(|v| *v = !*v);
-            })
-            .accessibility_label(move || Some(format!("{}, {}", label(), summary()).into()))
-            .child(icon_well(glyph))
-            .child(
+    card().overflow_hidden().child(
+        collapsible()
+            .open(move || open.get())
+            .reveal(true)
+            .content(
                 view()
-                    .flex_1()
-                    .min_w(px(0.0))
-                    .gap(px(2.0))
-                    .child(text(label).typo(Type::Headline).text_color(color::INK))
-                    .child(
-                        text(summary)
-                            .typo(Type::Subhead)
-                            .text_color(tint)
-                            .number_of_lines(1),
-                    ),
+                    .child(hairline(space::CARD))
+                    .child(view().p(px(space::CARD)).child(content)),
             )
             .child(
                 view()
-                    .rotate(move || {
-                        Radians(if open.get() {
-                            std::f32::consts::FRAC_PI_2
-                        } else {
-                            0.0
-                        })
+                    .role(AccessibilityRole::Button)
+                    .on_press(move || {
+                        dismiss_keyboard();
+                        open.update(|v| *v = !*v);
                     })
-                    .child(icon(Icon::ChevronRight, 18.0, color::MUTED)),
+                    .optional_label(move || Some(format!("{}, {}", label(), summary()).into()))
+                    .accessibility_state(move || AccessibilityState {
+                        expanded: Some(open.get()),
+                        ..AccessibilityState::default()
+                    })
+                    .flex_row()
+                    .items_center()
+                    .gap_3()
+                    .min_h(px(68.0))
+                    .px(px(space::CARD))
+                    .py_3()
+                    .transition_colors()
+                    .duration(motion::INSTANT)
+                    .hover(|s| s.bg(color::SURFACE_2))
+                    .active(|s| s.bg(color::SUNKEN))
+                    .focus_visible(|s| s.bg(color::SURFACE_2))
+                    .child(icon_well(glyph))
+                    .child(
+                        view()
+                            .flex_1()
+                            .min_w(px(0.0))
+                            .gap(px(2.0))
+                            .child(text(label).typo(Type::Headline).text_color(color::INK))
+                            .child(
+                                text(summary)
+                                    .typo(Type::Subhead)
+                                    .text_color(tint)
+                                    .number_of_lines(1),
+                            ),
+                    )
+                    .child(
+                        view()
+                            .rotate(move || {
+                                Radians(if open.get() {
+                                    std::f32::consts::FRAC_PI_2
+                                } else {
+                                    0.0
+                                })
+                            })
+                            .child(icon(Icon::ChevronRight, 18.0, color::MUTED)),
+                    ),
             ),
-        )
-        .child(
-            view()
-                .bind_opacity(&reveal)
-                .bind_translate_y(&reveal.interpolate(&[0.0, 1.0], &[motion::RISE, 0.0]))
-                .style_when(move || !open.get(), |s| s.hidden())
-                .accessibility_elements_hidden(move || !open.get())
-                .child(hairline(space::CARD))
-                .child(view().p(px(space::CARD)).child(content)),
-        )
+    )
 }
 
 /// The model account's row (its own page) and asking before each photo.
