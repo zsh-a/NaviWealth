@@ -1,3 +1,0 @@
-[target.wasm32-unknown-unknown]
-# wasm-bindgen catch wrappers require an externref table in the input module.
-rustflags = ["-C", "target-feature=+reference-types"]

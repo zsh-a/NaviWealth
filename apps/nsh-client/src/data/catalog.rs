@@ -3,7 +3,7 @@ use super::{clock, db};
 use finance_core::catalog::{self, Catalog, Entry, SecurityBinding};
 use nsh_core::{platform::HttpRequest, prelude::*, storage::Storage};
 use std::rc::Rc;
-const BUNDLE: &str = include_str!("../../../mobile/assets/catalog/securities.v1.ndjson");
+const BUNDLE: &str = include_str!("../../../../assets/catalog/securities.v1.ndjson");
 const BASE: &str = "https://github.com/zsh-a/NaviWealth/releases/download/securities-catalog/";
 const CHECKED: &str = "catalog.checked.v1";
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]

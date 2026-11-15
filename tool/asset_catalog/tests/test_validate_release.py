@@ -1,19 +1,14 @@
 import datetime as dt
 import json
 import pathlib
-import zipfile
 
 import pytest
 
 from tool.asset_catalog.build import fnv1a64
 from tool.asset_catalog.validate_release import (
-    CATALOG_ASSET_PATH,
     CatalogValidationError,
     ReleasePolicy,
-    validate_archives,
     validate_catalog,
-    validate_pubspec,
-    validate_web_root,
 )
 
 
@@ -115,73 +110,3 @@ def test_rejects_duplicate_unsorted_and_too_small_markets(tmp_path):
     assert "duplicate market/symbol" in message
     assert "not in canonical market/symbol order" in message
     assert "release minimum is 4" in message
-
-
-def test_validates_pubspec_declaration(tmp_path):
-    pubspec = tmp_path / "pubspec.yaml"
-    pubspec.write_text(
-        f"flutter:\n  assets:\n    - {CATALOG_ASSET_PATH}\n",
-        encoding="utf-8",
-    )
-    validate_pubspec(pubspec)
-
-    pubspec.write_text("flutter:\n  assets: []\n", encoding="utf-8")
-    with pytest.raises(CatalogValidationError, match="missing Flutter asset"):
-        validate_pubspec(pubspec)
-
-
-@pytest.mark.parametrize(
-    "entry",
-    [
-        f"assets/flutter_assets/{CATALOG_ASSET_PATH}",
-        f"base/assets/flutter_assets/{CATALOG_ASSET_PATH}",
-    ],
-)
-def test_validates_apk_and_aab_catalog_bytes(tmp_path, entry):
-    catalog = tmp_path / "catalog.ndjson"
-    raw = _write_catalog(catalog)
-    report = validate_catalog(
-        catalog,
-        policy=_fixture_policy(),
-        today=dt.date(2026, 7, 27),
-    )
-    archive = tmp_path / ("app.aab" if entry.startswith("base/") else "app.apk")
-    with zipfile.ZipFile(archive, "w") as bundle:
-        bundle.writestr(entry, raw)
-
-    validate_archives([archive], expected=report)
-
-
-def test_rejects_changed_archive_catalog(tmp_path):
-    catalog = tmp_path / "catalog.ndjson"
-    _write_catalog(catalog)
-    report = validate_catalog(
-        catalog,
-        policy=_fixture_policy(),
-        today=dt.date(2026, 7, 27),
-    )
-    archive = tmp_path / "app.apk"
-    with zipfile.ZipFile(archive, "w") as bundle:
-        bundle.writestr(
-            f"assets/flutter_assets/{CATALOG_ASSET_PATH}",
-            b"different",
-        )
-
-    with pytest.raises(CatalogValidationError, match="differs from committed"):
-        validate_archives([archive], expected=report)
-
-
-def test_validates_web_catalog_bytes(tmp_path):
-    catalog = tmp_path / "catalog.ndjson"
-    raw = _write_catalog(catalog)
-    report = validate_catalog(
-        catalog,
-        policy=_fixture_policy(),
-        today=dt.date(2026, 7, 27),
-    )
-    web_root = tmp_path / "web"
-    web_catalog = web_root / "assets" / CATALOG_ASSET_PATH
-    web_catalog.parent.mkdir(parents=True)
-    web_catalog.write_bytes(raw)
-
-    validate_web_root(web_root, expected=report)

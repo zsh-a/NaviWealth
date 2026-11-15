@@ -1,117 +1,100 @@
 # NaviWealth Agent Guide
 
-NaviWealth is a local-first Personal LifeOS. FinanceOS is the seed domain;
-HealthOS, KnowledgeOS, and ExecutionOS are opt-in domains registered through
-the LifeOS shell. The client direction is NSH 0.5.0 with domain truth in Rust
-crates. Android is
-in active migration scope; Web retention and iOS scope remain open decisions.
-Device AI stays native-only; any retained Web client has no AI runtime or Health
-platform integration.
-
-Flutter (`apps/mobile`) is frozen: bug fixes only; new features belong in
-NSH/Rust crates. Read `docs/architecture/adr/0001-nsh-client-migration.md` and
-`docs/roadmap/roadmap-lifeos.md` before planning work. The old Finance roadmap
-and product-direction Now/Next plans are archived.
-
-Start with `docs/agent-map.md`, which routes each task to the smallest
-authoritative context. Before changing architecture or cross-domain code, read:
-
-- `docs/architecture/lifeos-architecture-northstar.md`: boundaries and non-goals.
-- `docs/architecture/lifeos-shell.md`: cross-domain shell, domain registration, AI, sync, memory, persistence.
-- Roadmaps and domain SSOTs as needed: `docs/index.md`,
-  `docs/roadmap/roadmap-lifeos.md`,
-  `docs/domains/financeos-domain.md`,
-  `docs/domains/healthos-domain.md`, `docs/domains/knowledgeos-domain.md`,
-  `docs/domains/executionos-domain.md`.
-
-## Current Domains
-
-| Domain | Status | Main paths | Sync prefix |
-|---|---|---|---|
-| FinanceOS | Always on | `features/finance/`, finance feature slices, `features/finance/finance_ai_tools.dart` | `fin:` |
-| HealthOS | User opt-in | `features/health/`, `features/health/health_ai_tools.dart` | `health:` |
-| KnowledgeOS | User opt-in | `features/knowledge/`, `features/knowledge/knowledge_ai_tools.dart` | `know:` |
-| ExecutionOS | User opt-in | `features/execution/`, `features/execution/execution_ai_tools.dart` | `exec:` |
-
-The frozen Flutter production domain inventory is `apps/mobile/lib/app/domain_packs.dart`. Each domain contributes a `DomainPack`: tools, prompt block, shell route, shell spec, agents, command palette entries, and tab paths. Add a new domain by adding a real domain package and one registry entry; do not scatter one-off branching through bootstrap.
-
-The NSH client is a fixed four-tab composition (no `DomainPack` registry, per
-ADR 0002). `finance-core` and `health-core` own business truth; `lifeos-core`
-owns SQLite storage, backup/restore and the one-time Flutter import (today in `apps/nsh-client/src/data/db.rs`). These
-target crates are introduced by gated phases; `health-core` and `finance-core` exist today. Existing Dart path rules below apply
-to Flutter maintenance only. Do not extend FRB for new client features.
+NaviWealth is a local-first personal finance and health app for one Android
+phone. The client is NSH (Rust) in `apps/nsh-client/`; business truth lives in
+`crates/finance-core/` and `crates/health-core/`. The Flutter client and the
+Sync v3 backend were retired on 2026-11-15 (ADR 0003); their source is
+archived at the `flutter-final` git tag. Read
+`docs/architecture/adr/0003-flutter-retirement.md`,
+`docs/product/product-scope.md` and `docs/roadmap/roadmap-lifeos.md` before
+planning work. Start with `docs/agent-map.md`, which routes each task to the
+smallest authoritative context.
 
 ## Repository Map
 
 | Area | Path | Language |
 |---|---|---|
-| New native client | `apps/nsh-client/` | Rust, NSH |
-| Shared Health core | `crates/health-core/` | Rust |
-| Shared Finance core (double-entry ledger, statements) | `crates/finance-core/` | Rust |
+| NSH client | `apps/nsh-client/` | Rust, NSH |
+| Finance core (double-entry ledger, holdings, catalog) | `crates/finance-core/` | Rust |
+| Health core (meal recognition, nutrition, Garmin) | `crates/health-core/` | Rust |
+| Neutral SQLite/backup infrastructure | `crates/lifeos-core/` | Rust |
 | Agent Runtime | `third_party/agent-runtime/` | Rust submodule |
-| Frozen mobile app | `apps/mobile/` | Dart, Flutter |
-| Native embedding runtime | `apps/mobile/native/lifeos_native/` | Rust, flutter_rust_bridge |
-| Backend | `apps/backend/` | Rust, Cloudflare Workers, D1 |
-| Securities catalog build | `tool/asset_catalog/` | Python |
+| Market data SDK | `third_party/market-data-rs/` | Rust |
+| Securities catalog bundle | `assets/catalog/` | NDJSON |
+| Catalog build/publish pipeline | `tool/asset_catalog/` | Python |
 | Project docs | `docs/` | Markdown |
-| Docs site config | `mkdocs.yml` | MkDocs |
 | CI/CD | `.github/workflows/` | GitHub Actions |
 
-Mobile layout:
+NSH client layout:
 
 ```text
-apps/mobile/lib/
-  app/                  bootstrap, router, domain packs, app-level composition
-  core/                 cross-domain infrastructure only
-    ai/                 contracts, runtime, local memory, agents, composition seams
-    audit/              domain-neutral event log
-    auth/               JWT/session/domain opt-in
-    lifeos/             DomainPack registry seam
-    persistence/        Drift adapter and shared tables
-    shell/              multi-domain IA primitives
-    sync/               sync v3 row-state client, accepted acks, domain generations
-  design_system/        tokens, themes, charts, reusable widgets
-  features/
-    finance/            Finance composition, tools, data root, domain values, and slices
-    health/             HealthOS data, UI, AI tools, agents
-    knowledge/          KnowledgeOS notes, decisions, UI, AI tools
-    execution/          ExecutionOS data, UI, AI tools, agents
-  l10n/                 ARB files and generated localizations
-```
-
-Backend layout:
-
-```text
-apps/backend/src/
-  lib.rs                Worker router
-  auth/                 JWT, password hashing, middleware
-  routes/               health, auth, me, sync
-  sync/                 generic row-state sync store
-  error.rs              coded JSON errors
+apps/nsh-client/src/
+  domain/   host-owned meals/account and shared health-core domain exports
+  data/     device storage, photos, local time, thin NSH fetch Transport
+  ui/       styled components over nsh-base and its tokens
+  pages/    home (Today, Records, Assets, Review tabs, capture sheet), meal
+            editing, Settings
+  i18n/     English and Chinese copy
+tests/      headless meal, weight, Garmin, review and backup flows
 ```
 
 ## Architecture Rules
 
-- New client architecture follows ADR 0001 as narrowed by ADR 0002: domain-owned Rust truth (`finance-core`, `health-core`) and a UI-only NSH client.
-- Features follow `docs/product/product-scope.md`: personal use, four tabs, AI for recognition drafts only. Do not port removed Flutter features (Knowledge, Execution, AI chat/agents, FIRE, options, rebalance, Runway).
-- Business data lives in SQLite (`rusqlite`, bundled) in the app's private directory; NSH KV is a 5 MB preferences store. No SQLCipher or Keystore (ADR 0002): the Android sandbox protects data at rest, and only exported backups are passphrase-encrypted.
-- The NSH client is local-only: no Sync, login or backend calls; local backups only. Flutter data moves once through an importer. Sync v3 stays unchanged for the frozen Flutter client until it retires.
-- The Dart/Flutter rules below govern the frozen client's bug fixes until replacement.
+- Domain truth lives in Rust crates. `finance-core` owns the ledger, holdings
+  and catalog repositories; `health-core` owns meals, nutrition and Garmin
+  parsing; `lifeos-core` owns SQLite storage, migrations and backup/restore.
+  `apps/nsh-client/` is UI, composition and device storage only.
+- The client is local-only: no Sync, no login, no backend calls. Business
+  data lives in SQLite (`rusqlite`, bundled) in the app's private directory;
+  NSH KV is a 5 MB preferences store. Only exported backups are
+  passphrase-encrypted (ADR 0002).
+- Features follow `docs/product/product-scope.md`: personal use, four tabs,
+  AI for recognition drafts only. Do not port removed features or re-add the
+  retired Flutter features (Knowledge, Execution, AI chat/agents, FIRE,
+  options, rebalance, Runway, allocation display, broker statement import).
+- AI is device-only against user-owned LLM profiles. There is no backend AI
+  relay or cloud fallback. Provider protocols live in
+  `third_party/agent-runtime/crates/llm-protocol`; request policy in
+  `llm-client`.
+- Domain crates depend on neutral infrastructure, never on sibling domain
+  business models. Keep deterministic calculations out of any model.
+- Recognition and imports produce drafts; every confirmed write goes through
+  explicit user confirmation and is atomic.
+- Dated observations (prices, FX, valuations) keep provenance and never
+  overwrite manual entries on the same or newer day.
+- NSH is Android-only for releases; desktop builds exist for development and
+  headless tests. Web and iOS are out of scope.
 
-- `core/` is domain-neutral. It must not import `features/<domain>/` or domain business entities.
-- Domain business code lives under `features/<domain>/`, including all Finance slices under `features/finance/`. Finance composition belongs in `features/finance/`; cross-domain composition belongs in `app/`.
-- `app/` is the composition root. It may import multiple domains to assemble routers, memory indexers, domain packs, AI tools, agents, and provider overrides.
-- AI contracts and runtime stay in `core/ai/`; concrete domain tools live in `features/<domain>/ai_tools/` and are exported by `features/<domain>/<domain>_ai_tools.dart`.
-- `core/persistence/` is the shared Drift adapter. Domain repositories own domain table access. Cross-domain infrastructure may use only its own tables.
-- Sync is v3 row-state: generic versioned blobs, last-writer-wins, accepted
-  acknowledgements, and per-domain reset generations over one `POST /sync`.
-  Do not rebuild sync as CRDT, event sourcing, or schema negotiation.
-- AI is device-only. There is no backend AI relay, no cloud fallback, and no `/ai/chat` endpoint. Users provide their own Anthropic or OpenAI-compatible profile on device.
-- Web builds exclude AI runtime and Health platform integration.
+## Build And Test
+
+Each crate is an independent Cargo workspace; there is no root `Cargo.toml`.
+Keep each workspace's `Cargo.lock` committed and use `--locked`.
+
+```bash
+rtk cargo fmt --manifest-path <crate>/Cargo.toml --all -- --check
+rtk cargo clippy --manifest-path <crate>/Cargo.toml --all-targets --locked -- -D warnings
+rtk cargo test --manifest-path <crate>/Cargo.toml --locked
+```
+
+Run the three commands for `apps/nsh-client`, `crates/finance-core` and
+`crates/health-core`; CI runs fmt, clippy (`-D warnings`) and `--locked`
+tests.
+
+Securities catalog and docs:
+
+```bash
+./tool/build-asset-catalog.sh                  # stub bake from committed CSVs
+python3 -m pytest tool/asset_catalog/tests
+python3 -m tool.asset_catalog.validate_release
+node tool/check-docs.mjs                       # documentation link/nav check
+```
+
+Release: `nsh-vX.Y.Z` tags, APK built and signed by the manual `nsh client`
+workflow; see `docs/operations/branch-protection.md`.
 
 ## Search Workflow
 
-Use CodeGraph for structural questions and `rg` or `semble` for text/prose.
+Use CodeGraph for structural questions and `rg` for text/prose.
 
 CodeGraph:
 
@@ -120,181 +103,59 @@ CodeGraph:
 - Callers/callees/impact: `codegraph_callers`, `codegraph_callees`, `codegraph_impact`
 - Directory inventory: `codegraph_files`
 
-Semble examples:
-
-```bash
-rtk semble search "DomainPack registry" apps/mobile --content all
-rtk semble search "MorningBriefingAgent" apps/mobile
-rtk semble search "deployment guide" docs --content docs
-```
-
-If `semble` is unavailable, use:
-
-```bash
-rtk uvx --from "semble[mcp]" semble search "DomainPack registry" apps/mobile --content all
-```
-
 Use `rg` for exact strings, comments, config literals, and generated-file checks.
 
-## Build And Test
+## Conventions
 
-Prefix shell commands with `rtk` when running from this repo.
-
-NSH client:
-
-```bash
-rtk cargo test --manifest-path apps/nsh-client/Cargo.toml
-rtk cargo test --manifest-path crates/health-core/Cargo.toml --locked
-rtk cargo test --manifest-path crates/finance-core/Cargo.toml --locked
-```
-
-Mobile maintenance:
-
-```bash
-cd apps/mobile
-rtk flutter pub get
-rtk dart format .
-rtk flutter analyze --fatal-infos
-rtk flutter test
-rtk flutter run
-rtk flutter run -d chrome
-rtk flutter build web --release
-rtk flutter build apk --debug
-rtk flutter build ios --debug --no-codesign
-```
-
-Generated code:
-
-```bash
-cd apps/mobile
-rtk dart run build_runner build
-```
-
-One-time or asset setup:
-
-```bash
-apps/mobile/tool/setup-drift-web.sh
-apps/mobile/tool/build-cn-fonts.sh
-apps/mobile/tool/build-latin-fonts.sh
-```
-
-Backend:
-
-```bash
-cd apps/backend
-rtk cargo check --target wasm32-unknown-unknown
-rtk cargo fmt --all -- --check
-rtk cargo clippy --target wasm32-unknown-unknown --all-targets -- -D warnings
-rtk wrangler dev
-rtk wrangler deploy
-```
-
-Web smoke:
-
-```bash
-cd apps/mobile
-rtk flutter build web --release
-cd web_smoke
-rtk npm install
-rtk npm test
-```
-
-Project lint gates:
-
-```bash
-./tool/lint-no-feature-in-shared.sh
-./tool/lint-cross-feature-imports.sh
-./tool/lint-finance-domain-data-imports.sh
-./tool/lint-domain-neutral-contracts.sh
-./tool/lint-frb-llm-entrypoints.sh
-./tool/check-ai-contract-wire-enums.sh
-```
-
-## Dart And Flutter Conventions
-
-- Strict analysis is enabled: strict casts, strict inference, strict raw types.
-- Files use `snake_case.dart`; classes use `PascalCase`.
-- Providers use `camelCaseProvider`.
-- Constants use the existing local style; many cross-domain constants use `k` prefixes.
-- Use single quotes and trailing commas.
-- Never edit generated `*.g.dart`, `*.freezed.dart`, or FRB generated files by hand.
-- Complex async state should extend `ConventionalAsyncNotifier<T>` when it matches the fetch/refresh/mutate convention.
-- Override data/repository layers in tests instead of replacing feature providers with static `AsyncValue` unless the existing test pattern already does that.
-
-## UI Conventions
-
-- UI uses Forui plus the local design system. Prefer `SoftCard`/`AppSection` for surfaces (`FCard` is nearly unused in features), `FButton`, `FTheme`, `AppSpacing`, `AppRadius`, and chart components already in `design_system/`.
-- Keep domain shells dense and task-oriented. Do not add marketing pages or explanatory hero screens inside the app.
-- Use existing domain routes and `DomainTabsShell`; do not invent a second navigation model.
-- Cards are for repeated items, modals, and framed tools. Do not nest cards or turn every section into a card.
-- Form boundary: complex multi-section record forms use a full page (`AppFormPageScaffold` with `confirmLeave` dirty guard); lightweight single-entity capture uses a bottom sheet (`showAppFormSheet`/`showGuardedFormSheet` with `dirtyGuard`). Do not introduce a third entry pattern.
-- Primary buttons get haptics through the shared wrappers (`AppBusyButton`/`AppActionButton`, `hapticIntent` defaults to commit); do not hand-signal haptics at call sites that already go through a wrapper.
-- Use generated/localized strings where the surrounding UI does. Keep English and Chinese ARB files in sync.
-- After frontend changes, run a targeted widget test or inspect in the browser when a local web target is relevant.
+- Rust: nightly toolchain per workspace; `rustfmt` and strict clippy with
+  `-D warnings`; errors are `Result`, UI-facing errors are strings mapped at
+  the seam.
+- Money is exact: integer minor units and string decimals; floating point
+  never touches accounting truth; postings sum to zero separately within
+  each currency.
+- Documentation: update the owning SSOT (see `docs/agent-map.md`); run
+  `node tool/check-docs.mjs` after doc changes; keep `README.md`, `llms.txt`
+  and the mkdocs nav consistent with the docs tree.
 
 ## Testing Rules
 
-- In-memory DB helper: `makeTestDatabase()`.
-- Common fakes: `makeStubStamper()`, `InMemoryOutboxStore`, `InMemoryCursorStore`, `FakeSyncApiClient`.
-- Widget tests should wrap UI in `MaterialApp` or the existing app test harness so theme and localization resolve.
-- Add focused tests for new repositories, sync behavior, AI tools, proposal appliers, and route shell changes.
-
-## Data And Sync
-
-- Drift lives in `core/persistence/`; domain repositories live under `features/<domain>/data/`.
-- Shared sync envelope types live in `core/sync/`: `Hlc`, `SyncMeta`, `MutationStamper`, and outbox providers.
-- Row families are domain-prefixed at the sync boundary:
-  - Finance: `fin:<table>`
-  - Health: `health:<table>`
-  - Knowledge: `know:<table>`
-  - Execution: `exec:<table>`
-- Local-only derived data, memory embeddings, and triage side tables do not sync unless explicitly designed to do so.
-
-## AI Runtime
-
-- Runtime contracts: `core/ai/contracts/`.
-- Provider-neutral loop: `core/ai/runtime/`.
-- Domain tools: `features/<domain>/ai_tools/`.
-- Tool registry aggregation: `deviceToolsProvider` in `bootstrap.dart`, based on active `DomainPack`s.
-- Prompt aggregation: `systemPromptBlocksProvider`, also based on active `DomainPack`s.
-- Agents: `core/ai/agents/` framework; domain agents live under `features/<domain>/agents/` and are registered through `DomainPack.agentBuilder`.
-- Proposal application is a cross-domain seam. Active domain proposal routes are contributed by each `DomainPack` and composed in `apps/mobile/lib/app/domain_composition.dart`.
+- Crates express contracts as tests: property tests for ledger invariants,
+  corpus fixtures for statement parsers, fixtures for catalog and Garmin
+  parsing.
+- NSH client has headless flows (`nsh-testing`) for capture, review, backup
+  and restore; restore must be atomic and reject malformed backups without
+  touching current data.
+- Android device evidence (TLS, Keystore, upgrade/migration) is recorded
+  separately from headless tests; emulator evidence does not close a
+  physical-device roadmap item.
 
 ## Environment
 
-- Do not commit `.env` files.
-- Mobile compile-time config uses `--dart-define` in `apps/mobile/lib/core/config/app_config.dart`.
-- Key defines include:
-  - `API_BASE_URL`, default `http://127.0.0.1:8787`
-  - `BYPASS_AUTH`, default `false`
-  - `RUST_EMBEDDER_MODEL_DIR`
-  - `RUST_EMBEDDER_ORT_DYLIB_PATH`
-  - `RUST_EMBEDDER_LIBRARY_PATH`
-- Wrangler secret: `JWT_SECRET`.
-- The LLM API key is user-owned and stored on device as an `LlmProfile`, not as a backend secret.
+- No secrets in the repository. The Android release keystore arrives in CI
+  through `KEYSTORE_BASE64`/password secrets; `tool/sign-nsh-apk.sh` keeps
+  passwords out of argv.
+- Local development defaults: nightly toolchain per workspace; the WSL2 +
+  Windows emulator topology is documented in
+  `docs/development/local-development.md`.
+- `.nsh/` and `apps/client/` are local-only development data and are
+  gitignored; never commit them.
 
 ## Documentation Index
 
 | Doc | Use |
 |---|---|
-| `docs/architecture/adr/0001-nsh-client-migration.md` | NSH/Rust direction and open decisions |
-| `docs/roadmap/roadmap-lifeos.md` | Active migration phases and exit gates |
-| `docs/architecture/lifeos-architecture-northstar.md` | Architecture boundaries and non-goals |
-| `docs/architecture/lifeos-shell.md` | Cross-domain shell SSOT |
-| `docs/domains/healthos-domain.md` | HealthOS scope, data, AI tools, agents |
-| `docs/domains/knowledgeos-domain.md` | KnowledgeOS notes, decisions, relations, AI tools |
-| `docs/domains/executionos-domain.md` | ExecutionOS scope, plans, actions, progress |
-| `docs/ai/ai-architecture.md` | Device AI runtime design |
-| `docs/ai/ai-protocol.md` | AI event/tool protocol |
-| `docs/sync/sync-v3.md` | Active sync protocol |
-| `docs/domains/options-income.md` | Options income engine |
-| `docs/domains/market-data-providers.md` | Market data providers |
-| `docs/development/local-development.md` | Local setup |
-| `docs/development/testing-strategy.md` | Test strategy |
-| `apps/mobile/README.md` | Mobile engineering baseline |
-| `apps/mobile/design_tokens/README.md` | Design tokens |
-| `apps/mobile/web_smoke/README.md` | Playwright smoke tests |
-
+| `docs/agent-map.md` | Task → SSOT router |
+| `docs/product/product-scope.md` | Product scope SSOT |
+| `docs/roadmap/roadmap-lifeos.md` | Active phases and exit gates |
+| `docs/architecture/adr/0001-nsh-client-migration.md` | NSH direction |
+| `docs/architecture/adr/0002-personal-local-scope.md` | Personal, local-only scope |
+| `docs/architecture/adr/0003-flutter-retirement.md` | Flutter/backend retirement, catalog move, D1 ids |
+| `docs/architecture/agent-runtime-current.md` | Rust runtime code map and invariants |
+| `docs/development/local-development.md` | Local setup and Android debugging |
+| `docs/operations/branch-protection.md` | CI checks and release policy |
+| `tool/asset_catalog/README.md` | Securities catalog pipeline |
+| `docs/roadmap/roadmap-finance.md` | Archived FinanceOS roadmap (historical) |
+| `docs/roadmap/product-direction-and-demand-validation.md` | Archived product-direction study (historical) |
 
 <!-- headroom:rtk-instructions -->
 # RTK (Rust Token Killer) - Token-Optimized Commands

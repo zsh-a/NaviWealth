@@ -19,8 +19,9 @@ Thumbs.db
 # Rust build output
 target/
 
-# Stray nested Flutter build output
-apps/mobile/apps/
+# NSH local development data (dev database, emulator and signing scratch)
+.nsh/
+apps/client/
 
 # Agent / platform
 .agent_context/

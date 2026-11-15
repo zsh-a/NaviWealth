@@ -1,5 +1,5 @@
 site_name: NaviWealth Docs
-site_description: Local-first Personal LifeOS engineering documentation.
+site_description: Local-first personal finance and health app engineering documentation.
 docs_dir: docs
 
 theme:
@@ -28,36 +28,10 @@ nav:
   - Architecture:
       - NSH Migration ADR: architecture/adr/0001-nsh-client-migration.md
       - Personal Local Scope ADR: architecture/adr/0002-personal-local-scope.md
-      - Northstar: architecture/lifeos-architecture-northstar.md
-      - LifeOS Shell: architecture/lifeos-shell.md
+      - Flutter Retirement ADR: architecture/adr/0003-flutter-retirement.md
       - Agent Runtime: architecture/agent-runtime-current.md
-  - Domains:
-      - FinanceOS: domains/financeos-domain.md
-      - Portfolio Strategy Groups: domains/portfolio-strategy-groups.md
-      - Income Strategy: domains/income-strategy.md
-      - HealthOS: domains/healthos-domain.md
-      - KnowledgeOS: domains/knowledgeos-domain.md
-      - ExecutionOS: domains/executionos-domain.md
-      - Options Income: domains/options-income.md
-      - Market Data Providers: domains/market-data-providers.md
-      - Garmin Integration Reference: domains/garmin-integration.md
-  - AI:
-      - Device AI Architecture: ai/ai-architecture.md
-      - Runtime Event Contract: ai/ai-protocol.md
-      - Agent Experience: ai/agent-experience.md
-      - Personal Memory Deferred Plan: ai/personal-memory-implementation-plan.md
-  - Sync:
-      - Sync v3 Protocol: sync/sync-v3.md
-      - Protocol Test Catalogue: sync/sync-protocol-tests.md
-      - Manual E2E Checklist: sync/sync-e2e-manual.md
-      - Monitoring: sync/sync-monitoring.md
   - Development:
       - Local Development: development/local-development.md
-      - Testing Strategy: development/testing-strategy.md
-      - Structured Logging: development/logging.md
-      - Web Routing: development/web-routing.md
-      - Web Compatibility Matrix: development/web-compat-matrix.md
-      - Visual Baseline: visual-baseline/README.md
   - Operations:
       - Branch Protection: operations/branch-protection.md
   - Product Scope: product/product-scope.md

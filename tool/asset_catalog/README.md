@@ -1,12 +1,12 @@
 # Securities catalog build pipeline
 
-The Flutter app ships with a precomputed NDJSON bundle of every
+The NSH client ships with a precomputed NDJSON bundle of every
 "mainstream" listed security across A-share / HK / US / crypto, baked
-at build time and loaded into a local FTS5 table on first launch.
+at build time and indexed into a local search table on first launch.
 This directory holds everything needed to regenerate that bundle.
 
-The runtime side lives in
-[`apps/mobile/lib/features/finance/data/securities_catalog/`](../../apps/mobile/lib/features/finance/data/securities_catalog/) —
+The runtime side is the `finance-core` catalog parser, bundled by
+[`apps/nsh-client/src/data/catalog.rs`](../../apps/nsh-client/src/data/catalog.rs) —
 this README is for the build pipeline only.
 
 ## Layout
@@ -17,6 +17,8 @@ tool/asset_catalog/
 ├── classify.py         A-share code-prefix → asset-type rules
 ├── common.py           shared CSV writer + OpenCC traditional→simplified
 ├── diff_report.py      compare a fresh bake vs. the previous bundle
+├── publish.py          package the committed catalog for out-of-band refresh
+├── validate_release.py catalog validator (release gate for publish)
 ├── requirements.txt    pinned Python deps for full ingest
 ├── sources/
 │   ├── cn_a.py         BaoStock + mootdx adapter (SH+SZ+BJ)
@@ -86,11 +88,8 @@ preferred source.
 
 ## Release integration
 
-Releases package the committed catalog without fetching mutable upstream data.
 Refresh the desired sources, run the offline tests and stub bake, then commit
-the CSVs and generated NDJSON before creating a release tag.
-
-The release workflow runs the following gate before Flutter setup:
+the CSVs and generated NDJSON. The publish path runs the release gate:
 
 ```bash
 python3 -m tool.asset_catalog.validate_release
@@ -109,23 +108,18 @@ fallback. The current release floors are:
 | US | 5,000 |
 | Crypto | 400 |
 
-After building, the same command compares the committed file byte-for-byte
-with the copy in the APK, AAB, and Flutter web output. A release therefore
-fails both when the committed catalog is degraded and when Flutter stopped
-packaging the declared asset.
-
-Catalog refresh remains separate from release creation so rebuilding the same
-tag is deterministic and upstream outages cannot mutate or partially degrade a
-published catalog.
+Catalog refresh remains separate from app release creation so rebuilding the
+same tag is deterministic and upstream outages cannot mutate or partially
+degrade a published catalog.
 
 Catalog refresh runs manually with `./tool/build-asset-catalog.sh --full`.
 Run the catalog tests and release validator, then review and commit the source
 CSV and generated NDJSON changes. There is no scheduled refresh workflow or
 automatic catalog PR.
 
-## Out-of-band distribution (no APK rebuild)
+## Out-of-band distribution (no app release)
 
-Installed Android/iOS apps pick up a refreshed catalog without a new app
+The installed NSH client picks up a refreshed catalog without a new app
 release:
 
 1. Refresh, validate, and commit the NDJSON as above, then push to `main`.
@@ -136,32 +130,23 @@ release:
    `securities-<version>-<checksum8>.ndjson.gz` plus `catalog-manifest.json`
    (schema, version, checksum, count, SHA-256 of the gzip and the NDJSON).
 3. Both files go to the rolling `securities-catalog` GitHub Release. It is a
-   prerelease that is never marked latest, so it does not affect the APK
-   self-update manifest at `releases/latest`. The workflow keeps the newest
-   three gzip assets.
-4. Release builds receive `SECURITIES_CATALOG_MANIFEST_URL` from
-   `tool/build-android-release.sh`. About 20 seconds after startup, the app
-   fetches the manifest (at most once per 24 hours). When it is newer, the
-   app downloads the asset, checks both SHA-256 values and the header against
-   the manifest, and stores it under app support. `SecuritiesCatalogLoader`
-   then keeps the newer of the bundled and downloaded catalogs and replaces
-   the table atomically.
+   prerelease that is never marked latest, so it does not disturb
+   `releases/latest` consumers. The workflow keeps the newest three gzip
+   assets.
+4. At most once per 24 hours (or on demand from the app), the client fetches
+   the manifest, compares versions, downloads the asset, verifies it against
+   the manifest, and installs it atomically — keeping the newer of the
+   bundled and downloaded catalogs.
 
-Builds without the define (debug and local builds) and Web use only the
-bundled catalog. GitHub Release assets do not send CORS headers, and Web
-deploys already ship the committed file. A later app release whose bundled
-catalog is at least as new deletes the stale download. Bump
-`MANIFEST_SCHEMA` in `publish.py` together with
-`kSecuritiesCatalogManifestSchema` in the app if the bundle format changes.
-Apps that do not recognise the schema keep the catalog they already have.
+Bump `MANIFEST_SCHEMA` in `publish.py` when the manifest fields change.
+Clients that do not recognise the schema keep the catalog they already have.
 
 ## Output
 
-`apps/mobile/assets/catalog/securities.v1.ndjson` — JSON header line
-followed by one entry per line. The header carries `version` and a
-deterministic FNV-1a 64 checksum that the loader compares to the local
-`securities_catalog_meta` row. Bumping the source CSVs flips the
-checksum, which triggers an atomic FTS5 re-population on next app
+`assets/catalog/securities.v1.ndjson` — JSON header line followed by one
+entry per line. The header carries `version` and a deterministic FNV-1a 64
+checksum that the client verifies before installing a bundle. Bumping the
+source CSVs flips the checksum, which triggers an atomic re-index on next
 launch.
 
 The bake step enforces a **gzip-compressed budget of 800KB** and aborts

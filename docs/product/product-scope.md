@@ -8,9 +8,10 @@ Last reviewed: 2026-11-15.
 
 Owns what the NSH client is for, which features exist, and which are
 deliberately absent. [ADR 0002](../architecture/adr/0002-personal-local-scope.md)
-records the architectural consequences; the
-[roadmap](../roadmap/roadmap-lifeos.md) owns delivery order. The frozen
-Flutter client's feature inventory is not a parity target.
+records the architectural consequences and
+[ADR 0003](../architecture/adr/0003-flutter-retirement.md) records the Flutter
+retirement; the [roadmap](../roadmap/roadmap-lifeos.md) owns delivery order.
+The retired Flutter client's feature inventory is not a parity target.
 
 ## Promise
 
@@ -112,8 +113,8 @@ and screenshots fill gaps.
   credit-card purchase posts to `负债:…`; a repayment or top-up moves money
   between own accounts; a refund reverses its purchase.
 - **Statement import (primary):** the system file picker opens an Alipay CSV,
-  WeChat XLSX or CMB credit-card statement text (PDF is not decoded); the existing Flutter parsers move
-  to `finance-core` and must match the statement corpus fixtures exactly.
+  WeChat XLSX or CMB credit-card statement text (PDF is not decoded); the
+  `finance-core` parsers match the statement corpus fixtures exactly.
   Each row's payment method (`余额`, `花呗`, `招商银行储蓄卡(1234)`) maps to an
   asset or liability account, asked once and remembered; its category hint
   and payee map to an expense or income account through remembered rules.
@@ -164,8 +165,8 @@ the valuation date. Missing rates exclude those currencies and visibly label
 the result as known value; history never presents a partial series as complete.
 HKD/CNY and USD/CNY rates can refresh or be entered manually; manual rates win
 on the same day. Schema 14 preserves dated rates in local backups. Other
-currencies and crypto remain unsupported; allocation remains pending. Android
-TLS and physical-device checks remain unverified.
+currencies and crypto remain unsupported. Android TLS and physical-device
+checks remain unverified.
 
 The full target is:
 
@@ -174,7 +175,6 @@ The full target is:
   unrealized gain are derived from trades.
 - Quote refresh from one market-data provider, on demand and at app start;
   FX conversion to the base currency.
-- Allocation by asset class and currency on the Assets tab.
 
 ### Health
 
@@ -204,7 +204,6 @@ The full target is:
   daily foreground backups (without photos) and manual backup/restore
   (with meal photos), excluding credentials. Local file export waits for a
   save or share dialog on Android in NSH.
-- A one-time import of kept records from the Flutter client.
 
 ## Removed
 
@@ -220,9 +219,14 @@ The full target is:
 | Sync v3, accounts/login, backend dependency | Local backups only |
 | Domain opt-in, `DomainPack` registry, command palette, Life signals | Fixed composition of four tabs |
 | Web and iOS | Decided 2026-11-13 |
+| Flutter client and the Sync v3 backend | Retired 2026-11-15 (ADR 0003); archive at the `flutter-final` tag |
+| Allocation display by asset class and currency | Answers no daily or weekly question; net worth and holdings answer "what do I own" |
+| Broker statement import for trades | Fewer than ten trades a year; holdings stay manual entry |
+| One-time Flutter data import | Flutter retires directly after archiving its backup (ADR 0003) |
 
-Removed data is not lost: before Flutter retires, export its full backup
-and keep it as an archive file.
+Removed data is not lost: the owner exports the full Flutter backup before
+uninstalling, and the retired source stays reachable at the `flutter-final`
+tag.
 
 ## Records In Scope
 

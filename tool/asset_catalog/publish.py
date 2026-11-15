@@ -1,16 +1,18 @@
 """Package the committed securities catalog for out-of-band distribution.
 
-Installed apps poll ``catalog-manifest.json`` on the rolling
-``securities-catalog`` GitHub Release and download the gzip asset it names,
-so listing refreshes ship without a new APK. This script validates the
-committed NDJSON with the release gate, then writes into ``--output``:
+The NSH client polls ``catalog-manifest.json`` on the rolling
+``securities-catalog`` GitHub Release and downloads the gzip asset it
+names, so listing refreshes ship without a new app release. This script
+validates the committed NDJSON with the release gate, then writes into
+``--output``:
 
 * ``securities-<version>-<checksum8>.ndjson.gz`` — deterministic gzip
   (mtime 0). The name is content-addressed so a client holding an older
   manifest never downloads mismatched bytes while assets are being swapped.
-* ``catalog-manifest.json`` — the metadata ``SecuritiesCatalogManifest``
-  parses on device. Keep ``MANIFEST_SCHEMA`` in sync with
-  ``kSecuritiesCatalogManifestSchema`` in the app.
+* ``catalog-manifest.json`` — the metadata the NSH client parses on device
+  (``apps/nsh-client/src/data/catalog.rs``). Bump ``MANIFEST_SCHEMA`` when
+  the manifest fields change; clients that do not recognise the schema keep
+  the catalog they already have.
 """
 
 from __future__ import annotations

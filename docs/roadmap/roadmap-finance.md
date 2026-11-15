@@ -155,10 +155,9 @@ Finance business data.
 
 ## Current Capability Source
 
-Completed behavior is intentionally not archived in this roadmap. Use the
-[FinanceOS Domain SSOT](../domains/financeos-domain.md) to route to current
-business contracts and use executable tests for exact capability coverage.
-Release history belongs in Git tags and release notes.
+Completed behavior is intentionally not archived in this roadmap. Use
+executable tests for exact capability coverage. Release history belongs in
+Git tags and release notes.
 
 ## FinanceOS Boundaries
 

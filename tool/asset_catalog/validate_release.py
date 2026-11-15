@@ -1,13 +1,11 @@
-"""Validate the committed securities catalog and release artifacts.
+"""Validate the committed securities catalog.
 
-Release builds consume the catalog committed to Git; they must never fetch
-mutable upstream listings while building a tag. This validator is the release
-gate that makes that policy safe:
+The catalog committed to Git is bundled into the NSH client and published
+out-of-band on the rolling ``securities-catalog`` release. This validator is
+the gate that makes that policy safe:
 
 * verify NDJSON structure, row count, uniqueness, ordering, and FNV checksum;
-* reject future-dated or suspiciously small per-market catalogs;
-* confirm Flutter still declares the asset; and
-* compare the committed bytes with APK, AAB, and web build outputs.
+* reject future-dated or suspiciously small per-market catalogs.
 
 The default policy reflects the expected output of
 ``tool/build-asset-catalog.sh --full``. Tests can pass a smaller policy to
@@ -20,19 +18,15 @@ import argparse
 import collections
 import dataclasses
 import datetime as dt
-import hashlib
 import json
 import pathlib
 import re
 import sys
-import zipfile
-from collections.abc import Iterable, Mapping
+from collections.abc import Mapping
 
 from tool.asset_catalog.build import KNOWN_MARKETS, KNOWN_TYPES, fnv1a64
 
-CATALOG_ASSET_PATH = "assets/catalog/securities.v1.ndjson"
-DEFAULT_CATALOG_PATH = pathlib.Path("apps/mobile") / CATALOG_ASSET_PATH
-DEFAULT_PUBSPEC_PATH = pathlib.Path("apps/mobile/pubspec.yaml")
+DEFAULT_CATALOG_PATH = pathlib.Path("assets/catalog/securities.v1.ndjson")
 VERSION_RE = re.compile(r"^v1\.(\d{4})(\d{2})(\d{2})$")
 
 # Deliberately conservative floors. They catch stub/degraded feeds while
@@ -188,66 +182,6 @@ def validate_catalog(
     )
 
 
-def validate_pubspec(pubspec: pathlib.Path) -> None:
-    """Ensure Flutter still declares the catalog asset."""
-    try:
-        lines = pubspec.read_text(encoding="utf-8").splitlines()
-    except OSError as exc:
-        raise CatalogValidationError(f"cannot read pubspec {pubspec}: {exc}") from exc
-    declaration = f"- {CATALOG_ASSET_PATH}"
-    if declaration not in (line.strip() for line in lines):
-        raise CatalogValidationError(
-            f"{pubspec}: missing Flutter asset declaration {declaration!r}"
-        )
-
-
-def validate_archives(
-    archives: Iterable[pathlib.Path],
-    *,
-    expected: CatalogReport,
-) -> None:
-    """Verify APK/AAB archives contain exactly the committed catalog bytes."""
-    for archive in archives:
-        try:
-            with zipfile.ZipFile(archive) as bundle:
-                matches = [
-                    name
-                    for name in bundle.namelist()
-                    if name.endswith(f"flutter_assets/{CATALOG_ASSET_PATH}")
-                ]
-                if len(matches) != 1:
-                    raise CatalogValidationError(
-                        f"{archive}: expected one bundled {CATALOG_ASSET_PATH}, "
-                        f"found {len(matches)}"
-                    )
-                bundled = bundle.read(matches[0])
-        except (OSError, zipfile.BadZipFile) as exc:
-            raise CatalogValidationError(
-                f"cannot inspect Android archive {archive}: {exc}"
-            ) from exc
-        _require_identical_bytes(
-            bundled,
-            expected.raw_bytes,
-            label=f"{archive}:{matches[0]}",
-        )
-
-
-def validate_web_root(web_root: pathlib.Path, *, expected: CatalogReport) -> None:
-    """Verify a Flutter web output contains the committed catalog bytes."""
-    bundled_path = web_root / "assets" / CATALOG_ASSET_PATH
-    try:
-        bundled = bundled_path.read_bytes()
-    except OSError as exc:
-        raise CatalogValidationError(
-            f"cannot read web catalog {bundled_path}: {exc}"
-        ) from exc
-    _require_identical_bytes(
-        bundled,
-        expected.raw_bytes,
-        label=str(bundled_path),
-    )
-
-
 def _catalog_date(version: str, errors: list[str]) -> dt.date | None:
     match = VERSION_RE.fullmatch(version)
     if match is None:
@@ -258,17 +192,6 @@ def _catalog_date(version: str, errors: list[str]) -> dt.date | None:
     except ValueError:
         errors.append(f"header.version contains an invalid date: {version!r}")
         return None
-
-
-def _require_identical_bytes(actual: bytes, expected: bytes, *, label: str) -> None:
-    if actual == expected:
-        return
-    actual_sha = hashlib.sha256(actual).hexdigest()
-    expected_sha = hashlib.sha256(expected).hexdigest()
-    raise CatalogValidationError(
-        f"{label}: bundled catalog differs from committed catalog "
-        f"(bundled sha256={actual_sha}, committed sha256={expected_sha})"
-    )
 
 
 def _parse_minimums(values: list[str] | None) -> tuple[tuple[str, int], ...]:
@@ -285,7 +208,7 @@ def _parse_minimums(values: list[str] | None) -> tuple[tuple[str, int], ...]:
             minimum = int(raw_minimum)
         except ValueError as exc:
             raise argparse.ArgumentTypeError(
-                f"invalid --min-market count in {value!r}"
+                f"invalid --min-market count in {value!r}: must be non-negative"
             ) from exc
         if minimum < 0:
             raise argparse.ArgumentTypeError(
@@ -298,9 +221,6 @@ def _parse_minimums(values: list[str] | None) -> tuple[tuple[str, int], ...]:
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--catalog", type=pathlib.Path, default=DEFAULT_CATALOG_PATH)
-    parser.add_argument("--pubspec", type=pathlib.Path, default=DEFAULT_PUBSPEC_PATH)
-    parser.add_argument("--archive", type=pathlib.Path, action="append", default=[])
-    parser.add_argument("--web-root", type=pathlib.Path)
     parser.add_argument(
         "--min-market",
         action="append",
@@ -313,10 +233,6 @@ def main(argv: list[str]) -> int:
         minimums = _parse_minimums(args.min_market)
         policy = ReleasePolicy(min_market_counts=minimums)
         report = validate_catalog(args.catalog, policy=policy)
-        validate_pubspec(args.pubspec)
-        validate_archives(args.archive, expected=report)
-        if args.web_root is not None:
-            validate_web_root(args.web_root, expected=report)
     except (CatalogValidationError, argparse.ArgumentTypeError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
@@ -328,10 +244,6 @@ def main(argv: list[str]) -> int:
         f"OK: securities catalog {report.version} "
         f"rows={report.row_count} checksum={report.checksum} ({markets})"
     )
-    for archive in args.archive:
-        print(f"OK: bundled catalog matches committed bytes in {archive}")
-    if args.web_root is not None:
-        print(f"OK: bundled catalog matches committed bytes in {args.web_root}")
     return 0
 
 

@@ -1,51 +1,36 @@
 # NaviWealth
 
-> Local-first Personal LifeOS. FinanceOS is always on; HealthOS, KnowledgeOS,
-> and ExecutionOS are opt-in domains. Client direction is NSH/Rust; Flutter is
-> frozen to bug fixes. Backend is Cloudflare Workers in Rust. Sync is v3
-> row-state LWW. AI is device-only with
-> user-owned LLM profiles; there is no backend AI relay.
+> Local-first personal finance and health app for one Android phone. The
+> client is NSH (Rust); business truth lives in the `finance-core` and
+> `health-core` crates. Local-only: no backend, no sync, no account system;
+> passphrase-encrypted local backups. AI recognition runs on device against
+> user-owned LLM profiles through the `third_party/agent-runtime` submodule.
 
 ## Essential Docs
 
 - [Documentation Index](docs/index.md): Human and AI entry point for the docs tree.
 - [Agent Guide](AGENTS.md): Build commands, architecture rules, and coding conventions for AI agents.
-- [Architecture Northstar](docs/architecture/lifeos-architecture-northstar.md): Hard boundaries and non-goals.
-- [LifeOS Shell](docs/architecture/lifeos-shell.md): Domain registration, routing, AI, memory, sync, persistence seams.
-- [Device AI Architecture](docs/ai/ai-architecture.md): Device-only runtime design.
-- [Agent Runtime Current Architecture](docs/architecture/agent-runtime-current.md): Current Rust runtime code map, invariants, and maintenance guide.
-- [AI Runtime Event Contract](docs/ai/ai-protocol.md): Stream event and tool contract.
-- [Sync v3 Protocol](docs/sync/sync-v3.md): Active row-state sync protocol.
-- [Testing Strategy](docs/development/testing-strategy.md): Test pyramid, task spine, CI gate expectations.
-
-## Domain Docs
-
-- [HealthOS](docs/domains/healthos-domain.md): Health domain behavior, data, AI tools, agents.
-- [KnowledgeOS](docs/domains/knowledgeos-domain.md): Notes, decisions, relations, proposals, and memory projections.
-- [ExecutionOS](docs/domains/executionos-domain.md): Plans, actions, progress, and review.
 - [Product Scope](docs/product/product-scope.md): What the NSH client builds and deliberately omits.
 - [NSH Client Roadmap](docs/roadmap/roadmap-lifeos.md): Active delivery gates.
-- [NSH Migration ADR](docs/architecture/adr/0001-nsh-client-migration.md): NSH direction, Flutter freeze, Android only.
+- [NSH Migration ADR](docs/architecture/adr/0001-nsh-client-migration.md): NSH direction, Android only.
 - [Personal Local Scope ADR](docs/architecture/adr/0002-personal-local-scope.md): Personal, local-only reduced rewrite.
-- [FinanceOS Roadmap](docs/roadmap/roadmap-finance.md): Archived historical sequencing.
+- [Flutter Retirement ADR](docs/architecture/adr/0003-flutter-retirement.md): Flutter and Sync backend retirement, catalog relocation, D1 archive ids.
+- [Agent Runtime Current Architecture](docs/architecture/agent-runtime-current.md): Current Rust runtime code map, invariants, and maintenance guide.
+- [Local Development](docs/development/local-development.md): Rust toolchain, crates checks, NSH Android debugging.
+- [Branch Protection](docs/operations/branch-protection.md): CI checks and NSH release policy.
 
 ## Current Code Roots
 
-- `apps/nsh-client/`: New Rust/NSH UI client.
-- `crates/health-core/`: Shared meal recognition and nutrition.
-- `third_party/agent-runtime/`: Provider-neutral Rust runtime.
-- Existing Dart roots below are frozen-client maintenance authorities.
-
-- `apps/mobile/lib/app/domain_packs.dart`: Production domain inventory.
-- `apps/mobile/lib/core/auth/domain_scope.dart`: Domain opt-in enum and wire values.
-- `apps/mobile/lib/core/sync/domain_prefix.dart`: Sync row-family prefixes.
-- `apps/mobile/lib/core/ai/`: AI contracts, runtime, agents, memory, composition.
-- `apps/mobile/lib/features/`: Domain and finance feature code.
-- `apps/backend/src/sync/`: Backend generic row-state sync store.
+- `apps/nsh-client/`: NSH (Rust) UI client and its headless tests.
+- `crates/finance-core/`: Double-entry ledger, holdings, securities catalog truth.
+- `crates/health-core/`: Meal recognition, nutrition, Garmin daily summaries.
+- `third_party/agent-runtime/`: Provider-neutral LLM protocol and client (submodule).
+- `third_party/market-data-rs/`: Market-data SDK (Tencent quotes).
+- `assets/catalog/` + `tool/asset_catalog/`: Securities catalog bundle and its build/publish pipeline.
 
 ## Documentation Policy
 
-Documentation describes the current implementation. Superseded protocols,
-migration notes, and compatibility-only plans are removed rather than archived,
-except the explicitly archived Finance roadmap and product-direction study
-retained by the NSH migration decision.
+Documentation describes the current implementation. Superseded documents are
+removed rather than archived, except the explicitly archived Finance roadmap
+and product-direction study, which are retained historical context. Retired
+Flutter-era documents and code remain reachable at the `flutter-final` tag.

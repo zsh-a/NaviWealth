@@ -25,9 +25,9 @@ function relative(file) {
 const markdownFiles = [
   path.join(repoRoot, 'README.md'),
   path.join(repoRoot, 'CLAUDE.md'),
-  path.join(repoRoot, 'apps/mobile/README.md'),
-  path.join(repoRoot, 'apps/mobile/design_tokens/README.md'),
-  ...walkMarkdown(path.join(repoRoot, 'apps/mobile/docs')),
+  path.join(repoRoot, 'apps/nsh-client/README.md'),
+  path.join(repoRoot, 'apps/nsh-client/DESIGN.md'),
+  path.join(repoRoot, 'tool/asset_catalog/README.md'),
   ...walkMarkdown(docsRoot),
 ];
 const failures = [];
@@ -54,56 +54,15 @@ for (const match of mkdocs.matchAll(/^\s+-\s+[^:]+:\s+(\S+\.md)$/gm)) {
 }
 
 for (const file of markdownFiles) {
+  if (file.includes(`${path.sep}adr${path.sep}`)) continue;
   const source = fs.readFileSync(file, 'utf8');
   for (const match of source.matchAll(
-    /`((?:apps\/mobile\/lib|apps\/mobile\/native\/lifeos_native\/src|apps\/backend\/src|tool|\.github\/workflows)\/[^`]+)`/g,
+    /`((?:apps\/nsh-client|crates|tool|\.github\/workflows|assets\/catalog|third_party\/agent-runtime)\/[^`]+)`/g,
   )) {
     const target = match[1];
     if (/[<*>\s]/.test(target)) continue;
     if (!fs.existsSync(path.join(repoRoot, target))) {
       failures.push(`${relative(file)}: missing code authority ${target}`);
-    }
-  }
-
-  for (const block of source.matchAll(/```[^\n]*\n([\s\S]*?)```/g)) {
-    let codeRoot;
-    for (const line of block[1].split('\n')) {
-      if (/^apps\/(?:mobile|backend)\/\S+\/$/.test(line)) {
-        codeRoot = line;
-      } else if (codeRoot) {
-        const entry = line.match(/^ {2}(\S+\.(?:dart|rs|kt|cpp))\s/);
-        if (!entry || /[<*>]/.test(entry[1])) continue;
-        const target = path.join(codeRoot, entry[1]);
-        if (!fs.existsSync(path.join(repoRoot, target))) {
-          failures.push(`${relative(file)}: missing code-map file ${target}`);
-        }
-      }
-    }
-  }
-}
-
-const staleReferences = new Map([
-  ['Sync is v2', 'Sync v3 is the active protocol'],
-  ['v2 row-state', 'Sync v3 is the active protocol'],
-  [
-    'apps/mobile/lib/app/route_error_page.dart',
-    'RouteErrorPage lives under core/shell',
-  ],
-  [
-    'apps/mobile/lib/data/db/connection_web.dart',
-    'the Web connection lives under core/persistence',
-  ],
-  [
-    'apps/backend/src/routes/market/options.rs',
-    'the Backend has no options route',
-  ],
-]);
-
-for (const file of markdownFiles) {
-  const source = fs.readFileSync(file, 'utf8');
-  for (const [needle, reason] of staleReferences) {
-    if (source.includes(needle)) {
-      failures.push(`${relative(file)}: stale reference "${needle}"; ${reason}`);
     }
   }
 }

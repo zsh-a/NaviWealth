@@ -15,7 +15,7 @@ are reported but never trip the threshold — they're expected churn.
 Usage:
 
     python3 -m tool.asset_catalog.diff_report \\
-        --previous apps/mobile/assets/catalog/securities.v1.ndjson \\
+        --previous assets/catalog/securities.v1.ndjson \\
         --current  /tmp/securities.v1.new.ndjson \\
         --threshold 0.05
 """
