@@ -9,7 +9,7 @@ use common::*;
 fn an_empty_day_explains_what_to_do() -> Result<(), String> {
     let (app, _) = start(Vec::new(), None);
     assert!(app.shows("Nothing recorded today"));
-    assert!(app.shows("Connect a vision model"));
+    assert!(app.shows("Connect a recognition model"));
     assert!(app.shows("Nothing logged yet"));
     Ok(())
 }
@@ -106,7 +106,7 @@ fn declining_consent_sends_nothing() -> Result<(), String> {
     let (mut app, _) = start(account(false), Some(stub.clone()));
     attach_capture(&mut app)?;
     app.wait_for("Create a draft with your model")?;
-    app.press("Done")?;
+    app.press("label:Back")?;
     app.wait_for("Attach image")?;
     assert!(stub.requests().is_empty());
     assert!(app.shows("Create draft"));
@@ -248,14 +248,14 @@ fn a_recent_food_fills_the_new_food() -> Result<(), String> {
 fn the_api_key_is_kept_apart_from_the_settings() -> Result<(), String> {
     let (mut app, storage) = start(Vec::new(), None);
     app.press("label:Settings")?;
-    app.press("label:/^Vision model, /")?;
+    app.press("label:/^Recognition model, /")?;
     app.type_text("text:Paste your key", "sk-ant-secret")?;
     // Kept as typed: no Save.
     app.press("label:Back")?;
-    app.wait_for("label:/^Vision model, Anthropic · /")?;
+    app.wait_for("label:/^Recognition model, Anthropic · /")?;
     app.press("label:Back")?;
     app.wait_for("label:New entry")?;
-    app.wait_for_gone("Connect a vision model", GONE)?;
+    app.wait_for_gone("Connect a recognition model", GONE)?;
     let entries = storage.entries();
     assert_eq!(
         entries.get("secret.model-key.v1").map(String::as_str),
@@ -291,6 +291,7 @@ fn a_food_without_nutrition_is_not_saved_as_zero() -> Result<(), String> {
 fn settings_keep_the_goal_as_typed_without_save() -> Result<(), String> {
     let (mut app, storage) = start(Vec::new(), None);
     app.press("label:Settings")?;
+    app.press("label:/^Daily goal, /")?;
     app.type_text("label:Daily goal", "1800")?;
     app.press("label:Back")?;
     app.wait_for("label:New entry")?;

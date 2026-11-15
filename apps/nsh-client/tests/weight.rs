@@ -99,6 +99,7 @@ fn today_and_review_use_the_shared_average_and_caption_fits_large_text() -> Resu
 
     // The same caption must fit when Garmin uses the other two tiles.
     app.press("label:Settings")?;
+    app.press("label:/^Garmin, /")?;
     app.type_text("text:Paste your Garmin key", "GCDC-test-key")?;
     app.press("Connect")?;
     app.wait_for("text:Connected · garmin.cn")?;

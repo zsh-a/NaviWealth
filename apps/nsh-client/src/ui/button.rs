@@ -14,7 +14,7 @@ use super::{
     Lift, Typo,
     feedback::spinner,
     icons::{Icon, icon},
-    theme::{Type, color, motion, shadow, size},
+    theme::{Type, color, material, motion, shadow, size},
 };
 
 /// What a button means.
@@ -43,7 +43,7 @@ impl Variant {
             Variant::Secondary => color::SURFACE,
             Variant::Ghost => AdaptiveColor::TRANSPARENT,
             Variant::Danger => color::DANGER_SOFT,
-            Variant::Glass => color::MEDIA_SCRIM.opacity(0.38),
+            Variant::Glass => color::MEDIA_SCRIM.opacity(material::MEDIA_OPACITY),
         }
     }
 
@@ -53,7 +53,7 @@ impl Variant {
             Variant::Tonal | Variant::Ghost => color::SUNKEN,
             Variant::Secondary => color::SURFACE_2,
             Variant::Danger => color::DANGER_SOFT.map(|c| c.darken(0.05)),
-            Variant::Glass => color::MEDIA_SCRIM.opacity(0.55),
+            Variant::Glass => color::MEDIA_SCRIM.opacity(material::MEDIA_PRESSED_OPACITY),
         }
     }
 
@@ -81,6 +81,24 @@ impl Variant {
             Variant::Glass => element.backdrop_blur(px(18.0)),
             _ => element,
         }
+    }
+
+    /// A pressed primary loses its sheen and settles closer to the surface.
+    fn pressed_surface<E: Styled>(self, element: E) -> E {
+        let element = element.bg(self.pressed_fill());
+        if self == Variant::Primary {
+            element.bg_gradient_none().lift(&shadow::SEGMENT)
+        } else {
+            element
+        }
+    }
+}
+
+fn press_motion(scale: nsh_core::element::AnimatedValue, down: bool, pressed: f32) {
+    if reduce_motion() {
+        scale.set(1.0);
+    } else {
+        scale.spring(if down { pressed } else { 1.0 }, motion::PRESS);
     }
 }
 
@@ -232,12 +250,10 @@ impl Btn {
         let mut element = button()
             .disabled(inactive)
             .on_press_down(move || {
-                if !reduce_motion() {
-                    scale.spring(motion::PRESS_SCALE, motion::PRESS);
-                }
+                press_motion(scale, true, motion::PRESS_SCALE);
             })
             .on_press_up(move || {
-                scale.spring(1.0, motion::PRESS);
+                press_motion(scale, false, motion::PRESS_SCALE);
             })
             .on_press(move || {
                 if variant == Variant::Primary {
@@ -255,7 +271,7 @@ impl Btn {
             .rounded_full()
             .transition_colors()
             .duration(motion::INSTANT)
-            .active(move |s| s.bg(variant.pressed_fill()))
+            .active(move |s| variant.pressed_surface(s))
             .hover(move |s| s.bg(variant.pressed_fill()))
             .focus_visible(|s| {
                 s.outline(px(2.0))
@@ -347,14 +363,17 @@ impl IconBtn {
         let element = button()
             .accessibility_label(move || Some(label()))
             .on_press_down(move || {
-                if !reduce_motion() {
-                    scale.spring(motion::PRESS_SCALE_ICON, motion::PRESS);
-                }
+                press_motion(scale, true, motion::PRESS_SCALE_ICON);
             })
             .on_press_up(move || {
-                scale.spring(1.0, motion::PRESS);
+                press_motion(scale, false, motion::PRESS_SCALE_ICON);
             })
-            .on_press(press)
+            .on_press(move || {
+                if variant == Variant::Primary {
+                    haptic(Haptic::Impact(HapticImpact::Light));
+                }
+                press();
+            })
             .bind_scale(&scale)
             .size(px(side))
             .items_center()
@@ -363,7 +382,7 @@ impl IconBtn {
             .transition_colors()
             .duration(motion::INSTANT)
             .hover(move |s| s.bg(variant.pressed_fill()))
-            .active(move |s| s.bg(variant.pressed_fill()))
+            .active(move |s| variant.pressed_surface(s))
             .focus_visible(|s| s.outline(px(2.0)).outline_color(color::INK))
             .disabled_style(|s| s.opacity(0.3))
             .child(icon(
@@ -386,12 +405,10 @@ pub fn chip(
     button()
         .selected(selected)
         .on_press_down(move || {
-            if !reduce_motion() {
-                scale.spring(motion::PRESS_SCALE, motion::PRESS);
-            }
+            press_motion(scale, true, motion::PRESS_SCALE);
         })
         .on_press_up(move || {
-            scale.spring(1.0, motion::PRESS);
+            press_motion(scale, false, motion::PRESS_SCALE);
         })
         .on_press(press)
         .bind_scale(&scale)

@@ -109,7 +109,7 @@ fn a_recognition_cut_short_by_a_restart_can_be_tried_again() -> Result<(), Strin
     app.press("Try again")?;
     app.wait_for("text:White rice")?;
     assert_eq!(stub.requests().len(), 1, "the kept photo is sent again");
-    app.press("Done")?;
+    app.press("label:Close")?;
     app.wait_for(READY)?;
     Ok(())
 }

@@ -21,10 +21,27 @@ AI only to turn text and images into drafts, using the owner's model account.
   prefilled form as the main result. Missing values ask a concrete question;
   proposed new accounts are marked. Multiple records show their count on
   confirmation. Manual meal/money/weight actions are secondary under one
-  disclosure; favorites remain directly available with Undo.
+  disclosure; favorites remain directly available with Undo. Close is a
+  labelled cross, separate from Confirm and save; closing a nonempty draft
+  reports that the draft is kept and no records were saved.
+  Account rows in a ready result open an existing-account picker in the same
+  sheet. Transfer source and destination lists exclude the other account;
+  internal holding accounts are never offered. Selection first persists the
+  draft, then returns to the result, without calling the model or posting a
+  transaction. With no eligible account, the picker explains how to name a
+  proposed account through the correction box. Back returns from the account
+  picker or recognition consent; the cross closes the capture task.
+  A successful confirmation reports the single record's kind and value, or
+  the batch count. Its View action opens the common day in Records, or the
+  unfiltered all-days timeline when the batch spans days.
 - **Task sheets:** header and actions stay fixed; only the body scrolls.
-  Available height excludes the keyboard. Toasts belong to the active sheet
-  while it is open, so Undo cannot be covered by its backdrop.
+  Capture uses `fitted_task_sheet`: short content determines its height,
+  while longer results scroll at the available-height limit. Other task
+  editors retain `task_sheet`'s filled height, capped at 540 pt. Both exclude
+  the keyboard from available height. Toasts belong to the active sheet while
+  it is open, so Undo cannot be covered by its backdrop. Opening capture clears
+  old informational notices and saved receipts; Undo messages keep their normal
+  lifetime. A receipt's View cannot navigate behind a newly opened draft.
 - **Manual money:** amount, account/category (or from/to), a calendar date,
   optional details. Pickers replace the body in the same sheet; Back returns
   to the draft. Time, payee and note live in Details. Successful saves alone
@@ -96,10 +113,14 @@ AI only to turn text and images into drafts, using the owner's model account.
   (shaded by share of the goal, amber past it, a dot on weighed days, today
   outlined; a day opens in Records). Then the one-line note, the weight with
   its 7-day trend line, and Garmin averages.
-- **Settings keep every change as it is made; there is no Save.** The model
-  has its own page; the goal, asking before recognition, Garmin and backups
-  sit on the Settings page. A changed model account requires consent again
-  before sending text, images and account names.
+- **Settings keep every change as it is made; there is no Save.** Recognition
+  model / 识别模型 has its own page. Daily goal and Garmin initially show
+  their saved value or connection status; tapping the row expands their
+  controls in place. Collapsing preserves entered values, and hidden controls
+  are excluded from accessibility. Valid goal changes still save as typed;
+  Garmin still connects or disconnects through explicit actions. Asking before
+  recognition and backups remain on Settings. A changed model account requires
+  consent again before sending text, images and account names.
 
 Missing records never read as zero: an empty day shows "—" and "Nothing
 logged yet", never 0 kcal; a day without meals has no bar and no shade.
@@ -120,6 +141,7 @@ graphite with white ink, surfaces separated by tone and a hairline.
 | Text | `INK` (titles, figures), `BODY`, `MUTED` |
 | Decorative / inactive | `FAINT` (tertiary marks such as chevrons, disabled controls and unavailable dates) |
 | Action | `ACTION` (ink), `ACTION_PRESSED`, `ACTION_SHEEN`, `ON_ACTION` |
+| Floating material | `ON_GLASS_MUTED` (dock labels), `GLASS_EDGE`, `GLASS_WASH` (sheet highlight) |
 | AI | `AI_FROM` → `AI_TO` (analysis light, estimate marks) |
 | Status | `DANGER(_SOFT)`, `CAUTION(_SOFT)` (past a goal, estimates to check), `POSITIVE` |
 | Data | `PROTEIN` / `CARBS` / `FAT` (dark / middle / light stone), `OTHER`, `TRACK`, `HEAT` (calendar shade) |
@@ -176,12 +198,54 @@ Financial values, including gains and losses, stay in neutral ink.
   existing semantic icons: Wallet for cash accounts, Minus for debt accounts
   and Chart for holdings, without inferring account subtypes from names.
 - **Shape:** controls are pills; sheet 32 > card 24 > well 18 > field 16 >
-  thumbnail 16 > badge 8.
-- **Depth:** `shadow::CARD` under cards, `shadow::FLOAT` under the main
-  action and raised buttons; none in dark. Glass only for controls over
-  photos and the tab bar. The tab bar uses the lighter `shadow::SEGMENT`,
-  a nearly opaque `SURFACE` fill (0.94 opacity) and restrained blur (12 pt).
+  thumbnail 16 > badge 8. Cards and sheet top corners use continuous curves.
+- **Depth:** matte content with local frosted navigation and sheets;
+  light appearance uses the shared shadow vocabulary below, dark uses tone
+  and edges without shadows.
 - **Spacing:** the 4 pt scale; page gutter 20, card inset 20.
+
+## Elevation & Depth
+
+### Materials
+
+Cards, rows, fields and reading surfaces remain opaque. `src/ui/material.rs`
+shares the floating materials' surface tint, reflected edge and fallback;
+`src/ui/theme.rs` owns their values. Status and data colors keep their
+existing meanings.
+
+| Material | Surface | Edge and light | Lift |
+|---|---|---|---|
+| Dock | `SURFACE` at 0.88 opacity, 20 pt backdrop blur | 0.75 pt `GLASS_EDGE` around the pill | `shadow::DOCK` |
+| Sheet | `SURFACE` at 0.97 opacity, 24 pt backdrop blur | 0.75 pt top `GLASS_EDGE`; `GLASS_WASH` fades downward to transparent | `shadow::SHEET` |
+| Media controls and captions | `MEDIA_SCRIM` at 0.64 opacity, 18 pt backdrop blur; pressed buttons use 0.74 opacity | White `ON_MEDIA`; caption secondary text at 0.8 opacity | No additional shadow |
+
+The shared glass edge is white at `#B8` alpha in light appearance and `#20`
+in dark; the sheet wash is white at `#10` and `#04` alpha respectively.
+Inactive dock labels use `ON_GLASS_MUTED` (`#5C5D58` light / `#B4B6AE` dark)
+for legibility through the tint. Media readability comes from the dark mask
+even when backdrop blur is unavailable.
+
+Dock and sheet materials fall back to fully opaque `SURFACE`, with no
+backdrop filter, on Linux and Android below API 31. NSH 0.5's GTK renderer
+does not render backdrop filters. Android API 31 and above takes the blur
+path; its rendering and performance remain unverified on a real device.
+The home dock also becomes opaque while a home-owned sheet is open or a
+pushed route is active. This is a local home lifecycle rule, not a global
+limit on simultaneous materials.
+
+### Shadow vocabulary
+
+Shadow tuples below are `(x, y, blur, spread, #RRGGBBAA)` in points, from
+`src/ui/theme.rs`. All layers are outside shadows; `Lift` removes them in
+dark appearance.
+
+| Token | Layers | Use |
+|---|---|---|
+| `CARD` | `(0, 1, 2, 0, #1A14080A)`; `(0, 6, 20, -5, #1A140814)` | Content cards and secondary raised buttons |
+| `FLOAT` | `(0, 2, 6, 0, #0A0A0B1F)`; `(0, 8, 20, -6, #0A0A0B30)` | Primary buttons, including the round capture action |
+| `DOCK` | `(0, 1, 3, 0, #1A14080A)`; `(0, 5, 18, -5, #1A14081F)` | Floating tab bar |
+| `SHEET` | `(0, -1, 3, 0, #1A14080A)`; `(0, -8, 32, -8, #1A140829)` | Sheet top edge |
+| `SEGMENT` | `(0, 2, 6, 0, #1A140814)` | Selected segments and pressed primary buttons |
 
 ## Components (`src/ui/`)
 
@@ -197,6 +261,14 @@ value), `macro_tiles`, the energy `ring`, and one icon family (24 pt line
 glyphs). Pages share one top bar: a raised round Back and the title
 centered. Screens: the month calendar (`pages/review_calendar.rs`) serves
 Review's month and Records' go-to-day sheet.
+
+Button feedback is restrained: buttons and chips press to 98%, icon buttons
+to 96%. Primary buttons lose their sheen and settle to `shadow::SEGMENT`
+while pressed. The shared primary button and primary icon button each emit
+one light impact on activation; the home capture action adds no second
+haptic. Reduced motion keeps scale at 1 without starting the press spring.
+Sheets retain `nsh_base`'s entrance, backdrop, back/Escape and swipe-down
+behavior; the material layer adds no custom transition.
 
 Assets reuses the existing `card` for its single overview panel. Net worth
 aligns an ink whole amount (`Type::Display`), muted currency (`Type::Figure`)
@@ -244,7 +316,7 @@ still.
 
 | Screen | Change | Motion | Reduced motion |
 |---|---|---|---|
-| All | Button press | Spring to 0.96 (cards and tiles 0.98, icon buttons 0.90), deeper fill | Fill only |
+| All | Button press | Spring to 0.98 (cards and tiles 0.98, icon buttons 0.96), deeper fill; primary sheen clears and lift lowers | Fill and surface state only; no scale spring |
 | Home | Tab chosen | The bar's pill slides to the tab (native spring) | Jumps |
 | Today | Day's energy changes | Ring segments sweep to their new ends, `slower`; the figure eases to its new value | Set at once |
 | Today | Meals arrive (open, save, undo) | Rows rise 14 pt and fade in, staggered | Shown at once |
@@ -276,3 +348,18 @@ Light status minima are `DANGER` on its pressed soft fill (4.77:1),
 `CAUTION` on `SUNKEN` (4.90:1), and `POSITIVE` on `SUNKEN` (4.72:1).
 The dark minimum is `DANGER` on `RAISED` (4.71:1). This is evidence for
 those checked token pairs, not a whole-app WCAG conformance claim.
+
+Material review captures in `.impeccable/review/materials/` are GTK desktop
+evidence of the opaque dock/sheet fallback, not proof of Android blur.
+Source-token compositing over black and white backdrops, including the
+sheet wash, gives checked text minima of 5.05:1 light / 5.81:1 dark for the
+dock and 5.12:1 light / 5.22:1 dark for sheets. Over a white photo, the media
+mask gives 4.79:1 for secondary caption text and 6.38:1 for white text.
+These calculations cover the specified material/text combinations only;
+they do not establish whole-app accessibility or device performance.
+
+Capture and settings refinement previews in
+`.impeccable/review/capture-polish/` show the fitted composer, missing-account
+review and collapsed settings in GTK, including light/dark and a narrow
+360 × 640 capture review. These are desktop development captures; Android
+keyboard, system Back, rendering and performance still need device evidence.

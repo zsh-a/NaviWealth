@@ -21,6 +21,7 @@ struct Message {
     id: u64,
     text: SharedString,
     action: Option<SharedString>,
+    keep_on_new_task: bool,
 }
 
 #[derive(Clone, Default, PartialEq)]
@@ -39,6 +40,20 @@ fn state() -> Signal<State> {
 
 /// Shows `text`, with an action labelled `label` running `run` when given.
 pub fn show_toast(text: impl Into<SharedString>, action: Option<(SharedString, Rc<dyn Fn()>)>) {
+    show(text, action, true);
+}
+
+/// A saved receipt's View action is relevant until the next capture begins.
+/// Unlike Undo, it must not navigate behind a new unsaved draft.
+pub fn show_receipt(text: impl Into<SharedString>, action: (SharedString, Rc<dyn Fn()>)) {
+    show(text, Some(action), false);
+}
+
+fn show(
+    text: impl Into<SharedString>,
+    action: Option<(SharedString, Rc<dyn Fn()>)>,
+    keep_on_new_task: bool,
+) {
     let text = text.into();
     let (label, run) = match action {
         Some((label, run)) => (Some(label), Some(run)),
@@ -52,6 +67,7 @@ pub fn show_toast(text: impl Into<SharedString>, action: Option<(SharedString, R
             id: state.next,
             text,
             action: label,
+            keep_on_new_task,
         });
     });
 }
@@ -60,6 +76,20 @@ fn dismiss(id: u64) {
     if state().with_untracked(|s| s.current.as_ref().is_some_and(|m| m.id == id)) {
         ACTION.with(|slot| slot.borrow_mut().take());
         state().update(|state| state.current = None);
+    }
+}
+
+/// A new task retires informational notices and old receipts. An offered Undo action
+/// keeps its normal lifetime so opening a sheet cannot silently take it away.
+pub fn clear_notice() {
+    let id = state().with_untracked(|s| {
+        s.current
+            .as_ref()
+            .filter(|m| m.action.is_none() || !m.keep_on_new_task)
+            .map(|m| m.id)
+    });
+    if let Some(id) = id {
+        dismiss(id);
     }
 }
 

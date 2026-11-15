@@ -15,6 +15,7 @@ use crate::{
         Icon, Type, Typo, color,
         feedback::{appear, spinner},
         icon, motion,
+        theme::material,
     },
 };
 
@@ -165,7 +166,7 @@ fn caption(draft: Draft, veil: AnimatedValue) -> impl IntoElement {
         .px_4()
         .py_3()
         .rounded(px(20.0))
-        .bg(color::MEDIA_SCRIM.opacity(0.42))
+        .bg(color::MEDIA_SCRIM.opacity(material::MEDIA_OPACITY))
         .backdrop_blur(px(18.0))
         .bind_opacity(&veil)
         .bind_translate_y(&veil.interpolate(&[0.0, 1.0], &[10.0, 0.0]))
@@ -215,7 +216,7 @@ fn result_chip(draft: Draft) -> impl IntoElement {
                     .px_3()
                     .py(px(7.0))
                     .rounded_full()
-                    .bg(color::MEDIA_SCRIM.opacity(0.42))
+                    .bg(color::MEDIA_SCRIM.opacity(material::MEDIA_OPACITY))
                     .backdrop_blur(px(18.0))
                     .child(icon(Icon::Sparkle, 15.0, color::ON_MEDIA))
                     .child(

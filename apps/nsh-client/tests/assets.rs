@@ -52,7 +52,7 @@ fn accounts_balances_rename_and_net_worth_survive_restart() -> Result<(), String
     )?;
     app.press("Create draft")?;
     app.wait_for("Confirm and save")?;
-    app.press("Done")?;
+    app.press("label:Close")?;
     app.press("label:/^Cash, 1000.00 CNY/")?;
     app.press("label:Rename account")?;
     app.clear("label:Account name")?;

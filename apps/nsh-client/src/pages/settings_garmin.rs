@@ -8,10 +8,8 @@ use crate::{
     domain::garmin::Region,
     i18n::s,
     ui::{
-        Btn, Size, Type, Typo, color,
+        Btn, Size, color,
         field::{field, note, text_input},
-        space,
-        surface::card,
     },
 };
 
@@ -42,67 +40,67 @@ pub fn garmin_section() -> impl IntoElement {
             }
         });
     };
-    card().p(px(space::CARD)).gap_4().child(
-        when(garmin::connected, move || {
-            view()
-                .gap_3()
-                .child(
-                    text(|| {
-                        let host = match garmin::region() {
-                            Some(Region::China) => "garmin.cn",
-                            _ => "garmin.com",
-                        };
-                        s().garmin_connected(host)
-                    })
-                    .typo(Type::Subhead)
-                    .text_color(color::POSITIVE),
-                )
-                .child(
+    super::settings::setting_details(
+        || s().garmin,
+        || {
+            if garmin::connected() {
+                s().garmin_connected(match garmin::region() {
+                    Some(Region::China) => "garmin.cn",
+                    _ => "garmin.com",
+                })
+            } else {
+                s().garmin_disconnected.into()
+            }
+        },
+        view().gap_4().child(
+            when(garmin::connected, move || {
+                view().gap_3().child(
                     Btn::secondary()
                         .size(Size::Small)
                         .label(|| s().garmin_disconnect.into())
                         .on_press(garmin::disconnect)
                         .self_start(),
                 )
-        })
-        .otherwise(move || {
-            view()
-                .gap_3()
-                .child(field(
-                    || s().garmin_key,
-                    text_input(key)
-                        .masked(|| true)
-                        .auto_capitalize(AutoCapitalize::None)
-                        .auto_correct(false)
-                        .placeholder(|| s().garmin_key_placeholder.to_owned())
-                        .style_when(
-                            move || failure.get().is_some(),
-                            |s| s.border_color(color::DANGER),
-                        ),
-                ))
-                .child(note(
-                    move || {
-                        Some(
-                            match failure.get() {
-                                Some(garmin::Failure::KeyRejected) => s().garmin_key_rejected,
-                                Some(garmin::Failure::Network) => s().garmin_network,
-                                Some(garmin::Failure::Unreadable) => s().garmin_unreadable,
-                                None => s().garmin_note,
-                            }
-                            .into(),
-                        )
-                    },
-                    move || failure.get().is_some(),
-                ))
-                .child(
-                    Btn::tonal()
-                        .size(Size::Small)
-                        .label(|| s().garmin_connect.into())
-                        .busy(move || busy.get())
-                        .disabled(move || key.with(|k| k.trim().is_empty()))
-                        .on_press(connect)
-                        .self_start(),
-                )
-        }),
+            })
+            .otherwise(move || {
+                view()
+                    .gap_3()
+                    .child(field(
+                        || s().garmin_key,
+                        text_input(key)
+                            .masked(|| true)
+                            .auto_capitalize(AutoCapitalize::None)
+                            .auto_correct(false)
+                            .placeholder(|| s().garmin_key_placeholder.to_owned())
+                            .style_when(
+                                move || failure.get().is_some(),
+                                |s| s.border_color(color::DANGER),
+                            ),
+                    ))
+                    .child(note(
+                        move || {
+                            Some(
+                                match failure.get() {
+                                    Some(garmin::Failure::KeyRejected) => s().garmin_key_rejected,
+                                    Some(garmin::Failure::Network) => s().garmin_network,
+                                    Some(garmin::Failure::Unreadable) => s().garmin_unreadable,
+                                    None => s().garmin_note,
+                                }
+                                .into(),
+                            )
+                        },
+                        move || failure.get().is_some(),
+                    ))
+                    .child(
+                        Btn::tonal()
+                            .size(Size::Small)
+                            .label(|| s().garmin_connect.into())
+                            .busy(move || busy.get())
+                            .disabled(move || key.with(|k| k.trim().is_empty()))
+                            .on_press(connect)
+                            .self_start(),
+                    )
+            }),
+        ),
     )
 }

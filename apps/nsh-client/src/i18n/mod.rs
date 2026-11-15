@@ -132,7 +132,12 @@ pub struct Strings {
     pub capture_correction: &'static str,
     pub capture_correction_hint: &'static str,
     pub capture_confirm: &'static str,
-    pub capture_saved: &'static str,
+    pub capture_retained: &'static str,
+    pub capture_choose_account: &'static str,
+    pub capture_no_accounts: &'static str,
+    pub view_records: &'static str,
+    pub goal_unset: &'static str,
+    pub garmin_disconnected: &'static str,
     pub capture_failed: &'static str,
     pub capture_retry: &'static str,
     pub capture_keep_result: &'static str,
@@ -411,6 +416,22 @@ impl Strings {
     }
 
     /// A weight in kg, to one decimal.
+    pub fn capture_saved_count(&self, n: usize) -> String {
+        if self.zh() {
+            format!("已保存 {n} 条记录")
+        } else {
+            format!("Saved {n} records")
+        }
+    }
+
+    pub fn capture_saved_detail(&self, kind: &str, value: &str) -> String {
+        if self.zh() {
+            format!("已记{kind} · {value}")
+        } else {
+            format!("Saved {kind} · {value}")
+        }
+    }
+
     pub fn kg(&self, kg: f64) -> String {
         format!("{kg:.1}")
     }

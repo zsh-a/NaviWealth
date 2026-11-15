@@ -54,6 +54,19 @@ pub mod color {
     /// Text and icons on the action fill.
     pub const ON_ACTION: AdaptiveColor = c(0xFFFFFF, 0x1C1D1A);
 
+    /// Secondary navigation text over translucent material (not ordinary surfaces).
+    pub const ON_GLASS_MUTED: AdaptiveColor = c(0x5C5D58, 0xB4B6AE);
+    /// Reflected light on the edge of a floating material.
+    pub const GLASS_EDGE: AdaptiveColor = AdaptiveColor {
+        light: super::rgba(0xFFFFFFB8).to_hsla(),
+        dark: super::rgba(0xFFFFFF20).to_hsla(),
+    };
+    /// A restrained highlight across a sheet's upper surface.
+    pub const GLASS_WASH: AdaptiveColor = AdaptiveColor {
+        light: super::rgba(0xFFFFFF10).to_hsla(),
+        dark: super::rgba(0xFFFFFF04).to_hsla(),
+    };
+
     /// The AI's light, from iris to sky: analysis, estimates.
     pub const AI_FROM: AdaptiveColor = c(0x7B61FF, 0x9B87FF);
     pub const AI_TO: AdaptiveColor = c(0x22B8F0, 0x48C9F5);
@@ -128,6 +141,18 @@ pub mod size {
     pub const TOUCH: f32 = 44.0;
 }
 
+/// Translucent layers; content cards and fields remain opaque.
+pub mod material {
+    pub const DOCK_OPACITY: f32 = 0.88;
+    pub const DOCK_BLUR: f32 = 20.0;
+    pub const SHEET_OPACITY: f32 = 0.97;
+    pub const SHEET_BLUR: f32 = 24.0;
+    /// Readable even over an entirely white photo, with or without blur.
+    pub const MEDIA_OPACITY: f32 = 0.64;
+    pub const MEDIA_PRESSED_OPACITY: f32 = 0.74;
+    pub const EDGE: f32 = 0.75;
+}
+
 /// Text roles.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Type {
@@ -187,12 +212,22 @@ pub mod shadow {
     /// faint glow under it.
     pub const CARD: [BoxShadow; 2] = [
         layer(1.0, 2.0, 0.0, 0x1A14080A),
-        layer(10.0, 30.0, -6.0, 0x1A14081A),
+        layer(6.0, 20.0, -5.0, 0x1A140814),
     ];
     /// A floating control: the main action, raised round buttons.
     pub const FLOAT: [BoxShadow; 2] = [
         layer(2.0, 6.0, 0.0, 0x0A0A0B1F),
-        layer(14.0, 32.0, -8.0, 0x0A0A0B40),
+        layer(8.0, 20.0, -6.0, 0x0A0A0B30),
+    ];
+    /// A narrow floating navigation surface.
+    pub const DOCK: [BoxShadow; 2] = [
+        layer(1.0, 3.0, 0.0, 0x1A14080A),
+        layer(5.0, 18.0, -5.0, 0x1A14081F),
+    ];
+    /// A sheet lifted toward the user from the bottom edge.
+    pub const SHEET: [BoxShadow; 2] = [
+        layer(-1.0, 3.0, 0.0, 0x1A14080A),
+        layer(-8.0, 32.0, -8.0, 0x1A140829),
     ];
     /// The selected segment on its track.
     pub const SEGMENT: [BoxShadow; 1] = [layer(2.0, 6.0, 0.0, 0x1A140814)];
@@ -234,9 +269,9 @@ pub mod motion {
         frame_rate: None,
     };
     /// How far a pressed button shrinks.
-    pub const PRESS_SCALE: f32 = 0.96;
+    pub const PRESS_SCALE: f32 = 0.98;
     /// How far a pressed card shrinks.
     pub const PRESS_SCALE_CARD: f32 = 0.98;
     /// How far a pressed icon button shrinks.
-    pub const PRESS_SCALE_ICON: f32 = 0.9;
+    pub const PRESS_SCALE_ICON: f32 = 0.96;
 }

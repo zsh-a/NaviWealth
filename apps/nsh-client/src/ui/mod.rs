@@ -7,6 +7,7 @@ pub mod feedback;
 pub mod field;
 pub mod figures;
 pub mod icons;
+pub mod material;
 pub mod ring;
 pub mod segmented;
 pub mod sheet;

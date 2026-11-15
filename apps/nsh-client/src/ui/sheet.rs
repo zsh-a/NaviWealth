@@ -5,7 +5,10 @@
 use nsh_base::{SheetEvent, sheet};
 use nsh_core::prelude::*;
 
-use super::theme::{color, radius, space};
+use super::{
+    material::{self, Glass},
+    theme::{color, radius, space},
+};
 
 /// A sheet shown while `open` reads true; `close` is asked to set it false
 /// when the user dismisses it. `content` is made on each opening (use a
@@ -38,13 +41,39 @@ pub fn task_sheet(
     body: impl IntoElement,
     actions: impl IntoElement,
 ) -> impl IntoElement {
+    task_layout(open, close, header, body, actions, true)
+}
+
+/// Content-led capture: short drafts stay compact; long results scroll under
+/// the fixed header and action. The keyboard limits the same available space.
+pub fn fitted_task_sheet(
+    open: impl Fn() -> bool + 'static,
+    close: impl Fn() + 'static,
+    header: impl IntoElement,
+    body: impl IntoElement,
+    actions: impl IntoElement,
+) -> impl IntoElement {
+    task_layout(open, close, header, body, actions, false)
+}
+
+fn task_layout(
+    open: impl Fn() -> bool + 'static,
+    close: impl Fn() + 'static,
+    header: impl IntoElement,
+    body: impl IntoElement,
+    actions: impl IntoElement,
+    fill: bool,
+) -> impl IntoElement {
+    let available = move || (window().height.0 * 0.92 - keyboard_height().0 - 20.0).max(120.0);
     shell(
         open,
         close,
         view()
-            .h(move || {
-                px((window().height.0 * 0.92 - keyboard_height().0 - 20.0).clamp(120.0, 540.0))
-            })
+            .max_h(move || px(available()))
+            .style_when(
+                move || fill,
+                move |s| s.h(move || px(available().min(540.0))),
+            )
             .child(
                 view()
                     .flex_shrink(0.0)
@@ -54,7 +83,8 @@ pub fn task_sheet(
             )
             .child(
                 scroll()
-                    .flex_1()
+                    .flex_shrink(1.0)
+                    .style_when(move || fill, |s| s.flex_1())
                     .min_h(px(0.0))
                     .child(view().px(px(space::GUTTER)).py_2().child(body)),
             )
@@ -85,9 +115,9 @@ fn shell(
         .close_on_swipe(true)
         .backdrop_style(|s| s.bg(color::SCRIM.opacity(0.42)))
         .popup_style(|s| {
-            s.rounded_t(px(radius::SHEET))
-                .bg(color::SURFACE)
-                .shadow_xl()
+            material::glass(s, Glass::Sheet)
+                .rounded_t(px(radius::SHEET))
+                .border_curve(BorderCurve::Continuous)
         })
         .child(
             view()

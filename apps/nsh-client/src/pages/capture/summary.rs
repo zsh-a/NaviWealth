@@ -2,11 +2,11 @@
 use crate::{
     data::{finance, weights},
     domain::{
-        capture::{Draft, Record},
+        capture::{Draft, Record, Status},
         format,
     },
     i18n::s,
-    ui::{Type, Typo, color, surface::hairline},
+    ui::{Icon, Type, Typo, color, icon, surface::hairline},
 };
 use finance_core::{
     account::Account,
@@ -15,10 +15,50 @@ use finance_core::{
 };
 use nsh_core::prelude::*;
 
-pub fn records(draft: &Draft) -> AnyElement {
+pub fn common_day(draft: &Draft) -> Option<crate::domain::meal::Day> {
+    let day_of = |r: &Record| match r {
+        Record::Money { day, .. } | Record::Meal { day, .. } | Record::Weight { day, .. } => *day,
+    };
+    let first = draft.records.first().map(day_of)?;
+    draft
+        .records
+        .iter()
+        .all(|r| day_of(r) == first)
+        .then_some(first)
+}
+
+pub fn saved_message(draft: &Draft) -> String {
+    let [record] = draft.records.as_slice() else {
+        return s().capture_saved_count(draft.records.len());
+    };
+    let (label, value) = match record {
+        Record::Money { draft, .. } => (
+            match draft.kind {
+                Kind::Expense => s().spending,
+                Kind::Income => s().income,
+                Kind::Transfer => s().transfer,
+            },
+            format!("¥{}", draft.amount.as_deref().unwrap_or("—")),
+        ),
+        Record::Meal { estimate, .. } => (
+            s().meals,
+            format!(
+                "{} {}",
+                format::kcal(crate::domain::nutrition::total(&estimate.foods).kcal),
+                s().kcal
+            ),
+        ),
+        Record::Weight { kg, .. } => (s().weight, format!("{kg:.1} kg")),
+    };
+    s().capture_saved_detail(label, &value)
+}
+
+pub fn records(draft: &Draft, choosing: Signal<Option<super::accounts::Choice>>) -> AnyElement {
     view()
         .gap_4()
-        .children(draft.records.iter().map(record))
+        .children(draft.records.iter().enumerate().map(|(index, record)| {
+            record_view(record, index, choosing, draft.status == Status::Ready)
+        }))
         .into_element()
 }
 
@@ -45,7 +85,52 @@ fn account(account: &Option<Account>) -> String {
     }
 }
 
-fn record(record: &Record) -> AnyElement {
+fn account_line(
+    label: &'static str,
+    value: &Option<Account>,
+    index: usize,
+    destination: bool,
+    choosing: Signal<Option<super::accounts::Choice>>,
+    editable: bool,
+) -> AnyElement {
+    if !editable {
+        return line(label, account(value), value.is_none()).into_element();
+    }
+    let value = value
+        .as_ref()
+        .map(|_| account(value))
+        .unwrap_or_else(|| s().capture_choose_account.into());
+    nsh_base::button()
+        .on_press(move || {
+            dismiss_keyboard();
+            choosing.set(Some(super::accounts::Choice { index, destination }));
+        })
+        .accessibility_label(Some(format!("{label}, {value}").into()))
+        .flex_row()
+        .gap_2()
+        .items_center()
+        .min_h(px(48.0))
+        .rounded(px(8.0))
+        .active(|s| s.bg(color::SUNKEN))
+        .focus_visible(|s| s.outline(px(2.0)).outline_color(color::INK))
+        .child(text(label).typo(Type::Subhead).text_color(color::MUTED))
+        .child(
+            text(value)
+                .typo(Type::Body)
+                .text_color(color::INK)
+                .flex_1()
+                .text_right(),
+        )
+        .child(icon(Icon::ChevronRight, 16.0, color::MUTED))
+        .into_element()
+}
+
+fn record_view(
+    record: &Record,
+    index: usize,
+    choosing: Signal<Option<super::accounts::Choice>>,
+    editable: bool,
+) -> AnyElement {
     match record {
         Record::Money { day, draft } => {
             let title = match draft.kind {
@@ -92,20 +177,26 @@ fn record(record: &Record) -> AnyElement {
                         ),
                 )
                 .child(line(|| s().transaction_date, s().long_date(*day), false))
-                .child(line(
+                .child(account_line(
                     if draft.kind == Kind::Transfer {
                         s().from_account
                     } else {
                         s().own_account
                     },
-                    account(&draft.account),
-                    draft.account.is_none(),
+                    &draft.account,
+                    index,
+                    false,
+                    choosing,
+                    editable,
                 ))
                 .child(if draft.kind == Kind::Transfer {
-                    line(
+                    account_line(
                         s().to_account,
-                        account(&draft.other_account),
-                        draft.other_account.is_none(),
+                        &draft.other_account,
+                        index,
+                        true,
+                        choosing,
+                        editable,
                     )
                     .into_element()
                 } else {

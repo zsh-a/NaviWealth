@@ -18,6 +18,7 @@ pub fn card() -> View {
     view()
         .bg(color::SURFACE)
         .rounded(px(radius::CARD))
+        .border_curve(BorderCurve::Continuous)
         .lift(&shadow::CARD)
         .dark(|s| s.border_1().border_color(color::LINE))
 }

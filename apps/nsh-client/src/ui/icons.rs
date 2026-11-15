@@ -35,11 +35,13 @@ pub enum Icon {
     Bolt,
     Calendar,
     ChevronDown,
+    Close,
 }
 
 impl Icon {
     fn body(self) -> &'static str {
         match self {
+            Icon::Close => r#"<path d="M6 6l12 12M18 6L6 18"/>"#,
             Icon::Wallet => {
                 r#"<rect x="3" y="5" width="18" height="15" rx="3"/><path d="M4 5l13-2v2M21 10h-6v5h6M17 12.5h.01"/>"#
             }

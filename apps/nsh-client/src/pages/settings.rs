@@ -1,4 +1,4 @@
-//! Settings, kept as they change (there is no Save): the vision model (its
+//! Settings, kept as they change (there is no Save): the recognition model (its
 //! own page), the optional daily goal, whether to ask before each photo,
 //! the Garmin connection and backups.
 
@@ -18,7 +18,7 @@ use crate::{
         Icon, Type, Typo, color,
         field::{note, number_input},
         icon, space,
-        surface::{card, group_label, row_button},
+        surface::{card, group_label, hairline, row_button},
         toggle::switch_row,
     },
 };
@@ -57,6 +57,48 @@ pub fn settings_page() -> Screen {
                                 .child(super::settings_backup::backup_section()),
                         ),
                 ),
+        )
+}
+
+/// Low-frequency configuration opens in place, retaining entered values.
+pub(super) fn setting_details(
+    label: impl Fn() -> &'static str + Copy + 'static,
+    summary: impl Fn() -> String + Copy + 'static,
+    content: impl IntoElement,
+) -> impl IntoElement {
+    let open = signal(false);
+    card()
+        .overflow_hidden()
+        .child(
+            row_button(move || {
+                dismiss_keyboard();
+                open.update(|v| *v = !*v);
+            })
+            .accessibility_label(move || Some(format!("{}, {}", label(), summary()).into()))
+            .child(
+                text(summary)
+                    .typo(Type::Body)
+                    .text_color(color::INK)
+                    .flex_1(),
+            )
+            .child(
+                view()
+                    .rotate(move || {
+                        Radians(if open.get() {
+                            std::f32::consts::FRAC_PI_2
+                        } else {
+                            0.0
+                        })
+                    })
+                    .child(icon(Icon::ChevronRight, 18.0, color::MUTED)),
+            ),
+        )
+        .child(
+            view()
+                .style_when(move || !open.get(), |s| s.hidden())
+                .accessibility_elements_hidden(move || !open.get())
+                .child(hairline(space::CARD))
+                .child(view().p(px(space::CARD)).child(content)),
         )
 }
 
@@ -169,21 +211,28 @@ fn goal() -> impl IntoElement {
                     || parse_number(t).is_none_or(|v| v > *settings::GOAL_RANGE.end())
             })
     };
-    card()
-        .p(px(space::CARD))
-        .gap_2()
-        .child(number_input(text_of, || s().kcal, || s().daily_goal))
-        .child(note(
-            move || {
-                Some(
-                    if error() {
-                        s().error_goal
-                    } else {
-                        s().goal_note
-                    }
-                    .into(),
-                )
-            },
-            error,
-        ))
+    setting_details(
+        || s().daily_goal,
+        || {
+            settings::goal()
+                .map(|goal| format!("{} {}", field_number(goal), s().kcal))
+                .unwrap_or_else(|| s().goal_unset.into())
+        },
+        view()
+            .gap_2()
+            .child(number_input(text_of, || s().kcal, || s().daily_goal))
+            .child(note(
+                move || {
+                    Some(
+                        if error() {
+                            s().error_goal
+                        } else {
+                            s().goal_note
+                        }
+                        .into(),
+                    )
+                },
+                error,
+            )),
+    )
 }

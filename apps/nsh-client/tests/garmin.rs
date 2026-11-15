@@ -11,6 +11,7 @@ fn disconnect_during_a_root_pull_does_not_restore_the_key_or_import_late_rows() 
     let stub = garmin_cn_with_delay(Duration::from_millis(250));
     let (mut app, storage) = start_in(Some(dir.path()), vec![], Some(stub.clone()));
     app.press("label:Settings")?;
+    app.press("label:/^Garmin, /")?;
     app.type_text("text:Paste your Garmin key", "GCDC-test-key")?;
     app.press("Connect")?;
     app.wait_for("text:Connected · garmin.cn")?;
@@ -40,7 +41,7 @@ fn a_garmin_key_connects_in_its_region_and_brings_todays_numbers() -> Result<(),
     let stub = garmin_cn();
     let (mut app, storage) = start_in(Some(dir.path()), Vec::new(), Some(stub.clone()));
     app.press("label:Settings")?;
-    app.wait_for("Personal API key")?;
+    app.press("label:/^Garmin, /")?;
     app.type_text("text:Paste your Garmin key", "GCDC-test-key")?;
     app.press("Connect")?;
     app.wait_for("text:Connected · garmin.cn")?;
@@ -102,6 +103,7 @@ fn a_garmin_key_neither_region_knows_is_refused_and_not_kept() -> Result<(), Str
     ]));
     let (mut app, storage) = start(Vec::new(), Some(stub));
     app.press("label:Settings")?;
+    app.press("label:/^Garmin, /")?;
     app.type_text("text:Paste your Garmin key", "GCDC-old")?;
     app.press("Connect")?;
     app.wait_for("text:Garmin did not accept the key. It may have expired; create a new one.")?;

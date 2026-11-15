@@ -1,5 +1,6 @@
 //! One text/image composer. Results are records to review, with one natural
 //! language correction box. Forms are an explicit manual fallback.
+mod accounts;
 mod favorites;
 mod summary;
 
@@ -13,12 +14,12 @@ use crate::{
     i18n::s,
     nav::{self, Route},
     ui::{
-        Btn, Icon, IconBtn, Size, Type, Typo, Variant, color,
+        Btn, Icon, IconBtn, Type, Typo, Variant, color,
         feedback::spinner,
         field::{note, text_input},
-        sheet::task_sheet,
+        sheet::fitted_task_sheet,
         surface::{disclosure, hairline},
-        toast::show_toast,
+        toast::{show_receipt, show_toast},
         toggle::checkbox_row,
     },
 };
@@ -46,6 +47,7 @@ pub fn capture_editor(sheets: Sheets) -> impl IntoElement {
 }
 
 fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
+    crate::ui::toast::clear_notice();
     if let Some(photo) = initial.photo.clone() {
         spawn(photos::load(vec![photo]));
     }
@@ -55,6 +57,7 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
     let manual = signal(false);
     let consenting = signal(None::<ModelAccount>);
     let remember = signal(false);
+    let choosing = signal(None::<accounts::Choice>);
     let input = signal(if draft.with_untracked(|d| d.status == Status::Editing) {
         draft.with_untracked(|d| d.input.clone())
     } else {
@@ -83,10 +86,6 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
         d
     };
     let close = move || {
-        if consenting.get_untracked().is_some() {
-            consenting.set(None);
-            return;
-        }
         let d = current();
         if d.status == Status::Editing
             && d.input.trim().is_empty()
@@ -97,8 +96,9 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
             error.set(Some(s().error_transaction_storage.into()));
             return;
         }
+        let retained = !d.input.trim().is_empty() || d.photo.is_some() || !d.records.is_empty();
         if d.status != Status::Analyzing
-            && (!d.input.trim().is_empty() || d.photo.is_some() || !d.records.is_empty())
+            && retained
             && let Err(cause) = capture::put(d)
         {
             log::error!("capture: draft save failed: {cause}");
@@ -107,6 +107,9 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
         }
         dismiss_keyboard();
         sheets.capture.set(false);
+        if retained {
+            show_toast(s().capture_retained, None);
+        }
     };
     let run = move |account: ModelAccount| {
         error.set(None);
@@ -170,9 +173,22 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
         .flex_row()
         .items_center()
         .gap_2()
+        .child(when(
+            move || choosing.get().is_some() || consenting.get().is_some(),
+            move || {
+                IconBtn::new(Icon::ChevronLeft, || s().back.into())
+                    .variant(Variant::Ghost)
+                    .on_press(move || {
+                        choosing.set(None);
+                        consenting.set(None);
+                    })
+            },
+        ))
         .child(
             text(move || {
-                if draft.with(|d| d.records.is_empty()) {
+                if choosing.get().is_some() {
+                    s().capture_choose_account
+                } else if draft.with(|d| d.records.is_empty()) {
                     s().new_entry
                 } else {
                     s().capture_review
@@ -184,17 +200,19 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
             .role(AccessibilityRole::Header),
         )
         .child(
-            Btn::ghost()
-                .size(Size::Small)
-                .label(|| s().done.into())
+            IconBtn::new(Icon::Close, || s().close.into())
+                .variant(Variant::Ghost)
                 .on_press(close),
         );
     let body = view()
         .gap_4()
         .child(dynamic(move || {
             let consent = consenting.get();
+            let choice = choosing.get();
             untracked(move || {
-                if let Some(account) = consent {
+                if let Some(choice) = choice {
+                    accounts::picker(draft, input, error, choosing, choice).into_element()
+                } else if let Some(account) = consent {
                     view()
                         .gap_4()
                         .child(
@@ -225,7 +243,7 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                         .child(checkbox_row(remember, || s().dont_ask_again.into()))
                         .into_element()
                 } else {
-                    content(draft, input, manual, picking, attach, sheets, close).into_element()
+                    content(draft, input, manual, picking, attach, close, choosing).into_element()
                 }
             })
         }))
@@ -236,7 +254,11 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
         let correcting = !input.get().trim().is_empty();
         let has_records = draft.with(|d| !d.records.is_empty());
         let connected = settings::ready_account().is_some();
+        let picking_account = choosing.get().is_some();
         untracked(move || {
+            if picking_account {
+                return view().into_element();
+            }
             if let Some(account) = consent {
                 return Btn::primary()
                     .label(|| s().capture_generate.into())
@@ -282,11 +304,25 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                     })
                     .on_press(move || {
                         let draft_id = id.with(|id| id.clone());
-                        match capture::put(current()).and_then(|()| capture::confirm(&draft_id)) {
+                        let confirmed = current();
+                        match capture::put(confirmed.clone())
+                            .and_then(|()| capture::confirm(&draft_id))
+                        {
                             Ok(()) => {
                                 dismiss_keyboard();
                                 sheets.capture.set(false);
-                                show_toast(s().capture_saved, None);
+                                let day = summary::common_day(&confirmed);
+                                show_receipt(
+                                    summary::saved_message(&confirmed),
+                                    (
+                                        s().view_records.into(),
+                                        Rc::new(move || {
+                                            sheets.jump_to.set(day);
+                                            sheets.records_all.set(day.is_none());
+                                            nav::select(crate::nav::Tab::Records);
+                                        }),
+                                    ),
+                                );
                             }
                             Err(cause) => {
                                 log::error!("capture: confirmation failed: {cause}");
@@ -316,7 +352,20 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                 .into_element()
         })
     });
-    task_sheet(move || sheets.capture.get(), close, header, body, actions)
+    fitted_task_sheet(
+        move || sheets.capture.get(),
+        move || {
+            if choosing.get_untracked().is_some() || consenting.get_untracked().is_some() {
+                choosing.set(None);
+                consenting.set(None);
+            } else {
+                close();
+            }
+        },
+        header,
+        body,
+        actions,
+    )
 }
 
 fn content(
@@ -325,9 +374,10 @@ fn content(
     manual: Signal<bool>,
     picking: Signal<bool>,
     attach: impl Fn() + Copy + 'static,
-    sheets: Sheets,
     close: impl Fn() + Copy + 'static,
+    choosing: Signal<Option<accounts::Choice>>,
 ) -> impl IntoElement {
+    let sheets = Sheets::get();
     view()
         .gap_4()
         .child(
@@ -429,7 +479,7 @@ fn content(
                     ))
                     .child(dynamic(move || {
                         let d = draft.get();
-                        untracked(move || summary::records(&d))
+                        untracked(move || summary::records(&d, choosing))
                     }))
                     .child(when(
                         move || draft.with(|d| !d.question.is_empty()),

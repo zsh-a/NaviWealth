@@ -21,8 +21,11 @@ use crate::{
     i18n::s,
     nav::{self, Route, Tab},
     ui::{
-        Icon, IconBtn, Lift, Type, Typo, Variant, color, icon, sheet::bottom_sheet, space,
-        theme::shadow, toast::toast_host,
+        Icon, IconBtn, Type, Typo, Variant, color, icon,
+        material::{self, Glass},
+        sheet::bottom_sheet,
+        space,
+        toast::toast_host,
     },
 };
 
@@ -52,6 +55,8 @@ pub struct Sheets {
     pub jump: Signal<bool>,
     /// The day Records should scroll to, set by the calendar.
     pub jump_to: Signal<Option<Day>>,
+    /// A saved batch can span several days; show all records without old filters.
+    pub records_all: Signal<bool>,
 }
 
 impl Sheets {
@@ -79,6 +84,7 @@ pub fn home_page() -> Screen {
         garmin: signal(false),
         jump: signal(false),
         jump_to: signal(None),
+        records_all: signal(false),
     };
     provide_context(sheets);
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
@@ -186,11 +192,19 @@ fn dock(sheets: Sheets) -> impl IntoElement {
                 .p(px(6.0))
                 .gap(px(2.0))
                 .rounded_full()
-                .bg(color::SURFACE.opacity(0.94))
-                .backdrop_blur(px(12.0))
-                .border_1()
-                .border_color(color::LINE)
-                .lift(&shadow::SEGMENT)
+                .style_with(|s| material::glass(s, Glass::Dock))
+                .style_when(
+                    move || {
+                        sheets.capture.get()
+                            || sheets.setup.get()
+                            || sheets.finance.get().is_some()
+                            || sheets.weight.get().is_some()
+                            || sheets.garmin.get()
+                            || sheets.jump.get()
+                            || !nav::open().is_empty()
+                    },
+                    |s| s.bg(color::SURFACE).backdrop_filter_none(),
+                )
                 .indicator_style(|s| {
                     s.top(px(6.0))
                         .bottom(px(6.0))
@@ -212,7 +226,13 @@ fn dock(sheets: Sheets) -> impl IntoElement {
 
 fn tab_item(tab_of: Tab) -> impl IntoElement {
     let chosen = move || nav::tab() == tab_of;
-    let tint = move || if chosen() { color::INK } else { color::MUTED };
+    let tint = move || {
+        if chosen() {
+            color::INK
+        } else {
+            color::ON_GLASS_MUTED
+        }
+    };
     let glyph = match tab_of {
         Tab::Today => Icon::Sun,
         Tab::Records => Icon::List,
