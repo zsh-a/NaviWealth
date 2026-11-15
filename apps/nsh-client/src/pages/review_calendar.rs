@@ -155,7 +155,7 @@ fn day_cell(
         None if future => (None, color::FAINT.opacity(0.5)),
         // A weight alone makes a day a place to go when picking.
         None if (cell.weighed || cell.has_transactions) && pick.is_some() => (None, color::BODY),
-        None => (None, color::FAINT),
+        None => (None, color::MUTED),
     };
     let label = match cell.kcal {
         Some(kcal) => format!(

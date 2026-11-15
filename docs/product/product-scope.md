@@ -77,6 +77,13 @@ Updated 2026-11-14: the owner chose text-or-image capture with fewer forms.
   intake now and spending beside it once the ledger exists.
 - No hidden gestures: every action is a visible control, nothing depends on
   a long press. Settings keep each change as it is made; there is no Save.
+- Assets leads with net worth, compact totals and a continuous list of cash
+  accounts, open holdings and debts. Cost/quantity and normal check dates are
+  details; manual-price dates, cost fallback and unchecked status remain visible.
+  Manage contains creation and closed-holding history; Asset changes opens the
+  dated trend and valuation basis. Closed positions reappear after buying again.
+  A single icon-only plus beside the tab bar opens capture; its accessible
+  name is New entry / 新记录. Account and holding creation stay in Manage.
 - Review leads with one sentence of what changed against the period before;
   a month is a calendar whose days open in Records, which has the same
   calendar; a chosen day is shown alone, stepping to neighbouring days.

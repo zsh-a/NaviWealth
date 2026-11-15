@@ -62,89 +62,108 @@ pub(super) fn pair(
         )
 }
 
-pub fn section(open: Signal<Option<String>>) -> impl IntoElement {
-    view()
-        .gap_2()
-        .child(
+pub fn section(closed: bool) -> impl IntoElement {
+    dynamic(move || {
+        let book = finance::holdings();
+        let day = clock::today();
+        untracked(move || {
+            let positions: Vec<_> = book
+                .securities
+                .iter()
+                .filter_map(|sec| {
+                    let p = book.position(sec, day.0).expect("validated holdings");
+                    ((p.quantity == 0) == closed).then_some((sec, p))
+                })
+                .collect();
+            if positions.is_empty() {
+                return if closed {
+                    text(|| s().no_closed_holdings)
+                        .typo(Type::Body)
+                        .text_color(color::MUTED)
+                        .into_element()
+                } else {
+                    view().into_element()
+                };
+            }
             view()
-                .flex_row()
-                .items_center()
-                .gap_2()
-                .child(
+                .gap_1()
+                .child((!closed).then(|| {
                     text(|| s().holdings)
-                        .typo(Type::Title)
-                        .text_color(color::INK)
-                        .flex_1(),
-                )
-                .child(
-                    Btn::ghost()
-                        .icon(Icon::Plus)
-                        .label(|| s().add_holding.into())
-                        .on_press(move || open.set(Some(String::new()))),
-                ),
-        )
-        .child(dynamic(move || {
-            let book = finance::holdings();
-            let day = clock::today();
-            untracked(move || {
-                view().children(book.securities.iter().map(|security| {
-                    let p = book.position(security, day.0).expect("validated holdings");
-                    let id = security.id.clone();
-                    let sub = if p.quantity == 0 {
+                        .typo(Type::Subhead)
+                        .font_weight(FontWeight::SEMIBOLD)
+                        .text_color(color::MUTED)
+                        .role(AccessibilityRole::Header)
+                }))
+                .children(positions.into_iter().map(|(sec, p)| {
+                    let id = sec.id.clone();
+                    let status = if closed {
                         s().holding_closed.into()
                     } else {
-                        format!(
-                            "{} · {} ¥{}",
-                            holdings::format_units(p.quantity),
-                            s().unit_cost,
-                            p.average()
-                                .map(holdings::format_units)
-                                .unwrap_or_else(|| "—".into())
-                        )
+                        p.quote
+                            .as_ref()
+                            .map(|q| {
+                                format!("{} · {}", s().manual_price, s().short_date(Day(q.day)))
+                            })
+                            .unwrap_or_else(|| s().unpriced.into())
                     };
-                    let status = p
-                        .quote
-                        .as_ref()
-                        .map(|q| format!("{} · {}", s().manual_price, s().short_date(Day(q.day))))
-                        .unwrap_or_else(|| s().unpriced.into());
-                    let label = format!("{}, {}", security.name, sub);
-                    view()
-                        .child(
-                            row_button(move || nav::push(Route::Holding(id.clone())))
-                                .accessibility_label(move || Some(label.clone().into()))
-                                .px_0()
-                                .gap_3()
-                                .child(
-                                    view()
-                                        .flex_1()
-                                        .min_w(px(0.0))
-                                        .gap_1()
-                                        .child(
-                                            text(security.name.clone())
-                                                .typo(Type::Headline)
-                                                .text_color(color::INK)
-                                                .number_of_lines(1),
-                                        )
-                                        .child(
-                                            text(sub).typo(Type::Subhead).text_color(color::MUTED),
-                                        ),
-                                )
-                                .child(
-                                    view()
-                                        .items_end()
-                                        .gap_1()
-                                        .child(amount(p.value.unwrap_or(p.cost), Type::Figure))
-                                        .child(
-                                            text(status)
-                                                .typo(Type::Caption)
-                                                .text_color(color::MUTED),
-                                        ),
-                                ),
-                        )
-                        .child(hairline(0.0))
+                    let value = p.value.unwrap_or(p.cost);
+                    let label = format!("{}, {} CNY, {}", sec.name, money::format(value), status);
+                    view().child(
+                        row_button(move || nav::push(Route::Holding(id.clone())))
+                            .accessibility_label(move || Some(label.clone().into()))
+                            .px_0()
+                            .py_3()
+                            .gap_3()
+                            .min_h(px(56.0))
+                            .child(crate::ui::icon(Icon::Chart, 22.0, color::MUTED))
+                            .child(
+                                view()
+                                    .flex_1()
+                                    .min_w(px(0.0))
+                                    .gap_1()
+                                    .child(
+                                        text(sec.name.clone())
+                                            .typo(Type::Headline)
+                                            .text_color(color::INK)
+                                            .number_of_lines(1),
+                                    )
+                                    .child(
+                                        text(status).typo(Type::Caption).text_color(color::MUTED),
+                                    ),
+                            )
+                            .child(amount(value, Type::Headline))
+                            .child(crate::ui::icon(Icon::ChevronRight, 16.0, color::MUTED)),
+                    )
                 }))
-            })
-        }))
+                .into_element()
+        })
+    })
+}
+
+pub fn closed_page() -> Screen {
+    nav_page()
+        .title(|| s().closed_holdings)
+        .header_visible(false)
+        .status_bar(super::parts::status_bar)
+        .child(
+            view()
+                .flex_1()
+                .bg(color::CANVAS)
+                .child(super::parts::top_bar(
+                    || s().closed_holdings.into(),
+                    nav::pop,
+                    None,
+                ))
+                .child(
+                    scroll().flex_1().child(
+                        view()
+                            .px(px(crate::ui::space::GUTTER))
+                            .pt_4()
+                            .pb_safe_area_plus(px(24.0))
+                            .child(section(true)),
+                    ),
+                ),
+        )
 }
 
 pub fn holding_page(id: &str) -> Screen {
@@ -241,6 +260,12 @@ pub fn holding_page(id: &str) -> Screen {
                                         .child(pair(
                                             s().quantity,
                                             holdings::format_units(p.quantity),
+                                        ))
+                                        .child(pair(
+                                            s().unit_cost,
+                                            p.average()
+                                                .map(|v| format!("¥{}", holdings::format_units(v)))
+                                                .unwrap_or_else(|| "—".into()),
                                         ))
                                         .child(pair(
                                             s().holding_cost,

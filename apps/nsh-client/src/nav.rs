@@ -25,6 +25,8 @@ pub enum Route {
     /// An own financial account.
     Account(String),
     Holding(String),
+    AssetHistory,
+    ClosedHoldings,
 }
 
 /// The home's tabs.

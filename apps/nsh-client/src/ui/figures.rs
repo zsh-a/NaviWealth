@@ -115,7 +115,7 @@ pub fn stat(
                     if value().is_some() {
                         color::INK
                     } else {
-                        color::FAINT
+                        color::MUTED
                     }
                 }),
         )
@@ -235,7 +235,7 @@ fn tile(
                     })
                     .typo(Type::Caption)
                     .tabular_nums()
-                    .text_color(color::FAINT)
+                    .text_color(color::MUTED)
                     .pb(px(3.0)),
                 ),
         )

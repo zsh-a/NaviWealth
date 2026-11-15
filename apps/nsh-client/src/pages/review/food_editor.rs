@@ -373,7 +373,7 @@ pub fn FoodEditor() -> impl IntoElement {
                 FoodSource::Manual => s().source_manual.to_owned(),
             })
             .typo(Type::Caption)
-            .text_color(color::FAINT),
+            .text_color(color::MUTED),
         )
         .child(
             view()

@@ -22,50 +22,50 @@ pub mod color {
     }
 
     /// The page: warm daylight / deep graphite.
-    pub const CANVAS: AdaptiveColor = c(0xF5F4F1, 0x0A0A0B);
+    pub const CANVAS: AdaptiveColor = c(0xF4F3EF, 0x111211);
     /// Cards, sheets, rows.
-    pub const SURFACE: AdaptiveColor = c(0xFFFFFF, 0x161618);
+    pub const SURFACE: AdaptiveColor = c(0xFFFFFF, 0x1B1C1B);
     /// A well inside a surface: macro tiles, detail rows, chips.
-    pub const SURFACE_2: AdaptiveColor = c(0xF4F3F0, 0x1F1F22);
+    pub const SURFACE_2: AdaptiveColor = c(0xF3F2EE, 0x242522);
     /// Fields and tracks.
-    pub const SUNKEN: AdaptiveColor = c(0xEFEEEA, 0x1C1C1F);
+    pub const SUNKEN: AdaptiveColor = c(0xECEBE6, 0x20211F);
     /// What sits raised on a track: the selected segment.
-    pub const RAISED: AdaptiveColor = c(0xFFFFFF, 0x2C2C30);
+    pub const RAISED: AdaptiveColor = c(0xFFFFFF, 0x2D2E2B);
     /// Hairlines.
-    pub const LINE: AdaptiveColor = c(0xEAE9E5, 0x26262A);
+    pub const LINE: AdaptiveColor = c(0xE7E6E0, 0x30312E);
     /// Stronger edges: unchecked boxes, the grabber.
-    pub const LINE_STRONG: AdaptiveColor = c(0xD4D3CE, 0x3C3C41);
+    pub const LINE_STRONG: AdaptiveColor = c(0xD0CFC8, 0x484944);
 
     /// Titles and figures.
-    pub const INK: AdaptiveColor = c(0x0E0E10, 0xF6F6F7);
+    pub const INK: AdaptiveColor = c(0x1C1D1A, 0xEAEBE7);
     /// Copy.
-    pub const BODY: AdaptiveColor = c(0x2C2C30, 0xE2E2E6);
+    pub const BODY: AdaptiveColor = c(0x32332F, 0xD5D6D0);
     /// Secondary text.
-    pub const MUTED: AdaptiveColor = c(0x6B6B72, 0x9C9CA4);
-    /// Tertiary non-text marks, such as chevrons.
-    pub const FAINT: AdaptiveColor = c(0xABABB0, 0x606066);
+    pub const MUTED: AdaptiveColor = c(0x696A66, 0xA1A29E);
+    /// Tertiary marks and inactive controls; readable secondary text uses MUTED.
+    pub const FAINT: AdaptiveColor = c(0xA4A59E, 0x686A63);
 
     /// The primary action's fill: ink.
-    pub const ACTION: AdaptiveColor = c(0x111113, 0xF6F6F7);
+    pub const ACTION: AdaptiveColor = c(0x1C1D1A, 0xEAEBE7);
     /// Its pressed fill.
-    pub const ACTION_PRESSED: AdaptiveColor = c(0x33333A, 0xD6D6DA);
+    pub const ACTION_PRESSED: AdaptiveColor = c(0x383A34, 0xD0D2CA);
     /// The top of its sheen.
-    pub const ACTION_SHEEN: AdaptiveColor = c(0x2E2E33, 0xFFFFFF);
+    pub const ACTION_SHEEN: AdaptiveColor = c(0x34362F, 0xF0F1ED);
     /// Text and icons on the action fill.
-    pub const ON_ACTION: AdaptiveColor = c(0xFFFFFF, 0x0B0B0C);
+    pub const ON_ACTION: AdaptiveColor = c(0xFFFFFF, 0x1C1D1A);
 
     /// The AI's light, from iris to sky: analysis, estimates.
     pub const AI_FROM: AdaptiveColor = c(0x7B61FF, 0x9B87FF);
     pub const AI_TO: AdaptiveColor = c(0x22B8F0, 0x48C9F5);
 
     /// Destructive actions and errors.
-    pub const DANGER: AdaptiveColor = c(0xE5484D, 0xFF6369);
+    pub const DANGER: AdaptiveColor = c(0xAE303B, 0xFF6369);
     pub const DANGER_SOFT: AdaptiveColor = c(0xFDECEC, 0x3A1618);
     /// Estimates to check.
-    pub const CAUTION: AdaptiveColor = c(0xB86E00, 0xFFC046);
+    pub const CAUTION: AdaptiveColor = c(0x8C5A14, 0xFFC046);
     pub const CAUTION_SOFT: AdaptiveColor = c(0xFFF3DA, 0x372809);
     /// Done, connected.
-    pub const POSITIVE: AdaptiveColor = c(0x1E9A55, 0x4CC38A);
+    pub const POSITIVE: AdaptiveColor = c(0x23754F, 0x4CC38A);
 
     /// Energy from protein: the darkest step of the one warm-stone ramp the
     /// macronutrients share, so the ring reads as one quiet figure.
@@ -80,12 +80,12 @@ pub mod color {
     /// stone ramp; lighter days fade it toward the surface.
     pub const HEAT: AdaptiveColor = c(0xC4BFB5, 0x5E5A54);
     /// The ring's empty track.
-    pub const TRACK: AdaptiveColor = c(0xEFEEEA, 0x1E1E22);
+    pub const TRACK: AdaptiveColor = c(0xECEBE6, 0x20211F);
 
     /// The dim behind sheets.
     pub const SCRIM: AdaptiveColor = c(0x0A0A0B, 0x000000);
     /// Behind photos while they load.
-    pub const PHOTO_WELL: AdaptiveColor = c(0xE7E6E2, 0x1C1C1F);
+    pub const PHOTO_WELL: AdaptiveColor = c(0xE7E6E0, 0x20211F);
     /// Text and marks over a photo, on [`MEDIA_SCRIM`].
     pub const ON_MEDIA: AdaptiveColor = c(0xFFFFFF, 0xFFFFFF);
     /// The shade that keeps text over a photo readable.

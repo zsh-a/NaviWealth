@@ -1,7 +1,10 @@
 //! Assets answers what the recorded ledger says the owner owns. Account
 //! details and balance observations use the same journal as Today/Records.
 mod editor;
+mod overview;
 mod trend;
+pub use overview::assets_tab;
+pub use trend::history_page;
 
 use crate::{
     data::{clock, finance},
@@ -23,242 +26,23 @@ use finance_core::{
 use nsh_base::nav_page;
 use nsh_core::{element::Screen, prelude::*};
 
-pub fn assets_tab() -> impl IntoElement {
-    let create = signal(false);
-    let holding = signal(None::<String>);
-    #[cfg(not(any(target_os = "android", target_os = "ios")))]
-    crate::preview::holdings_opened(holding);
-    view()
-        .flex_1()
-        .child(
-            scroll().flex_1().child(
-                view()
-                    .px(px(space::GUTTER))
-                    .pt_safe_area_plus(px(12.0))
-                    .pb(move || px(super::home::dock_clearance()))
-                    .gap_5()
-                    .child(
-                        view()
-                            .flex_row()
-                            .items_center()
-                            .gap_3()
-                            .child(
-                                text(|| s().assets)
-                                    .typo(Type::LargeTitle)
-                                    .text_color(color::INK)
-                                    .flex_1()
-                                    .role(AccessibilityRole::Header),
-                            )
-                            .child(
-                                IconBtn::new(Icon::Plus, || s().add_account.into())
-                                    .variant(Variant::Secondary)
-                                    .on_press(move || create.set(true))
-                                    .style_when(
-                                        || {
-                                            !finance::accounts().iter().any(|a| a.is_cash())
-                                                && finance::holdings().securities.is_empty()
-                                        },
-                                        |s| s.hidden(),
-                                    ),
-                            ),
-                    )
-                    .child(dynamic(move || {
-                        let accounts: Vec<_> = finance::accounts()
-                            .into_iter()
-                            .filter(|a| a.is_cash())
-                            .collect();
-                        let entries = finance::transactions();
-                        let portfolio = finance::holdings();
-                        let checks = finance::checks();
-                        let today = clock::today();
-                        untracked(move || {
-                            if accounts.is_empty() && portfolio.securities.is_empty() {
-                                return view()
-                                    .gap_3()
-                                    .py_5()
-                                    .child(
-                                        text(|| s().assets_empty)
-                                            .typo(Type::Title)
-                                            .text_color(color::INK),
-                                    )
-                                    .child(
-                                        text(|| s().assets_empty_body)
-                                            .typo(Type::Body)
-                                            .text_color(color::MUTED),
-                                    )
-                                    .child(
-                                        Btn::primary()
-                                            .label(|| s().add_account.into())
-                                            .on_press(move || create.set(true)),
-                                    )
-                                    .child(
-                                        Btn::secondary()
-                                            .label(|| s().add_holding.into())
-                                            .on_press(move || holding.set(Some(String::new()))),
-                                    )
-                                    .into_element();
-                            }
-                            let snapshot = portfolio
-                                .overview(&entries, today.0)
-                                .expect("validated holdings valuation");
-                            let has_holdings = !portfolio.securities.is_empty();
-                            let balances = journal::balances(
-                                entries.iter().filter(|t| t.at.date() <= today.0),
-                            );
-                            view()
-                                .gap_5()
-                                .child(
-                                    view()
-                                        .gap_2()
-                                        .child(
-                                            text(move || {
-                                                if has_holdings {
-                                                    s().portfolio_net
-                                                } else {
-                                                    s().net_worth
-                                                }
-                                            })
-                                            .typo(Type::Headline)
-                                            .text_color(color::BODY),
-                                        )
-                                        .child(amount(snapshot.net, Type::Display))
-                                        .child(
-                                            view()
-                                                .flex_row()
-                                                .gap_4()
-                                                .child(metric(s().total_assets, snapshot.assets))
-                                                .child(metric(s().total_debt, snapshot.debt)),
-                                        )
-                                        .child(
-                                            text(move || {
-                                                if has_holdings {
-                                                    s().portfolio_basis
-                                                } else {
-                                                    s().assets_basis
-                                                }
-                                            })
-                                            .typo(Type::Subhead)
-                                            .text_color(color::MUTED),
-                                        ),
-                                )
-                                .child(super::holdings::section(holding))
-                                .child(trend::chart(&entries, &portfolio, today))
-                                .children(
-                                    [AccountKind::Assets, AccountKind::Liabilities]
-                                        .into_iter()
-                                        .filter_map(|kind| {
-                                            let own: Vec<_> = accounts
-                                                .iter()
-                                                .filter(|a| a.kind() == kind)
-                                                .cloned()
-                                                .collect();
-                                            if own.is_empty() {
-                                                return None;
-                                            }
-                                            Some(
-                                                view()
-                                                    .gap_2()
-                                                    .child(
-                                                        text(if kind == AccountKind::Assets {
-                                                            s().total_assets
-                                                        } else {
-                                                            s().total_debt
-                                                        })
-                                                        .typo(Type::Title)
-                                                        .text_color(color::INK),
-                                                    )
-                                                    .children(own.into_iter().map(|a| {
-                                                        let balance =
-                                                            balances.get(&a).copied().unwrap_or(0);
-                                                        let checked = checks
-                                                            .iter()
-                                                            .filter(|c| c.account == a)
-                                                            .max_by_key(|c| c.checked_at);
-                                                        let detail = checked
-                                                            .map(|c| {
-                                                                format!(
-                                                                    "{} · {}",
-                                                                    s().account_checked,
-                                                                    s().short_date(Day(c.day))
-                                                                )
-                                                            })
-                                                            .unwrap_or_else(|| {
-                                                                s().account_unchecked.into()
-                                                            });
-                                                        let name = a.name().to_owned();
-                                                        let value = assets::displayed(&a, balance);
-                                                        let label = format!(
-                                                            "{name}, {} CNY, {detail}",
-                                                            money::format(value)
-                                                        );
-                                                        view()
-                                                            .child(
-                                                                row_button(move || {
-                                                                    nav::push(Route::Account(
-                                                                        a.to_string(),
-                                                                    ))
-                                                                })
-                                                                .accessibility_label(move || {
-                                                                    Some(label.clone().into())
-                                                                })
-                                                                .px_0()
-                                                                .py_3()
-                                                                .gap_3()
-                                                                .child(
-                                                                    view()
-                                                                        .flex_1()
-                                                                        .min_w(px(0.0))
-                                                                        .gap_1()
-                                                                        .child(
-                                                                            text(name)
-                                                                                .typo(
-                                                                                    Type::Headline,
-                                                                                )
-                                                                                .text_color(
-                                                                                    color::INK,
-                                                                                )
-                                                                                .number_of_lines(1),
-                                                                        )
-                                                                        .child(
-                                                                            text(detail)
-                                                                                .typo(Type::Caption)
-                                                                                .text_color(
-                                                                                    color::MUTED,
-                                                                                ),
-                                                                        ),
-                                                                )
-                                                                .child(amount(value, Type::Figure))
-                                                                .child(icon(
-                                                                    Icon::ChevronRight,
-                                                                    16.0,
-                                                                    color::MUTED,
-                                                                )),
-                                                            )
-                                                            .child(hairline(0.0))
-                                                    })),
-                                            )
-                                        }),
-                                )
-                                .into_element()
-                        })
-                    })),
-            ),
-        )
-        .child(editor::account_editor(create, None))
-        .child(super::holdings::trade_editor(holding))
-}
-
-fn metric(label: &'static str, value: i64) -> impl IntoElement {
-    view()
-        .flex_1()
-        .min_w(px(0.0))
-        .gap_1()
-        .child(text(label).typo(Type::Subhead).text_color(color::MUTED))
-        .child(amount(value, Type::Figure))
+/// Group display digits without changing exact minor units or editable input.
+fn display_money(value: i64) -> String {
+    let raw = money::format(value);
+    let (whole, fraction) = raw.split_once('.').expect("money has two decimal places");
+    let (sign, digits) = whole.strip_prefix('-').map_or(("", whole), |d| ("-", d));
+    let mut grouped = String::from(sign);
+    for (i, ch) in digits.chars().enumerate() {
+        if i > 0 && (digits.len() - i).is_multiple_of(3) {
+            grouped.push(',');
+        }
+        grouped.push(ch);
+    }
+    format!("{grouped}.{fraction}")
 }
 
 pub(super) fn amount(value: i64, style: Type) -> impl IntoElement {
-    text(format!("¥{}", money::format(value)))
+    text(format!("¥{}", display_money(value)))
         .typo(style)
         .tabular_nums()
         .text_color(color::INK)

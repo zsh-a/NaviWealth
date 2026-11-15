@@ -10,6 +10,59 @@ use nsh_core::{
     prelude::*,
 };
 
+pub fn history_page() -> nsh_core::element::Screen {
+    use crate::{
+        data::{clock, finance},
+        nav,
+    };
+    nsh_base::nav_page()
+        .title(|| s().asset_history)
+        .header_visible(false)
+        .status_bar(super::super::parts::status_bar)
+        .child(
+            view()
+                .flex_1()
+                .bg(color::CANVAS)
+                .child(super::super::parts::top_bar(
+                    || s().asset_history.into(),
+                    nav::pop,
+                    None,
+                ))
+                .child(
+                    scroll().flex_1().child(
+                        view()
+                            .px(px(crate::ui::space::GUTTER))
+                            .pt_4()
+                            .pb_safe_area_plus(px(24.0))
+                            .child(dynamic(move || {
+                                let entries = finance::transactions();
+                                let portfolio = finance::holdings();
+                                let today = clock::today();
+                                untracked(move || {
+                                    view()
+                                        .gap_5()
+                                        .child(chart(&entries, &portfolio, today))
+                                        .child(
+                                            text(if portfolio.securities.is_empty() {
+                                                s().assets_basis
+                                            } else {
+                                                s().portfolio_basis
+                                            })
+                                            .typo(Type::Subhead)
+                                            .text_color(color::MUTED),
+                                        )
+                                        .child(
+                                            text(|| s().asset_history_note)
+                                                .typo(Type::Subhead)
+                                                .text_color(color::MUTED),
+                                        )
+                                })
+                            })),
+                    ),
+                ),
+        )
+}
+
 pub fn chart(
     entries: &[Transaction],
     portfolio: &finance_core::holdings::Book,
@@ -72,16 +125,17 @@ pub fn chart(
         )
         .child(
             text(format!(
-                "¥{} – ¥{}",
-                money::format(points.iter().map(|p| p.1).min().unwrap()),
-                money::format(points.iter().map(|p| p.1).max().unwrap())
+                "{} ¥{} – ¥{}",
+                s().value_range,
+                super::display_money(points.iter().map(|p| p.1).min().unwrap()),
+                super::display_money(points.iter().map(|p| p.1).max().unwrap())
             ))
             .typo(Type::Caption)
             .text_color(color::MUTED),
         )
         .child(
             plot()
-                .h(px(88.0))
+                .h(px(180.0))
                 .data(Rows::from_columns(
                     points.len(),
                     [("day".into(), days), ("value".into(), values)],

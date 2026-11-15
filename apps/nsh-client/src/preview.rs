@@ -150,12 +150,30 @@ pub fn apply() {
             cash: None,
         };
         finance::add_trade(Some(&sec), &opening).unwrap();
-        finance::set_quote(&Quote {
-            security: sec.id,
-            day: clock::today().plus_days(-1).0,
-            price: 4_380_000,
-        })
-        .unwrap();
+        if !has("unpriced") {
+            finance::set_quote(&Quote {
+                security: sec.id.clone(),
+                day: clock::today().plus_days(-1).0,
+                price: 4_380_000,
+            })
+            .unwrap();
+        }
+        if route.as_deref() == Some("closed-holdings") {
+            finance::add_trade(
+                None,
+                &Trade {
+                    id: "preview-close".into(),
+                    security: sec.id,
+                    at: clock::today().0.at(12, 0, 0, 0),
+                    kind: Kind::Sell,
+                    quantity: opening.quantity,
+                    price: 4_380_000,
+                    cash: Some(finance_core::account::Account::parse("资产:Bank").unwrap()),
+                    ..opening
+                },
+            )
+            .unwrap();
+        }
     }
     if route.as_deref().is_some_and(|r| r.starts_with("capture-")) {
         use crate::domain::capture::{Record, Status};
@@ -239,7 +257,15 @@ pub fn apply() {
         }
         Some("review" | "review-month") => nav::select(nav::Tab::Review),
         Some("records") => nav::select(nav::Tab::Records),
-        Some("assets" | "assets-empty") => nav::select(nav::Tab::Assets),
+        Some("assets" | "assets-empty" | "assets-manage") => nav::select(nav::Tab::Assets),
+        Some("asset-history") => {
+            nav::select(nav::Tab::Assets);
+            nav::push(Route::AssetHistory);
+        }
+        Some("closed-holdings") => {
+            nav::select(nav::Tab::Assets);
+            nav::push(Route::ClosedHoldings);
+        }
         Some("holdings" | "holding-new") => nav::select(nav::Tab::Assets),
         Some("holding" | "holding-trade" | "holding-price") => {
             nav::select(nav::Tab::Assets);
@@ -257,7 +283,10 @@ pub fn apply() {
     }
 }
 
-pub fn holdings_opened(open: Signal<Option<String>>) {
+pub fn assets_opened(manage: Signal<bool>, open: Signal<Option<String>>) {
+    if env::var("NW_PREVIEW_ROUTE").as_deref() == Ok("assets-manage") {
+        manage.set(true);
+    }
     if env::var("NW_PREVIEW_ROUTE").as_deref() == Ok("holding-new") {
         open.set(Some(String::new()));
     }

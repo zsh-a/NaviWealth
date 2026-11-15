@@ -11,6 +11,7 @@ use nsh_testing::DialogAnswer;
 
 fn add_holding(app: &mut Headless, name: &str, qty: &str, cost: &str) -> Result<(), String> {
     app.press("label:Assets")?;
+    app.press("text:Manage")?;
     app.press("Add holding")?;
     app.type_text("label:Name or code", name)?;
     app.type_text("label:Quantity", qty)?;
@@ -61,7 +62,7 @@ fn opening_price_partial_sale_and_cash_survive_restart_without_double_counting()
     assert_eq!(book.overview(&entries, today().0).unwrap().net, 50000);
     assert!(journal::spending(&entries, today().0, today().0).is_empty());
     app.press("label:Back")?;
-    app.wait_for("text:¥500.00")?;
+    app.wait_for("label:¥500.00")?;
     assert!(
         !app.shows("text:/^持仓·/"),
         "internal cost accounts never become cash accounts"
@@ -73,8 +74,8 @@ fn opening_price_partial_sale_and_cash_survive_restart_without_double_counting()
         None,
     );
     app.press("label:Assets")?;
-    app.wait_for("text:¥500.00")?;
-    app.press("label:/^Index ETF, 60 /")?;
+    app.wait_for("label:¥500.00")?;
+    app.press("label:/^Index ETF, 300.00 CNY/")?;
     app.wait_for("text:¥300.00")?;
     app.press("label:/^Sell, 40 /")?;
     app.on_dialog(|_| DialogAnswer::Press("Delete trade".into()));
@@ -95,6 +96,31 @@ fn opening_price_partial_sale_and_cash_survive_restart_without_double_counting()
         ),
         0
     );
+    // Closing removes the holding from the overview, but keeps its history
+    // reachable. Buying again returns it to the overview automatically.
+    app.press("Record trade")?;
+    app.press("Sell")?;
+    app.type_text("label:Quantity", "100")?;
+    app.type_text("label:Price per unit", "5")?;
+    app.press("Save trade")?;
+    app.wait_for("Trade saved")?;
+    app.press("label:Back")?;
+    app.wait_for("text:Manage")?;
+    assert!(!app.shows("text:Index ETF"));
+    app.press("text:Manage")?;
+    app.press("text:Closed holdings")?;
+    app.press("label:/^Index ETF, 0.00 CNY/")?;
+    app.press("Record trade")?;
+    app.type_text("label:Quantity", "10")?;
+    app.type_text("label:Price per unit", "4")?;
+    app.press("Save trade")?;
+    app.wait_for("Trade saved")?;
+    app.press("label:Back")?;
+    app.wait_for("No closed holdings")?;
+    app.press("label:Back")?;
+    app.wait_for("label:/^Index ETF, 50.00 CNY/")?;
+    app.press("label:New entry")?;
+    app.wait_for("What would you like to record?")?;
     Ok(())
 }
 

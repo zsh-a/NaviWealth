@@ -61,14 +61,19 @@ fn accounts_balances_rename_and_net_worth_survive_restart() -> Result<(), String
     app.wait_for("Account renamed")?;
     app.press("label:Back")?;
     app.wait_for("label:/^Wallet, 1000.00 CNY/")?;
-    // The nonempty overview uses its labelled add icon.
-    app.press("label:Add account")?;
+    // Creation stays available from the overview management menu.
+    app.press("text:Manage")?;
+    app.press("text:Add account")?;
     app.press("Credit / debt")?;
     app.type_text("label:Account name", "Card")?;
     app.press("Create account")?;
     verify(&mut app, "250.00", true)?;
     app.press("label:Back")?;
-    app.wait_for("text:¥750.00")?;
+    app.wait_for("label:¥750.00")?;
+    app.press("label:Asset changes")?;
+    app.wait_for("Changes include added records, balance adjustments and recorded prices. They are not investment returns.")?;
+    app.press("label:Back")?;
+    app.wait_for("label:¥750.00")?;
     let c = rusqlite::Connection::open(database_in(dir.path())).unwrap();
     let entries = repository::transactions(&c).unwrap();
     assert_eq!(assets::snapshot(&entries, today().0).net, 75000);
@@ -101,7 +106,7 @@ fn accounts_balances_rename_and_net_worth_survive_restart() -> Result<(), String
         None,
     );
     app.press("label:Assets")?;
-    app.wait_for("text:¥750.00")?;
+    app.wait_for("label:¥750.00")?;
     app.press("label:/^Card, 250.00 CNY/")?;
     // Reconfirming the same actual debt adds an observation, not fake spending.
     verify(&mut app, "250.00", true)?;

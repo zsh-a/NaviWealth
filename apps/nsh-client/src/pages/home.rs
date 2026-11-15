@@ -186,11 +186,11 @@ fn dock(sheets: Sheets) -> impl IntoElement {
                 .p(px(6.0))
                 .gap(px(2.0))
                 .rounded_full()
-                .bg(color::SURFACE.opacity(0.78))
-                .backdrop_blur(px(24.0))
+                .bg(color::SURFACE.opacity(0.94))
+                .backdrop_blur(px(12.0))
                 .border_1()
                 .border_color(color::LINE)
-                .lift(&shadow::FLOAT)
+                .lift(&shadow::SEGMENT)
                 .indicator_style(|s| {
                     s.top(px(6.0))
                         .bottom(px(6.0))
@@ -202,7 +202,7 @@ fn dock(sheets: Sheets) -> impl IntoElement {
         .child(
             IconBtn::new(Icon::Plus, || s().new_entry.into())
                 .variant(Variant::Primary)
-                .side(DOCK)
+                .side(56.0)
                 .on_press(move || {
                     sheets.capture_draft.set(None);
                     sheets.capture.set(true);

@@ -27,6 +27,8 @@ pub fn shell() -> impl IntoElement {
                     Route::ModelSettings => model_page(),
                     Route::Account(name) => crate::pages::assets::account_page(&name),
                     Route::Holding(id) => crate::pages::holdings::holding_page(&id),
+                    Route::AssetHistory => crate::pages::assets::history_page(),
+                    Route::ClosedHoldings => crate::pages::holdings::closed_page(),
                 };
                 // Back on iOS and Android is the system's: it pops the page
                 // natively, and the routes follow.

@@ -10,7 +10,10 @@ AI only to turn text and images into drafts, using the owner's model account.
 - **Primary task:** describe or photograph a record, confirm the result, and
   see what today adds up to; each week, see what changed.
 - **Home:** four tabs (Today · Records · Assets · Review) in a floating glass bar
-  beside one ink capture button. Settings is the corner action on Today.
+  beside one round ink capture button with a plus icon. The primary `IconBtn`
+  is 56 pt, vertically centered beside the 64 pt dock. Its accessible name
+  is New entry / 新记录; it opens the shared text/image composer.
+  Settings is the corner action on Today.
   Pages pushed over the home cover the bar. Hidden tabs stay alive (their
   scroll position stays) and are hidden from screen readers.
 - **Capture:** one text/image composer. The result is a readable receipt-like
@@ -43,18 +46,25 @@ AI only to turn text and images into drafts, using the owner's model account.
   of one card; all / meals / weight / money; 21 days at a time. The calendar button
   opens a month calendar; a chosen day is shown alone, under a bar with its
   date, steps to the days with records before and after it, and All days.
-- **Assets:** net worth leads, with asset and debt totals beneath it, then
-  holdings, a 30-day trend and own accounts grouped as assets or liabilities.
+- **Assets:** one overview card leads with net worth, followed by asset and
+  debt totals in two columns. Cash accounts, open holdings and debt accounts
+  follow as flat rows on the canvas.
   With holdings, values use dated manual CNY prices, falling back to cost
   when unpriced; without holdings, the basis is book balances. The visible
-  basis note, each holding's price date or unpriced label, and each account's
-  last-check date or unchecked label keep those limits clear. Internal holding
-  cost accounts stay out of the account list. No accounts or holdings shows a
-  short empty state with Add account and Add holding. The global text/image
+  short valuation basis links to Asset changes, which holds the 30-day chart,
+  full valuation basis and a note that changes are not investment returns.
+  Each holding keeps its manual price date or cost-fallback label. Unchecked
+  accounts keep a visible label; ordinary last-check dates live in account
+  details and remain in the row's accessible description. Internal holding
+  cost accounts stay out of the account list. Manage opens one bottom sheet
+  with Add account, Add holding and Closed holdings. No accounts or holdings
+  shows a short empty state with Add account and Add holding. The global text/image
   capture button remains the main record entry.
-- **Holdings:** flat rows show name, quantity and average unit cost, value,
-  and price status; closed positions remain visible. A row opens a detail
-  page with value, an explicit price-edit action, quantity, cost, unrealized
+- **Holdings:** flat overview rows show name, value and price status; quantity
+  and average unit cost live in details. Closed positions remain accessible
+  through Manage → Closed holdings, with their history and trade actions;
+  buying again returns a position to the overview automatically. A row opens
+  a detail page with value, an explicit price-edit action, quantity, cost, unrealized
   gain, Record trade, and newest-first activity. Realized gain and dividends
   appear when nonzero; unpriced unrealized gain is a dash. Opening a holding
   needs name, quantity and unit cost. Buy/sell use quantity, price and a cash
@@ -107,31 +117,70 @@ graphite with white ink, surfaces separated by tone and a hairline.
 | Role | Tokens |
 |---|---|
 | Surfaces | `CANVAS`, `SURFACE`, `SURFACE_2` (wells), `SUNKEN` (fields, tracks), `RAISED`, `LINE`, `LINE_STRONG` |
-| Text | `INK` (titles, figures), `BODY`, `MUTED`, `FAINT` |
+| Text | `INK` (titles, figures), `BODY`, `MUTED` |
+| Decorative / inactive | `FAINT` (tertiary marks such as chevrons, disabled controls and unavailable dates) |
 | Action | `ACTION` (ink), `ACTION_PRESSED`, `ACTION_SHEEN`, `ON_ACTION` |
 | AI | `AI_FROM` → `AI_TO` (analysis light, estimate marks) |
 | Status | `DANGER(_SOFT)`, `CAUTION(_SOFT)` (past a goal, estimates to check), `POSITIVE` |
 | Data | `PROTEIN` / `CARBS` / `FAT` (dark / middle / light stone), `OTHER`, `TRACK`, `HEAT` (calendar shade) |
 | Media | `ON_MEDIA`, `MEDIA_SCRIM`, `PHOTO_WELL` |
 
+Core palette from `src/ui/theme.rs`; each adaptive token switches with the
+system appearance. The warm neutral surfaces and ink actions retain the
+Ink & Daylight identity in both appearances.
+
+| Token | Light | Dark |
+|---|---|---|
+| `CANVAS` | `#F4F3EF` | `#111211` |
+| `SURFACE` | `#FFFFFF` | `#1B1C1B` |
+| `SURFACE_2` | `#F3F2EE` | `#242522` |
+| `SUNKEN` / `TRACK` | `#ECEBE6` | `#20211F` |
+| `RAISED` | `#FFFFFF` | `#2D2E2B` |
+| `LINE` | `#E7E6E0` | `#30312E` |
+| `LINE_STRONG` | `#D0CFC8` | `#484944` |
+| `INK` / `ACTION` | `#1C1D1A` | `#EAEBE7` |
+| `BODY` | `#32332F` | `#D5D6D0` |
+| `MUTED` | `#696A66` | `#A1A29E` |
+| `FAINT` | `#A4A59E` | `#686A63` |
+| `ACTION_PRESSED` | `#383A34` | `#D0D2CA` |
+| `ACTION_SHEEN` | `#34362F` | `#F0F1ED` |
+| `ON_ACTION` | `#FFFFFF` | `#1C1D1A` |
+| `DANGER` / `DANGER_SOFT` | `#AE303B` / `#FDECEC` | `#FF6369` / `#3A1618` |
+| `CAUTION` / `CAUTION_SOFT` | `#8C5A14` / `#FFF3DA` | `#FFC046` / `#372809` |
+| `POSITIVE` | `#23754F` | `#4CC38A` |
+
+Use `MUTED` for readable secondary copy, labels, placeholders, missing-value
+dashes, macro percentages and past dates without records. Reserve `FAINT`
+for decorative marks and inactive states, including disabled controls and
+future dates without records; it is outside the text contrast checks below.
+Status color conveys meaning: `DANGER` for errors and destructive actions,
+`CAUTION` for estimates to check or a goal exceeded, and `POSITIVE` for a
+completed connection. Soft status fills hold their matching foreground.
+Financial values, including gains and losses, stay in neutral ink.
+
 - **Type** (`Type`): Display 44, LargeTitle 34, Title 22, Figure 20,
   Headline 17, Body 16, Callout 15, Subhead 14, Caption 12.5; tabular
   numerals everywhere numbers move.
 - **Numbers:** every standalone number is a `stat`: the whole part in ink,
-  decimals one step quieter, the unit muted on the same baseline, a faint
+  decimals one step quieter, the unit muted on the same baseline, a
   dash and no unit without a value. `Scale::Hero` (Display) is the one
-  headline number of a card; `Scale::Tile` (Figure) sits among others.
+  headline number of a card; `Scale::Tile` (Figure) sits among others. Assets
+  uses its own exact money renderer: net worth follows the same baseline
+  hierarchy, while other financial amounts keep a single text style.
 - **Cards** hold the one main figure of a screen (Today's intake, Review's
-  intake), repeated rows, sheets and framed tools. Secondary figures (vitals,
-  Review's weight and Garmin averages) lie flat on the canvas, grouped by
-  hairlines and space. Cards never nest.
-- **Rows** lead with the meal's photo when it has one; otherwise the text
-  starts at the card's inset. No placeholder art.
+  intake, Assets' net worth), repeated rows, sheets and framed tools.
+  Secondary figures (vitals, Review's weight and Garmin averages) lie flat
+  on the canvas, grouped by hairlines and space. Cards never nest.
+- **Rows** for meals lead with the photo when present; otherwise the text
+  starts at the card's inset. No placeholder art. Asset overview rows use
+  existing semantic icons: Wallet for cash accounts, Minus for debt accounts
+  and Chart for holdings, without inferring account subtypes from names.
 - **Shape:** controls are pills; sheet 32 > card 24 > well 18 > field 16 >
   thumbnail 16 > badge 8.
 - **Depth:** `shadow::CARD` under cards, `shadow::FLOAT` under the main
   action and raised buttons; none in dark. Glass only for controls over
-  photos and the tab bar.
+  photos and the tab bar. The tab bar uses the lighter `shadow::SEGMENT`,
+  a nearly opaque `SURFACE` fill (0.94 opacity) and restrained blur (12 pt).
 - **Spacing:** the 4 pt scale; page gutter 20, card inset 20.
 
 ## Components (`src/ui/`)
@@ -149,13 +198,22 @@ glyphs). Pages share one top bar: a raised round Back and the title
 centered. Screens: the month calendar (`pages/review_calendar.rs`) serves
 Review's month and Records' go-to-day sheet.
 
-Assets uses the same type, spacing and controls on a flat canvas: one large
-net-worth figure, smaller totals and hairline-separated holding, account and
-activity rows. Its trend is a single ink line with a visible range and date
-endpoints, plus an accessible start/end summary; insufficient history gets
-explanatory text. Money keeps tabular numerals and neutral ink, including
-gains and losses. Quantity and unit price retain up to six decimal places;
-cost and gain figures come from the domain calculation. The price basis is
+Assets reuses the existing `card` for its single overview panel. Net worth
+aligns an ink whole amount (`Type::Display`), muted currency (`Type::Figure`)
+and muted decimals (`Type::Title`) on one baseline, exposed as one accessible
+element labelled with the full exact amount. The two subordinate totals use
+`Type::Body` values with muted caption labels. Holding and account rows stay
+flat, separated by space without hairlines, with muted 22 pt semantic icons
+and their existing valuation statuses. Activity rows retain hairlines.
+Asset changes carries the trend on a separate pushed page:
+a single ink line with a visible range and date endpoints, plus an accessible
+start/end summary; insufficient history gets explanatory text. Money keeps
+tabular numerals and neutral ink, including gains and losses. Overview
+amounts and primary balance/value figures use grouped thousands and two
+decimal places through a display-only formatter that preserves exact minor
+units and editable input. Detailed cost and gain figures keep their existing
+money formatting and come from the domain calculation. Quantity, average
+unit cost and unit price retain up to six decimal places. The price basis is
 manual CNY, without live quotes, FX, catalog search or AI trade entry.
 Account, holding and price editors reuse `task_sheet` and the existing
 calendar picker, with actions fixed above the keyboard. Quantity and unit
@@ -200,5 +258,21 @@ still.
 
 Verified on the GTK desktop build with the previews in `src/preview.rs`;
 holdings review captures are in `.impeccable/review/holdings/` at the repository
-root. These are desktop development evidence only; Android verification
-happens on the device build.
+root. The simplified Assets overview, Manage sheet, Asset changes, closed
+holdings and empty state are captured in `.impeccable/review/assets-simple/`,
+including light and dark overview captures. The subsequent overview-card,
+row-icon and quieter-dock refinement is captured in
+`.impeccable/review/assets-polished/`. These are desktop development evidence
+only; Android device verification remains outstanding.
+
+The warm neutral palette refinement is captured in
+`.impeccable/review/palette/`: `assets-light.png`, `assets-dark.png`,
+`capture-missing-light.png` and `capture-missing-dark.png`, alongside the
+other reviewed states. These captures are also GTK desktop development
+evidence only. The source-token calculation in that directory's
+`contrast.json` checks 72 text/background pairs across both appearances;
+all are at least 4.5:1. The minimum is light `MUTED` on `SUNKEN` (4.56:1).
+Light status minima are `DANGER` on its pressed soft fill (4.77:1),
+`CAUTION` on `SUNKEN` (4.90:1), and `POSITIVE` on `SUNKEN` (4.72:1).
+The dark minimum is `DANGER` on `RAISED` (4.71:1). This is evidence for
+those checked token pairs, not a whole-app WCAG conformance claim.

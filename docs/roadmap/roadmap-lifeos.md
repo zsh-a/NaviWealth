@@ -169,6 +169,8 @@ Flutter import.
   buy/sell/dividend with optional fees, exact moving-average cost and gains,
   atomic cash/journal updates, dated manual prices and valuation-aware net worth.
   Holdings are inline on Assets with one detail page and compact task sheets.
+  The simplified overview groups cash accounts, open holdings and debts;
+  Manage contains creation/closed history, while Asset changes owns the trend.
   Schema 10 backups validate positions against generated journal postings;
   unsafe deletion/backdated trades roll back. Core fixtures, headless flows,
   restart/restore and GTK light/dark small-screen checks cover this increment.

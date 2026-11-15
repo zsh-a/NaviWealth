@@ -199,9 +199,22 @@ Desktop visual previews include `capture`, `capture-ready`, `capture-missing`,
 
 ## Accounts and Assets
 
-Assets shows net worth, asset/debt balances and a 30-day dated valuation trend.
-Without holdings it uses book balances. Account details show dated entries,
-with older entries loaded in batches.
+Assets leads with one light overview surface: net worth uses a prominent whole
+amount with quieter currency/decimals, followed by two compact asset/debt totals.
+The exact complete amount remains available to assistive technology. Below it, cash
+accounts, open holdings and debts form a flat list with neutral type icons and
+spacing instead of repeated dividers. Rows show names and amounts; unverified
+accounts and manual-price/cost valuation status remain visible. Quantity,
+unit cost and normal balance-check dates live in details. Amounts use digit
+grouping for scanning. Without holdings, totals use book balances.
+
+Manage opens account/holding creation and closed-holding history. Fully closed
+positions leave the overview automatically and return after another purchase.
+The global capture action is a 56-point ink circle with a line plus, centered
+beside the dock. Its accessible name remains New entry / 新记录.
+Asset changes opens the full 30-day dated valuation chart and basis notes;
+it explicitly distinguishes recorded value changes from investment returns.
+Account details show dated entries, with older entries loaded in batches.
 The owner can create asset/liability accounts and rename them without merging
 accounts. Renaming updates postings, import mappings, balance observations and
 saved recognition references together; a running recognition must finish first.
@@ -221,7 +234,8 @@ Schema 9 adds `finance_balance_checks` to encrypted backup/restore and validatio
 The NSH pages only display those values.
 
 Previews: `NW_PREVIEW=account,meals,finance,assets,light` with
-`NW_PREVIEW_ROUTE=assets`, `asset-account`, or `asset-balance`; `assets-empty`
+`NW_PREVIEW_ROUTE=assets`, `assets-manage`, `asset-history`, `asset-account`, or
+`asset-balance`; `assets-empty`
 with only `NW_PREVIEW=light` checks the empty state. `NW_PREVIEW_WIDTH` and
 `NW_PREVIEW_HEIGHT` set the desktop viewport. GTK light/dark captures and
 headless 360×640/1.3 text-scale/simulated-IME checks are development evidence;
@@ -253,4 +267,6 @@ Meaningful checks cover partial/full sales, dividends/fees, cash rename,
 historical valuation, failed writes/retry, unsafe history edits, restart and
 backup validation. GTK previews use `NW_PREVIEW=account,meals,finance,assets,holdings,light`
 and routes `holdings`, `holding`, `holding-new`, `holding-trade`, `holding-price`.
+`closed-holdings` seeds a liquidated holding for the history page; adding
+`unpriced` to the preview flags leaves positions visibly valued at cost.
 These previews and headless checks are not Android device evidence.
