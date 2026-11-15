@@ -2657,7 +2657,7 @@ dependencies = [
 
 [[package]]
 name = "naviwealth-app"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "argon2",
  "base64 0.22.1",
