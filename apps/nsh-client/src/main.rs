@@ -13,11 +13,11 @@ use nsh_platform_windows as platform;
 fn main() -> impl std::process::Termination {
     env_logger::init();
     platform::run_app(
-        platform::AppSource::Rust(platform::Root::of::<nsh_app_naviwealth_health::App>()),
+        platform::AppSource::Rust(platform::Root::of::<naviwealth_app::App>()),
         platform::AppOptions {
-            title: "NaviWealth Health".to_owned(),
+            title: "NaviWealth".to_owned(),
             #[cfg(any(target_os = "linux", target_os = "windows"))]
-            app_id: "com.naviwealth.health.nsh".to_owned(),
+            app_id: "com.naviwealth.app".to_owned(),
             // A phone-sized window: the layout this client is designed for
             // (`NW_PREVIEW_HEIGHT` makes it taller to capture a whole page).
             size: (

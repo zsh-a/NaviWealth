@@ -106,10 +106,8 @@ fn account_completion_is_local_durable_and_never_posts_before_confirmation() -> 
     let body: String = db
         .query_row("SELECT body FROM capture_drafts", [], |r| r.get(0))
         .unwrap();
-    let kept: nsh_app_naviwealth_health::domain::capture::Draft =
-        serde_json::from_str(&body).unwrap();
-    let nsh_app_naviwealth_health::domain::capture::Record::Money { draft, .. } = &kept.records[0]
-    else {
+    let kept: naviwealth_app::domain::capture::Draft = serde_json::from_str(&body).unwrap();
+    let naviwealth_app::domain::capture::Record::Money { draft, .. } = &kept.records[0] else {
         panic!("money draft");
     };
     assert!(
@@ -337,8 +335,7 @@ fn compact_photo_and_text_composer_keeps_the_same_draft_across_back_and_reopen()
             Ok((r.get(0)?, r.get(1)?))
         })
         .unwrap();
-    let kept: nsh_app_naviwealth_health::domain::capture::Draft =
-        serde_json::from_str(&before.1).unwrap();
+    let kept: naviwealth_app::domain::capture::Draft = serde_json::from_str(&before.1).unwrap();
     assert_eq!(kept.input, "Lunch with a receipt");
     assert!(kept.photo.is_some());
     app.set_environment("IME dismissed", |e| e.keyboard_height = Points(0.0))?;

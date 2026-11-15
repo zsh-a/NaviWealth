@@ -1,5 +1,5 @@
 [package]
-name = "nsh-app-naviwealth-health"
+name = "naviwealth-app"
 description = "NaviWealth's native (NSH) client: photo meal logging for HealthOS."
 version = "0.8.1"
 edition = "2024"

@@ -1,8 +1,8 @@
 {
-  "name": "NaviWealth Health",
-  "id": "com.naviwealth.health.nsh",
-  "version": "0.8.1",
-  "build": 11,
+  "name": "NaviWealth",
+  "id": "com.naviwealth.app",
+  "version": "0.9.0",
+  "build": 12,
   "appearance": "system",
   "theme": "theme.json",
   "rust": ".",

@@ -31,19 +31,20 @@ checks that are present for the changed paths.
 | `KEY_ALIAS` | Signed NSH Android releases |
 | `KEY_PASSWORD` | Signed NSH Android releases |
 
-## NSH Health releases
+## NSH releases
 
-The `nsh client` manual workflow builds `apps/nsh-client` and signs its APK
-with the fixed repository keystore secrets above. From `nsh-v0.2.1`
-(build 4), it uploads only `naviwealth-health-nsh-release-arm64-v8a` after
-certificate matching and non-debuggable APK checks pass. Missing credentials,
-debug certificates or signature verification failures stop publication.
-`tool/sign-nsh-apk.sh` keeps passwords out of command arguments and removes
-temporary key material. Do not replace this with freshly generated debug keys.
+The `nsh client` manual workflow builds `apps/nsh-client`, checks the crate,
+and signs an arm64-v8a APK — `naviwealth-release-arm64-v8a` (the diagnostic
+build is `naviwealth-diagnostic-arm64-v8a`) — with the fixed repository
+keystore after certificate matching and non-debuggable APK checks pass.
+Missing credentials, debug certificates or signature verification failures
+stop publication. `tool/sign-nsh-apk.sh` keeps passwords out of command
+arguments and removes temporary key material. Do not replace this with
+freshly generated debug keys.
 
-NSH Health uses `nsh-vX.Y.Z` tags and its own package identity. Build the exact
-tag with the manual workflow and publish the verified APK plus `SHA256SUMS`.
-Do not republish the global latest release; it still holds the retired
-Flutter channel's artifacts.
-Legacy debug-signed Health installs need a data migration before switching to
-this certificate; subsequent Health releases must retain the fixed key.
+The package id is `com.naviwealth.app` (2026-11-15; the earlier
+`com.naviwealth.health.nsh` installs migrate by clean-install restore from a
+WebDAV backup). Releases use `nsh-vX.Y.Z` tags: build the exact tag with the
+manual workflow and publish the verified APK plus `SHA256SUMS`. Do not
+republish the global latest release; it still holds the retired Flutter
+channel's artifacts. Subsequent releases must retain the fixed key.

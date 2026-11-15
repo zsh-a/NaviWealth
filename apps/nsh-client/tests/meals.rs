@@ -95,7 +95,7 @@ fn a_photo_is_sent_only_after_consent_and_becomes_editable_foods() -> Result<(),
     let saved = stored_meals(dir.path());
     assert_eq!(
         saved[0]["prompt_version"],
-        nsh_app_naviwealth_health::domain::capture::PROMPT_VERSION
+        naviwealth_app::domain::capture::PROMPT_VERSION
     );
     Ok(())
 }

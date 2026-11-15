@@ -5,7 +5,7 @@
 mod common;
 
 use common::*;
-use nsh_app_naviwealth_health::domain::meal::decode_meals;
+use naviwealth_app::domain::meal::decode_meals;
 
 #[test]
 fn today_summarizes_spending_with_its_records_at_large_text() -> Result<(), String> {
