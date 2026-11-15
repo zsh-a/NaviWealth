@@ -14,6 +14,16 @@
 
 NaviWealth 是一个本地优先的个人应用：复式记账、证券持仓、拍照记餐和 Garmin 身体数据。客户端是 Rust 编写的 [NSH](https://github.com/longbridge/nsh) 应用，业务真相在 `navi-finance` 与 `navi-health` 两个 Rust crate 里。没有账号、没有后端、没有同步——只有设备上的 SQLite 和口令加密的本地备份。
 
+<p align="center">
+  <img src="docs/assets/readme/records.png" width="30%" alt="Records 流水">
+  <img src="docs/assets/readme/assets.png" width="30%" alt="Assets 资产">
+  <img src="docs/assets/readme/review.png" width="30%" alt="Review 回顾">
+</p>
+
+<p align="center">
+  <sub>流水 · 资产 · 周回顾 —— 模拟器上的真实应用（演示数据）</sub>
+</p>
+
 | 本地优先 | 设备端 AI | 为确认而设计 |
 |---|---|---|
 | 业务数据保存在应用私有目录的 SQLite 中；备份是本地口令加密文件。 | 用你自己的模型密钥直连 Anthropic 或 OpenAI 兼容接口，识别结果只是草稿。 | AI 与导入都只生成待确认记录；写入永远由你确认。 |
