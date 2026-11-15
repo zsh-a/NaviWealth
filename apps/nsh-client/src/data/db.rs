@@ -75,6 +75,13 @@ const MIGRATIONS: &[&str] = &[
     navi_finance::history::SCHEMA,
     // 16: immutable observed valuations.
     navi_finance::valuation::SCHEMA,
+    // 17: estimated body composition, one JSON body per day
+    // (`navi_health::bodycomp`); the scale link arrives with NSH Bluetooth.
+    "CREATE TABLE body_metrics (
+        day TEXT PRIMARY KEY NOT NULL,
+        body TEXT NOT NULL,
+        fetched_at_ms INTEGER NOT NULL
+    );",
 ];
 
 #[derive(Clone, Default)]
@@ -136,6 +143,7 @@ const HEALTH_TABLES: &[(&str, &str)] = &[
     ("garmin_days", "day, body, fetched_at_ms"),
     ("saved_meals", "id, saved_at_ms, used_at_ms, body"),
     ("review_notes", "day, text, updated_at_ms"),
+    ("body_metrics", "day, body, fetched_at_ms"),
 ];
 
 /// Why a restore was refused; nothing changed.
@@ -288,6 +296,18 @@ fn validate_restored(connection: &Connection) -> Result<(), String> {
             let value: navi_health::garmin::GarminDay =
                 serde_json::from_str(&body).map_err(|_| rusqlite::Error::InvalidQuery)?;
             if day.parse::<crate::domain::meal::Day>().is_err() || value.day != day {
+                return Err(rusqlite::Error::InvalidQuery);
+            }
+        }
+        let mut statement = connection.prepare("SELECT day, body FROM body_metrics")?;
+        let rows = statement.query_map([], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+        })?;
+        for row in rows {
+            let (day, body) = row?;
+            let value: navi_health::bodycomp::BodyMetrics =
+                serde_json::from_str(&body).map_err(|_| rusqlite::Error::InvalidQuery)?;
+            if day.parse::<crate::domain::meal::Day>().is_err() || !value.valid() {
                 return Err(rusqlite::Error::InvalidQuery);
             }
         }

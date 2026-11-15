@@ -19,8 +19,8 @@ use nsh_core::prelude::*;
 
 use crate::{
     data::{
-        backup, capture, clock, db, favorites, finance, garmin, meals, notes, pending, photos,
-        settings, tasks, weights,
+        backup, body_metrics, capture, clock, db, favorites, finance, garmin, meals, notes,
+        pending, photos, settings, tasks, weights,
     },
     i18n::s,
     ui::{Type, Typo, color, space},
@@ -76,6 +76,7 @@ pub fn App() -> impl IntoElement {
     pending::load();
     notes::load();
     weights::load();
+    body_metrics::load();
     garmin::load();
     backup::load();
     // At start, and as soon as a key is connected. The memo re-runs the

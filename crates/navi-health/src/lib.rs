@@ -2,6 +2,7 @@
 //! the Garmin Personal API requests and parsing. This crate does no I/O,
 //! never stores records, uploads in the background, or owns consent UI.
 
+pub mod bodycomp;
 pub mod catalog;
 pub mod consent;
 pub mod garmin;

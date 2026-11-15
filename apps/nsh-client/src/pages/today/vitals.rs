@@ -7,7 +7,7 @@ use nsh_base::button;
 use nsh_core::prelude::*;
 
 use crate::{
-    data::{garmin, weights},
+    data::{body_metrics, garmin, settings, weights},
     domain::meal::Day,
     i18n::s,
     nav::{self, Route},
@@ -68,13 +68,7 @@ pub fn vitals(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
             || s().weight,
             move || latest().map(|entry| s().kg(entry.kg)),
             || "kg",
-            move || match latest() {
-                None => s().tap_to_log.to_owned(),
-                Some(entry) if entry.day == day() => weights::weekly_change(entry)
-                    .map(|delta| s().week_change(delta))
-                    .unwrap_or_default(),
-                Some(entry) => s().weight_days_ago(day().days_since(entry.day)),
-            },
+            weight_caption(day, latest),
             move || sheets.weight.set(Some(day())),
         ))
         .child(when(has_garmin, divider))
@@ -102,6 +96,44 @@ pub fn vitals(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                 open_garmin,
             )
         }))
+}
+
+/// The weight tile's caption: the weekly trend (or the entry's age), then
+/// what else the day knows — the latest estimated body fat, the distance to
+/// the goal and the BMI, each only when it exists.
+fn weight_caption(
+    day: impl Fn() -> Day + Copy + 'static,
+    latest: impl Fn() -> Option<crate::domain::weight::Weight> + Copy + 'static,
+) -> impl Fn() -> String + Copy + 'static {
+    move || {
+        let base = match latest() {
+            None => return s().tap_to_log.to_owned(),
+            Some(entry) if entry.day == day() => weights::weekly_change(entry)
+                .map(|delta| s().week_change(delta))
+                .unwrap_or_default(),
+            Some(entry) => s().weight_days_ago(day().days_since(entry.day)),
+        };
+        let mut extras: Vec<String> = Vec::new();
+        if let Some(metric) = body_metrics::latest_until(day()) {
+            extras.push(format!(
+                "{} {:.1}%",
+                s().body_fat,
+                metric.metrics.body_fat_percent
+            ));
+        }
+        if let (Some(goal), Some(entry)) = (settings::goal_kg(), latest()) {
+            extras.push(s().to_goal(entry.kg - goal));
+        }
+        if let (Some(height), Some(entry)) = (settings::height_cm(), latest())
+            && let Some(bmi) = navi_health::bodycomp::bmi(entry.kg, height)
+        {
+            extras.push(format!("{} {bmi}", s().bmi));
+        }
+        match extras.is_empty() {
+            true => base,
+            false => format!("{base}\n{}", extras.join(" · ")),
+        }
+    }
 }
 
 /// A hairline between two vitals.

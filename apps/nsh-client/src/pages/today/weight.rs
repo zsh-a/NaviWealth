@@ -5,7 +5,7 @@ use std::rc::Rc;
 use nsh_core::prelude::*;
 
 use crate::{
-    data::weights,
+    data::{body_metrics, settings, weights},
     domain::{
         format::{field_number, parse_number},
         meal::Day,
@@ -18,6 +18,58 @@ use crate::{
         toast::show_toast,
     },
 };
+use navi_health::bodycomp;
+
+/// What the day already knows beyond the number: a scale estimate's three
+/// shares, and the BMI of the weight as typed (or as kept).
+fn scale_details(day: Day, typed: impl Fn() -> Option<f64> + Copy + 'static) -> impl IntoElement {
+    let estimate = move || body_metrics::on(day);
+    let bmi_text = move || -> Option<String> {
+        let kg = typed()
+            .or_else(|| weights::on(day).map(|entry| entry.kg))
+            .filter(|kg| valid_kg(*kg))?;
+        let height = settings::height_cm()?;
+        Some(format!("{} {}", s().bmi, bodycomp::bmi(kg, height)?))
+    };
+    when(
+        move || estimate().is_some() || bmi_text().is_some(),
+        move || {
+            view()
+                .gap_1()
+                .child(when(
+                    move || estimate().is_some(),
+                    move || {
+                        let metrics = estimate().unwrap().metrics;
+                        text(format!(
+                            "{} · {} {:.1}% · {} {:.1}% · {} {:.1}%",
+                            s().scale_estimate,
+                            s().body_fat,
+                            metrics.body_fat_percent,
+                            s().muscle,
+                            metrics.muscle_percent,
+                            s().water,
+                            metrics.water_percent,
+                        ))
+                        .typo(Type::Subhead)
+                        .tabular_nums()
+                        .text_color(color::MUTED)
+                        .number_of_lines(2)
+                        .into_element()
+                    },
+                ))
+                .child(when(
+                    move || bmi_text().is_some(),
+                    move || {
+                        text(move || bmi_text().unwrap_or_default())
+                            .typo(Type::Subhead)
+                            .tabular_nums()
+                            .text_color(color::MUTED)
+                            .into_element()
+                    },
+                ))
+        },
+    )
+}
 
 /// Logs or corrects `day`'s weight; deletes it with Undo.
 pub fn weight_editor(open: Signal<Option<Day>>) -> impl IntoElement {
@@ -73,6 +125,7 @@ fn editor(day: Day, open: Signal<Option<Day>>) -> impl IntoElement {
                 || true,
             )),
         )
+        .child(scale_details(day, move || value.with(|v| parse_number(v))))
         .child(
             view()
                 .flex_row()

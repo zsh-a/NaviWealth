@@ -73,6 +73,16 @@ fn backed_up(dav: &Dav) -> Result<Vec<u8>, String> {
     )
     .unwrap();
     db.execute(
+        "INSERT INTO body_metrics VALUES (?1, ?2, 42)",
+        [
+            today().to_string(),
+            json!({"body_fat_percent":18.3,"muscle_percent":76.9,"water_percent":56.9,
+                   "resistance_ohm":506.0,"model":"segal_3a_male_lt20"})
+            .to_string(),
+        ],
+    )
+    .unwrap();
+    db.execute(
         "INSERT INTO review_notes VALUES (?1, 'Lighter dinners.', 42)",
         [today().to_string()],
     )
@@ -176,6 +186,13 @@ fn encrypted_backup_creates_the_folder_and_restores_on_a_fresh_install() -> Resu
     assert_eq!(
         serde_json::from_str::<Value>(&body).unwrap()["steps"],
         12345
+    );
+    let fat: String = db
+        .query_row("SELECT body FROM body_metrics", [], |r| r.get(0))
+        .unwrap();
+    assert_eq!(
+        serde_json::from_str::<Value>(&fat).unwrap()["body_fat_percent"],
+        18.3
     );
     assert!(
         dav.requests()

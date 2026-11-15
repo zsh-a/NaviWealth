@@ -2,6 +2,7 @@
 //! device, local time, and the user's vision model.
 
 pub mod backup;
+pub mod body_metrics;
 pub mod catalog;
 pub mod clock;
 pub mod db;

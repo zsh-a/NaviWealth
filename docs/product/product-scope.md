@@ -188,7 +188,21 @@ The full target is:
   like any other. It
   replaced "log again today", which could only copy a meal still in the
   four-week strip onto today (Rule 5).
-- Weight: manual entry plus Garmin body composition when available.
+- Weight: manual entry plus Garmin body composition when available. A weight
+  day may carry an estimated body composition — body fat, muscle and water
+  shares with the estimating formula and impedance as provenance (Rule 5
+  reason: composition answers the same daily question as weight, how the
+  body changes beyond mass). BMI is shown, never stored: computed from the
+  weight and the height in Settings' body profile, which also keeps the age
+  and sex the estimates need. The goal weight (Settings) shows the day's
+  distance to it on Today and as a line in Review's weight chart, which has
+  30- and 90-day windows. Nothing is estimated from a manually entered
+  weight: composition arrives only with a scale measurement. The scale link
+  itself (AFU-WL/Welland body-fat scales over Bluetooth LE) waits for the
+  NSH runtime to expose a Bluetooth capability — nsh-core 0.5.0 has no such
+  host API and the packaged Android APK cannot add permissions (Personal
+  Local Scope decision 5) — so composition storage and display are built
+  ahead of it and the table stays empty until it lands.
 - Garmin daily data through Garmin's official Personal API (self-serve key,
   read-only, own data only): sleep duration and score, HRV with its status,
   resting heart rate, Body Battery high, steps and average stress. Pulled at
@@ -236,7 +250,8 @@ tag.
 Account (assets, liabilities, expenses, income, equity), Transaction with
 its postings, Import mapping rule, Balance check, Budget (optional),
 Security, Trade, Quote,
-Meal (with food snapshots and local photos), Favorite meal, Weight, Garmin daily summary,
+Meal (with food snapshots and local photos), Favorite meal, Weight, Estimated body composition (per weight day, from a scale),
+Garmin daily summary,
 Review note. Balances, spending, positions and net worth are derived and not
 stored as truth.
 

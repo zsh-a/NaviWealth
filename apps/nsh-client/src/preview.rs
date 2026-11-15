@@ -16,7 +16,9 @@ use std::env;
 use nsh_core::{platform::Appearance, prelude::*};
 
 use crate::{
-    data::{clock, favorites, finance, garmin, meals, pending, photos, settings, weights},
+    data::{
+        body_metrics, clock, favorites, finance, garmin, meals, pending, photos, settings, weights,
+    },
     domain::{
         account::{ModelAccount, Provider},
         catalog,
@@ -230,6 +232,34 @@ pub fn apply() {
             let kg = 74.6 - f64::from(29 - back) * 0.07 + [0.3, -0.2, 0.1, -0.1][back as usize % 4];
             weights::set(today.plus_days(-back), kg);
         }
+        // Scale estimates for most weighed days, drifting down a little
+        // faster than the weight itself.
+        for back in (0..30).rev().filter(|back| back % 4 != 1) {
+            let day = today.plus_days(-back);
+            let Some(entry) = weights::on(day) else {
+                continue;
+            };
+            let fat = 21.5 - f64::from(29 - back) * 0.05;
+            body_metrics::set(
+                day,
+                navi_health::bodycomp::estimate(
+                    entry.kg,
+                    175.0,
+                    33,
+                    navi_health::bodycomp::Sex::Male,
+                    Some(506.0),
+                )
+                .map(|metrics| navi_health::bodycomp::BodyMetrics {
+                    body_fat_percent: fat,
+                    ..metrics
+                })
+                .expect("the preview profile estimates"),
+            );
+        }
+        settings::save_height(Some(175));
+        settings::save_age(Some(33));
+        settings::save_sex(Some(navi_health::bodycomp::Sex::Male));
+        settings::save_goal_kg(Some(72.0));
     }
     if has("multicurrency") {
         use navi_finance::{

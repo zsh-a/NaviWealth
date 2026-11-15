@@ -265,6 +265,18 @@ Recommended sequence; this is planning, not a claim these items are implemented.
    price changes, FX and balance adjustments. State missing data instead of
    labeling all net-worth movement as investment return. Keep four tabs and
    expose detail on demand; a monthly budget is lower priority.
+3. **Weight body composition and the scale link.** Built ahead of the radio
+   (implemented): `bodycomp` estimation in `navi-health` (Segal/Deurenberg
+   from impedance, ported from the AFU-WL reference tool, fixture-tested), a
+   per-day `body_metrics` table with backup validation, the Settings body
+   profile (height, age, sex) and goal weight, BMI display, Review's 30/90-day
+   windows and body-fat line. Pending: the scale link itself — reading an
+   AFU-WL/Welland scale (service `FFB0`, write `FFB1`, notify `FFB2`, weight +
+   impedance notifications, estimates computed locally) needs the NSH runtime
+   to expose a Bluetooth capability (nsh-core 0.5.0 parses the key and drops
+   it; the packaged APK cannot add permissions). When it lands: scan and read
+   behind a draft/confirm write, with real-device evidence (emulator evidence
+   does not close the item).
 
 ## Operating Rules
 

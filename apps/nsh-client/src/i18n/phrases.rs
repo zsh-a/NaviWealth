@@ -216,6 +216,16 @@ impl Strings {
         }
     }
 
+    /// The signed distance from a weight to the goal weight; positive is
+    /// above the goal, negative below.
+    pub fn to_goal(&self, delta_kg: f64) -> String {
+        if self.zh() {
+            format!("距目标 {}", self.signed_kg(delta_kg))
+        } else {
+            format!("{} kg to goal", self.signed_kg(delta_kg))
+        }
+    }
+
     /// A change in kg, signed, to one decimal.
     pub fn signed_kg(&self, delta: f64) -> String {
         let sign = if delta > 0.0 {

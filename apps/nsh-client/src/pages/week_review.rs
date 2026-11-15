@@ -12,10 +12,10 @@ use nsh_core::prelude::*;
 use super::{
     home::{Sheets, dock_clearance},
     review_calendar::{Pick, calendar, month_days},
-    review_charts::{chart, macros, trend},
+    review_charts::{chart, macros, trend, trend_percent},
 };
 use crate::{
-    data::{clock, garmin, meals, settings, weights},
+    data::{body_metrics, clock, garmin, meals, settings, weights},
     domain::{
         format,
         meal::Day,
@@ -263,7 +263,24 @@ fn intake_card(period: Signal<Period>, days: Memo<Vec<Day>>) -> impl IntoElement
         )
 }
 
+/// The chart windows the weight card offers, ending at the period's last day.
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum WeightRange {
+    D30,
+    D90,
+}
+
+impl WeightRange {
+    fn days(self) -> i32 {
+        match self {
+            WeightRange::D30 => 30,
+            WeightRange::D90 => 90,
+        }
+    }
+}
+
 fn weight_card(days: Memo<Vec<Day>>) -> impl IntoElement {
+    let range = signal(WeightRange::D30);
     let entries = computed(move || {
         let (first, last) = days.with(|d| (d[0], d[d.len() - 1]));
         weights::window(last, last.days_since(first) + 1)
@@ -282,26 +299,55 @@ fn weight_card(days: Memo<Vec<Day>>) -> impl IntoElement {
                     || "kg".to_owned(),
                     Scale::Tile,
                 ))
+                .child(segmented(
+                    vec![
+                        Segment::new(WeightRange::D30, || s().range_30d.into()),
+                        Segment::new(WeightRange::D90, || s().range_90d.into()),
+                    ],
+                    move || range.get(),
+                    move |r| range.set(r),
+                ))
                 .child(dynamic(move || {
                     let history = weights::all();
-                    let (first, points) = days.with(|d| {
-                        (
-                            d[0],
-                            d.iter()
-                                .filter_map(|&day| {
-                                    crate::domain::weight::trend_weight(&history, day).map(|kg| {
-                                        crate::domain::weight::Weight {
-                                            day,
-                                            kg,
-                                            logged_at_ms: 0,
-                                        }
-                                    })
-                                })
-                                .collect(),
-                        )
-                    });
-                    let span = days.with(|d| d.len()) as f64;
-                    untracked(move || trend(first, span, points))
+                    let span = days
+                        .with(|d| d.last().copied())
+                        .map(|last| (last, range.get_untracked().days()));
+                    let Some((last, days_span)) = span else {
+                        return view().into_element();
+                    };
+                    let first = last.plus_days(1 - days_span);
+                    let points: Vec<crate::domain::weight::Weight> = (0..days_span)
+                        .filter_map(|offset| {
+                            let day = first.plus_days(offset);
+                            crate::domain::weight::trend_weight(&history, day).map(|kg| {
+                                crate::domain::weight::Weight {
+                                    day,
+                                    kg,
+                                    logged_at_ms: 0,
+                                }
+                            })
+                        })
+                        .collect();
+                    let goal = settings::goal_kg();
+                    let fat: Vec<(Day, f64)> = body_metrics::window(last, days_span)
+                        .into_iter()
+                        .map(|m| (m.day, m.metrics.body_fat_percent))
+                        .collect();
+                    untracked(move || {
+                        let charts =
+                            view().child(trend(first, f64::from(days_span.max(1)), points, goal));
+                        match fat.len() {
+                            0..=1 => charts.into_element(),
+                            _ => charts
+                                .child(
+                                    text(|| s().body_fat)
+                                        .typo(Type::Caption)
+                                        .text_color(color::MUTED),
+                                )
+                                .child(trend_percent(first, f64::from(days_span.max(1)), fat))
+                                .into_element(),
+                        }
+                    })
                 }))
         },
     )

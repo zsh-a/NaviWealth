@@ -6,7 +6,7 @@
 use nsh_core::prelude::*;
 
 use crate::{
-    data::{clock, photos},
+    data::{body_metrics, clock, photos},
     domain::{format, meal::Meal, weight::Weight},
     i18n::s,
     nav::{self, Route},
@@ -124,9 +124,12 @@ pub fn weight_row(entry: Weight, open: impl Fn() + 'static) -> impl IntoElement 
                 )
                 .child(
                     text(format!(
-                        "{} · {}",
+                        "{} · {}{}",
                         s().weight,
-                        clock::time_label(entry.logged_at_ms)
+                        clock::time_label(entry.logged_at_ms),
+                        body_metrics::on(entry.day).map_or_else(String::new, |m| {
+                            format!(" · {} {:.1}%", s().body_fat, m.metrics.body_fat_percent)
+                        }),
                     ))
                     .typo(Type::Subhead)
                     .tabular_nums()

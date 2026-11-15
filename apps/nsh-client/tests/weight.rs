@@ -137,3 +137,73 @@ fn today_and_review_use_the_shared_average_and_caption_fits_large_text() -> Resu
     }
     Ok(())
 }
+
+/// The scale context a seeded estimate carries: the Today caption, the
+/// editor's read-only estimate and BMI, the Review charts and the Records
+/// row.
+#[test]
+fn scale_context_shows_on_today_in_the_editor_in_review_and_records() -> Result<(), String> {
+    let dir = tempfile::tempdir().unwrap();
+    let profile = json!({"height_cm": 175, "age_years": 33, "sex": "male", "goal_kg": 72.0});
+    let profile = vec![("settings.v1".to_owned(), profile.to_string())];
+    let (app, _) = start_in(Some(dir.path()), profile.clone(), None);
+    drop(app);
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    for back in 0..10 {
+        db.execute(
+            "INSERT INTO weights (day, kg, logged_at_ms) VALUES (?1, ?2, 0)",
+            rusqlite::params![
+                today().plus_days(-back).to_string(),
+                70.0 + f64::from(back) * 0.1
+            ],
+        )
+        .unwrap();
+    }
+    for back in 0..3 {
+        db.execute(
+            "INSERT INTO body_metrics (day, body, fetched_at_ms) VALUES (?1, ?2, 0)",
+            rusqlite::params![
+                today().plus_days(-back).to_string(),
+                json!({
+                    "body_fat_percent": 18.3,
+                    "muscle_percent": 76.9,
+                    "water_percent": 56.9,
+                    "resistance_ohm": 506.0,
+                    "model": "segal_3a_male_lt20"
+                })
+                .to_string()
+            ],
+        )
+        .unwrap();
+    }
+    drop(db);
+    let (mut app, _) = start_in(Some(dir.path()), profile, None);
+
+    // Today: trend, the latest estimate, the distance to the goal and BMI.
+    app.wait_for("text:/\u{2212}0\\.5 \u{b7} 7d/")?;
+    app.wait_for("text:/Body fat 18\\.3%/")?;
+    app.wait_for("text:/\u{2212}2\\.0 kg to goal/")?;
+    app.wait_for("text:/BMI 22\\.86/")?;
+
+    // The editor reads the estimate and the BMI beside the number.
+    app.press("label:/^Weight, 70\\.0 kg/")?;
+    app.wait_for("Save weight")?;
+    app.wait_for(
+        "text:/Scale estimate \u{b7} Body fat 18\\.3% \u{b7} Muscle 76\\.9% \u{b7} Water 56\\.9%/",
+    )?;
+    app.wait_for("text:BMI 22.86")?;
+    app.press("Save weight")?;
+
+    // Review: the longer window and the body-fat line.
+    app.press("label:Review")?;
+    app.wait_for("text:30 days")?;
+    app.press("90 days")?;
+    app.wait_for("text:Body fat")?;
+
+    // Records: the weight row carries the estimate.
+    app.press("label:Records")?;
+    app.press("Weight")?;
+    app.wait_for("label:/^Weight, 70\\.0 kg/")?;
+    app.wait_for("text:/Body fat 18\\.3%/")?;
+    Ok(())
+}

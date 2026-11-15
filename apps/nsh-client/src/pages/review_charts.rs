@@ -169,9 +169,10 @@ pub fn macros(intake: Memo<Intake>) -> impl IntoElement {
         ))
 }
 
-/// The period's weights as a line, each at its day; nothing with fewer
-/// than two.
-pub fn trend(first: Day, span: f64, points: Vec<Weight>) -> AnyElement {
+/// The period's weights as a line, each at its day, with the goal weight as
+/// a second line when it sits inside the drawn range; nothing with fewer
+/// than two points.
+pub fn trend(first: Day, span: f64, points: Vec<Weight>, goal: Option<f64>) -> AnyElement {
     if points.len() < 2 {
         return view().into_element();
     }
@@ -198,7 +199,28 @@ pub fn trend(first: Day, span: f64, points: Vec<Weight>) -> AnyElement {
             reverse: false,
         })
         .interactive(false)
-        .child(line().text_color(color::INK).stroke_width(px(2.0)));
+        .child(line().text_color(color::INK).stroke_width(px(2.0)))
+        .child(match goal {
+            // The goal rides the drawn range only; outside it the tiles
+            // carry the distance instead.
+            Some(goal) if (low - pad..=high + pad).contains(&goal) => {
+                let goal_rows = Rows::from_columns(
+                    2,
+                    [
+                        ("day".into(), vec![0.0, (span - 1.0).max(1.0)]),
+                        ("goal".into(), vec![goal, goal]),
+                    ],
+                );
+                line()
+                    .data(goal_rows)
+                    .x(Some(RowAccessor::from("day")))
+                    .y(Some(RowAccessor::from("goal")))
+                    .text_color(color::CAUTION)
+                    .stroke_width(px(1.0))
+                    .into_element()
+            }
+            _ => view().into_element(),
+        });
     let caption = |kg| {
         text(format!("{} kg", s().kg(kg)))
             .typo(Type::Caption)
@@ -212,6 +234,49 @@ pub fn trend(first: Day, span: f64, points: Vec<Weight>) -> AnyElement {
                 .typo(Type::Caption)
                 .text_color(color::MUTED),
         )
+        .child(caption(high))
+        .child(line)
+        .child(caption(low))
+        .into_element()
+}
+
+/// The period's estimated body-fat shares as a line, each at its day;
+/// nothing with fewer than two.
+pub fn trend_percent(first: Day, span: f64, points: Vec<(Day, f64)>) -> AnyElement {
+    if points.len() < 2 {
+        return view().into_element();
+    }
+    let (days, shares): (Vec<f64>, Vec<f64>) = points
+        .iter()
+        .map(|(day, fat)| (f64::from(day.days_since(first)), *fat))
+        .unzip();
+    let low = shares.iter().copied().fold(f64::INFINITY, f64::min);
+    let high = shares.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+    let pad = ((1.0 - (high - low)) / 2.0).max(0.0) + 0.2;
+    let rows = Rows::from_columns(days.len(), [("day".into(), days), ("fat".into(), shares)]);
+    let line = plot()
+        .h(px(64.0))
+        .data(rows)
+        .x(Some(RowAccessor::from("day")))
+        .y(Some(RowAccessor::from("fat")))
+        .x_scale(Scale::Linear {
+            domain: Some([0.0, (span - 1.0).max(1.0)]),
+            reverse: false,
+        })
+        .y_scale(Scale::Linear {
+            domain: Some([low - pad, high + pad]),
+            reverse: false,
+        })
+        .interactive(false)
+        .child(line().text_color(color::CAUTION).stroke_width(px(2.0)));
+    let caption = |share| {
+        text(format!("{share:.1}%"))
+            .typo(Type::Caption)
+            .tabular_nums()
+            .text_color(color::MUTED)
+    };
+    view()
+        .gap_1()
         .child(caption(high))
         .child(line)
         .child(caption(low))

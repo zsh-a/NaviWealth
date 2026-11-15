@@ -5,13 +5,19 @@
 use nsh_core::{prelude::*, storage::Storage};
 use serde::{Deserialize, Serialize};
 
-use crate::domain::account::ModelAccount;
+use crate::domain::{account::ModelAccount, weight};
+use navi_health::bodycomp::Sex;
 
 const KEY: &str = "settings.v1";
 const KEY_SECRET: &str = "secret.model-key.v1";
 
 /// The lowest and highest daily goal accepted, in kcal.
 pub const GOAL_RANGE: std::ops::RangeInclusive<f64> = 500.0..=10_000.0;
+
+/// The plausible height range, in centimetres (the scale profiles agree).
+pub const HEIGHT_RANGE: std::ops::RangeInclusive<u16> = 80..=230;
+/// The plausible age range, in years (the scale profiles agree).
+pub const AGE_RANGE: std::ops::RangeInclusive<u16> = 5..=120;
 
 /// Everything the user set.
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
@@ -26,6 +32,16 @@ pub struct Settings {
     pub ledger: LedgerDefaults,
     #[serde(default)]
     pub trusted_capture: Vec<String>,
+    /// The body profile: BMI now, scale estimates later. Never a secret.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub height_cm: Option<u16>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub age_years: Option<u16>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sex: Option<Sex>,
+    /// The goal weight, in kilograms (`None` clears it).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub goal_kg: Option<f64>,
 }
 
 fn settings() -> Signal<Settings> {
@@ -41,6 +57,14 @@ pub fn load() {
         account.api_key = Storage::get_item(KEY_SECRET).unwrap_or_default();
     }
     loaded.goal_kcal = loaded.goal_kcal.filter(|goal| GOAL_RANGE.contains(goal));
+    loaded.height_cm = loaded
+        .height_cm
+        .filter(|height| HEIGHT_RANGE.contains(height));
+    loaded.age_years = loaded.age_years.filter(|age| AGE_RANGE.contains(age));
+    loaded.goal_kg = loaded
+        .goal_kg
+        .filter(|goal| weight::valid_kg(*goal))
+        .map(weight::rounded);
     settings().set(loaded);
 }
 
@@ -111,6 +135,60 @@ pub fn save_account(account: ModelAccount) {
 pub fn save_goal(goal_kcal: Option<f64>) {
     settings().update(|s| {
         s.goal_kcal = goal_kcal.filter(|goal| GOAL_RANGE.contains(goal));
+        persist(s);
+    });
+}
+
+/// The height in centimetres, when set (tracked).
+pub fn height_cm() -> Option<u16> {
+    settings().with(|s| s.height_cm)
+}
+
+/// The age in years, when set (tracked).
+pub fn age_years() -> Option<u16> {
+    settings().with(|s| s.age_years)
+}
+
+/// The sex the estimates need, when set (tracked).
+pub fn sex() -> Option<Sex> {
+    settings().with(|s| s.sex)
+}
+
+/// The goal weight in kilograms, when set (tracked).
+pub fn goal_kg() -> Option<f64> {
+    settings().with(|s| s.goal_kg)
+}
+
+/// Keeps the height (`None` clears it; outside the range is not kept).
+pub fn save_height(height_cm: Option<u16>) {
+    settings().update(|s| {
+        s.height_cm = height_cm.filter(|height| HEIGHT_RANGE.contains(height));
+        persist(s);
+    });
+}
+
+/// Keeps the age (`None` clears it; outside the range is not kept).
+pub fn save_age(age_years: Option<u16>) {
+    settings().update(|s| {
+        s.age_years = age_years.filter(|age| AGE_RANGE.contains(age));
+        persist(s);
+    });
+}
+
+/// Keeps the sex the estimates need (`None` clears it).
+pub fn save_sex(sex: Option<Sex>) {
+    settings().update(|s| {
+        s.sex = sex;
+        persist(s);
+    });
+}
+
+/// Keeps the goal weight (`None` clears it; out of range is not kept).
+pub fn save_goal_kg(goal_kg: Option<f64>) {
+    settings().update(|s| {
+        s.goal_kg = goal_kg
+            .filter(|goal| weight::valid_kg(*goal))
+            .map(weight::rounded);
         persist(s);
     });
 }

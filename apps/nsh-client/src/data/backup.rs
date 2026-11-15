@@ -12,7 +12,7 @@ use nsh_core::{prelude::*, storage::Storage};
 use serde::{Deserialize, Serialize};
 
 use super::{
-    clock, db, favorites, finance, garmin, meals, notes, photos,
+    body_metrics, clock, db, favorites, finance, garmin, meals, notes, photos,
     webdav::{DavError, Folder},
     weights,
 };
@@ -250,6 +250,7 @@ pub async fn restore(name: String) -> Result<(), Failure> {
         favorites::load();
         notes::load();
         weights::load();
+        body_metrics::load();
         garmin::load();
         finance::load().map_err(|_| Failure::Storage)?;
         super::statement_import::load().map_err(|_| Failure::Storage)?;
