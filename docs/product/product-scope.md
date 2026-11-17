@@ -53,7 +53,8 @@ whether the owner uses a feature every day or every week.
 Updated 2026-11-14: the owner chose text-or-image capture with fewer forms.
 
 - A floating tab bar beside one capture button. Capture opens one composer:
-  describe what happened or attach an image. Recognition routes to money,
+  describe what happened or attach up to four images per draft, including
+  evidence added in later turns. Recognition routes to money,
   meals or body weight; the owner need not choose a domain or entry method.
   Explicitly requested multiple records are reviewed together, with their
   count on the confirmation action. A purchase description alone does not
@@ -61,9 +62,11 @@ Updated 2026-11-14: the owner chose text-or-image capture with fewer forms.
 - Capture is a bounded conversation
   ([Capture Conversation](../architecture/capture-conversation.md)): the
   description or photo is the thread's first message, results and
-  clarifying questions are the model's turns, and a correction is the next
-  message. Questions that name an account or category offer tap-first
-  options. The thread lives inside one capture draft and ends with it.
+  clarifying questions are the model's `ask_user` tool calls, and a correction is the next
+  message. Decisions show a reason and unselected options with descriptions.
+  The owner can change selections, add text or images, then submit answers
+  together; the matching tool result continues the draft. Questions that name
+  an account or category offer tap-first options. The thread lives inside one capture draft and ends with it.
   Missing money fields stay missing and prevent confirmation; a named new
   account is shown as new and created only when confirmed. AI never selects a funding
   account merely because a payment app appears in a screenshot.
@@ -76,7 +79,7 @@ Updated 2026-11-14: the owner chose text-or-image capture with fewer forms.
   one compact editor: amount, category/account, a calendar date and optional
   details. Selection views replace the editor body; header and actions stay
   fixed above the keyboard. Only successful saves update remembered choices.
-- The model/server consent names the text, attached image and account names
+- The model/server consent names the text, attached images and account names
   being sent. It is remembered only for that model account when requested.
 - Today shows today. Past days are reached in Records; logging for another
   day changes the date on the review page.

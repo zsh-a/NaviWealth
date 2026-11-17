@@ -288,7 +288,12 @@ Recommended sequence; this is planning, not a claim these items are implemented.
    consent, draft durability and backup exclusion are unchanged. Product
    Scope's Interaction Model and `apps/nsh-client/DESIGN.md` describe the
    thread. Headless flows cover chip answering, multi-turn correction,
-   reopen after restart and degraded bare-string questions. Remaining:
+   reopen after restart and degraded bare-string questions. Image evidence now
+   accepts up to four images per draft, including image-only follow-up turns;
+   text-preserving PNG/JPEG preparation, per-turn replay and unresolved-question
+   confirmation blocking are covered by headless tests. Decisions now use the
+   single `ask_user` tool with editable options, explicit submission and durable
+   tool-result continuation; no automatic tool loop runs. Remaining:
    real-model quality and Android keyboard/device verification.
 
 ## Operating Rules

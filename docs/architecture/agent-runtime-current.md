@@ -66,7 +66,10 @@ openapi/            agent-runtime-api.yaml — HTTP API contract for server-firs
 - `crates/navi-health` performs meal recognition through `llm-protocol` wire
   types and `llm-client` request policy; the NSH client supplies its platform
   fetch as the Host Transport. Recognition is a single-shot draft operation;
-  there is no chat loop, proposal seam or durable resume in the NSH client.
+  there is no chat loop or proposal seam in the NSH client. Unified capture
+  uses the same protocol/client directly for `ask_user` tool calls, persisting
+  the suspended call and owner answers in its local draft. Continuation occurs
+  only when the owner submits or retries; `agent-chat` is not adopted.
 - Domain truth in `crates/navi-finance` and `crates/navi-health` never imports
   runtime crates; only recognition paths do.
 - CI runs `cargo fmt --check` and `cargo test --workspace --locked` inside the

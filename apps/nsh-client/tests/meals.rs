@@ -82,7 +82,8 @@ fn a_photo_is_sent_only_after_consent_and_becomes_editable_foods() -> Result<(),
         .filter(|block| block["type"] == "image")
         .collect();
     assert_eq!(images.len(), 1);
-    assert_eq!(images[0]["source"]["media_type"], "image/jpeg");
+    // The small fixture fits the lossless capture budget.
+    assert_eq!(images[0]["source"]["media_type"], "image/png");
 
     // 480 g × 92 + 150 g × 130 (the catalog's rice, not the model's 1) per 100 g;
     // the total counts up to it.

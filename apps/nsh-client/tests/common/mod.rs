@@ -273,7 +273,7 @@ pub fn garmin_cn_with_delay(delay: Duration) -> Arc<StubNetwork> {
 }
 
 pub fn record_reply(records: Vec<Value>) -> Value {
-    json!({"model":"test-model","stop_reason":"end_turn","content":[{"type":"text","text":json!({"records":records,"questions":[]}).to_string()}]})
+    json!({"model":"test-model","stop_reason":"end_turn","content":[{"type":"text","text":json!({"records":records}).to_string()}]})
 }
 
 pub fn meal_record() -> Value {

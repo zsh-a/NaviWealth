@@ -222,6 +222,7 @@ pub fn apply() {
             Turn::Owner {
                 text: draft.input.clone(),
                 photo: false,
+                images: Vec::new(),
             },
             Turn::Assistant {
                 reply: serde_json::json!({"records":[], "questions":[
@@ -232,6 +233,33 @@ pub fn apply() {
                 questions: vec![question],
             },
         ];
+        if route.as_deref() == Some("capture-ask") {
+            let input = serde_json::json!({"questions":[{
+                "id":"relation", "text":"Do these images show the same purchase?",
+                "reason":"An order and a payment can be evidence for one transaction.",
+                "required":true, "options":[
+                    {"id":"same","label":"Same purchase","description":"Combine the evidence into one record."},
+                    {"id":"separate","label":"Separate purchases","description":"Keep two records for review."}
+                ]
+            }]});
+            let blocks = serde_json::json!([{"type":"tool_use","id":"preview-ask","name":"ask_user","input":input}]);
+            let request =
+                crate::domain::capture::AskUser::parse("preview-ask", &input, blocks).unwrap();
+            draft.transcript.truncate(1);
+            draft.transcript.push(Turn::AskUser { request });
+        }
+        // Optional unsent evidence for desktop layout review, never sent automatically.
+        if let Ok(paths) = env::var("NW_PREVIEW_CAPTURE_IMAGES") {
+            for (index, path) in paths.split(':').take(4).enumerate() {
+                if let Ok(source) = std::fs::read(path)
+                    && let Some((bytes, _)) = photos::prepare_capture(&source)
+                {
+                    let name = format!("{}-preview-{index}.png", draft.id);
+                    photos::keep(&name, &bytes);
+                    draft.attachments.push(name);
+                }
+            }
+        }
         let _ = crate::data::capture::put(draft);
     }
     if has("favorites") && !untracked(favorites::any) {
@@ -528,7 +556,7 @@ pub fn home_opened(
 ) {
     let sheet = match env::var("NW_PREVIEW_ROUTE").as_deref() {
         Ok("capture") => capture,
-        Ok("capture-ready" | "capture-missing") => {
+        Ok("capture-ready" | "capture-missing" | "capture-ask") => {
             capture_id.set(crate::data::capture::all().first().map(|d| d.id.clone()));
             capture
         }

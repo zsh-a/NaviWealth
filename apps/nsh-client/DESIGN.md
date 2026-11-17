@@ -30,17 +30,29 @@ AI only to turn text and images into drafts, using the owner's model account.
   previous result. No domain selection before input and no prefilled form
   as the main result. Missing values ask a concrete question; proposed new
   accounts are marked. Multiple records show their count on confirmation.
+  New model decisions use `ask_user`: each question shows its reason and
+  whether an answer is needed, then full-width choices with short descriptions.
+  No choice is preselected. Tapping stages a choice with a check; tapping again
+  clears it. Submit answers is the single primary continuation action, and the
+  composer accepts extra text or photos. Selection persists immediately, while
+  the model is called only on submission. Historical decisions have no active
+  choices and the owner turn records the submitted answers. Pending tools and
+  failed continuations withhold confirmation until a final result arrives.
   Manual meal/money/weight actions are secondary under one disclosure;
   favorites remain directly available with Undo. Close is a labelled cross,
   separate from Confirm and save; Discard draft is a header action with
   Undo; closing a nonempty draft reports that the draft is kept and no
   records were saved.
   The composer is the one stable input, pinned in the task actions above the
-  keyboard: an accessible photo icon before the first message, the input
+  keyboard: an accessible photo icon on every owner turn, the input
   (labelled What would you like to record? / 想记下什么？) and a round send
   button. The action row above it swaps the task's current action:
   Recognize on the consent sheet, Review later while the model works,
   Set up without a model, and Confirm and save once the records are ready.
+  The draft accepts up to four images across all turns. Unsent evidence appears
+  as contained thumbnails with visible Remove image actions; sent thumbnails
+  stay with their owner message. At the limit, attachment is disabled. Pending
+  questions or unsent evidence withhold confirmation.
   Only a draft with no thread yet requests initial focus after the sheet
   opens; a ready result stays readable.
   Account rows in a ready result open an existing-account picker in the same

@@ -3,7 +3,7 @@
 use super::{clock, db, finance, meals, photos, tasks, vision, weights};
 use crate::domain::{
     account::ModelAccount,
-    capture::{Draft, MAX_INPUT, PROMPT_VERSION, Record, Status, Turn},
+    capture::{Draft, MAX_ATTACHMENTS, MAX_INPUT, PROMPT_VERSION, Record, Status, Turn},
     meal::{Meal, encode_meal},
     recognition::Lang,
 };
@@ -42,6 +42,8 @@ pub fn new() -> Draft {
         input: String::new(),
         correction: String::new(),
         photo: None,
+        attachments: Vec::new(),
+        answers: Vec::new(),
         records: Vec::new(),
         question: String::new(),
         transcript: Vec::new(),
@@ -86,10 +88,13 @@ pub fn get(id: &str) -> Option<Draft> {
     state().with(|s| s.0.iter().find(|d| d.id == id).cloned())
 }
 pub fn photo_names() -> HashSet<String> {
-    state().with(|s| s.0.iter().filter_map(|d| d.photo.clone()).collect())
+    state().with(|s| s.0.iter().flat_map(Draft::image_names).collect())
 }
 
 pub fn put(draft: Draft) -> Result<(), String> {
+    if draft.image_names().len() > MAX_ATTACHMENTS {
+        return Err("too many images".into());
+    }
     let body = serde_json::to_string(&draft).map_err(|e| e.to_string())?;
     db::with(|c| c.execute("INSERT INTO capture_drafts(id,created_at_ms,body) VALUES (?1,?2,?3) ON CONFLICT(id) DO UPDATE SET body=excluded.body",
         params![draft.id,draft.created_at_ms,body])).ok_or("database unavailable")?.map_err(|e| e.to_string())?;
@@ -118,33 +123,32 @@ pub fn recognize(
     if draft.input.chars().count() > MAX_INPUT || draft.correction.chars().count() > MAX_INPUT {
         return Err("input too long".into());
     }
-    // The composed message joins the thread as an owner turn; a retry
-    // (nothing composed) re-asks the last one. The first send turns the
-    // composer's text and photo into the thread's first message.
-    let message = draft.correction.trim().to_owned();
-    if draft.transcript.is_empty() {
-        if draft.input.trim().is_empty() && draft.photo.is_none() {
-            return Err("empty input".into());
-        }
-        draft.transcript.push(Turn::Owner {
-            text: draft.input.clone(),
-            photo: draft.photo.is_some(),
-        });
-    } else if !message.is_empty() {
-        draft.transcript.push(Turn::Owner {
-            text: message,
-            photo: false,
-        });
+    if draft.image_names().len() > MAX_ATTACHMENTS {
+        return Err("too many images".into());
     }
-    draft.correction.clear();
+    if let Some(kept) = untracked(|| get(&draft.id)) {
+        if kept.status == Status::Analyzing {
+            return Ok(());
+        }
+        if draft.pending_ask_user().map(|ask| &ask.call_id)
+            != kept.pending_ask_user().map(|ask| &ask.call_id)
+        {
+            return Err("question changed; reopen the draft".into());
+        }
+    }
+    prepare_turn(&mut draft)?;
     consent
         .check(&vision::upload_target(&account))
         .map_err(|e| e.to_string())?;
-    let jpeg = draft
-        .photo
-        .as_ref()
-        .map(|name| photos::bytes(name).ok_or("image unavailable"))
-        .transpose()?;
+    let images = draft
+        .image_names()
+        .into_iter()
+        .map(|name| {
+            photos::bytes(&name)
+                .map(|bytes| (name, bytes))
+                .ok_or("image unavailable")
+        })
+        .collect::<Result<Vec<_>, _>>()?;
     let id = draft.id.clone();
     if untracked(|| get(&id)).is_some_and(|d| d.status == Status::Analyzing) {
         return Ok(());
@@ -160,14 +164,19 @@ pub fn recognize(
         "known_categories":navi_finance::currency::Currency::ALL.into_iter().flat_map(|currency| navi_finance::account::defaults::all().into_iter().filter(|a| matches!(a.kind(),navi_finance::account::AccountKind::Expenses|navi_finance::account::AccountKind::Income)).map(move |a|a.in_currency(currency).to_string())).collect::<Vec<_>>()});
     tasks::spawn_app(async move {
         let response =
-            vision::recognize_record(account, draft.clone(), jpeg, lang, consent, context).await;
+            vision::recognize_record(account, draft.clone(), images, lang, consent, context).await;
         if RUNS.with(|r| r.borrow().get(&id).copied()) != Some(run)
             || untracked(|| get(&id)).is_none()
         {
             return;
         }
         match response {
-            Ok((records, questions, reply, model)) => {
+            Ok(vision::CaptureResponse::Records {
+                records,
+                questions,
+                reply,
+                model,
+            }) => {
                 let proposed = records.len();
                 draft.records = records;
                 draft.model = model;
@@ -179,6 +188,15 @@ pub fn recognize(
                     questions,
                 });
                 draft.status = Status::Ready;
+            }
+            Ok(vision::CaptureResponse::AskUser { request, model }) => {
+                if accept_ask_user(&mut draft, request, model).is_err() {
+                    FAILURES.with(|f| {
+                        f.borrow_mut()
+                            .insert(id.clone(), crate::domain::VisionFailure::Unreadable)
+                    });
+                    draft.status = Status::Failed;
+                }
             }
             Err(error) => {
                 log::warn!("capture: recognition failed: {error:?}");
@@ -199,6 +217,70 @@ pub fn recognize(
     Ok(())
 }
 
+/// A provider call may suspend only after the preceding owner message or tool
+/// result. It may neither replace an unanswered decision nor reuse a call id.
+fn accept_ask_user(
+    draft: &mut Draft,
+    request: crate::domain::capture::AskUser,
+    model: String,
+) -> Result<(), String> {
+    if draft.pending_ask_user().is_some()
+        || draft.transcript.iter().any(|turn| {
+            matches!(turn, Turn::AskUser { request: prior } if prior.call_id == request.call_id)
+        })
+    {
+        return Err("duplicate or overlapping decision".into());
+    }
+    draft.model = model;
+    draft.answers.clear();
+    draft.transcript.push(Turn::AskUser { request });
+    draft.status = Status::Ready;
+    Ok(())
+}
+
+/// Commit exactly one owner-initiated continuation to the draft. A failed
+/// request retries its already committed message instead of duplicating it.
+fn prepare_turn(draft: &mut Draft) -> Result<(), String> {
+    let message = draft.correction.trim().to_owned();
+    let images = draft.staged_images();
+    if let Some(request) = draft.pending_ask_user() {
+        request
+            .validate_answers(&draft.answers, &message, !images.is_empty())
+            .map_err(|_| "invalid answer".to_owned())?;
+        let call_id = request.call_id.clone();
+        draft.transcript.push(Turn::ToolAnswer {
+            call_id,
+            answers: std::mem::take(&mut draft.answers),
+            text: message,
+            images,
+        });
+    } else {
+        // Answers must never fall through into plain text or a different call.
+        if !draft.answers.is_empty() {
+            return Err("no pending question".into());
+        }
+        if draft.transcript.is_empty() {
+            if draft.input.trim().is_empty() && images.is_empty() {
+                return Err("empty input".into());
+            }
+            draft.transcript.push(Turn::Owner {
+                text: draft.input.clone(),
+                photo: !images.is_empty(),
+                images,
+            });
+        } else if !message.is_empty() || !images.is_empty() {
+            draft.transcript.push(Turn::Owner {
+                text: message,
+                photo: !images.is_empty(),
+                images,
+            });
+        }
+    }
+    draft.attachments.clear();
+    draft.correction.clear();
+    Ok(())
+}
+
 fn entry(draft: &Draft, index: usize, day: crate::domain::meal::Day) -> Entry {
     Entry {
         id: format!("{}-{index}", draft.id),
@@ -214,9 +296,30 @@ fn entry(draft: &Draft, index: usize, day: crate::domain::meal::Day) -> Entry {
     }
 }
 
+/// An answered tool call still needs a validated final model reply. In
+/// particular, "keep previous result" after a failed continuation cannot
+/// accidentally confirm records from before the pending decision.
+pub fn awaiting_tool_resolution(draft: &Draft) -> bool {
+    draft
+        .transcript
+        .iter()
+        .rev()
+        .find_map(|turn| match turn {
+            Turn::AskUser { .. } => Some(true),
+            Turn::Assistant { .. } => Some(false),
+            Turn::Owner { .. } | Turn::ToolAnswer { .. } => None,
+        })
+        .unwrap_or(false)
+}
+
 pub fn ready(draft: &Draft) -> bool {
     draft.status == Status::Ready
         && draft.correction.trim().is_empty()
+        && !draft.has_staged_images()
+        && draft.answers.is_empty()
+        && draft.pending_ask_user().is_none()
+        && !awaiting_tool_resolution(draft)
+        && draft.pending_questions().is_empty()
         && !draft.records.is_empty()
         && draft.records.iter().enumerate().all(|(i, r)| match r {
             Record::Money { day, draft: money } => {
@@ -291,4 +394,141 @@ pub fn confirm(id: &str) -> Result<(), String> {
         log::error!("capture: ledger refresh failed: {error}");
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod ask_user_tests {
+    use super::*;
+    use crate::domain::capture::{AskAnswer, AskOption, AskQuestion, AskUser};
+
+    fn pending() -> Draft {
+        let mut draft = new();
+        draft.status = Status::Ready;
+        draft.transcript.push(Turn::Owner {
+            text: "Lunch".into(),
+            photo: false,
+            images: Vec::new(),
+        });
+        draft.transcript.push(Turn::AskUser {
+            request: AskUser {
+                call_id: "ask-portion".into(),
+                questions: vec![AskQuestion {
+                    id: "portion".into(),
+                    text: "How much did you eat?".into(),
+                    reason: "The photo does not show consumption.".into(),
+                    required: true,
+                    options: vec![AskOption {
+                        id: "half".into(),
+                        label: "Half".into(),
+                        description: "100 g".into(),
+                    }],
+                }],
+                blocks: serde_json::json!([]),
+            },
+        });
+        draft
+    }
+
+    #[test]
+    fn answer_is_bound_to_call_and_retry_does_not_duplicate_it() {
+        let mut draft = pending();
+        assert!(!ready(&draft));
+        let before = draft.clone();
+        assert!(prepare_turn(&mut draft).is_err());
+        assert_eq!(
+            draft, before,
+            "no user input leaves pending decision untouched"
+        );
+        draft.answers.push(AskAnswer {
+            question_id: "portion".into(),
+            option_id: Some("half".into()),
+            text: String::new(),
+        });
+        prepare_turn(&mut draft).unwrap();
+        assert!(draft.answers.is_empty());
+        assert!(
+            matches!(draft.transcript.last(), Some(Turn::ToolAnswer { call_id, answers, .. })
+            if call_id == "ask-portion" && answers[0].question_id == "portion")
+        );
+        let committed = draft.clone();
+        prepare_turn(&mut draft).unwrap();
+        assert_eq!(
+            draft, committed,
+            "failed continuation retries the same tool result"
+        );
+    }
+
+    #[test]
+    fn wrong_question_answer_is_rejected_without_consuming_evidence() {
+        let mut draft = pending();
+        draft.answers.push(AskAnswer {
+            question_id: "another-question".into(),
+            option_id: Some("half".into()),
+            text: String::new(),
+        });
+        draft.attachments.push("label.png".into());
+        let before = draft.clone();
+        assert!(prepare_turn(&mut draft).is_err());
+        assert_eq!(draft, before);
+    }
+
+    #[test]
+    fn image_only_answer_keeps_evidence_with_the_tool_result() {
+        let mut draft = pending();
+        draft.attachments.push("label.png".into());
+        prepare_turn(&mut draft).unwrap();
+        assert!(draft.attachments.is_empty());
+        assert!(
+            matches!(draft.transcript.last(), Some(Turn::ToolAnswer { call_id, images, .. })
+            if call_id == "ask-portion" && images == &["label.png"])
+        );
+        assert!(draft.image_names().contains(&"label.png".to_owned()));
+    }
+    #[test]
+    fn answered_tool_still_requires_a_final_reply_before_confirmation() {
+        let mut draft = pending();
+        draft.correction = "I ate half".into();
+        prepare_turn(&mut draft).unwrap();
+        assert!(awaiting_tool_resolution(&draft));
+        draft.transcript.push(Turn::Assistant {
+            reply: "{}".into(),
+            records: 0,
+            questions: Vec::new(),
+        });
+        assert!(!awaiting_tool_resolution(&draft));
+    }
+    #[test]
+    fn a_new_tool_call_cannot_replace_an_unanswered_decision() {
+        let mut draft = pending();
+        let mut request = draft.pending_ask_user().unwrap().clone();
+        request.call_id = "different-call".into();
+        let before = draft.clone();
+        assert!(accept_ask_user(&mut draft, request, "test".into()).is_err());
+        assert_eq!(draft, before);
+    }
+
+    #[test]
+    fn an_answered_tool_call_id_cannot_be_reused() {
+        let mut draft = pending();
+        let request = draft.pending_ask_user().unwrap().clone();
+        draft.correction = "Half".into();
+        prepare_turn(&mut draft).unwrap();
+        let before = draft.clone();
+        assert!(accept_ask_user(&mut draft, request, "test".into()).is_err());
+        assert_eq!(draft, before);
+    }
+    #[test]
+    fn explicit_submission_can_skip_all_optional_questions() {
+        let mut draft = pending();
+        let Some(Turn::AskUser { request }) = draft.transcript.last_mut() else {
+            panic!("ask");
+        };
+        request.questions[0].required = false;
+        prepare_turn(&mut draft).unwrap();
+        assert!(
+            matches!(draft.transcript.last(), Some(Turn::ToolAnswer { call_id, answers, text, images })
+            if call_id == "ask-portion" && answers.is_empty() && text.is_empty() && images.is_empty())
+        );
+        assert!(awaiting_tool_resolution(&draft));
+    }
 }

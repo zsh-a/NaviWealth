@@ -2,6 +2,7 @@
 //! thread's first message, and results, questions and corrections are its
 //! turns. Forms are an explicit manual fallback.
 mod accounts;
+mod decisions;
 mod favorites;
 mod summary;
 
@@ -10,7 +11,7 @@ use crate::{
     data::{capture, clock, photos, settings, vision},
     domain::{
         account::ModelAccount,
-        capture::{Draft, MAX_INPUT, Question, Status, Turn},
+        capture::{Draft, MAX_ATTACHMENTS, MAX_INPUT, Question, Status, Turn},
     },
     i18n::s,
     nav::{self, Route},
@@ -26,12 +27,10 @@ use crate::{
     },
 };
 use navi_health::consent::Consent;
-use nsh_core::{
-    geometry::{DevicePixels, Percentage},
-    picker::PickRequest,
-    prelude::*,
-};
+use nsh_core::{picker::PickRequest, prelude::*};
 use std::rc::Rc;
+
+static NEXT_IMAGE: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 
 pub fn capture_editor(sheets: Sheets) -> impl IntoElement {
     retained(
@@ -49,9 +48,7 @@ pub fn capture_editor(sheets: Sheets) -> impl IntoElement {
 
 fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
     crate::ui::toast::clear_notice();
-    if let Some(photo) = initial.photo.clone() {
-        spawn(photos::load(vec![photo]));
-    }
+    spawn(photos::load(initial.image_names()));
     let id = stored(initial.id.clone());
     let draft = signal(initial);
     let error = signal(None::<String>);
@@ -100,7 +97,7 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
         let d = current();
         if d.transcript.is_empty()
             && d.input.trim().is_empty()
-            && d.photo.is_none()
+            && d.image_names().is_empty()
             && let Err(cause) = capture::remove(&d.id)
         {
             log::error!("capture: {cause}");
@@ -108,7 +105,7 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
             return;
         }
         let retained = !d.input.trim().is_empty()
-            || d.photo.is_some()
+            || !d.image_names().is_empty()
             || !d.records.is_empty()
             || !d.transcript.is_empty();
         if d.status != Status::Analyzing
@@ -128,6 +125,14 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
     let run = move |account: ModelAccount| {
         error.set(None);
         let d = current();
+        if let Some(request) = d.pending_ask_user()
+            && request
+                .validate_answers(&d.answers, &d.correction, d.has_staged_images())
+                .is_err()
+        {
+            error.set(Some(s().capture_answer_needed.into()));
+            return;
+        }
         if input.get_untracked().chars().count() > MAX_INPUT {
             error.set(Some(s().capture_too_long.into()));
             return;
@@ -163,21 +168,38 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
     };
     let attach = move || {
         picking.set(true);
-        let mut request = PickRequest::new(false, 1);
-        request.max_dimension = Some(DevicePixels(1600));
-        request.quality = Some(Percentage(0.9));
-        let picked = pick_images(request);
+        let remaining =
+            draft.with_untracked(|d| MAX_ATTACHMENTS.saturating_sub(d.image_names().len()));
+        if remaining == 0 {
+            picking.set(false);
+            return;
+        }
+        // Keep source detail: capture normalization strips metadata and bounds
+        // memory/bytes without the picker's preliminary lossy resize.
+        let picked = pick_images(PickRequest::new(true, remaining as u32));
         spawn(async move {
-            if let Some(file) = picked.await.into_iter().next() {
+            for file in picked.await.into_iter().take(remaining) {
                 let bytes = file.data.to_vec();
-                let prepared = blocking(move || photos::prepare(&bytes))
+                let prepared = blocking(move || photos::prepare_capture(&bytes))
                     .await
                     .ok()
                     .flatten();
                 if let Some((upload, _)) = prepared {
-                    let name = id.with(|id| format!("{id}.jpg"));
+                    let serial = NEXT_IMAGE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                    let extension = if upload.starts_with(b"\x89PNG") {
+                        "png"
+                    } else {
+                        "jpg"
+                    };
+                    let name =
+                        id.with(|id| format!("{id}-{}-{serial}.{extension}", clock::now_ms()));
                     photos::keep(&name, &upload);
-                    draft.update(|d| d.photo = Some(name));
+                    draft.update(|d| {
+                        if d.photo.is_none() && d.transcript.is_empty() {
+                            d.photo = Some(name.clone());
+                        }
+                        d.attachments.push(name);
+                    });
                 } else {
                     error.set(Some(s().failure_photo.0.into()));
                 }
@@ -298,7 +320,11 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                     let sheets = Sheets::get();
                     view()
                         .gap_4()
-                        .child(thread(&d, draft, input, choosing, send, arrived))
+                        .child(thread(&d, draft, input, choosing, send, arrived, error))
+                        .child(
+                            (!d.transcript.is_empty() && d.has_staged_images())
+                                .then(|| staged_images(&d, draft)),
+                        )
                         .child(hairline(0.0))
                         .child(disclosure(manual, || s().capture_manual.into()))
                         .child(when(
@@ -356,9 +382,10 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
             let picking_account = choosing.get().is_some();
             let ready_now = {
                 let mut d = draft.get_untracked();
-                d.correction = input.get_untracked();
+                d.correction = input.get();
                 capture::ready(&d)
             };
+            let asking = draft.with(|d| d.pending_ask_user().is_some());
             let connected = settings::ready_account().is_some();
             untracked(move || {
                 if picking_account {
@@ -390,6 +417,26 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                                 nav::push(Route::ModelSettings);
                             }
                         })
+                        .into_element();
+                }
+                if asking {
+                    return Btn::primary()
+                        .label(|| s().capture_submit_answers.into())
+                        .disabled(move || {
+                            picking.get()
+                                || draft.with(|d| {
+                                    d.pending_ask_user().is_none_or(|request| {
+                                        request
+                                            .validate_answers(
+                                                &d.answers,
+                                                &input.get(),
+                                                d.has_staged_images(),
+                                            )
+                                            .is_err()
+                                    })
+                                })
+                        })
+                        .on_press(send)
                         .into_element();
                 }
                 if ready_now {
@@ -442,15 +489,18 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                     .flex_row()
                     .gap_2()
                     .items_center()
-                    .child(when(
-                        move || draft.with(|d| d.transcript.is_empty()),
-                        move || {
-                            IconBtn::new(Icon::Photo, || s().capture_photo.into())
-                                .variant(Variant::Tonal)
-                                .on_press(attach)
-                                .disabled(move || picking.get())
-                        },
-                    ))
+                    .child(
+                        IconBtn::new(Icon::Photo, || s().capture_photo.into())
+                            .variant(Variant::Tonal)
+                            .on_press(attach)
+                            .disabled(move || {
+                                picking.get()
+                                    || draft.with(|d| {
+                                        d.status == Status::Analyzing
+                                            || d.image_names().len() >= MAX_ATTACHMENTS
+                                    })
+                            }),
+                    )
                     .child(
                         text_input(input)
                             .element_ref(&focus)
@@ -465,19 +515,21 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                                 }
                             }),
                     )
-                    .child(
-                        IconBtn::new(Icon::Send, || s().capture_send.into())
-                            .variant(Variant::Primary)
-                            .side(44.0)
-                            .on_press(send)
-                            .disabled(move || {
-                                picking.get()
-                                    || draft.with(|d| d.status == Status::Analyzing)
-                                    || input.get().trim().is_empty()
-                                        && draft
-                                            .with(|d| d.transcript.is_empty() && d.photo.is_none())
-                            }),
-                    )
+                    .child(when(
+                        move || draft.with(|d| d.pending_ask_user().is_none()),
+                        move || {
+                            IconBtn::new(Icon::Send, || s().capture_send.into())
+                                .variant(Variant::Primary)
+                                .side(44.0)
+                                .on_press(send)
+                                .disabled(move || {
+                                    picking.get()
+                                        || draft.with(|d| d.status == Status::Analyzing)
+                                        || input.get().trim().is_empty()
+                                            && draft.with(|d| !d.has_staged_images())
+                                })
+                        },
+                    ))
             },
         ));
     fitted_task_sheet(
@@ -506,6 +558,7 @@ fn thread(
     choosing: Signal<Option<accounts::Choice>>,
     send: impl Fn() + Copy + 'static,
     arrived: Stored<usize>,
+    error: Signal<Option<String>>,
 ) -> impl IntoElement {
     if draft.transcript.is_empty() {
         arrived.replace(0);
@@ -529,8 +582,71 @@ fn thread(
     let mut items: Vec<AnyElement> = Vec::new();
     for (index, turn) in draft.transcript.iter().enumerate() {
         let element = match turn {
-            Turn::Owner { text, photo } => {
-                owner_turn(text, *photo && index == 0, draft.photo.as_deref())
+            Turn::Owner {
+                text,
+                photo,
+                images,
+            } => {
+                let mut names = images.clone();
+                if names.is_empty() && *photo && index == 0 {
+                    names.extend(draft.photo.iter().cloned());
+                }
+                owner_turn(text, &names)
+            }
+            Turn::AskUser { request } => {
+                let open = index == latest && draft.status == Status::Ready;
+                view()
+                    .flex_row()
+                    .gap_2()
+                    .items_stretch()
+                    .child(ai_mark())
+                    .child(decisions::questions(
+                        request,
+                        draft,
+                        signal_draft,
+                        input,
+                        error,
+                        open,
+                    ))
+                    .into_element()
+            }
+            Turn::ToolAnswer {
+                call_id,
+                answers,
+                text,
+                images,
+            } => {
+                let request = draft.transcript[..index]
+                    .iter()
+                    .rev()
+                    .find_map(|turn| match turn {
+                        Turn::AskUser { request } if &request.call_id == call_id => Some(request),
+                        _ => None,
+                    });
+                let mut lines = Vec::new();
+                if let Some(request) = request {
+                    for answer in answers {
+                        if let Some(question) = request
+                            .questions
+                            .iter()
+                            .find(|q| q.id == answer.question_id)
+                        {
+                            let choice = answer
+                                .option_id
+                                .as_ref()
+                                .and_then(|id| question.options.iter().find(|o| &o.id == id));
+                            let label = choice.map(|o| o.label.as_str()).unwrap_or(&answer.text);
+                            lines.push(format!("{}: {}", question.text, label));
+                        }
+                    }
+                }
+                if !text.trim().is_empty() {
+                    lines.push(text.clone());
+                }
+                if lines.is_empty() && images.is_empty() {
+                    lines.push(s().capture_skipped_optional.to_owned());
+                }
+                owner_turn(&lines.join("\n"), images)
             }
             Turn::Assistant {
                 records, questions, ..
@@ -631,22 +747,26 @@ fn thread(
                                         }
                                     },
                                 ))
-                                .child((!draft.records.is_empty()).then(|| {
-                                    Btn::ghost()
-                                        .label(|| s().capture_keep_result.into())
-                                        .on_press(move || {
-                                            input.set(String::new());
-                                            signal_draft.update(|d| {
-                                                d.status = Status::Ready;
-                                                d.correction.clear();
-                                            });
-                                            if let Err(e) =
-                                                capture::put(signal_draft.get_untracked())
-                                            {
-                                                log::error!("capture: {e}");
-                                            }
-                                        })
-                                })),
+                                .child(
+                                    (!draft.records.is_empty()
+                                        && !capture::awaiting_tool_resolution(draft))
+                                    .then(|| {
+                                        Btn::ghost()
+                                            .label(|| s().capture_keep_result.into())
+                                            .on_press(move || {
+                                                input.set(String::new());
+                                                signal_draft.update(|d| {
+                                                    d.status = Status::Ready;
+                                                    d.correction.clear();
+                                                });
+                                                if let Err(e) =
+                                                    capture::put(signal_draft.get_untracked())
+                                                {
+                                                    log::error!("capture: {e}");
+                                                }
+                                            })
+                                    }),
+                                ),
                         ),
                 )
                 .into_element(),
@@ -669,9 +789,15 @@ fn ai_mark() -> impl IntoElement {
 }
 
 /// The owner's message: its photo beside an ink pill, on the right.
-fn owner_turn(message: &str, photo: bool, photo_name: Option<&str>) -> AnyElement {
-    let mut row = view().flex_row().justify_end().items_center().gap_2();
-    if let Some(name) = photo_name.filter(|_| photo).map(str::to_owned) {
+fn owner_turn(message: &str, images: &[String]) -> AnyElement {
+    let mut row = view()
+        .flex_row()
+        .flex_wrap()
+        .justify_end()
+        .items_center()
+        .gap_2();
+    for name in images {
+        let name = name.clone();
         row = row.child(
             image(move || photos::uri(&name).unwrap_or_default())
                 .size(px(48.0))
@@ -752,24 +878,11 @@ fn question_turn(
 fn empty_composer(draft: &Draft, signal_draft: Signal<Draft>) -> impl IntoElement {
     view()
         .gap_3()
-        .child(draft.photo.as_ref().map(|name| {
-            let name = name.clone();
-            view()
-                .flex_row()
-                .items_center()
-                .gap_3()
-                .child(
-                    image(move || photos::uri(&name).unwrap_or_default())
-                        .size(px(72.0))
-                        .object_fit(ResizeMode::Cover)
-                        .rounded(px(12.0)),
-                )
-                .child(
-                    Btn::ghost()
-                        .label(|| s().capture_remove_photo.into())
-                        .on_press(move || signal_draft.update(|d| d.photo = None)),
-                )
-        }))
+        .child(
+            draft
+                .has_staged_images()
+                .then(|| staged_images(draft, signal_draft)),
+        )
         .child(when(
             || settings::ready_account().is_none(),
             || {
@@ -778,4 +891,41 @@ fn empty_composer(draft: &Draft, signal_draft: Signal<Draft>) -> impl IntoElemen
                     .text_color(color::MUTED)
             },
         ))
+}
+
+/// Unsent evidence stays removable; sent evidence belongs to its thread turn.
+fn staged_images(draft: &Draft, signal_draft: Signal<Draft>) -> impl IntoElement {
+    let names = draft.staged_images();
+    view()
+        .gap_2()
+        .child((!names.is_empty()).then(|| {
+            text(|| s().capture_image_hint)
+                .typo(Type::Caption)
+                .text_color(color::MUTED)
+        }))
+        .children(names.into_iter().map(|name| {
+            let image_name = name.clone();
+            view()
+                .flex_row()
+                .items_center()
+                .gap_3()
+                .child(
+                    image(move || photos::uri(&image_name).unwrap_or_default())
+                        .size(px(64.0))
+                        .object_fit(ResizeMode::Contain)
+                        .rounded(px(radius::THUMB)),
+                )
+                .child(
+                    Btn::ghost()
+                        .label(|| s().capture_remove_photo.into())
+                        .on_press(move || {
+                            signal_draft.update(|d| {
+                                d.attachments.retain(|kept| kept != &name);
+                                if d.transcript.is_empty() && d.photo.as_ref() == Some(&name) {
+                                    d.photo = d.attachments.first().cloned();
+                                }
+                            })
+                        }),
+                )
+        }))
 }

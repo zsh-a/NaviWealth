@@ -33,8 +33,9 @@ confirmation; drafts live in SQLite and stay out of backups.
    disappear.
 2. **A bounded conversation, not AI chat.** The thread exists only inside
    one capture draft. The model only ever answers owner-initiated turns:
-   no autonomous turns, no tools, no background rounds, no named agents,
-   and no memory across drafts. It discusses nothing beyond turning the
+   no autonomous turns, no background rounds, no named agents,
+   and no memory across drafts. The only tool is `ask_user`, which suspends
+   the current request for an explicit owner response. It discusses nothing beyond turning the
    input into records. Confirming consumes the thread; discarding deletes
    it. Threads stay out of backups, like drafts today.
 3. **The confirmation boundary is unchanged.** A thread never saves
@@ -42,18 +43,25 @@ confirmation; drafts live in SQLite and stay out of backups.
    records, enabled only when every record is valid; missing money fields
    stay missing and block confirmation; estimates stay marked; a named new
    account is created only on confirm; the consent gate is unchanged.
-4. **Questions become structured.** The per-turn response schema grows
-   from `question: string` to `questions: [{text, kind, options}]` with
-   tap-first options drawn from known accounts and categories (free text
-   remains). Records and questions may share a turn; confirmation stays
-   gated on readiness. The change is client-local
-   (`apps/nsh-client/src/domain/capture.rs`), bumps `PROMPT_VERSION`, and
-   touches neither `navi-finance` nor `navi-health`.
-5. **Real multi-turn requests.** With a thread present, requests carry the
-   conversation as proper alternating messages instead of re-embedding the
-   draft in one user message. Photos ride only on the first turn. A bare
-   string question from an older response degrades to a single plain
-   question turn.
+4. **Decisions use one tool.** The model calls only `ask_user`, with one
+   to three questions. Each has a stable ID, question text, reason, required
+   flag and up to four choices with IDs, labels and descriptions. Nothing is
+   preselected. Choices are staged locally, can be changed, and are submitted
+   together through Submit answers; text and image-only evidence remain valid
+   responses. Required questions need an answer or supplemental evidence;
+   optional questions may be omitted. Omitting a question is not consent to an
+   invented fact. Missing money fields still prevent confirmation.
+5. **Protocol-correct continuation.** An assistant tool call (including its
+   original signed content blocks) persists in the draft. The owner response
+   references that exact call ID and replays as a tool result, followed by any
+   supplemental image message. One owner submission makes one model request;
+   the app never automatically resumes or loops over tools. Only one
+   `ask_user` call is accepted in a response. Unknown tools, malformed arguments
+   and reused call IDs fail without writing records. A normal final answer
+   contains only the complete records array; questions do not have a second
+   live response channel. Existing stored plain questions and option chips
+   remain readable for backward compatibility. Images replay with the owner
+   turn or tool answer that supplied them.
 6. **No fake streaming.** NSH `fetch` returns a whole body, so text never
    types out progressively. Presence while working is a typing indicator
    in the thread; results arrive as whole turns with the existing appear
@@ -81,11 +89,49 @@ confirmation; drafts live in SQLite and stay out of backups.
 - Product Scope Rule 3 changes from "not a chat timeline" to the bounded
   conversation above; the Removed entry for "AI chat" refers to free-form
   chat and agents, not to this thread.
-- Cost and latency scale with owner-initiated turns only; photos ride once.
+- Cost and latency scale with owner-initiated turns only; each photo belongs to its owner turn and is replayed with that turn in subsequent requests.
   Multi-turn prompt quality becomes part of the existing "real-model
   quality" verification item.
 - `agent-chat` from the Agent Runtime is not adopted: its durable
-  interaction and tool machinery serves autonomous loops; the thread needs
-  only message history and structured questions.
+  interaction and tool machinery serves autonomous loops; the thread uses
+  `llm-protocol` tool-use/result blocks with a single suspended tool.
 - Headless flows gain thread scenarios: chip answering, multi-turn
   correction, reopen-after-restart, degraded bare-string questions.
+
+## Image evidence
+
+A draft accepts at most four images across the whole thread. The composer
+accepts images on the first turn and on later owner-initiated turns, including
+an image-only answer. Unsent images can be removed; sent images remain with
+their original message. Closing/reopening and interrupted-request retries
+preserve these references. Older single-photo drafts remain readable.
+
+The model distinguishes multiple views or documents for one record from
+independent records. It reconciles the same serving or transaction once;
+labels support the matching product and after-meal photos describe leftovers.
+Unclear relationships or materially missing consumption information prompt a
+short question with useful choices or a request for supporting evidence.
+Outstanding questions and unsent evidence prevent confirmation.
+
+Capture uses metadata-free images bounded to a 4096 px edge, four megapixels
+and 2 MiB each. Lossless PNG is preferred when within the byte budget; noisy
+images use bounded high-quality JPEG. The picker does not first shrink or
+lossily encode capture inputs. The durable evidence is the same normalized
+image used for requests; MIME follows its actual encoding. This differs from
+the smaller meal-photo preparation path. Recognition quality still needs
+comparison against real owner samples; headless tests establish flow and wire
+contracts, not estimation accuracy.
+
+## Ask User durability and confirmation
+
+A pending tool call, staged answers and staged images survive close/reopen and
+restart. Choices carry no record side effects. A failed continuation retains
+the exact tool result for an owner-initiated retry; it does not create a second
+answer. The UI verifies the active call ID before applying a choice, and cannot
+submit historical questions. Consent still covers text, images and account
+names sent to the owner's configured model.
+
+While a tool is pending, while its answer awaits a successful final model
+reply, or while any new answer/text/image is unsent, confirmation is blocked.
+Keeping an earlier recognition result after a failed continuation cannot bypass
+that gate. Final confirmation remains one atomic batch write.

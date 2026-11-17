@@ -1,7 +1,6 @@
-//! Meal photos. A picked photo becomes one upright JPEG of at most 1280 px
-//! to send (re-encoding drops EXIF and GPS metadata) and a smaller one to
-//! keep. Kept photos live only in the app's data directory: they are never
-//! synced or uploaded again.
+//! Local meal and capture images. Re-encoding strips source metadata.
+//! Capture keeps a text-preserving PNG or JPEG for subsequent recognition turns.
+//! Images stay in the app directory unless explicitly sent or exported.
 
 use std::{
     collections::HashMap,
@@ -13,15 +12,25 @@ use std::{
 use base64::Engine;
 use nsh_core::prelude::*;
 
-/// Image decoding, orientation and metadata stripping are shared with Flutter.
+/// Legacy meal preparation uses the shared health core.
 pub fn prepare(bytes: &[u8]) -> Option<(Vec<u8>, Vec<u8>)> {
     navi_health::photo::prepare(bytes).ok()
 }
 
-/// `jpeg` as a `data:` URI an image shows without a request.
+/// Capture preparation preserves screenshot and label detail.
+pub fn prepare_capture(bytes: &[u8]) -> Option<(Vec<u8>, Vec<u8>)> {
+    navi_health::photo::prepare_capture(bytes).ok()
+}
+
+/// Image bytes as a `data:` URI an image shows without a request.
 pub fn data_uri(jpeg: &[u8]) -> SharedString {
+    let mime = if jpeg.starts_with(b"\x89PNG\r\n\x1a\n") {
+        "image/png"
+    } else {
+        "image/jpeg"
+    };
     format!(
-        "data:image/jpeg;base64,{}",
+        "data:{mime};base64,{}",
         base64::engine::general_purpose::STANDARD.encode(jpeg)
     )
     .into()
@@ -76,7 +85,10 @@ pub fn bytes(name: &str) -> Option<Vec<u8>> {
         .or_else(|| {
             cache().with_untracked(|c| {
                 c.0.get(name)
-                    .and_then(|uri| uri.strip_prefix("data:image/jpeg;base64,"))
+                    .and_then(|uri| {
+                        uri.strip_prefix("data:image/jpeg;base64,")
+                            .or_else(|| uri.strip_prefix("data:image/png;base64,"))
+                    })
                     .and_then(|data| base64::engine::general_purpose::STANDARD.decode(data).ok())
             })
         })
@@ -273,6 +285,20 @@ mod tests {
     fn unreadable_bytes_are_refused() {
         assert!(prepare(b"not an image").is_none());
         assert!(prepare(&[]).is_none());
+    }
+
+    #[test]
+    fn data_uris_carry_png() {
+        let bytes = png(16, 16);
+        let uri = data_uri(&bytes);
+        assert!(uri.starts_with("data:image/png;base64,"));
+        let encoded = uri.strip_prefix("data:image/png;base64,").unwrap();
+        assert_eq!(
+            base64::engine::general_purpose::STANDARD
+                .decode(encoded)
+                .unwrap(),
+            bytes
+        );
     }
 
     #[test]

@@ -186,9 +186,15 @@ device evidence.
 
 The global capture button opens a single description/image composer. The
 owner's model returns money, meal or body-weight drafts; a short correction
-updates the complete draft without creating a chat history. Manual entry is a
+updates the complete draft within its bounded local thread. Manual entry is a
 secondary disclosure. A purchase with a price does not imply food consumption.
 
+- `ask_user` is the only model tool: it suspends recognition for owner decisions,
+  each with a reason, required flag and unselected choices with descriptions.
+  Choices are durable, editable and submitted together. Text and supporting
+  images can answer too. The call ID and original assistant blocks are kept
+  for a matching tool-result continuation; no automatic tool loop runs. Final
+  model JSON contains records only. Legacy stored question turns remain readable.
 - `domain/capture.rs` composes the envelope and delegates money, nutrition and
   weight validation to their owning domains. `finance::recognition`
   rejects unsupported currencies, imprecise money and wrong account kinds;
@@ -197,11 +203,17 @@ secondary disclosure. A purchase with a price does not imply food consumption.
   runs recognition under the app root, and atomically consumes the draft while
   writing its whole batch. Neither recognition nor correction writes records.
   Database failures retain the draft for retry, with no partial batch.
-- Consent covers input text, the attached image and ledger account names;
+- Consent covers input text, attached images and ledger account names;
   old photo-only trust does not grant the broader consent. The model account
   fingerprint scopes remembered consent. There is no backend or agent loop.
 - Today and Records expose the same drafts. Interrupted runs can be retried
-  after restart. Photos are re-encoded before use; inputs are never logged.
+  after restart. Capture accepts up to four images per draft, including image-only follow-up
+  answers. Images stay with their original owner turn during history replay;
+  unsent evidence is removable and survives closing. Capture normalization
+  preserves up to a 4096 px edge / four megapixels / 2 MiB per image, preferring
+  lossless PNG and using high-quality JPEG when necessary. Pending model
+  questions, unresolved tool continuations and unsent evidence block confirmation.
+  Inputs are never logged.
 - Manual money has in-sheet selection views, a calendar, secondary details,
   and last-confirmed choices. Task sheets keep their action above the keyboard:
   they plan for it when they open, so it lifts the whole sheet natively
@@ -212,7 +224,10 @@ blocking, atomic multi-domain confirmation, a real SQLite failure and retry,
 restart, and invalid model output. The existing meal/draft flows now use the
 unified composer; finance tests retain exact posting/balance assertions.
 Desktop visual previews include `capture`, `capture-ready`, `capture-missing`,
-`transaction` and `transaction-new`. GTK previews are not Android evidence.
+`capture-ask` (a pending tool decision),
+`transaction` and `transaction-new`. Set `NW_PREVIEW_CAPTURE_IMAGES` to colon-separated
+image paths with `capture-ready` to inspect staged evidence. GTK previews are
+not Android evidence.
 
 ## Accounts and Assets
 
