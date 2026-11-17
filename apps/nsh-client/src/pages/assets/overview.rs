@@ -255,51 +255,74 @@ pub fn assets_tab() -> impl IntoElement {
                                     text(|| s().manage_assets)
                                         .typo(Type::Title)
                                         .text_color(color::INK)
-                                        .flex_1(),
+                                        .flex_1()
+                                        .role(AccessibilityRole::Header),
                                 )
                                 .child(
-                                    Btn::ghost()
-                                        .label(|| s().close.into())
+                                    IconBtn::new(Icon::Close, || s().close.into())
                                         .on_press(move || manage.set(false)),
                                 ),
                             view()
-                                .gap_2()
-                                .child(menu_row(|| s().add_account, move || create.set(true)))
-                                .child(menu_row(
-                                    || s().add_holding,
-                                    move || holding.set(Some(String::new())),
-                                ))
-                                .child(menu_row(
-                                    || {
-                                        crate::i18n::statement_import::copy(
-                                            "Exchange rates",
-                                            "汇率",
-                                        )
-                                    },
-                                    move || {
-                                        manage.set(false);
-                                        nav::push(Route::ExchangeRates);
-                                    },
-                                ))
-                                .child(menu_row(
-                                    || {
-                                        crate::i18n::statement_import::copy(
-                                            "Price history",
-                                            "价格与汇率记录",
-                                        )
-                                    },
-                                    move || {
-                                        manage.set(false);
-                                        nav::push(Route::PriceHistory(None));
-                                    },
-                                ))
-                                .child(menu_row(
-                                    || s().closed_holdings,
-                                    move || {
-                                        manage.set(false);
-                                        nav::push(Route::ClosedHoldings);
-                                    },
-                                )),
+                                .gap_3()
+                                .child(
+                                    view()
+                                        .gap_1()
+                                        .child(group_label(|| s().manage_group_create))
+                                        .child(action_row(
+                                            || s().add_account,
+                                            || s().manage_add_account_note,
+                                            Icon::Wallet,
+                                            move || create.set(true),
+                                        ))
+                                        .child(action_row(
+                                            || s().add_holding,
+                                            || s().manage_add_holding_note,
+                                            Icon::Plus,
+                                            move || holding.set(Some(String::new())),
+                                        )),
+                                )
+                                .child(
+                                    view()
+                                        .gap_1()
+                                        .child(group_label(|| s().manage_group_data))
+                                        .child(nav_row(
+                                            || {
+                                                crate::i18n::statement_import::copy(
+                                                    "Exchange rates",
+                                                    "汇率",
+                                                )
+                                            },
+                                            || s().manage_rates_note,
+                                            Icon::Refresh,
+                                            move || {
+                                                manage.set(false);
+                                                nav::push(Route::ExchangeRates);
+                                            },
+                                        ))
+                                        .child(nav_row(
+                                            || {
+                                                crate::i18n::statement_import::copy(
+                                                    "Price history",
+                                                    "价格与汇率记录",
+                                                )
+                                            },
+                                            || s().manage_prices_note,
+                                            Icon::Chart,
+                                            move || {
+                                                manage.set(false);
+                                                nav::push(Route::PriceHistory(None));
+                                            },
+                                        ))
+                                        .child(nav_row(
+                                            || s().closed_holdings,
+                                            || s().manage_closed_note,
+                                            Icon::Bookmark,
+                                            move || {
+                                                manage.set(false);
+                                                nav::push(Route::ClosedHoldings);
+                                            },
+                                        )),
+                                ),
                             view(),
                         )
                         .into_element(),
@@ -310,15 +333,60 @@ pub fn assets_tab() -> impl IntoElement {
         ))
 }
 
-fn menu_row(
+/// A create action: an ink chip around its glyph, its name and a scope note.
+fn action_row(
     label: impl Fn() -> &'static str + Copy + 'static,
+    note: impl Fn() -> &'static str + Copy + 'static,
+    glyph: Icon,
     press: impl Fn() + 'static,
 ) -> impl IntoElement {
     row_button(press)
-        .px_0()
+        .px(px(space::CARD))
+        .rounded(px(radius::FIELD))
+        .min_h(px(64.0))
+        .gap_3()
+        .child(
+            view()
+                .w(px(32.0))
+                .h(px(32.0))
+                .rounded_full()
+                .bg(color::INK)
+                .items_center()
+                .justify_center()
+                .child(icon(glyph, 18.0, color::ON_ACTION)),
+        )
+        .child(
+            view()
+                .flex_1()
+                .min_w(px(0.0))
+                .gap_1()
+                .child(text(label).typo(Type::Headline).text_color(color::INK))
+                .child(text(note).typo(Type::Subhead).text_color(color::MUTED)),
+        )
+        .child(icon(Icon::ChevronRight, 16.0, color::MUTED))
+}
+
+/// A data entry: a quiet glyph, its name and a scope note.
+fn nav_row(
+    label: impl Fn() -> &'static str + Copy + 'static,
+    note: impl Fn() -> &'static str + Copy + 'static,
+    glyph: Icon,
+    press: impl Fn() + 'static,
+) -> impl IntoElement {
+    row_button(press)
+        .px(px(space::CARD))
+        .rounded(px(radius::FIELD))
         .min_h(px(52.0))
         .gap_3()
-        .child(text(label).typo(Type::Body).text_color(color::INK).flex_1())
+        .child(icon(glyph, 20.0, color::MUTED))
+        .child(
+            view()
+                .flex_1()
+                .min_w(px(0.0))
+                .gap_1()
+                .child(text(label).typo(Type::Headline).text_color(color::INK))
+                .child(text(note).typo(Type::Subhead).text_color(color::MUTED)),
+        )
         .child(icon(Icon::ChevronRight, 16.0, color::MUTED))
 }
 
