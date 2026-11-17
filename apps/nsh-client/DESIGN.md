@@ -259,6 +259,23 @@ Financial values, including gains and losses, stay in neutral ink.
   and edges without shadows.
 - **Spacing:** the 4 pt scale; page gutter 20, card inset 20.
 
+## App mark: Folio · 页间
+
+The app mark is two turning pages with a parallel diagonal channel,
+drawn as two filled paths in [`brand/folio.svg`](brand/folio.svg). It uses
+the interface's ink `#1C1D1A` and warm canvas `#F4F3EF`. The open space
+between the pages is part of the mark; preserve it at small sizes. Inverse
+and launcher versions reuse the same paths, without gradients or textures.
+
+Run `rtk proxy python3 tool/render-nsh-brand.py` from the repository to
+export the full-square [`brand/icon-folio.svg`](brand/icon-folio.svg) and
+1024 px [`icon.png`](icon.png) used by the Android release workflow, plus
+mask and 16–64 px review renders in `.impeccable/review/folio-refined/`.
+Presentation corners are previews; the exported icon has a complete opaque
+background. Edit the master and regenerate rather than editing the PNG.
+Desktop raster previews do not establish Android launcher or adaptive-icon
+behavior.
+
 ## Elevation & Depth
 
 ### Materials

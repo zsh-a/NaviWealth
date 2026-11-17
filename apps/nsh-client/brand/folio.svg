@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256"
+     role="img" aria-labelledby="folio-title folio-description">
+  <title id="folio-title">NaviWealth — Folio</title>
+  <desc id="folio-description">Two turning pages separated by an open diagonal channel.</desc>
+  <g id="mark" fill="#1C1D1A">
+    <path d="M 40 44
+             C 70 48 86 62 96 90
+             L 136 179
+             C 104 191 69 209 40 210 Z"/>
+    <path d="M 122 102
+             C 153 85 184 75 216 66
+             V 210 H 170.539326 Z"/>
+  </g>
+</svg>
