@@ -39,6 +39,9 @@ fn verify(app: &mut Headless, value: &str, debt: bool) -> Result<(), String> {
     }
     app.press("Confirm balance")?;
     app.wait_for("Balance checked")?;
+    // The receipt can appear while the balance sheet is still exiting.
+    // Wait for it to release hit testing before interacting with the account.
+    app.wait_for_gone("task-sheet", GONE)?;
     Ok(())
 }
 
@@ -146,6 +149,9 @@ fn failed_balance_confirmation_preserves_preview_and_can_retry_once() -> Result<
     c.execute_batch("DROP TRIGGER fail_post").unwrap();
     app.press("Confirm balance")?;
     app.wait_for("Balance checked")?;
+    // The receipt can appear while the balance sheet is still exiting.
+    // Wait for it to release hit testing before interacting with the account.
+    app.wait_for_gone("task-sheet", GONE)?;
     assert_eq!(repository::transactions(&c).unwrap().len(), 1);
     assert_eq!(repository::balance_checks(&c).unwrap().len(), 1);
     app.press("label:/^Opening balance, 500.01 CNY/")?;
