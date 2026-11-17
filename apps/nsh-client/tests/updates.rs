@@ -6,6 +6,15 @@ use common::*;
 use naviwealth_app::set_live_updates;
 use nsh_core::{Points, Size};
 
+fn newer_version() -> String {
+    let version = env!("CARGO_PKG_VERSION");
+    let mut parts = version.split('.');
+    let major = parts.next().unwrap();
+    let minor = parts.next().unwrap();
+    let patch = parts.next().unwrap().parse::<u32>().unwrap();
+    format!("{major}.{minor}.{}", patch + 1)
+}
+
 fn releases() -> serde_json::Value {
     serde_json::json!([
         {
@@ -17,8 +26,8 @@ fn releases() -> serde_json::Value {
             "body": "flutter"
         },
         {
-            // Newer than the running 0.9.0.
-            "tag_name": "nsh-v0.11.0",
+            // Always newer than the running build, including after release bumps.
+            "tag_name": format!("nsh-v{}", newer_version()),
             "prerelease": false,
             "draft": false,
             "published_at": "2026-11-14T07:00:00Z",
@@ -51,7 +60,7 @@ fn settings_offers_a_newer_release_with_its_page() -> Result<(), String> {
     app.press("Update, Never checked")?;
     app.wait_for("text:Never checked")?;
     app.press("Check for updates")?;
-    app.wait_for("text:/Update available \u{b7} v0\\.11\\.0/")?;
+    app.wait_for(&format!("text:Update available · v{}", newer_version()))?;
     app.wait_for("text:A newer release, with notes worth reading.")?;
     app.wait_for("text:Open the release page")?;
     Ok(())
