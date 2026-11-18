@@ -28,8 +28,11 @@ android {
     testOptions { unitTests.isReturnDefaultValues = true }
     lint {
         warningsAsErrors = true
+        // Keep target API 35 with the validated NSH 0.5.0 host. A newer SDK
+        // installed on a CI runner must not silently change this compatibility
+        // decision; upgrading it requires separate platform acceptance.
         // Android phone/arm64 releases and the approved Folio artwork are deliberate.
-        disable += setOf("ChromeOsAbiSupport", "IconLauncherShape")
+        disable += setOf("OldTargetApi", "ChromeOsAbiSupport", "IconLauncherShape")
     }
 }
 dependencies {

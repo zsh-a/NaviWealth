@@ -8,7 +8,10 @@ estimates and confirmed database writes remain in Rust.
 
 Use NSH **0.5.0**, Android SDK/API 35, build tools 35.0.1, an Android NDK for
 NSH's native build, and JDK 17. The checked Gradle wrapper pins Gradle 8.13;
-AGP 8.9.2 and Kotlin 2.1.20 are pinned in the build files.
+AGP 8.9.2 and Kotlin 2.1.20 are pinned in the build files. Target API 35 stays
+aligned with the validated NSH host; newer SDKs preinstalled on CI runners do
+not change this choice. Lint excludes only `OldTargetApi`, the deliberate
+phone/arm64 ABI choice and approved icon shape; all other warnings remain errors.
 
 From the repository root:
 
