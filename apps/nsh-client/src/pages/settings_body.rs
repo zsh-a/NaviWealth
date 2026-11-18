@@ -15,6 +15,15 @@ use crate::{
 };
 use navi_health::bodycomp::Sex;
 
+#[derive(Clone, Default, PartialEq)]
+struct ProfileOpen(bool);
+
+/// Opens the body profile whether Settings is already visible or not.
+pub(crate) fn open_body_profile() {
+    global::<ProfileOpen>().set(ProfileOpen(true));
+    crate::nav::push(crate::nav::Route::Settings);
+}
+
 /// The body profile and the goal weight, kept as they change.
 pub fn body_section() -> impl IntoElement {
     view().gap_3().child(profile()).child(goal_weight())
@@ -22,6 +31,14 @@ pub fn body_section() -> impl IntoElement {
 
 /// Height, age and sex, each kept once it is in range or empty.
 fn profile() -> impl IntoElement {
+    let requested = global::<ProfileOpen>();
+    let open = signal(false);
+    effect(move || {
+        if requested.get().0 {
+            open.set(true);
+            requested.set(ProfileOpen::default());
+        }
+    });
     let height = signal(
         untracked(settings::height_cm)
             .map(|h| h.to_string())
@@ -80,11 +97,12 @@ fn profile() -> impl IntoElement {
             parts.join(" · ")
         }
     };
-    super::settings::setting_details(
+    super::settings::controlled_setting_details(
         Icon::Sliders,
         || s().body_profile,
         summary,
         || color::MUTED,
+        open,
         view()
             .gap_3()
             .child(

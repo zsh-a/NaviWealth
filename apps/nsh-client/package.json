@@ -1,0 +1,11 @@
+{
+  "name": "naviwealth-nsh-tooling",
+  "private": true,
+  "scripts": {
+    "format": "prettier --write App.tsx \"tsx/**/*.{ts,tsx}\" tests/scale-mixed.test.ts",
+    "format:check": "prettier --check App.tsx \"tsx/**/*.{ts,tsx}\" tests/scale-mixed.test.ts"
+  },
+  "devDependencies": {
+    "prettier": "3.10.1"
+  }
+}

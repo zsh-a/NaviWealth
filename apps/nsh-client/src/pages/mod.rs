@@ -29,6 +29,7 @@ pub use review::{
     edit_meal_page, failure_copy as review_failure_copy, new_meal_page, pending_meal_page,
 };
 pub use settings::settings_page;
+pub(crate) use settings_body::open_body_profile;
 pub use settings_model::model_page;
 
 pub(crate) mod exchange_rates;

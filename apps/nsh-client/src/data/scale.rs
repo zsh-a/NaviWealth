@@ -4,6 +4,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use navi_health::scale::{Measurement, Session, UserProfile};
 use nsh_core::prelude::*;
+use nsh_core::storage::Storage;
 use rusqlite::{Connection, OptionalExtension, params};
 use serde::{Deserialize, Serialize};
 
@@ -89,6 +90,26 @@ impl PartialEq for Live {
 fn live() -> Signal<Live> {
     global::<Live>()
 }
+
+// A failed deletion can leave a stale draft in SQLite. Quarantine it even
+// when SQLite is read-only, using the app's separate preferences store.
+const DRAFT_QUARANTINE_KEY: &str = "scale.draft-quarantine.v1";
+
+#[derive(Clone, Default, PartialEq)]
+struct DraftQuarantine(bool);
+
+fn drafts_quarantined() -> bool {
+    global::<DraftQuarantine>().get_untracked().0
+        || Storage::get_item(DRAFT_QUARANTINE_KEY).is_some()
+}
+
+fn quarantine_drafts() {
+    global::<DraftQuarantine>().set(DraftQuarantine(true));
+    if Storage::set_item(DRAFT_QUARANTINE_KEY, "1").is_err() {
+        log::error!("scale: could not persist draft quarantine");
+    }
+}
+
 fn random_id() -> Result<String, String> {
     let mut bytes = [0_u8; 16];
     getrandom::fill(&mut bytes).map_err(|_| "Could not create a measurement session".to_owned())?;
@@ -144,6 +165,9 @@ pub fn begin(device: Device) -> Result<Start, String> {
     })
     .ok_or("Local data unavailable")?
     .map_err(sql_error)?;
+    // The transaction retired every old draft before allowing a new one.
+    Storage::remove_item(DRAFT_QUARANTINE_KEY);
+    global::<DraftQuarantine>().set(DraftQuarantine::default());
     live().set(Live(Some(Rc::new(Active {
         start: start.clone(),
         device,
@@ -166,7 +190,7 @@ pub fn feed(session_id: &str, bytes: &[u8]) -> Result<Option<Preview>, String> {
         return Err("The scale session has ended".into());
     }
     if clock::today() != active.day {
-        cancel(session_id)?;
+        invalidate(session_id)?;
         return Err("The day changed. Start a new measurement.".into());
     }
     let (result, latest) = {
@@ -174,15 +198,15 @@ pub fn feed(session_id: &str, bytes: &[u8]) -> Result<Option<Preview>, String> {
         let result = protocol.feed(bytes);
         (result, protocol.latest())
     };
-    let clear = || -> Result<(), String> {
-        db::with(|c| c.execute("DELETE FROM scale_drafts WHERE session_id=?1", [session_id]))
-            .ok_or("Local data unavailable")?
-            .map_err(sql_error)?;
-        Ok(())
+    let clear = || {
+        delete_draft(session_id).inspect_err(|_| {
+            quarantine_drafts();
+            stop_session(session_id);
+        })
     };
     let measurement = match result {
         Err(_) => {
-            clear()?;
+            invalidate(session_id)?;
             return Err("The scale sent an unreadable measurement. Try again.".into());
         }
         Ok(Some(measurement)) => measurement,
@@ -195,7 +219,7 @@ pub fn feed(session_id: &str, bytes: &[u8]) -> Result<Option<Preview>, String> {
         }
     };
     if !measurement.valid() || !weight::valid_kg(measurement.weight_kg()) {
-        clear()?;
+        invalidate(session_id)?;
         return Err("The scale sent an invalid measurement".into());
     }
     let existing = pending()?;
@@ -227,6 +251,9 @@ pub fn feed(session_id: &str, bytes: &[u8]) -> Result<Option<Preview>, String> {
 
 /// The last review survives app reload; it never recreates an active BLE connection.
 pub fn pending() -> Result<Option<Preview>, String> {
+    if drafts_quarantined() {
+        return Ok(None);
+    }
     db::with(|c| -> Result<_, String> {
         let body: Option<String> = c
             .query_row("SELECT body FROM scale_drafts LIMIT 1", [], |r| r.get(0))
@@ -246,22 +273,33 @@ pub fn pending() -> Result<Option<Preview>, String> {
 
 /// Cancels exactly this session and its pending review. Other sessions are unaffected.
 pub fn cancel(session_id: &str) -> Result<(), String> {
+    delete_draft(session_id)?;
+    stop_session(session_id);
+    Ok(())
+}
+
+/// Rejects untrusted evidence before attempting draft deletion. A failed
+/// deletion must never return that draft to the review flow.
+pub fn invalidate(session_id: &str) -> Result<(), String> {
+    stop_session(session_id);
+    delete_draft(session_id).inspect_err(|_| quarantine_drafts())
+}
+
+fn delete_draft(session_id: &str) -> Result<(), String> {
     db::with(|c| c.execute("DELETE FROM scale_drafts WHERE session_id=?1", [session_id]))
         .ok_or("Local data unavailable")?
         .map_err(sql_error)?;
-    if live()
-        .get_untracked()
-        .0
-        .is_some_and(|a| a.start.session_id == session_id)
-    {
-        live().set(Live::default());
-    }
     Ok(())
 }
 
 /// Stops accepting notifications while retaining a completed review for confirmation.
 /// Called when the Android connection closes; reconnecting always starts a fresh session.
 pub fn pause(session_id: &str) -> Result<(), String> {
+    stop_session(session_id);
+    Ok(())
+}
+
+fn stop_session(session_id: &str) {
     if live()
         .get_untracked()
         .0
@@ -269,11 +307,13 @@ pub fn pause(session_id: &str) -> Result<(), String> {
     {
         live().set(Live::default());
     }
-    Ok(())
 }
 
 /// Confirms the Rust-owned review. Same-day replacement is an explicit UI decision.
 pub fn confirm(session_id: &str, token: &str, replace_existing: bool) -> Result<Confirmed, String> {
+    if drafts_quarantined() {
+        return Err("The measurement is no longer stable".into());
+    }
     if let Some(active) = live()
         .get_untracked()
         .0
@@ -526,6 +566,18 @@ mod tests {
             .child(
                 nsh_base::button()
                     .min_h(px(44.0))
+                    .child(text("Check retained review"))
+                    .on_press(move || {
+                        status.set(if pending().unwrap().is_some() {
+                            "Retained review".into()
+                        } else {
+                            "No retained review".into()
+                        });
+                    }),
+            )
+            .child(
+                nsh_base::button()
+                    .min_h(px(44.0))
                     .child(text("Cancel"))
                     .on_press(move || {
                         cancel(&id.get_untracked()).unwrap();
@@ -547,12 +599,21 @@ mod tests {
             .child(text(move || status.get()))
     }
     fn probe(dir: &std::path::Path) -> nsh_testing::Headless {
-        let mut config = nsh_engine::EngineConfig::new(nsh_engine::Root::of::<SessionProbe>());
-        config.data_dir = Some(dir.to_path_buf());
-        config.storage = Some(nsh_testing::MemoryStorage::new(vec![(
+        probe_with_storage(dir, profile_storage())
+    }
+    fn profile_storage() -> std::sync::Arc<nsh_testing::MemoryStorage> {
+        nsh_testing::MemoryStorage::new(vec![(
             "settings.v1".into(),
             serde_json::json!({"height_cm":170,"age_years":23,"sex":"male"}).to_string(),
-        )]));
+        )])
+    }
+    fn probe_with_storage(
+        dir: &std::path::Path,
+        storage: std::sync::Arc<nsh_testing::MemoryStorage>,
+    ) -> nsh_testing::Headless {
+        let mut config = nsh_engine::EngineConfig::new(nsh_engine::Root::of::<SessionProbe>());
+        config.data_dir = Some(dir.to_path_buf());
+        config.storage = Some(storage);
         let mut app = nsh_testing::Headless::start(config).unwrap();
         app.wait_for("Ready").unwrap();
         app
@@ -575,6 +636,50 @@ mod tests {
         app.wait_for("The scale session has ended").unwrap();
         app.press("Confirm").unwrap();
         app.wait_for("Confirmation rejected").unwrap();
+    }
+    #[test]
+    fn a_failed_invalidation_deletion_cannot_restore_the_old_draft() {
+        let dir = tempfile::tempdir().unwrap();
+        let storage = profile_storage();
+        let mut app = probe_with_storage(dir.path(), storage.clone());
+        app.press("Begin").unwrap();
+        app.press("Stable").unwrap();
+        app.wait_for("Review").unwrap();
+        let db_path = std::fs::read_dir(dir.path())
+            .unwrap()
+            .flatten()
+            .map(|entry| entry.path().join("naviwealth.sqlite"))
+            .find(|path| path.is_file())
+            .expect("NSH created the database in the app's data directory");
+        let db = Connection::open(db_path).unwrap();
+        db.execute_batch(
+            "CREATE TRIGGER fail_delete BEFORE DELETE ON scale_drafts
+             BEGIN SELECT RAISE(ABORT, 'temporary write failure'); END;",
+        )
+        .unwrap();
+        app.press("Bad packet").unwrap();
+        app.wait_for("Packet rejected").unwrap();
+        assert_eq!(
+            db.query_row("SELECT COUNT(*) FROM scale_drafts", [], |row| row
+                .get::<_, i64>(0))
+                .unwrap(),
+            1
+        );
+        app.press("Check retained review").unwrap();
+        app.wait_for("No retained review").unwrap();
+        app.press("Confirm").unwrap();
+        app.wait_for("Confirmation rejected").unwrap();
+        drop(app);
+
+        db.execute_batch("DROP TRIGGER fail_delete").unwrap();
+        let mut app = probe_with_storage(dir.path(), storage);
+        app.press("Check retained review").unwrap();
+        app.wait_for("No retained review").unwrap();
+        app.press("Begin").unwrap();
+        app.press("Stable").unwrap();
+        app.wait_for("Review").unwrap();
+        app.press("Confirm").unwrap();
+        app.wait_for("Saved:false:58.1").unwrap();
     }
     #[test]
     fn completed_review_survives_restart_and_pause_blocks_notifications() {

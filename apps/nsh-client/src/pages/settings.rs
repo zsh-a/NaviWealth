@@ -121,7 +121,18 @@ pub(super) fn setting_details(
     tint: impl Fn() -> AdaptiveColor + Copy + 'static,
     content: impl IntoElement,
 ) -> impl IntoElement {
-    let open = signal(false);
+    controlled_setting_details(glyph, label, summary, tint, signal(false), content)
+}
+
+/// A settings section that can also be opened from another page.
+pub(super) fn controlled_setting_details(
+    glyph: Icon,
+    label: impl Fn() -> &'static str + Copy + 'static,
+    summary: impl Fn() -> String + Copy + 'static,
+    tint: impl Fn() -> AdaptiveColor + Copy + 'static,
+    open: Signal<bool>,
+    content: impl IntoElement,
+) -> impl IntoElement {
     card().overflow_hidden().child(
         collapsible()
             .open(move || open.get())

@@ -77,7 +77,7 @@ impl Scale {
 
     /// Returns to the existing body-profile editor.
     pub fn open_profile(_cx: &mut ModuleCx) {
-        crate::nav::push(crate::nav::Route::Settings);
+        crate::pages::open_body_profile();
     }
 
     /// Verify scan evidence and begin one Rust-owned measurement attempt.
@@ -149,13 +149,13 @@ impl Scale {
         _cx: &mut ModuleCx,
     ) -> Result<Value, String> {
         if data_base64.len() > 256 {
-            let _ = crate::data::scale::feed(&session_id, &[]);
+            let _ = crate::data::scale::invalidate(&session_id);
             return Err("invalid_packet".into());
         }
         let bytes = match STANDARD.decode(data_base64) {
             Ok(bytes) => bytes,
             Err(_) => {
-                let _ = crate::data::scale::feed(&session_id, &[]);
+                let _ = crate::data::scale::invalidate(&session_id);
                 return Err("invalid_packet".into());
             }
         };
@@ -197,6 +197,11 @@ impl Scale {
     /// Discard this measurement attempt without changing any confirmed records.
     pub fn cancel(session_id: String, _cx: &mut ModuleCx) -> Result<(), String> {
         crate::data::scale::cancel(&session_id)
+    }
+
+    /// Retire invalid evidence even if SQLite cannot delete the draft.
+    pub fn invalidate(session_id: String, _cx: &mut ModuleCx) -> Result<(), String> {
+        crate::data::scale::invalidate(&session_id)
     }
 }
 

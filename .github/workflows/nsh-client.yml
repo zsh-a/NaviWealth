@@ -40,6 +40,14 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Check TypeScript formatting
+        run: |
+          npm ci --ignore-scripts --no-audit
+          npm run format:check
       - name: Linux backend libraries (GTK 4, GStreamer)
         run: |
           sudo apt-get update

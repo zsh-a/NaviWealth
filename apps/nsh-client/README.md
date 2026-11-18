@@ -54,6 +54,11 @@ bash ../../tool/build-nsh-android-host.sh release # app-owned Android host, unsi
 bash ../../tool/build-nsh-android-host.sh debug   # side-by-side com.naviwealth.app.bledev APK
 ```
 
+From `apps/nsh-client`, install the local TS formatter with `npm ci` and run
+`npm run format` before committing. `npm run format:check` runs the same check as
+release CI. Both commands cover `App.tsx`, `tsx/` and `tests/scale-mixed.test.ts`.
+Run `nsh check` for the native bridge and TSX type check.
+
 Debugging on Android from WSL2 against a Windows-side emulator (adb over
 mirrored loopback, SDK layout, pitfalls): see *NSH Android debugging from
 WSL2* in `../../docs/development/local-development.md`.

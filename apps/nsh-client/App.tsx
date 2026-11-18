@@ -1,19 +1,38 @@
 import { mount, signal, colorScheme, computed, host } from "nsh";
 import { Sheet } from "nsh/base";
-import { App, Scale } from "naviwealth/native";
+import { App } from "naviwealth/native";
 import { ScalePanel } from "./tsx/ScalePanel";
-import type { Palette } from "./tsx/scale-types";
+import { scaleNative } from "./tsx/scale-bridge";
 
 function MixedApp() {
- const open = signal(false);
- const palette = computed(()=>Scale.palette(colorScheme()==="dark") as unknown as Palette);
- return <>
-   <App testMode={host.params.testMode===true} scaleEnabled={true} onOpenScale={()=>open.set(true)}/>
-   <Sheet open={open()} onOpenChange={event=>open.set(event.open)} closeOnSwipe
-     popupStyle={{backgroundColor:palette().surface,borderTopLeftRadius:32,borderTopRightRadius:32}}
-     backdropStyle={{backgroundColor:palette().scrim}}>
-     <ScalePanel close={()=>open.set(false)}/>
-   </Sheet>
- </>;
+  const open = signal(false);
+  const scaleBusy = signal(false);
+  const palette = computed(() => scaleNative.palette(colorScheme() === "dark"));
+  return (
+    <>
+      <App
+        testMode={host.params.testMode === true}
+        scaleEnabled={true}
+        onOpenScale={() => open.set(true)}
+      />
+      <Sheet
+        open={open()}
+        onOpenChange={(event) => {
+          if (!scaleBusy()) open.set(event.open);
+        }}
+        closeOnEscape={!scaleBusy()}
+        closeOnBackdropPress={!scaleBusy()}
+        closeOnSwipe={!scaleBusy()}
+        popupStyle={{
+          backgroundColor: palette().surface,
+          borderTopLeftRadius: 32,
+          borderTopRightRadius: 32,
+        }}
+        backdropStyle={{ backgroundColor: palette().scrim }}
+      >
+        <ScalePanel close={() => open.set(false)} busy={scaleBusy} />
+      </Sheet>
+    </>
+  );
 }
 mount(MixedApp);
