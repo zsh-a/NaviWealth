@@ -339,15 +339,17 @@ test("scale mixed: notifications before initialization acknowledgement cannot cr
 }, 30000);
 
 test("scale mixed: rejected initialization cannot leave a recoverable uninitialized draft", async () => {
-  let rejectWrite: (reason: unknown) => void = () => { throw new Error("Write has not started"); };
   const app = await start(true, true, { available: true, enabled: true }, {
-    "ble.write": () => new Promise<unknown>((_, reject) => { rejectWrite = reject; }),
+    // The separate pending-ack test covers early notifications. Fail this
+    // operation directly so the test server has no unresolved press/host RPC
+    // when we navigate away from the failed connection.
+    "ble.write": () => { throw new Error("Synthetic initialization write failure"); },
   });
   const sessionId = await connect(app, false);
+  await app.waitFor("Try again");
+  // Late notifications after initialization failure cannot revive the draft.
   await packet(app, sessionId, STABLE);
   await packet(app, sessionId, IMPEDANCE);
-  rejectWrite(new Error("Synthetic initialization write failure"));
-  await app.waitFor("Try again");
   expect(app.shows("Confirm and save")).toBe(false);
   expect(app.shows("id:scale-preview")).toBe(false);
   await home(app);
