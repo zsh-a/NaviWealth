@@ -80,7 +80,10 @@ Updated 2026-11-14: the owner chose text-or-image capture with fewer forms.
   details. Selection views replace the editor body; header and actions stay
   fixed above the keyboard. Only successful saves update remembered choices.
 - The model/server consent names the text, attached images and account names
-  being sent. It is remembered only for that model account when requested.
+  being sent. It is remembered only for that model account and API protocol
+  when requested. Model settings explicitly select Anthropic Messages, OpenAI
+  Chat Completions or OpenAI Responses; Responses uses local history and
+  disables server-side response storage.
 - Today shows today. Past days are reached in Records; logging for another
   day changes the date on the review page.
 - Today keeps one layout from health-only to finance: the summary card shows

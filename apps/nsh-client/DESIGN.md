@@ -173,7 +173,15 @@ AI only to turn text and images into drafts, using the owner's model account.
   outlined; a day opens in Records). Then the one-line note, the weight with
   its 7-day trend line, and Garmin averages.
 - **Settings keep every change as it is made; there is no Save.** Recognition
-  model / 识别模型 has its own page. Daily goal and Garmin initially show
+  model / 识别模型 has its own page with one continuous form for API protocol,
+  base URL, model and key. The protocol field shows the current choice;
+  its native select opens an anchored desktop list or an Android touch picker
+  containing Anthropic, OpenAI Chat and OpenAI Responses. Endpoint paths appear
+  only in that list. Keep full labels, accessible selection state and field-sized
+  touch targets at narrow widths and larger text. Test connection follows the
+  fields; the device-storage note is a quiet footer. Protocol changes preserve
+  custom connection fields and require recognition consent again; Test
+  connection follows the chosen endpoint. Daily goal and Garmin initially show
   their saved value or connection status; tapping the row expands their
   controls in place. Collapsing preserves entered values, and hidden controls
   are excluded from accessibility. Valid goal changes still save as typed;

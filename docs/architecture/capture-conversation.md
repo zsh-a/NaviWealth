@@ -135,3 +135,28 @@ While a tool is pending, while its answer awaits a successful final model
 reply, or while any new answer/text/image is unsent, confirmation is blocked.
 Keeping an earlier recognition result after a failed continuation cannot bypass
 that gate. Final confirmation remains one atomic batch write.
+
+## Compatible provider output contracts
+
+Every capture request includes the complete final-record JSON Schema and a
+plain-JSON-only instruction in its system prompt, in addition to the native
+structured-output option. Some Anthropic-compatible services accept that option
+without enforcing its schema: tool calls can succeed while the final response
+uses code fences or different record fields. The prompt must therefore carry
+the contract explicitly. Local schema and domain validation remain mandatory;
+formatting problems never authorize guessed accounting fields or record writes.
+Diagnostics keep only bounded error classifications, never provider response
+contents, thinking, owner input, image data or credentials.
+
+## OpenAI Responses
+
+The model profile explicitly selects Anthropic Messages, OpenAI Chat Completions
+or OpenAI Responses. Responses is a distinct protocol with a distinct consent
+fingerprint. It uses `store: false` and locally replayed native output items;
+server-side conversation IDs are not a persistence dependency. The draft keeps
+native reasoning, message and function-call items with each assistant turn,
+including the items needed to resume an `ask_user` call after restart. Tool
+answers reference the function call's `call_id`, never its output item's `id`.
+Images follow as input-image content. Malformed, failed or incomplete responses
+cannot become confirmed records. Legacy drafts without native output remain
+readable, and their text/image history can still be encoded.

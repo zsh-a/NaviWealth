@@ -3,7 +3,7 @@
 //! text; Test connection checks the account as it stands. Photos go to a
 //! changed account only after asking again.
 
-use nsh_base::nav_page;
+use nsh_base::{SelectEntry, SelectItem, nav_page};
 use nsh_core::{
     element::{AutoCapitalize, KeyboardType, Screen},
     prelude::*,
@@ -21,10 +21,9 @@ use crate::{
     pages::review_failure_copy,
     ui::{
         Btn, Icon, IconBtn, Size, Type, Typo, color,
-        field::{field, note, text_input},
-        segmented::{Segment, segmented},
+        field::{field, note, select_input, text_input},
         space,
-        surface::{card, group_label},
+        surface::card,
     },
 };
 
@@ -176,37 +175,66 @@ pub fn model_page() -> Screen {
             })),
     )
     .child(note(
-        move || {
-            Some(if key_error() {
-                s().error_key.into()
-            } else {
-                s().key_note.into()
-            })
-        },
+        move || key_error().then(|| s().error_key.into()),
         key_error,
     ));
 
-    let connection = card()
+    let protocol = field(
+        || s().provider,
+        select_input(move || provider_label(provider.get()))
+            .accessibility_label(move || Some(s().provider.into()))
+            .items(move || {
+                Provider::ALL
+                    .into_iter()
+                    .enumerate()
+                    .map(|(index, choice)| {
+                        SelectItem::new(index.to_string(), provider_label(choice))
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .value(move || {
+                Some(SharedString::from(
+                    provider_index(provider.get()).to_string(),
+                ))
+            })
+            .on_change(move |value: &Option<SharedString>| {
+                if let Some(choice) = value
+                    .as_deref()
+                    .and_then(|v| v.parse::<usize>().ok())
+                    .and_then(|i| Provider::ALL.get(i))
+                {
+                    choose_provider(*choice);
+                }
+            })
+            .render_item(|entry: &SelectEntry| {
+                let choice = Provider::ALL[entry.index as usize];
+                view()
+                    .gap_1()
+                    .child(
+                        text(entry.title.clone())
+                            .typo(Type::Body)
+                            .text_color(color::INK),
+                    )
+                    .child(
+                        text(provider_path(choice))
+                            .typo(Type::Caption)
+                            .text_color(color::MUTED),
+                    )
+            }),
+    );
+    let form = card()
         .p(px(space::CARD))
         .gap_4()
-        .child(field(
-            || s().provider,
-            segmented(
-                vec![
-                    Segment::new(Provider::Anthropic, || s().anthropic.into()),
-                    Segment::new(Provider::OpenAiCompatible, || s().openai_compatible.into()),
-                ],
-                move || provider.get(),
-                choose_provider,
-            ),
-        ))
+        .child(protocol)
         .child(url)
-        .child(model_field);
-    let credentials = card()
-        .p(px(space::CARD))
-        .gap_3()
+        .child(model_field)
         .child(key)
-        .child(test_row(test, run_test));
+        .child(test_row(test, run_test))
+        .child(
+            text(|| s().key_note)
+                .typo(Type::Caption)
+                .text_color(color::MUTED),
+        );
     nav_page()
         .title(|| SharedString::from(s().vision_model))
         .header_visible(false)
@@ -226,14 +254,33 @@ pub fn model_page() -> Screen {
                                 .pt_2()
                                 .pb(move || px(safe_area().bottom.0 + 32.0))
                                 .gap_3()
-                                .child(group_label(|| s().model_group_connection))
-                                .child(connection)
-                                .child(view().h_3())
-                                .child(group_label(|| s().model_group_credentials))
-                                .child(credentials),
+                                .child(form),
                         ),
                 ),
         )
+}
+
+fn provider_index(provider: Provider) -> usize {
+    Provider::ALL
+        .iter()
+        .position(|p| *p == provider)
+        .unwrap_or(0)
+}
+
+fn provider_label(provider: Provider) -> &'static str {
+    match provider {
+        Provider::Anthropic => s().anthropic,
+        Provider::OpenAiCompatible => s().openai_compatible,
+        Provider::OpenAiResponses => s().openai_responses,
+    }
+}
+
+fn provider_path(provider: Provider) -> &'static str {
+    match provider {
+        Provider::Anthropic => "/messages",
+        Provider::OpenAiCompatible => "/chat/completions",
+        Provider::OpenAiResponses => "/responses",
+    }
 }
 
 fn test_row(test: Signal<Test>, run: impl Fn() + 'static) -> impl IntoElement {

@@ -14,17 +14,23 @@ pub enum Provider {
     /// The OpenAI Chat Completions API, as many providers and local
     /// servers offer it.
     OpenAiCompatible,
+    /// The OpenAI Responses API.
+    OpenAiResponses,
 }
 
 impl Provider {
-    /// Both, in the order the settings show them.
-    pub const ALL: [Provider; 2] = [Provider::Anthropic, Provider::OpenAiCompatible];
+    /// Providers, in the order the settings show them.
+    pub const ALL: [Provider; 3] = [
+        Provider::Anthropic,
+        Provider::OpenAiCompatible,
+        Provider::OpenAiResponses,
+    ];
 
     /// The base URL a new account starts with.
     pub fn default_base_url(self) -> &'static str {
         match self {
             Provider::Anthropic => "https://api.anthropic.com/v1",
-            Provider::OpenAiCompatible => "https://api.openai.com/v1",
+            Provider::OpenAiCompatible | Provider::OpenAiResponses => "https://api.openai.com/v1",
         }
     }
 
@@ -33,7 +39,7 @@ impl Provider {
     pub fn default_model(self) -> &'static str {
         match self {
             Provider::Anthropic => "claude-opus-5-5",
-            Provider::OpenAiCompatible => "",
+            Provider::OpenAiCompatible | Provider::OpenAiResponses => "",
         }
     }
 
@@ -140,6 +146,7 @@ impl ModelAccount {
         let provider = match self.provider {
             Provider::Anthropic => "anthropic",
             Provider::OpenAiCompatible => "openai",
+            Provider::OpenAiResponses => "openai_responses",
         };
         let base = self.normalized_base_url();
         // Only scheme/authority are case-insensitive. A gateway path can name
@@ -252,5 +259,38 @@ mod tests {
         assert!(!format!("{account:?}").contains("secret"));
         let back: ModelAccount = serde_json::from_str(&json).unwrap();
         assert!(back.api_key.is_empty());
+    }
+    #[test]
+    fn legacy_openai_serialization_and_consent_remain_stable() {
+        let legacy = r#"{"provider":"open_ai_compatible","base_url":"https://api.openai.com/v1","model":"test-model"}"#;
+        let account: ModelAccount = serde_json::from_str(legacy).unwrap();
+        assert_eq!(serde_json::to_string(&account).unwrap(), legacy);
+        assert_eq!(
+            account.fingerprint(),
+            r#"["openai","https://api.openai.com/v1","test-model"]"#
+        );
+        let mut responses = account.clone();
+        responses.provider = Provider::OpenAiResponses;
+        assert_ne!(responses.fingerprint(), account.fingerprint());
+        assert_eq!(
+            responses.fingerprint(),
+            r#"["openai_responses","https://api.openai.com/v1","test-model"]"#
+        );
+    }
+
+    #[test]
+    fn responses_account_roundtrips_without_its_secret() {
+        let mut account = ModelAccount::new(Provider::OpenAiResponses);
+        assert_eq!(account.validate(), vec![AccountError::Model]);
+        account.model = "test-model".into();
+        assert!(account.is_ready());
+        account.api_key = "synthetic-secret".into();
+        let encoded = serde_json::to_string(&account).unwrap();
+        assert!(encoded.contains("open_ai_responses"));
+        assert!(!encoded.contains("synthetic-secret"));
+        assert!(!format!("{account:?}").contains("synthetic-secret"));
+        let decoded: ModelAccount = serde_json::from_str(&encoded).unwrap();
+        assert!(decoded.api_key.is_empty());
+        assert_eq!(decoded.fingerprint(), account.fingerprint());
     }
 }

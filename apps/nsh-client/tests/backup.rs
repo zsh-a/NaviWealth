@@ -95,9 +95,13 @@ fn backed_up(dav: &Dav) -> Result<Vec<u8>, String> {
     )
     .unwrap();
     // Market-cache rows: present on the device, absent from the backup.
-    // The most recent weekday: quotes and bars only make sense on trading
-    // days, and a bar's day must precede its fetch date.
-    let mut day = today().0.checked_sub(jiff::Span::new().days(1)).unwrap();
+    // Leave a full UTC day before now so the following day's 01:00 fetch
+    // cannot lie in the future during early-morning test runs.
+    let mut day = jiff::Timestamp::now()
+        .to_zoned(jiff::tz::TimeZone::UTC)
+        .date()
+        .checked_sub(jiff::Span::new().days(2))
+        .unwrap();
     while matches!(
         day.weekday(),
         jiff::civil::Weekday::Saturday | jiff::civil::Weekday::Sunday

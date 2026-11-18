@@ -1,16 +1,16 @@
 //! Form fields: a visible label, the control, and its description or error
 //! right under it. Inputs share one height, inset and focus edge (ink).
 
-use nsh_base::input;
+use nsh_base::{SelectElement, input, select};
 use nsh_core::{
     element::{Input, KeyboardType},
     prelude::*,
 };
 
 use super::{
-    Typo,
+    Lift, Typo,
     icons::{Icon, icon},
-    theme::{Type, color, radius, size},
+    theme::{Type, color, radius, shadow, size},
 };
 
 /// `control` under its `label`.
@@ -71,6 +71,52 @@ pub fn text_input(value: Signal<String>) -> Input {
     .border(px(1.5))
     .border_color(AdaptiveColor::TRANSPARENT)
     .focus(|s| s.border_color(color::INK).bg(color::SURFACE))
+}
+
+/// A native select with the same surface and height as a text field.
+/// Desktop uses an anchored list; Android presents the touch picker.
+pub fn select_input(label: impl IntoReactive<SharedString>) -> SelectElement {
+    select()
+        .trigger(
+            view()
+                .flex_row()
+                .items_center()
+                .gap_3()
+                .min_h(px(size::MEDIUM + 2.0))
+                .px_4()
+                .py_2()
+                .bg(color::SUNKEN)
+                .rounded(px(radius::FIELD))
+                .border(px(1.5))
+                .border_color(AdaptiveColor::TRANSPARENT)
+                .focus_visible(|s| s.border_color(color::INK))
+                .child(
+                    text(label)
+                        .typo(Type::Body)
+                        .text_color(color::INK)
+                        .flex_1()
+                        .min_w(px(0.0)),
+                )
+                .child(icon(Icon::ChevronDown, 18.0, color::MUTED)),
+        )
+        .popup_style(|s| {
+            s.bg(color::SURFACE)
+                .rounded(px(radius::FIELD))
+                .lift(&shadow::FLOAT)
+                .dark(|s| s.border_1().border_color(color::LINE))
+        })
+        .list_style(|s| s.p_1())
+        .backdrop_style(|s| s.bg(color::SCRIM.opacity(0.32)))
+        .item_class("focus:outline-2")
+        .item_style(|s| {
+            s.min_h(px(52.0))
+                .px_3()
+                .py_3()
+                .rounded(px(radius::BADGE))
+                .typo(Type::Body)
+                .text_color(color::INK)
+                .selected(|s| s.bg(color::SUNKEN))
+        })
 }
 
 /// A decimal input bound to `value` (the text as typed), with its `unit`

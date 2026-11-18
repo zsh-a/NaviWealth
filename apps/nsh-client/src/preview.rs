@@ -44,7 +44,14 @@ pub fn apply() {
         set_color_scheme(Appearance::Light);
     }
     if has("account") {
-        let mut account = ModelAccount::new(Provider::Anthropic);
+        let mut account = ModelAccount::new(if has("responses") {
+            Provider::OpenAiResponses
+        } else {
+            Provider::Anthropic
+        });
+        if account.model.is_empty() {
+            account.model = "preview-vision-model".into();
+        }
         if let Ok(base) = env::var("NW_PREVIEW_BASE_URL") {
             account.base_url = base;
         }
@@ -225,6 +232,7 @@ pub fn apply() {
                 images: Vec::new(),
             },
             Turn::Assistant {
+                provider_output: None,
                 reply: serde_json::json!({"records":[], "questions":[
                     {"text": question.text, "options": question.options}
                 ]})

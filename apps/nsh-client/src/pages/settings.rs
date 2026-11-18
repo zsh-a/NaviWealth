@@ -208,6 +208,7 @@ fn recognition() -> impl IntoElement {
             let provider = match a.provider {
                 Provider::Anthropic => s().anthropic,
                 Provider::OpenAiCompatible => s().openai_compatible,
+                Provider::OpenAiResponses => s().openai_responses,
             };
             format!("{provider} · {}", a.model)
         }

@@ -9,7 +9,7 @@ use navi_finance::recognition::MoneyDraft;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
-pub const PROMPT_VERSION: &str = "record-capture-v4";
+pub const PROMPT_VERSION: &str = "record-capture-v5";
 pub const MAX_INPUT: usize = 2000;
 pub const MAX_ATTACHMENTS: usize = 4;
 
@@ -78,6 +78,9 @@ pub struct AskUser {
     pub call_id: String,
     pub questions: Vec<AskQuestion>,
     pub blocks: Value,
+    /// Native assistant output needed to resume stateless Responses reasoning.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub provider_output: Option<Value>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -148,6 +151,7 @@ impl AskUser {
             call_id: call_id.to_owned(),
             questions: parsed.questions,
             blocks,
+            provider_output: None,
         })
     }
 
@@ -240,6 +244,8 @@ pub enum Turn {
         records: usize,
         #[serde(default)]
         questions: Vec<Question>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        provider_output: Option<Value>,
     },
     AskUser {
         request: AskUser,
@@ -366,6 +372,7 @@ impl Draft {
             self.transcript.push(Turn::Assistant {
                 reply,
                 records: 0,
+                provider_output: None,
                 questions: vec![Question {
                     text: question,
                     options: Vec::new(),
@@ -442,9 +449,12 @@ Reconcile an order screenshot and its payment screenshot as evidence of ONE tran
 For meals, ask about materially unclear consumed quantity or whether shown leftovers belong to this meal; a package size does not prove the owner ate the entire package. Offer a supporting photo when a label, portion or screenshot is unreadable. Do not invent exact hidden oil amounts; keep nutrition estimates explicit.
 MONEY RULES: {} MEAL RULES (apply separately to each established meal group and to descriptions without images): {}
 The SAME meal assumption in the meal rules applies ONLY within an established meal group, never to all attached images.
-The meal rules describe only the nested meal payload; the top-level output must ALWAYS use the record envelope schema, never bare title/foods JSON."#,
+The meal rules describe only the nested meal payload; the top-level output must ALWAYS use the record envelope schema, never bare title/foods JSON.
+FINAL RESPONSE CONTRACT: The final record response must be one JSON object only, with no Markdown code fences, introduction or trailing explanation. The following schema applies to final records, not to ask_user tool arguments. Follow it even if the service ignores native structured-output settings. Include every required property; use null only where permitted. Money uses kind (never type), string-decimal amount, and explicit account/category fields. Do not invent missing accounting facts to satisfy the schema; call ask_user instead.
+FINAL_RECORD_JSON_SCHEMA: {final_schema}"#,
         navi_finance::recognition::INSTRUCTIONS,
-        navi_health::recognition::system_prompt(lang)
+        navi_health::recognition::system_prompt(lang),
+        final_schema = result_schema(),
     )
 }
 
@@ -922,6 +932,7 @@ mod tests {
                 reply,
                 records,
                 questions,
+                ..
             }) => {
                 assert_eq!(*records, 0);
                 assert_eq!(questions.len(), 1);
@@ -933,5 +944,26 @@ mod tests {
         // A fresh draft migrates to itself.
         draft.question.clear();
         assert_eq!(draft.clone().migrated(), draft);
+    }
+    #[test]
+    fn legacy_turns_default_native_provider_output_to_none() {
+        let request = ask();
+        let mut encoded = serde_json::to_value(&request).unwrap();
+        assert!(encoded.get("provider_output").is_none());
+        let restored: AskUser = serde_json::from_value(encoded.clone()).unwrap();
+        assert!(restored.provider_output.is_none());
+        encoded["provider_output"] = json!([{"type":"reasoning","encrypted_content":"opaque"}]);
+        let restored: AskUser = serde_json::from_value(encoded).unwrap();
+        assert!(restored.provider_output.is_some());
+        let legacy = json!({"Assistant":{"reply":"{}","records":0,"questions":[]}});
+        let turn: Turn = serde_json::from_value(legacy.clone()).unwrap();
+        assert!(matches!(
+            &turn,
+            Turn::Assistant {
+                provider_output: None,
+                ..
+            }
+        ));
+        assert_eq!(serde_json::to_value(turn).unwrap(), legacy);
     }
 }

@@ -70,6 +70,10 @@ openapi/            agent-runtime-api.yaml — HTTP API contract for server-firs
   uses the same protocol/client directly for `ask_user` tool calls, persisting
   the suspended call and owner answers in its local draft. Continuation occurs
   only when the owner submits or retries; `agent-chat` is not adopted.
+- `llm-protocol` owns Anthropic Messages, OpenAI Chat Completions and OpenAI
+  Responses codecs. Responses whole-body requests keep `store: false`; native
+  output items are returned as metadata for the host to persist and replay.
+  The NSH host stores them only inside the draft and continues on owner input.
 - Domain truth in `crates/navi-finance` and `crates/navi-health` never imports
   runtime crates; only recognition paths do.
 - CI runs `cargo fmt --check` and `cargo test --workspace --locked` inside the

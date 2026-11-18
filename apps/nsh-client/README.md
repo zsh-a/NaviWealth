@@ -15,8 +15,8 @@ Meals, weights and Garmin days live on the device in
 keys under their own storage keys. Optional encrypted backups go to the owner's
 WebDAV folder. Garmin data comes read-only from Garmin's
 Personal API with the user's own key. Photos go straight from the device to the base
-URL you configure (Anthropic Messages API or an OpenAI-compatible Chat
-Completions API); there is no NaviWealth relay.
+URL you configure (Anthropic Messages, OpenAI Chat
+Completions, or OpenAI Responses); there is no NaviWealth relay.
 
 ```text
 src/
@@ -181,6 +181,26 @@ to `records` and `capture`. These seed synthetic entries only in the selected
 preview data directory. Headless tests verify behavior; they are not Android
 device evidence.
 
+
+## Model API protocols
+
+Settings → Recognition model uses one form with a compact API protocol picker:
+Anthropic,
+OpenAI Chat (`/chat/completions`) and OpenAI Responses (`/responses`). The URL
+is the API base (for example `https://api.openai.com/v1`); the chosen protocol
+appends its endpoint. The owner supplies the model name. Existing Chat profiles
+keep their persisted identity; a protocol change requires fresh recognition
+consent, while typed custom URLs, model names and keys are preserved.
+
+Responses uses `store: false` and sends the locally kept input history. Native
+output items, including encrypted reasoning and function calls, stay with the
+draft and replay before the matching `function_call_output`. It does not rely
+on server-stored conversations or `previous_response_id`. Images are input
+image items, and the same draft/confirmation rules apply to all three APIs.
+The NSH adapter uses whole responses; Responses streaming is explicitly
+unsupported. Connection tests use the selected protocol's own endpoint.
+Desktop previews accept `NW_PREVIEW=account,responses,light` and
+`NW_PREVIEW_ROUTE=model` to inspect the selected protocol.
 
 ## Text and image capture
 

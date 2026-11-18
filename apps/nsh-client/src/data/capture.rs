@@ -176,6 +176,7 @@ pub fn recognize(
                 questions,
                 reply,
                 model,
+                provider_output,
             }) => {
                 let proposed = records.len();
                 draft.records = records;
@@ -186,6 +187,7 @@ pub fn recognize(
                     reply,
                     records: proposed,
                     questions,
+                    provider_output,
                 });
                 draft.status = Status::Ready;
             }
@@ -424,6 +426,7 @@ mod ask_user_tests {
                     }],
                 }],
                 blocks: serde_json::json!([]),
+                provider_output: None,
             },
         });
         draft
@@ -494,6 +497,7 @@ mod ask_user_tests {
             reply: "{}".into(),
             records: 0,
             questions: Vec::new(),
+            provider_output: None,
         });
         assert!(!awaiting_tool_resolution(&draft));
     }

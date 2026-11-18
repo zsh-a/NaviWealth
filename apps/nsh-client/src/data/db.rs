@@ -773,12 +773,13 @@ mod tests {
 
     #[test]
     fn snapshots_empty_market_caches_and_keep_the_records() {
-        // The most recent weekday, and the weekday before it: quotes and
-        // bars only make sense on trading days.
+        // Leave a full day before now: the fixture fetches the bar at 01:00
+        // on the following day, which must not be in the future before 01:00 UTC.
+        // Quotes and bars only make sense on trading days.
         let mut day = jiff::Timestamp::now()
             .to_zoned(jiff::tz::TimeZone::UTC)
             .date()
-            .checked_sub(jiff::Span::new().days(1))
+            .checked_sub(jiff::Span::new().days(2))
             .unwrap();
         while matches!(
             day.weekday(),
