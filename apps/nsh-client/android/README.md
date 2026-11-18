@@ -23,7 +23,8 @@ From the repository root:
 building the mixed native library. `prepare` builds the mixed APK and extracts
 inputs without running Gradle. `NSH_BIN` selects the CLI; `NSH_MIXED_APK` can
 reuse a previously built mixed APK; `NSH_ANDROID_AAR` can select the matching
-SDK. The script verifies the exact 0.5.0 Java SDK digest. The default embedding
+SDK. The script installs the CLI-matched Android runtime when it is missing,
+before pinning the runtime path, and verifies the exact 0.5.0 Java SDK digest. The default embedding
 SDK download also verifies its pinned official release archive checksum.
 
 Only **classes.jar** and the consumer rules are taken from the embedding AAR.

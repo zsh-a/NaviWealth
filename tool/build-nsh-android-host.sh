@@ -18,6 +18,11 @@ staging="$app_dir/.nsh/android-host"
 mkdir -p "$staging"
 nsh_root="$(dirname "$(dirname "$(readlink -f "$nsh_bin")")")"
 # Pair the CLI with its own mobile runtime, rather than a stale global install.
+# A fresh CLI install only includes the desktop runtime. Install Android before
+# setting NSH_RUNTIME: an explicit override disables the CLI's automatic fetch.
+if [[ "$mode" != runtime && -z "${NSH_MIXED_APK:-}" && ! -d "$nsh_root/runtime/android/release" ]]; then
+  env -u NSH_RUNTIME "$nsh_bin" component add android
+fi
 export NSH_RUNTIME="$nsh_root/runtime"
 if [[ -n "${NSH_ANDROID_AAR:-}" && ! -f "$NSH_ANDROID_AAR" ]]; then
   echo 'NSH_ANDROID_AAR must name an existing matching SDK.' >&2; exit 1
