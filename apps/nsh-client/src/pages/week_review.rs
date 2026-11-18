@@ -10,7 +10,7 @@ use std::rc::Rc;
 use nsh_core::prelude::*;
 
 use super::{
-    home::{Sheets, dock_clearance},
+    home::Sheets,
     review_calendar::{Pick, calendar, month_days},
     review_charts::{chart, macros, trend, trend_percent},
 };
@@ -56,7 +56,7 @@ pub fn review_tab() -> impl IntoElement {
         view()
             .px(px(space::GUTTER))
             .pt_safe_area_plus(px(10.0))
-            .pb(move || px(dock_clearance()))
+            .pb_4()
             .gap_4()
             .child(header(period, back, days))
             .child(segmented(
@@ -71,12 +71,12 @@ pub fn review_tab() -> impl IntoElement {
                 },
             ))
             .child(summary(period, days, before))
+            .child(intake_card(period, days))
             .child(super::finance_review::spending_section(
                 days, before, period,
             ))
-            .child(intake_card(period, days))
-            .child(super::review_note::note_editor(days))
             .child(weight_card(days))
+            .child(super::review_note::note_editor(days))
             .child(recovery_card(days)),
     )
 }
@@ -190,20 +190,18 @@ fn intake_card(period: Signal<Period>, days: Memo<Vec<Day>>) -> impl IntoElement
         .gap_4()
         .child(
             view()
-                .flex_row()
-                .items_start()
-                .justify_between()
-                .gap_3()
-                .child(
-                    view()
-                        .gap(px(6.0))
-                        .child(label(|| s().daily_intake))
-                        .child(stat(
+                .gap(px(6.0))
+                .child(label(|| s().daily_intake))
+                .child(when(
+                    move || average().is_some(),
+                    move || {
+                        stat(
                             move || average().map(format::kcal),
                             || s().kcal.to_owned(),
                             Scale::Hero,
-                        )),
-                ),
+                        )
+                    },
+                )),
         )
         .child(
             when(

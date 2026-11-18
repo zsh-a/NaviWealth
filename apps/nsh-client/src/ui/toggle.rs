@@ -60,10 +60,10 @@ pub fn switch_row(
             haptic(Haptic::Selection);
             on.set(*next);
         })
-        .flex_row()
+        .flex_row_reverse()
         .items_center()
         .justify_between()
-        .gap_4()
+        .gap_3()
         .min_h(px(size::TOUCH))
         .focus_visible(|s| s.outline(px(2.0)).outline_color(color::INK))
         .track_style(|s| {
@@ -89,6 +89,7 @@ pub fn switch_row(
             text(label)
                 .typo(Type::Body)
                 .text_color(color::INK)
-                .flex_shrink(1.0),
+                .flex_1()
+                .min_w(px(0.0)),
         )
 }

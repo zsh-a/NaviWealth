@@ -23,21 +23,27 @@ pub fn provide_launcher(enabled: bool, open: impl Fn() + 'static) {
     }
 }
 
-pub fn launch_button(before: impl Fn() + 'static) -> Option<AnyElement> {
+pub(crate) fn launch_label() -> &'static str {
+    if s().lang == Lang::Zh {
+        "连接体脂秤"
+    } else {
+        "Connect scale"
+    }
+}
+
+pub(crate) fn launch_action() -> Option<impl Fn() + 'static> {
     let launcher = use_context::<Launcher>()?;
+    Some(move || (launcher.open)())
+}
+
+pub fn launch_button(before: impl Fn() + 'static) -> Option<AnyElement> {
+    let open = launch_action()?;
     Some(
         Btn::new(Variant::Tonal)
-            .label(|| {
-                if s().lang == Lang::Zh {
-                    "连接体脂秤"
-                } else {
-                    "Connect scale"
-                }
-                .into()
-            })
+            .label(|| launch_label().into())
             .on_press(move || {
                 before();
-                (launcher.open)();
+                open();
             })
             .into_element(),
     )

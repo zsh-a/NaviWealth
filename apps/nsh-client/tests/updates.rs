@@ -57,10 +57,15 @@ fn settings_offers_a_newer_release_with_its_page() -> Result<(), String> {
     // The auto-check stays off in tests; the owner asks for this one.
     set_live_updates(true);
     app.press("label:Settings")?;
-    app.press("Update, Never checked")?;
-    app.wait_for("text:Never checked")?;
+    let current = env!("CARGO_PKG_VERSION");
+    app.wait_for(&format!("text:v{current} · Never checked"))?;
+    app.press(&format!("label:Update, v{current} · Never checked"))?;
     app.press("Check for updates")?;
     app.wait_for(&format!("text:Update available · v{}", newer_version()))?;
+    app.wait_for(&format!(
+        "text:v{current} · Update available · v{}",
+        newer_version()
+    ))?;
     app.wait_for("text:A newer release, with notes worth reading.")?;
     app.wait_for("text:Open the release page")?;
     Ok(())

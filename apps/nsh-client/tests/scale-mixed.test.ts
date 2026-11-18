@@ -125,7 +125,7 @@ test("scale mixed: native Rust settings open TSX, Rust-generated command and con
   const app = await start();
   const sessionId = await connect(app);
   await packet(app, sessionId, STABLE);
-  await app.waitFor("Save weight only");
+  await app.waitFor("id:scale-actions >> label:Save weight only");
   expect(app.shows("Confirm and save")).toBe(false);
   await packet(app, sessionId, IMPEDANCE);
   await app.waitFor("Confirm and save");
@@ -134,8 +134,9 @@ test("scale mixed: native Rust settings open TSX, Rust-generated command and con
   await packet(app, sessionId, IMPEDANCE);
   expect(app.count("id:scale-preview")).toBe(1);
   expect(calls(app, "ble.write").length).toBe(1);
-  await app.press("Confirm and save");
+  await app.press("id:scale-actions >> label:Confirm and save");
   await app.waitFor("Measurement saved");
+  expect(app.count("id:scale-panel >> label:Close")).toBe(1);
   // Native callbacks queued after confirmation cannot recreate a saved draft.
   await packet(app, sessionId, IMPEDANCE);
   expect(app.shows("id:scale-preview")).toBe(false);
@@ -163,7 +164,7 @@ test("scale mixed: cancelling a reviewed measurement writes no weight and ignore
   await app.waitFor("Save weight");
 }, 30000);
 
-test("scale mixed: missing body profile offers existing Rust settings before any hardware calls", async () => {
+test("scale mixed: missing body profile opens the dedicated editor before any hardware calls", async () => {
   const app = await start(false);
   await app.waitFor("Open body profile");
   expect(app.shows("Find scale")).toBe(false);
@@ -172,6 +173,9 @@ test("scale mixed: missing body profile offers existing Rust settings before any
   await app.waitFor("id:scale-panel", { state: "gone" });
   await app.waitFor("label:Height");
   await app.waitFor("label:Age");
+  await app.press("label:Back");
+  await app.waitFor("Devices & connections");
+  expect(app.shows("label:Height")).toBe(false);
 }, 30000);
 
 test("scale mixed: unavailable hardware host gives a recoverable message without replacing existing Rust UI", async () => {

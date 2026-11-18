@@ -1,8 +1,4 @@
-//! Settings, kept as they change (there is no Save): the recognition model
-//! (its own page), the optional daily goal, the body profile, the Garmin
-//! connection and backups (its own page). Every row leads with its icon and
-//! carries its state as a tinted summary, so what needs the owner shows
-//! before anything opens.
+//! Settings index: related rows share a surface and show their current state.
 
 use nsh_base::{collapsible, nav_page};
 use nsh_core::{element::Screen, prelude::*};
@@ -46,29 +42,46 @@ pub fn settings_page() -> Screen {
                                 .px(px(space::GUTTER))
                                 .pt_2()
                                 .pb(move || px(safe_area().bottom.0 + 32.0))
-                                .gap_3()
-                                .child(group_label(|| s().recognition))
-                                .child(recognition())
-                                .child(view().h_3())
-                                .child(group_label(|| s().daily_goal))
-                                .child(goal())
-                                .child(view().h_3())
-                                .child(group_label(|| s().body_profile))
-                                .child(super::settings_body::body_section())
-                                .child(crate::scale::launch_button(|| {}))
-                                .child(view().h_3())
-                                .child(group_label(|| s().garmin))
-                                .child(super::settings_garmin::garmin_section())
-                                .child(view().h_3())
-                                .child(group_label(|| s().backup))
-                                .child(super::settings_backup::backup_row())
-                                .child(view().h_3())
-                                .child(group_label(|| s().update))
-                                .child(super::settings_updates::updates_section())
+                                .gap_6()
+                                .child(settings_group(
+                                    || s().body_and_weight,
+                                    card()
+                                        .overflow_hidden()
+                                        .child(super::settings_body::profile_row())
+                                        .child(hairline(space::CARD))
+                                        .child(goal())
+                                        .child(hairline(space::CARD))
+                                        .child(super::settings_body::goal_weight()),
+                                ))
+                                .child(settings_group(
+                                    || s().settings_connections,
+                                    card()
+                                        .overflow_hidden()
+                                        .child(super::settings_body::scale_row().map(|row| {
+                                            view().child(row).child(hairline(space::CARD))
+                                        }))
+                                        .child(super::settings_garmin::garmin_section()),
+                                ))
+                                .child(settings_group(|| s().recognition, recognition()))
+                                .child(settings_group(
+                                    || s().settings_data,
+                                    super::settings_backup::backup_row(),
+                                ))
+                                .child(settings_group(
+                                    || s().settings_about,
+                                    super::settings_updates::updates_section(),
+                                ))
                                 .child(keyboard_diagnostics()),
                         ),
                 ),
         )
+}
+
+fn settings_group(
+    title: impl Fn() -> &'static str + 'static,
+    content: impl IntoElement,
+) -> impl IntoElement {
+    view().gap_2().child(group_label(title)).child(content)
 }
 
 /// An icon in its well: the fixed anchor every settings row leads with.
@@ -90,25 +103,41 @@ pub(super) fn entry_row(
     tint: impl Fn() -> AdaptiveColor + Copy + 'static,
     press: impl Fn() + 'static,
 ) -> impl IntoElement {
-    card().overflow_hidden().child(
-        row_button(press)
-            .accessibility_label(move || Some(format!("{}, {}", title(), summary()).into()))
-            .child(icon_well(glyph))
-            .child(
-                view()
-                    .flex_1()
-                    .min_w(px(0.0))
-                    .gap(px(2.0))
-                    .child(text(title).typo(Type::Headline).text_color(color::INK))
-                    .child(
-                        text(summary)
-                            .typo(Type::Subhead)
-                            .text_color(tint)
-                            .number_of_lines(1),
-                    ),
-            )
-            .child(icon(Icon::ChevronRight, 18.0, color::MUTED)),
-    )
+    card()
+        .overflow_hidden()
+        .child(entry_list_row(glyph, title, summary, tint, press))
+}
+
+pub(super) fn entry_list_row(
+    glyph: Icon,
+    title: impl Fn() -> &'static str + Copy + 'static,
+    summary: impl Fn() -> String + Copy + 'static,
+    tint: impl Fn() -> AdaptiveColor + Copy + 'static,
+    press: impl Fn() + 'static,
+) -> impl IntoElement {
+    row_button(press)
+        .accessibility_label(move || Some(format!("{}, {}", title(), summary()).into()))
+        .child(icon_well(glyph))
+        .child(entry_text(title, summary, tint))
+        .child(icon(Icon::ChevronRight, 18.0, color::MUTED))
+}
+
+fn entry_text(
+    title: impl Fn() -> &'static str + 'static,
+    summary: impl Fn() -> String + 'static,
+    tint: impl Fn() -> AdaptiveColor + 'static,
+) -> impl IntoElement {
+    view()
+        .flex_1()
+        .min_w(px(0.0))
+        .gap(px(2.0))
+        .child(text(title).typo(Type::Headline).text_color(color::INK))
+        .child(
+            text(summary)
+                .typo(Type::Subhead)
+                .text_color(tint)
+                .number_of_lines(2),
+        )
 }
 
 /// Low-frequency configuration opens in place, retaining entered values.
@@ -121,11 +150,18 @@ pub(super) fn setting_details(
     tint: impl Fn() -> AdaptiveColor + Copy + 'static,
     content: impl IntoElement,
 ) -> impl IntoElement {
-    controlled_setting_details(glyph, label, summary, tint, signal(false), content)
+    card().overflow_hidden().child(setting_details_row(
+        glyph,
+        label,
+        summary,
+        tint,
+        signal(false),
+        content,
+    ))
 }
 
-/// A settings section that can also be opened from another page.
-pub(super) fn controlled_setting_details(
+/// A disclosure inside a shared settings surface.
+pub(super) fn setting_details_row(
     glyph: Icon,
     label: impl Fn() -> &'static str + Copy + 'static,
     summary: impl Fn() -> String + Copy + 'static,
@@ -133,65 +169,51 @@ pub(super) fn controlled_setting_details(
     open: Signal<bool>,
     content: impl IntoElement,
 ) -> impl IntoElement {
-    card().overflow_hidden().child(
-        collapsible()
-            .open(move || open.get())
-            .reveal(true)
-            .content(
-                view()
-                    .child(hairline(space::CARD))
-                    .child(view().p(px(space::CARD)).child(content)),
-            )
-            .child(
-                view()
-                    .role(AccessibilityRole::Button)
-                    .on_press(move || {
-                        dismiss_keyboard();
-                        open.update(|v| *v = !*v);
-                    })
-                    .optional_label(move || Some(format!("{}, {}", label(), summary()).into()))
-                    .accessibility_state(move || AccessibilityState {
-                        expanded: Some(open.get()),
-                        ..AccessibilityState::default()
-                    })
-                    .flex_row()
-                    .items_center()
-                    .gap_3()
-                    .min_h(px(68.0))
-                    .px(px(space::CARD))
-                    .py_3()
-                    .transition_colors()
-                    .duration(motion::INSTANT)
-                    .hover(|s| s.bg(color::SURFACE_2))
-                    .active(|s| s.bg(color::SUNKEN))
-                    .focus_visible(|s| s.bg(color::SURFACE_2))
-                    .child(icon_well(glyph))
-                    .child(
-                        view()
-                            .flex_1()
-                            .min_w(px(0.0))
-                            .gap(px(2.0))
-                            .child(text(label).typo(Type::Headline).text_color(color::INK))
-                            .child(
-                                text(summary)
-                                    .typo(Type::Subhead)
-                                    .text_color(tint)
-                                    .number_of_lines(1),
-                            ),
-                    )
-                    .child(
-                        view()
-                            .rotate(move || {
-                                Radians(if open.get() {
-                                    std::f32::consts::FRAC_PI_2
-                                } else {
-                                    0.0
-                                })
+    collapsible()
+        .open(move || open.get())
+        .reveal(true)
+        .content(
+            view()
+                .child(hairline(space::CARD))
+                .child(view().p(px(space::CARD)).child(content)),
+        )
+        .child(
+            view()
+                .role(AccessibilityRole::Button)
+                .on_press(move || {
+                    dismiss_keyboard();
+                    open.update(|v| *v = !*v);
+                })
+                .optional_label(move || Some(format!("{}, {}", label(), summary()).into()))
+                .accessibility_state(move || AccessibilityState {
+                    expanded: Some(open.get()),
+                    ..AccessibilityState::default()
+                })
+                .flex_row()
+                .items_center()
+                .gap_3()
+                .min_h(px(68.0))
+                .px(px(space::CARD))
+                .py_3()
+                .transition_colors()
+                .duration(motion::INSTANT)
+                .hover(|s| s.bg(color::SURFACE_2))
+                .active(|s| s.bg(color::SUNKEN))
+                .focus_visible(|s| s.bg(color::SURFACE_2))
+                .child(icon_well(glyph))
+                .child(entry_text(label, summary, tint))
+                .child(
+                    view()
+                        .rotate(move || {
+                            Radians(if open.get() {
+                                std::f32::consts::FRAC_PI_2
+                            } else {
+                                0.0
                             })
-                            .child(icon(Icon::ChevronRight, 18.0, color::MUTED)),
-                    ),
-            ),
-    )
+                        })
+                        .child(icon(Icon::ChevronRight, 18.0, color::MUTED)),
+                ),
+        )
 }
 
 /// The model account's row (its own page) and asking before each photo.
@@ -235,31 +257,13 @@ fn recognition() -> impl IntoElement {
     };
     card()
         .overflow_hidden()
-        .child(
-            row_button(|| nav::push(Route::ModelSettings))
-                .accessibility_label(move || {
-                    Some(format!("{}, {}", s().vision_model, summary()).into())
-                })
-                .child(icon_well(Icon::Eye))
-                .child(
-                    view()
-                        .flex_1()
-                        .min_w(px(0.0))
-                        .gap(px(2.0))
-                        .child(
-                            text(|| s().vision_model)
-                                .typo(Type::Headline)
-                                .text_color(color::INK),
-                        )
-                        .child(
-                            text(summary)
-                                .typo(Type::Subhead)
-                                .text_color(tint)
-                                .number_of_lines(1),
-                        ),
-                )
-                .child(icon(Icon::ChevronRight, 18.0, color::MUTED)),
-        )
+        .child(entry_list_row(
+            Icon::Eye,
+            || s().vision_model,
+            summary,
+            tint,
+            || nav::push(Route::ModelSettings),
+        ))
         .child(
             view()
                 .px(px(space::CARD))
@@ -306,7 +310,7 @@ fn goal() -> impl IntoElement {
                     || parse_number(t).is_none_or(|v| v > *settings::GOAL_RANGE.end())
             })
     };
-    setting_details(
+    setting_details_row(
         Icon::Chart,
         || s().daily_goal,
         || {
@@ -315,6 +319,7 @@ fn goal() -> impl IntoElement {
                 .unwrap_or_else(|| s().goal_unset.into())
         },
         || color::MUTED,
+        signal(false),
         view()
             .gap_3()
             .child(number_input(text_of, || s().kcal, || s().daily_goal))

@@ -34,10 +34,9 @@ const DOCK: f32 = 64.0;
 /// The bar's gap above the safe area.
 const DOCK_GAP: f32 = 14.0;
 
-/// The space a tab's scrolling content leaves under its last item so it
-/// clears the bar.
-pub fn dock_clearance() -> f32 {
-    DOCK + DOCK_GAP + safe_area().bottom.0 + 28.0
+/// Top edge of the dock, measured from the bottom of the home surface.
+fn dock_top_inset() -> f32 {
+    DOCK + DOCK_GAP + safe_area().bottom.0
 }
 
 /// The sheets the home owns, for its tabs to open (context).
@@ -117,7 +116,7 @@ pub fn home_page() -> Screen {
                             move || sheets.capture.get() || sheets.finance.get().is_some(),
                             |s| s.hidden(),
                         )
-                        .child(toast_host(|| DOCK + DOCK_GAP + safe_area().bottom.0 + 12.0)),
+                        .child(toast_host(|| dock_top_inset() + 12.0)),
                 )
                 .child(capture_editor(sheets))
                 .child(setup_sheet(sheets))
@@ -154,6 +153,7 @@ fn pane(tab: Tab, content: impl IntoElement) -> impl IntoElement {
     view()
         .absolute()
         .inset_0()
+        .bottom(|| px(dock_top_inset() + 8.0))
         .style_when(move || nav::tab() != tab, |s| s.hidden())
         .accessibility_elements_hidden(move || nav::tab() != tab)
         .child(content)

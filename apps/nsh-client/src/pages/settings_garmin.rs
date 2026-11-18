@@ -4,7 +4,10 @@
 use nsh_core::{element::AutoCapitalize, prelude::*};
 
 use crate::{
-    data::{garmin, tasks},
+    data::{
+        garmin::{self, Failure, SyncState},
+        tasks,
+    },
     domain::garmin::Region,
     i18n::s,
     ui::{
@@ -40,26 +43,12 @@ pub fn garmin_section() -> impl IntoElement {
             }
         });
     };
-    super::settings::setting_details(
+    super::settings::setting_details_row(
         Icon::Server,
         || s().garmin,
-        || {
-            if garmin::connected() {
-                s().garmin_connected(match garmin::region() {
-                    Some(Region::China) => "garmin.cn",
-                    _ => "garmin.com",
-                })
-            } else {
-                s().garmin_disconnected.into()
-            }
-        },
-        || {
-            if garmin::connected() {
-                color::POSITIVE
-            } else {
-                color::MUTED
-            }
-        },
+        summary,
+        tint,
+        signal(false),
         view().gap_4().child(
             when(garmin::connected, move || {
                 view().gap_3().child(
@@ -111,4 +100,31 @@ pub fn garmin_section() -> impl IntoElement {
             }),
         ),
     )
+}
+
+fn summary() -> String {
+    if !garmin::connected() {
+        return s().garmin_disconnected.into();
+    }
+    match garmin::sync_state() {
+        SyncState::Syncing => s().garmin_syncing.into(),
+        SyncState::Failed(Failure::KeyRejected) => s().garmin_key_rejected.into(),
+        SyncState::Failed(Failure::Network) => s().garmin_network.into(),
+        SyncState::Failed(Failure::Unreadable) => s().garmin_unreadable.into(),
+        SyncState::Idle => s().garmin_connected(match garmin::region() {
+            Some(Region::China) => "garmin.cn",
+            _ => "garmin.com",
+        }),
+    }
+}
+
+fn tint() -> AdaptiveColor {
+    if !garmin::connected() {
+        return color::MUTED;
+    }
+    match garmin::sync_state() {
+        SyncState::Idle => color::POSITIVE,
+        SyncState::Syncing => color::MUTED,
+        SyncState::Failed(_) => color::DANGER,
+    }
 }

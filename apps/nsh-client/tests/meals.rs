@@ -362,8 +362,8 @@ fn a_meal_with_more_nutrition_shows_its_sums_and_editor() -> Result<(), String> 
 fn settings_keep_the_goal_as_typed_without_save() -> Result<(), String> {
     let (mut app, storage) = start(Vec::new(), None);
     app.press("label:Settings")?;
-    app.press("label:/^Daily goal, /")?;
-    app.type_text("label:Daily goal", "1800")?;
+    app.press("label:/^Daily calorie goal, /")?;
+    app.type_text("label:Daily calorie goal", "1800")?;
     app.press("label:Back")?;
     app.wait_for("label:New entry")?;
     let settings = storage
@@ -373,5 +373,25 @@ fn settings_keep_the_goal_as_typed_without_save() -> Result<(), String> {
         .unwrap_or_default();
     assert!(settings.contains("1800"), "the goal is kept: {settings}");
     assert!(!app.shows("text:Save"));
+    Ok(())
+}
+
+#[test]
+fn body_profile_saves_in_its_own_page_and_shows_only_completion_in_settings() -> Result<(), String>
+{
+    let (mut app, _) = start(Vec::new(), None);
+    app.press("label:Settings")?;
+    app.press("label:Body profile, Incomplete")?;
+    app.wait_for("label:Height")?;
+    app.type_text("label:Height", "170")?;
+    app.type_text("label:Age", "35")?;
+    app.press("Male")?;
+    app.press("label:Back")?;
+    app.wait_for("label:Body profile, Complete")?;
+    assert!(!app.shows("text:170 cm"));
+    app.press("label:Body profile, Complete")?;
+    app.wait_for("label:Height")?;
+    assert_eq!(app.screen().input_text("label:Height")?, Some("170"));
+    assert_eq!(app.screen().input_text("label:Age")?, Some("35"));
     Ok(())
 }

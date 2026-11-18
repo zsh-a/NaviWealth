@@ -11,7 +11,7 @@ use nsh_core::{geometry::Point, prelude::*};
 use super::{
     drafts::drafts_section,
     finance::transaction_row,
-    home::{Sheets, dock_clearance},
+    home::Sheets,
     rows::{INSET, TEXT_INSET, divider, meal_row, weight_row},
 };
 use crate::{
@@ -144,7 +144,7 @@ pub fn records_tab() -> impl IntoElement {
         view()
             .px(px(space::GUTTER))
             .pt_safe_area_plus(px(10.0))
-            .pb(move || px(dock_clearance()))
+            .pb_4()
             .gap_5()
             .child(
                 view()
@@ -154,21 +154,18 @@ pub fn records_tab() -> impl IntoElement {
                     .px(px(4.0))
                     .pt_2()
                     .child(
-                        view()
+                        text(|| s().records)
                             .flex_1()
                             .min_w(px(0.0))
-                            .gap(px(2.0))
-                            .child(
-                                text(|| s().history)
-                                    .typo(Type::Subhead)
-                                    .text_color(color::MUTED),
-                            )
-                            .child(
-                                text(|| s().records)
-                                    .typo(Type::LargeTitle)
-                                    .text_color(color::INK)
-                                    .role(AccessibilityRole::Header),
-                            ),
+                            .typo(Type::LargeTitle)
+                            .text_color(color::INK)
+                            .role(AccessibilityRole::Header),
+                    )
+                    .child(
+                        Btn::ghost()
+                            .size(Size::Small)
+                            .label(|| crate::i18n::statement_import::title().into())
+                            .on_press(|| crate::nav::push(crate::nav::Route::StatementImport)),
                     )
                     .child(
                         IconBtn::new(Icon::Calendar, || s().go_to_day.into())
@@ -195,12 +192,6 @@ pub fn records_tab() -> impl IntoElement {
                 }),
             )
             .child(drafts_section(true))
-            .child(
-                Btn::ghost()
-                    .size(Size::Small)
-                    .label(|| crate::i18n::statement_import::title().into())
-                    .on_press(|| crate::nav::push(crate::nav::Route::StatementImport)),
-            )
             .child(
                 when(
                     move || days.with(Vec::is_empty),

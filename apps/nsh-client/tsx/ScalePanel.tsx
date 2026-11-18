@@ -37,13 +37,31 @@ export function ScalePanel(props: { close: () => void; busy: Signal<boolean> }) 
         return "";
     }
   });
-  const canScan = computed(
-    () =>
-      profileLoaded() &&
-      profileReady() &&
-      !preview() &&
-      !["saved", "connecting", "measuring"].includes(state()),
-  );
+  const needsProfile = computed(() => profileLoaded() && !profileReady() && !preview());
+  const primaryAction = computed(() => {
+    if (state() === "saved") return { label: labels.close, run: leave };
+    const reading = preview();
+    if (reading) {
+      const label = replacement()
+        ? labels.replaceSave
+        : reading.measurement.metrics
+          ? labels.save
+          : labels.weightOnly;
+      return { label, run: () => void save() };
+    }
+    if (needsProfile()) return { label: labels.editProfile, run: () => void openProfile() };
+    if (!profileLoaded() || !profileReady()) return null;
+    switch (state()) {
+      case "scanning":
+        return { label: labels.scan, run: () => void scan(), disabled: true };
+      case "idle":
+        return { label: labels.scan, run: () => void scan() };
+      case "failed":
+        return { label: labels.retry, run: () => void scan() };
+      default:
+        return null;
+    }
+  });
   const textStyle = () => ({ fontSize: 16, lineHeight: 23, color: palette().ink });
   const noteStyle = () => ({ fontSize: 14, lineHeight: 21, color: palette().muted });
   function Action(action: {
@@ -58,13 +76,17 @@ export function ScalePanel(props: { close: () => void; busy: Signal<boolean> }) 
         disabled={action.disabled}
         onPress={action.run}
         style={{
-          minHeight: 50,
-          paddingHorizontal: 20,
-          paddingVertical: 12,
+          minHeight: action.primary ? 50 : 44,
+          paddingHorizontal: action.primary ? 20 : 12,
+          paddingVertical: action.primary ? 12 : 8,
           borderRadius: 25,
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: action.primary ? palette().ink : palette().well,
+          backgroundColor: action.primary
+            ? action.disabled
+              ? palette().well
+              : palette().ink
+            : "transparent",
         }}
       >
         <Text
@@ -72,7 +94,11 @@ export function ScalePanel(props: { close: () => void; busy: Signal<boolean> }) 
             fontSize: 16,
             lineHeight: 23,
             fontWeight: 600,
-            color: action.primary ? palette().onAction : palette().ink,
+            color: action.disabled
+              ? palette().muted
+              : action.primary
+                ? palette().onAction
+                : palette().ink,
           }}
         >
           {action.label}
@@ -105,31 +131,48 @@ export function ScalePanel(props: { close: () => void; busy: Signal<boolean> }) 
         >
           {labels.title}
         </Text>
-        <Action label={labels.close} run={leave} disabled={locked()} />
+        <If when={state() !== "saved"}>
+          <Action label={labels.close} run={leave} disabled={locked()} />
+        </If>
       </View>
       <Scroll style={{ flexShrink: 1 }}>
         <View style={{ gap: 16, paddingBottom: 8 }}>
-          <Text style={noteStyle()}>{labels.intro}</Text>
-          <If when={profileLoaded() && !profileReady() && !preview()}>
+          <If
+            when={
+              profileLoaded() &&
+              profileReady() &&
+              state() === "idle" &&
+              !message() &&
+              !devices().length
+            }
+          >
+            <Text style={textStyle()}>{labels.intro}</Text>
+          </If>
+          <If when={needsProfile()}>
             <Text style={textStyle()}>{labels.profile}</Text>
-            <Action label={labels.editProfile} disabled={locked()} run={() => void openProfile()} />
           </If>
           <If when={message() !== ""}>
             <Text
               testID="scale-message"
+              android={{ accessibilityLiveRegion: "polite" }}
               style={{
-                ...noteStyle(),
+                ...(state() === "saved" ? textStyle() : noteStyle()),
+                fontWeight: state() === "saved" ? 600 : 400,
                 color:
                   state() === "failed" || message() === labels.saveFailed
                     ? palette().danger
-                    : palette().muted,
+                    : state() === "saved"
+                      ? palette().ink
+                      : palette().muted,
               }}
             >
               {message()}
             </Text>
           </If>
           <If when={progress()}>
-            <Text style={textStyle()}>{progress()}</Text>
+            <Text style={textStyle()} android={{ accessibilityLiveRegion: "polite" }}>
+              {progress()}
+            </Text>
           </If>
           <If when={!preview() && state() !== "saved" && profileReady()}>
             <Each of={devices()} key={(device) => device.address}>
@@ -156,14 +199,20 @@ export function ScalePanel(props: { close: () => void; busy: Signal<boolean> }) 
               const kg = () => (reading().measurement.weight_grams / 1000).toFixed(2);
               return (
                 <View testID="scale-preview" style={{ gap: 12, paddingVertical: 8 }}>
-                  <Text style={noteStyle()}>{`${reading().device.name} · ${reading().day}`}</Text>
                   <Text
                     accessibilityLabel={`${labels.weight} ${kg()} kg`}
-                    style={{ fontSize: 44, lineHeight: 48, fontWeight: 700, color: palette().ink }}
+                    style={{
+                      fontSize: 52,
+                      lineHeight: 56,
+                      fontWeight: 700,
+                      fontVariant: ["tabular-nums"],
+                      color: palette().ink,
+                    }}
                   >
                     {kg()}
                     <Text style={{ fontSize: 16, color: palette().muted }}> kg</Text>
                   </Text>
+                  <Text style={noteStyle()}>{`${reading().device.name} · ${reading().day}`}</Text>
                   <If when={reading().measurement.metrics}>
                     {(m: () => NonNullable<Preview["measurement"]["metrics"]>) => {
                       return (
@@ -187,40 +236,30 @@ export function ScalePanel(props: { close: () => void; busy: Signal<boolean> }) 
                       style={textStyle()}
                     >{`${labels.replace} ${reading().existing_kg?.toFixed(1)} kg`}</Text>
                   </If>
-                  <Action
-                    primary
-                    disabled={locked()}
-                    label={
-                      replacement()
-                        ? labels.replaceSave
-                        : reading().measurement.metrics
-                          ? labels.save
-                          : labels.weightOnly
-                    }
-                    run={() => void save()}
-                  />
-                  <If when={replacement()}>
-                    <Action label={labels.keep} run={() => void cancel()} disabled={locked()} />
-                  </If>
-                  <If when={!replacement()}>
-                    <Action label={labels.discard} run={() => void cancel()} disabled={locked()} />
-                  </If>
                 </View>
               );
             }}
           </If>
         </View>
       </Scroll>
-      <If when={canScan()}>
-        <Action
-          primary
-          label={state() === "failed" ? labels.retry : labels.scan}
-          disabled={state() === "scanning" || locked()}
-          run={() => void scan()}
-        />
-      </If>
-      <If when={state() === "saved"}>
-        <Action primary label={labels.close} run={leave} />
+      <If when={primaryAction()}>
+        {(action) => (
+          <View testID="scale-actions" style={{ flexShrink: 0, gap: 4 }}>
+            <Action
+              primary
+              label={action().label}
+              disabled={locked() || action().disabled}
+              run={() => action().run()}
+            />
+            <If when={preview()}>
+              <Action
+                label={replacement() ? labels.keep : labels.discard}
+                run={() => void cancel()}
+                disabled={locked()}
+              />
+            </If>
+          </View>
+        )}
       </If>
     </View>
   );

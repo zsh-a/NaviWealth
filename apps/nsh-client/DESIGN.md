@@ -15,7 +15,8 @@ AI only to turn text and images into drafts, using the owner's model account.
   is New entry / 新记录; it opens the shared text/image composer.
   Settings is the corner action on Today.
   Pages pushed over the home cover the bar. Hidden tabs stay alive (their
-  scroll position stays) and are hidden from screen readers.
+  scroll position stays) and are hidden from screen readers. Each tab scrolls
+  in a viewport that ends above the dock and system inset.
 - **Capture:** one bounded conversation
   ([Capture Conversation](../../docs/architecture/capture-conversation.md)). The
   description or photo is the thread's first message on the right, in an ink
@@ -32,6 +33,7 @@ AI only to turn text and images into drafts, using the owner's model account.
   accounts are marked. Multiple records show their count on confirmation.
   New model decisions use `ask_user`: each question shows its reason and
   whether an answer is needed, then full-width choices with short descriptions.
+  The question and its choices are grouped together, with answer controls pinned below.
   No choice is preselected. Tapping stages a choice with a check; tapping again
   clears it. Submit answers is the single primary continuation action, and the
   composer accepts extra text or photos. Selection persists immediately, while
@@ -105,7 +107,9 @@ AI only to turn text and images into drafts, using the owner's model account.
   is summarized beside the records it adds up. Opening balances and
   adjustments remain in the timeline with quieter labels and amounts; they
   are not spending. Groups are 24 pt apart, the records 32 pt below the
-  vitals. Past days are in Records.
+  vitals. Before any meals are logged, the card omits the empty ring and macro
+  legend. Model setup is a compact row below the daily content. Past days are
+  in Records.
 - **Drafts:** text/image inputs and recognition results are kept on device,
   pinned on Today and atop Records from one shared source. They can be left,
   reopened, corrected in a sentence, retried, confirmed or discarded with
@@ -115,8 +119,9 @@ AI only to turn text and images into drafts, using the owner's model account.
 - **Records:** every day newest first, its header on one line (date, the
   day's kcal, a weight chip that opens the weight editor), its meals as rows
   of one card; all / meals / weight / money; 21 days at a time. The calendar button
-  opens a month calendar; a chosen day is shown alone, under a bar with its
-  date, steps to the days with records before and after it, and All days.
+  opens a month calendar and shares the header with the statement import action.
+  A chosen day is shown alone, under a bar with its date, steps to adjacent
+  days with records, and All days.
 - **Assets:** one overview card leads with net worth, followed by asset and
   debt totals in two columns. Cash accounts, open holdings and debt accounts
   follow as flat rows on the canvas.
@@ -133,8 +138,9 @@ AI only to turn text and images into drafts, using the owner's model account.
   details and remain in the row's accessible description. Internal holding
   cost accounts stay out of the account list. Manage opens one bottom sheet
   with Add account, Add holding, Exchange rates and Closed holdings. No accounts or holdings
-  shows a short empty state with Add account and Add holding. The global text/image
-  capture button remains the main record entry.
+  shows a short empty state with Add account as the main action and Add holding
+  as a quiet alternative. The global text/image capture button remains the
+  main record entry.
 - **Holdings:** flat overview rows show name, value and price status; quantity
   and average unit cost live in details. Closed positions remain accessible
   through Manage → Closed holdings, with their history and trade actions;
@@ -170,8 +176,8 @@ AI only to turn text and images into drafts, using the owner's model account.
   what changed (daily average against the period before, weight trend),
   then the intake card: a bar per day for a week, a calendar for a month
   (shaded by share of the goal, amber past it, a dot on weighed days, today
-  outlined; a day opens in Records). Then the one-line note, the weight with
-  its 7-day trend line, and Garmin averages.
+  outlined; a day opens in Records). Spending and weight follow, then the
+  one-line note and Garmin averages. An empty intake card shows a short message.
 - **Settings keep every change as it is made; there is no Save.** Recognition
   model / 识别模型 has its own page with one continuous form for API protocol,
   base URL, model and key. The protocol field shows the current choice;
@@ -181,13 +187,17 @@ AI only to turn text and images into drafts, using the owner's model account.
   touch targets at narrow widths and larger text. Test connection follows the
   fields; the device-storage note is a quiet footer. Protocol changes preserve
   custom connection fields and require recognition consent again; Test
-  connection follows the chosen endpoint. Daily goal and Garmin initially show
-  their saved value or connection status; tapping the row expands their
-  controls in place. Collapsing preserves entered values, and hidden controls
-  are excluded from accessibility. Valid goal changes still save as typed;
-  Garmin still connects or disconnects through explicit actions. Asking before
-  recognition and backups remain on Settings. A changed model account requires
-  consent again before sending text, images and account names.
+  connection follows the chosen endpoint. Settings groups related rows under
+  Health profile & goals, Devices & connections, Recognition & consent, Data
+  & backups, and About. Body profile opens a dedicated editor and the index
+  shows completion status. The scale opens that editor directly when needed.
+  The daily calorie goal and goal weight expand in place. Garmin shows its
+  connection or sync state and has explicit connect and disconnect actions.
+  The scale sheet keeps the reading in its scroll region and the current
+  action in a fixed footer. Backup & restore shows automatic backup status
+  and the last outcome. About displays the installed version before opening
+  update details. A changed model account requires consent again before
+  sending text, images and account names.
 
 Missing records never read as zero: an empty day shows "—" and "Nothing
 logged yet", never 0 kcal; a day without meals has no bar and no shade.

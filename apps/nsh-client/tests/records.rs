@@ -220,7 +220,7 @@ fn a_day_in_reviews_month_opens_in_records() -> Result<(), String> {
     app.press("This month")?;
     let day = today();
     app.press(&format!("label:{}, 300 kcal", long_date(day)))?;
-    app.wait_for("text:All history")?;
+    app.wait_for("All days")?;
     // Today alone (it stays in this month on the 1st too).
     app.wait_for(&format!("text:{}", day.0.strftime("%a, %b %-d")))?;
     assert!(!app.shows("text:Yesterday"));

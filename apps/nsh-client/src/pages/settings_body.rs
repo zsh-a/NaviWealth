@@ -1,44 +1,97 @@
-//! Settings' body section: the height, age and sex the BMI and the scale
-//! estimates need, and the optional goal weight. Changes are kept at once.
+//! Body profile and weight goals. Valid changes are kept as they are made.
 
-use nsh_core::prelude::*;
+use nsh_base::nav_page;
+use nsh_core::{element::Screen, prelude::*};
+
+use super::parts::{status_bar, top_bar};
 
 use crate::{
     data::settings,
     domain::format::{field_number, parse_number},
     i18n::s,
+    nav::{self, Route},
     ui::{
-        Icon, color,
+        Icon, Type, Typo, color,
         field::{field, note, number_input},
+        icon,
         segmented::{Segment, segmented},
+        space,
+        surface::{card, row_button},
     },
 };
 use navi_health::bodycomp::Sex;
 
-#[derive(Clone, Default, PartialEq)]
-struct ProfileOpen(bool);
-
-/// Opens the body profile whether Settings is already visible or not.
+/// Open the editor directly from Settings or the scale sheet.
 pub(crate) fn open_body_profile() {
-    global::<ProfileOpen>().set(ProfileOpen(true));
-    crate::nav::push(crate::nav::Route::Settings);
+    nav::push(Route::BodyProfile);
 }
 
-/// The body profile and the goal weight, kept as they change.
-pub fn body_section() -> impl IntoElement {
-    view().gap_3().child(profile()).child(goal_weight())
+pub(super) fn profile_row() -> impl IntoElement {
+    super::settings::entry_list_row(
+        Icon::Sliders,
+        || s().body_profile,
+        || {
+            let complete = settings::height_cm().is_some()
+                && settings::age_years().is_some()
+                && settings::sex().is_some();
+            if complete {
+                s().body_profile_complete
+            } else {
+                s().body_profile_incomplete
+            }
+            .into()
+        },
+        || color::MUTED,
+        open_body_profile,
+    )
+}
+
+/// The scale sheet launches as a task from the device group.
+pub(super) fn scale_row() -> Option<impl IntoElement> {
+    crate::scale::launch_action().map(|open| {
+        let label = crate::scale::launch_label;
+        row_button(open)
+            .accessibility_label(move || Some(label().into()))
+            .child(super::settings::icon_well(Icon::Scale))
+            .child(
+                text(label)
+                    .flex_1()
+                    .min_w(px(0.0))
+                    .typo(Type::Headline)
+                    .text_color(color::INK),
+            )
+            .child(icon(Icon::ChevronRight, 18.0, color::MUTED))
+    })
 }
 
 /// Height, age and sex, each kept once it is in range or empty.
-fn profile() -> impl IntoElement {
-    let requested = global::<ProfileOpen>();
-    let open = signal(false);
-    effect(move || {
-        if requested.get().0 {
-            open.set(true);
-            requested.set(ProfileOpen::default());
-        }
-    });
+pub(crate) fn body_profile_page() -> Screen {
+    nav_page()
+        .title(|| SharedString::from(s().body_profile))
+        .header_visible(false)
+        .status_bar(status_bar)
+        .child(
+            view()
+                .flex_1()
+                .bg(color::CANVAS)
+                .child(top_bar(|| s().body_profile.into(), nav::pop, None))
+                .child(
+                    scroll()
+                        .flex_1()
+                        .keyboard_dismiss_mode(KeyboardDismissMode::OnDrag)
+                        .child(
+                            view()
+                                .px(px(space::GUTTER))
+                                .pt_2()
+                                .pb(move || px(safe_area().bottom.0 + 32.0))
+                                .gap_3()
+                                .child(card().p(px(space::CARD)).child(profile_form())),
+                        ),
+                ),
+        )
+}
+
+fn profile_form() -> impl IntoElement {
     let height = signal(
         untracked(settings::height_cm)
             .map(|h| h.to_string())
@@ -74,81 +127,50 @@ fn profile() -> impl IntoElement {
         age_value().is_err()
             && age.with(|t| t.trim().len() >= 2 || parse_number(t).is_none_or(|v| v > 120.0))
     };
-    let summary = move || match (
-        settings::height_cm(),
-        settings::age_years(),
-        settings::sex(),
-    ) {
-        (None, None, None) => s().goal_unset.into(),
-        (height, age, sex) => {
-            let mut parts: Vec<String> = Vec::new();
-            if let Some(height) = height {
-                parts.push(format!("{} cm", height));
-            }
-            if let Some(age) = age {
-                parts.push(age.to_string());
-            }
-            if let Some(sex) = sex {
-                parts.push(match sex {
-                    Sex::Male => s().male.into(),
-                    Sex::Female => s().female.into(),
-                });
-            }
-            parts.join(" · ")
-        }
-    };
-    super::settings::controlled_setting_details(
-        Icon::Sliders,
-        || s().body_profile,
-        summary,
-        || color::MUTED,
-        open,
-        view()
-            .gap_3()
-            .child(
-                field(
-                    || s().height,
-                    number_input(height, || "cm", || s().height)
-                        .style_when(height_error, |s| s.border_color(color::DANGER)),
-                )
-                .child(note(
-                    move || {
-                        Some(if height_error() {
-                            s().error_height.into()
-                        } else {
-                            s().body_profile_note.into()
-                        })
-                    },
-                    height_error,
-                )),
+    view()
+        .gap_4()
+        .child(
+            text(|| s().body_profile_note)
+                .typo(Type::Subhead)
+                .text_color(color::MUTED),
+        )
+        .child(
+            field(
+                || s().height,
+                number_input(height, || "cm", || s().height)
+                    .style_when(height_error, |s| s.border_color(color::DANGER)),
             )
-            .child(
-                field(
-                    || s().age_years,
-                    number_input(age, || "", || s().age_years)
-                        .style_when(age_error, |s| s.border_color(color::DANGER)),
-                )
-                .child(note(
-                    move || age_error().then(|| s().error_age.into()),
-                    age_error,
-                )),
-            )
-            .child(field(
-                || s().sex,
-                segmented(
-                    vec![
-                        Segment::new(Some(Sex::Male), || s().male.into()),
-                        Segment::new(Some(Sex::Female), || s().female.into()),
-                    ],
-                    settings::sex,
-                    settings::save_sex,
-                ),
+            .child(note(
+                move || height_error().then(|| s().error_height.into()),
+                height_error,
             )),
-    )
+        )
+        .child(
+            field(
+                || s().age_years,
+                number_input(age, || "", || s().age_years)
+                    .style_when(age_error, |s| s.border_color(color::DANGER)),
+            )
+            .child(note(
+                move || age_error().then(|| s().error_age.into()),
+                age_error,
+            )),
+        )
+        .child(field(
+            || s().sex,
+            segmented(
+                vec![
+                    Segment::new(Some(Sex::Male), || s().male.into()),
+                    Segment::new(Some(Sex::Female), || s().female.into()),
+                ],
+                settings::sex,
+                settings::save_sex,
+            ),
+        ))
 }
 
 /// The optional goal weight, kept once it is a weight in range or empty.
-fn goal_weight() -> impl IntoElement {
+pub(super) fn goal_weight() -> impl IntoElement {
     let text_of = signal(
         untracked(settings::goal_kg)
             .map(field_number)
@@ -179,8 +201,8 @@ fn goal_weight() -> impl IntoElement {
                     || parse_number(t).is_none_or(|v| v > crate::domain::weight::MAX_KG)
             })
     };
-    super::settings::setting_details(
-        Icon::Scale,
+    super::settings::setting_details_row(
+        Icon::Chart,
         || s().goal_weight,
         || {
             settings::goal_kg()
@@ -188,6 +210,7 @@ fn goal_weight() -> impl IntoElement {
                 .unwrap_or_else(|| s().goal_unset.into())
         },
         || color::MUTED,
+        signal(false),
         view()
             .gap_3()
             .child(number_input(text_of, || "kg", || s().goal_weight))

@@ -10,11 +10,7 @@ use crate::{
     data::clock,
     data::updates::{self, Check},
     i18n::s,
-    ui::{
-        Btn, Icon, Size, Type, Typo, color,
-        field::note,
-        figures::{Scale, stat},
-    },
+    ui::{Btn, Icon, Size, Type, Typo, color, field::note},
 };
 
 /// The update row: the running version against the newest release.
@@ -26,11 +22,6 @@ pub fn updates_section() -> impl IntoElement {
         tint,
         view()
             .gap_3()
-            .child(stat(
-                move || Some(format!("v{}", updates::current())),
-                String::new,
-                Scale::Tile,
-            ))
             .child(when(
                 move || updates::checked_at_ms().is_some(),
                 move || {
@@ -117,14 +108,23 @@ pub fn updates_section() -> impl IntoElement {
 
 /// The row's summary: what the owner needs at a glance.
 fn summary() -> String {
+    let current = updates::current();
+    if matches!(updates::status(), Check::Failed(_)) {
+        return format!("v{current} · {}", s().update_failed);
+    }
     match updates::latest() {
-        Some(release) if updates::update_available() => s().update_found(&release.version),
-        Some(release) => s().update_uptodate(&release.version),
-        None => s().update_never.into(),
+        Some(release) if updates::update_available() => {
+            format!("v{current} · {}", s().update_found(&release.version))
+        }
+        Some(_) => s().update_uptodate(current),
+        None => format!("v{current} · {}", s().update_never),
     }
 }
 
 fn tint() -> AdaptiveColor {
+    if matches!(updates::status(), Check::Failed(_)) {
+        return color::DANGER;
+    }
     match updates::latest() {
         Some(_) if updates::update_available() => color::CAUTION,
         Some(_) => color::POSITIVE,

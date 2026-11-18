@@ -70,33 +70,36 @@ pub fn hero(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                             },
                         )),
                 )
-                .child(
-                    view()
-                        .size(px(RING))
-                        .flex_shrink_0()
-                        .child(energy_ring(RING, STROKE, ring))
-                        .child(
-                            view()
-                                .absolute()
-                                .inset_0()
-                                .items_center()
-                                .justify_center()
-                                .child(
-                                    text(move || match goal.get() {
-                                        Some(g) if g > 0.0 && logged() => {
-                                            format!("{:.0}%", total().kcal / g * 100.0)
-                                        }
-                                        _ => String::new(),
-                                    })
-                                    .typo(Type::Callout)
-                                    .font_weight(FontWeight::SEMIBOLD)
-                                    .tabular_nums()
-                                    .text_color(color::INK),
-                                ),
-                        ),
-                ),
+                .child(when(
+                    move || logged() && total().kcal > 0.0,
+                    move || {
+                        view()
+                            .size(px(RING))
+                            .flex_shrink_0()
+                            .child(energy_ring(RING, STROKE, ring))
+                            .child(
+                                view()
+                                    .absolute()
+                                    .inset_0()
+                                    .items_center()
+                                    .justify_center()
+                                    .child(
+                                        text(move || match goal.get() {
+                                            Some(g) if g > 0.0 && logged() => {
+                                                format!("{:.0}%", total().kcal / g * 100.0)
+                                            }
+                                            _ => String::new(),
+                                        })
+                                        .typo(Type::Callout)
+                                        .font_weight(FontWeight::SEMIBOLD)
+                                        .tabular_nums()
+                                        .text_color(color::INK),
+                                    ),
+                            )
+                    },
+                )),
         )
-        .child(
+        .child(when(logged, move || {
             view()
                 .flex_row()
                 .gap_4()
@@ -105,21 +108,14 @@ pub fn hero(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                     color::PROTEIN,
                     || s().protein,
                     move || total().protein,
-                    logged,
                 ))
                 .child(macro_mark(
                     color::CARBS,
                     || s().carbs,
                     move || total().carbs,
-                    logged,
                 ))
-                .child(macro_mark(
-                    color::FAT,
-                    || s().fat,
-                    move || total().fat,
-                    logged,
-                )),
-        )
+                .child(macro_mark(color::FAT, || s().fat, move || total().fat))
+        }))
 }
 
 /// The energy counting up, or a dash before anything is logged (missing
@@ -150,7 +146,6 @@ fn macro_mark(
     tint: AdaptiveColor,
     name: fn() -> &'static str,
     grams: impl Fn() -> f64 + 'static,
-    logged: impl Fn() -> bool + 'static,
 ) -> impl IntoElement {
     view()
         .flex_row()
@@ -158,15 +153,9 @@ fn macro_mark(
         .gap(px(6.0))
         .child(view().size(px(6.0)).rounded_full().bg(tint))
         .child(
-            text(move || {
-                if logged() {
-                    format!("{} {}g", name(), format::grams(grams()))
-                } else {
-                    format!("{} —", name())
-                }
-            })
-            .typo(Type::Caption)
-            .tabular_nums()
-            .text_color(color::MUTED),
+            text(move || format!("{} {}g", name(), format::grams(grams())))
+                .typo(Type::Caption)
+                .tabular_nums()
+                .text_color(color::MUTED),
         )
 }

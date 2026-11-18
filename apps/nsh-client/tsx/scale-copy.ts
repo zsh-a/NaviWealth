@@ -1,7 +1,7 @@
 export const copy = {
   en: {
     title: "Connect scale",
-    intro: "Step onto your AFU-WL scale to wake it. Keep this screen open while measuring.",
+    intro: "Step onto your AFU-WL scale to wake it, then tap Find scale.",
     scan: "Find scale",
     scanning: "Looking for your scale…",
     empty: "No scale found. Wake the scale and try again.",
@@ -19,7 +19,7 @@ export const copy = {
     muscle: "Estimated muscle",
     water: "Estimated body water",
     estimate: "Body composition is estimated locally from impedance and your body profile.",
-    noImpedance: "No valid impedance yet. You can save weight only, or wait for body composition.",
+    noImpedance: "No valid impedance reading is available. You can still save your weight.",
     profile: "Complete your height, age and sex in Body profile before connecting.",
     editProfile: "Open body profile",
     unsupported:
@@ -43,7 +43,7 @@ export const copy = {
   },
   zh: {
     title: "连接体脂秤",
-    intro: "轻踩 AFU-WL 体脂秤唤醒设备，测量时请保持此页面打开。",
+    intro: "轻踩 AFU-WL 体脂秤唤醒设备，再点「查找体脂秤」。",
     scan: "查找体脂秤",
     scanning: "正在查找体脂秤…",
     empty: "未找到体脂秤，请唤醒设备后重试。",
@@ -61,7 +61,7 @@ export const copy = {
     muscle: "估算肌肉率",
     water: "估算水分率",
     estimate: "体成分根据阻抗和身体档案在本机估算。",
-    noImpedance: "暂未获得有效阻抗，可仅保存体重，或继续等待体成分。",
+    noImpedance: "没有有效的阻抗读数，仍可单独保存体重。",
     profile: "连接前，请先在身体档案中补充身高、年龄和性别。",
     editProfile: "打开身体档案",
     unsupported: "当前环境无法连接蓝牙体脂秤，请使用支持体脂秤的 Android 版本。",

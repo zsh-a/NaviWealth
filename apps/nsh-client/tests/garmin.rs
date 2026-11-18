@@ -14,7 +14,7 @@ fn disconnect_during_a_root_pull_does_not_restore_the_key_or_import_late_rows() 
     app.press("label:/^Garmin, /")?;
     app.type_text("text:Paste your Garmin key", "GCDC-test-key")?;
     app.press("Connect")?;
-    app.wait_for("text:Connected · garmin.cn")?;
+    app.wait_for("text:Disconnect")?;
     // Let the root pull start, then revoke the connection before it returns.
     for _ in 0..50 {
         if stub.requests().iter().any(|r| r.method == "GET") {

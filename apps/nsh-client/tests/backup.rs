@@ -22,7 +22,7 @@ use nsh_testing::DialogAnswer;
 /// Settings now carries backup as one row; its form lives on its own page.
 fn open_backup(app: &mut Headless) -> Result<(), String> {
     app.press("label:Settings")?;
-    app.press("label:/^Backup, /")?;
+    app.press("label:/^Backup & restore, /")?;
     app.wait_for("text:WebDAV folder")
 }
 
@@ -431,11 +431,11 @@ fn dav_authentication_errors_and_redirects_are_visible_without_sending_credentia
         );
         app.press("label:Settings")?;
         app.wait_for(if status == 401 {
-            "text:The WebDAV account or password is wrong."
+            "text:Automatic backup on · The WebDAV account or password is wrong."
         } else if status == 503 {
-            "text:The WebDAV server answered 503."
+            "text:Automatic backup on · The WebDAV server answered 503."
         } else {
-            "text:The WebDAV server answered 302."
+            "text:Automatic backup on · The WebDAV server answered 302."
         })?;
         assert!(destination.requests().is_empty());
     }

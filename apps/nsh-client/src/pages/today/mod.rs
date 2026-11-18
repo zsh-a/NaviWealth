@@ -15,17 +15,14 @@ pub use weight::weight_editor;
 
 use nsh_core::prelude::*;
 
-use super::{
-    drafts::drafts_section,
-    home::{Sheets, dock_clearance},
-};
+use super::{drafts::drafts_section, home::Sheets};
 use crate::{
     data::{clock, settings},
     i18n::s,
     nav::{self, Route},
     ui::{
         Btn, Icon, IconBtn, Size, Type, Typo, color, icon, sheet::bottom_sheet, space,
-        surface::card,
+        surface::row_button,
     },
 };
 
@@ -36,16 +33,16 @@ pub fn today_tab() -> impl IntoElement {
         view()
             .px(px(space::GUTTER))
             .pt_safe_area_plus(px(10.0))
-            .pb(move || px(dock_clearance()))
+            .pb_4()
             // Groups breathe more than their parts: 24 pt between the summary
             // groups, 32 pt before the day's records.
             .gap_6()
             .child(header())
-            .child(drafts_section(false))
-            .child(setup_card())
             .child(hero::hero(day))
+            .child(drafts_section(false))
             .child(vitals::vitals(day))
-            .child(view().mt_2().child(meal_list::meal_list(day))),
+            .child(view().mt_2().child(meal_list::meal_list(day)))
+            .child(setup_row()),
     )
 }
 
@@ -83,42 +80,22 @@ fn header() -> impl IntoElement {
 }
 
 /// Shown until a model account can analyze photos.
-fn setup_card() -> impl IntoElement {
+fn setup_row() -> impl IntoElement {
     when(
         || settings::ready_account().is_none(),
         || {
-            card()
-                .p(px(space::CARD))
-                .gap_4()
+            row_button(|| nav::push(Route::Settings))
+                .min_h(px(48.0))
+                .px_0()
+                .accessibility_label(|| Some(s().setup_title.into()))
+                .child(ai_mark(28.0))
                 .child(
-                    view()
-                        .flex_row()
-                        .items_start()
-                        .gap(px(14.0))
-                        .child(ai_mark(44.0))
-                        .child(
-                            view()
-                                .flex_1()
-                                .gap_1()
-                                .child(
-                                    text(|| s().setup_title)
-                                        .typo(Type::Headline)
-                                        .text_color(color::INK),
-                                )
-                                .child(
-                                    text(|| s().setup_body)
-                                        .typo(Type::Callout)
-                                        .text_color(color::MUTED),
-                                ),
-                        ),
+                    text(|| s().setup_title)
+                        .flex_1()
+                        .typo(Type::Subhead)
+                        .text_color(color::BODY),
                 )
-                .child(
-                    Btn::tonal()
-                        .size(Size::Small)
-                        .label(|| s().set_up.into())
-                        .on_press(|| nav::push(Route::Settings))
-                        .self_end(),
-                )
+                .child(icon(Icon::ChevronRight, 16.0, color::MUTED))
         },
     )
 }

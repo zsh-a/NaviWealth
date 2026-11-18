@@ -36,7 +36,7 @@ pub fn assets_tab() -> impl IntoElement {
                 view()
                     .px(px(space::GUTTER))
                     .pt_safe_area_plus(px(12.0))
-                    .pb(move || px(super::super::home::dock_clearance()))
+                    .pb_4()
                     .gap_5()
                     .child(
                         view()
@@ -90,14 +90,12 @@ pub fn assets_tab() -> impl IntoElement {
                                             },
                                         ),
                                     )
-                                    .child(
-                                        Btn::secondary().label(|| s().add_holding.into()).on_press(
-                                            move || {
-                                                holding.set(Some(String::new()));
-                                                manage.set(true);
-                                            },
-                                        ),
-                                    )
+                                    .child(Btn::ghost().label(|| s().add_holding.into()).on_press(
+                                        move || {
+                                            holding.set(Some(String::new()));
+                                            manage.set(true);
+                                        },
+                                    ))
                                     .into_element();
                             }
                             let valued = portfolio.overview_with_rates(&entries, today.0, &rates);

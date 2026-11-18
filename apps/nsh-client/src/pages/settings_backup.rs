@@ -47,30 +47,28 @@ pub fn failure_copy(failure: Failure) -> String {
     }
 }
 
-/// The backup's state, as Settings' one row carries it: what happened last,
-/// tinted so an unprotected day shows without opening anything.
+/// Shows whether automatic backups can run, followed by the latest outcome.
 fn summary() -> String {
-    match backup::status() {
-        Status::Running => s().backup_running.to_owned(),
-        Status::Failed(failure) => failure_copy(failure),
-        Status::Idle => match backup::last_backup_ms() {
-            Some(ms) => {
-                let when = format!(
-                    "{} {}",
-                    s().long_date(clock::day_of(ms)),
-                    clock::time_label(ms)
-                );
-                s().backup_last(&when)
-            }
-            None => s().backup_never.to_owned(),
-        },
-    }
+    let configured = backup::configured();
+    let automatic = if configured {
+        s().backup_auto_enabled
+    } else {
+        s().backup_auto_disabled
+    };
+    let outcome = match (backup::status(), backup::last_backup_ms()) {
+        (Status::Idle, Some(ms)) => s().backup_last(&s().short_date(clock::day_of(ms))),
+        (Status::Idle, None) if !configured => return automatic.to_owned(),
+        _ => status_line(),
+    };
+    format!("{automatic} · {outcome}")
 }
 
 fn tint() -> AdaptiveColor {
     match backup::status() {
         Status::Failed(_) => color::DANGER,
-        Status::Idle if backup::last_backup_ms().is_none() => color::CAUTION,
+        Status::Idle if backup::configured() && backup::last_backup_ms().is_none() => {
+            color::CAUTION
+        }
         _ => color::MUTED,
     }
 }

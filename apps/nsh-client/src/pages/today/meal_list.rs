@@ -14,8 +14,8 @@ use crate::{
         rows::{TEXT_INSET, divider, meal_row},
     },
     ui::{
-        Icon, Type, Typo, color,
-        feedback::{appear, empty_state},
+        Type, Typo, color,
+        feedback::appear,
         surface::{card, section_header},
     },
 };
@@ -137,17 +137,15 @@ pub fn meal_list(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                 },
             )
             .otherwise(move || {
-                card().child(empty_state(
-                    Icon::Utensils,
-                    move || {
-                        if day() == clock::today() {
-                            s().empty_today
-                        } else {
-                            s().empty_day
-                        }
-                    },
-                    || s().empty_body,
-                ))
+                text(move || {
+                    if day() == clock::today() {
+                        s().empty_today
+                    } else {
+                        s().empty_day
+                    }
+                })
+                .typo(Type::Subhead)
+                .text_color(color::MUTED)
             }),
         )
 }

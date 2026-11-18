@@ -7,7 +7,8 @@ use nsh_core::prelude::*;
 use crate::{
     nav::{self, Route},
     pages::{
-        edit_meal_page, home_page, model_page, new_meal_page, pending_meal_page, settings_page,
+        body_profile_page, edit_meal_page, home_page, model_page, new_meal_page, pending_meal_page,
+        settings_page,
     },
 };
 
@@ -24,6 +25,7 @@ pub fn shell() -> impl IntoElement {
                     Route::EditMeal(id) => edit_meal_page(&id),
                     Route::Pending(id) => pending_meal_page(&id),
                     Route::Settings => settings_page(),
+                    Route::BodyProfile => body_profile_page(),
                     Route::ModelSettings => model_page(),
                     Route::BackupSettings => crate::pages::settings_backup::backup_page(),
                     Route::Account(name) => crate::pages::assets::account_page(&name),

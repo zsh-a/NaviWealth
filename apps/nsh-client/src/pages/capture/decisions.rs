@@ -17,8 +17,11 @@ pub fn questions(
     open: bool,
 ) -> impl IntoElement {
     let call_id = request.call_id.clone();
+    let current = snapshot
+        .pending_ask_user()
+        .is_some_and(|ask| ask.call_id == call_id);
     view()
-        .gap_4()
+        .gap_5()
         .flex_1()
         .min_w(px(0.0))
         .children(request.questions.iter().map(|question| {
@@ -32,24 +35,27 @@ pub fn questions(
             view()
                 .gap_2()
                 .child(
-                    text(question.text.clone())
-                        .typo(Type::Headline)
-                        .text_color(color::INK),
+                    view()
+                        .gap_1()
+                        .child(
+                            text(question.text.clone())
+                                .typo(Type::Headline)
+                                .text_color(color::INK),
+                        )
+                        .child(current.then(|| {
+                            let status = if question.required {
+                                s().capture_required
+                            } else {
+                                s().capture_optional
+                            };
+                            let detail = if question.reason.is_empty() {
+                                status.to_owned()
+                            } else {
+                                format!("{status} · {}", question.reason)
+                            };
+                            text(detail).typo(Type::Subhead).text_color(color::MUTED)
+                        })),
                 )
-                .child(
-                    text(if question.required {
-                        s().capture_required
-                    } else {
-                        s().capture_optional
-                    })
-                    .typo(Type::Caption)
-                    .text_color(color::MUTED),
-                )
-                .child((!question.reason.is_empty()).then(|| {
-                    text(question.reason.clone())
-                        .typo(Type::Subhead)
-                        .text_color(color::MUTED)
-                }))
                 .child(open.then(|| {
                     view()
                         .gap_1()
@@ -85,6 +91,9 @@ pub fn questions(
                                     Err(_) => error.set(Some(s().error_transaction_storage.into())),
                                 }
                             })
+                            .min_h(px(48.0))
+                            .px_3()
+                            .py_2()
                             .accessibility_label(Some(label.clone().into()))
                             .selected(checked)
                             .bg(if checked {

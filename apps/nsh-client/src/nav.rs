@@ -20,6 +20,8 @@ pub enum Route {
     Pending(String),
     /// Settings.
     Settings,
+    /// Height, age and sex used for health calculations.
+    BodyProfile,
     /// The vision model account, from Settings.
     ModelSettings,
     /// Backup and restore, from Settings.
