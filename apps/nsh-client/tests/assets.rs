@@ -14,9 +14,14 @@ fn create(app: &mut Headless, name: &str, debt: bool) -> Result<(), String> {
     app.type_text("label:Account name", name)?;
     app.press("Create account")?;
     app.wait_for("Check balance")?;
+    app.wait_for_gone("task-sheet", GONE)?;
     Ok(())
 }
 fn verify(app: &mut Headless, value: &str, debt: bool) -> Result<(), String> {
+    // During the task's native exit the receipt is rendered both on the
+    // page and inside the retained sheet. Activate it only after that sheet
+    // leaves, so both fast local runs and slower CI target one action.
+    app.wait_for_gone("task-sheet", GONE)?;
     app.press("Check balance")?;
     // Creation's receipt opens the balance editor directly; account details
     // use their own Check balance action.
