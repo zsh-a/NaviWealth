@@ -2,7 +2,7 @@
 //! The UI carries opaque identifiers; it cannot supply a replacement estimate.
 use std::{cell::RefCell, rc::Rc};
 
-use navi_health::scale::{Measurement, Session, UserProfile};
+use navi_health::scale::{DeviceProtocol, LiveReading, Measurement, Session, UserProfile};
 use nsh_core::prelude::*;
 use nsh_core::storage::Storage;
 use rusqlite::{Connection, OptionalExtension, params};
@@ -24,6 +24,34 @@ impl Device {
             && !self.id.chars().any(char::is_control)
             && !self.name.chars().any(char::is_control)
     }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct RememberedScale {
+    pub device: Device,
+    pub identity: DeviceProtocol,
+}
+
+const REMEMBERED_SCALE_KEY: &str = "scale.remembered-device.v1";
+
+pub fn remembered() -> Option<RememberedScale> {
+    let saved: RememberedScale =
+        serde_json::from_str(&Storage::get_item(REMEMBERED_SCALE_KEY)?).ok()?;
+    saved.device.valid().then_some(saved)
+}
+
+pub fn remember(session_id: &str) -> Option<Device> {
+    let active = live().get_untracked().0?;
+    if active.start.session_id != session_id {
+        return None;
+    }
+    let saved = RememberedScale {
+        device: active.device.clone(),
+        identity: active.identity.clone(),
+    };
+    let encoded = serde_json::to_string(&saved).ok()?;
+    Storage::set_item(REMEMBERED_SCALE_KEY, &encoded).ok()?;
+    Some(saved.device)
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -71,6 +99,7 @@ struct Saved {
 struct Active {
     start: Start,
     device: Device,
+    identity: DeviceProtocol,
     day: Day,
     revision: i64,
     existing_kg: Option<f64>,
@@ -138,7 +167,7 @@ fn weight_on(c: &Connection, day: Day) -> rusqlite::Result<Option<f64>> {
 
 /// Starts a fresh foreground session, snapshotting the owner profile and today's entry.
 /// Starting a new session retires old pending decisions and callback identifiers.
-pub fn begin(device: Device) -> Result<Start, String> {
+pub fn begin(device: Device, identity: DeviceProtocol) -> Result<Start, String> {
     if !device.valid() {
         return Err("Invalid scale identity".into());
     }
@@ -146,7 +175,7 @@ pub fn begin(device: Device) -> Result<Start, String> {
         height_cm: settings::height_cm()
             .ok_or("Set height in Body profile before connecting the scale")?,
         age_years: settings::age_years()
-            .ok_or("Set age in Body profile before connecting the scale")?,
+            .ok_or("Set date of birth in Body profile before connecting the scale")?,
         sex: settings::sex().ok_or("Set sex in Body profile before connecting the scale")?,
     };
     let protocol =
@@ -171,6 +200,7 @@ pub fn begin(device: Device) -> Result<Start, String> {
     live().set(Live(Some(Rc::new(Active {
         start: start.clone(),
         device,
+        identity,
         day,
         revision: baseline,
         existing_kg,
@@ -297,6 +327,14 @@ fn delete_draft(session_id: &str) -> Result<(), String> {
 pub fn pause(session_id: &str) -> Result<(), String> {
     stop_session(session_id);
     Ok(())
+}
+
+pub fn live_reading(session_id: &str) -> Option<LiveReading> {
+    let active = live().get_untracked().0?;
+    if active.start.session_id != session_id {
+        return None;
+    }
+    active.protocol.borrow().live_reading()
 }
 
 fn stop_session(session_id: &str) {
@@ -507,10 +545,16 @@ mod tests {
                     .min_h(px(44.0))
                     .child(text("Begin"))
                     .on_press(move || {
-                        match begin(Device {
-                            id: "device".into(),
-                            name: "AFU-WL".into(),
-                        }) {
+                        match begin(
+                            Device {
+                                id: "device".into(),
+                                name: "AFU-WL".into(),
+                            },
+                            DeviceProtocol {
+                                device_type: 0x27,
+                                protocol_ver: 2,
+                            },
+                        ) {
                             Ok(start) => {
                                 id.set(start.session_id);
                                 reviewed.set(None);

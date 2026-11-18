@@ -207,8 +207,10 @@ The full target is:
   shares with the estimating formula and impedance as provenance (Rule 5
   reason: composition answers the same daily question as weight, how the
   body changes beyond mass). BMI is shown, never stored: computed from the
-  weight and the height in Settings' body profile, which also keeps the age
-  and sex the estimates need. The goal weight (Settings) shows the day's
+  weight and the height in Settings' body profile, which also keeps the birth
+  date and sex the estimates need. Completed age is calculated on the local
+  measurement day and frozen with the measurement; old entered ages remain
+  a labelled fallback until the owner supplies a birth date. The goal weight (Settings) shows the day's
   distance to it on Today and as a line in Review's weight chart, which has
   30- and 90-day windows. Nothing is estimated from a manually entered
   weight: composition arrives only with a scale measurement. The scale link
@@ -216,7 +218,13 @@ The full target is:
   the existing Rust pages and the scale sheet; Kotlin owns Android permissions,
   scanning and GATT through an explicit Host Channel whitelist. Rust owns packet
   validation, profile/time commands, estimation and atomic confirmation. A
-  completed draft stays local and can be reopened without reconnecting. Same-day
+  completed draft stays local and can be reopened without reconnecting.
+  Opening measurement otherwise attempts the remembered scale once in the
+  foreground; closing/backgrounding stops it. Dynamic weight updates live but
+  cannot be confirmed before stability. Details may derive BMI and estimated
+  fat/fat-free/muscle/water masses from the same measurement; estimates keep
+  their model provenance and do not claim numerical parity with vendor scores.
+  Same-day
   replacement requires a second confirmation; missing valid impedance offers
   weight only. Manual edits, deletion, Undo and backup preserve the association
   between weight and its measuring evidence. Host builds, packet fixtures and

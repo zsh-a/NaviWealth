@@ -8,28 +8,55 @@ export interface Device {
   serviceData?: Record<string, string>;
 }
 
+export interface ScaleIdentity {
+  id: string;
+  name: string;
+}
+
+export interface LiveReading {
+  weight_grams: number;
+  stable: boolean;
+}
+
+export interface ScaleUpdate {
+  preview: Preview | null;
+  reading: LiveReading | null;
+}
+
 export interface Preview {
   session_id: string;
   token: string;
   day: string;
   measured_at_ms: number;
-  device: { id: string; name: string };
+  device: ScaleIdentity;
   existing_kg: number | null;
+  summary: MeasurementSummary;
   measurement: {
     weight_grams: number;
     resistance_ohm: number | null;
     metrics: Composition | null;
+    profile: { height_cm: number; age_years: number; sex: "male" | "female" };
   };
+}
+
+export interface MeasurementSummary {
+  bmi: number | null;
+  fat_mass_kg: number | null;
+  fat_free_mass_kg: number | null;
+  muscle_mass_kg: number | null;
+  water_mass_kg: number | null;
 }
 
 export interface Composition {
   body_fat_percent: number;
   muscle_percent: number;
   water_percent: number;
+  model: string;
 }
 
 export interface Start {
   session_id: string;
+  address: string;
   commands: string[];
 }
 

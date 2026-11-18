@@ -6,6 +6,7 @@ import type { App, HostMessage, HostOptions } from "nsh/test";
 const STABLE = "rCmAaOLCAgAFQAAAAAAAAAAp1RE=";
 const IMPEDANCE = "rCkCAAIFAdgBgGjiwgAAAAAp1g4=";
 const PROFILE = { height_cm: 170, age_years: 23, sex: "male" };
+const REMEMBERED_SCALE_KEY = "scale.remembered-device.v1";
 const DEVICE = {
   address: "12:34:56:78:9A:BC",
   name: "AFU-WL-TZ-A1",
@@ -57,6 +58,8 @@ async function start(
   },
   overrides: NonNullable<HostOptions["handlers"]> = {},
   manualClock = false,
+  preferences: Record<string, string> = {},
+  openScale = true,
 ): Promise<App> {
   const app = await open("..", {
     clock: manualClock ? {} : undefined,
@@ -65,7 +68,7 @@ async function start(
     reducedMotion: true,
     width: 390,
     height: 844,
-    storage: { "settings.v1": JSON.stringify(profile ? PROFILE : {}) },
+    storage: { "settings.v1": JSON.stringify(profile ? PROFILE : {}), ...preferences },
     network: {},
     host: {
       params: { testMode: true },
@@ -75,6 +78,7 @@ async function start(
     },
   });
   await app.waitFor("label:New entry");
+  if (!openScale) return app;
   await app.press("label:Settings");
   await app.scroll("Connect scale", 250);
   await app.press("Connect scale");
@@ -82,32 +86,47 @@ async function start(
   return app;
 }
 async function connect(app: App, waitForAcknowledgement = true): Promise<string> {
+  if (
+    app.shows("Connecting to the scale…") ||
+    app.shows("Connected. Step onto the scale and stand still.")
+  ) {
+    await app.waitFor("Connected. Step onto the scale and stand still.");
+    const connected = calls(app, "ble.connect").at(-1);
+    if (!connected) throw new Error("Expected the foreground auto-connection");
+    return data(connected).sessionId as string;
+  }
   const previousScans = calls(app, "ble.scan.start").length;
   const previousWrites = calls(app, "ble.write").length;
-  await app.press("Find scale");
-  await app.waitUntil(() => calls(app, "ble.scan.start").length === previousScans + 1);
-  const scanId = data(calls(app, "ble.scan.start")[previousScans]).sessionId;
-  await app.host.send("ble.device", { ...DEVICE, sessionId: scanId });
-  const pressed = app.press("label:Connect AFU-WL-TZ-A1");
+  const direct = app.shows("Connect saved scale");
+  let target = "Connect saved scale";
+  if (!direct) {
+    await app.press("Find scale");
+    await app.waitUntil(() => calls(app, "ble.scan.start").length === previousScans + 1);
+    const scanId = data(calls(app, "ble.scan.start")[previousScans]).sessionId;
+    await app.host.send("ble.device", { ...DEVICE, sessionId: scanId });
+    target = "label:Connect AFU-WL-TZ-A1";
+  }
+  const pressed = app.press(target);
   // The test server awaits a function handler while serving this press.
   // Pending-write tests deliberately keep that host reply unresolved.
   if (waitForAcknowledgement) await pressed;
   else void pressed.catch(() => {});
   await app.waitUntil(() => calls(app, "ble.write").length === previousWrites + 1);
   const connected = data(calls(app, "ble.connect")[previousWrites]);
+  expect(connected.address).toBe(DEVICE.address);
+  expect(calls(app, "ble.scan.start").length).toBe(previousScans + (direct ? 0 : 1));
   const write = data(calls(app, "ble.write")[previousWrites]);
   expect(write.sessionId).toBe(connected.sessionId);
   const command = decodeBase64(write.dataBase64 as string);
   expect(command.length).toBe(20);
   expect(command[0]).toBe(0xac);
   expect(command[1]).toBe(0x27);
-  expect(command[9]).toBe(170);
-  expect(command[12]).toBe(23);
-  expect(command[13]).toBe(1);
-  expect(command[18]).toBe(0xd0);
+  expect(command[2]).toBe(0x08);
+  expect(command.slice(7, 18)).toEqual([0x20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+  expect(command[18]).toBe(0xdf);
   expect(command[19]).toBe(command.slice(2, 19).reduce((sum, byte) => (sum + byte) & 255, 0));
   if (waitForAcknowledgement) {
-    await app.waitFor("Stand still on the scale. Reading weight and impedance…");
+    await app.waitFor("Connected. Step onto the scale and stand still.");
   }
   return connected.sessionId as string;
 }
@@ -172,7 +191,7 @@ test("scale mixed: missing body profile opens the dedicated editor before any ha
   await app.press("Open body profile");
   await app.waitFor("id:scale-panel", { state: "gone" });
   await app.waitFor("label:Height");
-  await app.waitFor("label:Age");
+  await app.waitFor("label:Birth date");
   await app.press("label:Back");
   await app.waitFor("Devices & connections");
   expect(app.shows("label:Height")).toBe(false);
@@ -200,6 +219,23 @@ test("scale mixed: a matching device name without verified manufacturer metadata
   expect(calls(app, "ble.write").length).toBe(0);
   await home(app);
   await app.waitFor("label:Weight, —");
+}, 30000);
+
+test("scale mixed: unrelated service candidates cannot masquerade as AFU-WL scales", async () => {
+  const app = await start();
+  await app.press("Find scale");
+  await app.waitUntil(() => calls(app, "ble.scan.start").length === 1);
+  const sessionId = data(calls(app, "ble.scan.start")[0]).sessionId;
+  await app.host.send("ble.device", {
+    ...DEVICE,
+    sessionId,
+    name: "Nearby scale",
+    manufacturerData: {},
+    serviceUuids: ["0000ffb0-0000-1000-8000-00805f9b34fb"],
+  });
+  expect(app.shows("label:Connect Nearby scale")).toBe(false);
+  expect(calls(app, "ble.connect").length).toBe(0);
+  expect(calls(app, "ble.write").length).toBe(0);
 }, 30000);
 
 test("scale mixed: closing keeps a local draft and reopening does not reconnect", async () => {
@@ -233,7 +269,7 @@ test("scale mixed: replacing a same-day measurement requires a second explicit c
   await app.press("label:Settings");
   await app.scroll("Connect scale", 250);
   await app.press("Connect scale");
-  await app.waitFor("Find scale");
+  await app.waitFor("Connected. Step onto the scale and stand still.");
   sessionId = await connect(app);
   // Same captured wire shape, original grams changed to 61000, checksum renewed.
   await packet(app, sessionId, "rCmAaO5IAgAFQAAAAAAAAAAp1QM=");
@@ -292,6 +328,56 @@ test("scale mixed: dynamic weight invalidates the old preview until a new stable
   await app.waitFor("label:Weight, —");
 }, 30000);
 
+test("scale mixed: stable weight invites the owner to stay on for composition", async () => {
+  const app = await start(true, true, undefined, {}, true);
+  const sessionId = await connect(app);
+  await packet(app, sessionId, STABLE);
+  await app.waitFor("Weight is stable. Stay on the scale a little longer.");
+  expect(
+    app.shows("No valid impedance reading is available. You can still save your weight."),
+  ).toBe(false);
+  expect(app.shows("Save weight only")).toBe(true);
+  if (!app.clock) throw new Error("Expected a manual clock");
+  await app.clock.fastForward(8_000);
+  await packet(app, sessionId, IMPEDANCE);
+  await app.waitFor("Confirm and save");
+  await app.clock.fastForward(15_000);
+  expect(app.shows("Confirm and save")).toBe(true);
+  expect(app.shows("Reading body composition…")).toBe(false);
+}, 30000);
+
+test("scale mixed: moving readings update live without offering to save", async () => {
+  const app = await start();
+  const sessionId = await connect(app);
+  await packet(app, sessionId, "rCkAaOLCAgAFQAAAAAAAAAAp1RE=");
+  await app.waitFor("label:Live weight 58.05 kg");
+  expect(app.shows("id:scale-preview")).toBe(false);
+  expect(app.shows("Save weight only")).toBe(false);
+  await packet(app, sessionId, STABLE);
+  await app.waitFor("label:Weight 58.05 kg");
+  expect(app.shows("id:scale-live-reading")).toBe(false);
+  await packet(app, sessionId, IMPEDANCE);
+  await app.press("Measurement details");
+  await app.waitFor("Estimated fat-free mass");
+  expect(app.texts().join(" ")).toContain("51.20 kg");
+  expect(app.texts().join(" ")).toContain("Segal BIA");
+}, 30000);
+
+test("scale mixed: composition timeout preserves a weight-only review without restarting for duplicates", async () => {
+  const app = await start(true, true, undefined, {}, true);
+  const sessionId = await connect(app);
+  await packet(app, sessionId, STABLE);
+  if (!app.clock) throw new Error("Expected a manual clock");
+  await app.clock.fastForward(14_999);
+  await packet(app, sessionId, STABLE);
+  expect(app.shows("Reading body composition…")).toBe(true);
+  await app.clock.fastForward(1);
+  await app.waitFor("No valid impedance reading is available. You can still save your weight.");
+  expect(app.shows("Reading body composition…")).toBe(false);
+  await app.press("Save weight only");
+  await app.waitFor("Measurement saved");
+}, 30000);
+
 test("scale mixed: background disconnect keeps a completed review and ignores late callbacks", async () => {
   const app = await start();
   const sessionId = await connect(app);
@@ -340,7 +426,7 @@ test("scale mixed: oversized malformed evidence removes the retained Rust previe
   await packet(app, sessionId, IMPEDANCE);
   await app.waitFor("Confirm and save");
   await packet(app, sessionId, "A".repeat(260));
-  await app.waitFor("Try again");
+  await app.waitFor("Connect saved scale");
   expect(app.shows("id:scale-preview")).toBe(false);
   expect(app.shows("Confirm and save")).toBe(false);
   await home(app);
@@ -348,7 +434,7 @@ test("scale mixed: oversized malformed evidence removes the retained Rust previe
   await app.press("label:Settings");
   await app.scroll("Connect scale", 250);
   await app.press("Connect scale");
-  await app.waitFor("Find scale");
+  await app.waitFor("Connected. Step onto the scale and stand still.");
   expect(app.shows("id:scale-preview")).toBe(false);
   expect(app.shows("Confirm and save")).toBe(false);
   expect(app.shows("A previous measurement is kept on this device. Review it before saving.")).toBe(
@@ -356,7 +442,7 @@ test("scale mixed: oversized malformed evidence removes the retained Rust previe
   );
 }, 30000);
 
-test("scale mixed: notifications before initialization acknowledgement cannot create a save token", async () => {
+test("scale mixed: notifications during initialization are replayed only after acknowledgement", async () => {
   let acknowledge: (value: unknown) => void = () => {
     throw new Error("Write has not started");
   };
@@ -377,11 +463,8 @@ test("scale mixed: notifications before initialization acknowledgement cannot cr
   expect(app.shows("id:scale-preview")).toBe(false);
   expect(app.shows("Confirm and save")).toBe(false);
   expect(app.shows("Save weight only")).toBe(false);
+  expect(app.storage()[REMEMBERED_SCALE_KEY]).toBe(undefined);
   acknowledge({ written: true });
-  await app.waitFor("Stand still on the scale. Reading weight and impedance…");
-  expect(app.shows("id:scale-preview")).toBe(false);
-  await packet(app, sessionId, STABLE);
-  await packet(app, sessionId, IMPEDANCE);
   await app.waitFor("Confirm and save");
   await app.press("Discard measurement");
   await app.waitFor("id:scale-panel", { state: "gone" });
@@ -389,27 +472,32 @@ test("scale mixed: notifications before initialization acknowledgement cannot cr
   await app.waitFor("label:Weight, —");
 }, 30000);
 
-test("scale mixed: rejected initialization cannot leave a recoverable uninitialized draft", async () => {
+test("scale mixed: rejected initialization discards buffered readings and does not remember the scale", async () => {
+  let acknowledge: (value: unknown) => void = () => {
+    throw new Error("Write has not started");
+  };
   const app = await start(
     true,
     true,
     { available: true, enabled: true },
     {
-      // The separate pending-ack test covers early notifications. Fail this
-      // operation directly so the test server has no unresolved press/host RPC
-      // when we navigate away from the failed connection.
-      "ble.write": () => {
-        throw new Error("Synthetic initialization write failure");
-      },
+      "ble.write": () =>
+        new Promise<unknown>((resolve) => {
+          acknowledge = resolve;
+        }),
     },
   );
   const sessionId = await connect(app, false);
+  await packet(app, sessionId, STABLE);
+  await packet(app, sessionId, IMPEDANCE);
+  acknowledge({ written: false });
   await app.waitFor("Try again");
   // Late notifications after initialization failure cannot revive the draft.
   await packet(app, sessionId, STABLE);
   await packet(app, sessionId, IMPEDANCE);
   expect(app.shows("Confirm and save")).toBe(false);
   expect(app.shows("id:scale-preview")).toBe(false);
+  expect(app.storage()[REMEMBERED_SCALE_KEY]).toBe(undefined);
   await home(app);
   await app.waitFor("label:Weight, —");
   await app.press("label:Settings");
@@ -420,19 +508,78 @@ test("scale mixed: rejected initialization cannot leave a recoverable uninitiali
   expect(app.shows("Confirm and save")).toBe(false);
 }, 30000);
 
-test("scale mixed: waiting for a stable weight times out and permits a fresh scan", async () => {
+test("scale mixed: opening measurement reconnects the saved scale without scanning", async () => {
+  const app = await start();
+  const previousSession = await connect(app);
+  await app.waitUntil(() => !!app.storage()[REMEMBERED_SCALE_KEY]);
+  const encoded = app.storage()[REMEMBERED_SCALE_KEY];
+  expect(JSON.parse(encoded)).toEqual({
+    device: { id: DEVICE.address, name: DEVICE.name },
+    identity: { device_type: 0x27, protocol_ver: 2 },
+  });
+  const relaunched = await start(
+    true,
+    true,
+    undefined,
+    {},
+    false,
+    {
+      [REMEMBERED_SCALE_KEY]: encoded,
+    },
+    false,
+  );
+  expect(relaunched.host.calls()).toEqual([]);
+  await relaunched.press("label:Settings");
+  await relaunched.scroll("Connect scale", 250);
+  await relaunched.press("Connect scale");
+  await relaunched.waitFor("Connected. Step onto the scale and stand still.");
+  expect(calls(relaunched, "ble.connect").length).toBe(1);
+  expect(await connect(relaunched)).not.toBe(previousSession);
+  expect(calls(relaunched, "ble.scan.start")).toEqual([]);
+}, 30000);
+
+test("scale mixed: no notification times out and permits direct retry without rescanning", async () => {
   const app = await start(true, true, { available: true, enabled: true }, {}, true);
   const sessionId = await connect(app);
   const clock = app.clock;
   if (!clock) throw new Error("Expected a manual clock");
 
   await clock.fastForward(30_000);
-  await app.waitFor("No stable weight arrived. Step off the scale, wake it and try again.");
+  await app.waitFor(
+    "Connected, but the scale sent no readings. Wake it and reconnect, then step on when prompted.",
+  );
   await packet(app, sessionId, STABLE);
   expect(app.shows("id:scale-preview")).toBe(false);
   expect(calls(app, "ble.disconnect").map(data)).toEqual([{ sessionId }]);
 
-  const previousScans = calls(app, "ble.scan.start").length;
-  await app.press("Try again");
-  await app.waitUntil(() => calls(app, "ble.scan.start").length === previousScans + 1);
+  expect(await connect(app)).not.toBe(sessionId);
+  expect(calls(app, "ble.scan.start").length).toBe(1);
+}, 30000);
+
+test("scale mixed: a failed saved-scale connection offers a fresh scan", async () => {
+  let attempts = 0;
+  const app = await start(
+    true,
+    true,
+    { available: true, enabled: true },
+    {
+      "ble.connect": () => ({ connected: ++attempts === 1 }),
+    },
+    true,
+  );
+  const sessionId = await connect(app);
+  await packet(app, sessionId, "rCkAaOLCAgAFQAAAAAAAAAAp1RE=");
+  const clock = app.clock;
+  if (!clock) throw new Error("Expected a manual clock");
+  await clock.fastForward(30_000);
+  await app.waitFor(
+    "No stable weight arrived. Step off, reconnect and wait for the prompt before stepping on again.",
+  );
+  await app.press("Connect saved scale");
+  await app.waitFor(
+    "Could not finish the measurement. Check Bluetooth, precise-location and nearby-device permissions, then wake the scale and retry.",
+  );
+  expect(calls(app, "ble.scan.start").length).toBe(1);
+  await app.press("Find another scale");
+  await app.waitUntil(() => calls(app, "ble.scan.start").length === 2);
 }, 30000);

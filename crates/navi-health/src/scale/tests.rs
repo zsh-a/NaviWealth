@@ -239,7 +239,17 @@ fn initialization_has_checked_profile_timestamp_timezone_and_full_byte_checksum(
         packet[2..19].iter().fold(0u8, |s, n| s.wrapping_add(*n))
     );
     assert_eq!(
-        encode_initialization(&profile(), 0x12345678, 32, 0x27, 2).unwrap(),
+        encode_initialization(
+            &profile(),
+            0x12345678,
+            32,
+            &DeviceProtocol {
+                device_type: 0x27,
+                protocol_ver: 2,
+            },
+            "AFU-WL",
+        )
+        .unwrap(),
         vec![packet]
     );
     assert_eq!(
@@ -273,6 +283,82 @@ fn initialization_has_checked_profile_timestamp_timezone_and_full_byte_checksum(
     );
     let negative = encode_profile(&profile(), 0, -48, 0x27, 0).unwrap();
     assert_eq!(negative[6], 208);
+}
+
+#[test]
+fn live_weight_is_available_without_creating_a_confirmable_measurement() {
+    let mut session = Session::new(profile()).unwrap();
+    let mut moving = weight();
+    moving[2] &= 0x7f;
+    assert!(session.feed(&checksum(moving)).unwrap().is_none());
+    assert_eq!(
+        session.live_reading(),
+        Some(LiveReading {
+            weight_grams: 58_050,
+            stable: false
+        })
+    );
+    assert!(session.latest().is_none());
+    session.feed(&weight()).unwrap();
+    assert_eq!(
+        session.live_reading(),
+        Some(LiveReading {
+            weight_grams: 58_050,
+            stable: true
+        })
+    );
+    assert!(session.feed(&[0xac]).is_err());
+    assert!(session.live_reading().is_none());
+    assert!(session.latest().is_none());
+}
+
+#[test]
+fn display_summary_uses_original_measurement_and_keeps_missing_composition_missing() {
+    let mut session = Session::new(profile()).unwrap();
+    let weight_only = session.feed(&weight()).unwrap().unwrap();
+    assert_eq!(weight_only.summary().bmi, Some(20.09));
+    assert_eq!(weight_only.summary().fat_mass_kg, None);
+    assert_eq!(weight_only.summary().fat_free_mass_kg, None);
+    assert_eq!(weight_only.summary().muscle_mass_kg, None);
+    assert_eq!(weight_only.summary().water_mass_kg, None);
+    let complete = session.feed(&adc()).unwrap().unwrap();
+    let summary = complete.summary();
+    assert_eq!(summary.fat_mass_kg, Some(6.85));
+    assert_eq!(summary.fat_free_mass_kg, Some(51.2));
+    assert_eq!(summary.muscle_mass_kg, Some(48.59));
+    assert_eq!(summary.water_mass_kg, Some(35.82));
+    assert_eq!(summary.bmi, Some(20.09));
+    assert!(complete.valid());
+}
+
+#[test]
+fn tz_a1_initialization_uses_only_the_captured_clock_command() {
+    let identity = DeviceProtocol {
+        device_type: 0x27,
+        protocol_ver: 1,
+    };
+    let commands =
+        encode_initialization(&profile(), 0x12345678, 32, &identity, "AFU-WL-TZ-A1").unwrap();
+    assert_eq!(
+        commands,
+        vec![vec![
+            0xac, 0x27, 0x08, 0x12, 0x34, 0x56, 0x78, 0x20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xdf,
+            0x1b,
+        ]]
+    );
+    assert_eq!(
+        encode_initialization(
+            &profile(),
+            0x12345678,
+            32,
+            &DeviceProtocol {
+                protocol_ver: 3,
+                ..identity
+            },
+            "AFU-WL-TZ-A1",
+        ),
+        Err(ScaleError::Initialization)
+    );
 }
 
 #[test]

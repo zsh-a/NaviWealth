@@ -47,6 +47,29 @@ impl Measurement {
     pub fn weight_kg(&self) -> f64 {
         f64::from(self.weight_grams) / 1000.0
     }
+
+    pub fn summary(&self) -> MeasurementSummary {
+        let estimated_mass = |percent: f64| rounded_2(self.weight_kg() * percent / 100.0);
+        MeasurementSummary {
+            bmi: bodycomp::bmi(self.weight_kg(), self.profile.height_cm),
+            fat_mass_kg: self
+                .metrics
+                .as_ref()
+                .map(|value| estimated_mass(value.body_fat_percent)),
+            fat_free_mass_kg: self
+                .metrics
+                .as_ref()
+                .map(|value| estimated_mass(100.0 - value.body_fat_percent)),
+            muscle_mass_kg: self
+                .metrics
+                .as_ref()
+                .map(|value| estimated_mass(value.muscle_percent)),
+            water_mass_kg: self
+                .metrics
+                .as_ref()
+                .map(|value| estimated_mass(value.water_percent)),
+        }
+    }
     /// Checks provenance and recomputes derived values, including after restore.
     pub fn valid(&self) -> bool {
         self.profile.valid()
@@ -63,6 +86,15 @@ impl Measurement {
                     &self.profile,
                 )
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct MeasurementSummary {
+    pub bmi: Option<f64>,
+    pub fat_mass_kg: Option<f64>,
+    pub fat_free_mass_kg: Option<f64>,
+    pub muscle_mass_kg: Option<f64>,
+    pub water_mass_kg: Option<f64>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Error)]
@@ -173,6 +205,12 @@ pub enum Event {
     },
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct LiveReading {
+    pub weight_grams: u32,
+    pub stable: bool,
+}
+
 /// Each measurement notification is one independently checksummed 20-byte
 /// frame. A shortened ATT value is rejected, never glued to a later reading.
 /// Unknown/history/settings frames are ignored and cannot produce drafts.
@@ -247,6 +285,7 @@ pub struct Session {
     profile: UserProfile,
     protocol: Protocol,
     latest: Option<Measurement>,
+    live_reading: Option<LiveReading>,
 }
 impl Session {
     pub fn new(profile: UserProfile) -> Result<Self, ScaleError> {
@@ -257,14 +296,19 @@ impl Session {
             profile,
             protocol: Protocol,
             latest: None,
+            live_reading: None,
         })
     }
     pub fn reset(&mut self) {
         self.protocol.reset();
         self.latest = None;
+        self.live_reading = None;
     }
     pub fn latest(&self) -> Option<Measurement> {
         self.latest.clone()
+    }
+    pub fn live_reading(&self) -> Option<LiveReading> {
+        self.live_reading.clone()
     }
     pub fn feed(&mut self, data: &[u8]) -> Result<Option<Measurement>, ScaleError> {
         let event = match self.protocol.feed(data) {
@@ -274,6 +318,16 @@ impl Session {
                 return Err(error);
             }
         };
+        if let Some(Event::Weight {
+            weight_grams,
+            stable,
+        }) = &event
+        {
+            self.live_reading = Some(LiveReading {
+                weight_grams: *weight_grams,
+                stable: *stable,
+            });
+        }
         let candidate = match event {
             Some(Event::Weight { stable: false, .. }) => {
                 self.latest = None;
@@ -400,20 +454,36 @@ pub fn encode_profile(
     Ok(packet)
 }
 
-/// Initial GATT writes, in order, after notification subscription succeeds.
+/// Initial GATT writes after notification subscription succeeds. The
+/// AFU-WL-TZ-A1 capture uses the DF/08 time command, not the D0 user profile.
 pub fn encode_initialization(
     profile: &UserProfile,
     unix_seconds: u32,
     utc_offset_quarters: i8,
-    device_type: u8,
-    protocol_ver: u8,
+    identity: &DeviceProtocol,
+    model_name: &str,
 ) -> Result<Vec<Vec<u8>>, ScaleError> {
+    if model_name == "AFU-WL-TZ-A1" {
+        if !profile.valid() {
+            return Err(ScaleError::Profile);
+        }
+        if identity.device_type != 0x27 || identity.protocol_ver > 2 {
+            return Err(ScaleError::Initialization);
+        }
+        let mut packet = vec![0; 20];
+        packet[..3].copy_from_slice(&[0xac, identity.device_type, 0x08]);
+        packet[3..7].copy_from_slice(&unix_seconds.to_be_bytes());
+        packet[7] = 0x20;
+        packet[18] = 0xdf;
+        packet[19] = packet[2..19].iter().copied().fold(0u8, u8::wrapping_add);
+        return Ok(vec![packet]);
+    }
     encode_profile(
         profile,
         unix_seconds,
         utc_offset_quarters,
-        device_type,
-        protocol_ver,
+        identity.device_type,
+        identity.protocol_ver,
     )
     .map(|p| vec![p])
 }

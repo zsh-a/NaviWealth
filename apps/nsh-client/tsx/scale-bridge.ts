@@ -2,11 +2,15 @@ import { Scale } from "naviwealth/native";
 import { host } from "nsh";
 import type {
   Composition,
+  LiveReading,
+  MeasurementSummary,
   Connection,
   Device,
   Notification,
   Palette,
   Preview,
+  ScaleIdentity,
+  ScaleUpdate,
   Start,
 } from "./scale-types";
 
@@ -73,8 +77,38 @@ function isComposition(value: unknown): value is Composition {
     isRecord(value) &&
     isNumber(value.body_fat_percent) &&
     isNumber(value.muscle_percent) &&
-    isNumber(value.water_percent)
+    isNumber(value.water_percent) &&
+    isString(value.model)
   );
+}
+
+function isLiveReading(value: unknown): value is LiveReading {
+  return (
+    isRecord(value) &&
+    isNumber(value.weight_grams) &&
+    Number.isInteger(value.weight_grams) &&
+    value.weight_grams >= 0 &&
+    value.weight_grams <= 0x3ffff &&
+    typeof value.stable === "boolean"
+  );
+}
+
+function isSummary(value: unknown): value is MeasurementSummary {
+  return (
+    isRecord(value) &&
+    ["bmi", "fat_mass_kg", "fat_free_mass_kg", "muscle_mass_kg", "water_mass_kg"].every(
+      (key) => value[key] === null || isNumber(value[key]),
+    )
+  );
+}
+
+function isIdentity(value: unknown): value is ScaleIdentity {
+  return isRecord(value) && isString(value.id) && isString(value.name);
+}
+
+function readIdentity(value: unknown): ScaleIdentity | null {
+  if (value === null || isIdentity(value)) return value;
+  throw new Error("invalid_scale_identity");
 }
 
 function isPreview(value: unknown): value is Preview {
@@ -86,10 +120,13 @@ function isPreview(value: unknown): value is Preview {
     isString(value.day) &&
     isNumber(value.measured_at_ms) &&
     (value.existing_kg === null || isNumber(value.existing_kg)) &&
-    isRecord(device) &&
-    isString(device.id) &&
-    isString(device.name) &&
+    isIdentity(device) &&
     isRecord(measurement) &&
+    isRecord(measurement.profile) &&
+    isNumber(measurement.profile.height_cm) &&
+    isNumber(measurement.profile.age_years) &&
+    (measurement.profile.sex === "male" || measurement.profile.sex === "female") &&
+    isSummary(value.summary) &&
     isNumber(measurement.weight_grams) &&
     (measurement.resistance_ohm === null || isNumber(measurement.resistance_ohm)) &&
     (measurement.metrics === null || isComposition(measurement.metrics))
@@ -126,20 +163,26 @@ export const scaleNative = {
   },
   profileReady: () => Scale.profileReady(),
   openProfile: () => Scale.openProfile(),
-  async begin(device: Device): Promise<Start> {
-    const value = await Scale.begin(device);
+  remembered: async () => readIdentity(await Scale.remembered()),
+  remember: async (sessionId: string) => readIdentity(await Scale.remember(sessionId)),
+  async begin(device?: Device): Promise<Start> {
+    const value = device ? await Scale.begin(device) : await Scale.beginRemembered();
     if (!isRecord(value) || !isString(value.session_id) || !value.session_id) {
       throw new Error("invalid_scale_start");
     }
-    const { session_id, commands } = value;
-    if (!isStringArray(commands) || commands.length === 0) {
+    const { session_id, address, commands } = value;
+    if (!isString(address) || !address || !isStringArray(commands) || commands.length === 0) {
       await Scale.invalidate(session_id);
       throw new Error("invalid_scale_start");
     }
-    return { session_id, commands };
+    return { session_id, address, commands };
   },
-  async feed(sessionId: string, dataBase64: string): Promise<Preview | null> {
-    return readPreview(await Scale.feed(sessionId, dataBase64));
+  async feed(sessionId: string, dataBase64: string): Promise<ScaleUpdate> {
+    const value = await Scale.feed(sessionId, dataBase64);
+    if (!isRecord(value)) throw new Error("invalid_scale_update");
+    const { reading } = value;
+    if (reading !== null && !isLiveReading(reading)) throw new Error("invalid_scale_reading");
+    return { preview: readPreview(value.preview), reading };
   },
   async pending(): Promise<Preview | null> {
     return readPreview(await Scale.pending());

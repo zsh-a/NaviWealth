@@ -269,7 +269,7 @@ Recommended sequence; this is planning, not a claim these items are implemented.
    (implemented): `bodycomp` estimation in `navi-health` (Segal/Deurenberg
    from impedance, ported from the AFU-WL reference tool, fixture-tested), a
    per-day `body_metrics` table with backup validation, the Settings body
-   profile (height, age, sex) and goal weight, BMI display, Review's 30/90-day
+   profile (height, birth date, sex) and goal weight, BMI display, Review's 30/90-day
    windows and body-fat line.
 
    **Implemented 2026-11-18, physical acceptance pending:** a small TSX root
@@ -281,9 +281,19 @@ Recommended sequence; this is planning, not a claim these items are implemented.
    path; package id and signing policy stay unchanged.
 
    - Foreground scans request Android permissions on explicit user action,
+     including precise location: a physical comparison revealed the target
+     in 49 ms after removing `neverForLocation` and granting location.
+     Location coordinates are never read. Scans
      expire, and stop with GATT on background/destruction. Session generations
-     fence cancelled callbacks; writes are serialized with deadlines. No
-     background service or automatic reconnect is introduced.
+     fence cancelled callbacks; writes are serialized with deadlines. The last
+     successfully initialized scale is remembered in device-local preferences
+     for one automatic connection attempt when the measurement sheet opens.
+     A retained draft instead opens for review. There is no background service
+     or reconnect loop. Dynamic readings update before a stable draft exists.
+   - Birth date supplies current completed age, frozen with every measurement;
+     legacy entered ages are retained honestly until replaced. Display-only
+     BMI and estimated fat/fat-free/muscle/water masses reuse the measurement's
+     captured profile and existing model, without changing stored algorithms.
    - `navi-health::scale` validates advertisement identity, packet lengths,
      checksums, stable weight and ADC evidence, preserving original grams.
      Rust creates profile/time commands. Missing valid impedance gives a
@@ -298,6 +308,11 @@ Recommended sequence; this is planning, not a claim these items are implemented.
      and backup tests; Android JVM session fencing, strict lint and actual
      arm64 APK assembly. A side-by-side emulator build opens the retained
      Rust pages and the TSX sheet. These are development evidence only.
+
+   **Physical evidence 2026-11-18:** after correcting scan permissions, the
+   AFU-WL-TZ-A1 was discovered in 49 ms and completed a DF/08 session with
+   live/stable D5 and D6 impedance. The owner confirmed weight and body
+   composition on screen. This is one successful foreground measurement.
 
    **Remaining exit gates:** compare physical AFU-WL weight/impedance with the
    scale display and reference capture; verify protocol versions and profile

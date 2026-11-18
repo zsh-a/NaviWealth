@@ -379,12 +379,12 @@ fn settings_keep_the_goal_as_typed_without_save() -> Result<(), String> {
 #[test]
 fn body_profile_saves_in_its_own_page_and_shows_only_completion_in_settings() -> Result<(), String>
 {
-    let (mut app, _) = start(Vec::new(), None);
+    let (mut app, storage) = start(Vec::new(), None);
     app.press("label:Settings")?;
     app.press("label:Body profile, Incomplete")?;
     app.wait_for("label:Height")?;
     app.type_text("label:Height", "170")?;
-    app.type_text("label:Age", "35")?;
+    app.type_text("label:Birth date", "1991-11-19")?;
     app.press("Male")?;
     app.press("label:Back")?;
     app.wait_for("label:Body profile, Complete")?;
@@ -392,6 +392,151 @@ fn body_profile_saves_in_its_own_page_and_shows_only_completion_in_settings() ->
     app.press("label:Body profile, Complete")?;
     app.wait_for("label:Height")?;
     assert_eq!(app.screen().input_text("label:Height")?, Some("170"));
-    assert_eq!(app.screen().input_text("label:Age")?, Some("35"));
+    assert_eq!(
+        app.screen().input_text("label:Birth date")?,
+        Some("1991-11-19")
+    );
+    assert!(!app.shows("label:Age"));
+    let saved: Value = serde_json::from_str(&storage.entries()["settings.v1"]).unwrap();
+    assert_eq!(saved["birth_date"], "1991-11-19");
+    assert!(saved.get("age_years").is_none());
+    let entries = storage.entries().into_iter().collect();
+    drop(app);
+    let (mut app, _) = start(entries, None);
+    app.press("label:Settings")?;
+    app.press("label:Body profile, Complete")?;
+    assert_eq!(
+        app.screen().input_text("label:Birth date")?,
+        Some("1991-11-19")
+    );
+    Ok(())
+}
+
+#[test]
+fn body_profile_requests_birth_date_without_inventing_one_from_legacy_age() -> Result<(), String> {
+    let (mut app, storage) = start(
+        vec![(
+            "settings.v1".into(),
+            json!({"height_cm":170,"age_years":35,"sex":"male"}).to_string(),
+        )],
+        None,
+    );
+    app.press("label:Settings")?;
+    app.press("label:Body profile, Incomplete")?;
+    app.wait_for("text:/^Legacy age: 35/")?;
+    assert_eq!(app.screen().input_text("label:Birth date")?, Some(""));
+    let original = storage.entries()["settings.v1"].clone();
+    for invalid in [
+        "1991-02-29",
+        "2030-01-01",
+        "2025-01-01",
+        "1800-01-01",
+        "not a date",
+    ] {
+        app.clear("label:Birth date")?;
+        app.type_text("label:Birth date", invalid)?;
+        app.wait_for("text:/^Enter a real birth date/")?;
+        assert_eq!(
+            storage.entries()["settings.v1"],
+            original,
+            "invalid: {invalid}"
+        );
+    }
+    app.clear("label:Birth date")?;
+    app.type_text("label:Birth date", "2000-02-29")?;
+    let saved: Value = serde_json::from_str(&storage.entries()["settings.v1"]).unwrap();
+    assert_eq!(saved["birth_date"], "2000-02-29");
+    assert!(saved.get("age_years").is_none());
+    let saved_raw = storage.entries()["settings.v1"].clone();
+    app.type_text("label:Birth date", "-bad")?;
+    app.wait_for("text:/^Enter a real birth date/")?;
+    assert_eq!(storage.entries()["settings.v1"], saved_raw);
+    app.clear("label:Birth date")?;
+    let saved: Value = serde_json::from_str(&storage.entries()["settings.v1"]).unwrap();
+    assert!(saved.get("birth_date").is_none());
+    assert!(
+        saved.get("age_years").is_none(),
+        "clearing DOB cannot revive stale age"
+    );
+    Ok(())
+}
+
+#[test]
+fn body_profile_malformed_birth_date_does_not_discard_other_settings() -> Result<(), String> {
+    let (mut app, _) = start(
+        vec![(
+            "settings.v1".into(),
+            json!({"height_cm":170,"age_years":35,"sex":"male","birth_date":"1991-02-29"})
+                .to_string(),
+        )],
+        None,
+    );
+    app.press("label:Settings")?;
+    app.press("label:Body profile, Incomplete")?;
+    assert_eq!(app.screen().input_text("label:Height")?, Some("170"));
+    assert_eq!(app.screen().input_text("label:Birth date")?, Some(""));
+    app.wait_for("text:/^Legacy age: 35/")?;
+    Ok(())
+}
+
+#[test]
+fn body_profile_age_advances_at_the_local_birthday_after_resume() -> Result<(), String> {
+    use nsh_core::{platform::Lifecycle, time::Clock};
+    naviwealth_app::disable_live_market_data();
+    naviwealth_app::set_live_updates(false);
+    let original =
+        json!({"height_cm":170,"age_years":99,"sex":"male","birth_date":"1991-11-19"}).to_string();
+    let storage = MemoryStorage::new(vec![("settings.v1".into(), original.clone())]);
+    let at: jiff::Timestamp = "2026-11-18T15:59:00Z".parse().unwrap();
+    let now = std::time::SystemTime::UNIX_EPOCH + Duration::from_secs(at.as_second() as u64);
+    let mut config = EngineConfig::new(Root::of::<App>());
+    config.storage = Some(storage.clone());
+    config.clock = Clock::manual(now);
+    let mut app = Headless::start(config).unwrap();
+    app.set_environment("Shanghai", |e| {
+        e.locale_settings.time_zone = nsh_core::platform::TimeZone::parse("Asia/Shanghai").unwrap()
+    })?;
+    app.set_environment("background", |e| e.lifecycle = Lifecycle::Background)?;
+    app.set_environment("resume", |e| e.lifecycle = Lifecycle::Active)?;
+    app.press("label:Settings")?;
+    app.press("label:Body profile, Complete")?;
+    app.wait_for("text:/^Age: 34[.]/")?;
+    app.set_environment("background", |e| e.lifecycle = Lifecycle::Background)?;
+    app.set_system_time(now + Duration::from_secs(60))?;
+    app.set_environment("resume", |e| e.lifecycle = Lifecycle::Active)?;
+    app.wait_for("text:/^Age: 35[.]/")?;
+    assert_eq!(
+        storage.entries()["settings.v1"],
+        original,
+        "age is derived, not rewritten"
+    );
+    Ok(())
+}
+
+#[test]
+fn body_profile_birth_date_copy_and_calendar_are_available_in_chinese() -> Result<(), String> {
+    use nsh_core::platform::{Locale, LocaleSettings};
+    let (mut app, storage) = start(Vec::new(), None);
+    let locale = Locale::parse("zh-CN").unwrap();
+    app.set_environment("Chinese", |e| {
+        e.locale = locale;
+        e.locale_settings = LocaleSettings::of(locale);
+    })?;
+    app.press("label:设置")?;
+    app.press("label:身体档案, 资料待补全")?;
+    app.wait_for("label:出生日期")?;
+    app.press("label:选择出生日期")?;
+    app.press("label:选择出生日期")?;
+    assert!(
+        !storage.entries().contains_key("settings.v1"),
+        "opening the calendar must not save a date"
+    );
+    app.type_text("label:出生日期", "2000-02-29")?;
+    app.wait_for("text:/^年龄:/")?;
+    app.press("label:选择出生日期")?;
+    app.press("label:2000-02-28")?;
+    app.wait_for("label:出生日期")?;
+    let saved: Value = serde_json::from_str(&storage.entries()["settings.v1"]).unwrap();
+    assert_eq!(saved["birth_date"], "2000-02-28");
     Ok(())
 }

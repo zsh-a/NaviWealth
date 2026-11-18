@@ -191,10 +191,29 @@ AI only to turn text and images into drafts, using the owner's model account.
   Health profile & goals, Devices & connections, Recognition & consent, Data
   & backups, and About. Body profile opens a dedicated editor and the index
   shows completion status. The scale opens that editor directly when needed.
+  Body profile asks for an actual birth date using a calendar/year selector
+  or ISO date entry. Age is computed on the current local day; previous
+  entered ages are labelled legacy and never converted to invented birthdays.
   The daily calorie goal and goal weight expand in place. Garmin shows its
   connection or sync state and has explicit connect and disconnect actions.
   The scale sheet keeps the reading in its scroll region and the current
-  action in a fixed footer. Backup & restore shows automatic backup status
+  action in a fixed footer. Three restrained stage tracks show actual connection,
+  stable weight and composition completion; they never imply a timed percentage.
+  The saved scale is a flat device row and signal strength uses plain language.
+  Opening measurement makes one foreground auto-connect attempt to the saved
+  scale, unless a retained draft needs review. Failures expose retry/change
+  device, without repeated connection loops. Valid dynamic weight packets
+  update a separate live figure but never enable confirmation before stability.
+  Stable weight leads with a tabular figure and quieter decimals/unit; composition
+  follows in three flat columns. Device/date details expand on request.
+  Details also show the captured profile, BMI, estimated fat/fat-free/muscle/
+  water masses, reference-derived resistance, and the named estimation model.
+  Those derived values belong to this measurement, never a newer manual weight.
+  After stable weight, the primary action waits up to 15 seconds for impedance
+  while instructing the owner to remain on the scale. Saving weight alone stays
+  an explicit secondary action, and missing impedance then leaves a weight-only
+  review. Late timers cannot overwrite completed, cancelled or reopened reviews.
+  All touch actions are at least 48 pt. Backup & restore shows automatic backup status
   and the last outcome. About displays the installed version before opening
   update details. A changed model account requires consent again before
   sending text, images and account names.

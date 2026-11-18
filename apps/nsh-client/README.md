@@ -86,13 +86,30 @@ compile none of it.
 ## AFU-WL scale
 
 Connect scale is available in Settings and the Today weight editor. Complete
-height, age and sex first. The TSX sheet requests a bounded foreground scan,
-connects an AFU-WL, reviews weight and optional impedance-derived composition,
-and saves only after explicit confirmation. Rust validates identity and packets,
+height, date of birth and sex first. Birth date supplies completed age on
+the local measurement date; legacy entered ages remain labelled until replaced.
+Enable system Location and allow precise location
+and Nearby devices when prompted; these permissions are needed to receive
+this scale's Bluetooth advertisements, without reading location coordinates.
+On first use, lightly tap the AFU-WL to wake it, scan
+and select it. After a successful connection and initialization, the app remembers
+the scale on this device. Next time, wake it and open the measurement sheet:
+it makes one foreground connection attempt without scanning. A failed attempt
+offers **Connect saved scale** or **Find another scale**. A retained draft takes
+priority and opens for review without reconnecting. Step onto the scale when
+prompted; live readings update without creating a save token until stable.
+Closing or backgrounding disconnects; there is no background reconnect loop.
+Review weight and optional impedance-derived composition before explicitly
+confirming the measurement. Rust validates identity and packets,
 creates profile/time commands and owns review tokens. Same-day replacement has
 a second confirmation; closing keeps a completed local draft, while Discard
 removes it. Manual weight changes and Undo reconcile composition and provenance.
 BLE data stays on-device and never enters a model request.
+Measurement details derive BMI, fat mass, fat-free mass, muscle mass and water
+mass from that measurement's original grams, captured profile and estimates.
+These are display-only and do not change stored evidence or old algorithms.
+They are not guaranteed to match the manufacturer's proprietary composition
+model; unknown visceral-fat/body-age/protein scores are not fabricated.
 
 Use NSH CLI **0.5.0** for mixed checks and builds. The host build script pins the
 matching Java inputs and extracts the app-linked native library from the NSH

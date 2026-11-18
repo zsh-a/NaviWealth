@@ -6,11 +6,14 @@ import android.app.Activity
 import android.bluetooth.*
 import android.bluetooth.le.*
 import android.content.*
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.util.Base64
+import android.util.Log
 import com.longbridge.nsh.NshHostReply
 import com.longbridge.nsh.NshView
 import java.util.ArrayDeque
@@ -28,6 +31,10 @@ internal class ScaleBleBridge(private val activity: Activity, private val nsh: N
     }
     private val main = Handler(Looper.getMainLooper())
     private val gate = BleSessionGate()
+    private val debug = activity.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
+    private var scanStarted = 0L
+    private var connectStarted = 0L
+    private val notificationCounts = mutableMapOf<String, Int>()
     private var foreground = true
     private var destroyed = false
     private var scanner: BluetoothLeScanner? = null
@@ -124,9 +131,11 @@ internal class ScaleBleBridge(private val activity: Activity, private val nsh: N
     private fun timeout(data: Map<*, *>, fallback: Int, maximum: Int): Long =
         ((data["timeoutMs"] as? Number)?.toInt() ?: fallback).coerceIn(1000, maximum).toLong()
     private fun adapter(): BluetoothAdapter? = activity.getSystemService(BluetoothManager::class.java)?.adapter
-    private fun requiredPermissions(): Array<String> = if (Build.VERSION.SDK_INT >= 31)
-        arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
-        else arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+    private fun requiredPermissions(): Array<String> {
+        if (Build.VERSION.SDK_INT < 31) return arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+        val bluetooth = arrayOf(Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT)
+        return bluetooth + arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)
+    }
     private fun permissionsGranted(): Boolean = requiredPermissions().all { activity.checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED }
     private fun withPermission(id: String, reply: NshHostReply, action: () -> Unit) {
         if (!foreground) { reply.reject("app_background"); return }
@@ -134,6 +143,7 @@ internal class ScaleBleBridge(private val activity: Activity, private val nsh: N
         if (permissionInFlight) { reply.reject("permission_pending"); return }
         permission = PendingPermission(id, reply, action)
         permissionInFlight = true
+        trace("permission_requested")
         try { activity.requestPermissions(requiredPermissions(), PERMISSION_REQUEST) }
         catch (_: Exception) {
             permissionInFlight = false
@@ -146,6 +156,7 @@ internal class ScaleBleBridge(private val activity: Activity, private val nsh: N
         permissionInFlight = false
         val pending = permission ?: return
         permission = null
+        trace("permission_result granted=${permissionsGranted()}")
         if (!foreground || destroyed) pending.reply.reject("app_background")
         else if (!permissionsGranted()) pending.reply.reject("permission_denied")
         else try { pending.action() } catch (_: Exception) { pending.reply.reject("bluetooth_unavailable") }
@@ -169,6 +180,25 @@ internal class ScaleBleBridge(private val activity: Activity, private val nsh: N
     private fun send(name: String, id: String, data: Map<String, Any>) {
         if (!destroyed) nsh.send(name, data + ("sessionId" to id))
     }
+    private fun trace(stage: String) {
+        if (debug) Log.i("NaviScale", stage)
+    }
+    private fun traceConnection(stage: String) {
+        if (debug) trace("$stage elapsed_ms=${SystemClock.elapsedRealtime() - connectStarted}")
+    }
+    private fun traceNotification(bytes: ByteArray) {
+        if (!debug) return
+        val kind = when {
+            bytes.size != 20 -> "other_length"
+            bytes[0] != 0xac.toByte() -> "other_header"
+            bytes[18] == 0xd5.toByte() -> if (bytes[2] < 0) "d5_high_bit" else "d5_low_bit"
+            bytes[18] == 0xd6.toByte() -> "d6"
+            else -> "command_${bytes[18].toUByte().toString(16).padStart(2, '0')}"
+        }
+        val count = notificationCounts.getOrDefault(kind, 0) + 1
+        notificationCounts[kind] = count
+        if (count == 1) traceConnection("first_notification kind=$kind len=${bytes.size}")
+    }
     private fun error(id: String, code: String) { send("ble.error", id, mapOf("code" to code, "message" to code)) }
     private fun startScan(id: String, duration: Long, reply: NshHostReply) {
         stopScan()
@@ -177,16 +207,22 @@ internal class ScaleBleBridge(private val activity: Activity, private val nsh: N
         if (adapter == null || !adapter.isEnabled) { reply.reject("bluetooth_off"); return }
         val current = adapter.bluetoothLeScanner ?: run { reply.reject("bluetooth_unavailable"); return }
         val seen = mutableSetOf<String>()
+        var received = 0
+        var manufacturerMatches = 0
         val callback = object : ScanCallback() {
             override fun onScanResult(callbackType: Int, result: ScanResult) {
                 main.post {
                     if (destroyed || scanCallback !== this || scanSession != id || !foreground) return@post
                     try {
                         if (!permissionsGranted()) { stopScan(); error(id, "permission_denied"); return@post }
-                        val name = result.scanRecord?.deviceName ?: result.device.name ?: ""
+                        received++
+                        val name = result.scanRecord?.deviceName?.takeIf { it.isNotBlank() }
+                            ?: result.device.name.orEmpty()
                         // Known AFU-WL target; service UUIDs may be absent from its advertisements.
                         val record = result.scanRecord
                         val services = record?.serviceUuids?.map { it.uuid.toString() } ?: emptyList()
+                        if (record?.manufacturerSpecificData?.get(0x27ac) != null) manufacturerMatches++
+                        if (received == 1) trace("scan_first_result")
                         if (!name.startsWith("AFU-WL", ignoreCase = true) && SERVICE.toString() !in services) return@post
                         val manufacturerData = mutableMapOf<String, String>()
                         record?.manufacturerSpecificData?.let { data ->
@@ -200,6 +236,18 @@ internal class ScaleBleBridge(private val activity: Activity, private val nsh: N
                         } ?: emptyMap()
                         val address = result.device.address
                         if (seen.size >= 64 || !seen.add(address)) return@post
+                        if (seen.size == 1) trace("scan_first_match named=${name.isNotBlank()} elapsed_ms=${SystemClock.elapsedRealtime() - scanStarted}")
+                        if (debug) {
+                            val fields = record?.manufacturerSpecificData?.let { fields ->
+                                (0 until fields.size()).map { index ->
+                                    "${fields.keyAt(index).toString(16)}:${fields.valueAt(index).size}"
+                                }
+                            }
+                            val serviceFields = record?.serviceData?.map { (uuid, bytes) ->
+                                "${uuid.uuid}:${bytes.size}"
+                            }
+                            trace("scan_candidate tz_a1=${name == "AFU-WL-TZ-A1"} manufacturer=$fields service=$serviceFields rssi=${result.rssi}")
+                        }
                         send("ble.device", id, mapOf("address" to address, "name" to name.take(80), "rssi" to result.rssi,
                             "manufacturerData" to manufacturerData, "serviceUuids" to services, "serviceData" to serviceData))
                     } catch (_: SecurityException) { stopScan(); error(id, "permission_denied") }
@@ -210,11 +258,14 @@ internal class ScaleBleBridge(private val activity: Activity, private val nsh: N
             } }
         }
         scanSession = id; scanner = current; scanCallback = callback
+        scanStarted = SystemClock.elapsedRealtime()
+        trace("scan_started")
         try { current.startScan(null, ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build(), callback) }
         catch (_: Exception) { stopScan(); reply.reject("scan_failed"); return }
         scanDeadline = Runnable {
             if (scanSession == id && scanCallback === callback) {
                 stopScan()
+                trace("scan_timeout received=$received matches=${seen.size} afu_manufacturer=$manufacturerMatches")
                 send("ble.connection", id, mapOf("state" to "scan_stopped", "reason" to "scan_timeout"))
             }
         }.also { main.postDelayed(it, duration) }
@@ -231,6 +282,9 @@ internal class ScaleBleBridge(private val activity: Activity, private val nsh: N
         val adapter = adapter()
         if (adapter == null || !adapter.isEnabled) { reply.reject("bluetooth_off"); return }
         val token = gate.begin(id)
+        connectStarted = SystemClock.elapsedRealtime()
+        notificationCounts.clear()
+        traceConnection("connect_started")
         connectReply = reply
         send("ble.connection", id, mapOf("state" to "connecting"))
         val callback = object : BluetoothGattCallback() {
@@ -244,10 +298,12 @@ internal class ScaleBleBridge(private val activity: Activity, private val nsh: N
                 }
             } }
             override fun onConnectionStateChange(current: BluetoothGatt, status: Int, state: Int) = post(current) {
+                traceConnection("gatt_state status=$status state=$state")
                 if (status != BluetoothGatt.GATT_SUCCESS || state == BluetoothProfile.STATE_DISCONNECTED) closeConnection("disconnected")
                 else if (state == BluetoothProfile.STATE_CONNECTED && !current.discoverServices()) closeConnection("service_discovery_failed")
             }
             override fun onServicesDiscovered(current: BluetoothGatt, status: Int) = post(current) {
+                traceConnection("services_discovered status=$status")
                 if (status != BluetoothGatt.GATT_SUCCESS) { closeConnection("service_discovery_failed"); return@post }
                 val service = current.getService(SERVICE)
                 val write = service?.getCharacteristic(WRITE)
@@ -266,6 +322,7 @@ internal class ScaleBleBridge(private val activity: Activity, private val nsh: N
             }
             override fun onDescriptorWrite(current: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int) = post(current) {
                 if (descriptor.uuid != CCCD || ready) return@post
+                traceConnection("subscription_ack status=$status")
                 if (status != BluetoothGatt.GATT_SUCCESS) { closeConnection("notify_failed"); return@post }
                 ready = true
                 connectDeadline?.let { main.removeCallbacks(it) }; connectDeadline = null
@@ -279,11 +336,14 @@ internal class ScaleBleBridge(private val activity: Activity, private val nsh: N
             }
             override fun onCharacteristicChanged(current: BluetoothGatt, characteristic: BluetoothGattCharacteristic, value: ByteArray) = notification(current, characteristic, value.clone())
             private fun notification(current: BluetoothGatt, characteristic: BluetoothGattCharacteristic, bytes: ByteArray) = post(current) {
-                if (ready && characteristic.uuid == NOTIFY && bytes.size in 1..512)
+                if (ready && characteristic.uuid == NOTIFY && bytes.size in 1..512) {
+                    traceNotification(bytes)
                     send("ble.notification", id, mapOf("dataBase64" to Base64.encodeToString(bytes, Base64.NO_WRAP)))
+                }
             }
             override fun onCharacteristicWrite(current: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) = post(current) {
                 if (characteristic.uuid != WRITE || writes.isEmpty()) return@post
+                traceConnection("write_ack status=$status")
                 writeDeadline?.let { main.removeCallbacks(it) }; writeDeadline = null
                 if (status != BluetoothGatt.GATT_SUCCESS) { closeConnection("write_failed"); return@post }
                 writes.removeFirst().reply.resolve(mapOf("written" to true))
@@ -301,13 +361,18 @@ internal class ScaleBleBridge(private val activity: Activity, private val nsh: N
         val current = gatt ?: return
         val characteristic = writeCharacteristic ?: return
         val item = writes.first
-        val type = if (characteristic.properties and BluetoothGattCharacteristic.PROPERTY_WRITE != 0)
-            BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT else BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+        val type = if (characteristic.properties and BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE != 0)
+            BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE else BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+        if (debug) {
+            val command = item.bytes.getOrNull(18)?.toUByte()?.toString(16)?.padStart(2, '0') ?: "none"
+            traceConnection("write_started type=$type command=$command")
+        }
         if (!writeCharacteristic(current, characteristic, item.bytes, type)) { closeConnection("write_failed"); return }
         writeDeadline = Runnable { closeConnection("write_timeout") }.also { main.postDelayed(it, 8000) }
     }
     private fun closeConnection(reason: String) {
         val id = gate.sessionId
+        if (id != null && debug) traceConnection("connection_closed reason=$reason notifications=$notificationCounts")
         gate.invalidate()
         ready = false
         connectDeadline?.let { main.removeCallbacks(it) }; connectDeadline = null

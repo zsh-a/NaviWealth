@@ -2,18 +2,25 @@ import { cleanup, effect, lifecycle, signal, untracked } from "nsh";
 import type { Signal } from "nsh";
 import { scaleBle, scaleNative } from "./scale-bridge";
 import type { ScaleCopy } from "./scale-copy";
-import type { Device, Preview } from "./scale-types";
+import type { Device, LiveReading, Notification, Preview, ScaleIdentity } from "./scale-types";
 
 const SCAN_TIMEOUT_MS = 12_000;
 const MEASUREMENT_TIMEOUT_MS = 30_000;
+const COMPOSITION_TIMEOUT_MS = 15_000;
 const MAX_DEVICES = 16;
+const MAX_PENDING_NOTIFICATIONS = 64;
 
 export function createScaleSession(labels: ScaleCopy, close: () => void, busy: Signal<boolean>) {
   const state = signal<
     "idle" | "scanning" | "connecting" | "measuring" | "review" | "failed" | "saved"
   >("idle");
   const devices = signal<Device[]>([]);
+  const remembered = signal<ScaleIdentity | null>(null);
+  const finding = signal(false);
+  const processing = signal(false);
+  const waitingForComposition = signal(false);
   const preview = signal<Preview | null>(null);
+  const liveReading = signal<LiveReading | null>(null);
   const message = signal("");
   const replacement = signal(false);
   const profileReady = signal(false);
@@ -24,7 +31,15 @@ export function createScaleSession(labels: ScaleCopy, close: () => void, busy: S
   let scanTimer: ReturnType<typeof setTimeout> | undefined;
   let disposed = false;
   let initialized = false;
+  let notifications: Notification["dataBase64"][] | undefined;
+  let receivedNotification = false;
   let measurementTimer: ReturnType<typeof setTimeout> | undefined;
+  let compositionTimer: ReturnType<typeof setTimeout> | undefined;
+  function clearCompositionTimeout() {
+    clearTimeout(compositionTimer);
+    compositionTimer = undefined;
+    waitingForComposition.set(false);
+  }
   const isCurrent = (attempt: number) => !disposed && attempt === generation;
   function clearMeasurementTimeout() {
     clearTimeout(measurementTimer);
@@ -35,16 +50,22 @@ export function createScaleSession(labels: ScaleCopy, close: () => void, busy: S
     const attempt = generation;
     measurementTimer = setTimeout(() => {
       if (!isCurrent(attempt) || preview()) return;
+      const detail = receivedNotification ? labels.measurementTimeout : labels.noSignal;
       halt();
-      fail(labels.measurementTimeout);
+      fail(detail);
     }, MEASUREMENT_TIMEOUT_MS);
   }
   const halt = () => {
     generation++;
     initialized = false;
+    notifications = undefined;
+    processing.set(false);
+    receivedNotification = false;
+    liveReading.set(null);
     clearTimeout(scanTimer);
     scanTimer = undefined;
     clearMeasurementTimeout();
+    clearCompositionTimeout();
     const scan = scanId;
     scanId = "";
     const live = liveId;
@@ -95,6 +116,7 @@ export function createScaleSession(labels: ScaleCopy, close: () => void, busy: S
   async function scan() {
     if (busy() || preview() || state() === "scanning") return;
     halt();
+    finding.set(true);
     replacement.set(false);
     devices.set([]);
     message.set("");
@@ -131,12 +153,18 @@ export function createScaleSession(labels: ScaleCopy, close: () => void, busy: S
       }
     }
   }
-  async function connect(device: Device) {
+  async function connect(device?: Device) {
     if (busy() || preview() || state() === "connecting" || liveId) return;
     halt();
+    finding.set(false);
+    devices.set([]);
     const attempt = generation;
     message.set("");
     replacement.set(false);
+    if (!scaleBle.available()) {
+      fail(labels.unsupported);
+      return;
+    }
     state.set("connecting");
     try {
       const start = await scaleNative.begin(device);
@@ -145,22 +173,32 @@ export function createScaleSession(labels: ScaleCopy, close: () => void, busy: S
         return;
       }
       liveId = start.session_id;
-      await scaleBle.connect(liveId, device.address);
+      await scaleBle.connect(liveId, start.address);
       if (!isCurrent(attempt)) return;
-      for (const dataBase64 of start.commands) {
+      for (const [index, dataBase64] of start.commands.entries()) {
+        if (index === start.commands.length - 1) notifications = [];
         await scaleBle.write(liveId, dataBase64);
         if (!isCurrent(attempt)) return;
       }
       initialized = true;
       state.set("measuring");
       awaitReading();
+      if (device) {
+        void scaleNative
+          .remember(liveId)
+          .then((saved) => {
+            if (isCurrent(attempt) && saved) remembered.set(saved);
+          })
+          .catch(() => {});
+      }
+      void drainNotifications();
     } catch {
       if (isCurrent(attempt)) invalidate(labels.failed);
     }
   }
   async function save() {
     const reviewed = preview();
-    if (!reviewed || busy()) return;
+    if (!reviewed || busy() || processing()) return;
     // A paused/reopened review is valid without a connection. A live attempt
     // must finish its profile/time initialization before it can be confirmed.
     if (liveId && !initialized) return;
@@ -204,6 +242,49 @@ export function createScaleSession(labels: ScaleCopy, close: () => void, busy: S
     message.set(devices().length ? labels.stopped : labels.empty);
   }
 
+  async function drainNotifications() {
+    const queue = notifications;
+    if (!initialized || !queue?.length || processing() || busy()) return;
+    const id = liveId;
+    const attempt = generation;
+    processing.set(true);
+    try {
+      while (queue.length && isCurrent(attempt) && !busy()) {
+        const packet = queue.shift();
+        if (packet == null) {
+          invalidate(labels.packet);
+          return;
+        }
+        const update = await scaleNative.feed(id, packet);
+        if (!isCurrent(attempt) || busy()) return;
+        const result = update.preview;
+        liveReading.set(update.reading);
+        const previous = preview();
+        if (!result || result.measurement.metrics) clearCompositionTimeout();
+        else if (
+          !previous ||
+          previous.measurement.weight_grams !== result.measurement.weight_grams
+        ) {
+          clearCompositionTimeout();
+          waitingForComposition.set(true);
+          compositionTimer = setTimeout(() => {
+            if (isCurrent(attempt)) clearCompositionTimeout();
+          }, COMPOSITION_TIMEOUT_MS);
+        }
+        if (!result || preview()?.token !== result.token) replacement.set(false);
+        if (result) clearMeasurementTimeout();
+        else awaitReading();
+        preview.set(result);
+        state.set(result ? "review" : "measuring");
+        message.set("");
+      }
+    } catch {
+      if (isCurrent(attempt) && !busy()) invalidate(labels.packet);
+    } finally {
+      if (isCurrent(attempt)) processing.set(false);
+    }
+  }
+
   const stops = [
     scaleBle.onDevice((device) => {
       if (!scanId || device.sessionId !== scanId || !device.name.startsWith("AFU-WL")) return;
@@ -226,38 +307,20 @@ export function createScaleSession(labels: ScaleCopy, close: () => void, busy: S
         }
         halt();
         if (!busy()) {
-          message.set(labels.disconnected);
+          message.set(preview() ? labels.disconnected : labels.disconnectedEarly);
           state.set(preview() ? "review" : "failed");
         }
       }
     }),
-    scaleBle.onNotification(async (event) => {
-      if (!liveId || event.sessionId !== liveId || !initialized || busy()) return;
-      if (event.dataBase64 === null) {
+    scaleBle.onNotification((event) => {
+      if (!liveId || event.sessionId !== liveId || !notifications || busy()) return;
+      if (notifications.length >= MAX_PENDING_NOTIFICATIONS) {
         invalidate(labels.packet);
         return;
       }
-      const id = liveId;
-      const attempt = generation;
-      try {
-        const result = await scaleNative.feed(id, event.dataBase64);
-        if (!isCurrent(attempt) || id !== liveId || busy()) return;
-        const previous = preview();
-        if (
-          !result ||
-          previous?.session_id !== result.session_id ||
-          previous?.token !== result.token
-        )
-          replacement.set(false);
-        if (result) clearMeasurementTimeout();
-        else awaitReading();
-        preview.set(result);
-        state.set(result ? "review" : "measuring");
-        message.set("");
-      } catch {
-        if (!isCurrent(attempt) || busy()) return;
-        invalidate(labels.packet);
-      }
+      receivedNotification = true;
+      notifications.push(event.dataBase64);
+      void drainNotifications();
     }),
     scaleBle.onError((event) => {
       if (event.sessionId !== liveId && event.sessionId !== scanId) return;
@@ -276,7 +339,7 @@ export function createScaleSession(labels: ScaleCopy, close: () => void, busy: S
       untracked(() => {
         halt();
         if (!busy()) {
-          message.set(labels.disconnected);
+          message.set(preview() ? labels.disconnected : "");
           state.set(preview() ? "review" : "idle");
         }
       });
@@ -288,21 +351,27 @@ export function createScaleSession(labels: ScaleCopy, close: () => void, busy: S
     stops.forEach((stop) => stop());
   });
   async function restoreDraft() {
+    let reconnect = false;
     try {
       const ready = await scaleNative.profileReady();
       if (disposed) return;
       profileReady.set(ready);
+      const saved = await scaleNative.remembered().catch(() => null);
       const kept = await scaleNative.pending();
       if (disposed) return;
+      remembered.set(saved);
       if (kept) {
         preview.set(kept);
         state.set("review");
         message.set(labels.draft);
-      }
+      } else reconnect = ready && saved !== null;
     } catch {
       if (!disposed) fail(labels.failed);
     } finally {
       if (!disposed) profileLoaded.set(true);
+    }
+    if (reconnect && !disposed && state() === "idle" && lifecycle() !== "background") {
+      await connect();
     }
   }
   void restoreDraft();
@@ -318,7 +387,12 @@ export function createScaleSession(labels: ScaleCopy, close: () => void, busy: S
   return {
     state,
     devices,
+    remembered,
+    finding,
+    processing,
+    waitingForComposition,
     preview,
+    liveReading,
     message,
     replacement,
     profileReady,

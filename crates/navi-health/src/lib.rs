@@ -8,6 +8,7 @@ pub mod consent;
 pub mod garmin;
 pub mod nutrition;
 pub mod photo;
+pub mod profile;
 pub mod recognition;
 pub mod scale;
 pub mod weight;

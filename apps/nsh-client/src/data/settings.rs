@@ -5,7 +5,7 @@
 use nsh_core::{prelude::*, storage::Storage};
 use serde::{Deserialize, Serialize};
 
-use crate::domain::{account::ModelAccount, weight};
+use crate::domain::{account::ModelAccount, meal::Day, weight};
 use navi_health::bodycomp::Sex;
 
 const KEY: &str = "settings.v1";
@@ -17,7 +17,7 @@ pub const GOAL_RANGE: std::ops::RangeInclusive<f64> = 500.0..=10_000.0;
 /// The plausible height range, in centimetres (the scale profiles agree).
 pub const HEIGHT_RANGE: std::ops::RangeInclusive<u16> = 80..=230;
 /// The plausible age range, in years (the scale profiles agree).
-pub const AGE_RANGE: std::ops::RangeInclusive<u16> = 5..=120;
+pub use navi_health::profile::AGE_RANGE;
 
 /// Everything the user set.
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
@@ -35,6 +35,14 @@ pub struct Settings {
     /// The body profile: BMI now, scale estimates later. Never a secret.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub height_cm: Option<u16>,
+    /// An actual user-supplied calendar date, never inferred from legacy age.
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "read_birth_date"
+    )]
+    pub birth_date: Option<Day>,
+    /// Legacy fallback only, until the owner supplies a birth date.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub age_years: Option<u16>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -144,9 +152,30 @@ pub fn height_cm() -> Option<u16> {
     settings().with(|s| s.height_cm)
 }
 
-/// The age in years, when set (tracked).
+/// The saved birth date (tracked).
+pub fn birth_date() -> Option<Day> {
+    settings().with(|s| s.birth_date)
+}
+
+/// Current completed years in the device's local calendar (tracked).
+/// Legacy age is used only when there is no saved birth date. Scale sessions
+/// take their own immutable snapshot of this value.
 pub fn age_years() -> Option<u16> {
-    settings().with(|s| s.age_years)
+    settings().with(|s| match s.birth_date {
+        Some(birth_date) => age_on(birth_date, super::clock::today()),
+        None => s.age_years,
+    })
+}
+
+pub fn age_on(birth_date: Day, today: Day) -> Option<u16> {
+    let parts = |day: Day| (day.0.year(), day.0.month(), day.0.day());
+    navi_health::profile::age_years_on(parts(birth_date), parts(today))
+}
+
+/// A malformed date must not discard unrelated settings or credentials.
+fn read_birth_date<'de, D: serde::Deserializer<'de>>(reader: D) -> Result<Option<Day>, D::Error> {
+    let value = Option::<serde_json::Value>::deserialize(reader)?;
+    Ok(value.and_then(|v| v.as_str()?.parse().ok()))
 }
 
 /// The sex the estimates need, when set (tracked).
@@ -167,12 +196,29 @@ pub fn save_height(height_cm: Option<u16>) {
     });
 }
 
-/// Keeps the age (`None` clears it; outside the range is not kept).
+/// Legacy compatibility for old fixtures and development previews. The
+/// editor collects birth date; a saved birth date always takes precedence.
 pub fn save_age(age_years: Option<u16>) {
     settings().update(|s| {
         s.age_years = age_years.filter(|age| AGE_RANGE.contains(age));
         persist(s);
     });
+}
+
+/// Keeps a genuine birth date, or clears it. Invalid ages leave the saved
+/// profile unchanged; supplying a date retires the legacy static age.
+pub fn save_birth_date(birth_date: Option<Day>) -> bool {
+    if birth_date.is_some_and(|date| age_on(date, super::clock::today()).is_none()) {
+        return false;
+    }
+    settings().update(|s| {
+        s.birth_date = birth_date;
+        if birth_date.is_some() {
+            s.age_years = None;
+        }
+        persist(s);
+    });
+    true
 }
 
 /// Keeps the sex the estimates need (`None` clears it).

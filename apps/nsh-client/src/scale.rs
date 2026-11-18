@@ -116,36 +116,29 @@ impl Scale {
             &service_data,
         )
         .map_err(|_| "unsupported_scale".to_owned())?;
-        let timestamp = jiff::Timestamp::now();
-        let seconds = u32::try_from(timestamp.as_second()).map_err(|_| "invalid_time")?;
-        let offset = timestamp
-            .to_zoned(jiff::tz::TimeZone::system())
-            .offset()
-            .seconds();
-        if offset % 900 != 0 {
-            return Err("invalid_timezone".into());
-        }
-        let quarters = i8::try_from(offset / 900).map_err(|_| "invalid_timezone")?;
-        let commands = protocol::encode_initialization(
-            &profile().ok_or("incomplete_profile")?,
-            seconds,
-            quarters,
-            identity.device_type,
-            identity.protocol_ver,
+        begin_session(
+            crate::data::scale::Device {
+                id: address.into(),
+                name: name.into(),
+            },
+            identity,
         )
-        .map_err(|_| "unsupported_scale".to_owned())?;
-        let start = crate::data::scale::begin(crate::data::scale::Device {
-            id: address.into(),
-            name: name.into(),
-        })?;
-        let mut result = serde_json::to_value(start).map_err(|_| "invalid_session")?;
-        result["commands"] = json!(
-            commands
-                .into_iter()
-                .map(|b| STANDARD.encode(b))
-                .collect::<Vec<_>>()
-        );
-        Ok(result)
+    }
+
+    /// Display the scale saved in local preferences without starting a connection.
+    pub fn remembered(_cx: &mut ModuleCx) -> Value {
+        json!(crate::data::scale::remembered().map(|saved| saved.device))
+    }
+
+    /// Start a new attempt using the last successfully initialized scale.
+    pub fn begin_remembered(_cx: &mut ModuleCx) -> Result<Value, String> {
+        let saved = crate::data::scale::remembered().ok_or("no_saved_scale")?;
+        begin_session(saved.device, saved.identity)
+    }
+
+    /// Remember the active scale after the host acknowledges initialization.
+    pub fn remember(session_id: String, _cx: &mut ModuleCx) -> Value {
+        json!(crate::data::scale::remember(&session_id))
     }
 
     /// Decode one native notification; only Rust may produce a save token.
@@ -165,13 +158,18 @@ impl Scale {
                 return Err("invalid_packet".into());
             }
         };
-        serde_json::to_value(crate::data::scale::feed(&session_id, &bytes)?)
-            .map_err(|_| "invalid_preview".into())
+        let preview = crate::data::scale::feed(&session_id, &bytes)?;
+        Ok(json!({
+            "preview": preview.as_ref().map(display_preview),
+            "reading": crate::data::scale::live_reading(&session_id),
+        }))
     }
 
     /// Reopen a locally kept measurement; a connection is never restored automatically.
     pub fn pending(_cx: &mut ModuleCx) -> Result<Value, String> {
-        serde_json::to_value(crate::data::scale::pending()?).map_err(|_| "invalid_preview".into())
+        Ok(json!(
+            crate::data::scale::pending()?.as_ref().map(display_preview)
+        ))
     }
 
     /// Atomically confirm the exact reviewed Rust draft once.
@@ -209,6 +207,54 @@ impl Scale {
     pub fn invalidate(session_id: String, _cx: &mut ModuleCx) -> Result<(), String> {
         crate::data::scale::invalidate(&session_id)
     }
+}
+
+fn begin_session(
+    device: crate::data::scale::Device,
+    identity: protocol::DeviceProtocol,
+) -> Result<Value, String> {
+    let timestamp = jiff::Timestamp::now();
+    let seconds = u32::try_from(timestamp.as_second()).map_err(|_| "invalid_time")?;
+    let offset = timestamp
+        .to_zoned(jiff::tz::TimeZone::system())
+        .offset()
+        .seconds();
+    if offset % 900 != 0 {
+        return Err("invalid_timezone".into());
+    }
+    let quarters = i8::try_from(offset / 900).map_err(|_| "invalid_timezone")?;
+    let commands = protocol::encode_initialization(
+        &profile().ok_or("incomplete_profile")?,
+        seconds,
+        quarters,
+        &identity,
+        &device.name,
+    )
+    .map_err(|_| "unsupported_scale".to_owned())?;
+    let address = device.id.clone();
+    let start = crate::data::scale::begin(device, identity)?;
+    let mut result = serde_json::to_value(start).map_err(|_| "invalid_session")?;
+    result["address"] = json!(address);
+    result["commands"] = json!(
+        commands
+            .into_iter()
+            .map(|b| STANDARD.encode(b))
+            .collect::<Vec<_>>()
+    );
+    Ok(result)
+}
+
+fn display_preview(preview: &crate::data::scale::Preview) -> Value {
+    json!({
+        "session_id": preview.session_id,
+        "token": preview.token,
+        "day": preview.day,
+        "measured_at_ms": preview.measured_at_ms,
+        "device": preview.device,
+        "measurement": preview.measurement,
+        "existing_kg": preview.existing_kg,
+        "summary": preview.measurement.summary(),
+    })
 }
 
 fn profile() -> Option<protocol::UserProfile> {

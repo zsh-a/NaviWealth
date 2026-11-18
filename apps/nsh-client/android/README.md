@@ -55,8 +55,10 @@ All operations are registered before loading the bundle:
   `{connected:true}` only after GATT discovery and notification subscription.
 - `ble.disconnect {sessionId}` cancels permission continuations and connection.
 - `ble.write {sessionId,dataBase64}` queues one 1–20 byte AFU-WL frame. It
-  resolves after the Android write callback, with at most 16 pending writes
-  and an 8-second per-write deadline.
+  prefers Write Without Response as used by the AFU-WL reference, falling
+  back to Write Request for characteristics that only support that property.
+  It resolves after the Android write callback, with at most 16 pending
+  writes and an 8-second per-write deadline.
 
 Events always contain `sessionId`. `ble.device` adds `address`, `name`, `rssi`,
 `manufacturerData` (decimal company-id keys to base64 bytes), `serviceUuids`,
@@ -67,8 +69,11 @@ before profile writes; a matching name or service alone is not sufficient.
 `ble.error` has bounded `code` and `message`; platform exception text and raw
 health packets are never logged.
 
-The host supports Android 8+ with location permission through Android 11 and
-Nearby devices permissions on Android 12+. It never requests background
+The host supports Android 8+ with foreground location permission and, on
+Android 12+, Nearby devices permissions. Precise location and system Location
+must be enabled for scanning: the `neverForLocation` assertion filtered this
+AFU-WL-TZ-A1's advertisements on the tested phone. The app does not read
+location coordinates. It never requests background
 location, advertises, bonds automatically or starts a background service.
 Cancellation, backgrounding, destruction and Bluetooth-off close the current
 session; generation fences reject late callbacks. Permission dialogs that
@@ -77,6 +82,41 @@ complete after cancellation cannot resume an old measurement.
 ## Evidence boundary
 
 Kotlin compilation, unit tests and Android lint check the host without a
-physical scale. Real-device scanning, `neverForLocation` filtering, GATT
-behavior, permission revocation, suspend/resume and upgrade data retention
+physical scale. Full measurement, GATT behavior, permission revocation,
+suspend/resume and upgrade data retention
 still require physical-device evidence.
+
+On a physical phone running the side-by-side debug APK, run
+`adb -s <phone-serial> logcat -T 1 -v threadtime NaviScale:I '*:S'`
+and measure once. This tag is emitted only by debuggable builds. It records
+scan/connection timings, GATT status, and counts of notification frame types.
+Scan diagnostics also include candidate manufacturer IDs, service UUIDs and
+field lengths, without their payloads, to diagnose advertisement rejection.
+The D5 high bit is an unverified wire marker, not proof of a stable reading.
+No addresses, profile values, measurements or packet payloads are logged.
+
+2026-11-18 scan comparison: with `neverForLocation`, multiple scans received
+hundreds of unrelated advertisements but no AFU-WL-TZ-A1. Removing that flag
+and granting precise location revealed the target in 49 ms, at -60 dBm.
+Its identity was in seven bytes of `27AC` Service Data rather than `27AC`
+Manufacturer Data. The same permissions apply to debug and release.
+
+The subsequent DF/08 session connected and subscribed in 3.0 s, received
+live D5 notifications, a stable D5 at 19.0 s, and D6 impedance at 27.0 s
+from connection start. The owner confirmed that weight and body composition
+appeared. This verifies one foreground measurement on this phone; numerical
+comparison against the scale display/reference, lifecycle and permission
+revocation, and upgrade retention still require separate acceptance.
+
+2026-11-18 physical check: direct connect, service discovery, notification
+subscription, and the profile write callback succeeded in 1.0–2.4 s. In a
+full 30-second measurement window, the host received four D8 history frames
+at startup and no D5 live weight or D6 impedance frames. Both builds used
+Write Without Response on this scale. This verifies transport setup on the
+tested phone, not successful live measurement. D8 does not create a draft.
+
+The verified `AFU-WL-TZ-A1` advertisement now selects the DF/08 time
+initialization documented by the
+[ScaleMe live protocol](https://github.com/bugwz/ScaleMe/blob/81ab69c53fe3c8b057449498f82b8e68cfb5a421/ScaleMe/Infrastructure/Bluetooth/Protocols/Wolai/WolaiAFUScaleAdapter.swift).
+Other verified AFU-WL models still use D0 profile/time initialization. This
+change does not acknowledge or import D8 history, or send a clear command.
