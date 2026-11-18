@@ -31,33 +31,25 @@ fn transfer_completion_excludes_its_source_and_view_reveals_a_multi_day_batch() 
     app.press("label:Records")?;
     app.press("Meals")?;
     app.press("label:New entry")?;
-    app.set_viewport(nsh_core::geometry::Size::new(
-        nsh_core::geometry::Points(360.0),
-        nsh_core::geometry::Points(640.0),
-    ))?;
-    app.set_environment("small phone with IME", |e| {
-        e.font_scale = 1.3;
-        e.keyboard_height = nsh_core::geometry::Points(280.0);
-    })?;
+    // Keep this account/batch contract on the normal viewport. The compact
+    // composer test below owns small-screen/IME coverage; simulating an IME
+    // here leaves native sheet hit-test geometry stale during account picking.
     app.type_text(
         "label:What would you like to record?",
         "Transfer 20 yuan and yesterday's weight 74.2 kg",
     )?;
-    // The IME stays up for the sheet's interactions: the headless scene does
-    // not track the sheet's native reposition once the keyboard env closes,
-    // so presses into the re-lowered sheet read stale geometry. The compact
-    // composer test covers the IME-up layout; device evidence covers the
-    // dismissed-keyboard taps.
     app.press("label:Send")?;
     app.wait_for("Which account was used?")?;
     app.press("label:From account, Choose account")?;
     app.press("label:Cash")?;
+    app.wait_for("label:From account, Cash")?;
     app.press("label:To account, Choose account")?;
     assert!(
         !app.shows("label:Cash"),
         "transfer destination excludes its source"
     );
     app.press("label:Bank")?;
+    app.wait_for("label:To account, Bank")?;
     app.press("Confirm and save (2)")?;
     app.wait_for("Saved 2 records")?;
     app.press("View")?;
