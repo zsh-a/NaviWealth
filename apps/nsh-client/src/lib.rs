@@ -10,6 +10,7 @@ mod nav;
 mod pages;
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
 mod preview;
+mod scale;
 mod shell;
 mod ui;
 
@@ -29,7 +30,7 @@ use crate::{
 /// The app's UI set (`nsh.json` `"rust"`).
 #[native_module("naviwealth/native")]
 fn native(registry: &mut Registry) {
-    registry.register::<App>();
+    registry.register::<App>().module::<scale::Scale>();
 }
 
 /// For headless tests: no quotes or exchange rates from the public
@@ -46,10 +47,35 @@ pub fn set_live_updates(live: bool) {
     data::updates::set_live(live);
 }
 
+/// The optional capabilities supplied by the mixed TSX entry.
+#[derive(Clone, PartialEq, Props)]
+pub struct AppProps {
+    /// The TSX entry can present the scale flow through the Android host.
+    #[prop(default)]
+    pub scale_enabled: Prop<bool>,
+    /// Disable live optional refreshes for local headless development hosts.
+    #[prop(default)]
+    pub test_mode: Prop<bool>,
+}
+
+/// Requests handled by the mixed TSX entry, outside the existing Rust pages.
+#[derive(Clone, PartialEq, Event)]
+pub enum AppEvent {
+    /// Open the scale connection and measurement flow.
+    OpenScale,
+}
+
 /// The root: loads what the device keeps, keeps "today" current, and shows
 /// the navigation stack on the canvas.
 #[component]
-pub fn App() -> impl IntoElement {
+pub fn App(props: AppProps, cx: Scope<AppEvent>) -> impl IntoElement {
+    if cfg!(debug_assertions) && props.test_mode.get() {
+        disable_live_market_data();
+        set_live_updates(false);
+    }
+    scale::provide_launcher(props.scale_enabled.get(), move || {
+        cx.emit(AppEvent::OpenScale)
+    });
     tasks::mark_root();
     if let Err(error) = db::open()
         .and_then(|()| finance::load())

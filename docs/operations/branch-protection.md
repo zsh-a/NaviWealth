@@ -15,7 +15,7 @@ choose to use pull requests.
 
 Workflows use path filters, so unrelated areas do not start each other's
 checks. The `nsh client` workflow runs only on manual dispatch and checks
-the app crate before packaging.
+the app crate and mixed TSX flows before packaging.
 
 ## Optional protected-main setup
 
@@ -33,7 +33,10 @@ checks that are present for the changed paths.
 
 ## NSH releases
 
-The `nsh client` manual workflow builds `apps/nsh-client`, checks the crate,
+The `nsh client` manual workflow checks `apps/nsh-client` and its mixed flows,
+then runs `tool/build-nsh-android-host.sh release` (Gradle unit tests, lint and
+assembly). The app-owned host packages the app-linked NSH 0.5.0 native library
+and TSX bundle; it preserves the package id and private storage location,
 and signs an arm64-v8a APK — `naviwealth-release-arm64-v8a` (the diagnostic
 build is `naviwealth-diagnostic-arm64-v8a`) — with the fixed repository
 keystore after certificate matching and non-debuggable APK checks pass.

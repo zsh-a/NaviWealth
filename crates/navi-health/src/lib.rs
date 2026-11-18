@@ -9,6 +9,7 @@ pub mod garmin;
 pub mod nutrition;
 pub mod photo;
 pub mod recognition;
+pub mod scale;
 pub mod weight;
 
 pub use consent::{Consent, ConsentError, UploadTarget};

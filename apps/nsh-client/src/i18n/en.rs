@@ -272,7 +272,7 @@ pub(super) static STRINGS: Strings = Strings {
     water: "Water",
     bmi: "BMI",
     body_profile: "Body profile",
-    body_profile_note: "Used for BMI now, and for scale estimates once a scale is linked.",
+    body_profile_note: "Used to calculate BMI and estimate body composition from scale measurements.",
     height: "Height",
     age_years: "Age",
     sex: "Sex",

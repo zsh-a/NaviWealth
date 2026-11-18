@@ -15,6 +15,7 @@ pub mod meals;
 pub mod notes;
 pub mod pending;
 pub mod photos;
+pub mod scale;
 pub mod settings;
 pub mod statement_import;
 pub mod tasks;

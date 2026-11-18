@@ -126,6 +126,7 @@ fn editor(day: Day, open: Signal<Option<Day>>) -> impl IntoElement {
             )),
         )
         .child(scale_details(day, move || value.with(|v| parse_number(v))))
+        .child(crate::scale::launch_button(move || open.set(None)))
         .child(
             view()
                 .flex_row()
@@ -141,7 +142,7 @@ fn editor(day: Day, open: Signal<Option<Day>>) -> impl IntoElement {
                                     Some((
                                         s().undo.into(),
                                         Rc::new(move || {
-                                            weights::set(removed.day, removed.kg);
+                                            weights::restore_removed(removed);
                                         }),
                                     )),
                                 );

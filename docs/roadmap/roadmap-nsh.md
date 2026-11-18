@@ -270,13 +270,48 @@ Recommended sequence; this is planning, not a claim these items are implemented.
    from impedance, ported from the AFU-WL reference tool, fixture-tested), a
    per-day `body_metrics` table with backup validation, the Settings body
    profile (height, age, sex) and goal weight, BMI display, Review's 30/90-day
-   windows and body-fat line. Pending: the scale link itself — reading an
-   AFU-WL/Welland scale (service `FFB0`, write `FFB1`, notify `FFB2`, weight +
-   impedance notifications, estimates computed locally) needs the NSH runtime
-   to expose a Bluetooth capability (nsh-core 0.5.0 parses the key and drops
-   it; the packaged APK cannot add permissions). When it lands: scan and read
-   behind a draft/confirm write, with real-device evidence (emulator evidence
-   does not close the item).
+   windows and body-fat line.
+
+   **Implemented 2026-11-18, physical acceptance pending:** a small TSX root
+   mounts the existing Rust App and a scale sheet. An app-owned Kotlin/Gradle
+   host exposes six session-scoped BLE operations through `host.call` and sends
+   bounded events. The build pins NSH 0.5.0 Java classes and consumer rules,
+   and packages the app-linked mixed `libnsh.so`, never the embedding archive's
+   generic native library. `tool/build-nsh-android-host.sh` is the release build
+   path; package id and signing policy stay unchanged.
+
+   - Foreground scans request Android permissions on explicit user action,
+     expire, and stop with GATT on background/destruction. Session generations
+     fence cancelled callbacks; writes are serialized with deadlines. No
+     background service or automatic reconnect is introduced.
+   - `navi-health::scale` validates advertisement identity, packet lengths,
+     checksums, stable weight and ADC evidence, preserving original grams.
+     Rust creates profile/time commands. Missing valid impedance gives a
+     weight-only draft; no BMI fallback is labeled as impedance-derived fat.
+   - Rust owns the review token and persists completed drafts locally.
+     Confirmation atomically writes weight, optional composition and provenance.
+     Same-day replacement requires explicit confirmation and rejects intervening
+     edits. Delete/Undo and backups reconcile measuring evidence; live sessions
+     and unfinished drafts never leave the device in an exported backup.
+   - Evidence: protocol fixtures and malformed/out-of-order cases; mixed
+     TSX-to-Rust-to-host headless flows; storage rollback, replacement, Undo
+     and backup tests; Android JVM session fencing, strict lint and actual
+     arm64 APK assembly. A side-by-side emulator build opens the retained
+     Rust pages and the TSX sheet. These are development evidence only.
+
+   **Remaining exit gates:** compare physical AFU-WL weight/impedance with the
+   scale display and reference capture; verify protocol versions and profile
+   initialization, permission denial/revocation, Bluetooth toggles and pause/
+   resume on a real phone. Verify a signed in-place upgrade from the previous
+   standalone APK preserves SQLite, photos and preferences, plus Back, picker,
+   sharing, networking and encrypted restore. No physical-device gate is
+   closed by emulator or headless tests.
+
+   Protocol wire examples are independently implemented from the
+   [AFU-WL reference](https://github.com/Mzdyl/ant-afu-welland-scale);
+   [NSH 0.5.0 embedding](https://github.com/longbridge/nsh/blob/v0.5.0/docs/dev/embedding.md)
+   defines the mixed Host Channel boundary.
+
 4. **Conversational capture thread.** Implemented ahead of its gates
    ([capture conversation](../architecture/capture-conversation.md)): the
    composer's text or photo opens the thread as the first message; results,

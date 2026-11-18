@@ -1,0 +1,255 @@
+//! Typed boundary between the mixed TSX entry and the existing Rust app.
+use crate::{
+    domain::recognition::Lang,
+    i18n::s,
+    ui::{Btn, Variant},
+};
+use base64::{Engine, engine::general_purpose::STANDARD};
+use navi_health::scale as protocol;
+use nsh_core::prelude::*;
+use serde_json::{Value, json};
+use std::rc::Rc;
+
+#[derive(Clone)]
+struct Launcher {
+    open: Rc<dyn Fn()>,
+}
+
+pub fn provide_launcher(enabled: bool, open: impl Fn() + 'static) {
+    if enabled {
+        provide_context(Launcher {
+            open: Rc::new(open),
+        });
+    }
+}
+
+pub fn launch_button(before: impl Fn() + 'static) -> Option<AnyElement> {
+    let launcher = use_context::<Launcher>()?;
+    Some(
+        Btn::new(Variant::Tonal)
+            .label(|| {
+                if s().lang == Lang::Zh {
+                    "连接体脂秤"
+                } else {
+                    "Connect scale"
+                }
+                .into()
+            })
+            .on_press(move || {
+                before();
+                (launcher.open)();
+            })
+            .into_element(),
+    )
+}
+
+/// Local scale measurement operations. Android hardware is supplied by the host.
+#[module]
+pub struct Scale;
+
+#[module]
+impl Scale {
+    /// UI language; no credentials or profile leave this local bridge.
+    pub fn language(_cx: &mut ModuleCx) -> String {
+        if s().lang == Lang::Zh { "zh" } else { "en" }.into()
+    }
+
+    /// Shared Ink and Daylight tokens for the TSX surface.
+    pub fn palette(dark: bool) -> Value {
+        use crate::ui::color;
+        let hex = |role: nsh_core::element::AdaptiveColor| {
+            let color = if dark { role.dark } else { role.light };
+            format!("#{:08X}", u32::from(color.to_rgb()))
+        };
+        json!({"canvas":hex(color::CANVAS),"surface":hex(color::SURFACE),
+            "ink":hex(color::INK),"muted":hex(color::MUTED),"line":hex(color::LINE),
+            "well":hex(color::SUNKEN),"danger":hex(color::DANGER),
+            "onAction":hex(color::ON_ACTION),"positive":hex(color::POSITIVE),"scrim":hex(color::SCRIM.opacity(0.32))})
+    }
+
+    /// Whether the explicit body profile is ready for a measurement.
+    pub fn profile_ready(_cx: &mut ModuleCx) -> bool {
+        let Some(profile) = profile() else {
+            return false;
+        };
+        profile.valid()
+    }
+
+    /// Returns to the existing body-profile editor.
+    pub fn open_profile(_cx: &mut ModuleCx) {
+        crate::nav::push(crate::nav::Route::Settings);
+    }
+
+    /// Verify scan evidence and begin one Rust-owned measurement attempt.
+    pub fn begin(device: Value, _cx: &mut ModuleCx) -> Result<Value, String> {
+        let address = device["address"].as_str().ok_or("invalid_device")?;
+        let name = device["name"].as_str().ok_or("invalid_device")?;
+        if address.is_empty() || address.len() > 128 || name.len() > 128 {
+            return Err("invalid_device".into());
+        }
+        let manufacturers = manufacturer_data(&device["manufacturerData"])?;
+        let services: Vec<String> = device["serviceUuids"]
+            .as_array()
+            .ok_or("invalid_device")?
+            .iter()
+            .map(|s| {
+                s.as_str()
+                    .filter(|s| s.len() <= 64)
+                    .map(str::to_owned)
+                    .ok_or("invalid_device".to_owned())
+            })
+            .collect::<Result<_, _>>()?;
+        if services.len() > 32 {
+            return Err("invalid_device".into());
+        }
+        let service_data = service_data(&device["serviceData"])?;
+        let identity = protocol::identify_advertisement_with_service_data(
+            &manufacturers,
+            name,
+            &services,
+            &service_data,
+        )
+        .map_err(|_| "unsupported_scale".to_owned())?;
+        let timestamp = jiff::Timestamp::now();
+        let seconds = u32::try_from(timestamp.as_second()).map_err(|_| "invalid_time")?;
+        let offset = timestamp
+            .to_zoned(jiff::tz::TimeZone::system())
+            .offset()
+            .seconds();
+        if offset % 900 != 0 {
+            return Err("invalid_timezone".into());
+        }
+        let quarters = i8::try_from(offset / 900).map_err(|_| "invalid_timezone")?;
+        let commands = protocol::encode_initialization(
+            &profile().ok_or("incomplete_profile")?,
+            seconds,
+            quarters,
+            identity.device_type,
+            identity.protocol_ver,
+        )
+        .map_err(|_| "unsupported_scale".to_owned())?;
+        let start = crate::data::scale::begin(crate::data::scale::Device {
+            id: address.into(),
+            name: name.into(),
+        })?;
+        let mut result = serde_json::to_value(start).map_err(|_| "invalid_session")?;
+        result["commands"] = json!(
+            commands
+                .into_iter()
+                .map(|b| STANDARD.encode(b))
+                .collect::<Vec<_>>()
+        );
+        Ok(result)
+    }
+
+    /// Decode one native notification; only Rust may produce a save token.
+    pub fn feed(
+        session_id: String,
+        data_base64: String,
+        _cx: &mut ModuleCx,
+    ) -> Result<Value, String> {
+        if data_base64.len() > 256 {
+            let _ = crate::data::scale::feed(&session_id, &[]);
+            return Err("invalid_packet".into());
+        }
+        let bytes = match STANDARD.decode(data_base64) {
+            Ok(bytes) => bytes,
+            Err(_) => {
+                let _ = crate::data::scale::feed(&session_id, &[]);
+                return Err("invalid_packet".into());
+            }
+        };
+        serde_json::to_value(crate::data::scale::feed(&session_id, &bytes)?)
+            .map_err(|_| "invalid_preview".into())
+    }
+
+    /// Reopen a locally kept measurement; a connection is never restored automatically.
+    pub fn pending(_cx: &mut ModuleCx) -> Result<Value, String> {
+        serde_json::to_value(crate::data::scale::pending()?).map_err(|_| "invalid_preview".into())
+    }
+
+    /// Atomically confirm the exact reviewed Rust draft once.
+    pub fn confirm(
+        session_id: String,
+        token: String,
+        replace_existing: bool,
+        _cx: &mut ModuleCx,
+    ) -> Result<Value, String> {
+        serde_json::to_value(
+            crate::data::scale::confirm(&session_id, &token, replace_existing).map_err(
+                |error| match error.as_str() {
+                    "Local data unavailable"
+                    | "Could not save the measurement. Check device storage and try again." => {
+                        "storage_unavailable".to_owned()
+                    }
+                    _ => "stale_measurement".to_owned(),
+                },
+            )?,
+        )
+        .map_err(|_| "invalid_confirmation".into())
+    }
+
+    /// Stop accepting notifications while retaining a completed local draft.
+    pub fn pause(session_id: String, _cx: &mut ModuleCx) -> Result<(), String> {
+        crate::data::scale::pause(&session_id)
+    }
+
+    /// Discard this measurement attempt without changing any confirmed records.
+    pub fn cancel(session_id: String, _cx: &mut ModuleCx) -> Result<(), String> {
+        crate::data::scale::cancel(&session_id)
+    }
+}
+
+fn profile() -> Option<protocol::UserProfile> {
+    use crate::data::settings;
+    Some(protocol::UserProfile {
+        height_cm: settings::height_cm()?,
+        age_years: settings::age_years()?,
+        sex: settings::sex()?,
+    })
+}
+
+fn manufacturer_data(value: &Value) -> Result<Vec<(u16, Vec<u8>)>, String> {
+    let map = value.as_object().ok_or("invalid_device")?;
+    if map.len() > 32 {
+        return Err("invalid_device".into());
+    }
+    map.iter()
+        .map(|(id, bytes)| {
+            let id = id.parse::<u16>().map_err(|_| "invalid_device")?;
+            let bytes = decode_advertisement(bytes)?;
+            Ok((id, bytes))
+        })
+        .collect()
+}
+fn service_data(value: &Value) -> Result<Vec<(String, Vec<u8>)>, String> {
+    let Some(map) = value.as_object() else {
+        return if value.is_null() {
+            Ok(vec![])
+        } else {
+            Err("invalid_device".into())
+        };
+    };
+    if map.len() > 32 {
+        return Err("invalid_device".into());
+    }
+    map.iter()
+        .map(|(uuid, bytes)| {
+            if uuid.len() > 64 {
+                return Err("invalid_device".into());
+            }
+            Ok((uuid.clone(), decode_advertisement(bytes)?))
+        })
+        .collect()
+}
+fn decode_advertisement(value: &Value) -> Result<Vec<u8>, String> {
+    let value = value
+        .as_str()
+        .filter(|s| s.len() <= 344)
+        .ok_or("invalid_device")?;
+    let bytes = STANDARD.decode(value).map_err(|_| "invalid_device")?;
+    if bytes.len() > 254 {
+        return Err("invalid_device".into());
+    }
+    Ok(bytes)
+}

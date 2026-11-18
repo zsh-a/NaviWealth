@@ -84,9 +84,8 @@ pub fn window(day: Day, days: i32) -> Vec<Metric> {
 }
 
 /// Keeps `metrics` as `day`'s estimate, replacing it. Refuses invalid
-/// values; a manually logged weight never touches these. Written by the
-/// preview seed (and, later, the scale link); nothing estimates it from a
-/// manually entered weight.
+/// values. Used by the preview seed; real scale readings use scale's atomic
+/// confirmation service. Nothing estimates it from a manually entered weight.
 pub fn set(day: Day, value: BodyMetrics) -> bool {
     let value = BodyMetrics {
         body_fat_percent: rounded(value.body_fat_percent),
@@ -110,15 +109,23 @@ pub fn set(day: Day, value: BodyMetrics) -> bool {
             return false;
         }
     };
-    let written = db::with(|connection| {
-        connection.execute(
+    let written = db::with(|connection| -> rusqlite::Result<()> {
+        let tx = connection.unchecked_transaction()?;
+        // A standalone composition write cannot retain provenance from a
+        // different scale estimate. Real measurements use scale::confirm.
+        tx.execute(
+            "DELETE FROM scale_measurements WHERE day=?1",
+            [day.to_string()],
+        )?;
+        tx.execute(
             "INSERT INTO body_metrics (day, body, fetched_at_ms) VALUES (?1, ?2, ?3)
              ON CONFLICT (day) DO UPDATE SET body = excluded.body, fetched_at_ms = excluded.fetched_at_ms",
             params![day.to_string(), body, metric.fetched_at_ms],
-        )
+        )?;
+        tx.commit()
     });
-    if let Some(Err(error)) = written {
-        log::error!("body_metrics: {day} was not kept: {error}");
+    if !matches!(written, Some(Ok(_))) {
+        log::error!("body_metrics: {day} was not kept");
         return false;
     }
     metrics().update(|m| {

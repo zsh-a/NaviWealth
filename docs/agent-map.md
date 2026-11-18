@@ -21,9 +21,10 @@ Flutter client and Sync backend are retired (2026-11-15).
 | Task | Read first | Code authority | Minimum verification |
 |---|---|---|---|
 | Plan or scope product work | [Product Scope](product/product-scope.md), [roadmap](roadmap/roadmap-nsh.md), ADRs | `docs/product/`, `docs/roadmap/` | Phase exit evidence; archived plans do not authorize work |
-| Change NSH UI or pages | [`apps/nsh-client/README.md`](../apps/nsh-client/README.md), `apps/nsh-client/DESIGN.md` | `apps/nsh-client/src/` | Headless `nsh-testing` flows; device evidence where the roadmap requires it |
+| Change NSH UI or pages | [`apps/nsh-client/README.md`](../apps/nsh-client/README.md), `apps/nsh-client/DESIGN.md` | `apps/nsh-client/src/`, `App.tsx`, `tsx/` | Headless `nsh-testing` flows; device evidence where the roadmap requires it |
 | Change ledger, holdings or catalog behavior | `crates/navi-finance/` tests | `crates/navi-finance/src/` | Focused `cargo test` fixtures; exact money/rounding invariants |
 | Change meals, nutrition or Garmin behavior | `crates/navi-health/` tests | `crates/navi-health/src/` | Focused `cargo test` fixtures |
+| Change AFU-WL scale or Android hardware | [`apps/nsh-client/android/README.md`](../apps/nsh-client/android/README.md), [roadmap](roadmap/roadmap-nsh.md) | `crates/navi-health/src/scale.rs`, app `src/data/scale.rs`, `tsx/`, `android/` | Protocol/storage fixtures, mixed flows, Android lint/unit tests; physical scale gate separately |
 | Change persistence, migrations or backup | `apps/nsh-client/src/data/db.rs`, owning crate tests | `apps/nsh-client/src/data/` | Migration, backup roundtrip and restore atomicity tests |
 | Change AI recognition or provider calls | [Agent Runtime Current Architecture](architecture/agent-runtime-current.md) | `third_party/agent-runtime/`, `crates/navi-health/` | Adapter tests with fixed wire fixtures |
 | Change the securities catalog | [`tool/asset_catalog/README.md`](../tool/asset_catalog/README.md) | `tool/asset_catalog/` | `python3 -m pytest tool/asset_catalog/tests`, catalog validator |

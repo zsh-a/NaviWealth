@@ -71,8 +71,8 @@ Daily loop from `apps/nsh-client/`:
 
 ```sh
 adb devices                                       # lists emulator-5554 over loopback
-nsh run --target android                          # build, debug-sign, install, launch
-nsh package --target android --abi x86_64 --run   # one-shot: package + install + launch
+nsh run --target android                          # generic development host; no BLE handlers
+bash ../../tool/build-nsh-android-host.sh debug   # app-owned BLE host; arm64, side-by-side .bledev
 adb logcat
 ```
 
@@ -86,12 +86,14 @@ Rules and known pitfalls:
 - Non-interactive shells do not source `~/.zshenv`; scripts must export the
   Android/Java variables themselves. Symptom: `apksigner: exec: java: not
   found` right after a successful `libnsh.so` build.
-- Drive Android builds through `nsh run` / `nsh package`; they configure the
+- The app-owned BLE host script first invokes pinned NSH 0.5.0 packaging,
+  then Gradle; generic `nsh run` / `nsh package` hosts omit BLE handlers. NSH configures the
   NDK linker and cc environment. Bare `cargo check --target
   x86_64-linux-android` fails in cc-rs with `failed to find tool
   "x86_64-linux-android-clang"`.
-- CI's release APK is `arm64-v8a`-only and will not install on an x86_64
-  emulator; package locally with `--abi x86_64` instead.
+- The app-owned host is `arm64-v8a`-only. An x86_64 emulator needs arm64
+  translation support; check `ro.product.cpu.abilist` before installing.
+  The `.bledev` debug package keeps existing production app data separate.
 - Emulator evidence covers UI and flow debugging. Roadmap items marked as
   physical-device verification (Keystore, real TLS, upgrade/migration) still
   need hardware.

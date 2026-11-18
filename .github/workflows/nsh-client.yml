@@ -73,14 +73,18 @@ jobs:
         run: |
           curl -fsSL "https://github.com/longbridge/nsh/releases/download/${NSH_VERSION}/install.sh" | sh
           echo "$HOME/.nsh/bin" >> "$GITHUB_PATH"
-      - name: Package the NSH app
+      - name: Check the mixed TSX entry and scale flows
+        run: |
+          nsh check
+          nsh test tests/scale-mixed.test.ts --filter "scale mixed"
+      - name: Package the mixed app in the Android BLE host
         env:
           DIAGNOSTICS: ${{ inputs.diagnostics }}
         run: |
           nsh --version
           # option_env! sees any value, even an empty one: set it only when asked.
           if [ "$DIAGNOSTICS" = "true" ]; then export NW_DIAG=1; fi
-          nsh package --target android --abi arm64-v8a --icon icon.png -o "$RUNNER_TEMP/packaged"
+          bash ../../tool/build-nsh-android-host.sh release
       - name: Sign with the fixed Android release key
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
@@ -88,7 +92,7 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          apk=$(find "$RUNNER_TEMP/packaged" -maxdepth 1 -name '*.apk' -print -quit)
+          apk="android/app/build/outputs/apk/release/app-release-unsigned.apk"
           bash ../../tool/sign-nsh-apk.sh "$apk" "$RUNNER_TEMP/release-apk/NaviWealth.apk"
       - name: Verify the APK (release signature, package, ABI)
         run: |
@@ -101,7 +105,11 @@ jobs:
             echo '::error::A release APK must not be debuggable'
             exit 1
           fi
-          unzip -l "$apk" | grep -E "lib/|classes" || true
+          unzip -l "$apk" | grep -E "lib/|classes|assets/nsh/bundle.nshc"
+          unzip -l "$apk" | grep -q 'assets/nsh/bundle.nshc'
+          permissions=$("$tools/aapt2" dump permissions "$apk")
+          grep -q 'android.permission.BLUETOOTH_SCAN' <<< "$permissions"
+          grep -q 'android.permission.BLUETOOTH_CONNECT' <<< "$permissions"
       - uses: actions/upload-artifact@v4
         with:
           name: naviwealth-${{ inputs.diagnostics && 'diagnostic' || 'release' }}-arm64-v8a

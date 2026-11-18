@@ -55,6 +55,7 @@ pub fn settings_page() -> Screen {
                                 .child(view().h_3())
                                 .child(group_label(|| s().body_profile))
                                 .child(super::settings_body::body_section())
+                                .child(crate::scale::launch_button(|| {}))
                                 .child(view().h_3())
                                 .child(group_label(|| s().garmin))
                                 .child(super::settings_garmin::garmin_section())

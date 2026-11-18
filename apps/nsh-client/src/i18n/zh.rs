@@ -268,7 +268,7 @@ pub(super) static STRINGS: Strings = Strings {
     water: "水分",
     bmi: "BMI",
     body_profile: "身体档案",
-    body_profile_note: "现在用于计算 BMI；接入体脂秤后也用于体成分估算。",
+    body_profile_note: "用于计算 BMI，并根据体脂秤测量估算体成分。",
     height: "身高",
     age_years: "年龄",
     sex: "性别",

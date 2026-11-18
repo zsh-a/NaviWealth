@@ -1,6 +1,6 @@
 # NaviWealth native client (NSH)
 
-NaviWealth's native client, written in Rust on [NSH](https://github.com/longbridge/nsh)
+NaviWealth's native client, with Rust pages and a small TSX hardware entry on [NSH](https://github.com/longbridge/nsh)
 0.5.0. Its first page is HealthOS meal logging: choose a photo of a meal, allow
 it to be sent to your own vision model, review the estimated foods and amounts,
 and save. The home has four tabs: Today (spending, intake and vitals), Records
@@ -27,7 +27,10 @@ src/
             editing, Settings
   i18n/     English and Chinese copy
   preview.rs  desktop-only preview seeding for design review
-tests/      headless meal, weight, Garmin, review and backup flows
+App.tsx     mixed entry mounting the retained Rust App and scale sheet
+tsx/        scale interaction and localized copy; no protocol or domain math
+android/    Kotlin foreground BLE host and permissions, pinned NSH Java runtime
+tests/      headless meal, weight, Garmin, review, backup and mixed scale flows
 ```
 
 Meal recognition, catalog nutrition, photo normalization and destination-bound
@@ -45,8 +48,10 @@ cargo clippy --all-targets -- -D warnings
 cargo fmt --check
 nsh run                                     # GTK desktop window (phone-sized)
 nsh run --target android                    # emulator/device dev host: build, debug-sign, install, launch
-nsh package --target android --abi arm64-v8a   # device APK; needs the Android SDK, NDK and a JDK
-nsh package --target android --abi x86_64   # x86_64 emulator APK; --run also installs and launches
+nsh check                                   # mixed TSX/native type check
+nsh test tests/scale-mixed.test.ts           # mixed scale flow with local host fixtures
+bash ../../tool/build-nsh-android-host.sh release # app-owned Android host, unsigned arm64 APK
+bash ../../tool/build-nsh-android-host.sh debug   # side-by-side com.naviwealth.app.bledev APK
 ```
 
 Debugging on Android from WSL2 against a Windows-side emulator (adb over
@@ -57,7 +62,7 @@ The Android release APK is built by the manual GitHub Actions workflow
 `nsh client` (`.github/workflows/nsh-client.yml`), uploaded as an artifact and
 signed with the repository's fixed Android release key (`KEYSTORE_BASE64`,
 `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`). `tool/sign-nsh-apk.sh`
-re-signs the NSH package using separate store/key passwords from environment
+signs the app-owned Gradle host package using separate store/key passwords from environment
 variables, verifies its certificate against the keystore, rejects debug
 certificates, and removes temporary key material on exit. Missing secrets or
 failed verification fail the build; only the signed APK is uploaded.
@@ -72,6 +77,24 @@ The workflow's `diagnostics` input builds a diagnostic APK instead
 with keyboard diagnostics: shows, keyboard height, window and safe-area
 changes, and late frames during the last keyboard motion. Release builds
 compile none of it.
+
+## AFU-WL scale
+
+Connect scale is available in Settings and the Today weight editor. Complete
+height, age and sex first. The TSX sheet requests a bounded foreground scan,
+connects an AFU-WL, reviews weight and optional impedance-derived composition,
+and saves only after explicit confirmation. Rust validates identity and packets,
+creates profile/time commands and owns review tokens. Same-day replacement has
+a second confirmation; closing keeps a completed local draft, while Discard
+removes it. Manual weight changes and Undo reconcile composition and provenance.
+BLE data stays on-device and never enters a model request.
+
+Use NSH CLI **0.5.0** for mixed checks and builds. The host build script pins the
+matching Java inputs and extracts the app-linked native library from the NSH
+mixed package. Plain `nsh run --target android` uses the generic development
+host and does not provide these BLE handlers. The production unsigned APK is
+`android/app/build/outputs/apk/release/app-release-unsigned.apk`; signing remains
+in CI. Physical scale and signed upgrade acceptance remain open in the roadmap.
 
 ## Health review and backups
 

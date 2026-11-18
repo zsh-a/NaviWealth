@@ -12,7 +12,7 @@
 
 ---
 
-NaviWealth 是一个本地优先的个人应用：复式记账、证券持仓、拍照记餐和 Garmin 身体数据。客户端是 Rust 编写的 [NSH](https://github.com/longbridge/nsh) 应用，业务真相在 `navi-finance` 与 `navi-health` 两个 Rust crate 里。没有账号、没有后端、没有同步——只有设备上的 SQLite 和口令加密的本地备份。
+NaviWealth 是一个本地优先的个人应用：复式记账、证券持仓、拍照记餐和 Garmin 身体数据。客户端以 Rust 页面为主，使用 TSX 接入硬件交互，是 [NSH](https://github.com/longbridge/nsh) 应用，业务真相在 `navi-finance` 与 `navi-health` 两个 Rust crate 里。没有账号、没有后端、没有同步——只有设备上的 SQLite 和口令加密的本地备份。
 
 <p align="center">
   <img src="docs/assets/readme/records.png" width="30%" alt="Records 流水">
@@ -38,7 +38,7 @@ NaviWealth 是一个本地优先的个人应用：复式记账、证券持仓、
 ## 仓库结构
 
 ```text
-apps/nsh-client/            NSH (Rust) 客户端：界面、存储、页面与无头测试
+apps/nsh-client/            NSH 客户端：Rust 页面与存储、TSX 体脂秤交互、Kotlin BLE 宿主
 crates/navi-finance/        复式账本、持仓与证券目录的业务真相
 crates/navi-health/         餐食识别、营养与 Garmin 数据解析
 third_party/agent-runtime/  模型协议与客户端（git submodule）

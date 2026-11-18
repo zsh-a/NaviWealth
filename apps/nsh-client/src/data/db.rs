@@ -82,6 +82,32 @@ const MIGRATIONS: &[&str] = &[
         body TEXT NOT NULL,
         fetched_at_ms INTEGER NOT NULL
     );",
+    // 18: confirmed scale provenance, private review drafts and local stale-write guards.
+    "CREATE TABLE scale_measurements (
+        day TEXT PRIMARY KEY NOT NULL,
+        session_id TEXT UNIQUE NOT NULL,
+        body TEXT NOT NULL
+    );
+    CREATE TABLE scale_drafts (session_id TEXT PRIMARY KEY NOT NULL, body TEXT NOT NULL);
+    CREATE TABLE weight_revisions (day TEXT PRIMARY KEY NOT NULL, revision INTEGER NOT NULL CHECK(revision >= 0));
+    CREATE TRIGGER weight_insert_revision AFTER INSERT ON weights BEGIN
+      INSERT INTO weight_revisions VALUES(NEW.day,1) ON CONFLICT(day) DO UPDATE SET revision=revision+1;
+    END;
+    CREATE TRIGGER weight_update_revision AFTER UPDATE ON weights BEGIN
+      INSERT INTO weight_revisions VALUES(NEW.day,1) ON CONFLICT(day) DO UPDATE SET revision=revision+1;
+    END;
+    CREATE TRIGGER weight_delete_revision AFTER DELETE ON weights BEGIN
+      INSERT INTO weight_revisions VALUES(OLD.day,1) ON CONFLICT(day) DO UPDATE SET revision=revision+1;
+    END;
+    CREATE TRIGGER metrics_insert_revision AFTER INSERT ON body_metrics BEGIN
+      INSERT INTO weight_revisions VALUES(NEW.day,1) ON CONFLICT(day) DO UPDATE SET revision=revision+1;
+    END;
+    CREATE TRIGGER metrics_update_revision AFTER UPDATE ON body_metrics BEGIN
+      INSERT INTO weight_revisions VALUES(NEW.day,1) ON CONFLICT(day) DO UPDATE SET revision=revision+1;
+    END;
+    CREATE TRIGGER metrics_delete_revision AFTER DELETE ON body_metrics BEGIN
+      INSERT INTO weight_revisions VALUES(OLD.day,1) ON CONFLICT(day) DO UPDATE SET revision=revision+1;
+    END;",
 ];
 
 #[derive(Clone, Default)]
@@ -129,7 +155,7 @@ pub fn catalog_seed() -> Option<String> {
     std::fs::read_to_string(data_dir()?.join("catalog-seed.ndjson")).ok()
 }
 
-fn migrate(connection: &mut Connection) -> Result<(), navi_storage::Error> {
+pub(super) fn migrate(connection: &mut Connection) -> Result<(), navi_storage::Error> {
     navi_storage::migrate(connection, MIGRATIONS)
 }
 
@@ -144,6 +170,7 @@ const HEALTH_TABLES: &[(&str, &str)] = &[
     ("saved_meals", "id, saved_at_ms, used_at_ms, body"),
     ("review_notes", "day, text, updated_at_ms"),
     ("body_metrics", "day, body, fetched_at_ms"),
+    ("scale_measurements", "day, session_id, body"),
 ];
 
 /// Why a restore was refused; nothing changed.
@@ -193,6 +220,12 @@ fn snapshot_file(connection: &Connection, path: &Path) -> Result<Vec<u8>, String
         copy.execute(&format!("DELETE FROM {table}"), [])
             .map_err(|error| error.to_string())?;
     }
+    // Unconfirmed health reviews do not leave the device in exported backups.
+    // Revisions are local concurrency guards, not records.
+    copy.execute("DELETE FROM scale_drafts", [])
+        .map_err(|e| e.to_string())?;
+    copy.execute("DELETE FROM weight_revisions", [])
+        .map_err(|e| e.to_string())?;
     copy.execute("VACUUM", [])
         .map_err(|error| error.to_string())?;
     drop(copy);
@@ -230,8 +263,14 @@ fn restore_file(connection: &Connection, path: &Path) -> Result<(), RestoreError
     }
     migrate(&mut restored).map_err(|_| RestoreError::Unreadable)?;
     validate_restored(&restored).map_err(|_| RestoreError::Unreadable)?;
+    // Review drafts are never imported. Clearing the source first lets the
+    // normal table replacement invalidate current drafts in the same transaction.
+    restored
+        .execute("DELETE FROM scale_drafts", [])
+        .map_err(|_| RestoreError::Unreadable)?;
     drop(restored);
     let mut tables = HEALTH_TABLES.to_vec();
+    tables.push(("scale_drafts", "session_id, body"));
     if version >= 7 {
         tables.extend_from_slice(navi_finance::repository::TABLES);
     }
@@ -355,6 +394,7 @@ fn validate_restored(connection: &Connection) -> Result<(), String> {
         Ok(())
     };
     read().map_err(|e| e.to_string())?;
+    super::scale::validate_saved(connection)?;
     navi_finance::repository::validate(connection).map_err(|e| e.to_string())
 }
 
@@ -853,6 +893,117 @@ mod tests {
         );
         assert_eq!(count("finance_daily_bars"), 0, "daily bars are caches");
         assert_eq!(count("finance_quotes"), 1, "manual prices are records");
+    }
+
+    #[test]
+    fn scale_backup_excludes_reviews_restores_provenance_and_rejects_tampering() {
+        use navi_health::{
+            bodycomp::Sex,
+            scale::{Session, UserProfile},
+        };
+        let c = navi_storage::memory(MIGRATIONS).unwrap();
+        let mut session = Session::new(UserProfile {
+            height_cm: 170,
+            age_years: 23,
+            sex: Sex::Male,
+        })
+        .unwrap();
+        let packet = |s: &str| -> Vec<u8> {
+            (0..s.len())
+                .step_by(2)
+                .map(|i| u8::from_str_radix(&s[i..i + 2], 16).unwrap())
+                .collect()
+        };
+        session
+            .feed(&packet("AC298068E2C2020005400000000000000029D511"))
+            .unwrap();
+        let measurement = session
+            .feed(&packet("AC290200020501D8018068E2C20000000029D60E"))
+            .unwrap()
+            .unwrap();
+        let preview = super::super::scale::Preview {
+            session_id: "1".repeat(32),
+            token: "2".repeat(32),
+            day: "2026-11-18".parse().unwrap(),
+            measured_at_ms: 1,
+            device: super::super::scale::Device {
+                id: "device".into(),
+                name: "AFU-WL".into(),
+            },
+            measurement,
+            existing_kg: None,
+        };
+        c.execute("INSERT INTO weights VALUES('2026-11-18',58.1,1)", [])
+            .unwrap();
+        let body = serde_json::to_string(preview.measurement.metrics.as_ref().unwrap()).unwrap();
+        c.execute("INSERT INTO body_metrics VALUES('2026-11-18',?1,1)", [body])
+            .unwrap();
+        let body = serde_json::json!({"preview":preview,"confirmed_at_ms":2}).to_string();
+        c.execute(
+            "INSERT INTO scale_measurements VALUES('2026-11-18',?1,?2)",
+            rusqlite::params![preview.session_id, body],
+        )
+        .unwrap();
+        c.execute(
+            "INSERT INTO scale_drafts VALUES('private-review','private-token')",
+            [],
+        )
+        .unwrap();
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("scale.sqlite");
+        snapshot_file(&c, &path).unwrap();
+        let copy = Connection::open(&path).unwrap();
+        assert_eq!(
+            copy.query_row("SELECT count(*) FROM scale_drafts", [], |r| r
+                .get::<_, i64>(0))
+                .unwrap(),
+            0
+        );
+        assert_eq!(
+            copy.query_row("SELECT count(*) FROM weight_revisions", [], |r| r
+                .get::<_, i64>(0))
+                .unwrap(),
+            0
+        );
+        assert_eq!(
+            c.query_row("SELECT count(*) FROM scale_drafts", [], |r| r
+                .get::<_, i64>(0))
+                .unwrap(),
+            1,
+            "snapshot leaves current review untouched"
+        );
+        assert!(validate_restored(&copy).is_ok());
+        let current = navi_storage::memory(MIGRATIONS).unwrap();
+        current
+            .execute(
+                "INSERT INTO scale_drafts VALUES('current-review','current-token')",
+                [],
+            )
+            .unwrap();
+        restore_file(&current, &path).unwrap();
+        assert_eq!(
+            current
+                .query_row("SELECT count(*) FROM scale_measurements", [], |r| r
+                    .get::<_, i64>(0))
+                .unwrap(),
+            1
+        );
+        assert_eq!(
+            current
+                .query_row("SELECT count(*) FROM scale_drafts", [], |r| r
+                    .get::<_, i64>(0))
+                .unwrap(),
+            0,
+            "restore invalidates old reviews atomically"
+        );
+        copy.execute("UPDATE weights SET kg=80.0", []).unwrap();
+        assert_eq!(restore_file(&current, &path), Err(RestoreError::Unreadable));
+        assert_eq!(
+            current
+                .query_row("SELECT kg FROM weights", [], |r| r.get::<_, f64>(0))
+                .unwrap(),
+            58.1
+        );
     }
 
     #[test]

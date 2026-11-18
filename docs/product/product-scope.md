@@ -212,11 +212,17 @@ The full target is:
   distance to it on Today and as a line in Review's weight chart, which has
   30- and 90-day windows. Nothing is estimated from a manually entered
   weight: composition arrives only with a scale measurement. The scale link
-  itself (AFU-WL/Welland body-fat scales over Bluetooth LE) waits for the
-  NSH runtime to expose a Bluetooth capability — nsh-core 0.5.0 has no such
-  host API and the packaged Android APK cannot add permissions (Personal
-  Local Scope decision 5) — so composition storage and display are built
-  ahead of it and the table stays empty until it lands.
+  uses a foreground AFU-WL/Welland Bluetooth LE flow. A small TSX entry mounts
+  the existing Rust pages and the scale sheet; Kotlin owns Android permissions,
+  scanning and GATT through an explicit Host Channel whitelist. Rust owns packet
+  validation, profile/time commands, estimation and atomic confirmation. A
+  completed draft stays local and can be reopened without reconnecting. Same-day
+  replacement requires a second confirmation; missing valid impedance offers
+  weight only. Manual edits, deletion, Undo and backup preserve the association
+  between weight and its measuring evidence. Host builds, packet fixtures and
+  headless flows are verified; real-device measurements and signed in-place
+  upgrade acceptance remain open (see the roadmap). This does not change
+  Personal Local Scope's no-Keystore decision.
 - Garmin daily data through Garmin's official Personal API (self-serve key,
   read-only, own data only): sleep duration and score, HRV with its status,
   resting heart rate, Body Battery high, steps and average stress. Pulled at

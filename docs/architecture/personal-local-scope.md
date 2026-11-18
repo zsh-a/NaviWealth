@@ -41,16 +41,14 @@ features. The migration became a reduced rewrite, not a port.
    No `knowledge-core`, `execution-core` or domain registry. Recognition calls
    use `llm-protocol` / `llm-client` from the Agent Runtime submodule
    directly; the Agent Runtime loop is not hosted.
-5. **No SQLCipher, no Keystore (2026-11-13).** NSH's standalone Android APK
-   is packaged from a prebuilt runtime without Gradle: there is no place for
-   Kotlin code and no JavaVM handed to Rust, so Keystore would need an unsafe
-   JNI shim (Android 12+ only) or a different host app. For a personal
-   single-device app this is not worth it. The database is plain SQLite in
-   the app's private directory, protected by the Android sandbox and
-   file-based encryption; model and Garmin credentials stay in app-private
-   storage. Exported backups are the files that leave the sandbox, so they
-   are encrypted with a passphrase. Revisit if NSH exposes JNI or host
-   plugins to standalone apps.
+5. **No SQLCipher, no Keystore (2026-11-13; host clarification 2026-11-18).**
+   The database is plain SQLite in the app's private directory, protected by
+   the Android sandbox and file-based encryption; model and Garmin credentials
+   stay in app-private storage. Exported backups are the files that leave the
+   sandbox, so they are encrypted with a passphrase. The app-owned Gradle host
+   now supplies Kotlin hardware integration for the scale; native access is
+   technically available. That implementation does not expand the personal
+   single-device credential-storage policy or add Keystore to this scope.
 6. **Garmin through the Personal API.** Use the self-serve personal key and
    its token flow, read-only. The key and tokens stay in app-private storage
    and never enter exported backups. The reverse-engineered client is not

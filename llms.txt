@@ -1,7 +1,7 @@
 # NaviWealth
 
 > Local-first personal finance and health app for one Android phone. The
-> client is NSH (Rust); business truth lives in the `navi-finance` and
+> client is NSH (Rust pages, TSX hardware UI, Kotlin Android host); business truth lives in the `navi-finance` and
 > `navi-health` crates. Local-only: no backend, no sync, no account system;
 > passphrase-encrypted local backups. AI recognition runs on device against
 > user-owned LLM profiles through the `third_party/agent-runtime` submodule.
@@ -20,7 +20,7 @@
 
 ## Current Code Roots
 
-- `apps/nsh-client/`: NSH (Rust) UI client and its headless tests.
+- `apps/nsh-client/`: NSH mixed client, Android BLE host and headless tests.
 - `crates/navi-finance/`: Double-entry ledger, holdings, securities catalog truth.
 - `crates/navi-health/`: Meal recognition, nutrition, Garmin daily summaries.
 - `third_party/agent-runtime/`: Provider-neutral LLM protocol and client (submodule).

@@ -1,10 +1,43 @@
 {
   "name": "NaviWealth",
   "id": "com.naviwealth.app",
-  "version": "0.12.1",
-  "build": 19,
+  "version": "0.13.0",
+  "build": 20,
   "appearance": "system",
   "theme": "theme.json",
   "rust": ".",
-  "root": "App"
+  "capabilities": {
+    "network": {
+      "hosts": [
+        "*"
+      ]
+    },
+    "webview": {
+      "hosts": [
+        "*"
+      ]
+    },
+    "statusBar": true,
+    "clipboard": true,
+    "picker": true,
+    "speech": true,
+    "notifications": true,
+    "audio": true,
+    "openUrl": true,
+    "windows": true,
+    "host": [
+      "ble.status",
+      "ble.scan.start",
+      "ble.scan.stop",
+      "ble.connect",
+      "ble.disconnect",
+      "ble.write"
+    ],
+    "fs": {
+      "read": [
+        "${dataDir}",
+        "${pluginDir}"
+      ]
+    }
+  }
 }

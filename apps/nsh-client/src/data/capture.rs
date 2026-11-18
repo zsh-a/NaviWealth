@@ -359,6 +359,7 @@ pub fn confirm(id: &str) -> Result<(), String> {
                         params![meal.id,meal.day.to_string(),meal.logged_at_ms,encode_meal(&meal)]).map_err(|e| e.to_string())?;
                 }
                 Record::Weight { day, kg } => {
+                    super::scale::reconcile_weight_in_transaction(&tx, &day.to_string(), Some(crate::domain::weight::rounded(*kg))).map_err(|e| e.to_string())?;
                     tx.execute("INSERT INTO weights(day,kg,logged_at_ms) VALUES(?1,?2,?3) ON CONFLICT(day) DO UPDATE SET kg=excluded.kg,logged_at_ms=excluded.logged_at_ms",
                         params![day.to_string(),crate::domain::weight::rounded(*kg),draft.created_at_ms]).map_err(|e| e.to_string())?;
                 }
@@ -392,6 +393,7 @@ pub fn confirm(id: &str) -> Result<(), String> {
     }
     meals::load();
     weights::load();
+    super::body_metrics::load();
     if let Err(error) = finance::load() {
         log::error!("capture: ledger refresh failed: {error}");
     }
