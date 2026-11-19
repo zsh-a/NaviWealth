@@ -12,6 +12,7 @@ fn stored(dir: &Path) -> Vec<journal::Transaction> {
 fn open_new(app: &mut Headless) -> Result<(), String> {
     open_manual(app, "Log transaction")?;
     app.wait_for("Save transaction")?;
+    assert!(!app.shows("id:task-header >> label:Delete transaction"));
     Ok(())
 }
 
@@ -133,12 +134,104 @@ fn edited_date_is_reachable_from_calendar_and_delete_can_be_undone() -> Result<(
     app.wait_for("All days")?;
     app.press("label:/^Lunch shop, −42.25 CNY/")?;
     app.press("Details")?;
+    app.on_dialog(|_| DialogAnswer::Press("Delete transaction".into()));
     app.press("Delete transaction")?;
     app.wait_for("Undo")?;
     assert!(stored(dir.path()).is_empty());
     app.press("Undo")?;
     app.wait_for("label:/^Lunch shop, −42.25 CNY/")?;
     assert_eq!(stored(dir.path()).len(), 1);
+    Ok(())
+}
+
+#[test]
+fn delete_is_visible_above_the_keyboard_and_cancel_keeps_unsaved_changes() -> Result<(), String> {
+    use nsh_core::geometry::{Points, Size};
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
+    first_expense(&mut app)?;
+    app.press("label:/^Lunch shop, −31.50 CNY/")?;
+    app.set_viewport(Size::new(Points(360.0), Points(640.0)))?;
+    app.set_environment("large text with keyboard", |env| {
+        env.font_scale = 1.3;
+        env.keyboard_height = Points(280.0);
+    })?;
+    let delete = app
+        .screen()
+        .layout_nodes()
+        .into_iter()
+        .find(|n| n.test_id.as_deref() == Some("task-header"))
+        .unwrap();
+    assert!(delete.bounds.origin.y.0 >= 0.0);
+    assert!(delete.bounds.origin.y.0 + delete.bounds.size.height.0 <= 360.5);
+    assert!(delete.bounds.size.height.0 >= 48.0);
+    app.clear("label:Amount")?;
+    app.type_text("label:Amount", "42.25")?;
+    app.on_dialog(|dialog| {
+        assert_eq!(dialog.title.as_deref(), Some("Delete this transaction?"));
+        let summary = dialog.message.as_deref().unwrap();
+        assert!(summary.contains("Lunch shop"));
+        assert!(summary.contains("31.50"));
+        assert!(summary.contains("Cash"));
+        assert!(!summary.contains("42.25"));
+        DialogAnswer::Press("Cancel".into())
+    });
+    app.press("id:task-header >> label:Delete transaction")?;
+    assert_eq!(stored(dir.path())[0].postings[0].amount.abs(), 3150);
+    app.set_environment("keyboard dismissed", |env| {
+        env.keyboard_height = Points(0.0)
+    })?;
+    app.press("Save transaction")?;
+    app.wait_for_gone("Save transaction", GONE)?;
+    assert_eq!(stored(dir.path())[0].postings[0].amount.abs(), 4225);
+    Ok(())
+}
+
+#[test]
+fn failed_delete_and_failed_undo_can_retry_without_partial_postings() -> Result<(), String> {
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
+    first_expense(&mut app)?;
+    let original = stored(dir.path());
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    db.execute_batch("CREATE TRIGGER reject_delete BEFORE DELETE ON finance_postings WHEN OLD.position=1 BEGIN SELECT RAISE(ABORT,'full disk'); END;").unwrap();
+    app.press("label:/^Lunch shop, −31.50 CNY/")?;
+    app.on_dialog(|_| DialogAnswer::Press("Delete transaction".into()));
+    app.press("id:task-header >> label:Delete transaction")?;
+    app.wait_for("Could not delete this record. Please try again.")?;
+    assert_eq!(stored(dir.path()), original);
+    assert!(app.shows("Save transaction"));
+    db.execute_batch("DROP TRIGGER reject_delete").unwrap();
+    app.press("id:task-header >> label:Delete transaction")?;
+    app.wait_for("Transaction deleted")?;
+    assert!(stored(dir.path()).is_empty());
+    db.execute_batch("CREATE TRIGGER reject_restore BEFORE INSERT ON finance_postings WHEN NEW.position=1 BEGIN SELECT RAISE(ABORT,'full disk'); END;").unwrap();
+    app.press("Undo")?;
+    app.wait_for("Could not restore this record. Tap Try again to retry.")?;
+    assert!(stored(dir.path()).is_empty());
+    db.execute_batch("DROP TRIGGER reject_restore").unwrap();
+    app.press("Try again")?;
+    app.wait_for("label:/^Lunch shop, −31.50 CNY/")?;
+    assert_eq!(stored(dir.path()), original);
+    Ok(())
+}
+
+#[test]
+fn undo_refuses_to_overwrite_a_newer_transaction_with_the_same_identity() -> Result<(), String> {
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
+    first_expense(&mut app)?;
+    let mut newer = stored(dir.path())[0].clone();
+    app.press("label:/^Lunch shop, −31.50 CNY/")?;
+    app.on_dialog(|_| DialogAnswer::Press("Delete transaction".into()));
+    app.press("id:task-header >> label:Delete transaction")?;
+    app.wait_for("Transaction deleted")?;
+    newer.note = "Newer evidence".into();
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    repository::save(&db, &newer).unwrap();
+    app.press("Undo")?;
+    app.wait_for("This record or its account changed. Undo cannot overwrite newer data.")?;
+    assert_eq!(stored(dir.path()), [newer]);
     Ok(())
 }
 

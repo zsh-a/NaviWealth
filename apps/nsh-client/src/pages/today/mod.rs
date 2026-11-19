@@ -1,6 +1,7 @@
 //! Today: what the day adds up to (intake), three vitals, and today's
 //! records. Only today: past days are in Records.
 
+mod body;
 mod garmin;
 mod hero;
 mod meal_list;
@@ -8,6 +9,7 @@ mod vitals;
 mod week;
 mod weight;
 
+pub use body::body_overview;
 pub use garmin::garmin_sheet;
 pub use meal_list::{meal_title, slot_name};
 pub use week::day_strip;

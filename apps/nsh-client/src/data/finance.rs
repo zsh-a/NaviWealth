@@ -203,6 +203,8 @@ pub fn confirm_balance(
         .ok_or(repository::Error::Invalid("database unavailable"))??;
     update(|s| {
         Rc::make_mut(&mut s.checks).push(check);
+        Rc::make_mut(&mut s.checks)
+            .sort_by(|a, b| a.checked_at.cmp(&b.checked_at).then(a.id.cmp(&b.id)));
         if let Some(entry) = entry {
             Rc::make_mut(&mut s.transactions).push(entry);
             Rc::make_mut(&mut s.transactions).sort_by(|a, b| a.at.cmp(&b.at).then(a.id.cmp(&b.id)));
@@ -319,15 +321,61 @@ pub fn save(entry: Transaction) -> Result<(), String> {
     Ok(())
 }
 
-pub fn remove(id: &str) -> Result<Transaction, String> {
-    let removed = db::with(|c| repository::remove(c, id))
-        .ok_or("the database is not open")?
-        .map_err(|error| {
-            log::error!("finance: deletion failed: {error}");
-            error.to_string()
-        })?;
-    update(|s| Rc::make_mut(&mut s.transactions).retain(|t| t.id != id));
+#[derive(Debug)]
+pub enum RemovalError {
+    Missing,
+    Changed,
+    Unavailable,
+}
+
+fn removal_result<T>(
+    result: Option<Result<T, repository::Error>>,
+    operation: &str,
+) -> Result<T, RemovalError> {
+    match result {
+        Some(Ok(value)) => Ok(value),
+        Some(Err(error)) => {
+            log::error!("finance: {operation} failed: {error}");
+            Err(match error {
+                repository::Error::Missing => RemovalError::Missing,
+                repository::Error::RecordChanged => RemovalError::Changed,
+                _ => RemovalError::Unavailable,
+            })
+        }
+        None => {
+            log::error!("finance: {operation} failed: the database is not open");
+            Err(RemovalError::Unavailable)
+        }
+    }
+}
+
+pub fn remove(expected: &Transaction) -> Result<repository::RemovedTransaction, RemovalError> {
+    let removed = removal_result(
+        db::with(|c| repository::remove_confirmed(c, expected)),
+        "deletion",
+    )?;
+    update(|s| {
+        Rc::make_mut(&mut s.transactions).retain(|t| t.id != removed.entry.id);
+        Rc::make_mut(&mut s.checks).retain(|c| c.id != removed.entry.id);
+    });
     Ok(removed)
+}
+
+pub fn restore_removed(removed: &repository::RemovedTransaction) -> Result<(), RemovalError> {
+    removal_result(
+        db::with(|c| repository::restore_removed(c, removed)),
+        "Undo",
+    )?;
+    update(|s| {
+        Rc::make_mut(&mut s.transactions).push(removed.entry.clone());
+        Rc::make_mut(&mut s.transactions).sort_by(|a, b| a.at.cmp(&b.at).then(a.id.cmp(&b.id)));
+        if let Some(check) = &removed.balance_check {
+            Rc::make_mut(&mut s.checks).push(check.clone());
+            Rc::make_mut(&mut s.checks)
+                .sort_by(|a, b| a.checked_at.cmp(&b.checked_at).then(a.id.cmp(&b.id)));
+        }
+    });
+    Ok(())
 }
 
 #[cfg(test)]
@@ -335,6 +383,145 @@ mod tests {
     use super::*;
     use nsh_engine::{EngineConfig, Root};
     use nsh_testing::Headless;
+
+    fn assert_mirrors_match_disk() {
+        db::with(|c| {
+            assert_eq!(transactions(), repository::transactions(c).unwrap());
+            assert_eq!(checks(), repository::balance_checks(c).unwrap());
+            assert_eq!(accounts(), repository::accounts(c).unwrap());
+        })
+        .unwrap();
+    }
+
+    #[test]
+    fn removal_errors_preserve_missing_changed_and_unavailable_distinctions() {
+        assert!(matches!(
+            removal_result::<()>(Some(Err(repository::Error::Missing)), "test"),
+            Err(RemovalError::Missing)
+        ));
+        assert!(matches!(
+            removal_result::<()>(Some(Err(repository::Error::RecordChanged)), "test"),
+            Err(RemovalError::Changed)
+        ));
+        assert!(matches!(
+            removal_result::<()>(Some(Err(repository::Error::Invalid("test"))), "test"),
+            Err(RemovalError::Unavailable)
+        ));
+        assert!(matches!(
+            removal_result::<()>(None, "test"),
+            Err(RemovalError::Unavailable)
+        ));
+    }
+
+    #[component]
+    fn RemovalProbe() -> impl IntoElement {
+        let done = signal(false);
+        view()
+            .child(text(move || if done.get() { "done" } else { "ready" }))
+            .child(text("exercise removal").on_press(move || {
+                let day = jiff::civil::date(2026, 11, 14);
+                let own = Account::parse("资产:Cash").unwrap();
+                let ordinary = navi_finance::journal::spend(
+                    navi_finance::journal::Entry {
+                        id: "ordinary".into(),
+                        at: day.at(12, 0, 0, 0),
+                        payee: "Lunch".into(),
+                        note: String::new(),
+                        source: navi_finance::journal::Source::Manual,
+                    },
+                    &own,
+                    &navi_finance::account::defaults::expense("餐饮"),
+                    3151,
+                )
+                .unwrap();
+                let unavailable = repository::RemovedTransaction {
+                    entry: ordinary.clone(),
+                    balance_check: None,
+                };
+                assert!(matches!(remove(&ordinary), Err(RemovalError::Unavailable)));
+                assert!(matches!(
+                    restore_removed(&unavailable),
+                    Err(RemovalError::Unavailable)
+                ));
+                assert!(transactions().is_empty());
+                assert!(checks().is_empty());
+
+                db::open().unwrap();
+                load().unwrap();
+                create_account(own.clone()).unwrap();
+                let check = repository::BalanceCheck {
+                    id: "m".into(),
+                    account: own,
+                    day,
+                    actual: 10_001,
+                    checked_at: day.at(23, 59, 59, 0),
+                };
+                confirm_balance(check.clone(), 0).unwrap();
+                // Ties sort by id, even when confirmations arrive out of order.
+                for id in ["z", "a"] {
+                    confirm_balance(
+                        repository::BalanceCheck {
+                            id: id.into(),
+                            ..check.clone()
+                        },
+                        check.actual,
+                    )
+                    .unwrap();
+                }
+                save(ordinary.clone()).unwrap();
+                assert_mirrors_match_disk();
+                let original = snapshot();
+                let opening = transactions().into_iter().find(|t| t.id == "m").unwrap();
+                let mut stale = ordinary.clone();
+                stale.note = "stale snapshot".into();
+                assert!(matches!(remove(&stale), Err(RemovalError::Changed)));
+                assert!(snapshot() == original);
+
+                db::with(|c| c.execute_batch("CREATE TRIGGER fail_delete_check BEFORE DELETE ON finance_balance_checks BEGIN SELECT RAISE(ABORT,'full disk'); END;")).unwrap().unwrap();
+                assert!(matches!(remove(&opening), Err(RemovalError::Unavailable)));
+                assert!(snapshot() == original);
+                assert_mirrors_match_disk();
+                db::with(|c| c.execute_batch("DROP TRIGGER fail_delete_check")).unwrap().unwrap();
+                let removed = remove(&opening).unwrap();
+                assert_eq!(removed.balance_check, Some(check));
+                assert_mirrors_match_disk();
+                let deleted = snapshot();
+                db::with(|c| c.execute_batch("CREATE TRIGGER fail_insert_check BEFORE INSERT ON finance_balance_checks BEGIN SELECT RAISE(ABORT,'full disk'); END;")).unwrap().unwrap();
+                assert!(matches!(restore_removed(&removed), Err(RemovalError::Unavailable)));
+                assert!(snapshot() == deleted);
+                assert_mirrors_match_disk();
+                db::with(|c| c.execute_batch("DROP TRIGGER fail_insert_check")).unwrap().unwrap();
+                restore_removed(&removed).unwrap();
+                assert!(snapshot() == original);
+                assert_mirrors_match_disk();
+                assert!(matches!(restore_removed(&removed), Err(RemovalError::Changed)));
+                assert!(snapshot() == original);
+
+                let removed = remove(&ordinary).unwrap();
+                assert!(matches!(remove(&ordinary), Err(RemovalError::Missing)));
+                assert_mirrors_match_disk();
+                restore_removed(&removed).unwrap();
+                assert!(snapshot() == original);
+                assert_mirrors_match_disk();
+                let removed = remove(&ordinary).unwrap();
+                let mut newer = ordinary;
+                newer.note = "newer record".into();
+                save(newer).unwrap();
+                let before_conflict = snapshot();
+                assert!(matches!(restore_removed(&removed), Err(RemovalError::Changed)));
+                assert!(snapshot() == before_conflict);
+                assert_mirrors_match_disk();
+                done.set(true);
+            }))
+    }
+
+    #[test]
+    fn removal_and_undo_publish_only_committed_sorted_transactions_and_checks() {
+        let mut app = Headless::start(EngineConfig::new(Root::of::<RemovalProbe>())).unwrap();
+        app.wait_for("ready").unwrap();
+        app.press("exercise removal").unwrap();
+        app.wait_for("done").unwrap();
+    }
 
     #[component]
     fn SliceProbe() -> impl IntoElement {

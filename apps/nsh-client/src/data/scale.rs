@@ -165,6 +165,54 @@ fn weight_on(c: &Connection, day: Day) -> rusqlite::Result<Option<f64>> {
     .optional()
 }
 
+/// Distinguishes absent scale provenance from evidence that cannot be trusted.
+#[derive(Clone, PartialEq)]
+pub enum MeasurementEvidence {
+    Legacy,
+    Confirmed(Measurement),
+    Rejected,
+}
+
+/// Reads scale evidence without changing storage or consulting today's profile.
+/// Callers track weight/body-metrics signals to refresh this read-only lookup.
+pub fn evidence_on(day: Day) -> MeasurementEvidence {
+    db::with(|c| evidence_on_in(c, day)).unwrap_or(MeasurementEvidence::Rejected)
+}
+
+/// Returns only confirmed evidence, retaining its original precision and profile.
+pub fn measurement_on(day: Day) -> Option<navi_health::scale::Measurement> {
+    match evidence_on(day) {
+        MeasurementEvidence::Confirmed(measurement) => Some(measurement),
+        MeasurementEvidence::Legacy | MeasurementEvidence::Rejected => None,
+    }
+}
+
+fn evidence_on_in(c: &Connection, day: Day) -> MeasurementEvidence {
+    // Keep provenance and both associated records in one consistent read snapshot.
+    let read = || -> Result<MeasurementEvidence, String> {
+        let tx = c.unchecked_transaction().map_err(sql_error)?;
+        let row: Option<(String, String)> = tx
+            .query_row(
+                "SELECT session_id,body FROM scale_measurements WHERE day=?1",
+                [day.to_string()],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .optional()
+            .map_err(sql_error)?;
+        let evidence = match row {
+            Some((id, body)) => MeasurementEvidence::Confirmed(
+                validate_record(&tx, &day.to_string(), &id, &body)?
+                    .preview
+                    .measurement,
+            ),
+            None => MeasurementEvidence::Legacy,
+        };
+        tx.commit().map_err(sql_error)?;
+        Ok(evidence)
+    };
+    read().unwrap_or(MeasurementEvidence::Rejected)
+}
+
 /// Starts a fresh foreground session, snapshotting the owner profile and today's entry.
 /// Starting a new session retires old pending decisions and callback identifiers.
 pub fn begin(device: Device, identity: DeviceProtocol) -> Result<Start, String> {
@@ -484,38 +532,60 @@ pub(super) fn validate_saved(c: &Connection) -> Result<(), String> {
         .map_err(sql_error)?;
     for row in rows {
         let (day, id, body) = row.map_err(sql_error)?;
-        let saved: Saved = serde_json::from_str(&body).map_err(|_| "Invalid scale provenance")?;
-        let p = saved.preview;
-        if !p.valid()
-            || p.day.to_string() != day
-            || p.session_id != id
-            || saved.confirmed_at_ms < p.measured_at_ms
-            || weight_on(c, p.day).map_err(sql_error)?
-                != Some(weight::rounded(p.measurement.weight_kg()))
-        {
-            return Err("Scale provenance does not match the kept weight".into());
-        }
-        let body: Option<String> = c
-            .query_row("SELECT body FROM body_metrics WHERE day=?1", [day], |r| {
-                r.get(0)
-            })
-            .optional()
-            .map_err(sql_error)?;
-        let metrics = body
-            .map(|b| serde_json::from_str(&b))
-            .transpose()
-            .map_err(|_| "Invalid composition")?;
-        if metrics != p.measurement.metrics {
-            return Err("Scale provenance does not match the composition".into());
-        }
+        validate_record(c, &day, &id, &body)?;
     }
     Ok(())
+}
+
+fn validate_record(c: &Connection, day: &str, id: &str, body: &str) -> Result<Saved, String> {
+    let saved: Saved = serde_json::from_str(body).map_err(|_| "Invalid scale provenance")?;
+    let p = &saved.preview;
+    if !p.valid()
+        || p.day.to_string() != day
+        || p.session_id != id
+        || saved.confirmed_at_ms < p.measured_at_ms
+        || weight_on(c, p.day).map_err(sql_error)?
+            != Some(weight::rounded(p.measurement.weight_kg()))
+    {
+        return Err("Scale provenance does not match the kept weight".into());
+    }
+    let body: Option<String> = c
+        .query_row("SELECT body FROM body_metrics WHERE day=?1", [day], |r| {
+            r.get(0)
+        })
+        .optional()
+        .map_err(sql_error)?;
+    let metrics = body
+        .map(|b| serde_json::from_str(&b))
+        .transpose()
+        .map_err(|_| "Invalid composition")?;
+    if metrics != p.measurement.metrics {
+        return Err("Scale provenance does not match the composition".into());
+    }
+    Ok(saved)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use navi_health::bodycomp::Sex;
+
+    #[component]
+    fn UnavailableDatabaseProbe() -> impl IntoElement {
+        let day = "2026-11-18".parse().unwrap();
+        assert!(db::with(|_| ()).is_none());
+        assert!(matches!(evidence_on(day), MeasurementEvidence::Rejected));
+        assert!(measurement_on(day).is_none());
+        text("Unavailable database rejected")
+    }
+
+    #[test]
+    fn unavailable_database_is_rejected_rather_than_legacy() {
+        let config =
+            nsh_engine::EngineConfig::new(nsh_engine::Root::of::<UnavailableDatabaseProbe>());
+        let mut app = nsh_testing::Headless::start(config).unwrap();
+        app.wait_for("Unavailable database rejected").unwrap();
+    }
 
     #[component]
     fn SessionProbe() -> impl IntoElement {
@@ -580,6 +650,49 @@ mod tests {
                             Ok(None) => status.set("No reading".into()),
                             Err(e) => status.set(e),
                         }
+                    }),
+            )
+            .child(
+                nsh_base::button()
+                    .min_h(px(44.0))
+                    .child(text("Composition"))
+                    .on_press(move || {
+                        let p = feed(
+                            &id.get_untracked(),
+                            &packet("AC290200020501D8018068E2C20000000029D60E"),
+                        )
+                        .unwrap()
+                        .unwrap();
+                        reviewed.set(Some(p));
+                        status.set("Composition review".into());
+                    }),
+            )
+            .child(
+                nsh_base::button()
+                    .min_h(px(44.0))
+                    .child(text("Change profile"))
+                    .on_press(move || {
+                        settings::save_height(Some(180));
+                        settings::save_age(Some(45));
+                        settings::save_sex(Some(Sex::Female));
+                        status.set("Profile changed".into());
+                    }),
+            )
+            .child(
+                nsh_base::button()
+                    .min_h(px(44.0))
+                    .child(text("Check frozen measurement"))
+                    .on_press(move || {
+                        let p = reviewed.get_untracked().unwrap();
+                        let kept = measurement_on(p.day);
+                        status.set(
+                            if kept == Some(p.measurement) {
+                                "Original measurement retained"
+                            } else {
+                                "No matching measurement"
+                            }
+                            .into(),
+                        );
                     }),
             )
             .child(
@@ -741,10 +854,33 @@ mod tests {
         app.press("Confirm").unwrap();
         app.wait_for("Saved:true:58.1").unwrap();
     }
+    #[test]
+    fn confirmed_measurement_keeps_frozen_profile_and_metrics_after_settings_change() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut app = probe(dir.path());
+        app.press("Begin").unwrap();
+        app.press("Stable").unwrap();
+        app.press("Composition").unwrap();
+        app.wait_for("Composition review").unwrap();
+        app.press("Check frozen measurement").unwrap();
+        app.wait_for("No matching measurement").unwrap();
+        app.press("Confirm").unwrap();
+        app.wait_for("Saved:false:58.1").unwrap();
+        app.press("Change profile").unwrap();
+        app.wait_for("Profile changed").unwrap();
+        app.press("Check frozen measurement").unwrap();
+        app.wait_for("Original measurement retained").unwrap();
+    }
     fn database() -> Connection {
         let mut c = Connection::open_in_memory().unwrap();
         db::migrate(&mut c).unwrap();
         c
+    }
+    fn measurement_on_in(c: &Connection, day: Day) -> Option<Measurement> {
+        match evidence_on_in(c, day) {
+            MeasurementEvidence::Confirmed(measurement) => Some(measurement),
+            MeasurementEvidence::Legacy | MeasurementEvidence::Rejected => None,
+        }
     }
     fn draft(c: &Connection, with_impedance: bool) -> Draft {
         let profile = UserProfile {
@@ -803,6 +939,111 @@ mod tests {
             replace,
             d.preview.measured_at_ms + 1,
         )
+    }
+    #[test]
+    fn measurement_lookup_is_read_only_and_retains_original_precision() {
+        for with_impedance in [false, true] {
+            let c = database();
+            let d = draft(&c, with_impedance);
+            keep(&c, &d);
+            confirm_draft(&c, &d, false).unwrap();
+            let changes = c.total_changes();
+            c.pragma_update(None, "query_only", true).unwrap();
+            assert!(
+                evidence_on_in(&c, d.preview.day)
+                    == MeasurementEvidence::Confirmed(d.preview.measurement.clone())
+            );
+            assert_eq!(
+                measurement_on_in(&c, d.preview.day),
+                Some(d.preview.measurement.clone())
+            );
+            assert_eq!(weight_on(&c, d.preview.day).unwrap(), Some(58.1));
+            assert_eq!(c.total_changes(), changes);
+        }
+    }
+    #[test]
+    fn measurement_lookup_ignores_missing_manual_and_unconfirmed_measurements() {
+        let c = database();
+        let d = draft(&c, true);
+        let day = d.preview.day;
+        assert_eq!(measurement_on_in(&c, day), None);
+        assert!(matches!(
+            evidence_on_in(&c, day),
+            MeasurementEvidence::Legacy
+        ));
+        keep(&c, &d);
+        assert_eq!(measurement_on_in(&c, day), None);
+        assert!(matches!(
+            evidence_on_in(&c, day),
+            MeasurementEvidence::Legacy
+        ));
+        c.execute("INSERT INTO weights VALUES(?1,58.1,1)", [day.to_string()])
+            .unwrap();
+        assert_eq!(measurement_on_in(&c, day), None);
+        assert!(matches!(
+            evidence_on_in(&c, day),
+            MeasurementEvidence::Legacy
+        ));
+        c.execute(
+            "INSERT INTO body_metrics VALUES(?1,?2,1)",
+            params![
+                day.to_string(),
+                serde_json::to_string(d.preview.measurement.metrics.as_ref().unwrap()).unwrap()
+            ],
+        )
+        .unwrap();
+        assert_eq!(measurement_on_in(&c, day), None);
+        assert!(matches!(
+            evidence_on_in(&c, day),
+            MeasurementEvidence::Legacy
+        ));
+        c.execute("DELETE FROM scale_drafts", []).unwrap();
+        let d = draft(&c, true);
+        keep(&c, &d);
+        confirm_draft(&c, &d, true).unwrap();
+        assert_eq!(measurement_on_in(&c, day.plus_days(1)), None);
+        assert!(matches!(
+            evidence_on_in(&c, day.plus_days(1)),
+            MeasurementEvidence::Legacy
+        ));
+    }
+    #[test]
+    fn measurement_lookup_rejects_invalid_or_mismatched_provenance_without_writes() {
+        for sql in [
+            "DELETE FROM weights",
+            "UPDATE weights SET kg=80.0",
+            "DELETE FROM body_metrics",
+            "UPDATE body_metrics SET body='unreadable'",
+            "UPDATE body_metrics SET body=json_set(body,'$.body_fat_percent',99)",
+            "UPDATE scale_measurements SET body='unreadable'",
+            "UPDATE scale_measurements SET body=json_set(body,'$.preview.day','2026-11-17')",
+            "UPDATE scale_measurements SET session_id='foreign-session'",
+            "UPDATE scale_measurements SET body=json_set(body,'$.confirmed_at_ms',0)",
+            "UPDATE scale_measurements SET body=json_set(body,'$.preview.token','invalid')",
+            "UPDATE scale_measurements SET body=json_set(body,'$.preview.measured_at_ms',0)",
+            "UPDATE scale_measurements SET body=json_set(body,'$.preview.measurement.profile.height_cm',0)",
+            "UPDATE scale_measurements SET body=json_set(body,'$.preview.measurement.profile.age_years',0)",
+            "UPDATE scale_measurements SET body=json_set(body,'$.preview.measurement.algorithm_version','unknown')",
+            "UPDATE scale_measurements SET body=json_set(body,'$.preview.measurement.metrics',null)",
+            "ALTER TABLE scale_measurements RENAME TO unavailable_scale_measurements",
+        ] {
+            let c = database();
+            let d = draft(&c, true);
+            keep(&c, &d);
+            confirm_draft(&c, &d, false).unwrap();
+            c.execute_batch(sql).unwrap();
+            let changes = c.total_changes();
+            c.pragma_update(None, "query_only", true).unwrap();
+            assert_eq!(measurement_on_in(&c, d.preview.day), None, "{sql}");
+            assert!(
+                matches!(
+                    evidence_on_in(&c, d.preview.day),
+                    MeasurementEvidence::Rejected
+                ),
+                "{sql}"
+            );
+            assert_eq!(c.total_changes(), changes);
+        }
     }
     #[test]
     fn confirmation_is_atomic_repeatable_and_keeps_original_precision() {

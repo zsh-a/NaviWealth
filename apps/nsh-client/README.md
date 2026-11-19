@@ -85,7 +85,11 @@ compile none of it.
 
 ## AFU-WL scale
 
-Connect scale is available in Settings and the Today weight editor. Complete
+Connect scale is available in Settings, Today’s Body metrics overview and the
+manual weight editor. Today shows a full-width dated weight, weekly change,
+body fat and BMI; composition joins only on that weight’s day. Garmin vitals
+use a separate equal-width row. The overview reveals muscle, water, goals and
+original measurement details without crowding the daily summary. Complete
 height, date of birth and sex first. Birth date supplies completed age on
 the local measurement date; legacy entered ages remain labelled until replaced.
 Enable system Location and allow precise location
@@ -327,7 +331,11 @@ repository recomputes the expected balance inside the transaction and rejects a
 stale preview. It writes a balanced opening/adjustment entry against equity and a
 balance observation atomically. Zero difference saves only the observation;
 balance checks never change income/spending. Confirmed balance entries can be
-inspected from all timelines. Corrections use another balance check.
+inspected and revoked from all timelines. Revocation and Undo remove or restore
+their postings and balance observations atomically. Corrections use another
+balance check. Ordinary transactions expose Delete on the editor's main header,
+with a saved-record confirmation and retryable Undo; a changed record or account
+cannot be overwritten by an old confirmation or Undo action.
 
 Schema 9 adds `finance_balance_checks` to encrypted backup/restore and validation.
 `finance::assets` owns book totals and debt presentation;

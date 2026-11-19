@@ -21,6 +21,9 @@ struct TaskHost {
     open: Rc<dyn Fn() -> bool>,
 }
 
+#[derive(Clone)]
+struct KeyboardBudget(Rc<dyn Fn() -> bool>);
+
 /// Inside a task host, how a swipe or a backdrop press leaves the whole task
 /// from the current panel (after its own discard guard). Back still steps
 /// back. Cleared when the panel unmounts; outside a host it does nothing.
@@ -112,9 +115,21 @@ pub fn task_host(
     close: impl Fn() + Copy + 'static,
     content: impl Fn() -> AnyElement + 'static,
 ) -> impl IntoElement {
+    task_host_with_keyboard(open, close, || true, content)
+}
+
+/// A reading panel can use the full sheet. Switching to entry reserves the
+/// keyboard's space using the same native host, without stacked overlays.
+pub fn task_host_with_keyboard(
+    open: impl Fn() -> bool + Copy + 'static,
+    close: impl Fn() + Copy + 'static,
+    editing: impl Fn() -> bool + Copy + 'static,
+    content: impl Fn() -> AnyElement + 'static,
+) -> impl IntoElement {
     retained(
         move || open().then_some(()),
         move |_| {
+            provide_context(KeyboardBudget(Rc::new(editing)));
             let host = TaskHost {
                 close: stored(None),
                 dismiss: stored(None),
@@ -208,7 +223,8 @@ fn task_layout(
 ) -> impl IntoElement {
     // One height calculation, shared with the outer shell. The grabber uses 20pt.
     let planned = untracked(planned_keyboard);
-    let available = move || (sheet_height(planned) - 20.0).max(100.0);
+    let height = height_budget(planned);
+    let available = move || (height() - 20.0).max(100.0);
     let layout = view()
         .max_h(move || px(available()))
         .style_when(
@@ -254,6 +270,17 @@ const KEYBOARD_GAP: f32 = 20.0;
 /// assumed to cover.
 const KEYBOARD_GUESS: f32 = 0.38;
 
+fn height_budget(planned: Option<f32>) -> impl Fn() -> f32 + Copy {
+    let budget = stored(use_context::<KeyboardBudget>());
+    move || {
+        if budget.with(|b| b.as_ref().is_some_and(|b| !(b.0)())) {
+            (window().height.0 * 0.92 - keyboard_height().0).max(140.0)
+        } else {
+            sheet_height(planned)
+        }
+    }
+}
+
 /// The keyboard height a sheet plans for, read once when it opens so the
 /// sheet keeps its size: the last height the keyboard reached, if it has
 /// shown. Without one, [`sheet_height`] guesses from the current window.
@@ -287,6 +314,7 @@ fn shell(
     let lifecycle = use_context::<Lifecycle>();
     let opened = lifecycle.as_ref().map(|l| l.opened);
     let planned = untracked(planned_keyboard);
+    let height = height_budget(planned);
     sheet()
         .open(move || Some(open()))
         .on_open(move |_: &()| {
@@ -318,7 +346,7 @@ fn shell(
         .child(
             view()
                 .test_id("task-sheet")
-                .max_h(move || px(sheet_height(planned)))
+                .max_h(move || px(height()))
                 .child(
                     view()
                         .w(px(36.0))

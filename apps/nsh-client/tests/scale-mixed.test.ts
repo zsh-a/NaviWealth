@@ -80,6 +80,7 @@ async function start(
   await app.waitFor("label:New entry");
   if (!openScale) return app;
   await app.press("label:Settings");
+  await app.waitFor("Devices & connections");
   await app.scroll("Connect scale", 250);
   await app.press("Connect scale");
   await app.waitFor("id:scale-panel");
@@ -150,6 +151,17 @@ test("scale mixed: native Rust settings open TSX, Rust-generated command and con
   await app.waitFor("Confirm and save");
   expect(app.shows("label:Weight 58.05 kg")).toBe(true);
   expect(app.texts().join(" ")).toContain("Estimated body fat");
+  expect(app.shows("id:scale-bmi >> text:20.1")).toBe(true);
+  expect(app.shows("id:scale-fat >> text:6.85 kg")).toBe(true);
+  expect(app.shows("id:scale-muscle >> text:48.59 kg")).toBe(true);
+  expect(app.shows("id:scale-water >> text:35.82 kg")).toBe(true);
+  expect(app.shows("id:scale-stages")).toBe(false);
+  expect(app.shows("id:scale-evidence")).toBe(false);
+  await app.press("Measurement details");
+  await app.waitFor("text:Segal BIA");
+  await app.waitFor("text:170 cm · 23 years");
+  await app.press("Hide measurement details");
+  expect(app.shows("id:scale-evidence")).toBe(false);
   await packet(app, sessionId, IMPEDANCE);
   expect(app.count("id:scale-preview")).toBe(1);
   expect(calls(app, "ble.write").length).toBe(1);
@@ -160,9 +172,9 @@ test("scale mixed: native Rust settings open TSX, Rust-generated command and con
   await packet(app, sessionId, IMPEDANCE);
   expect(app.shows("id:scale-preview")).toBe(false);
   await home(app);
-  await app.waitFor("label:Weight, 58.1 kg");
+  await app.waitFor("label:Body metrics, 58.1 kg");
   expect(app.texts().join(" ")).toContain("Body fat");
-  await app.press("label:Weight, 58.1 kg");
+  await app.press("label:Body metrics, 58.1 kg");
   expect(app.texts().join(" ")).toContain("Scale estimate");
 }, 30000);
 
@@ -176,10 +188,10 @@ test("scale mixed: cancelling a reviewed measurement writes no weight and ignore
   await app.waitFor("id:scale-panel", { state: "gone" });
   await app.press("label:Back");
   await packet(app, sessionId, IMPEDANCE);
-  await app.waitFor("label:Weight, —");
+  await app.waitFor("label:Body metrics, —");
   expect(calls(app, "ble.disconnect").length).toBe(1);
   // The same existing Rust entry remains usable after TSX cancellation.
-  await app.press("label:Weight, —");
+  await app.press("label:Body metrics, —");
   await app.waitFor("Save weight");
 }, 30000);
 
@@ -204,7 +216,7 @@ test("scale mixed: unavailable hardware host gives a recoverable message without
     "This environment cannot connect to a Bluetooth scale. Use the Android build with scale support.",
   );
   await home(app);
-  await app.waitFor("label:Weight, —");
+  await app.waitFor("label:Body metrics, —");
 }, 30000);
 
 test("scale mixed: a matching device name without verified manufacturer metadata cannot connect or write", async () => {
@@ -218,7 +230,7 @@ test("scale mixed: a matching device name without verified manufacturer metadata
   expect(calls(app, "ble.connect").length).toBe(0);
   expect(calls(app, "ble.write").length).toBe(0);
   await home(app);
-  await app.waitFor("label:Weight, —");
+  await app.waitFor("label:Body metrics, —");
 }, 30000);
 
 test("scale mixed: unrelated service candidates cannot masquerade as AFU-WL scales", async () => {
@@ -245,7 +257,7 @@ test("scale mixed: closing keeps a local draft and reopening does not reconnect"
   await packet(app, sessionId, IMPEDANCE);
   await app.waitFor("Confirm and save");
   await home(app);
-  await app.waitFor("label:Weight, —");
+  await app.waitFor("label:Body metrics, —");
   await app.press("label:Settings");
   await app.scroll("Connect scale", 250);
   await app.press("Connect scale");
@@ -254,7 +266,7 @@ test("scale mixed: closing keeps a local draft and reopening does not reconnect"
   await app.press("Confirm and save");
   await app.waitFor("Measurement saved");
   await home(app);
-  await app.waitFor("label:Weight, 58.1 kg");
+  await app.waitFor("label:Body metrics, 58.1 kg");
 }, 30000);
 
 test("scale mixed: replacing a same-day measurement requires a second explicit confirmation", async () => {
@@ -265,7 +277,7 @@ test("scale mixed: replacing a same-day measurement requires a second explicit c
   await app.press("Confirm and save");
   await app.waitFor("Measurement saved");
   await home(app);
-  await app.waitFor("label:Weight, 58.1 kg");
+  await app.waitFor("label:Body metrics, 58.1 kg");
   await app.press("label:Settings");
   await app.scroll("Connect scale", 250);
   await app.press("Connect scale");
@@ -286,7 +298,7 @@ test("scale mixed: replacing a same-day measurement requires a second explicit c
   await app.press("Replace and save");
   await app.waitFor("Measurement saved");
   await home(app);
-  await app.waitFor("label:Weight, 61.0 kg");
+  await app.waitFor("label:Body metrics, 61.0 kg");
 }, 30000);
 
 test("scale mixed: first-use Android permission gate reaches native scan authorization", async () => {
@@ -302,7 +314,7 @@ test("scale mixed: first-use Android permission gate reaches native scan authori
   expect(app.shows("Try again")).toBe(false);
   await home(app);
   expect(calls(app, "ble.scan.stop").length).toBe(1);
-  await app.waitFor("label:Weight, —");
+  await app.waitFor("label:Body metrics, —");
 }, 30000);
 
 test("scale mixed: dynamic weight invalidates the old preview until a new stable reading", async () => {
@@ -325,7 +337,7 @@ test("scale mixed: dynamic weight invalidates the old preview until a new stable
   await app.press("Discard measurement");
   await app.waitFor("id:scale-panel", { state: "gone" });
   await app.press("label:Back");
-  await app.waitFor("label:Weight, —");
+  await app.waitFor("label:Body metrics, —");
 }, 30000);
 
 test("scale mixed: stable weight invites the owner to stay on for composition", async () => {
@@ -449,7 +461,7 @@ test("scale mixed: background disconnect keeps a completed review and ignores la
   await app.press("Confirm and save");
   await app.waitFor("Measurement saved");
   await home(app);
-  await app.waitFor("label:Weight, 58.1 kg");
+  await app.waitFor("label:Body metrics, 58.1 kg");
 }, 30000);
 
 test("scale mixed: transient inactive permission UI does not cancel scanning", async () => {
@@ -483,7 +495,7 @@ test("scale mixed: oversized malformed evidence removes the retained Rust previe
   expect(app.shows("id:scale-preview")).toBe(false);
   expect(app.shows("Confirm and save")).toBe(false);
   await home(app);
-  await app.waitFor("label:Weight, —");
+  await app.waitFor("label:Body metrics, —");
   await app.press("label:Settings");
   await app.scroll("Connect scale", 250);
   await app.press("Connect scale");
@@ -522,7 +534,7 @@ test("scale mixed: notifications during initialization are replayed only after a
   await app.press("Discard measurement");
   await app.waitFor("id:scale-panel", { state: "gone" });
   await app.press("label:Back");
-  await app.waitFor("label:Weight, —");
+  await app.waitFor("label:Body metrics, —");
 }, 30000);
 
 test("scale mixed: rejected initialization discards buffered readings and does not remember the scale", async () => {
@@ -552,7 +564,7 @@ test("scale mixed: rejected initialization discards buffered readings and does n
   expect(app.shows("id:scale-preview")).toBe(false);
   expect(app.storage()[REMEMBERED_SCALE_KEY]).toBe(undefined);
   await home(app);
-  await app.waitFor("label:Weight, —");
+  await app.waitFor("label:Body metrics, —");
   await app.press("label:Settings");
   await app.scroll("Connect scale", 250);
   await app.press("Connect scale");

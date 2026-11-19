@@ -1,13 +1,10 @@
-//! Three vitals asked about daily: last night's sleep, the latest weight
-//! and Body Battery (with resting heart rate). Pressing weight logs it;
-//! pressing a Garmin vital shows all of the day's Garmin data, or Settings
-//! before a key is connected.
+//! Body metrics, followed by two equally sized Garmin summaries.
 
 use nsh_base::button;
 use nsh_core::prelude::*;
 
 use crate::{
-    data::{body_metrics, garmin, settings, weights},
+    data::garmin,
     domain::meal::Day,
     i18n::s,
     nav::{self, Route},
@@ -33,107 +30,65 @@ pub fn vitals(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
             nav::push(Route::Settings);
         }
     };
-    let latest = move || weights::latest_until(day());
     view()
-        .flex_row()
-        .items_stretch()
-        .style_when(|| font_scale() > 1.2, |s| s.flex_col())
+        .gap_4()
+        .child(
+            view()
+                .test_id("body-summary")
+                .child(super::body::summary(day)),
+        )
         .child(when(has_garmin, move || {
-            tile(
-                Icon::Moon,
-                || s().sleep,
-                move || {
-                    summary.with(|d| {
-                        d.as_ref()
-                            .and_then(|d| d.sleep_seconds)
-                            .map(|v| s().sleep_time(v))
-                    })
-                },
-                || "",
-                move || {
-                    summary
-                        .with(|d| {
+            view()
+                .test_id("garmin-vitals")
+                .flex_row()
+                .items_stretch()
+                .style_when(|| font_scale() > 1.2, |s| s.flex_col())
+                .child(tile(
+                    Icon::Moon,
+                    || s().sleep,
+                    move || {
+                        summary.with(|d| {
                             d.as_ref()
-                                .and_then(|d| d.sleep_score)
-                                .map(|v| s().sleep_score(v))
+                                .and_then(|d| d.sleep_seconds)
+                                .map(|v| s().sleep_time(v))
                         })
-                        .unwrap_or_default()
-                },
-                open_garmin,
-            )
-        }))
-        .child(when(has_garmin, divider))
-        .child(tile(
-            Icon::Scale,
-            || s().weight,
-            move || latest().map(|entry| s().kg(entry.kg)),
-            || "kg",
-            weight_caption(day, latest),
-            move || sheets.weight.set(Some(day())),
-        ))
-        .child(when(has_garmin, divider))
-        .child(when(has_garmin, move || {
-            tile(
-                Icon::Bolt,
-                || s().body_battery,
-                move || {
-                    summary.with(|d| {
-                        d.as_ref()
-                            .and_then(|d| d.body_battery_high)
-                            .map(|v| v.to_string())
-                    })
-                },
-                || "",
-                move || {
-                    summary
-                        .with(|d| {
+                    },
+                    || "",
+                    move || {
+                        summary
+                            .with(|d| {
+                                d.as_ref()
+                                    .and_then(|d| d.sleep_score)
+                                    .map(|v| s().sleep_score(v))
+                            })
+                            .unwrap_or_default()
+                    },
+                    open_garmin,
+                ))
+                .child(divider())
+                .child(tile(
+                    Icon::Bolt,
+                    || s().body_battery,
+                    move || {
+                        summary.with(|d| {
                             d.as_ref()
-                                .and_then(|d| d.resting_hr)
-                                .map(|v| format!("{} {v}", s().resting))
+                                .and_then(|d| d.body_battery_high)
+                                .map(|v| v.to_string())
                         })
-                        .unwrap_or_default()
-                },
-                open_garmin,
-            )
+                    },
+                    || "",
+                    move || {
+                        summary
+                            .with(|d| {
+                                d.as_ref()
+                                    .and_then(|d| d.resting_hr)
+                                    .map(|v| format!("{} {v}", s().resting))
+                            })
+                            .unwrap_or_default()
+                    },
+                    open_garmin,
+                ))
         }))
-}
-
-/// The weight tile's caption: the weekly trend (or the entry's age), then
-/// what else the day knows — the latest estimated body fat, the distance to
-/// the goal and the BMI, each only when it exists.
-fn weight_caption(
-    day: impl Fn() -> Day + Copy + 'static,
-    latest: impl Fn() -> Option<crate::domain::weight::Weight> + Copy + 'static,
-) -> impl Fn() -> String + Copy + 'static {
-    move || {
-        let base = match latest() {
-            None => return s().tap_to_log.to_owned(),
-            Some(entry) if entry.day == day() => weights::weekly_change(entry)
-                .map(|delta| s().week_change(delta))
-                .unwrap_or_default(),
-            Some(entry) => s().weight_days_ago(day().days_since(entry.day)),
-        };
-        let mut extras: Vec<String> = Vec::new();
-        if let Some(metric) = body_metrics::latest_until(day()) {
-            extras.push(format!(
-                "{} {:.1}%",
-                s().body_fat,
-                metric.metrics.body_fat_percent
-            ));
-        }
-        if let (Some(goal), Some(entry)) = (settings::goal_kg(), latest()) {
-            extras.push(s().to_goal(entry.kg - goal));
-        }
-        if let (Some(height), Some(entry)) = (settings::height_cm(), latest())
-            && let Some(bmi) = navi_health::bodycomp::bmi(entry.kg, height)
-        {
-            extras.push(format!("{} {bmi}", s().bmi));
-        }
-        match extras.is_empty() {
-            true => base,
-            false => format!("{base}\n{}", extras.join(" · ")),
-        }
-    }
 }
 
 /// A hairline between two vitals.
@@ -160,7 +115,8 @@ fn tile(
 ) -> impl IntoElement {
     button()
         .on_press(press)
-        .flex_grow(move || if font_scale() > 1.2 { 0.0_f32 } else { 1.0_f32 })
+        .flex_1()
+        .style_when(|| font_scale() > 1.2, |s| s.flex_grow(0.0).basis(auto()))
         .min_w(px(0.0))
         .px(px(6.0))
         .py(px(8.0))

@@ -103,6 +103,13 @@ pub struct BalanceCheck {
     pub checked_at: jiff::civil::DateTime,
 }
 
+/// The exact committed records kept for Undo. Accounts remain in the ledger.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct RemovedTransaction {
+    pub entry: Transaction,
+    pub balance_check: Option<BalanceCheck>,
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error(transparent)]
@@ -115,6 +122,8 @@ pub enum Error {
     Invalid(&'static str),
     #[error("transaction no longer exists")]
     Missing,
+    #[error("the record changed; review it again")]
+    RecordChanged,
     #[error("an account with this name already exists")]
     AccountExists,
     #[error("the account balance changed; review the new difference")]
@@ -321,6 +330,11 @@ pub fn save(connection: &Connection, entry: &Transaction) -> Result<(), Error> {
 /// Joins the host's draft-confirmation transaction so the ledger write and
 /// removal of its draft either both happen or neither does.
 pub fn save_in_transaction(tx: &sqlite::Transaction<'_>, entry: &Transaction) -> Result<(), Error> {
+    require_regular_entry(entry)?;
+    write_entry(tx, entry)
+}
+
+fn require_regular_entry(entry: &Transaction) -> Result<(), Error> {
     if matches!(entry.source, Source::Investment { .. })
         || entry.id.starts_with("trade:")
         || entry.postings.iter().any(|p| p.account.is_holding())
@@ -329,7 +343,7 @@ pub fn save_in_transaction(tx: &sqlite::Transaction<'_>, entry: &Transaction) ->
             "investment entries must be changed through trades",
         ));
     }
-    write_entry(tx, entry)
+    Ok(())
 }
 
 pub(crate) fn save_investment(
@@ -446,19 +460,87 @@ pub fn transactions(connection: &Connection) -> Result<Vec<Transaction>, Error> 
 }
 
 pub fn remove(connection: &Connection, id: &str) -> Result<Transaction, Error> {
+    Ok(remove_matching(connection, id, None)?.entry)
+}
+
+/// Deletes only the snapshot the owner confirmed, including its observation.
+pub fn remove_confirmed(
+    connection: &Connection,
+    expected: &Transaction,
+) -> Result<RemovedTransaction, Error> {
+    remove_matching(connection, &expected.id, Some(expected))
+}
+
+fn remove_matching(
+    connection: &Connection,
+    id: &str,
+    expected: Option<&Transaction>,
+) -> Result<RemovedTransaction, Error> {
     let tx = connection.unchecked_transaction()?;
     let entry = transactions(&tx)?
         .into_iter()
         .find(|t| t.id == id)
         .ok_or(Error::Missing)?;
-    if matches!(entry.source, Source::Investment { .. }) {
-        return Err(Error::Invalid("delete the trade instead"));
+    if expected.is_some_and(|expected| expected != &entry) {
+        return Err(Error::RecordChanged);
     }
+    require_regular_entry(&entry)?;
+    let balance_check = balance_checks(&tx)?.into_iter().find(|c| c.id == id);
     // Explicit deletion also works for test/host connections without FK enforcement.
     tx.execute("DELETE FROM finance_postings WHERE transaction_id=?1", [id])?;
     tx.execute("DELETE FROM finance_transactions WHERE id=?1", [id])?;
+    tx.execute("DELETE FROM finance_balance_checks WHERE id=?1", [id])?;
     tx.commit()?;
-    Ok(entry)
+    Ok(RemovedTransaction {
+        entry,
+        balance_check,
+    })
+}
+
+/// Undo joins one transaction and never replaces a reused identity or recreates
+/// an account whose name changed after deletion.
+pub fn restore_removed(connection: &Connection, removed: &RemovedTransaction) -> Result<(), Error> {
+    let entry = &removed.entry;
+    require_regular_entry(entry)?;
+    validate_entry(entry)?;
+    let tx = connection.unchecked_transaction()?;
+    let occupied: bool = tx.query_row(
+        "SELECT EXISTS(SELECT 1 FROM finance_transactions WHERE id=?1)
+             OR EXISTS(SELECT 1 FROM finance_balance_checks WHERE id=?1)",
+        [&entry.id],
+        |r| r.get(0),
+    )?;
+    if occupied {
+        return Err(Error::RecordChanged);
+    }
+    if let Source::Statement { provider, id } = &entry.source {
+        let occupied: bool = tx.query_row(
+            "SELECT EXISTS(SELECT 1 FROM finance_transactions WHERE source_provider=?1 AND source_id=?2)",
+            params![provider, id],
+            |r| r.get(0),
+        )?;
+        if occupied {
+            return Err(Error::RecordChanged);
+        }
+    }
+    let known: HashSet<_> = accounts(&tx)?.into_iter().collect();
+    if entry.postings.iter().any(|p| !known.contains(&p.account)) {
+        return Err(Error::RecordChanged);
+    }
+    if let Some(check) = &removed.balance_check {
+        if check.id != entry.id || !check.account.is_cash() || check.day > check.checked_at.date() {
+            return Err(Error::Invalid("balance check"));
+        }
+        if !known.contains(&check.account) {
+            return Err(Error::RecordChanged);
+        }
+    }
+    save_in_transaction(&tx, entry)?;
+    if let Some(check) = &removed.balance_check {
+        tx.execute("INSERT INTO finance_balance_checks(id,account,day,actual,checked_at) VALUES(?1,?2,?3,?4,?5)", params![check.id,check.account.as_str(),check.day.to_string(),check.actual,check.checked_at.to_string()])?;
+    }
+    tx.commit()?;
+    Ok(())
 }
 
 pub fn rules(connection: &Connection) -> Result<Rules, Error> {
@@ -597,6 +679,281 @@ mod tests {
             amount,
         )
         .unwrap()
+    }
+
+    fn removal_db() -> Connection {
+        navi_storage::memory(&[
+            SCHEMA,
+            BALANCE_SCHEMA,
+            crate::holdings::store::SCHEMA,
+            crate::import::store::SCHEMA,
+        ])
+        .unwrap()
+    }
+
+    fn check(id: &str, actual: i64) -> BalanceCheck {
+        BalanceCheck {
+            id: id.into(),
+            account: Account::parse("资产:现金").unwrap(),
+            day: jiff::civil::date(2026, 11, 14),
+            actual,
+            checked_at: jiff::civil::date(2026, 11, 15).at(8, 0, 0, 0),
+        }
+    }
+
+    fn ledger_snapshot(db: &Connection) -> (Vec<Transaction>, Vec<BalanceCheck>, Vec<Account>) {
+        (
+            transactions(db).unwrap(),
+            balance_checks(db).unwrap(),
+            accounts(db).unwrap(),
+        )
+    }
+
+    #[test]
+    fn regular_removal_and_undo_preserve_exact_postings_and_source_metadata() {
+        for source in [
+            Source::Manual,
+            Source::Statement {
+                provider: "alipay".into(),
+                id: "reference-123".into(),
+            },
+            Source::Recognition {
+                model: "owner-model".into(),
+                prompt_version: "v1".into(),
+            },
+        ] {
+            let db = removal_db();
+            let mut original = entry("one", 3151);
+            original.source = source;
+            original.note = "original note".into();
+            save(&db, &original).unwrap();
+            save(&db, &entry("two", 5)).unwrap();
+            let before = ledger_snapshot(&db);
+            let removed = remove_confirmed(&db, &original).unwrap();
+            assert_eq!(removed.entry, original);
+            assert_eq!(removed.balance_check, None);
+            assert_eq!(transactions(&db).unwrap(), [entry("two", 5)]);
+            assert_eq!(accounts(&db).unwrap(), before.2);
+            restore_removed(&db, &removed).unwrap();
+            assert_eq!(ledger_snapshot(&db), before);
+        }
+    }
+
+    #[test]
+    fn opening_and_adjustment_removal_and_undo_restore_the_original_observation() {
+        for with_history in [false, true] {
+            let db = removal_db();
+            let original_check = check("balance", 10_001);
+            create_account(&db, &original_check.account).unwrap();
+            let expected = if with_history {
+                save(&db, &entry("spend", 3151)).unwrap();
+                -3151
+            } else {
+                0
+            };
+            let original = confirm_balance(&db, &original_check, expected)
+                .unwrap()
+                .unwrap();
+            assert!(original.postings.iter().any(|p| p.account
+                == if with_history {
+                    defaults::adjustment()
+                } else {
+                    defaults::opening()
+                }));
+            let other_check = check("zero-difference", original_check.actual);
+            assert_eq!(
+                confirm_balance(&db, &other_check, original_check.actual).unwrap(),
+                None
+            );
+            let before = ledger_snapshot(&db);
+            let removed = remove_confirmed(&db, &original).unwrap();
+            assert_eq!(removed.entry, original);
+            assert_eq!(removed.balance_check, Some(original_check));
+            assert_eq!(
+                balance_checks(&db).unwrap().as_slice(),
+                std::slice::from_ref(&other_check)
+            );
+            assert!(!transactions(&db).unwrap().contains(&original));
+            restore_removed(&db, &removed).unwrap();
+            assert_eq!(ledger_snapshot(&db), before);
+            // The original public deletion API also removes its check atomically.
+            assert_eq!(remove(&db, &original.id).unwrap(), original);
+            assert_eq!(balance_checks(&db).unwrap(), [other_check]);
+        }
+    }
+
+    #[test]
+    fn balance_check_write_failures_roll_back_the_entire_delete_or_undo() {
+        let db = removal_db();
+        let observation = check("balance", 10_001);
+        create_account(&db, &observation.account).unwrap();
+        let original = confirm_balance(&db, &observation, 0).unwrap().unwrap();
+        let before = ledger_snapshot(&db);
+        db.execute_batch("CREATE TRIGGER fail_delete_check BEFORE DELETE ON finance_balance_checks BEGIN SELECT RAISE(ABORT, 'simulated full disk'); END;").unwrap();
+        assert!(matches!(
+            remove_confirmed(&db, &original),
+            Err(Error::Sql(_))
+        ));
+        assert_eq!(ledger_snapshot(&db), before);
+        assert!(matches!(remove(&db, &original.id), Err(Error::Sql(_))));
+        assert_eq!(ledger_snapshot(&db), before);
+        db.execute_batch("DROP TRIGGER fail_delete_check").unwrap();
+        let removed = remove_confirmed(&db, &original).unwrap();
+        let after = ledger_snapshot(&db);
+        db.execute_batch("CREATE TRIGGER fail_insert_check BEFORE INSERT ON finance_balance_checks BEGIN SELECT RAISE(ABORT, 'simulated full disk'); END;").unwrap();
+        assert!(matches!(restore_removed(&db, &removed), Err(Error::Sql(_))));
+        assert_eq!(ledger_snapshot(&db), after);
+        db.execute_batch("DROP TRIGGER fail_insert_check").unwrap();
+        restore_removed(&db, &removed).unwrap();
+        assert_eq!(ledger_snapshot(&db), before);
+    }
+
+    #[test]
+    fn stale_deletion_and_reused_entry_or_statement_identities_are_refused() {
+        let db = removal_db();
+        let original = entry("one", 3151);
+        save(&db, &original).unwrap();
+        // Even metadata-only edits invalidate the confirmed snapshot.
+        let mut newer = original.clone();
+        newer.note = "edited".into();
+        save(&db, &newer).unwrap();
+        let before = ledger_snapshot(&db);
+        assert!(matches!(
+            remove_confirmed(&db, &original),
+            Err(Error::RecordChanged)
+        ));
+        assert_eq!(ledger_snapshot(&db), before);
+        let removed = remove_confirmed(&db, &newer).unwrap();
+        assert!(matches!(remove_confirmed(&db, &newer), Err(Error::Missing)));
+        save(&db, &original).unwrap();
+        let before = ledger_snapshot(&db);
+        assert!(matches!(
+            restore_removed(&db, &removed),
+            Err(Error::RecordChanged)
+        ));
+        assert_eq!(ledger_snapshot(&db), before);
+
+        let mut statement = entry("statement", 500);
+        statement.source = Source::Statement {
+            provider: "alipay".into(),
+            id: "same-reference".into(),
+        };
+        save(&db, &statement).unwrap();
+        let removed = remove_confirmed(&db, &statement).unwrap();
+        statement.id = "reimported".into();
+        save(&db, &statement).unwrap();
+        let before = ledger_snapshot(&db);
+        assert!(matches!(
+            restore_removed(&db, &removed),
+            Err(Error::RecordChanged)
+        ));
+        assert_eq!(ledger_snapshot(&db), before);
+    }
+
+    #[test]
+    fn undo_refuses_reused_check_ids_even_when_the_deleted_entry_had_no_check() {
+        for had_check in [false, true] {
+            let db = removal_db();
+            let observation = check("same-id", 10_001);
+            create_account(&db, &observation.account).unwrap();
+            let original = if had_check {
+                confirm_balance(&db, &observation, 0).unwrap().unwrap()
+            } else {
+                let original = entry("same-id", 100);
+                save(&db, &original).unwrap();
+                original
+            };
+            let removed = remove_confirmed(&db, &original).unwrap();
+            let replacement = check("same-id", 0);
+            assert_eq!(confirm_balance(&db, &replacement, 0).unwrap(), None);
+            let before = ledger_snapshot(&db);
+            assert!(matches!(
+                restore_removed(&db, &removed),
+                Err(Error::RecordChanged)
+            ));
+            assert_eq!(ledger_snapshot(&db), before);
+        }
+    }
+
+    #[test]
+    fn undo_never_resurrects_an_account_renamed_after_deletion() {
+        for had_check in [false, true] {
+            let db = removal_db();
+            let observation = check("balance", 10_001);
+            create_account(&db, &observation.account).unwrap();
+            let original = if had_check {
+                confirm_balance(&db, &observation, 0).unwrap().unwrap()
+            } else {
+                let original = entry("one", 3151);
+                save(&db, &original).unwrap();
+                original
+            };
+            let removed = remove_confirmed(&db, &original).unwrap();
+            let renamed = Account::parse("资产:改名现金").unwrap();
+            let tx = db.unchecked_transaction().unwrap();
+            rename_account(&tx, &observation.account, &renamed).unwrap();
+            tx.commit().unwrap();
+            let before = ledger_snapshot(&db);
+            assert!(matches!(
+                restore_removed(&db, &removed),
+                Err(Error::RecordChanged)
+            ));
+            assert_eq!(ledger_snapshot(&db), before);
+            assert!(!accounts(&db).unwrap().contains(&observation.account));
+        }
+    }
+
+    #[test]
+    fn ledger_delete_and_undo_cannot_bypass_holdings() {
+        use crate::holdings::{self, Kind, Security, Trade, store};
+        let db = removal_db();
+        let security = Security::new("etf", "ETF").unwrap();
+        let today = jiff::civil::date(2026, 11, 15);
+        let trade = Trade {
+            id: "opening".into(),
+            security: security.id.clone(),
+            at: today.at(12, 0, 0, 0),
+            kind: Kind::Opening,
+            quantity: holdings::parse_units("10").unwrap(),
+            price: holdings::parse_units("2").unwrap(),
+            amount: 0,
+            fee: 0,
+            cash: None,
+        };
+        store::add_trade(&db, Some(&security), &trade, today).unwrap();
+        let original = transactions(&db).unwrap().pop().unwrap();
+        let before = ledger_snapshot(&db);
+        assert!(matches!(remove(&db, &original.id), Err(Error::Invalid(_))));
+        assert!(matches!(
+            remove_confirmed(&db, &original),
+            Err(Error::Invalid(_))
+        ));
+        assert_eq!(ledger_snapshot(&db), before);
+        store::validate(&db).unwrap();
+        store::remove_trade(&db, &trade.id).unwrap();
+        let after = ledger_snapshot(&db);
+        let removed = RemovedTransaction {
+            entry: original,
+            balance_check: None,
+        };
+        assert!(matches!(
+            restore_removed(&db, &removed),
+            Err(Error::Invalid(_))
+        ));
+        // Neither a disguised source nor a changed id can bypass the guard.
+        let mut disguised = removed.clone();
+        disguised.entry.source = Source::Manual;
+        assert!(matches!(
+            restore_removed(&db, &disguised),
+            Err(Error::Invalid(_))
+        ));
+        disguised.entry.id = "ordinary".into();
+        assert!(matches!(
+            restore_removed(&db, &disguised),
+            Err(Error::Invalid(_))
+        ));
+        assert_eq!(ledger_snapshot(&db), after);
+        store::validate(&db).unwrap();
     }
 
     #[test]

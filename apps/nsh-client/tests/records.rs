@@ -121,7 +121,7 @@ fn records_fold_weight_into_summary_and_weight_filter_opens_editor() -> Result<(
     app.press("text:Tap to log")?;
     app.type_text("label:Weight", "70")?;
     app.press("Save weight")?;
-    app.wait_for("label:Weight, 70.0 kg")?;
+    app.wait_for("label:Body metrics, 70.0 kg")?;
 
     app.press("label:Records")?;
     app.wait_for("text:300 kcal")?;

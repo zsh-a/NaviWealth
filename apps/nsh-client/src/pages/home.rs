@@ -12,7 +12,7 @@ use super::{
     parts::status_bar,
     records::records_tab,
     records_jump::jump_sheet,
-    today::{garmin_sheet, setup_sheet, today_tab, weight_editor},
+    today::{body_overview, garmin_sheet, setup_sheet, today_tab, weight_editor},
     week_review::review_tab,
 };
 use crate::{
@@ -23,7 +23,7 @@ use crate::{
     ui::{
         Icon, IconBtn, Type, Typo, Variant, color, icon,
         material::{self, Glass},
-        sheet::bottom_sheet,
+        sheet::{bottom_sheet, retained, task_host_with_keyboard},
         space,
         toast::toast_host,
     },
@@ -33,6 +33,12 @@ use crate::{
 const DOCK: f32 = 64.0;
 /// The bar's gap above the safe area.
 const DOCK_GAP: f32 = 14.0;
+
+#[derive(Clone, PartialEq)]
+enum BodyPanel {
+    Overview(Day),
+    Edit(Day),
+}
 
 /// Top edge of the dock, measured from the bottom of the home surface.
 fn dock_top_inset() -> f32 {
@@ -47,6 +53,8 @@ pub struct Sheets {
     pub setup: Signal<bool>,
     /// The day whose weight the editor shows.
     pub weight: Signal<Option<Day>>,
+    /// Today opens an overview before editing an individual day's weight.
+    pub body: Signal<Option<Day>>,
     /// Empty id creates a transaction; an existing id opens its editor.
     pub finance: Signal<Option<String>>,
     pub garmin: Signal<bool>,
@@ -79,6 +87,7 @@ pub fn home_page() -> Screen {
         capture_draft: signal(None),
         setup: signal(false),
         weight: signal(None),
+        body: signal(None),
         finance: signal(None),
         garmin: signal(false),
         jump: signal(false),
@@ -86,6 +95,9 @@ pub fn home_page() -> Screen {
         records_all: signal(false),
     };
     provide_context(sheets);
+    // Keep the departing editor's budget until its native host unmounts;
+    // setting weight=None alone must not expand it during the exit slide.
+    let body_editing = signal(false);
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
     crate::preview::home_opened(
         sheets.capture,
@@ -113,7 +125,12 @@ pub fn home_page() -> Screen {
                         .inset_0()
                         .pointer_events(PointerEvents::BoxNone)
                         .style_when(
-                            move || sheets.capture.get() || sheets.finance.get().is_some(),
+                            move || {
+                                sheets.capture.get()
+                                    || sheets.finance.get().is_some()
+                                    || sheets.body.get().is_some()
+                                    || sheets.weight.get().is_some()
+                            },
                             |s| s.hidden(),
                         )
                         .child(toast_host(|| dock_top_inset() + 12.0)),
@@ -121,10 +138,35 @@ pub fn home_page() -> Screen {
                 .child(capture_editor(sheets))
                 .child(setup_sheet(sheets))
                 .child(finance_editor(sheets.finance))
-                .child(bottom_sheet(
-                    move || sheets.weight.with(Option::is_some),
-                    move || sheets.weight.set(None),
-                    weight_editor(sheets.weight),
+                .child(task_host_with_keyboard(
+                    move || sheets.weight.get().is_some() || sheets.body.get().is_some(),
+                    move || {
+                        sheets.weight.set(None);
+                        sheets.body.set(None);
+                    },
+                    move || body_editing.get(),
+                    move || {
+                        retained(
+                            move || {
+                                sheets
+                                    .weight
+                                    .get()
+                                    .map(BodyPanel::Edit)
+                                    .or_else(|| sheets.body.get().map(BodyPanel::Overview))
+                            },
+                            move |panel| match panel {
+                                BodyPanel::Edit(_) => {
+                                    body_editing.set(true);
+                                    weight_editor(sheets.weight).into_element()
+                                }
+                                BodyPanel::Overview(day) => {
+                                    body_editing.set(false);
+                                    body_overview(day).into_element()
+                                }
+                            },
+                        )
+                        .into_element()
+                    },
                 ))
                 .child(bottom_sheet(
                     move || sheets.garmin.get(),

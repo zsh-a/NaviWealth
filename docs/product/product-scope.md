@@ -43,7 +43,7 @@ whether the owner uses a feature every day or every week.
 
 | Tab | Answers | Contents |
 |---|---|---|
-| Today | What happened today? | Today only (history lives in Records): a summary of spending and intake so far, sleep, latest weight and Body Battery, today's records, and drafts awaiting confirmation |
+| Today | What happened today? | Today only (history lives in Records): a summary of spending and intake so far, body metrics, sleep and Body Battery, today's records, and drafts awaiting confirmation |
 | Records | What did I record? | One date-ordered timeline of transactions and meals; drafts awaiting confirmation (imports, recognition results) pinned on top |
 | Assets | What do I own? | Accounts and balances, holdings with quantity, cost and market value, net worth and its trend |
 | Review | How did this week / month go? | Spending by category vs the previous period and the optional budget, net worth and holdings change, average intake and macros, weight trend, Garmin sleep/resting HR/steps averages, one line of the owner's own notes |
@@ -141,9 +141,16 @@ and screenshots fill gaps.
   unselected.
 - **Balance checks:** the owner states an account's real balance on a date;
   a difference is shown and can be posted to `权益:调整` with confirmation.
-  Opening balances are postings against `权益:期初`.
+  Opening balances are postings against `权益:期初`. A confirmed balance entry
+  can be revoked from its receipt; its postings and associated observation are
+  removed together and restored together by Undo.
 - Manual entry is a bottom sheet: amount, expense or income account, the own
   account it came from or went to, or a transfer between two own accounts.
+- Existing ordinary transactions expose Delete on the main editor, with a
+  confirmation of the saved record and Undo after success. Deletion and Undo
+  are atomic, reject changed identities, and update balances and records only
+  after commit. Investment entries remain governed by their trade deletion
+  flow so cash and holdings stay consistent.
 - Short descriptions, receipts or payment screenshots become reviewable
   transaction drafts through the owner's own model account. This capture
   path was brought forward by the owner's 2026-11-14 AI-native direction;
@@ -207,13 +214,19 @@ The full target is:
   shares with the estimating formula and impedance as provenance (Rule 5
   reason: composition answers the same daily question as weight, how the
   body changes beyond mass). BMI is shown, never stored: computed from the
-  weight and the height in Settings' body profile, which also keeps the birth
+  weight and the frozen measurement height when available (manual weights use
+  the current height in Settings' body profile), which also keeps the birth
   date and sex the estimates need. Completed age is calculated on the local
   measurement day and frozen with the measurement; old entered ages remain
   a labelled fallback until the owner supplies a birth date. The goal weight (Settings) shows the day's
-  distance to it on Today and as a line in Review's weight chart, which has
+  distance to it in Today's Body metrics overview and as a line in Review's weight chart, which has
   30- and 90-day windows. Nothing is estimated from a manually entered
-  weight: composition arrives only with a scale measurement. The scale link
+  weight: composition arrives only with a scale measurement. Today calls this
+  summary Body metrics: a full-width dated weight with a separate weekly trend,
+  body-fat and BMI facts. It joins composition on the kept weight's day;
+  missing data is a dash. Muscle, water, goals and original measurement details
+  are disclosed in its overview. Garmin summaries retain their own equal-width
+  row, stacking at large text. The scale link
   uses a foreground AFU-WL/Welland Bluetooth LE flow. A small TSX entry mounts
   the existing Rust pages and the scale sheet; Kotlin owns Android permissions,
   scanning and GATT through an explicit Host Channel whitelist. Rust owns packet

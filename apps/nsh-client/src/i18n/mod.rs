@@ -168,6 +168,18 @@ pub struct Strings {
     pub edit_transaction: &'static str,
     pub save_transaction: &'static str,
     pub delete_transaction: &'static str,
+    pub delete_transaction_action: &'static str,
+    pub delete_transaction_title: &'static str,
+    pub delete_transaction_body: &'static str,
+    pub revoke_balance: &'static str,
+    pub revoke_balance_title: &'static str,
+    pub revoke_balance_body: &'static str,
+    pub balance_entry_removed: &'static str,
+    pub error_transaction_delete: &'static str,
+    pub error_transaction_missing: &'static str,
+    pub error_transaction_changed: &'static str,
+    pub error_transaction_restore: &'static str,
+    pub error_transaction_undo_changed: &'static str,
     pub transaction_deleted: &'static str,
     pub transactions: &'static str,
     pub spending: &'static str,
@@ -279,6 +291,15 @@ pub struct Strings {
     pub delete_weight: &'static str,
     pub save_weight: &'static str,
     pub body_fat: &'static str,
+    pub body_metrics: &'static str,
+    pub body_more: &'static str,
+    pub body_missing: &'static str,
+    pub fat_mass: &'static str,
+    pub fat_free_mass: &'static str,
+    pub muscle_mass: &'static str,
+    pub water_mass: &'static str,
+    pub measurement_profile: &'static str,
+    pub resistance: &'static str,
     pub muscle: &'static str,
     pub water: &'static str,
     pub bmi: &'static str,
@@ -500,16 +521,6 @@ impl Strings {
 
     pub fn kg(&self, kg: f64) -> String {
         format!("{kg:.1}")
-    }
-
-    /// When the shown weight was logged, `days` before the chosen day.
-    pub fn weight_days_ago(&self, days: i32) -> String {
-        match (self.zh(), days) {
-            (true, 1) => "昨天记录".to_owned(),
-            (true, _) => format!("{days} 天前记录"),
-            (false, 1) => "Logged yesterday".to_owned(),
-            (false, _) => format!("Logged {days} days ago"),
-        }
     }
 
     /// A sleep duration: `7h 32m`.

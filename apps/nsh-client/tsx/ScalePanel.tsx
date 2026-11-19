@@ -13,6 +13,7 @@ import type { Signal } from "nsh";
 import { Button } from "nsh/base";
 import { scaleNative } from "./scale-bridge";
 import { copy } from "./scale-copy";
+import { ScaleReading } from "./ScaleReading";
 import { createScaleSession } from "./scale-session";
 import type { Preview } from "./scale-types";
 
@@ -94,42 +95,6 @@ export function ScalePanel(props: { close: () => void; busy: Signal<boolean> }) 
   });
   const textStyle = () => ({ fontSize: 16, lineHeight: 23, color: palette().ink });
   const noteStyle = () => ({ fontSize: 14, lineHeight: 21, color: palette().muted });
-  function Metric(metric: { label: string; value: string }) {
-    return (
-      <View style={{ flex: 1, gap: 6 }}>
-        <Text
-          style={{
-            fontSize: 24,
-            lineHeight: 30,
-            fontWeight: 600,
-            fontVariant: ["tabular-nums"],
-            color: palette().ink,
-          }}
-        >
-          {metric.value}
-          <Text style={{ fontSize: 14, fontWeight: 400, color: palette().muted }}> %</Text>
-        </Text>
-        <Text style={{ fontSize: 12.5, lineHeight: 18, color: palette().muted }}>
-          {metric.label}
-        </Text>
-      </View>
-    );
-  }
-  function Detail(detail: { label: string; value: string }) {
-    return (
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          gap: 16,
-          paddingVertical: 8,
-        }}
-      >
-        <Text style={{ ...noteStyle(), flex: 1 }}>{detail.label}</Text>
-        <Text style={{ ...textStyle(), fontVariant: ["tabular-nums"] }}>{detail.value}</Text>
-      </View>
-    );
-  }
   function Action(action: {
     label: string;
     run: () => void;
@@ -197,7 +162,7 @@ export function ScalePanel(props: { close: () => void; busy: Signal<boolean> }) 
           role="header"
           style={{ fontSize: 20, lineHeight: 26, fontWeight: 600, color: palette().ink, flex: 1 }}
         >
-          {labels.title}
+          {preview() ? labels.results : labels.title}
         </Text>
         <If when={state() !== "saved"}>
           <Action label={labels.close} run={leave} disabled={locked()} />
@@ -205,7 +170,14 @@ export function ScalePanel(props: { close: () => void; busy: Signal<boolean> }) 
       </View>
       <Scroll style={{ flexShrink: 1, flexGrow: 1 }}>
         <View style={{ gap: 24, paddingBottom: 8 }}>
-          <If when={profileReady() && state() !== "failed"}>
+          <If
+            when={
+              profileReady() &&
+              state() !== "failed" &&
+              !preview()?.measurement.metrics &&
+              state() !== "saved"
+            }
+          >
             <View testID="scale-stages" style={{ flexDirection: "row", gap: 12 }}>
               <Each of={[labels.stageConnect, labels.stageWeight, labels.stageComposition]}>
                 {(label, index) => (
@@ -266,7 +238,7 @@ export function ScalePanel(props: { close: () => void; busy: Signal<boolean> }) 
           <If when={needsProfile()}>
             <Text style={textStyle()}>{labels.profile}</Text>
           </If>
-          <If when={message() !== ""}>
+          <If when={message() !== "" && !(preview() && message() === labels.draft)}>
             <Text
               testID="scale-message"
               android={{ accessibilityLiveRegion: "polite" }}
@@ -284,7 +256,7 @@ export function ScalePanel(props: { close: () => void; busy: Signal<boolean> }) 
               {message()}
             </Text>
           </If>
-          <If when={progress()}>
+          <If when={progress() && !preview()}>
             <View style={{ gap: 8 }}>
               <Text
                 style={{ fontSize: 24, lineHeight: 32, fontWeight: 600, color: palette().ink }}
@@ -340,150 +312,17 @@ export function ScalePanel(props: { close: () => void; busy: Signal<boolean> }) 
             </Each>
           </If>
           <If when={preview()}>
-            {(reading: () => Preview) => {
-              const kg = () => (reading().measurement.weight_grams / 1000).toFixed(2);
-              return (
-                <View testID="scale-preview" style={{ gap: 20, paddingVertical: 8 }}>
-                  <View style={{ gap: 8 }}>
-                    <Text
-                      testID="scale-status"
-                      android={{ accessibilityLiveRegion: "polite" }}
-                      style={{
-                        fontSize: 24,
-                        lineHeight: 32,
-                        fontWeight: 600,
-                        color: palette().ink,
-                      }}
-                    >
-                      {reading().measurement.metrics
-                        ? labels.complete
-                        : compositionPhase() === "waiting"
-                          ? labels.compositionPending
-                          : compositionPhase() === "delayed"
-                            ? labels.compositionDelayed
-                            : labels.compositionIncomplete}
-                    </Text>
-                    <Text style={noteStyle()}>
-                      {reading().measurement.metrics
-                        ? labels.reviewHint
-                        : compositionPhase() === "waiting"
-                          ? labels.compositionHint
-                          : compositionPhase() === "delayed"
-                            ? labels.compositionDelayedHint
-                            : labels.noImpedance}
-                    </Text>
-                  </View>
-                  <Text style={noteStyle()}>{labels.weight}</Text>
-                  <Text
-                    accessibilityLabel={`${labels.weight} ${kg()} kg`}
-                    style={{
-                      fontSize: 56,
-                      lineHeight: 66,
-                      fontWeight: 600,
-                      fontVariant: ["tabular-nums"],
-                      color: palette().ink,
-                    }}
-                  >
-                    {kg().split(".")[0]}
-                    <Text style={{ color: palette().muted }}>.{kg().split(".")[1]}</Text>
-                    <Text style={{ fontSize: 20, fontWeight: 400, color: palette().muted }}>
-                      {" "}
-                      kg
-                    </Text>
-                  </Text>
-                  <If when={reading().measurement.metrics}>
-                    {(m: () => NonNullable<Preview["measurement"]["metrics"]>) => {
-                      return (
-                        <View
-                          style={{
-                            gap: 16,
-                            borderTopWidth: 1,
-                            borderColor: palette().line,
-                            paddingTop: 20,
-                          }}
-                        >
-                          <View style={{ flexDirection: "row", gap: 12 }}>
-                            <Metric label={labels.fat} value={m().body_fat_percent.toFixed(1)} />
-                            <Metric label={labels.muscle} value={m().muscle_percent.toFixed(1)} />
-                            <Metric label={labels.water} value={m().water_percent.toFixed(1)} />
-                          </View>
-                          <Text style={{ fontSize: 12.5, lineHeight: 19, color: palette().muted }}>
-                            {labels.estimate}
-                          </Text>
-                        </View>
-                      );
-                    }}
-                  </If>
-                  <Button
-                    accessibilityLabel={detailsOpen() ? labels.hideDetails : labels.details}
-                    onPress={() => detailsOpen.set(!detailsOpen())}
-                    style={{ minHeight: 48, justifyContent: "center", alignItems: "flex-start" }}
-                  >
-                    <Text style={noteStyle()}>
-                      {detailsOpen() ? labels.hideDetails : labels.details}
-                    </Text>
-                  </Button>
-                  <If when={detailsOpen()}>
-                    <View
-                      style={{
-                        gap: 4,
-                        borderTopWidth: 1,
-                        borderColor: palette().line,
-                        paddingTop: 12,
-                      }}
-                    >
-                      <Text
-                        style={noteStyle()}
-                      >{`${reading().device.name} · ${reading().day}`}</Text>
-                      <Detail
-                        label={labels.profileSnapshot}
-                        value={`${reading().measurement.profile.height_cm} cm · ${reading().measurement.profile.age_years} ${labels.ageUnit}`}
-                      />
-                      <If when={reading().summary.bmi !== null}>
-                        <Detail
-                          label={labels.bmi}
-                          value={reading().summary.bmi?.toFixed(2) ?? "—"}
-                        />
-                      </If>
-                      <Each
-                        of={[
-                          { label: labels.fatMass, value: reading().summary.fat_mass_kg },
-                          { label: labels.leanMass, value: reading().summary.fat_free_mass_kg },
-                          { label: labels.muscleMass, value: reading().summary.muscle_mass_kg },
-                          { label: labels.waterMass, value: reading().summary.water_mass_kg },
-                        ].filter((item) => item.value !== null)}
-                      >
-                        {(item) => (
-                          <Detail label={item().label} value={`${item().value?.toFixed(2)} kg`} />
-                        )}
-                      </Each>
-                      <If when={reading().measurement.resistance_ohm !== null}>
-                        <Detail
-                          label={labels.impedance}
-                          value={`${reading().measurement.resistance_ohm?.toFixed(1)} Ω`}
-                        />
-                      </If>
-                      <If when={reading().measurement.metrics}>
-                        <Detail
-                          label={labels.estimateModel}
-                          value={
-                            reading().measurement.metrics?.model.startsWith("segal")
-                              ? "Segal BIA"
-                              : (reading().measurement.metrics?.model ?? "—")
-                          }
-                        />
-                        <Text style={{ ...noteStyle(), paddingTop: 8 }}>{labels.derivedNote}</Text>
-                      </If>
-                    </View>
-                  </If>
-                  <If when={replacement()}>
-                    <Text
-                      style={textStyle()}
-                    >{`${labels.replace} ${reading().existing_kg?.toFixed(1)} kg`}</Text>
-                  </If>
-                </View>
-              );
-            }}
+            {(reading: () => Preview) => (
+              <ScaleReading
+                reading={reading}
+                phase={compositionPhase}
+                replacement={replacement}
+                retainedDraft={() => message() === labels.draft}
+                detailsOpen={detailsOpen}
+                palette={palette}
+                labels={labels}
+              />
+            )}
           </If>
         </View>
       </Scroll>

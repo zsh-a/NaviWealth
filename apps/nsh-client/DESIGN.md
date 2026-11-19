@@ -95,14 +95,27 @@ AI only to turn text and images into drafts, using the owner's model account.
 - **Manual money:** amount, account/category (or from/to), a calendar date,
   optional details. Pickers replace the body in the same sheet; Back returns
   to the draft. Time, payee and note live in Details. Successful saves alone
-  update remembered account/category choices.
+  update remembered account/category choices. Existing records expose Delete
+  in the fixed header, including when the simple editor cannot edit their
+  postings. New entries have no Delete action. A confirmation names the saved
+  record, date and account amounts; cancelling preserves the draft. Balance
+  receipts expose Revoke in the same header position. Successful deletion
+  offers Undo; temporary Undo failures keep a retry action, while identity or
+  account changes are explained instead of overwriting newer data.
 - **No hidden gestures.** Every action is a visible control; nothing
   depends on a long press.
 - **Today shows today:** the main card is health only: intake as the one
   Display figure, what is left of the goal, and the macro ring (below the
-  figure at large text). Flat beneath it are weight, plus sleep
-  and Body Battery once Garmin is connected (a Garmin vital opens all of the
-  day's Garmin data). Then today's records, whose header carries the count
+  figure at large text). Flat beneath it is a full-width Body metrics summary:
+  a dated weight, a separate weekly trend, then quiet body-fat and BMI facts.
+  Missing facts use a dash. Composition belongs to that weight's day, never
+  a newer or older reading. Extra composition, goal distance and original
+  measurement details live in the overview; its manual editor shares one
+  native sheet and returns to the overview. With no weight, the summary
+  opens entry directly. A reading panel uses the sheet's space; entry reserves
+  the keyboard. Sleep and Body Battery occupy a separate equal-width row
+  once Garmin is connected, stacking at large text (a Garmin vital opens all
+  of the day's Garmin data). Then today's records, whose header carries the count
   and the day's spending in each currency ("3 条 · 支出 ¥12.00"): spending
   is summarized beside the records it adds up. Opening balances and
   adjustments remain in the timeline with quieter labels and amounts; they
@@ -204,8 +217,15 @@ AI only to turn text and images into drafts, using the owner's model account.
   scale, unless a retained draft needs review. Failures expose retry/change
   device, without repeated connection loops. Valid dynamic weight packets
   update a separate live figure but never enable confirmation before stability.
-  Stable weight leads with a tabular figure and quieter decimals/unit; composition
-  follows in three flat columns. Device/date details expand on request.
+  Measurement results keep a dated, quiet status above a weight row with
+  tabular figures and quieter decimals/unit. Completion retires the stage
+  tracks and the connection prompt. Body fat and BMI form the first pair;
+  muscle and water form the second, divided by a hairline on the same surface.
+  Each composition share carries its mass from the same frozen Rust summary
+  as smaller secondary text. Large text stacks the pairs, and compact phones
+  use a smaller weight figure. The details row has a rotating chevron and
+  reveals device/date and provenance on request. No decorative scores,
+  reference-range bars or fabricated comparisons are added.
   Details also show the captured profile, BMI, estimated fat/fat-free/muscle/
   water masses, reference-derived resistance, and the named estimation model.
   Those derived values belong to this measurement, never a newer manual weight.

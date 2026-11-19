@@ -259,6 +259,9 @@ pub(super) fn balance_title(t: &Transaction) -> Option<&'static str> {
 
 /// Balance entries remain readable from Today/Records as well as an account.
 pub(super) fn balance_entry(t: Transaction, open: Signal<Option<String>>) -> AnyElement {
+    let error = signal(None::<String>);
+    let asking = signal(false);
+    let removed = t.clone();
     let own = t.own_postings().next().map(|p| p.account.clone());
     let header = view()
         .flex_row()
@@ -267,11 +270,22 @@ pub(super) fn balance_entry(t: Transaction, open: Signal<Option<String>>) -> Any
             text(balance_title(&t).unwrap_or(s().transactions))
                 .typo(Type::Title)
                 .text_color(color::INK)
-                .flex_1(),
+                .flex_1()
+                .min_w(px(0.0)),
+        )
+        .child(
+            Btn::ghost()
+                .label(|| s().undo.into())
+                .disabled(move || asking.get())
+                .on_press(move || {
+                    super::finance::confirm_delete(removed.clone(), open, error, asking)
+                })
+                .accessibility_label(|| Some(s().revoke_balance.into())),
         )
         .child(
             Btn::ghost()
                 .label(|| s().close.into())
+                .disabled(move || asking.get())
                 .on_press(move || open.set(None)),
         );
     let body = view()
@@ -300,17 +314,30 @@ pub(super) fn balance_entry(t: Transaction, open: Signal<Option<String>>) -> Any
                 .typo(Type::Body)
                 .text_color(color::MUTED),
         );
-    let action = Btn::primary()
-        .label(|| s().view_account.into())
-        .on_press(move || {
-            open.set(None);
-            if let Some(a) = &own {
-                nav::push(Route::Account(a.to_string()));
-            }
-        });
+    let action = view()
+        .gap_2()
+        .child(crate::ui::field::note(
+            move || error.get().map(Into::into),
+            || true,
+        ))
+        .child(
+            Btn::primary()
+                .label(|| s().view_account.into())
+                .disabled(move || asking.get())
+                .on_press(move || {
+                    open.set(None);
+                    if let Some(a) = &own {
+                        nav::push(Route::Account(a.to_string()));
+                    }
+                }),
+        );
     crate::ui::sheet::task_sheet(
         move || open.get().is_some(),
-        move || open.set(None),
+        move || {
+            if !asking.get_untracked() {
+                open.set(None);
+            }
+        },
         header,
         body,
         action,

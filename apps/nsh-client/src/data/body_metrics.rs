@@ -67,11 +67,6 @@ pub fn on(day: Day) -> Option<Metric> {
     metrics().with(|m| m.0.iter().find(|m| m.day == day).cloned())
 }
 
-/// The latest estimate on or before `day` (tracked).
-pub fn latest_until(day: Day) -> Option<Metric> {
-    metrics().with(|m| m.0.iter().rev().find(|m| m.day <= day).cloned())
-}
-
 /// The estimates of the `days` days ending on `day` (tracked).
 pub fn window(day: Day, days: i32) -> Vec<Metric> {
     let first = day.plus_days(1 - days);

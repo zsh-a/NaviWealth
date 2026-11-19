@@ -161,8 +161,47 @@ fn failed_balance_confirmation_preserves_preview_and_can_retry_once() -> Result<
     assert_eq!(repository::balance_checks(&c).unwrap().len(), 1);
     app.press("label:/^Opening balance, 500.01 CNY/")?;
     app.wait_for(
-        "This is a confirmed balance entry. Check the account balance again to correct it.",
+        "This entry comes from a balance check. Check the account again, or revoke this entry to recalculate its balance.",
     )?;
+    Ok(())
+}
+
+#[test]
+fn balance_entry_revocation_and_undo_keep_the_check_and_journal_together() -> Result<(), String> {
+    use nsh_testing::DialogAnswer;
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
+    create(&mut app, "Cash", false)?;
+    verify(&mut app, "500.00", false)?;
+    app.wait_for_gone("task-sheet", GONE)?;
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    let entries = repository::transactions(&db).unwrap();
+    let checks = repository::balance_checks(&db).unwrap();
+    app.press("label:/^Opening balance, 500.00 CNY/")?;
+    app.on_dialog(|dialog| {
+        assert_eq!(dialog.title.as_deref(), Some("Revoke this balance entry?"));
+        let summary = dialog.message.as_deref().unwrap();
+        assert!(summary.contains("Cash"));
+        assert!(summary.contains("500.00"));
+        DialogAnswer::Press("Cancel".into())
+    });
+    app.press("id:task-header >> label:Revoke balance entry")?;
+    assert_eq!(repository::transactions(&db).unwrap(), entries);
+    assert_eq!(repository::balance_checks(&db).unwrap(), checks);
+    app.on_dialog(|_| DialogAnswer::Press("Revoke balance entry".into()));
+    app.press("id:task-header >> label:Revoke balance entry")?;
+    app.wait_for("Balance entry removed")?;
+    assert!(repository::transactions(&db).unwrap().is_empty());
+    assert!(repository::balance_checks(&db).unwrap().is_empty());
+    assert!(
+        repository::accounts(&db)
+            .unwrap()
+            .contains(&Account::parse("资产:Cash").unwrap())
+    );
+    app.press("Undo")?;
+    app.wait_for("label:/^Opening balance, 500.00 CNY/")?;
+    assert_eq!(repository::transactions(&db).unwrap(), entries);
+    assert_eq!(repository::balance_checks(&db).unwrap(), checks);
     Ok(())
 }
 

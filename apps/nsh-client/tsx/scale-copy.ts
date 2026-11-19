@@ -1,6 +1,7 @@
 export const copy = {
   en: {
     title: "Connect scale",
+    results: "Measurement results",
     intro: "Tap your AFU-WL scale lightly to wake it, then tap Find scale.",
     savedIntro: "Tap the scale lightly to wake it, then connect. Step on when prompted.",
     remembered: "Saved scale",
@@ -89,6 +90,7 @@ export const copy = {
   },
   zh: {
     title: "连接体脂秤",
+    results: "测量结果",
     intro: "轻踩 AFU-WL 体脂秤唤醒设备，再点「查找体脂秤」。",
     savedIntro: "先轻踩唤醒体脂秤，再点连接。看到提示后再上秤。",
     remembered: "已记住的设备",

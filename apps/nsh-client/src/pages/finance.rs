@@ -12,6 +12,7 @@ use navi_finance::{
     currency::Currency,
     journal::{self, Entry, Source, Transaction},
     money,
+    repository::RemovedTransaction,
 };
 use nsh_base::{CalendarEntry, CalendarItemKind, alert_dialog, calendar};
 use nsh_core::prelude::*;
@@ -262,6 +263,107 @@ pub fn finance_editor(open: Signal<Option<String>>) -> impl IntoElement {
 
 static NEXT: AtomicU64 = AtomicU64::new(0);
 
+pub(super) fn confirm_delete(
+    entry: Transaction,
+    open: Signal<Option<String>>,
+    error: Signal<Option<String>>,
+    asking: Signal<bool>,
+) {
+    if asking.get_untracked() {
+        return;
+    }
+    asking.set(true);
+    error.set(None);
+    dismiss_keyboard();
+    let balance = super::assets::balance_title(&entry).is_some();
+    let accounts = entry
+        .own_postings()
+        .map(|p| {
+            format!(
+                "{} · {}",
+                crate::ui::currency::account_label(&p.account),
+                crate::ui::currency::format(p.amount, p.account.currency()),
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+    let summary = format!(
+        "{}\n{} · {}\n{}\n\n{}",
+        transaction_title(&entry),
+        s().long_date(crate::domain::meal::Day(entry.at.date())),
+        entry.at.time().strftime("%H:%M"),
+        accounts,
+        if balance {
+            s().revoke_balance_body
+        } else {
+            s().delete_transaction_body
+        },
+    );
+    let answer = alert_dialog()
+        .title(if balance {
+            s().revoke_balance_title
+        } else {
+            s().delete_transaction_title
+        })
+        .description(summary)
+        .cancel("keep", s().cancel)
+        .destructive(
+            "delete",
+            if balance {
+                s().revoke_balance
+            } else {
+                s().delete_transaction
+            },
+        )
+        .show();
+    spawn(async move {
+        let confirmed = answer
+            .await
+            .is_ok_and(|a| a.action.as_deref() == Some("delete"));
+        asking.set(false);
+        if !confirmed || open.get_untracked().as_deref() != Some(entry.id.as_str()) {
+            return;
+        }
+        match finance::remove(&entry) {
+            Ok(removed) => {
+                open.set(None);
+                offer_undo(removed, false);
+            }
+            Err(cause) => error.set(Some(
+                match cause {
+                    finance::RemovalError::Missing => s().error_transaction_missing,
+                    finance::RemovalError::Changed => s().error_transaction_changed,
+                    finance::RemovalError::Unavailable => s().error_transaction_delete,
+                }
+                .into(),
+            )),
+        }
+    });
+}
+
+fn offer_undo(removed: RemovedTransaction, retry: bool) {
+    let message = if retry {
+        s().error_transaction_restore
+    } else if super::assets::balance_title(&removed.entry).is_some() {
+        s().balance_entry_removed
+    } else {
+        s().transaction_deleted
+    };
+    show_toast(
+        message,
+        Some((
+            if retry { s().try_again } else { s().undo }.into(),
+            Rc::new(move || match finance::restore_removed(&removed) {
+                Ok(()) => {}
+                Err(finance::RemovalError::Unavailable) => offer_undo(removed.clone(), true),
+                Err(finance::RemovalError::Missing | finance::RemovalError::Changed) => {
+                    show_toast(s().error_transaction_undo_changed, None);
+                }
+            }),
+        )),
+    );
+}
+
 fn editor(id: String, open: Signal<Option<String>>) -> impl IntoElement {
     let existing = finance::transactions().into_iter().find(|t| t.id == id);
     if let Some(Source::Investment { trade_id }) = existing.as_ref().map(|t| &t.source) {
@@ -366,6 +468,9 @@ fn editor(id: String, open: Signal<Option<String>>) -> impl IntoElement {
     let error = signal(None::<String>);
     let asking = signal(false);
     let close = move || {
+        if asking.get_untracked() {
+            return;
+        }
         if panel.get_untracked() != Panel::Main {
             panel.set(match panel.get_untracked() {
                 Panel::NewOwn => Panel::Own,
@@ -400,6 +505,11 @@ fn editor(id: String, open: Signal<Option<String>>) -> impl IntoElement {
         });
     };
     let kept = stored(existing.clone());
+    let delete = move || {
+        if let Some(entry) = kept.with(|t| t.clone()) {
+            confirm_delete(entry, open, error, asking);
+        }
+    };
     let save = move || {
         if !editable {
             return;
@@ -463,8 +573,21 @@ fn editor(id: String, open: Signal<Option<String>>) -> impl IntoElement {
             .typo(Type::Title)
             .text_color(color::INK)
             .flex_1()
+            .min_w(px(0.0))
             .role(AccessibilityRole::Header),
         )
+        .child(when(
+            move || panel.get() == Panel::Main && kept.with(|t| t.is_some()),
+            move || {
+                Btn::ghost()
+                    .size(Size::Small)
+                    .label(|| s().delete_transaction_action.into())
+                    .disabled(move || asking.get())
+                    .on_press(delete)
+                    .accessibility_label(|| Some(s().delete_transaction.into()))
+                    .min_h(px(48.0))
+            },
+        ))
         .child(
             Btn::ghost()
                 .size(Size::Small)
@@ -476,6 +599,7 @@ fn editor(id: String, open: Signal<Option<String>>) -> impl IntoElement {
                     }
                     .into()
                 })
+                .disabled(move || asking.get())
                 .on_press(close),
         );
     let body = dynamic(move || {
@@ -743,30 +867,11 @@ fn editor(id: String, open: Signal<Option<String>>) -> impl IntoElement {
                         .label(|| s().transaction_time)
                         .placeholder("18:30"),
                 ))
-                .child(kept.with(|t| t.clone()).map(|t| {
+                .child(kept.with(|t| t.is_some()).then(|| {
                     Btn::new(Variant::Danger)
                         .label(|| s().delete_transaction.into())
-                        .on_press(move || match finance::remove(&t.id) {
-                            Ok(removed) => {
-                                open.set(None);
-                                show_toast(
-                                    s().transaction_deleted,
-                                    Some((
-                                        s().undo.into(),
-                                        Rc::new(move || {
-                                            if let Err(cause) = finance::save(removed.clone()) {
-                                                log::error!("finance: undo failed: {cause}");
-                                                show_toast(s().error_transaction_storage, None);
-                                            }
-                                        }),
-                                    )),
-                                );
-                            }
-                            Err(cause) => {
-                                log::error!("finance: delete failed: {cause}");
-                                error.set(Some(s().error_transaction_storage.into()));
-                            }
-                        })
+                        .disabled(move || asking.get())
+                        .on_press(delete)
                 }))
                 .into_element(),
         })
@@ -780,7 +885,7 @@ fn editor(id: String, open: Signal<Option<String>>) -> impl IntoElement {
                 move || {
                     Btn::primary()
                         .label(|| s().save_transaction.into())
-                        .disabled(move || !editable)
+                        .disabled(move || !editable || asking.get())
                         .on_press(save)
                 },
             )
