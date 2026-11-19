@@ -127,13 +127,17 @@ async function connect(app: App, waitForAcknowledgement = true): Promise<string>
   expect(command[0]).toBe(0xac);
   expect(command[1]).toBe(0x27);
   expect(command[2]).toBe(0x08);
-  expect(command.slice(7, 18)).toEqual([0x20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+  // The native bridge uses the host's time zone (UTC on CI, UTC+8 locally).
+  const offsetQuarters = command[7] > 127 ? command[7] - 256 : command[7];
+  expect(offsetQuarters >= -48 && offsetQuarters <= 56).toBe(true);
+  expect(command.slice(8, 18)).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
   expect(command[18]).toBe(0xdf);
   expect(command[19]).toBe(command.slice(2, 19).reduce((sum, byte) => (sum + byte) & 255, 0));
   const profile = data(calls(app, "ble.write")[previousWrites + 1]);
   expect(profile.sessionId).toBe(connected.sessionId);
   const profileCommand = decodeBase64(profile.dataBase64 as string);
   expect(profileCommand.length).toBe(20);
+  expect(profileCommand[6]).toBe(command[7]);
   expect(profileCommand[18]).toBe(0xd0);
   expect(profileCommand[16] & 1).toBe(1);
   expect(profileCommand[19]).toBe(
