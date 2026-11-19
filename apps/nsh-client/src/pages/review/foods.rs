@@ -247,6 +247,10 @@ pub fn failure_copy(strings: &'static Strings, failure: &VisionFailure) -> (&'st
         VisionFailure::Truncated | VisionFailure::Unreadable => pair(strings.failure_unreadable),
         VisionFailure::Refused => pair(strings.failure_refused),
         VisionFailure::Photo => pair(strings.failure_photo),
+        VisionFailure::Storage => (
+            strings.storage_unavailable,
+            strings.error_transaction_storage.to_owned(),
+        ),
         VisionFailure::Provider(error) => match error {
             ProviderError::Unauthorized => pair(strings.failure_unauthorized),
             ProviderError::Forbidden => pair(strings.failure_forbidden),

@@ -263,7 +263,7 @@ pub fn apply() {
                     && let Some((bytes, _)) = photos::prepare_capture(&source)
                 {
                     let name = format!("{}-preview-{index}.png", draft.id);
-                    photos::keep(&name, &bytes);
+                    photos::keep(&name, &bytes).expect("preview image");
                     draft.attachments.push(name);
                 }
             }
@@ -272,7 +272,7 @@ pub fn apply() {
     }
     if has("favorites") && !untracked(favorites::any) {
         for meal in untracked(meals::all).iter().take(4) {
-            favorites::save_from(meal);
+            favorites::save_from(meal).expect("preview favorite");
         }
     }
     if has("drafts") && untracked(pending::all).is_empty() {
@@ -549,7 +549,8 @@ fn seed_drafts() {
             skipped: 0,
             status,
             created_at_ms: clock::now_ms() - index as i64,
-        });
+        })
+        .expect("preview draft");
     }
 }
 
@@ -646,7 +647,7 @@ fn seed_meals() {
         let bytes = std::fs::read(photo_paths.get(index)?).ok()?;
         let (_, keep) = photos::prepare(&bytes)?;
         let name = format!("{id}.jpg");
-        photos::keep(&name, &keep);
+        photos::keep(&name, &keep).ok()?;
         Some(name)
     };
     let mut noodles = food(
@@ -723,7 +724,8 @@ fn seed_meals() {
             photo,
             model: Some("claude-opus-5-5".into()),
             prompt_version: None,
-        });
+        })
+        .expect("preview meal");
     }
 }
 

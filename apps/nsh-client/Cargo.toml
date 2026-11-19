@@ -1,6 +1,6 @@
 [package]
 name = "naviwealth-app"
-description = "NaviWealth's native (NSH) client: photo meal logging for HealthOS."
+description = "NaviWealth's local-first NSH finance and health client."
 version = "0.16.0"
 edition = "2024"
 rust-version = "1.97"

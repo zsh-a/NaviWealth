@@ -30,7 +30,7 @@ NaviWealth 是一个本地优先的个人应用：复式记账、证券持仓、
 
 ## 功能
 
-- **记账**：复式分录（五类账户），支付宝 / 微信 / 招行账单导入，跨币种（CNY / HKD / USD），余额核对与可选月度预算。
+- **记账**：复式分录（五类账户），支付宝 / 微信 / 招行账单导入，跨币种（CNY / HKD / USD）与余额核对；月度预算尚未实现。
 - **持仓**：手动录入买卖 / 分红，移动平均成本与损益，证券目录搜索（A股 / 港股 / 美股 / ETF），腾讯行情，历史价格与净资产趋势。
 - **健康**：拍照识别记餐、体重记录、Garmin 官方 Personal API（睡眠 / HRV / 静息心率 / 步数等）。
 - **回顾**：周 / 月视图、分类支出对比、净资产变化、摄入与体重趋势。
@@ -40,7 +40,8 @@ NaviWealth 是一个本地优先的个人应用：复式记账、证券持仓、
 ```text
 apps/nsh-client/            NSH 客户端：Rust 页面与存储、TSX 体脂秤交互、Kotlin BLE 宿主
 crates/navi-finance/        复式账本、持仓与证券目录的业务真相
-crates/navi-health/         餐食识别、营养与 Garmin 数据解析
+crates/navi-health/         餐食与收藏模型、持久化、营养、健康汇总与 Garmin 解析
+crates/navi-storage/        中性的 SQLite 迁移、快照与原子表替换
 third_party/agent-runtime/  模型协议与客户端（git submodule）
 third_party/market-data-rs/ 行情 SDK（腾讯源）
 tool/asset_catalog/         证券目录源数据与构建、校验、发布工具链
@@ -58,6 +59,7 @@ rtk cargo test --manifest-path crates/navi-finance/Cargo.toml --locked
 rtk cargo test --manifest-path crates/navi-health/Cargo.toml --locked
 ```
 
+PR 和相关 push 自动运行领域、客户端、混合 TSX 与 Android 宿主检查，无需发布密钥。
 Android 调试（含 WSL2 + Windows 模拟器拓扑）见 [Local Development](docs/development/local-development.md)；发布 APK 由 `nsh client` 手动工作流构建签名，使用 `nsh-vX.Y.Z` 标签。
 
 ## 文档导航

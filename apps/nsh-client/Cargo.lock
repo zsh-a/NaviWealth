@@ -2640,8 +2640,11 @@ name = "navi-health"
 version = "0.1.0"
 dependencies = [
  "image",
+ "jiff",
  "llm-client",
  "llm-protocol",
+ "log",
+ "navi-storage",
  "serde",
  "serde_json",
  "thiserror",

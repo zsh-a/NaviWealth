@@ -51,11 +51,22 @@ pub(super) fn discard(draft: Draft) {
     let Some(kept) = untracked(|| pending::get(&id)) else {
         return;
     };
-    pending::remove(&id);
+    if let Err(error) = pending::remove(&id) {
+        crate::ui::feedback::storage_error(error);
+        return;
+    }
     nav::pop();
     show_toast(
         s().draft_discarded,
-        Some((s().undo.into(), Rc::new(move || pending::put(kept.clone())))),
+        Some((
+            s().undo.into(),
+            Rc::new(move || {
+                crate::ui::feedback::undo_write(Rc::new({
+                    let kept = kept.clone();
+                    move || pending::put(kept.clone())
+                }))
+            }),
+        )),
     );
 }
 
@@ -149,7 +160,9 @@ impl Draft {
                 kept.slot = slot;
                 kept.title = title;
                 kept.day = day;
-                pending::put(kept);
+                if let Err(error) = pending::put(kept) {
+                    crate::ui::feedback::storage_error(error);
+                }
             });
         });
     }

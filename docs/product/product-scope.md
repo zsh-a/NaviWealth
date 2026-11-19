@@ -2,7 +2,7 @@
 
 Status: active product SSOT for the NSH client.
 
-Last reviewed: 2026-11-15.
+Last reviewed: 2026-11-19.
 
 ## Document Contract
 
@@ -46,7 +46,7 @@ whether the owner uses a feature every day or every week.
 | Today | What happened today? | Today only (history lives in Records): a summary of spending and intake so far, body metrics, sleep and Body Battery, today's records, and drafts awaiting confirmation |
 | Records | What did I record? | One date-ordered timeline of transactions and meals; drafts awaiting confirmation (imports, recognition results) pinned on top |
 | Assets | What do I own? | Accounts and balances, holdings with quantity, cost and market value, net worth and its trend |
-| Review | How did this week / month go? | Spending by category vs the previous period and the optional budget, net worth and holdings change, average intake and macros, weight trend, Garmin sleep/resting HR/steps averages, one line of the owner's own notes |
+| Review | How did this week / month go? | Spending by category vs the previous period (optional budget planned), net worth and holdings change, average intake and macros, weight trend, Garmin sleep/resting HR/steps averages, one line of the owner's own notes |
 
 ## Interaction Model
 
@@ -155,8 +155,8 @@ and screenshots fill gaps.
   transaction drafts through the owner's own model account. This capture
   path was brought forward by the owner's 2026-11-14 AI-native direction;
   statement import remains the primary bulk ingestion path.
-- One optional monthly budget against total expenses. No per-category
-  budgets.
+- Planned, not yet implemented: one optional monthly budget against total
+  expenses. No per-category budgets.
 
 ### Holdings (detail required)
 

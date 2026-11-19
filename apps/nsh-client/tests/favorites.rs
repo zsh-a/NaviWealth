@@ -105,3 +105,54 @@ fn a_favorite_can_be_removed_from_its_meal() -> Result<(), String> {
     assert!(stored_favorites(dir.path()).is_empty());
     Ok(())
 }
+
+#[test]
+fn failed_favorite_writes_preserve_the_bookmark_and_allow_retry() -> Result<(), String> {
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, _) = start_in(Some(dir.path()), pasta_today(), None);
+    let dialogs = storage_dialogs(&mut app);
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    db.execute_batch("CREATE TRIGGER reject_favorite BEFORE INSERT ON saved_meals BEGIN SELECT RAISE(ABORT,'full disk'); END;").unwrap();
+    app.press("Tomato pasta")?;
+    app.press("label:Save as favorite")?;
+    assert_eq!(dialogs.load(std::sync::atomic::Ordering::Relaxed), 1);
+    assert!(stored_favorites(dir.path()).is_empty());
+    app.wait_for("label:Save as favorite")?;
+    db.execute_batch("DROP TRIGGER reject_favorite").unwrap();
+    app.press("label:Save as favorite")?;
+    app.wait_for("label:Remove from favorites")?;
+    db.execute_batch("CREATE TRIGGER reject_remove BEFORE DELETE ON saved_meals BEGIN SELECT RAISE(ABORT,'full disk'); END;").unwrap();
+    app.press("label:Remove from favorites")?;
+    assert_eq!(dialogs.load(std::sync::atomic::Ordering::Relaxed), 2);
+    assert_eq!(stored_favorites(dir.path()).len(), 1);
+    app.wait_for("label:Remove from favorites")?;
+    db.execute_batch("DROP TRIGGER reject_remove").unwrap();
+    app.press("label:Remove from favorites")?;
+    app.wait_for("label:Save as favorite")?;
+    assert!(stored_favorites(dir.path()).is_empty());
+    Ok(())
+}
+
+#[test]
+fn logging_a_favorite_rolls_back_the_meal_when_last_use_cannot_commit() -> Result<(), String> {
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, _) = start_in(Some(dir.path()), pasta_today(), None);
+    save_pasta(&mut app)?;
+    let before = stored_favorites(dir.path());
+    app.press("label:Back")?;
+    let dialogs = storage_dialogs(&mut app);
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    db.execute_batch("CREATE TRIGGER reject_last_use BEFORE UPDATE ON saved_meals BEGIN SELECT RAISE(ABORT,'full disk'); END;").unwrap();
+    app.press(OPEN)?;
+    app.press(TILE)?;
+    assert_eq!(dialogs.load(std::sync::atomic::Ordering::Relaxed), 1);
+    assert_eq!(stored_meals(dir.path()).len(), 1);
+    assert_eq!(stored_favorites(dir.path()), before);
+    app.wait_for(TILE)?;
+    db.execute_batch("DROP TRIGGER reject_last_use").unwrap();
+    app.press(TILE)?;
+    app.wait_for("Logged Tomato pasta")?;
+    app.wait_for("text:2 meals")?;
+    assert_eq!(stored_meals(dir.path()).len(), 2);
+    Ok(())
+}

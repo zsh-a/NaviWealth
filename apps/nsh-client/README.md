@@ -1,10 +1,9 @@
 # NaviWealth native client (NSH)
 
 NaviWealth's native client, with Rust pages and a small TSX hardware entry on [NSH](https://github.com/longbridge/nsh)
-0.5.0. Its first page is HealthOS meal logging: choose a photo of a meal, allow
-it to be sent to your own vision model, review the estimated foods and amounts,
-and save. The home has four tabs: Today (spending, intake and vitals), Records
-(all history), Assets (accounts, book balances and net worth), and Review
+0.5.0. Capture turns a description or photos into reviewable money, meal or
+weight drafts using the owner's model. The home has four tabs: Today
+(spending, intake and vitals), Records (all history), Assets (accounts, book balances and net worth), and Review
 (the week or month). The capture button accepts a description or image and
 keeps a draft for confirmation. Settings keep each change as it is made;
 manual entry and account management work without a model account. Design
@@ -20,7 +19,7 @@ Completions, or OpenAI Responses); there is no NaviWealth relay.
 
 ```text
 src/
-  domain/   host-owned meals/account and shared health domain exports
+  domain/   host account/capture composition and shared health re-exports
   data/     device storage, photos, local time, thin NSH fetch Transport
   ui/       the app's styled components over nsh-base, and its tokens
   pages/    the home (Today, Records, Assets, Review tabs, capture sheet), meal
@@ -33,8 +32,10 @@ android/    Kotlin foreground BLE host and permissions, pinned NSH Java runtime
 tests/      headless meal, weight, Garmin, review, backup and mixed scale flows
 ```
 
-Meal recognition, catalog nutrition, photo normalization and destination-bound
-consent live in `../../crates/navi-health`. Provider wire
+Meals, favorites, validation, repositories, nutrition, health-review calculations,
+photo normalization and destination-bound consent live in `../../crates/navi-health`.
+The client adapts those contracts to reactive signals and composes capture and
+scale transactions with device-local evidence. Provider wire
 formats live in `../../third_party/agent-runtime/crates/llm-protocol`; request
 policy lives in `llm-client`. NSH supplies its platform fetch transport rather
 than the reqwest adapter. NSH 0.5.0 returns whole response bodies; recognition does not require
@@ -157,8 +158,13 @@ is a foreground task, not an Android scheduled background job. Manual backups
 can be made any time. Each file has a new timestamped name and a conditional
 PUT prevents replacing an existing file. No automatic remote deletion occurs.
 
-Backups contain the SQLite database: meals, favorites, notes, weights and
-imported Garmin days. Save and back up (by hand) also carries the meal photos
+Backups contain confirmed meals, favorites, notes, weights, composition and
+scale provenance, imported Garmin days, the ledger, holdings, dated manual
+prices/FX, price audit and valuation observations. Recognition threads, meal
+review drafts, scale drafts and local revision guards are excluded. Provider
+quotes and daily bars are excluded as re-fetchable caches. Statement-import
+reviews remain part of the finance backup contract. Save and back up
+(by hand) also carries the meal photos
 of meals and favorites, named `…-photos.nwbk` and marked "With photos" in the
 restore list; the daily automatic backup leaves photos out so it stays small.
 Restoring writes back the photos a backup carries and keeps photos already on
@@ -171,6 +177,11 @@ database alone, still restore.
 
 Restore lists the ten newest files and asks before replacing records. Decryption,
 schema and record validation happen before one transaction replaces the data.
+Photos are written and synced first without overwriting existing files. A
+same-name photo with different contents receives a new name in the restored
+records. Photo or database failure removes newly staged files and preserves
+current records and photos. A process crash can leave unreferenced files for
+the next orphan sweep; SQLite and the filesystem are not one transaction.
 Wrong passphrases, changed files, invalid records and newer schemas leave
 existing records intact. Settings and credentials stay on this device. Older
 daily-name backups remain readable.
@@ -235,8 +246,8 @@ Finance together, rejecting unbalanced entries, missing account references and
 invalid source identities before replacing current rows. Health-only backups
 (schema 1–6) restore Health while preserving the current ledger. Restore remains
 explicitly confirmed. Balances and spending are derived, never stored as truth.
-Statement import and budgets are subsequent increments. The initial holdings
-increment is described below.
+Statement import is implemented; the optional monthly budget remains planned.
+The initial holdings increment is described below.
 
 Desktop previews accept `NW_PREVIEW=account,meals,finance,light` (or `dark`) and
 `NW_PREVIEW_ROUTE=transaction` / `transaction-new` for the editor, in addition
@@ -443,9 +454,11 @@ Quote refreshes and history backfills publish holdings and FX together.
 Opening a database and restoring a backup still validate the complete ledger. Recorded values
 are not end-of-day closing values; past observations are never fabricated.
 
-Backups include all three new tables. Migration, exact roundtrip, malformed
-history/audit/snapshot rejection and atomic restore are checked alongside
-revision precedence, manual overrides and immutable valuation tests. Live
+Backups include audit records and valuation observations. Provider daily bars
+and current provider quotes are omitted and rebuilt on demand after restore.
+Migration, record roundtrip, malformed history/audit/snapshot rejection and
+atomic restore are checked alongside revision precedence, manual overrides
+and immutable valuation tests. Live
 public TLS checks cover CN 510300, HK 00700, US AAPL/BRK.B and both FX pairs;
 Android platform behavior still requires device verification.
 

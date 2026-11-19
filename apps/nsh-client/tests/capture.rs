@@ -822,3 +822,42 @@ fn unsent_views_can_be_removed_and_four_views_survive_reopen_without_recognition
     assert!(stored_meals(dir.path()).is_empty());
     Ok(())
 }
+
+#[test]
+fn an_image_that_cannot_be_kept_is_not_attached_or_sent() -> Result<(), String> {
+    let dir = tempfile::tempdir().unwrap();
+    let stub = network(200, record_reply(vec![meal_record()]));
+    let (mut app, _) = start_in(Some(dir.path()), account(true), Some(stub.clone()));
+    let folder = database_in(dir.path())
+        .parent()
+        .unwrap()
+        .join("meal-photos");
+    std::fs::write(&folder, b"not a directory").unwrap();
+    picks_a_photo(&mut app);
+    app.press("label:New entry")?;
+    app.press("Attach image")?;
+    app.wait_for("Could not save changes. Check device storage and try again.")?;
+    assert!(!app.shows("Remove image"));
+    assert!(stub.requests().is_empty());
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    let bodies: Vec<String> = db
+        .prepare("SELECT body FROM capture_drafts")
+        .unwrap()
+        .query_map([], |row| row.get(0))
+        .unwrap()
+        .collect::<Result<_, _>>()
+        .unwrap();
+    for body in bodies {
+        let draft: naviwealth_app::domain::capture::Draft = serde_json::from_str(&body).unwrap();
+        assert!(draft.image_names().is_empty());
+    }
+    std::fs::remove_file(&folder).unwrap();
+    picks_a_photo(&mut app);
+    app.press("Attach image")?;
+    app.wait_for("Remove image")?;
+    assert!(
+        stub.requests().is_empty(),
+        "successful attachment still needs an explicit send"
+    );
+    Ok(())
+}

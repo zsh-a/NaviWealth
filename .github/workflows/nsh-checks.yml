@@ -1,0 +1,108 @@
+name: nsh checks
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/nsh-client/**'
+      - 'crates/**'
+      - 'third_party/agent-runtime'
+      - 'third_party/market-data-rs/**'
+      - 'tool/build-nsh-android-host.sh'
+      - 'rust-toolchain.toml'
+      - '.cargo/config.toml'
+      - '.github/workflows/nsh-checks.yml'
+  pull_request:
+    paths:
+      - 'apps/nsh-client/**'
+      - 'crates/**'
+      - 'third_party/agent-runtime'
+      - 'third_party/market-data-rs/**'
+      - 'tool/build-nsh-android-host.sh'
+      - 'rust-toolchain.toml'
+      - '.cargo/config.toml'
+      - '.github/workflows/nsh-checks.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nsh-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  NSH_VERSION: v0.5.0
+
+jobs:
+  client:
+    name: Rust and mixed TSX flows
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: apps/nsh-client
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Install Linux backend libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang libclang-dev libgtk-4-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+      - name: Install configured Rust toolchain
+        run: |
+          rustup toolchain install
+          rustc -Vv
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/nsh-client
+          key: checks
+      - name: Check Rust
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy --all-targets --locked -- -D warnings
+          cargo test --locked
+      - name: Check TypeScript formatting
+        run: |
+          npm ci --ignore-scripts --no-audit
+          npm run format:check
+      - name: Check documentation paths against the source tree
+        run: node ../../tool/check-docs.mjs
+      - name: Install pinned NSH CLI
+        run: |
+          curl -fsSL "https://github.com/longbridge/nsh/releases/download/${NSH_VERSION}/install.sh" | sh
+          echo "$HOME/.nsh/bin" >> "$GITHUB_PATH"
+      - name: Check mixed entry and scale flows
+        run: |
+          nsh check
+          nsh test tests/scale-mixed.test.ts --filter "scale mixed"
+
+  android:
+    name: Android host unit tests and lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install Android SDK platform and build tools
+        run: |
+          sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$sdkmanager" --licenses > /dev/null || true
+          "$sdkmanager" --install "platforms;android-35" "build-tools;35.0.1" > /dev/null
+      - name: Install pinned NSH CLI
+        run: |
+          curl -fsSL "https://github.com/longbridge/nsh/releases/download/${NSH_VERSION}/install.sh" | sh
+          echo "$HOME/.nsh/bin" >> "$GITHUB_PATH"
+      - name: Prepare verified NSH Java runtime
+        run: bash tool/build-nsh-android-host.sh runtime
+      - name: Test and lint the Android host without packaging
+        run: apps/nsh-client/android/gradlew -p apps/nsh-client/android testReleaseUnitTest lintRelease

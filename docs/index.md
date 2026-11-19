@@ -36,7 +36,8 @@ This documentation uses a docs-as-code structure:
 ```text
 apps/nsh-client/           NSH (Rust) client: UI, storage, pages, headless tests
 crates/navi-finance/       double-entry ledger, holdings, catalog truth
-crates/navi-health/        meal recognition, nutrition, Garmin parsing
+crates/navi-health/        health models, repositories, nutrition, review and Garmin parsing
+crates/navi-storage/       neutral SQLite migrations, snapshots and table replacement
 third_party/agent-runtime/ llm-protocol, llm-client (submodule)
 third_party/market-data-rs/ market-data SDK (Tencent quotes)
 tool/asset_catalog/        catalog sources, build, validation and publish pipeline

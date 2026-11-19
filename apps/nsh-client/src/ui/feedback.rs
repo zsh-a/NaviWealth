@@ -173,3 +173,32 @@ pub fn appear(index: u32, child: impl IntoElement) -> View {
         .bind_translate_y(&shown.interpolate(&[0.0, 1.0], &[motion::RISE, 0.0]))
         .child(child)
 }
+
+/// A failed local write leaves the editor and its inputs intact.
+pub fn storage_error(error: impl std::fmt::Display) {
+    log::error!("local write failed: {error}");
+    haptic(Haptic::Notification(HapticNotification::Error));
+    let answer = nsh_base::alert_dialog()
+        .title(crate::i18n::s().storage_unavailable)
+        .description(crate::i18n::s().error_transaction_storage)
+        .action("close", crate::i18n::s().close)
+        .show();
+    spawn(async move {
+        let _ = answer.await;
+    });
+}
+
+/// Keep a failed Undo available for another attempt within the normal toast lifetime.
+pub fn undo_write(action: std::rc::Rc<dyn Fn() -> Result<(), String>>) {
+    if let Err(error) = action() {
+        log::error!("Undo could not commit: {error}");
+        let retry = action.clone();
+        super::toast::show_toast(
+            crate::i18n::s().error_transaction_storage,
+            Some((
+                crate::i18n::s().try_again.into(),
+                std::rc::Rc::new(move || undo_write(retry.clone())),
+            )),
+        );
+    }
+}

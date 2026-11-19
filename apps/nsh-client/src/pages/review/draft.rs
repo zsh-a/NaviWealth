@@ -237,7 +237,11 @@ impl Draft {
                     .photo
                     .with_untracked(|p| p.as_ref().and_then(|p| p.keep.clone()))
                     .unwrap_or_else(|| upload.clone());
-                photos::keep(&name, &jpeg);
+                if let Err(error) = photos::keep(&name, &jpeg) {
+                    self.phase.set(Phase::Failed(VisionFailure::Storage));
+                    crate::ui::feedback::storage_error(error);
+                    return;
+                }
                 self.photo_name.replace(Some(name.clone()));
                 self.photo.update(|p| {
                     if let Some(p) = p {
@@ -265,7 +269,11 @@ impl Draft {
             created_at_ms: clock::now_ms(),
         };
         let lang = Lang::from_language(locale().language());
-        pending::recognize(draft, account, upload, lang, consent);
+        if let Err(error) = pending::recognize(draft, account, upload, lang, consent) {
+            self.phase.set(Phase::Failed(VisionFailure::Storage));
+            crate::ui::feedback::storage_error(error);
+            return;
+        }
         self.pending.set(Some(id));
         self.started.replace(true);
         if fresh {
@@ -340,24 +348,31 @@ impl Draft {
         let photo = match self.photo.get_untracked().and_then(|photo| photo.keep) {
             Some(jpeg) => {
                 let name = format!("{id}.jpg");
-                photos::keep(&name, &jpeg);
+                if let Err(error) = photos::keep(&name, &jpeg) {
+                    crate::ui::feedback::storage_error(error);
+                    return;
+                }
                 Some(name)
             }
             None => self.photo_name.with(|name| name.clone()),
         };
-        meals::save(Meal {
-            id,
-            day: self.day.get_untracked(),
-            logged_at_ms: self.logged_at.with(|at| at.unwrap_or_else(clock::now_ms)),
-            slot: self.slot.get_untracked(),
-            title: self.title.get_untracked(),
-            foods: self.foods.get_untracked(),
-            photo,
-            model: self.model.get_untracked(),
-            prompt_version: self.prompt_version.get_untracked(),
-        });
-        if let Some(draft) = self.pending.get_untracked() {
-            pending::remove(&draft);
+        let result = meals::save_review(
+            Meal {
+                id,
+                day: self.day.get_untracked(),
+                logged_at_ms: self.logged_at.with(|at| at.unwrap_or_else(clock::now_ms)),
+                slot: self.slot.get_untracked(),
+                title: self.title.get_untracked(),
+                foods: self.foods.get_untracked(),
+                photo,
+                model: self.model.get_untracked(),
+                prompt_version: self.prompt_version.get_untracked(),
+            },
+            self.pending.get_untracked().as_deref(),
+        );
+        if let Err(error) = result {
+            crate::ui::feedback::storage_error(error);
+            return;
         }
         self.dirty.set(false);
         nav::pop();

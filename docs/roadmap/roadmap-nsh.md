@@ -219,9 +219,10 @@ Started before the (now canceled) Flutter import by the owner's choice
   intraday marks retain distinct provenance; same-day manual values win.
   Rebinding preserves archived observations. Asset changes separates current
   recalculation from observations captured at an actual instant, with missing
-  FX explicit. All new data participates in validated atomic backup/restore;
-  tests cover baseline migration, exact roundtrip, malformed backups, revision
-  precedence and capture immutability. These are daily prices and observed
+  FX explicit. Audit records and valuation observations participate in validated
+  atomic backup/restore; provider quotes and daily bars are excluded as
+  re-fetchable caches. Tests cover baseline migration, record roundtrip, malformed
+  backups, revision precedence and capture immutability. These are daily prices and observed
   valuations, not minute/tick bars, adjusted returns or retroactive snapshots.
 - Remaining: Android TLS/physical-device, system Back, keyboard
   and migration verification. Android TLS and physical-device behavior remain
@@ -250,13 +251,13 @@ directly after archiving.
 - Exit: restore from an NSH export on a clean install succeeds; two weeks of
   NSH as the only app.
 
-## Next increments after NSH 0.7.0
+## Remaining increments
 
 Recommended sequence; this is planning, not a claim these items are implemented.
 
 1. **Prove the daily Android path.** Upgrade from the released 0.6.0 APK on a
-   physical device; verify schema 16 migration, real statement picking, mixed
-   currency settlement, CN/HK/US TLS refresh, background/resume and keyboard/Back
+   physical device; verify migration to the current schema, real statement picking,
+   mixed currency settlement, CN/HK/US TLS refresh, background/resume and keyboard/Back
    behavior. Restore an encrypted backup into a clean install and compare
    balances, quantities, prices and recorded valuations. Supply a native local
    export/share path so recovery does not require WebDAV configuration.

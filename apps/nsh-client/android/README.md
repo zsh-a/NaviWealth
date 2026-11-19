@@ -30,6 +30,11 @@ SDK. The script installs the CLI-matched Android runtime when it is missing,
 before pinning the runtime path, and verifies the exact 0.5.0 Java SDK digest. The default embedding
 SDK download also verifies its pinned official release archive checksum.
 
+The automatic `nsh checks` workflow runs the runtime-only preparation, release
+JVM tests and strict lint on relevant pushes and PRs. It needs no NDK build,
+signing credentials or APK publication; the manual release workflow still
+assembles and signs the complete mixed app separately.
+
 Only **classes.jar** and the consumer rules are taken from the embedding AAR.
 Its prebuilt `libnsh.so` is never shipped: the application-linked library comes
 from the mixed app's own NSH package. Generated files live under `.nsh/` and

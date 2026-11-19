@@ -418,18 +418,24 @@ fn toggle_favorite(draft: Draft) {
         return;
     };
     if let Some(favorite) = untracked(|| favorites::of_meal(&id)) {
-        if favorites::remove(&favorite.id).is_some() {
-            haptic(Haptic::Selection);
-            announce_for_accessibility(s().favorite_removed.to_owned());
+        match favorites::remove(&favorite.id) {
+            Ok(Some(_)) => {
+                haptic(Haptic::Selection);
+                announce_for_accessibility(s().favorite_removed.to_owned());
+            }
+            Ok(None) => {}
+            Err(error) => crate::ui::feedback::storage_error(error),
         }
         return;
     }
-    match draft.snapshot().as_ref().and_then(favorites::save_from) {
-        Some(_) => {
-            haptic(Haptic::Notification(HapticNotification::Success));
-            announce_for_accessibility(s().favorite_saved.to_owned());
+    if let Some(meal) = draft.snapshot() {
+        match favorites::save_from(&meal) {
+            Ok(_) => {
+                haptic(Haptic::Notification(HapticNotification::Success));
+                announce_for_accessibility(s().favorite_saved.to_owned());
+            }
+            Err(error) => crate::ui::feedback::storage_error(error),
         }
-        None => haptic(Haptic::Notification(HapticNotification::Error)),
     }
 }
 
@@ -438,8 +444,13 @@ fn delete(draft: Draft) {
     let Some(id) = draft.meal_id.with(|id| id.clone()) else {
         return;
     };
-    let Some(meal) = meals::remove(&id) else {
-        return;
+    let meal = match meals::remove(&id) {
+        Ok(Some(meal)) => meal,
+        Ok(None) => return,
+        Err(error) => {
+            crate::ui::feedback::storage_error(error);
+            return;
+        }
     };
     draft.dirty.set(false);
     nav::pop();
@@ -448,7 +459,12 @@ fn delete(draft: Draft) {
         s().meal_deleted,
         Some((
             s().undo.into(),
-            Rc::new(move || meals::restore(restored.clone())),
+            Rc::new(move || {
+                crate::ui::feedback::undo_write(Rc::new({
+                    let meal = restored.clone();
+                    move || meals::restore(meal.clone())
+                }))
+            }),
         )),
     );
 }

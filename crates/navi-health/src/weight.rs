@@ -1,6 +1,8 @@
 //! Weight trends over measured days. Missing days are never filled in.
 //! Hosts supply calendar-day offsets and one measurement per day.
 
+pub mod records;
+
 /// Trailing seven-calendar-day mean. At least three measured days and a
 /// measurement in the last three days are needed to call it a trend.
 pub fn trend_weight(entries: &[(i32, f64)], day: i32) -> Option<f64> {

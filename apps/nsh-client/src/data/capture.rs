@@ -4,7 +4,7 @@ use super::{clock, db, finance, meals, photos, tasks, vision, weights};
 use crate::domain::{
     account::ModelAccount,
     capture::{Draft, MAX_ATTACHMENTS, MAX_INPUT, PROMPT_VERSION, Record, Status, Turn},
-    meal::{Meal, encode_meal},
+    meal::Meal,
     recognition::Lang,
 };
 use navi_finance::journal::{Entry, Source};
@@ -355,8 +355,7 @@ pub fn confirm(id: &str) -> Result<(), String> {
                         slot:*slot, title:estimate.title.clone(), foods:estimate.foods.clone(), photo:draft.photo.clone(),
                         model:Some(draft.model.clone()), prompt_version:Some(PROMPT_VERSION.into()) };
                     if !meal.is_valid() { return Err("invalid meal".into()); }
-                    tx.execute("INSERT INTO meals(id,day,logged_at_ms,body) VALUES(?1,?2,?3,?4)",
-                        params![meal.id,meal.day.to_string(),meal.logged_at_ms,encode_meal(&meal)]).map_err(|e| e.to_string())?;
+                    navi_health::store::insert_meal(&tx, &meal).map_err(|e| e.to_string())?;
                 }
                 Record::Weight { day, kg } => {
                     super::scale::reconcile_weight_in_transaction(&tx, &day.to_string(), Some(crate::domain::weight::rounded(*kg))).map_err(|e| e.to_string())?;
@@ -391,7 +390,9 @@ pub fn confirm(id: &str) -> Result<(), String> {
     if has_money {
         super::settings::save_ledger_defaults(preferences);
     }
-    meals::load();
+    if let Err(error) = meals::load() {
+        log::error!("capture: committed meals could not refresh: {error}");
+    }
     weights::load();
     super::body_metrics::load();
     if let Err(error) = finance::load() {

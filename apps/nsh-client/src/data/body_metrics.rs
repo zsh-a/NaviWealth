@@ -1,7 +1,7 @@
 //! Estimated body composition per day ([`navi_health::bodycomp`]), kept in
 //! the database ([`super::db`]) and mirrored in a signal in day order, like
-//! [`super::weights`]. Until the scale link exists the table stays empty;
-//! nothing here is ever estimated from a manually entered weight.
+//! [`super::weights`]. Scale confirmation writes composition and measuring
+//! evidence atomically; manually entered weights never produce estimates.
 
 use nsh_core::prelude::*;
 use rusqlite::{Connection, params};

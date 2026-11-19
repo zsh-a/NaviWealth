@@ -106,8 +106,9 @@ fn tile(
             if editing.get_untracked() {
                 remove(&id);
             } else {
-                close();
-                log(&id);
+                if log(&id) {
+                    close();
+                }
             }
         })
         .accessibility_label(move || {
@@ -185,9 +186,14 @@ fn photo(name: Option<String>) -> impl IntoElement {
 }
 
 /// Logs the favorite `id` today, with Undo.
-fn log(id: &str) {
-    let Some(meal) = favorites::log(id, clock::today()) else {
-        return;
+fn log(id: &str) -> bool {
+    let meal = match favorites::log(id, clock::today()) {
+        Ok(Some(meal)) => meal,
+        Ok(None) => return false,
+        Err(error) => {
+            crate::ui::feedback::storage_error(error);
+            return false;
+        }
     };
     haptic(Haptic::Notification(HapticNotification::Success));
     let name = favorites::get(id)
@@ -200,23 +206,37 @@ fn log(id: &str) {
         Some((
             s().undo.into(),
             Rc::new(move || {
-                meals::remove(&logged);
+                crate::ui::feedback::undo_write(Rc::new({
+                    let logged = logged.clone();
+                    move || meals::remove(&logged).map(|_| ())
+                }));
             }),
         )),
     );
+    true
 }
 
 /// Removes the favorite `id`, with Undo.
 fn remove(id: &str) {
-    let Some(removed) = favorites::remove(id) else {
-        return;
+    let removed = match favorites::remove(id) {
+        Ok(Some(removed)) => removed,
+        Ok(None) => return,
+        Err(error) => {
+            crate::ui::feedback::storage_error(error);
+            return;
+        }
     };
     haptic(Haptic::Impact(HapticImpact::Light));
     show_toast(
         s().favorite_removed,
         Some((
             s().undo.into(),
-            Rc::new(move || favorites::restore(removed.clone())),
+            Rc::new(move || {
+                crate::ui::feedback::undo_write(Rc::new({
+                    let favorite = removed.clone();
+                    move || favorites::restore(favorite.clone())
+                }))
+            }),
         )),
     );
 }

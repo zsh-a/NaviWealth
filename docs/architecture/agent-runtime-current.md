@@ -105,7 +105,8 @@ rtk cargo run -p agent-cli -- validate schemas/run-request.schema.json fixtures/
 |---|---|---|
 | Add or change a wire field | `schemas/`, submodule `third_party/agent-runtime/crates/agent-core/`, fixtures | schema validation tests |
 | Change LLM provider behavior | submodule `third_party/agent-runtime/crates/llm-protocol/`, `third_party/agent-runtime/crates/llm-client/` | `rtk cargo test` in the submodule |
-| Change recognition prompts or parsing | `crates/navi-health/` | health fixtures and adapter tests |
+| Change meal-recognition prompts or parsing | `crates/navi-health/` | health fixtures and adapter tests |
+| Change unified capture prompts, tools or history replay | `apps/nsh-client/src/domain/capture.rs`, `apps/nsh-client/src/data/vision.rs` | capture and Responses adapter/headless flows |
 
 ## Current Limitations
 

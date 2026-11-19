@@ -2,7 +2,7 @@
 
 Status: accepted.
 
-Date: 2026-11-13. Updated 2026-11-15 after the Flutter retirement.
+Date: 2026-11-13. Updated 2026-11-19 to clarify current storage and domain ownership.
 
 ## Context
 
@@ -33,10 +33,10 @@ features. The migration became a reduced rewrite, not a port.
 
    | Package | Owns |
    |---|---|
-   | `crates/navi-storage` | SQLite storage, migrations, clock, encrypted backup export/restore |
+   | `crates/navi-storage` | Neutral SQLite opening, migration execution, snapshots and atomic table replacement |
    | `crates/navi-finance` | Accounts, transactions, categories, budget, statement parsers, securities, trades, quotes, FX, derived positions and net worth |
-   | `crates/navi-health` | Meal recognition and nutrition, meals, weight, Garmin Personal API client and daily summaries |
-   | `apps/nsh-client` | Four tabs, settings, UI components; fixed composition |
+   | `crates/navi-health` | Meal/favorite models and validated repositories, nutrition, weight and review calculations, Garmin request/parsing contracts |
+   | `apps/nsh-client` | Four tabs, settings, reactive adapters, device clock/photos/network, encrypted backup orchestration and cross-domain capture/scale transactions |
 
    No `knowledge-core`, `execution-core` or domain registry. Recognition calls
    use `llm-protocol` / `llm-client` from the Agent Runtime submodule

@@ -1,0 +1,40 @@
+name: Documentation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**/*.md'
+      - 'llms.txt'
+      - 'tool/check-docs.mjs'
+      - 'tool/tests/check-docs.test.mjs'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    paths:
+      - '**/*.md'
+      - 'llms.txt'
+      - 'tool/check-docs.mjs'
+      - 'tool/tests/check-docs.test.mjs'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - run: node --test tool/tests/check-docs.test.mjs
+      - run: node tool/check-docs.mjs

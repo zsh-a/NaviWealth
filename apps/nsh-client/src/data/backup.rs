@@ -242,14 +242,20 @@ pub async fn restore(name: String) -> Result<(), Failure> {
         let (_, bundle) = background(async move { backup::open(&file, &passphrase) })
             .await
             .map_err(|_| Failure::Storage)??;
-        db::replace_with(&bundle.database).map_err(|error| match error {
+        let photos = photos::prepare_restore(bundle.photos)
+            .await
+            .map_err(|error| {
+                log::error!("backup: could not prepare restored photos: {error}");
+                Failure::Storage
+            })?;
+        db::replace_with(&bundle.database, photos.renamed()).map_err(|error| match error {
             db::RestoreError::Newer => Failure::Newer,
             db::RestoreError::Unreadable => Failure::NotABackup,
             db::RestoreError::Storage => Failure::Storage,
         })?;
-        photos::restore(bundle.photos).await;
-        meals::load();
-        favorites::load();
+        photos.commit();
+        meals::load().map_err(|_| Failure::Storage)?;
+        favorites::load().map_err(|_| Failure::Storage)?;
         notes::load();
         weights::load();
         body_metrics::load();

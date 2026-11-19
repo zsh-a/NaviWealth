@@ -136,7 +136,9 @@ async function connect(app: App, waitForAcknowledgement = true): Promise<string>
   expect(profileCommand.length).toBe(20);
   expect(profileCommand[18]).toBe(0xd0);
   expect(profileCommand[16] & 1).toBe(1);
-  expect(profileCommand[19]).toBe(profileCommand.slice(2, 19).reduce((sum, byte) => (sum + byte) & 255, 0));
+  expect(profileCommand[19]).toBe(
+    profileCommand.slice(2, 19).reduce((sum, byte) => (sum + byte) & 255, 0),
+  );
   if (waitForAcknowledgement) {
     await app.waitFor("Connected. Step onto the scale and stand still.");
   }
@@ -990,9 +992,14 @@ test("scale mixed: rejected profile after clock sync discards buffered readings 
 }, 30000);
 
 test("scale mixed: failed clock synchronization never sends the profile or remembers the scale", async () => {
-  const app = await start(true, true, { available: true, enabled: true }, {
-    "ble.write": { written: false },
-  });
+  const app = await start(
+    true,
+    true,
+    { available: true, enabled: true },
+    {
+      "ble.write": { written: false },
+    },
+  );
   await app.press("Find scale");
   await app.waitUntil(() => calls(app, "ble.scan.start").length === 1);
   const scanId = data(calls(app, "ble.scan.start")[0]).sessionId;

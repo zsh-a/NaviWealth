@@ -4,8 +4,8 @@
 
 use std::collections::HashSet;
 
+use navi_health::store;
 use nsh_core::prelude::*;
-use rusqlite::{Connection, params};
 
 use super::{clock, db, meals};
 use crate::domain::{
@@ -21,57 +21,29 @@ fn favorites() -> Signal<Favorites> {
 }
 
 /// Reads the kept favorites; the root calls it once, after [`db::open`].
-pub fn load() {
-    let list = db::with(|connection| {
-        read_all(connection).unwrap_or_else(|error| {
-            log::error!("favorites: cannot read the database: {error}");
-            Vec::new()
-        })
-    })
-    .unwrap_or_default();
+pub fn load() -> Result<(), String> {
+    let list = db::with(store::favorites)
+        .ok_or("the database is not open")?
+        .map_err(|e| e.to_string())?;
     favorites().set(Favorites(list));
+    Ok(())
 }
 
-fn read_all(connection: &Connection) -> rusqlite::Result<Vec<Favorite>> {
-    let mut statement = connection.prepare("SELECT body FROM saved_meals")?;
-    let bodies = statement.query_map([], |row| row.get::<_, String>(0))?;
-    let mut list = Vec::new();
-    for body in bodies {
-        if let Ok(favorite) = serde_json::from_str::<Favorite>(&body?)
-            && favorite.is_valid()
-        {
-            list.push(favorite);
-        }
-    }
-    Ok(list)
-}
-
-fn write(favorite: &Favorite) {
-    let Ok(body) = serde_json::to_string(favorite) else {
-        return;
-    };
-    let written = db::with(|connection| {
-        connection.execute(
-            "INSERT INTO saved_meals (id, saved_at_ms, used_at_ms, body) VALUES (?1, ?2, ?3, ?4)
-             ON CONFLICT (id) DO UPDATE SET
-                saved_at_ms = excluded.saved_at_ms, used_at_ms = excluded.used_at_ms,
-                body = excluded.body",
-            params![favorite.id, favorite.saved_at_ms, favorite.used_at_ms, body],
-        )
-    });
-    if let Some(Err(error)) = written {
-        log::error!("favorites: {} was not kept: {error}", favorite.id);
-    }
-}
-
-fn put(favorite: Favorite) {
-    write(&favorite);
+fn reflect(favorite: Favorite) {
     favorites().update(
         |list| match list.0.iter_mut().find(|kept| kept.id == favorite.id) {
             Some(kept) => *kept = favorite,
             None => list.0.push(favorite),
         },
     );
+}
+
+fn put(favorite: Favorite) -> Result<(), String> {
+    db::with(|c| store::save_favorite(c, &favorite))
+        .ok_or("the database is not open")?
+        .map_err(|e| e.to_string())?;
+    reflect(favorite);
+    Ok(())
 }
 
 /// Every favorite, most recently used first (tracked).
@@ -102,45 +74,31 @@ pub fn get(id: &str) -> Option<Favorite> {
 /// Keeps `meal` as a favorite. Kept photos are never rewritten, so the
 /// favorite shares the meal's file; the sweep keeps it while either refers
 /// to it.
-pub fn save_from(meal: &Meal) -> Option<Favorite> {
+pub fn save_from(meal: &Meal) -> Result<Favorite, String> {
     let id = format!("f{}", meals::new_meal_id());
     let favorite = Favorite::from_meal(meal, id, meal.photo.clone(), clock::now_ms());
-    if !favorite.is_valid() {
-        return None;
-    }
-    put(favorite.clone());
-    Some(favorite)
+    put(favorite.clone())?;
+    Ok(favorite)
 }
 
-/// Removes the favorite `id` and gives it back (to undo). Its photo goes
-/// with the next launch's sweep.
-pub fn remove(id: &str) -> Option<Favorite> {
-    let mut removed = None;
-    favorites().update(|list| {
-        if let Some(index) = list.0.iter().position(|f| f.id == id) {
-            removed = Some(list.0.remove(index));
-        }
-    });
-    if removed.is_some() {
-        let deleted = db::with(|connection| {
-            connection.execute("DELETE FROM saved_meals WHERE id = ?1", params![id])
-        });
-        if let Some(Err(error)) = deleted {
-            log::error!("favorites: {id} was not deleted: {error}");
-        }
-    }
-    removed
+/// Removes a favorite only after the database commits.
+pub fn remove(id: &str) -> Result<Option<Favorite>, String> {
+    let removed = db::with(|c| store::remove_favorite(c, id))
+        .ok_or("the database is not open")?
+        .map_err(|e| e.to_string())?;
+    favorites().update(|list| list.0.retain(|f| f.id != id));
+    Ok(removed)
 }
 
-/// Puts back a favorite [`remove`] took.
-pub fn restore(favorite: Favorite) {
-    put(favorite);
+pub fn restore(favorite: Favorite) -> Result<(), String> {
+    put(favorite)
 }
 
-/// Logs the favorite `id` as a new meal on `day` (its slot from the time
-/// of day) and keeps it; gives the meal, to undo.
-pub fn log(id: &str, day: Day) -> Option<Meal> {
-    let mut favorite = get(id)?;
+/// The meal and favorite's last-use time commit together before UI publication.
+pub fn log(id: &str, day: Day) -> Result<Option<Meal>, String> {
+    let Some(mut favorite) = get(id) else {
+        return Ok(None);
+    };
     let now = clock::now_ms();
     let (hour, minute) = clock::hour_minute(now);
     let meal = favorite.to_meal(
@@ -151,10 +109,15 @@ pub fn log(id: &str, day: Day) -> Option<Meal> {
         favorite.photo.clone(),
         meals::new_food_id,
     );
-    meals::save(meal.clone());
     favorite.used_at_ms = now;
-    put(favorite);
-    Some(meal)
+    db::with(|c| store::log_favorite(c, &favorite, &meal))
+        .ok_or("the database is not open")?
+        .map_err(|e| e.to_string())?;
+    batch(|| {
+        meals::reflect(meal.clone());
+        reflect(favorite);
+    });
+    Ok(Some(meal))
 }
 
 /// The photos the favorites refer to.

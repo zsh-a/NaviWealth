@@ -496,3 +496,167 @@ fn a_backup_made_by_hand_carries_the_photos_back_to_a_fresh_install() -> Result<
     );
     Ok(())
 }
+
+#[test]
+fn encrypted_backups_exclude_recognition_threads_and_local_write_guards() -> Result<(), String> {
+    let dav = Dav::new();
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, _) = start_in(
+        Some(dir.path()),
+        backups(&dav, "correct horse battery", Some(today().to_string())),
+        None,
+    );
+    let database = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    let private = "private-unconfirmed-transcript-evidence";
+    for table in ["meal_drafts", "capture_drafts"] {
+        database
+            .execute(
+                &format!("INSERT INTO {table}(id,created_at_ms,body) VALUES('draft',1,?1)"),
+                [private],
+            )
+            .unwrap();
+    }
+    database
+        .execute("INSERT INTO scale_drafts VALUES('session',?1)", [private])
+        .unwrap();
+    database
+        .execute("INSERT INTO weight_revisions VALUES('2026-11-19',42)", [])
+        .unwrap();
+    open_backup(&mut app)?;
+    app.press("Save and back up")?;
+    app.wait_until("an encrypted backup", GONE, |_| !dav.files().is_empty())?;
+    let (_, encrypted) = dav.files().into_iter().next_back().unwrap();
+    let (_, bundle) = backup::open(&encrypted, "correct horse battery").unwrap();
+    assert!(
+        !bundle
+            .database
+            .windows(private.len())
+            .any(|bytes| bytes == private.as_bytes())
+    );
+    let copy_path = dir.path().join("exported.sqlite");
+    std::fs::write(&copy_path, &bundle.database).unwrap();
+    let copy = rusqlite::Connection::open(copy_path).unwrap();
+    for table in [
+        "meal_drafts",
+        "capture_drafts",
+        "scale_drafts",
+        "weight_revisions",
+    ] {
+        let exported: i64 = copy
+            .query_row(&format!("SELECT count(*) FROM {table}"), [], |row| {
+                row.get(0)
+            })
+            .unwrap();
+        let original: i64 = database
+            .query_row(&format!("SELECT count(*) FROM {table}"), [], |row| {
+                row.get(0)
+            })
+            .unwrap();
+        assert_eq!(exported, 0, "{table} must stay out of exported backups");
+        assert_eq!(original, 1, "backup must preserve the live {table}");
+    }
+    Ok(())
+}
+
+/// A valid database with a photo-backed meal and explicit image bytes.
+fn backup_with_photo(dav: &Dav, photos: Vec<(String, Vec<u8>)>) {
+    let source = tempfile::tempdir().unwrap();
+    let (app, _) = start_in(Some(source.path()), pasta_today(), None);
+    drop(app);
+    let db = rusqlite::Connection::open(database_in(source.path())).unwrap();
+    db.execute(
+        "UPDATE meals SET body=json_set(body,'$.photo','m1.jpg')",
+        [],
+    )
+    .unwrap();
+    let meal: Meal = serde_json::from_value(stored_meals(source.path())[0].clone()).unwrap();
+    let favorite = naviwealth_app::domain::favorite::Favorite::from_meal(
+        &meal,
+        "favorite".into(),
+        Some("m1.jpg".into()),
+        42,
+    );
+    navi_health::store::save_favorite(&db, &favorite).unwrap();
+    let schema: u32 = db
+        .pragma_query_value(None, "user_version", |row| row.get(0))
+        .unwrap();
+    drop(db);
+    let bundle = Bundle {
+        database: std::fs::read(database_in(source.path())).unwrap(),
+        photos,
+    };
+    dav.put(
+        "naviwealth-2026-11-19-photos.nwbk",
+        backup::seal(&bundle, "correct horse battery", schema, 42).unwrap(),
+    );
+}
+
+#[test]
+fn failed_photo_preparation_preserves_database_and_existing_photos() -> Result<(), String> {
+    let dav = Dav::new();
+    backup_with_photo(
+        &dav,
+        vec![("new.jpg".into(), photo()), ("blocked.jpg".into(), photo())],
+    );
+    let (mut app, _, dir) = fresh_with(&dav, "correct horse battery", true);
+    let before = stored_meals(dir.path());
+    std::fs::create_dir_all(photo_dir(dir.path()).join("blocked.jpg")).unwrap();
+    std::fs::write(photo_dir(dir.path()).join("kept.jpg"), b"kept").unwrap();
+    restore_latest(&mut app, &dav)?;
+    app.wait_for("text:The device could not write.")?;
+    assert_eq!(stored_meals(dir.path()), before);
+    assert_eq!(
+        std::fs::read(photo_dir(dir.path()).join("kept.jpg")).unwrap(),
+        b"kept"
+    );
+    assert!(!photo_dir(dir.path()).join("new.jpg").exists());
+    Ok(())
+}
+
+#[test]
+fn restore_uses_new_references_for_conflicting_photos_and_preserves_local_files()
+-> Result<(), String> {
+    let dav = Dav::new();
+    backup_with_photo(&dav, vec![("m1.jpg".into(), photo())]);
+    let (mut app, _, dir) = fresh_with(&dav, "correct horse battery", false);
+    std::fs::create_dir_all(photo_dir(dir.path())).unwrap();
+    std::fs::write(photo_dir(dir.path()).join("m1.jpg"), b"local photo").unwrap();
+    restore_latest(&mut app, &dav)?;
+    app.wait_for("text:Backup restored")?;
+    let restored = stored_meals(dir.path());
+    let name = restored[0]["photo"].as_str().unwrap();
+    assert_ne!(name, "m1.jpg");
+    assert_eq!(
+        std::fs::read(photo_dir(dir.path()).join(name)).unwrap(),
+        photo()
+    );
+    assert_eq!(
+        std::fs::read(photo_dir(dir.path()).join("m1.jpg")).unwrap(),
+        b"local photo"
+    );
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    let favorite = navi_health::store::favorites(&db).unwrap();
+    assert_eq!(favorite[0].photo.as_deref(), Some(name));
+    Ok(())
+}
+
+#[test]
+fn rejected_database_restore_removes_only_newly_prepared_photos() -> Result<(), String> {
+    let dav = Dav::new();
+    backup_with_photo(&dav, vec![("m1.jpg".into(), photo())]);
+    let (mut app, _, dir) = fresh_with(&dav, "correct horse battery", true);
+    let before = stored_meals(dir.path());
+    std::fs::create_dir_all(photo_dir(dir.path())).unwrap();
+    std::fs::write(photo_dir(dir.path()).join("m1.jpg"), b"kept").unwrap();
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    db.execute_batch("CREATE TRIGGER reject_restore BEFORE INSERT ON meals BEGIN SELECT RAISE(ABORT,'device cannot write'); END;").unwrap();
+    restore_latest(&mut app, &dav)?;
+    app.wait_for("text:Not a readable NaviWealth backup.")?;
+    assert_eq!(stored_meals(dir.path()), before);
+    assert_eq!(
+        std::fs::read(photo_dir(dir.path()).join("m1.jpg")).unwrap(),
+        b"kept"
+    );
+    assert_eq!(std::fs::read_dir(photo_dir(dir.path())).unwrap().count(), 1);
+    Ok(())
+}

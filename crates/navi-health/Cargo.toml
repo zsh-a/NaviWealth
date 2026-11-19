@@ -4,11 +4,14 @@ version = "0.1.0"
 edition = "2024"
 rust-version = "1.96"
 publish = false
-description = "Shared, host-independent meal recognition and photo preparation."
+description = "Host-independent health models, calculations, recognition and validated storage."
 
 [workspace]
 
 [dependencies]
+navi-storage = { path = "../navi-storage" }
+jiff = { version = "0.2", default-features = false, features = ["std", "serde"] }
+log = "0.4"
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp"] }
 llm-protocol = { path = "../../third_party/agent-runtime/crates/llm-protocol" }
 llm-client = { path = "../../third_party/agent-runtime/crates/llm-client" }

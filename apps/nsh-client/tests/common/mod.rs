@@ -316,3 +316,19 @@ pub fn seed_catalog(dir: &Path) {
     std::fs::create_dir_all(seed.parent().unwrap()).expect("the instance dir");
     std::fs::write(seed, CATALOG_SAMPLE).expect("the catalog seed is written");
 }
+
+/// Check the native failure dialog while allowing the editor to keep its state.
+pub fn storage_dialogs(app: &mut Headless) -> Arc<std::sync::atomic::AtomicUsize> {
+    let count = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    let observed = count.clone();
+    app.on_dialog(move |dialog| {
+        assert_eq!(dialog.title.as_deref(), Some("Local data unavailable"));
+        assert_eq!(
+            dialog.message.as_deref(),
+            Some("Could not save changes. Check device storage and try again.")
+        );
+        observed.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        nsh_testing::DialogAnswer::Press("Close".into())
+    });
+    count
+}

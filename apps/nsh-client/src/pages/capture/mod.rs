@@ -193,7 +193,11 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                     };
                     let name =
                         id.with(|id| format!("{id}-{}-{serial}.{extension}", clock::now_ms()));
-                    photos::keep(&name, &upload);
+                    if let Err(failure) = photos::keep(&name, &upload) {
+                        log::error!("capture: image could not be kept: {failure}");
+                        error.set(Some(s().error_transaction_storage.into()));
+                        continue;
+                    }
                     draft.update(|d| {
                         if d.photo.is_none() && d.transcript.is_empty() {
                             d.photo = Some(name.clone());

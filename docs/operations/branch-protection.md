@@ -10,12 +10,18 @@ choose to use pull requests.
 - `Rust domain crates`: fmt, clippy and tests for `navi-storage`, `navi-finance`
   and `navi-health`, plus fmt and tests for the `third_party/agent-runtime`
   submodule
+- `nsh checks`: client fmt, clippy and headless tests, TypeScript formatting,
+  mixed NSH type/flow checks, and Android host JVM tests and lint; no signing
+  credentials or APK publication
+- `Documentation`: first-party document links/code paths, including `llms.txt`
+  and the Android host README, plus checker regression tests
 - `securities-catalog`: bakes the catalog from `tool/asset_catalog/sources/`
   and republishes the rolling catalog release when they change
 
 Workflows use path filters, so unrelated areas do not start each other's
-checks. The `nsh client` workflow runs only on manual dispatch and checks
-the app crate and mixed TSX flows before packaging.
+checks. Automatic client verification is separate from the `nsh client`
+manual release workflow, which repeats app and mixed-flow checks before
+packaging and signing.
 
 ## Optional protected-main setup
 
@@ -55,6 +61,7 @@ branch verify without publishing.
 The package id is `com.naviwealth.app` (2026-11-15; the earlier
 `com.naviwealth.health.nsh` installs migrate by clean-install restore from a
 WebDAV backup). Releases use `nsh-vX.Y.Z` tags: build the exact tag with the
-manual workflow and publish the verified APK plus `SHA256SUMS`. Do not
-republish the global latest release; it still holds the retired Flutter
-channel's artifacts. Subsequent releases must retain the fixed key.
+manual workflow and publish the verified APK plus `SHA256SUMS`. A newly
+created NSH release is marked latest, matching the app's release lookup;
+existing historical Flutter release artifacts are not overwritten. Subsequent
+releases must retain the fixed key.

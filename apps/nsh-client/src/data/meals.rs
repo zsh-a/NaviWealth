@@ -8,12 +8,13 @@ use std::{
     sync::atomic::{AtomicU64, Ordering},
 };
 
+use navi_health::store;
 use nsh_core::{prelude::*, storage::Storage};
-use rusqlite::{Connection, params};
+use rusqlite::Connection;
 
 use super::{clock, db};
 use crate::domain::{
-    meal::{Day, DaySummary, Meal, decode_meal, decode_meals, encode_meal, meals_of, summarize},
+    meal::{Day, DaySummary, Meal, meals_of, summarize},
     nutrition::Food,
 };
 
@@ -28,83 +29,46 @@ fn meals() -> Signal<Meals> {
 }
 
 /// Reads the kept meals; the root calls it once, after [`db::open`].
-pub fn load() {
+pub fn load() -> Result<(), String> {
     let list = db::with(|connection| {
-        move_legacy(connection);
-        read_all(connection).unwrap_or_else(|error| {
-            log::error!("meals: cannot read the database: {error}");
-            Vec::new()
-        })
+        move_legacy(connection)?;
+        store::meals(connection).map_err(|error| error.to_string())
     })
-    .unwrap_or_default();
+    .ok_or("the database is not open")??;
     meals().set(Meals(list));
+    Ok(())
 }
 
-/// Moves meals from the legacy key-value entry into the database in one
-/// transaction, and removes the entry only after it commits. Meals already
-/// in the database keep their row.
-fn move_legacy(connection: &Connection) {
+/// The legacy entry is removed only after every record validates and the
+/// complete inventory commits. A malformed entry remains recoverable.
+fn move_legacy(connection: &Connection) -> Result<(), String> {
     let Some(raw) = Storage::get_item(LEGACY_KEY) else {
-        return;
+        return Ok(());
     };
-    let legacy = decode_meals(&raw);
-    let moved =
-        (|| -> rusqlite::Result<()> {
-            let tx = connection.unchecked_transaction()?;
-            for meal in &legacy {
-                tx.execute(
-                "INSERT OR IGNORE INTO meals (id, day, logged_at_ms, body) VALUES (?1, ?2, ?3, ?4)",
-                params![meal.id, meal.day.to_string(), meal.logged_at_ms, encode_meal(meal)],
-            )?;
-            }
-            tx.commit()
-        })();
-    match moved {
-        Ok(()) => {
-            Storage::remove_item(LEGACY_KEY);
-            log::info!("meals: moved {} meals into the database", legacy.len());
-        }
-        Err(error) => log::error!("meals: kept the legacy entry, the move failed: {error}"),
+    #[derive(serde::Deserialize)]
+    struct Legacy {
+        version: u32,
+        meals: Vec<Meal>,
     }
+    let legacy: Legacy = serde_json::from_str(&raw).map_err(|e| e.to_string())?;
+    if legacy.version != 1 || legacy.meals.iter().any(|meal| !meal.is_valid()) {
+        return Err("invalid legacy meals".into());
+    }
+    store::import_legacy_meals(connection, &legacy.meals).map_err(|e| e.to_string())?;
+    Storage::remove_item(LEGACY_KEY);
+    log::debug!("meals: migrated {} records", legacy.meals.len());
+    Ok(())
 }
 
-fn read_all(connection: &Connection) -> rusqlite::Result<Vec<Meal>> {
-    let mut statement = connection.prepare("SELECT body FROM meals ORDER BY logged_at_ms, id")?;
-    let bodies = statement.query_map([], |row| row.get::<_, String>(0))?;
-    let mut list = Vec::new();
-    for body in bodies {
-        if let Some(meal) = decode_meal(&body?) {
-            list.push(meal);
-        }
-    }
-    Ok(list)
-}
-
-fn write(meal: &Meal) {
-    let written = db::with(|connection| {
-        connection.execute(
-            "INSERT INTO meals (id, day, logged_at_ms, body) VALUES (?1, ?2, ?3, ?4)
-             ON CONFLICT (id) DO UPDATE SET
-                day = excluded.day, logged_at_ms = excluded.logged_at_ms, body = excluded.body",
-            params![
-                meal.id,
-                meal.day.to_string(),
-                meal.logged_at_ms,
-                encode_meal(meal)
-            ],
-        )
-    });
-    if let Some(Err(error)) = written {
-        log::error!("meals: meal {} was not kept: {error}", meal.id);
-    }
-}
-
-fn delete(id: &str) {
-    let deleted =
-        db::with(|connection| connection.execute("DELETE FROM meals WHERE id = ?1", params![id]));
-    if let Some(Err(error)) = deleted {
-        log::error!("meals: meal {id} was not deleted: {error}");
-    }
+/// Publish only a committed meal. Cross-domain confirmation uses this after
+/// its host-owned transaction succeeds.
+pub(super) fn reflect(meal: Meal) {
+    meals().update(
+        |meals| match meals.0.iter_mut().find(|kept| kept.id == meal.id) {
+            Some(kept) => *kept = meal,
+            None => meals.0.push(meal),
+        },
+    );
 }
 
 /// `day`'s meals in the order they were logged (tracked).
@@ -123,32 +87,47 @@ pub fn get(id: &str) -> Option<Meal> {
 }
 
 /// Adds `meal`, or replaces the one with its id.
-pub fn save(meal: Meal) {
-    write(&meal);
-    meals().update(
-        |meals| match meals.0.iter_mut().find(|kept| kept.id == meal.id) {
-            Some(kept) => *kept = meal,
-            None => meals.0.push(meal),
-        },
-    );
+pub fn save(meal: Meal) -> Result<(), String> {
+    save_review(meal, None)
 }
 
-/// Removes the meal `id` and gives it back (to undo). Its photo stays
-/// until the next launch sweeps photos no meal refers to.
-pub fn remove(id: &str) -> Option<Meal> {
-    let mut removed = None;
-    meals().update(|meals| {
-        if let Some(index) = meals.0.iter().position(|meal| meal.id == id) {
-            removed = Some(meals.0.remove(index));
-            delete(id);
+/// A legacy recognition review consumes its draft in the same transaction as
+/// the confirmed meal, just like unified capture.
+pub fn save_review(meal: Meal, pending_id: Option<&str>) -> Result<(), String> {
+    db::with(|connection| -> Result<(), String> {
+        let tx = connection
+            .unchecked_transaction()
+            .map_err(|e| e.to_string())?;
+        store::save_meal(&tx, &meal).map_err(|e| e.to_string())?;
+        if let Some(id) = pending_id {
+            let removed = tx
+                .execute("DELETE FROM meal_drafts WHERE id=?1", [id])
+                .map_err(|e| e.to_string())?;
+            if removed != 1 {
+                return Err("draft no longer exists".into());
+            }
         }
-    });
-    removed
+        tx.commit().map_err(|e| e.to_string())
+    })
+    .ok_or("the database is not open")??;
+    reflect(meal);
+    if let Some(id) = pending_id {
+        super::pending::forget(id);
+    }
+    Ok(())
 }
 
-/// Puts back a meal [`remove`] took.
-pub fn restore(meal: Meal) {
-    save(meal);
+/// Removes a committed meal and returns it for Undo only after success.
+pub fn remove(id: &str) -> Result<Option<Meal>, String> {
+    let removed = db::with(|c| store::remove_meal(c, id))
+        .ok_or("the database is not open")?
+        .map_err(|e| e.to_string())?;
+    meals().update(|meals| meals.0.retain(|meal| meal.id != id));
+    Ok(removed)
+}
+
+pub fn restore(meal: Meal) -> Result<(), String> {
+    save(meal)
 }
 
 /// The most recently eaten foods, one per name (case-insensitive), newest

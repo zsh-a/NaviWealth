@@ -205,6 +205,15 @@ fn remove_scratch(path: &Path) {
 /// and FX rates stay: the owner entered or kept them.
 const MARKET_CACHES: &[&str] = &["finance_market_quotes", "finance_daily_bars"];
 
+/// Device-local recognition evidence and concurrency guards are not records.
+/// Statement import reviews keep their existing finance backup contract.
+const PRIVATE_TABLES: &[&str] = &[
+    "meal_drafts",
+    "capture_drafts",
+    "scale_drafts",
+    "weight_revisions",
+];
+
 /// A consistent copy of the whole database, as file bytes, with the market
 /// caches emptied and their pages reclaimed.
 pub fn snapshot() -> Result<Vec<u8>, String> {
@@ -218,16 +227,10 @@ pub fn snapshot() -> Result<Vec<u8>, String> {
 fn snapshot_file(connection: &Connection, path: &Path) -> Result<Vec<u8>, String> {
     navi_storage::snapshot(connection, path).map_err(|error| error.to_string())?;
     let copy = Connection::open(path).map_err(|error| error.to_string())?;
-    for table in MARKET_CACHES {
+    for table in MARKET_CACHES.iter().chain(PRIVATE_TABLES) {
         copy.execute(&format!("DELETE FROM {table}"), [])
             .map_err(|error| error.to_string())?;
     }
-    // Unconfirmed health reviews do not leave the device in exported backups.
-    // Revisions are local concurrency guards, not records.
-    copy.execute("DELETE FROM scale_drafts", [])
-        .map_err(|e| e.to_string())?;
-    copy.execute("DELETE FROM weight_revisions", [])
-        .map_err(|e| e.to_string())?;
     copy.execute("VACUUM", [])
         .map_err(|error| error.to_string())?;
     drop(copy);
@@ -237,16 +240,29 @@ fn snapshot_file(connection: &Connection, path: &Path) -> Result<Vec<u8>, String
 /// Health-only backups (schema 1–6) replace Health records and preserve the
 /// current ledger. Backups from schema 7 onward replace both domains. The
 /// whole replacement is atomic and validated before touching current rows.
-pub fn replace_with(file: &[u8]) -> Result<(), RestoreError> {
+pub fn replace_with(
+    file: &[u8],
+    photos: &std::collections::HashMap<String, String>,
+) -> Result<(), RestoreError> {
     let path = scratch("restore");
     remove_scratch(&path);
     std::fs::write(&path, file).map_err(|_| RestoreError::Storage)?;
-    let result = with(|c| restore_file(c, &path)).unwrap_or(Err(RestoreError::Storage));
+    let result =
+        with(|c| restore_file_with_photos(c, &path, photos)).unwrap_or(Err(RestoreError::Storage));
     remove_scratch(&path);
     result
 }
 
+#[cfg(test)]
 fn restore_file(connection: &Connection, path: &Path) -> Result<(), RestoreError> {
+    restore_file_with_photos(connection, path, &Default::default())
+}
+
+fn restore_file_with_photos(
+    connection: &Connection,
+    path: &Path,
+    photos: &std::collections::HashMap<String, String>,
+) -> Result<(), RestoreError> {
     let mut restored = Connection::open(path).map_err(|_| RestoreError::Unreadable)?;
     restored
         .pragma_update(None, "trusted_schema", false)
@@ -265,6 +281,7 @@ fn restore_file(connection: &Connection, path: &Path) -> Result<(), RestoreError
     }
     migrate(&mut restored).map_err(|_| RestoreError::Unreadable)?;
     validate_restored(&restored).map_err(|_| RestoreError::Unreadable)?;
+    remap_photos(&restored, photos).map_err(|_| RestoreError::Unreadable)?;
     // Review drafts are never imported. Clearing the source first lets the
     // normal table replacement invalidate current drafts in the same transaction.
     restored
@@ -289,10 +306,46 @@ fn restore_file(connection: &Connection, path: &Path) -> Result<(), RestoreError
     })
 }
 
-/// Reject malformed records before replacing anything. Ordinary loading
-/// skips bad rows; doing that during restore would silently lose data.
+/// Photo names are storage references, not meal identities. Repoint only the
+/// validated source copy before its rows enter the destination transaction.
+fn remap_photos(
+    connection: &Connection,
+    names: &std::collections::HashMap<String, String>,
+) -> Result<(), String> {
+    if names.is_empty() {
+        return Ok(());
+    }
+    for table in ["meals", "saved_meals"] {
+        let mut statement = connection
+            .prepare(&format!("SELECT id, body FROM {table}"))
+            .map_err(|e| e.to_string())?;
+        let rows = statement
+            .query_map([], |row| {
+                Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+            })
+            .map_err(|e| e.to_string())?;
+        for row in rows {
+            let (id, body) = row.map_err(|e| e.to_string())?;
+            let mut body: serde_json::Value =
+                serde_json::from_str(&body).map_err(|e| e.to_string())?;
+            if let Some(name) = body["photo"].as_str().and_then(|name| names.get(name)) {
+                body["photo"] = name.clone().into();
+                connection
+                    .execute(
+                        &format!("UPDATE {table} SET body=?1 WHERE id=?2"),
+                        rusqlite::params![body.to_string(), id],
+                    )
+                    .map_err(|e| e.to_string())?;
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Reject malformed records before replacing anything, using the same health
+/// contracts as normal loading and confirmed writes.
 fn validate_restored(connection: &Connection) -> Result<(), String> {
-    use crate::domain::{meal::Meal, weight::valid_kg};
+    use crate::domain::weight::valid_kg;
     for (table, _) in HEALTH_TABLES.iter().chain(navi_finance::repository::TABLES) {
         let kind: String = connection
             .query_row(
@@ -306,27 +359,6 @@ fn validate_restored(connection: &Connection) -> Result<(), String> {
         }
     }
     let read = || -> rusqlite::Result<()> {
-        let mut statement = connection.prepare("SELECT id, day, logged_at_ms, body FROM meals")?;
-        let rows = statement.query_map([], |row| {
-            Ok((
-                row.get::<_, String>(0)?,
-                row.get::<_, String>(1)?,
-                row.get::<_, i64>(2)?,
-                row.get::<_, String>(3)?,
-            ))
-        })?;
-        for row in rows {
-            let (id, day, at, body) = row?;
-            let meal: Meal =
-                serde_json::from_str(&body).map_err(|_| rusqlite::Error::InvalidQuery)?;
-            if !meal.is_valid()
-                || meal.id != id
-                || meal.day.to_string() != day
-                || meal.logged_at_ms != at
-            {
-                return Err(rusqlite::Error::InvalidQuery);
-            }
-        }
         let mut statement = connection.prepare("SELECT day, kg, logged_at_ms FROM weights")?;
         let rows = statement.query_map([], |row| {
             Ok((
@@ -370,18 +402,6 @@ fn validate_restored(connection: &Connection) -> Result<(), String> {
                 return Err(rusqlite::Error::InvalidQuery);
             }
         }
-        let mut statement = connection.prepare("SELECT id, body FROM saved_meals")?;
-        let rows = statement.query_map([], |row| {
-            Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
-        })?;
-        for row in rows {
-            let (id, body) = row?;
-            let value: crate::domain::favorite::Favorite =
-                serde_json::from_str(&body).map_err(|_| rusqlite::Error::InvalidQuery)?;
-            if !value.is_valid() || value.id != id {
-                return Err(rusqlite::Error::InvalidQuery);
-            }
-        }
         let mut statement = connection.prepare("SELECT day, text FROM review_notes")?;
         let rows = statement.query_map([], |row| {
             Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
@@ -396,6 +416,7 @@ fn validate_restored(connection: &Connection) -> Result<(), String> {
         Ok(())
     };
     read().map_err(|e| e.to_string())?;
+    navi_health::store::validate(connection).map_err(|e| e.to_string())?;
     super::scale::validate_saved(connection)?;
     navi_finance::repository::validate(connection).map_err(|e| e.to_string())
 }

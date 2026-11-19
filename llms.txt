@@ -22,7 +22,8 @@
 
 - `apps/nsh-client/`: NSH mixed client, Android BLE host and headless tests.
 - `crates/navi-finance/`: Double-entry ledger, holdings, securities catalog truth.
-- `crates/navi-health/`: Meal recognition, nutrition, Garmin daily summaries.
+- `crates/navi-health/`: Meals and favorites, validated repositories, nutrition, weight and health-review calculations, Garmin parsing.
+- `crates/navi-storage/`: Neutral SQLite migrations, snapshots and atomic table replacement.
 - `third_party/agent-runtime/`: Provider-neutral LLM protocol and client (submodule).
 - `third_party/market-data-rs/`: Market-data SDK (Tencent quotes).
 - `tool/asset_catalog/`: Securities catalog source CSVs and its bake/publish pipeline (the client downloads the bundle from the rolling release).

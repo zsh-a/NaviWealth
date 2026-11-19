@@ -540,3 +540,119 @@ fn body_profile_birth_date_copy_and_calendar_are_available_in_chinese() -> Resul
     assert_eq!(saved["birth_date"], "2000-02-28");
     Ok(())
 }
+
+#[test]
+fn failed_manual_save_preserves_the_editor_and_can_be_retried() -> Result<(), String> {
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
+    let dialogs = storage_dialogs(&mut app);
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    db.execute_batch("CREATE TRIGGER reject_meal BEFORE INSERT ON meals BEGIN SELECT RAISE(ABORT,'full disk'); END;").unwrap();
+    open_manual(&mut app, "Manual meal")?;
+    app.type_text("text:e.g. Beef noodle soup", "Rice")?;
+    app.type_text("label:Amount eaten", "250")?;
+    app.type_text("label:Energy", "130")?;
+    app.press("Done")?;
+    app.press("text:/^Save meal/")?;
+    assert_eq!(dialogs.load(std::sync::atomic::Ordering::Relaxed), 1);
+    assert!(stored_meals(dir.path()).is_empty());
+    app.wait_for("text:Rice")?;
+    assert!(app.screen().enabled("text:/^Save meal/")?);
+    db.execute_batch("DROP TRIGGER reject_meal").unwrap();
+    app.press("text:/^Save meal/")?;
+    app.wait_for("text:1 meal")?;
+    assert_eq!(stored_meals(dir.path()).len(), 1);
+    Ok(())
+}
+
+#[test]
+fn failed_delete_keeps_the_meal_and_failed_undo_offers_retry() -> Result<(), String> {
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, _) = start_in(Some(dir.path()), pasta_today(), None);
+    let dialogs = storage_dialogs(&mut app);
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    db.execute_batch("CREATE TRIGGER reject_delete BEFORE DELETE ON meals BEGIN SELECT RAISE(ABORT,'full disk'); END;").unwrap();
+    app.press("Tomato pasta")?;
+    app.press("label:Delete meal")?;
+    assert_eq!(dialogs.load(std::sync::atomic::Ordering::Relaxed), 1);
+    assert_eq!(stored_meals(dir.path()).len(), 1);
+    app.wait_for("Edit meal")?;
+    db.execute_batch("DROP TRIGGER reject_delete; CREATE TRIGGER reject_undo BEFORE INSERT ON meals BEGIN SELECT RAISE(ABORT,'full disk'); END;").unwrap();
+    app.press("label:Delete meal")?;
+    app.wait_for("Meal deleted")?;
+    assert!(stored_meals(dir.path()).is_empty());
+    app.set_viewport(nsh_core::Size::new(
+        nsh_core::Points(360.0),
+        nsh_core::Points(640.0),
+    ))?;
+    app.set_environment("large text", |e| e.font_scale = 1.3)?;
+    app.press("Undo")?;
+    app.wait_for("Could not save changes. Check device storage and try again.")?;
+    for label in [
+        "Could not save changes. Check device storage and try again.",
+        "Try again",
+    ] {
+        let nodes = app.screen().layout_nodes();
+        let node = nodes
+            .iter()
+            .find(|node| {
+                !node.hidden
+                    && node
+                        .text
+                        .as_ref()
+                        .is_some_and(|text| text.text.text.as_str() == label)
+            })
+            .expect("toast copy and recovery action are mounted");
+        assert!(
+            node.bounds.origin.x.0 >= 16.0
+                && node.bounds.origin.x.0 + node.bounds.size.width.0 <= 344.0,
+            "toast text must fit the narrow viewport: {node:?}"
+        );
+    }
+    assert!(stored_meals(dir.path()).is_empty());
+    db.execute_batch("DROP TRIGGER reject_undo").unwrap();
+    app.press("Try again")?;
+    app.wait_for("Tomato pasta")?;
+    assert_eq!(stored_meals(dir.path()).len(), 1);
+    Ok(())
+}
+
+#[test]
+fn unreadable_health_records_block_startup_without_sweeping_photos() -> Result<(), String> {
+    let dir = tempfile::tempdir().unwrap();
+    let (app, _) = start_in(Some(dir.path()), pasta_today(), None);
+    drop(app);
+    let folder = database_in(dir.path())
+        .parent()
+        .unwrap()
+        .join("meal-photos");
+    std::fs::create_dir_all(&folder).unwrap();
+    let photo = folder.join("kept.jpg");
+    std::fs::write(&photo, b"recoverable photo").unwrap();
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    db.execute("UPDATE meals SET body='{}'", []).unwrap();
+    drop(db);
+    let mut config = EngineConfig::new(Root::of::<App>());
+    config.storage = Some(MemoryStorage::new(Vec::new()));
+    config.data_dir = Some(dir.path().to_owned());
+    let mut app = Headless::start(config).unwrap();
+    app.wait_for("Local data unavailable")?;
+    app.wait(Duration::from_millis(100))?;
+    assert!(
+        photo.exists(),
+        "a failed load must not classify photos as orphans"
+    );
+    Ok(())
+}
+
+#[test]
+fn malformed_legacy_meals_remain_available_for_recovery() -> Result<(), String> {
+    let raw = json!({"version":1,"meals":[{"id":"malformed"}]}).to_string();
+    let storage = MemoryStorage::new(vec![("meals.v1".into(), raw.clone())]);
+    let mut config = EngineConfig::new(Root::of::<App>());
+    config.storage = Some(storage.clone());
+    let mut app = Headless::start(config).unwrap();
+    app.wait_for("Local data unavailable")?;
+    assert_eq!(storage.entries()["meals.v1"], raw);
+    Ok(())
+}

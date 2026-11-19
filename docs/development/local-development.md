@@ -28,10 +28,12 @@ rtk cargo clippy --manifest-path crates/navi-finance/Cargo.toml --all-targets --
 rtk cargo test --manifest-path crates/navi-finance/Cargo.toml --locked
 ```
 
-Repeat the last three commands for `crates/navi-health/Cargo.toml` and
-`apps/nsh-client/Cargo.toml`. These are independent Cargo workspaces; there is
-no root `Cargo.toml`. CI checks both domain crates on relevant pushes and PRs;
-the NSH workflow remains manually dispatched. Keep each workspace's
+Repeat the last three commands for `crates/navi-health/Cargo.toml`,
+`crates/navi-storage/Cargo.toml` and `apps/nsh-client/Cargo.toml`. These are
+independent Cargo workspaces; there is no root `Cargo.toml`. Relevant pushes
+and PRs run the domain checks plus `nsh checks` (client Rust, mixed TSX
+flows, Android JVM tests and lint). The signed APK workflow remains manually
+dispatched. Keep each workspace's
 `Cargo.lock` committed and use `--locked` for checks. Dependency updates are
 explicit `cargo update` changes reviewed with their lockfile diffs.
 
@@ -95,7 +97,7 @@ Rules and known pitfalls:
   translation support; check `ro.product.cpu.abilist` before installing.
   The `.bledev` debug package keeps existing production app data separate.
 - Emulator evidence covers UI and flow debugging. Roadmap items marked as
-  physical-device verification (Keystore, real TLS, upgrade/migration) still
+  physical-device verification (permissions, real TLS, upgrade/migration) still
   need hardware.
 
 `.cargo/config.toml` provides backtraces and debug logs for first-party crates

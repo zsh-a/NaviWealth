@@ -37,27 +37,34 @@ thread_local! {
 }
 
 /// Reads the kept drafts; the root calls it once, after [`db::open`].
-pub fn load() {
-    let list = db::with(|connection| -> rusqlite::Result<Vec<PendingMeal>> {
-        let mut statement =
-            connection.prepare("SELECT body FROM meal_drafts ORDER BY created_at_ms")?;
-        let bodies = statement.query_map([], |row| row.get::<_, String>(0))?;
+pub fn load() -> Result<(), String> {
+    let list = db::with(|connection| -> Result<Vec<PendingMeal>, String> {
+        let mut statement = connection
+            .prepare("SELECT id, created_at_ms, body FROM meal_drafts ORDER BY created_at_ms")
+            .map_err(|e| e.to_string())?;
+        let rows = statement
+            .query_map([], |row| {
+                Ok((
+                    row.get::<_, String>(0)?,
+                    row.get::<_, i64>(1)?,
+                    row.get::<_, String>(2)?,
+                ))
+            })
+            .map_err(|e| e.to_string())?;
         let mut list = Vec::new();
-        for body in bodies {
-            if let Ok(draft) = serde_json::from_str::<PendingMeal>(&body?)
-                && draft.is_valid()
-            {
-                list.push(draft.restored());
+        for row in rows {
+            let (id, at, body) = row.map_err(|e| e.to_string())?;
+            let draft: PendingMeal = serde_json::from_str(&body).map_err(|e| e.to_string())?;
+            if !draft.is_valid() || draft.id != id || draft.created_at_ms != at {
+                return Err("invalid meal draft".into());
             }
+            list.push(draft.restored());
         }
         Ok(list)
     })
-    .and_then(|read| {
-        read.map_err(|error| log::error!("drafts: cannot read the database: {error}"))
-            .ok()
-    })
-    .unwrap_or_default();
+    .ok_or("the database is not open")??;
     drafts().set(Drafts(list));
+    Ok(())
 }
 
 /// Every draft, newest first (tracked).
@@ -76,39 +83,44 @@ pub fn failure(id: &str) -> Option<VisionFailure> {
 }
 
 /// Keeps `draft`, replacing the one with its id.
-pub fn put(draft: PendingMeal) {
+pub fn put(draft: PendingMeal) -> Result<(), String> {
     if !draft.is_valid() {
-        return;
+        return Err("invalid meal draft".into());
     }
-    if let Ok(body) = serde_json::to_string(&draft) {
-        let written = db::with(|connection| {
-            connection.execute(
-                "INSERT INTO meal_drafts (id, created_at_ms, body) VALUES (?1, ?2, ?3)
-                 ON CONFLICT (id) DO UPDATE SET body = excluded.body",
-                params![draft.id, draft.created_at_ms, body],
-            )
-        });
-        if let Some(Err(error)) = written {
-            log::error!("drafts: {} was not kept: {error}", draft.id);
-        }
-    }
+    let body = serde_json::to_string(&draft).map_err(|e| e.to_string())?;
+    db::with(|connection| {
+        connection.execute(
+            "INSERT INTO meal_drafts (id, created_at_ms, body) VALUES (?1, ?2, ?3)
+         ON CONFLICT (id) DO UPDATE SET body = excluded.body",
+            params![draft.id, draft.created_at_ms, body],
+        )
+    })
+    .ok_or("the database is not open")?
+    .map_err(|e| e.to_string())?;
+    reflect(draft);
+    Ok(())
+}
+
+fn reflect(draft: PendingMeal) {
     drafts().update(|d| match d.0.iter_mut().find(|kept| kept.id == draft.id) {
         Some(kept) => *kept = draft,
         None => d.0.push(draft),
     });
 }
 
-/// Drops the draft `id` (saved as a meal, or discarded); a recognition
-/// still running for it is ignored when it ends.
-pub fn remove(id: &str) {
+/// Forget a draft only after its deletion has committed, including confirmation.
+pub(super) fn forget(id: &str) {
     RUNS.with(|r| r.borrow_mut().remove(id));
     FAILURES.with(|f| f.borrow_mut().remove(id));
-    let deleted =
-        db::with(|connection| connection.execute("DELETE FROM meal_drafts WHERE id = ?1", [id]));
-    if let Some(Err(error)) = deleted {
-        log::error!("drafts: {id} was not deleted: {error}");
-    }
     drafts().update(|d| d.0.retain(|p| p.id != id));
+}
+
+pub fn remove(id: &str) -> Result<(), String> {
+    db::with(|connection| connection.execute("DELETE FROM meal_drafts WHERE id=?1", [id]))
+        .ok_or("the database is not open")?
+        .map_err(|e| e.to_string())?;
+    forget(id);
+    Ok(())
 }
 
 /// Keeps `draft` as analyzing and reads its photo `jpeg` with `account`
@@ -119,7 +131,9 @@ pub fn recognize(
     jpeg: Rc<Vec<u8>>,
     lang: Lang,
     consent: Consent,
-) {
+) -> Result<(), String> {
+    draft.status = PendingStatus::Analyzing;
+    put(draft.clone())?;
     let id = draft.id.clone();
     let run = RUNS.with(|r| {
         let mut runs = r.borrow_mut();
@@ -128,8 +142,6 @@ pub fn recognize(
         next
     });
     FAILURES.with(|f| f.borrow_mut().remove(&id));
-    draft.status = PendingStatus::Analyzing;
-    put(draft);
     tasks::spawn_app(async move {
         let result = vision::recognize(account, jpeg, lang, consent).await;
         let current = RUNS.with(|r| r.borrow().get(&id).copied()) == Some(run);
@@ -158,8 +170,16 @@ pub fn recognize(
                 haptic(Haptic::Notification(HapticNotification::Error));
             }
         }
-        put(draft);
+        if let Err(error) = put(draft.clone()) {
+            // Keep a runtime failure marker over the durable interrupted run;
+            // this is not a successfully saved recognition result.
+            draft.status = PendingStatus::Failed;
+            FAILURES.with(|f| f.borrow_mut().insert(id, VisionFailure::Storage));
+            reflect(draft);
+            crate::ui::feedback::storage_error(error);
+        }
     });
+    Ok(())
 }
 
 /// The photos the drafts refer to.

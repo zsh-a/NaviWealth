@@ -1,5 +1,5 @@
-//! What the app keeps and where it talks: meals, settings and photos on the
-//! device, local time, and the user's vision model.
+//! Device and reactive adapters over domain repositories, with host-owned
+//! transactions for capture, measuring evidence and encrypted backup/restore.
 
 pub mod backup;
 pub mod body_metrics;

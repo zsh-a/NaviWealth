@@ -1,7 +1,6 @@
-//! NaviWealth's native client, written in Rust on NSH: HealthOS meal
-//! logging. A photo of a meal becomes an editable estimate from the user's
-//! own vision model; confirmed meals add up to the day's intake. Everything
-//! stays on the device.
+//! NaviWealth's local-first NSH client for finance and health. Domain crates
+//! own record models, calculations and validated repositories; this app owns
+//! device adapters, reactive UI and explicitly confirmed cross-domain writes.
 
 mod data;
 pub mod domain;
@@ -83,6 +82,9 @@ pub fn App(props: AppProps, cx: Scope<AppEvent>) -> impl IntoElement {
         .and_then(|()| data::statement_import::load())
         .and_then(|()| data::catalog::load())
         .and_then(|()| data::market::load())
+        .and_then(|()| meals::load())
+        .and_then(|()| favorites::load())
+        .and_then(|()| pending::load())
     {
         log::error!("startup: local data unavailable: {error}");
         return view()
@@ -103,9 +105,6 @@ pub fn App(props: AppProps, cx: Scope<AppEvent>) -> impl IntoElement {
             )
             .into_element();
     }
-    meals::load();
-    favorites::load();
-    pending::load();
     notes::load();
     weights::load();
     body_metrics::load();

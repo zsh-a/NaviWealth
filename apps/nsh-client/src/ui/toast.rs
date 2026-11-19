@@ -118,6 +118,7 @@ pub fn toast_view(bottom: impl Fn() -> f32 + 'static) -> impl IntoElement {
         .right_0()
         .bottom(move || px(bottom()))
         .items_center()
+        .px_4()
         .pointer_events(PointerEvents::BoxNone)
         .child(each(
             move || state().with(|s| s.current.clone().into_iter().collect::<Vec<_>>()),
@@ -139,7 +140,10 @@ fn bubble(message: Message) -> impl IntoElement {
         .flex_row()
         .items_center()
         .gap_3()
-        .mx_4()
+        // The centered host does not stretch children. Bound the bubble so
+        // long error copy wraps instead of moving the action off-screen.
+        .max_w(relative(1.0))
+        .py_2()
         .pl_5()
         .pr(px(if message.action.is_some() { 8.0 } else { 20.0 }))
         .min_h(px(52.0))
@@ -150,10 +154,12 @@ fn bubble(message: Message) -> impl IntoElement {
             text(message.text.clone())
                 .typo(Type::Callout)
                 .text_color(color::CANVAS)
+                .min_w(px(0.0))
                 .flex_shrink(1.0),
         )
         .child(message.action.map(|label| {
             button()
+                .flex_shrink_0()
                 .on_press(move || {
                     let run = ACTION.with(|slot| slot.borrow_mut().take());
                     dismiss(id);

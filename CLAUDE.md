@@ -16,7 +16,7 @@ smallest authoritative context.
 | NSH client | `apps/nsh-client/` | Rust, NSH |
 | Finance (ledger, holdings, catalog) | `crates/navi-finance/` | Rust |
 | Health (meals, nutrition, Garmin) | `crates/navi-health/` | Rust |
-| Neutral SQLite/backup infrastructure | `crates/navi-storage/` | Rust |
+| Neutral SQLite infrastructure | `crates/navi-storage/` | Rust |
 | Agent Runtime | `third_party/agent-runtime/` | Rust submodule |
 | Market data SDK | `third_party/market-data-rs/` | Rust |
 | Catalog source CSVs | `tool/asset_catalog/sources/` | CSV |
@@ -28,7 +28,7 @@ NSH client layout:
 
 ```text
 apps/nsh-client/src/
-  domain/   host-owned meals/account and shared health domain exports
+  domain/   host account/capture composition and shared health re-exports
   data/     device storage, photos, local time, thin NSH fetch Transport
   ui/       styled components over nsh-base and its tokens
   pages/    home (Today, Records, Assets, Review tabs, capture sheet), meal
@@ -40,9 +40,11 @@ tests/      headless meal, weight, Garmin, review and backup flows
 ## Architecture Rules
 
 - Domain truth lives in Rust crates. `navi-finance` owns the ledger, holdings
-  and catalog repositories; `navi-health` owns meals, nutrition and Garmin
-  parsing; `navi-storage` owns SQLite storage, migrations and backup/restore.
-  `apps/nsh-client/` is UI, composition and device storage only.
+  and catalog repositories; `navi-health` owns meal/favorite models and
+  repositories, nutrition, weight/review calculations and Garmin parsing.
+  `navi-storage` supplies neutral SQLite migrations, snapshots and atomic
+  table replacement. The client owns UI, device adapters, the clock, encrypted
+  backup orchestration and cross-domain capture/scale transactions.
 - The client is local-only: no Sync, no login, no backend calls. Business
   data lives in SQLite (`rusqlite`, bundled) in the app's private directory;
   NSH KV is a 5 MB preferences store. Only exported backups are
@@ -75,9 +77,10 @@ rtk cargo clippy --manifest-path <crate>/Cargo.toml --all-targets --locked -- -D
 rtk cargo test --manifest-path <crate>/Cargo.toml --locked
 ```
 
-Run the three commands for `apps/nsh-client`, `crates/navi-finance` and
-`crates/navi-health`; CI runs fmt, clippy (`-D warnings`) and `--locked`
-tests.
+Run the three commands for `apps/nsh-client`, `crates/navi-finance`,
+`crates/navi-health` and `crates/navi-storage`; automatic CI runs fmt, clippy
+(`-D warnings`) and `--locked` tests on relevant pushes and PRs. Signed
+Android packaging remains a separate manual workflow.
 
 Securities catalog and docs:
 
@@ -85,7 +88,8 @@ Securities catalog and docs:
 ./tool/build-asset-catalog.sh                  # stub bake from committed CSVs
 python3 -m pytest tool/asset_catalog/tests
 python3 -m tool.asset_catalog.validate_release
-node tool/check-docs.mjs                       # documentation link/nav check
+node tool/check-docs.mjs                       # first-party documentation link/path check
+node --test tool/tests/check-docs.test.mjs      # document checker regressions
 ```
 
 Release: `nsh-vX.Y.Z` tags, APK built and signed by the manual `nsh client`

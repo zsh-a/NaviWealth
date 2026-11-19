@@ -1,6 +1,6 @@
-//! The domain: plain Rust that knows nothing of NSH, tested without an
-//! engine. Meals and their nutrients, the bundled catalog, the model
-//! account, what is asked of a vision model and how its answer is read.
+//! Host-owned model profiles, capture envelopes and backup formats, plus
+//! compatibility exports of health models and calculations from navi-health.
+//! Everything here is plain Rust and can be tested without an NSH engine.
 
 pub mod account;
 pub mod backup;
@@ -52,6 +52,8 @@ pub enum VisionFailure {
     Unreadable,
     /// The photo could not be prepared (an unsupported format).
     Photo,
+    /// The device could not persist a recognition draft.
+    Storage,
 }
 
 impl VisionFailure {
@@ -62,7 +64,8 @@ impl VisionFailure {
             VisionFailure::Offline(_)
             | VisionFailure::Timeout
             | VisionFailure::Truncated
-            | VisionFailure::Unreadable => true,
+            | VisionFailure::Unreadable
+            | VisionFailure::Storage => true,
             VisionFailure::Provider(error) => matches!(
                 error,
                 ProviderError::RateLimited | ProviderError::Overloaded | ProviderError::Server(_)
