@@ -226,7 +226,11 @@ The full target is:
   their model provenance and do not claim numerical parity with vendor scores.
   Same-day
   replacement requires a second confirmation; missing valid impedance offers
-  weight only. Manual edits, deletion, Undo and backup preserve the association
+  weight only and is explicitly unfinished. A slow composition reading keeps
+  listening and offers remeasurement rather than claiming completion. Empty
+  impedance packets cannot erase valid composition within the same load cycle;
+  moving weight starts fresh evidence. Manual edits, deletion, Undo and backup
+  preserve the association
   between weight and its measuring evidence. Host builds, packet fixtures and
   headless flows are verified; real-device measurements and signed in-place
   upgrade acceptance remain open (see the roadmap). This does not change

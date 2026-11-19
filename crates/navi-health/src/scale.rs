@@ -358,7 +358,13 @@ impl Session {
                     self.reset();
                     return Err(ScaleError::StaleMeasurement);
                 }
-                measurement(weight_grams, raw_impedances, &self.profile)
+                let candidate = measurement(weight_grams, raw_impedances, &self.profile);
+                if candidate.metrics.is_none()
+                    && self.latest.as_ref().is_some_and(|m| m.metrics.is_some())
+                {
+                    return Ok(None);
+                }
+                candidate
             }
             None => return Ok(None),
         };

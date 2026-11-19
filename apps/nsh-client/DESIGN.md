@@ -209,10 +209,13 @@ AI only to turn text and images into drafts, using the owner's model account.
   Details also show the captured profile, BMI, estimated fat/fat-free/muscle/
   water masses, reference-derived resistance, and the named estimation model.
   Those derived values belong to this measurement, never a newer manual weight.
-  After stable weight, the primary action waits up to 15 seconds for impedance
-  while instructing the owner to remain on the scale. Saving weight alone stays
-  an explicit secondary action, and missing impedance then leaves a weight-only
-  review. Late timers cannot overwrite completed, cancelled or reopened reviews.
+  After stable weight, the primary action waits for impedance while instructing
+  the owner to remain on the scale. After 15 seconds, the sheet says it is still
+  waiting, keeps accepting readings and offers Measure again. Interrupted and
+  reopened weight-only drafts explicitly say composition is unfinished and also
+  offer Measure again. Saving weight alone remains an explicit secondary action;
+  only valid composition is labelled complete. Late timers cannot overwrite
+  completed, cancelled or reopened reviews.
   All touch actions are at least 48 pt. Backup & restore shows automatic backup status
   and the last outcome. About displays the installed version before opening
   update details. A changed model account requires consent again before

@@ -72,6 +72,31 @@ fn attributed_live_fixtures_keep_original_grams_and_primary_adc() {
 }
 
 #[test]
+fn empty_or_unusable_adc_does_not_replace_composition_within_a_load_cycle() {
+    let mut session = Session::new(profile()).unwrap();
+    session.feed(&weight()).unwrap();
+    let complete = session.feed(&adc()).unwrap().unwrap();
+    for primary in [0_u16, 99, 65535] {
+        let mut empty = adc();
+        empty[4..6].copy_from_slice(&primary.to_be_bytes());
+        assert!(session.feed(&checksum(empty)).unwrap().is_none());
+        assert_eq!(session.latest(), Some(complete.clone()));
+    }
+
+    let mut moving = weight();
+    moving[2] &= 0x7f;
+    assert!(session.feed(&checksum(moving)).unwrap().is_none());
+    assert!(session.latest().is_none());
+    session.feed(&weight()).unwrap();
+    let mut empty = adc();
+    empty[4..8].fill(0);
+    let incomplete = session.feed(&checksum(empty)).unwrap().unwrap();
+    assert!(incomplete.metrics.is_none());
+    assert_eq!(incomplete.raw_impedances, vec![0.0, 0.0]);
+    assert!(incomplete.valid());
+}
+
+#[test]
 fn dynamic_mismatched_and_out_of_order_readings_never_mix() {
     let mut session = Session::new(profile()).unwrap();
     assert_eq!(

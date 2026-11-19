@@ -333,9 +333,7 @@ test("scale mixed: stable weight invites the owner to stay on for composition", 
   const sessionId = await connect(app);
   await packet(app, sessionId, STABLE);
   await app.waitFor("Weight is stable. Stay on the scale a little longer.");
-  expect(
-    app.shows("No valid impedance reading is available. You can still save your weight."),
-  ).toBe(false);
+  expect(app.shows("Body composition is unfinished")).toBe(false);
   expect(app.shows("Save weight only")).toBe(true);
   if (!app.clock) throw new Error("Expected a manual clock");
   await app.clock.fastForward(8_000);
@@ -363,7 +361,7 @@ test("scale mixed: moving readings update live without offering to save", async 
   expect(app.texts().join(" ")).toContain("Segal BIA");
 }, 30000);
 
-test("scale mixed: composition timeout preserves a weight-only review without restarting for duplicates", async () => {
+test("scale mixed: a slow composition reading stays unfinished without restarting for duplicates", async () => {
   const app = await start(true, true, undefined, {}, true);
   const sessionId = await connect(app);
   await packet(app, sessionId, STABLE);
@@ -372,7 +370,62 @@ test("scale mixed: composition timeout preserves a weight-only review without re
   await packet(app, sessionId, STABLE);
   expect(app.shows("Reading body composition…")).toBe(true);
   await app.clock.fastForward(1);
-  await app.waitFor("No valid impedance reading is available. You can still save your weight.");
+  await app.waitFor("Still waiting for body composition");
+  expect(app.shows("Reading body composition…")).toBe(false);
+  expect(app.shows("Your measurement is ready")).toBe(false);
+  expect(calls(app, "ble.disconnect").length).toBe(0);
+  await app.press("Save weight only");
+  await app.waitFor("Measurement saved");
+}, 30000);
+
+test("scale mixed: late composition completes and zero impedance cannot erase its save token", async () => {
+  const app = await start(true, true, undefined, {}, true);
+  const sessionId = await connect(app);
+  await packet(app, sessionId, STABLE);
+  if (!app.clock) throw new Error("Expected a manual clock");
+  await app.clock.fastForward(20_000);
+  await app.waitFor("Still waiting for body composition");
+  await packet(app, sessionId, IMPEDANCE);
+  await app.waitFor("Your measurement is ready");
+  await packet(app, sessionId, "rCkCAAAAAAABgGjiwgAAAAAp1g4=");
+  expect(app.shows("Confirm and save")).toBe(true);
+  expect(app.texts().join(" ")).toContain("Estimated body fat");
+  await app.press("Confirm and save");
+  await app.waitFor("Measurement saved");
+}, 30000);
+
+test("scale mixed: an unfinished draft offers a fresh session and rejects old notifications", async () => {
+  const app = await start(true, true, undefined, {}, true);
+  const sessionId = await connect(app);
+  await packet(app, sessionId, STABLE);
+  await app.waitFor("Reading body composition…");
+  await home(app);
+  await app.press("label:Settings");
+  await app.scroll("Connect scale", 250);
+  await app.press("Connect scale");
+  await app.waitFor("Body composition is unfinished");
+  expect(app.shows("Your measurement is ready")).toBe(false);
+  expect(calls(app, "ble.connect").length).toBe(1);
+  await app.press("Measure again");
+  await app.waitFor("Connected. Step onto the scale and stand still.");
+  const nextId = await connect(app);
+  expect(nextId).not.toBe(sessionId);
+  expect(calls(app, "ble.scan.start").length).toBe(1);
+  await packet(app, sessionId, IMPEDANCE);
+  expect(app.shows("id:scale-preview")).toBe(false);
+  await packet(app, nextId, STABLE);
+  await packet(app, nextId, IMPEDANCE);
+  await app.waitFor("Confirm and save");
+}, 30000);
+
+test("scale mixed: disconnection with only weight is unfinished and still permits weight-only saving", async () => {
+  const app = await start();
+  const sessionId = await connect(app);
+  await packet(app, sessionId, STABLE);
+  await app.waitFor("Reading body composition…");
+  await app.host.send("ble.connection", { sessionId, state: "disconnected" });
+  await app.waitFor("Body composition is unfinished");
+  expect(app.shows("Your measurement is ready")).toBe(false);
   expect(app.shows("Reading body composition…")).toBe(false);
   await app.press("Save weight only");
   await app.waitFor("Measurement saved");

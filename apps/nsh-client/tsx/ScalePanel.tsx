@@ -26,7 +26,7 @@ export function ScalePanel(props: { close: () => void; busy: Signal<boolean> }) 
     remembered,
     finding,
     processing,
-    waitingForComposition,
+    compositionPhase,
     preview,
     liveReading,
     message,
@@ -36,6 +36,7 @@ export function ScalePanel(props: { close: () => void; busy: Signal<boolean> }) 
     scan,
     connect,
     save,
+    remeasure,
     leave,
     cancel,
     openProfile,
@@ -65,14 +66,17 @@ export function ScalePanel(props: { close: () => void; busy: Signal<boolean> }) 
     if (state() === "saved") return { label: labels.close, run: leave };
     const reading = preview();
     if (reading) {
-      if (waitingForComposition() && !replacement()) {
+      if (!reading.measurement.metrics && compositionPhase() === "waiting" && !replacement()) {
         return { label: labels.compositionPending, run: () => {}, disabled: true };
       }
-      const label = replacement()
-        ? labels.replaceSave
-        : reading.measurement.metrics
-          ? labels.save
-          : labels.weightOnly;
+      if (!reading.measurement.metrics && !replacement()) {
+        return {
+          label: profileReady() ? labels.remeasure : labels.editProfile,
+          run: () => void (profileReady() ? remeasure() : openProfile()),
+          disabled: processing(),
+        };
+      }
+      const label = replacement() ? labels.replaceSave : labels.save;
       return { label, run: () => void save(), disabled: processing() };
     }
     if (needsProfile()) return { label: labels.editProfile, run: () => void openProfile() };
@@ -351,10 +355,22 @@ export function ScalePanel(props: { close: () => void; busy: Signal<boolean> }) 
                         color: palette().ink,
                       }}
                     >
-                      {waitingForComposition() ? labels.compositionPending : labels.complete}
+                      {reading().measurement.metrics
+                        ? labels.complete
+                        : compositionPhase() === "waiting"
+                          ? labels.compositionPending
+                          : compositionPhase() === "delayed"
+                            ? labels.compositionDelayed
+                            : labels.compositionIncomplete}
                     </Text>
                     <Text style={noteStyle()}>
-                      {waitingForComposition() ? labels.compositionHint : labels.reviewHint}
+                      {reading().measurement.metrics
+                        ? labels.reviewHint
+                        : compositionPhase() === "waiting"
+                          ? labels.compositionHint
+                          : compositionPhase() === "delayed"
+                            ? labels.compositionDelayedHint
+                            : labels.noImpedance}
                     </Text>
                   </View>
                   <Text style={noteStyle()}>{labels.weight}</Text>
@@ -397,9 +413,6 @@ export function ScalePanel(props: { close: () => void; busy: Signal<boolean> }) 
                         </View>
                       );
                     }}
-                  </If>
-                  <If when={!reading().measurement.metrics && !waitingForComposition()}>
-                    <Text style={noteStyle()}>{labels.noImpedance}</Text>
                   </If>
                   <Button
                     accessibilityLabel={detailsOpen() ? labels.hideDetails : labels.details}
@@ -492,7 +505,7 @@ export function ScalePanel(props: { close: () => void; busy: Signal<boolean> }) 
               disabled={locked() || action().disabled}
               run={() => action().run()}
             />
-            <If when={waitingForComposition() && !replacement()}>
+            <If when={preview() && !preview()?.measurement.metrics && !replacement()}>
               <Action
                 label={labels.weightOnly}
                 run={() => void save()}
