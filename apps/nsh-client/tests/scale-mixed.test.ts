@@ -279,7 +279,7 @@ async function startRace() {
   const app = await start(true, true, undefined, {}, false, {}, true, bridge.modules);
   const sessionId = await connect(app);
   const delivery = packet(app, sessionId, STABLE);
-  await app.waitUntil(() => bridge.feeds.length === 1);
+  await waitForNative(app, () => bridge.feeds.length === 1);
   const original = bridge.draft(sessionId, "original-token");
   bridge.publish(original);
   bridge.feeds[0].resolve({ preview: original, reading: null });
@@ -293,7 +293,7 @@ async function beginRaceEstimate(app: App, bridge: ReturnType<typeof raceBridge>
   await app.scroll("label:Choose estimation algorithm: Sun 2003", 300);
   const selection = app.press("label:Choose estimation algorithm: Sun 2003");
   void selection.catch(() => {});
-  await app.waitUntil(bridge.estimating);
+  await waitForNative(app, bridge.estimating);
   expect(app.enabled("Save weight only")).toBe(false);
   return { selection };
 }
@@ -315,6 +315,9 @@ async function dispatchLifecycle(app: App, state: "active" | "background") {
   // await its idle acknowledgement only after releasing the held response.
   const transition = app.setLifecycle(state);
   void transition.catch(() => {});
+  // Serve the transport for each transition while a native response is held,
+  // before dispatching another lifecycle state that could overtake it.
+  void app.wait(0).catch(() => {});
   // Let the lifecycle effect run while the controlled native response is held.
   await new Promise<void>((resolve) => setTimeout(resolve, 50));
   return { transition };

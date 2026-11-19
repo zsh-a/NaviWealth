@@ -549,6 +549,7 @@ fn failed_manual_save_preserves_the_editor_and_can_be_retried() -> Result<(), St
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
     db.execute_batch("CREATE TRIGGER reject_meal BEFORE INSERT ON meals BEGIN SELECT RAISE(ABORT,'full disk'); END;").unwrap();
     open_manual(&mut app, "Manual meal")?;
+    app.wait_for("text:e.g. Beef noodle soup")?;
     app.type_text("text:e.g. Beef noodle soup", "Rice")?;
     app.type_text("label:Amount eaten", "250")?;
     app.type_text("label:Energy", "130")?;
