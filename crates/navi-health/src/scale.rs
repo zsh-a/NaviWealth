@@ -515,7 +515,7 @@ pub fn encode_profile(
         Sex::Male => 1,
         Sex::Female => 2,
     };
-    packet[16] = 3; // enable impedance and measurement
+    packet[16] = 3; // impedance (bit 0) and small-load weighing (bit 1)
     packet[18] = 0xd0;
     packet[19] = packet[2..19]
         .iter()
@@ -524,7 +524,9 @@ pub fn encode_profile(
 }
 
 /// Initial GATT writes after notification subscription succeeds. The
-/// AFU-WL-TZ-A1 capture uses the DF/08 time command, not the D0 user profile.
+/// AFU-WL-TZ-A1 needs DF/08 clock synchronization before its D0 profile.
+/// Clock synchronization alone does not enable impedance measurement: always
+/// send the current profile and BIA flag, including when reconnecting.
 pub fn encode_initialization(
     profile: &UserProfile,
     unix_seconds: u32,
@@ -532,29 +534,23 @@ pub fn encode_initialization(
     identity: &DeviceProtocol,
     model_name: &str,
 ) -> Result<Vec<Vec<u8>>, ScaleError> {
-    if model_name == "AFU-WL-TZ-A1" {
-        if !profile.valid() {
-            return Err(ScaleError::Profile);
-        }
-        if identity.device_type != 0x27 || identity.protocol_ver > 2 {
-            return Err(ScaleError::Initialization);
-        }
-        let mut packet = vec![0; 20];
-        packet[..3].copy_from_slice(&[0xac, identity.device_type, 0x08]);
-        packet[3..7].copy_from_slice(&unix_seconds.to_be_bytes());
-        packet[7] = 0x20;
-        packet[18] = 0xdf;
-        packet[19] = packet[2..19].iter().copied().fold(0u8, u8::wrapping_add);
-        return Ok(vec![packet]);
-    }
-    encode_profile(
+    let profile_command = encode_profile(
         profile,
         unix_seconds,
         utc_offset_quarters,
         identity.device_type,
         identity.protocol_ver,
-    )
-    .map(|p| vec![p])
+    )?;
+    if model_name == "AFU-WL-TZ-A1" {
+        let mut packet = vec![0; 20];
+        packet[..3].copy_from_slice(&[0xac, identity.device_type, 0x08]);
+        packet[3..7].copy_from_slice(&unix_seconds.to_be_bytes());
+        packet[7] = utc_offset_quarters as u8;
+        packet[18] = 0xdf;
+        packet[19] = packet[2..19].iter().copied().fold(0u8, u8::wrapping_add);
+        return Ok(vec![packet, profile_command]);
+    }
+    Ok(vec![profile_command])
 }
 
 #[cfg(test)]

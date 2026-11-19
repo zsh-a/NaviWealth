@@ -115,8 +115,24 @@ at startup and no D5 live weight or D6 impedance frames. Both builds used
 Write Without Response on this scale. This verifies transport setup on the
 tested phone, not successful live measurement. D8 does not create a draft.
 
-The verified `AFU-WL-TZ-A1` advertisement now selects the DF/08 time
+The verified `AFU-WL-TZ-A1` advertisement selects the DF/08 time
 initialization documented by the
 [ScaleMe live protocol](https://github.com/bugwz/ScaleMe/blob/81ab69c53fe3c8b057449498f82b8e68cfb5a421/ScaleMe/Infrastructure/Bluetooth/Protocols/Wolai/WolaiAFUScaleAdapter.swift).
-Other verified AFU-WL models still use D0 profile/time initialization. This
-change does not acknowledge or import D8 history, or send a clear command.
+2026-11-19 protocol review of the installed manufacturer's app found that
+clock synchronization is followed by a user-profile write. DF/08 alone
+does not carry the impedance-enable flag. Initialization now sends DF/08,
+then D0 with the current profile and impedance enabled, on every connection.
+Both writes must succeed before the UI reports readiness or remembers the
+device. Both commands use the supplied timezone offset in quarter hours;
+DF/08 no longer hardcodes UTC+8. Other verified AFU-WL models still use D0
+profile/time initialization. This does not acknowledge or import D8 history,
+or send a clear command.
+
+2026-11-19 physical check of this two-command sequence: both DF/08 and D0
+received successful Android write callbacks; live D5 notifications followed.
+Stable D5 arrived at 21:26:26.531 and D6 at 21:26:34.183 (7.652 s later).
+The owner confirmed that the scale display automatically entered impedance
+measurement and the app displayed body-composition results. The resulting
+draft remained available for explicit confirmation. This verifies this
+phone/scale session; repeated reconnect and cold-start coverage remain
+separate from this single successful measurement.

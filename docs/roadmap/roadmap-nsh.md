@@ -322,6 +322,14 @@ Recommended sequence; this is planning, not a claim these items are implemented.
    live/stable D5 and D6 impedance. The owner confirmed weight and body
    composition on screen. This is one successful foreground measurement.
 
+   **Physical evidence 2026-11-19:** time-only initialization could leave
+   the scale weighing without entering impedance measurement. Sending DF/08
+   followed by the current D0 profile with impedance enabled restored the
+   automatic transition in one real-phone session. Stable D5 was followed
+   by D6 7.652 s later; the owner confirmed the scale's measuring sequence
+   and the app's composition result. Repeated reconnect/cold-start behavior
+   still needs separate verification; see the [Android host evidence](../../apps/nsh-client/android/README.md).
+
    **Remaining exit gates:** compare physical AFU-WL weight/impedance with the
    scale display and reference capture; verify protocol versions and profile
    initialization, permission denial/revocation, Bluetooth toggles and pause/

@@ -627,7 +627,7 @@ fn display_summary_uses_original_measurement_and_keeps_missing_composition_missi
 }
 
 #[test]
-fn tz_a1_initialization_uses_only_the_captured_clock_command() {
+fn tz_a1_initialization_syncs_clock_then_enables_bia_with_current_profile() {
     let identity = DeviceProtocol {
         device_type: 0x27,
         protocol_ver: 1,
@@ -635,11 +635,30 @@ fn tz_a1_initialization_uses_only_the_captured_clock_command() {
     let commands =
         encode_initialization(&profile(), 0x12345678, 32, &identity, "AFU-WL-TZ-A1").unwrap();
     assert_eq!(
-        commands,
+        commands[..1],
         vec![vec![
             0xac, 0x27, 0x08, 0x12, 0x34, 0x56, 0x78, 0x20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xdf,
             0x1b,
         ]]
+    );
+    assert_eq!(commands[1], hex("AC2712345678200001AA0000170100000300D0CA"));
+    for (offset, expected) in [(-20, 0xec), (0, 0), (36, 36)] {
+        let commands =
+            encode_initialization(&profile(), 0x12345678, offset, &identity, "AFU-WL-TZ-A1")
+                .unwrap();
+        assert_eq!(commands.len(), 2);
+        assert_eq!(commands[0][7], expected);
+        assert_eq!(commands[1][6], expected);
+        for command in commands {
+            assert_eq!(
+                command[19],
+                command[2..19].iter().copied().fold(0u8, u8::wrapping_add)
+            );
+        }
+    }
+    assert_eq!(
+        encode_initialization(&profile(), 0x12345678, 57, &identity, "AFU-WL-TZ-A1"),
+        Err(ScaleError::Initialization)
     );
     assert_eq!(
         encode_initialization(

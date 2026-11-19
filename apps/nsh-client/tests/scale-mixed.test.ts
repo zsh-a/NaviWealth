@@ -101,6 +101,7 @@ async function connect(app: App, waitForAcknowledgement = true): Promise<string>
   }
   const previousScans = calls(app, "ble.scan.start").length;
   const previousWrites = calls(app, "ble.write").length;
+  const previousConnections = calls(app, "ble.connect").length;
   const direct = app.shows("Connect saved scale");
   let target = "Connect saved scale";
   if (!direct) {
@@ -115,8 +116,8 @@ async function connect(app: App, waitForAcknowledgement = true): Promise<string>
   // Pending-write tests deliberately keep that host reply unresolved.
   if (waitForAcknowledgement) await pressed;
   else void pressed.catch(() => {});
-  await app.waitUntil(() => calls(app, "ble.write").length === previousWrites + 1);
-  const connected = data(calls(app, "ble.connect")[previousWrites]);
+  await app.waitUntil(() => calls(app, "ble.write").length === previousWrites + 2);
+  const connected = data(calls(app, "ble.connect")[previousConnections]);
   expect(connected.address).toBe(DEVICE.address);
   expect(calls(app, "ble.scan.start").length).toBe(previousScans + (direct ? 0 : 1));
   const write = data(calls(app, "ble.write")[previousWrites]);
@@ -129,6 +130,13 @@ async function connect(app: App, waitForAcknowledgement = true): Promise<string>
   expect(command.slice(7, 18)).toEqual([0x20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
   expect(command[18]).toBe(0xdf);
   expect(command[19]).toBe(command.slice(2, 19).reduce((sum, byte) => (sum + byte) & 255, 0));
+  const profile = data(calls(app, "ble.write")[previousWrites + 1]);
+  expect(profile.sessionId).toBe(connected.sessionId);
+  const profileCommand = decodeBase64(profile.dataBase64 as string);
+  expect(profileCommand.length).toBe(20);
+  expect(profileCommand[18]).toBe(0xd0);
+  expect(profileCommand[16] & 1).toBe(1);
+  expect(profileCommand[19]).toBe(profileCommand.slice(2, 19).reduce((sum, byte) => (sum + byte) & 255, 0));
   if (waitForAcknowledgement) {
     await app.waitFor("Connected. Step onto the scale and stand still.");
   }
@@ -419,7 +427,7 @@ test("scale mixed: three Rust models recompute one live draft without reconnecti
   await app.waitFor("label:Estimated body fat 12.0%");
   expect(app.shows("id:scale-algorithms >> text:Sun 2003")).toBe(true);
   expect(calls(app, "ble.connect").length).toBe(1);
-  expect(calls(app, "ble.write").length).toBe(1);
+  expect(calls(app, "ble.write").length).toBe(2);
   expect(calls(app, "ble.disconnect").length).toBe(0);
   expect(algorithmPreference(app)).toBe("segal");
   if (app.shows("Hide estimation algorithms")) await app.press("Hide estimation algorithms");
@@ -480,7 +488,7 @@ test("scale mixed: retained draft keeps its chosen algorithm and frozen profile 
   await chooseAlgorithm(app, "Sun 2003");
   await app.waitFor("label:Estimated body fat 12.0%");
   await app.waitFor("text:170 cm · 23 years");
-  expect(calls(app, "ble.write").length).toBe(1);
+  expect(calls(app, "ble.write").length).toBe(2);
   await app.press("Confirm and save");
   await app.waitFor("Measurement saved");
 }, 30000);
@@ -507,7 +515,7 @@ test("scale mixed: unsupported model is recoverable and never claims missing imp
   await chooseAlgorithm(app, "Wu 2015");
   await app.waitFor("This algorithm cannot estimate this measurement");
   expect(calls(app, "ble.connect").length).toBe(1);
-  expect(calls(app, "ble.write").length).toBe(1);
+  expect(calls(app, "ble.write").length).toBe(2);
   await app.press("Save weight only");
   await app.waitFor("Measurement saved");
   await home(app);
@@ -565,7 +573,7 @@ test("scale mixed: native Rust settings open TSX, Rust-generated command and con
   expect(app.shows("id:scale-evidence")).toBe(false);
   await packet(app, sessionId, IMPEDANCE);
   expect(app.count("id:scale-preview")).toBe(1);
-  expect(calls(app, "ble.write").length).toBe(1);
+  expect(calls(app, "ble.write").length).toBe(2);
   await app.press("id:scale-actions >> label:Confirm and save");
   await app.waitFor("Measurement saved");
   expect(app.count("id:scale-panel >> label:Close")).toBe(1);
@@ -909,7 +917,8 @@ test("scale mixed: oversized malformed evidence removes the retained Rust previe
   );
 }, 30000);
 
-test("scale mixed: notifications during initialization are replayed only after acknowledgement", async () => {
+test("scale mixed: notifications during profile initialization are replayed only after both writes succeed", async () => {
+  let initializationWrites = 0;
   let acknowledge: (value: unknown) => void = () => {
     throw new Error("Write has not started");
   };
@@ -919,9 +928,11 @@ test("scale mixed: notifications during initialization are replayed only after a
     { available: true, enabled: true },
     {
       "ble.write": () =>
-        new Promise<unknown>((resolve) => {
-          acknowledge = resolve;
-        }),
+        ++initializationWrites === 1
+          ? { written: true }
+          : new Promise<unknown>((resolve) => {
+              acknowledge = resolve;
+            }),
     },
   );
   const sessionId = await connect(app, false);
@@ -939,7 +950,8 @@ test("scale mixed: notifications during initialization are replayed only after a
   await app.waitFor("label:Body metrics, —");
 }, 30000);
 
-test("scale mixed: rejected initialization discards buffered readings and does not remember the scale", async () => {
+test("scale mixed: rejected profile after clock sync discards buffered readings and does not remember the scale", async () => {
+  let initializationWrites = 0;
   let acknowledge: (value: unknown) => void = () => {
     throw new Error("Write has not started");
   };
@@ -949,9 +961,11 @@ test("scale mixed: rejected initialization discards buffered readings and does n
     { available: true, enabled: true },
     {
       "ble.write": () =>
-        new Promise<unknown>((resolve) => {
-          acknowledge = resolve;
-        }),
+        ++initializationWrites === 1
+          ? { written: true }
+          : new Promise<unknown>((resolve) => {
+              acknowledge = resolve;
+            }),
     },
   );
   const sessionId = await connect(app, false);
@@ -972,6 +986,21 @@ test("scale mixed: rejected initialization discards buffered readings and does n
   await app.press("Connect scale");
   await app.waitFor("Find scale");
   expect(app.shows("id:scale-preview")).toBe(false);
+  expect(app.shows("Confirm and save")).toBe(false);
+}, 30000);
+
+test("scale mixed: failed clock synchronization never sends the profile or remembers the scale", async () => {
+  const app = await start(true, true, { available: true, enabled: true }, {
+    "ble.write": { written: false },
+  });
+  await app.press("Find scale");
+  await app.waitUntil(() => calls(app, "ble.scan.start").length === 1);
+  const scanId = data(calls(app, "ble.scan.start")[0]).sessionId;
+  await app.host.send("ble.device", { ...DEVICE, sessionId: scanId });
+  await app.press("label:Connect AFU-WL-TZ-A1");
+  await app.waitFor("Try again");
+  expect(calls(app, "ble.write").length).toBe(1);
+  expect(app.storage()[REMEMBERED_SCALE_KEY]).toBe(undefined);
   expect(app.shows("Confirm and save")).toBe(false);
 }, 30000);
 
