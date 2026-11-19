@@ -1,11 +1,12 @@
 import { expect, open, test } from "nsh/test";
-import type { App, HostMessage, HostOptions } from "nsh/test";
+import type { App, HostMessage, HostOptions, OpenOptions } from "nsh/test";
+import type { AlgorithmId, Preview, ScaleUpdate } from "../tsx/scale-types";
 
 // Independently attributed captures from Mzdyl/ant-afu-welland-scale's
 // test_protocol_and_bodycomp.py. They exercise the actual Rust decoder.
 const STABLE = "rCmAaOLCAgAFQAAAAAAAAAAp1RE=";
 const IMPEDANCE = "rCkCAAIFAdgBgGjiwgAAAAAp1g4=";
-const PROFILE = { height_cm: 170, age_years: 23, sex: "male" };
+const PROFILE = { height_cm: 170, age_years: 23, sex: "male" as const };
 const REMEMBERED_SCALE_KEY = "scale.remembered-device.v1";
 const DEVICE = {
   address: "12:34:56:78:9A:BC",
@@ -60,6 +61,7 @@ async function start(
   manualClock = false,
   preferences: Record<string, string> = {},
   openScale = true,
+  modules: OpenOptions["modules"] = undefined,
 ): Promise<App> {
   const app = await open("..", {
     clock: manualClock ? {} : undefined,
@@ -70,6 +72,7 @@ async function start(
     height: 844,
     storage: { "settings.v1": JSON.stringify(profile ? PROFILE : {}), ...preferences },
     network: {},
+    modules,
     host: {
       params: { testMode: true },
       handlers: withHost
@@ -141,6 +144,403 @@ async function home(app: App): Promise<void> {
   await app.waitFor("label:New entry");
 }
 
+async function chooseAlgorithm(app: App, name: string): Promise<void> {
+  await app.waitFor("id:scale-algorithms");
+  if (!app.shows("id:scale-algorithm-options")) {
+    await app.press("id:scale-algorithms >> label:Choose estimation algorithm");
+  }
+  await app.press(`label:Choose estimation algorithm: ${name}`);
+  await app.waitFor("Updating estimate…", { state: "gone" });
+  await app.waitFor(`id:scale-algorithms >> text:${name}`);
+}
+
+function algorithmPreference(app: App): string {
+  return JSON.parse(app.storage()["settings.v1"]).scale_algorithm ?? "segal";
+}
+
+function deferred<T>() {
+  let resolve: (value: T) => void = () => {
+    throw new Error("Deferred response is not initialized");
+  };
+  const promise = new Promise<T>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
+
+// These boundary tests hold native responses to reproduce interleavings that
+// synchronous Rust operations normally hide. The existing integration cases
+// below still exercise the real decoder, estimators and confirmed writes.
+function raceBridge() {
+  let current: Preview | null = null;
+  const feeds: ReturnType<typeof deferred<ScaleUpdate>>[] = [];
+  const pending: ReturnType<typeof deferred<Preview | null>>[] = [];
+  const estimate = deferred<Preview>();
+  const confirmed: string[] = [];
+  let estimating = false;
+  function draft(
+    sessionId: string,
+    token: string,
+    id: AlgorithmId = "segal",
+    grams = 58050,
+  ): Preview {
+    return {
+      session_id: sessionId,
+      token,
+      day: "2026-11-19",
+      measured_at_ms: 1795046400000,
+      device: { id: DEVICE.address, name: DEVICE.name },
+      existing_kg: null,
+      algorithm: {
+        id,
+        name: { segal: "Segal BIA", wu2015: "Wu 2015", sun2003: "Sun 2003" }[id],
+        description: "Controlled response ordering",
+        experimental: id !== "segal",
+      },
+      algorithm_unavailable: false,
+      measurement: {
+        weight_grams: grams,
+        resistance_ohm: null,
+        metrics: null,
+        profile: PROFILE,
+        algorithm_version: {
+          segal: "afu_wl_scale27_bia_v1",
+          wu2015: "afu_wl_scale27_wu2015_ffm_v1",
+          sun2003: "afu_wl_scale27_sun2003_ffm_tbw_v1",
+        }[id],
+      },
+      summary: {
+        bmi: null,
+        fat_mass_kg: null,
+        fat_free_mass_kg: null,
+        muscle_mass_kg: null,
+        water_mass_kg: null,
+      },
+    };
+  }
+  const modules: OpenOptions["modules"] = {
+    "naviwealth/native": {
+      "Scale.feed": () => {
+        const response = deferred<ScaleUpdate>();
+        feeds.push(response);
+        return response.promise;
+      },
+      "Scale.pending": () => {
+        if (!current) return null;
+        const response = deferred<Preview | null>();
+        pending.push(response);
+        return response.promise;
+      },
+      "Scale.reestimate": (sessionId: string, token: string, id: AlgorithmId) => {
+        expect(current?.token).toBe(token);
+        current = draft(sessionId, "estimate-token", id);
+        estimating = true;
+        return estimate.promise;
+      },
+      "Scale.confirm": (sessionId: string, token: string) => {
+        expect(current?.session_id).toBe(sessionId);
+        expect(current?.token).toBe(token);
+        confirmed.push(token);
+        return null;
+      },
+    },
+  };
+  return {
+    modules,
+    feeds,
+    pending,
+    estimate,
+    confirmed,
+    draft,
+    current: () => current!,
+    estimating: () => estimating,
+    publish: (reading: Preview) => {
+      current = reading;
+    },
+  };
+}
+
+async function startRace() {
+  const bridge = raceBridge();
+  const app = await start(true, true, undefined, {}, false, {}, true, bridge.modules);
+  const sessionId = await connect(app);
+  const delivery = packet(app, sessionId, STABLE);
+  await app.waitUntil(() => bridge.feeds.length === 1);
+  const original = bridge.draft(sessionId, "original-token");
+  bridge.publish(original);
+  bridge.feeds[0].resolve({ preview: original, reading: null });
+  await delivery;
+  await app.waitFor("Save weight only");
+  return { app, bridge, sessionId };
+}
+
+async function beginRaceEstimate(app: App, bridge: ReturnType<typeof raceBridge>) {
+  await app.press("id:scale-algorithms >> label:Choose estimation algorithm");
+  await app.scroll("label:Choose estimation algorithm: Sun 2003", 300);
+  const selection = app.press("label:Choose estimation algorithm: Sun 2003");
+  void selection.catch(() => {});
+  await app.waitUntil(bridge.estimating);
+  expect(app.enabled("Save weight only")).toBe(false);
+  return { selection };
+}
+
+async function waitForNative(app: App, condition: () => boolean) {
+  // Pump the headless transport without awaiting its idle acknowledgement:
+  // the held native response is intentionally keeping the engine non-idle.
+  void app.wait(0).catch(() => {});
+  const deadline = Date.now() + 5000;
+  while (!condition()) {
+    if (Date.now() > deadline)
+      throw new Error(`Native response ordering barrier timed out: ${condition}`);
+    await new Promise<void>((resolve) => setTimeout(resolve, 5));
+  }
+}
+
+async function dispatchLifecycle(app: App, state: "active" | "background") {
+  // A native stand-in keeps the app non-idle. Dispatch the transition now;
+  // await its idle acknowledgement only after releasing the held response.
+  const transition = app.setLifecycle(state);
+  void transition.catch(() => {});
+  // Let the lifecycle effect run while the controlled native response is held.
+  await new Promise<void>((resolve) => setTimeout(resolve, 50));
+  return { transition };
+}
+
+test("scale mixed: repeated background during reestimate recovery keeps saving locked until the latest token is read", async () => {
+  const { app, bridge } = await startRace();
+  const { selection } = await beginRaceEstimate(app, bridge);
+  const transitions = [
+    await dispatchLifecycle(app, "background"),
+    await dispatchLifecycle(app, "active"),
+  ];
+  await waitForNative(app, () => calls(app, "ble.disconnect").length === 1);
+  bridge.estimate.resolve(bridge.current());
+  await waitForNative(app, () => bridge.pending.length === 1);
+  transitions.push(
+    await dispatchLifecycle(app, "background"),
+    await dispatchLifecycle(app, "active"),
+  );
+  bridge.pending[0].resolve(bridge.current());
+  await waitForNative(app, () => bridge.pending.length === 2);
+  expect(app.enabled("Save weight only")).toBe(false);
+  bridge.pending[1].resolve(bridge.current());
+  await selection;
+  await Promise.all(transitions.map((item) => item.transition));
+  await waitForNative(app, () => app.enabled("Save weight only"));
+  await app.press("Save weight only");
+  await app.waitFor("Measurement saved");
+  expect(bridge.confirmed).toEqual(["estimate-token"]);
+}, 30000);
+
+test("scale mixed: background during an in-flight feed recovers its newer token before saving", async () => {
+  const { app, bridge, sessionId } = await startRace();
+  const delivery = packet(app, sessionId, IMPEDANCE);
+  await waitForNative(app, () => bridge.feeds.length === 2);
+  const newer = bridge.draft(sessionId, "newer-feed-token", "segal", 61000);
+  bridge.publish(newer);
+  expect(app.enabled("Save weight only")).toBe(false);
+  const transitions = [
+    await dispatchLifecycle(app, "background"),
+    await dispatchLifecycle(app, "active"),
+  ];
+  bridge.feeds[1].resolve({ preview: newer, reading: null });
+  await waitForNative(app, () => bridge.pending.length === 1);
+  expect(app.enabled("Save weight only")).toBe(false);
+  bridge.pending[0].resolve(newer);
+  await delivery;
+  await Promise.all(transitions.map((item) => item.transition));
+  await app.waitFor("label:Weight 61.00 kg");
+  await app.waitUntil(() => app.enabled("Save weight only"));
+  await app.press("Save weight only");
+  await app.waitFor("Measurement saved");
+  expect(bridge.confirmed).toEqual(["newer-feed-token"]);
+}, 30000);
+
+test("scale mixed: notifications arriving during an in-flight feed are retained and drained", async () => {
+  const { app, bridge, sessionId } = await startRace();
+  const first = packet(app, sessionId, STABLE);
+  await waitForNative(app, () => bridge.feeds.length === 2);
+  const second = packet(app, sessionId, IMPEDANCE);
+  expect(bridge.feeds.length).toBe(2);
+  expect(app.enabled("Save weight only")).toBe(false);
+  bridge.feeds[1].resolve({ preview: bridge.current(), reading: null });
+  await waitForNative(app, () => bridge.feeds.length === 3);
+  const newer = bridge.draft(sessionId, "queued-feed-token", "segal", 61000);
+  bridge.publish(newer);
+  bridge.feeds[2].resolve({ preview: newer, reading: null });
+  await first;
+  await second;
+  await app.waitFor("label:Weight 61.00 kg");
+  await waitForNative(app, () => app.enabled("Save weight only"));
+  await app.press("Save weight only");
+  await app.waitFor("Measurement saved");
+  expect(bridge.confirmed).toEqual(["queued-feed-token"]);
+}, 30000);
+
+test("scale mixed: repeatedly invalidated recovery safely clears an unverified preview", async () => {
+  const { app, bridge } = await startRace();
+  const { selection } = await beginRaceEstimate(app, bridge);
+  const transitions = [
+    await dispatchLifecycle(app, "background"),
+    await dispatchLifecycle(app, "active"),
+  ];
+  bridge.estimate.resolve(bridge.current());
+  for (let request = 0; request < 4; request++) {
+    await waitForNative(app, () => bridge.pending.length === request + 1);
+    expect(app.enabled("Save weight only")).toBe(false);
+    transitions.push(
+      await dispatchLifecycle(app, "background"),
+      await dispatchLifecycle(app, "active"),
+    );
+    bridge.pending[request].resolve(bridge.current());
+  }
+  await selection;
+  await Promise.all(transitions.map((item) => item.transition));
+  await app.waitFor("id:scale-preview", { state: "gone" });
+  expect(app.shows("Save weight only")).toBe(false);
+  expect(bridge.confirmed).toEqual([]);
+}, 30000);
+
+test("scale mixed: three Rust models recompute one live draft without reconnecting or changing the default", async () => {
+  const app = await start();
+  const sessionId = await connect(app);
+  await packet(app, sessionId, STABLE);
+  await packet(app, sessionId, IMPEDANCE);
+  await app.waitFor("label:Estimated body fat 11.8%");
+  await chooseAlgorithm(app, "Wu 2015");
+  await app.waitFor("label:Estimated body fat 10.6%");
+  await app.press("Choose estimation algorithm");
+  expect(app.texts().join(" ")).toContain("Changes this draft only.");
+  await chooseAlgorithm(app, "Sun 2003");
+  await app.waitFor("label:Estimated body fat 12.0%");
+  // New impedance and weight packets must retain the draft's chosen model.
+  await packet(app, sessionId, IMPEDANCE);
+  await packet(app, sessionId, STABLE);
+  await app.waitFor("label:Estimated body fat 12.0%");
+  expect(app.shows("id:scale-algorithms >> text:Sun 2003")).toBe(true);
+  expect(calls(app, "ble.connect").length).toBe(1);
+  expect(calls(app, "ble.write").length).toBe(1);
+  expect(calls(app, "ble.disconnect").length).toBe(0);
+  expect(algorithmPreference(app)).toBe("segal");
+  if (app.shows("Hide estimation algorithms")) await app.press("Hide estimation algorithms");
+  expect(app.shows("id:scale-algorithms >> text:Sun 2003")).toBe(true);
+  await app.scroll("Measurement details", 300);
+  await app.press("Measurement details");
+  await app.waitFor("text:Sun 2003 · sun2003_table5_male_ffm_tbw");
+  await app.waitFor("text:170 cm · 23 years");
+  await app.press("Confirm and save");
+  await app.waitFor("Measurement saved");
+  await home(app);
+  await app.press("label:Body metrics, 58.1 kg");
+  // The native overview reads the confirmed Measurement's algorithm version.
+  await app.waitFor("text:Sun 2003 · Experimental");
+  await app.waitFor("text:12.0%");
+}, 30000);
+
+test("scale mixed: pre-connection selection persists as the default and survives app restart", async () => {
+  const app = await start();
+  await chooseAlgorithm(app, "Wu 2015");
+  expect(algorithmPreference(app)).toBe("wu2015");
+  expect(app.host.calls()).toEqual([]);
+  const preferences = app.storage();
+  const relaunched = await start(true, true, undefined, {}, false, preferences);
+  await relaunched.waitFor("id:scale-algorithms >> text:Wu 2015");
+  const sessionId = await connect(relaunched);
+  await packet(relaunched, sessionId, STABLE);
+  await packet(relaunched, sessionId, IMPEDANCE);
+  await relaunched.waitFor("label:Estimated body fat 10.6%");
+  await relaunched.press("Confirm and save");
+  await relaunched.waitFor("Measurement saved");
+}, 30000);
+
+test("scale mixed: retained draft keeps its chosen algorithm and frozen profile after native settings change", async () => {
+  const app = await start();
+  const sessionId = await connect(app);
+  await packet(app, sessionId, STABLE);
+  await packet(app, sessionId, IMPEDANCE);
+  await chooseAlgorithm(app, "Wu 2015");
+  await home(app);
+  await app.press("label:Settings");
+  await app.press("Body profile");
+  await app.clear("label:Height");
+  await app.type("label:Height", "180");
+  await app.scroll("Estimation algorithm", 1000);
+  await app.press("label:Estimation algorithm, Sun 2003");
+  expect(algorithmPreference(app)).toBe("sun2003");
+  await app.press("label:Back");
+  await app.scroll("Connect scale", 250);
+  await app.press("Connect scale");
+  await app.waitFor("id:scale-algorithms >> text:Wu 2015");
+  await app.waitFor("label:Estimated body fat 10.6%");
+  await app.scroll("Measurement details", 300);
+  await app.press("Measurement details");
+  await app.waitFor("text:170 cm · 23 years");
+  expect(calls(app, "ble.connect").length).toBe(1);
+  await app.scroll("Hide measurement details", -2000);
+  await chooseAlgorithm(app, "Sun 2003");
+  await app.waitFor("label:Estimated body fat 12.0%");
+  await app.waitFor("text:170 cm · 23 years");
+  expect(calls(app, "ble.write").length).toBe(1);
+  await app.press("Confirm and save");
+  await app.waitFor("Measurement saved");
+}, 30000);
+
+test("scale mixed: unsupported model is recoverable and never claims missing impedance or completion", async () => {
+  const app = await start(true, true, undefined, {}, true, {
+    "settings.v1": JSON.stringify({ ...PROFILE, age_years: 80, scale_algorithm: "wu2015" }),
+  });
+  const sessionId = await connect(app);
+  await packet(app, sessionId, STABLE);
+  await app.waitFor("Reading body composition…");
+  await packet(app, sessionId, IMPEDANCE);
+  await app.waitFor("This algorithm cannot estimate this measurement");
+  if (!app.clock) throw new Error("Expected a manual clock");
+  await app.clock.fastForward(30_000);
+  expect(app.shows("Your measurement is ready")).toBe(false);
+  expect(app.shows("Reading body composition…")).toBe(false);
+  expect(app.shows("Still waiting for body composition")).toBe(false);
+  expect(app.shows("id:scale-composition")).toBe(false);
+  expect(app.enabled("Save weight only")).toBe(true);
+  await chooseAlgorithm(app, "Sun 2003");
+  await app.waitFor("Your measurement is ready");
+  await app.waitFor("label:Estimated body fat 12.0%");
+  await chooseAlgorithm(app, "Wu 2015");
+  await app.waitFor("This algorithm cannot estimate this measurement");
+  expect(calls(app, "ble.connect").length).toBe(1);
+  expect(calls(app, "ble.write").length).toBe(1);
+  await app.press("Save weight only");
+  await app.waitFor("Measurement saved");
+  await home(app);
+  await app.waitFor("label:Body metrics, 58.1 kg");
+}, 30000);
+
+test("scale mixed: changing the model resets replacement confirmation for the new review token", async () => {
+  const app = await start();
+  let sessionId = await connect(app);
+  await packet(app, sessionId, STABLE);
+  await packet(app, sessionId, IMPEDANCE);
+  await app.press("Confirm and save");
+  await app.waitFor("Measurement saved");
+  await home(app);
+  await app.press("label:Settings");
+  await app.scroll("Connect scale", 250);
+  await app.press("Connect scale");
+  sessionId = await connect(app);
+  await packet(app, sessionId, STABLE);
+  await packet(app, sessionId, IMPEDANCE);
+  await app.press("Confirm and save");
+  await app.waitFor("Replace and save");
+  await chooseAlgorithm(app, "Sun 2003");
+  await app.waitFor("Confirm and save");
+  expect(app.shows("Replace and save")).toBe(false);
+  await app.press("Confirm and save");
+  await app.waitFor("Replace and save");
+  await packet(app, sessionId, IMPEDANCE);
+  expect(app.shows("Replace and save")).toBe(true);
+  await app.press("Replace and save");
+  await app.waitFor("Measurement saved");
+}, 30000);
+
 test("scale mixed: native Rust settings open TSX, Rust-generated command and confirmed measurement update Today", async () => {
   const app = await start();
   const sessionId = await connect(app);
@@ -157,6 +557,7 @@ test("scale mixed: native Rust settings open TSX, Rust-generated command and con
   expect(app.shows("id:scale-water >> text:35.82 kg")).toBe(true);
   expect(app.shows("id:scale-stages")).toBe(false);
   expect(app.shows("id:scale-evidence")).toBe(false);
+  await app.scroll("Measurement details", 300);
   await app.press("Measurement details");
   await app.waitFor("text:Segal BIA");
   await app.waitFor("text:170 cm · 23 years");
@@ -367,6 +768,7 @@ test("scale mixed: moving readings update live without offering to save", async 
   await app.waitFor("label:Weight 58.05 kg");
   expect(app.shows("id:scale-live-reading")).toBe(false);
   await packet(app, sessionId, IMPEDANCE);
+  await app.scroll("Measurement details", 300);
   await app.press("Measurement details");
   await app.waitFor("Estimated fat-free mass");
   expect(app.texts().join(" ")).toContain("51.20 kg");

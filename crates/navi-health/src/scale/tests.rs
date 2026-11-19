@@ -97,6 +97,88 @@ fn empty_or_unusable_adc_does_not_replace_composition_within_a_load_cycle() {
 }
 
 #[test]
+fn changed_usable_resistance_reaches_host_when_original_model_cannot_estimate_it() {
+    for original_algorithm in [Algorithm::Wu2015, Algorithm::Sun2003] {
+        let mut session = Session::with_algorithm(profile(), original_algorithm).unwrap();
+        session.feed(&weight()).unwrap();
+        let first = session.feed(&adc()).unwrap().unwrap();
+        assert!(first.metrics.is_some());
+        // The host changes its selected algorithm without changing BLE/session
+        // state. Its draft is normalized from the original model's evidence.
+        let previous_host_draft = first.reestimate(Algorithm::Segal).unwrap();
+        let mut changed = adc();
+        changed[4..6].copy_from_slice(&100_u16.to_be_bytes());
+        let changed = checksum(changed);
+        let evidence = session.feed(&changed).unwrap().unwrap();
+        assert_eq!(evidence.algorithm(), Some(original_algorithm));
+        assert_eq!(evidence.weight_grams, 58_050);
+        assert_eq!(evidence.resistance_ohm, Some(100.0));
+        assert_eq!(evidence.raw_impedances, vec![100.0, 472.0]);
+        assert!(evidence.metrics.is_none());
+        assert!(evidence.valid());
+        assert_eq!(session.latest(), Some(evidence.clone()));
+        let next_host_draft = evidence.reestimate(Algorithm::Segal).unwrap();
+        assert_eq!(next_host_draft.resistance_ohm, Some(100.0));
+        assert!(next_host_draft.metrics.is_some());
+        assert_ne!(next_host_draft.metrics, previous_host_draft.metrics);
+        assert_ne!(next_host_draft, previous_host_draft);
+        assert!(next_host_draft.valid());
+        assert!(session.live_reading().unwrap().stable);
+        assert!(session.feed(&changed).unwrap().is_none());
+        assert!(session.feed(&weight()).unwrap().is_none());
+        assert_eq!(session.latest(), Some(evidence));
+    }
+}
+
+#[test]
+fn unusable_resistance_cannot_erase_host_composition_when_original_model_has_none() {
+    for original_algorithm in [Algorithm::Wu2015, Algorithm::Sun2003] {
+        let mut session = Session::with_algorithm(profile(), original_algorithm).unwrap();
+        session.feed(&weight()).unwrap();
+        let mut usable = adc();
+        usable[4..6].copy_from_slice(&100_u16.to_be_bytes());
+        let usable = checksum(usable);
+        let evidence = session.feed(&usable).unwrap().unwrap();
+        assert!(evidence.metrics.is_none());
+        assert_eq!(evidence.resistance_ohm, Some(100.0));
+        let host_draft = evidence.reestimate(Algorithm::Segal).unwrap();
+        assert!(host_draft.metrics.is_some());
+        for primary in [0_u16, 99, 65_535] {
+            let mut invalid = adc();
+            invalid[4..6].copy_from_slice(&primary.to_be_bytes());
+            assert!(session.feed(&checksum(invalid)).unwrap().is_none());
+            let retained = session.latest().unwrap();
+            assert_eq!(retained, evidence);
+            assert!(retained.valid());
+            assert_eq!(
+                retained.reestimate(Algorithm::Segal),
+                Some(host_draft.clone())
+            );
+        }
+        // A new moving-weight cycle must discard the previous load's evidence.
+        let mut moving = weight();
+        moving[2] &= 0x7f;
+        assert!(session.feed(&checksum(moving)).unwrap().is_none());
+        assert!(session.latest().is_none());
+        assert!(!session.live_reading().unwrap().stable);
+        session.feed(&weight()).unwrap();
+        let mut empty = adc();
+        empty[4..8].fill(0);
+        let incomplete = session.feed(&checksum(empty)).unwrap().unwrap();
+        assert!(incomplete.resistance_ohm.is_none());
+        assert!(incomplete.metrics.is_none());
+        assert!(incomplete.valid());
+        assert!(
+            incomplete
+                .reestimate(Algorithm::Segal)
+                .unwrap()
+                .metrics
+                .is_none()
+        );
+    }
+}
+
+#[test]
 fn dynamic_mismatched_and_out_of_order_readings_never_mix() {
     let mut session = Session::new(profile()).unwrap();
     assert_eq!(
@@ -175,16 +257,21 @@ fn history_and_settings_cannot_be_saved_as_live_measurements() {
 #[test]
 fn invalid_or_missing_primary_impedance_never_uses_bmi_as_body_fat() {
     for raw in [vec![], vec![0.0, 517.0], vec![99.0], vec![65535.0]] {
-        let reading = measurement(58050, raw, &profile());
+        let reading = measurement(58050, raw, &profile(), Algorithm::Segal);
         assert_eq!(reading.resistance_ohm, None);
         assert_eq!(reading.metrics, None);
         assert!(reading.valid());
     }
-    let converted = measurement(58050, vec![4270.2], &profile());
+    let converted = measurement(58050, vec![4270.2], &profile(), Algorithm::Segal);
     assert_eq!(converted.resistance_ohm, Some(506.33));
     // Raw wire ADCs are integers: persisted fractional ADCs are not valid.
     assert!(!converted.valid());
-    let reordered = measurement(58050, vec![200.0, 300.0, 400.0, 500.0, 506.0], &profile());
+    let reordered = measurement(
+        58050,
+        vec![200.0, 300.0, 400.0, 500.0, 506.0],
+        &profile(),
+        Algorithm::Segal,
+    );
     assert_eq!(reordered.resistance_ohm, Some(506.0));
     assert!(reordered.valid());
 }
@@ -216,6 +303,189 @@ fn measurements_are_revalidated_from_their_profile_and_raw_evidence() {
         })
         .is_err()
     );
+}
+
+#[test]
+fn legacy_json_remains_byte_for_byte_compatible_and_valid() {
+    // Frozen pre-selection schema and values, independent of serialization
+    // generated by the implementation under test. No new Measurement fields.
+    let json = r#"{"weight_grams":58050,"resistance_ohm":517.0,"raw_impedances":[517.0,472.0],"metrics":{"body_fat_percent":11.8,"muscle_percent":83.7,"water_percent":61.7,"resistance_ohm":517.0,"model":"segal_3a_male_lt20"},"profile":{"height_cm":170,"age_years":23,"sex":"male"},"algorithm_version":"afu_wl_scale27_bia_v1"}"#;
+    let reading: Measurement = serde_json::from_str(json).unwrap();
+    assert_eq!(reading.algorithm(), Some(Algorithm::Segal));
+    assert!(reading.valid());
+    assert_eq!(serde_json::to_string(&reading).unwrap(), json);
+    assert_eq!(reading.reestimate(Algorithm::Segal), Some(reading.clone()));
+    let mut session = Session::new(profile()).unwrap();
+    session.feed(&weight()).unwrap();
+    assert_eq!(session.feed(&adc()).unwrap(), Some(reading));
+}
+
+#[test]
+fn selected_sessions_and_explicit_reestimation_preserve_frozen_original_evidence() {
+    let mut entered_profile = profile();
+    let mut legacy = Session::new(entered_profile.clone()).unwrap();
+    legacy.feed(&weight()).unwrap();
+    let source = legacy.feed(&adc()).unwrap().unwrap();
+    // Later profile edits must not reinterpret a session or historic reading.
+    entered_profile.height_cm = 190;
+    entered_profile.age_years = 45;
+    entered_profile.sex = Sex::Female;
+    for algorithm in Algorithm::ALL {
+        let mut session = Session::with_algorithm(profile(), algorithm).unwrap();
+        let weight_only = session.feed(&weight()).unwrap().unwrap();
+        assert_eq!(weight_only.algorithm(), Some(algorithm));
+        assert!(weight_only.valid());
+        assert!(weight_only.metrics.is_none());
+        assert!(weight_only.resistance_ohm.is_none());
+        let reading = session.feed(&adc()).unwrap().unwrap();
+        assert_eq!(source.reestimate(algorithm), Some(reading.clone()));
+        assert_eq!(reading.weight_grams, 58_050);
+        assert_eq!(reading.raw_impedances, vec![517.0, 472.0]);
+        assert_eq!(reading.resistance_ohm, Some(517.0));
+        assert_eq!(reading.profile, profile());
+        assert_ne!(reading.profile, entered_profile);
+        assert_eq!(reading.algorithm(), Some(algorithm));
+        assert_eq!(
+            Algorithm::from_model_id(&reading.metrics.as_ref().unwrap().model),
+            Some(algorithm)
+        );
+        assert!(reading.valid());
+        assert_eq!(reading.reestimate(Algorithm::Segal), Some(source.clone()));
+        let restored: Measurement =
+            serde_json::from_str(&serde_json::to_string(&reading).unwrap()).unwrap();
+        assert_eq!(restored, reading);
+        assert!(restored.valid());
+        session.reset();
+        assert!(session.latest().is_none());
+        session.feed(&weight()).unwrap();
+        assert_eq!(session.feed(&adc()).unwrap(), Some(reading));
+    }
+    assert_eq!(source.algorithm_version, ALGORITHM_VERSION);
+    assert!(source.valid());
+}
+
+#[test]
+fn exact_new_versions_reject_relabelling_and_tampering_before_reestimation() {
+    for (algorithm, version) in [
+        (Algorithm::Wu2015, "afu_wl_scale27_wu2015_ffm_v1"),
+        (Algorithm::Sun2003, "afu_wl_scale27_sun2003_ffm_tbw_v1"),
+    ] {
+        let good = measurement(58_050, vec![517.0, 472.0], &profile(), algorithm);
+        assert_eq!(good.algorithm_version, version);
+        assert!(good.valid());
+        let mut corruptions = Vec::new();
+        for version in [ALGORITHM_VERSION, "unknown", "afu_wl_scale27_wu2015_ffm_v2"] {
+            let mut reading = good.clone();
+            reading.algorithm_version = version.into();
+            corruptions.push(reading);
+        }
+        let mut reading = good.clone();
+        reading.algorithm_version = algorithm_version(if algorithm == Algorithm::Wu2015 {
+            Algorithm::Sun2003
+        } else {
+            Algorithm::Wu2015
+        })
+        .into();
+        corruptions.push(reading);
+        for field in ["fat", "water", "muscle", "resistance", "model", "absent"] {
+            let mut reading = good.clone();
+            let metrics = reading.metrics.as_mut().unwrap();
+            match field {
+                "fat" => metrics.body_fat_percent += 0.1,
+                "water" => metrics.water_percent += 0.1,
+                "muscle" => metrics.muscle_percent += 0.1,
+                "resistance" => metrics.resistance_ohm = Some(500.0),
+                "model" => metrics.model = "unrecognized".into(),
+                _ => reading.metrics = None,
+            }
+            corruptions.push(reading);
+        }
+        for raw in [
+            vec![517.5],
+            vec![f64::NAN],
+            vec![-1.0],
+            vec![65_536.0],
+            vec![517.0; 6],
+        ] {
+            let mut reading = good.clone();
+            reading.raw_impedances = raw;
+            corruptions.push(reading);
+        }
+        let mut reading = good.clone();
+        reading.weight_grams = 0;
+        corruptions.push(reading);
+        let mut reading = good.clone();
+        reading.profile.height_cm = 175;
+        corruptions.push(reading);
+        let mut reading = good;
+        reading.resistance_ohm = Some(500.0);
+        corruptions.push(reading);
+        for reading in corruptions {
+            assert!(!reading.valid());
+            for selected in Algorithm::ALL {
+                assert!(reading.reestimate(selected).is_none());
+            }
+        }
+    }
+}
+
+#[test]
+fn inapplicable_models_keep_stable_weight_and_proxy_without_fabricated_composition() {
+    for (algorithm, age) in [(Algorithm::Wu2015, 76), (Algorithm::Sun2003, 95)] {
+        let profile = UserProfile {
+            age_years: age,
+            ..profile()
+        };
+        let mut session = Session::with_algorithm(profile.clone(), algorithm).unwrap();
+        // Selection must not allow ADC to make an unstable measurement stable.
+        assert_eq!(
+            session.feed(&adc()).unwrap_err(),
+            ScaleError::StaleMeasurement
+        );
+        let mut moving = weight();
+        moving[2] &= 0x7f;
+        assert!(session.feed(&checksum(moving)).unwrap().is_none());
+        assert!(!session.live_reading().unwrap().stable);
+        assert!(session.latest().is_none());
+        let stable = session.feed(&weight()).unwrap().unwrap();
+        assert!(stable.metrics.is_none());
+        let reading = session.feed(&adc()).unwrap().unwrap();
+        assert_eq!(reading.weight_grams, 58_050);
+        assert_eq!(reading.resistance_ohm, Some(517.0));
+        assert_eq!(reading.raw_impedances, vec![517.0, 472.0]);
+        assert_eq!(reading.profile, profile);
+        assert!(reading.metrics.is_none());
+        assert_eq!(reading.algorithm(), Some(algorithm));
+        assert!(reading.valid());
+        assert!(session.live_reading().unwrap().stable);
+        assert_eq!(reading.reestimate(algorithm), Some(reading.clone()));
+        let mut fabricated = reading.clone();
+        fabricated.metrics = reading.reestimate(Algorithm::Segal).unwrap().metrics;
+        assert!(fabricated.metrics.is_some());
+        assert!(!fabricated.valid());
+        assert!(fabricated.reestimate(Algorithm::Segal).is_none());
+    }
+    for algorithm in Algorithm::ALL {
+        let reading = measurement(58_050, vec![], &profile(), algorithm);
+        assert!(reading.valid());
+        for selected in Algorithm::ALL {
+            let result = reading.reestimate(selected).unwrap();
+            assert!(result.metrics.is_none());
+            assert!(result.resistance_ohm.is_none());
+            assert!(result.valid());
+        }
+        assert_eq!(
+            Session::with_algorithm(
+                UserProfile {
+                    height_cm: 0,
+                    ..profile()
+                },
+                algorithm
+            )
+            .unwrap_err(),
+            ScaleError::Profile
+        );
+    }
 }
 
 #[test]

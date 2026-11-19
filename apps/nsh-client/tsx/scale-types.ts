@@ -23,7 +23,23 @@ export interface ScaleUpdate {
   reading: LiveReading | null;
 }
 
+export type AlgorithmId = "segal" | "wu2015" | "sun2003";
+
+export interface AlgorithmOption {
+  id: AlgorithmId;
+  name: string;
+  description: string;
+  experimental: boolean;
+}
+
+export interface Algorithms {
+  selected: AlgorithmId;
+  options: AlgorithmOption[];
+}
+
 export interface Preview {
+  algorithm: AlgorithmOption;
+  algorithm_unavailable: boolean;
   session_id: string;
   token: string;
   day: string;
@@ -32,6 +48,7 @@ export interface Preview {
   existing_kg: number | null;
   summary: MeasurementSummary;
   measurement: {
+    algorithm_version: string;
     weight_grams: number;
     resistance_ohm: number | null;
     metrics: Composition | null;

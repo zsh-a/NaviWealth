@@ -1,7 +1,11 @@
 //! Rust-owned scale sessions and reviewed, atomic health measurements.
 //! The UI carries opaque identifiers; it cannot supply a replacement estimate.
-use std::{cell::RefCell, rc::Rc};
+use std::{
+    cell::{Cell, RefCell},
+    rc::Rc,
+};
 
+use navi_health::bodycomp::Algorithm;
 use navi_health::scale::{DeviceProtocol, LiveReading, Measurement, Session, UserProfile};
 use nsh_core::prelude::*;
 use nsh_core::storage::Storage;
@@ -104,6 +108,7 @@ struct Active {
     revision: i64,
     existing_kg: Option<f64>,
     protocol: RefCell<Session>,
+    algorithm: Cell<Algorithm>,
 }
 #[derive(Clone, Default)]
 struct Live(Option<Rc<Active>>);
@@ -226,8 +231,9 @@ pub fn begin(device: Device, identity: DeviceProtocol) -> Result<Start, String> 
             .ok_or("Set date of birth in Body profile before connecting the scale")?,
         sex: settings::sex().ok_or("Set sex in Body profile before connecting the scale")?,
     };
-    let protocol =
-        Session::new(profile.clone()).map_err(|_| "Check the body profile".to_owned())?;
+    let algorithm = settings::scale_algorithm();
+    let protocol = Session::with_algorithm(profile.clone(), algorithm)
+        .map_err(|_| "Check the body profile".to_owned())?;
     let start = Start {
         session_id: random_id()?,
         profile,
@@ -253,6 +259,7 @@ pub fn begin(device: Device, identity: DeviceProtocol) -> Result<Start, String> 
         revision: baseline,
         existing_kg,
         protocol: RefCell::new(protocol),
+        algorithm: Cell::new(algorithm),
     }))));
     Ok(start)
 }
@@ -293,9 +300,14 @@ pub fn feed(session_id: &str, bytes: &[u8]) -> Result<Option<Preview>, String> {
                 clear()?;
                 return Ok(None);
             };
-            return Ok(pending()?.filter(|p| p.session_id == session_id && p.measurement == latest));
+            let latest = active_measurement(&active, &latest);
+            return Ok(pending()?.filter(|p| {
+                p.session_id == session_id && Some(&p.measurement) == latest.as_ref()
+            }));
         }
     };
+    let measurement =
+        active_measurement(&active, &measurement).ok_or("The scale sent an invalid measurement")?;
     if !measurement.valid() || !weight::valid_kg(measurement.weight_kg()) {
         invalidate(session_id)?;
         return Err("The scale sent an invalid measurement".into());
@@ -347,6 +359,97 @@ pub fn pending() -> Result<Option<Preview>, String> {
         .transpose()
     })
     .ok_or("Local data unavailable")?
+}
+
+fn active_measurement(active: &Active, measurement: &Measurement) -> Option<Measurement> {
+    let algorithm = active.algorithm.get();
+    if measurement.algorithm()? == algorithm {
+        Some(measurement.clone())
+    } else {
+        measurement.reestimate(algorithm)
+    }
+}
+
+/// Re-estimation only replaces a draft. The old token is invalidated in the
+/// same transaction; saved weight, composition, time and profile stay intact.
+pub fn reestimate(session_id: &str, token: &str, algorithm: Algorithm) -> Result<Preview, String> {
+    if drafts_quarantined() {
+        return Err("stale_measurement".into());
+    }
+    let active = live()
+        .get_untracked()
+        .0
+        .filter(|a| a.start.session_id == session_id);
+    let expected = active.as_ref().and_then(|a| {
+        a.protocol
+            .borrow()
+            .latest()
+            .as_ref()
+            .and_then(|m| active_measurement(a, m))
+    });
+    let preview = db::with(|c| {
+        reestimate_in(
+            c,
+            session_id,
+            token,
+            algorithm,
+            expected.as_ref(),
+            active.is_some(),
+        )
+    })
+    .ok_or("storage_unavailable")??;
+    if let Some(active) = active {
+        active.algorithm.set(algorithm);
+    }
+    Ok(preview)
+}
+
+fn reestimate_in(
+    c: &Connection,
+    session_id: &str,
+    token: &str,
+    algorithm: Algorithm,
+    expected: Option<&Measurement>,
+    live: bool,
+) -> Result<Preview, String> {
+    let tx = c
+        .unchecked_transaction()
+        .map_err(|_| "storage_unavailable")?;
+    let body: String = tx
+        .query_row(
+            "SELECT body FROM scale_drafts WHERE session_id=?1",
+            [session_id],
+            |r| r.get(0),
+        )
+        .optional()
+        .map_err(|_| "storage_unavailable")?
+        .ok_or("stale_measurement")?;
+    let mut draft: Draft = serde_json::from_str(&body).map_err(|_| "stale_measurement")?;
+    if !draft.preview.valid()
+        || draft.preview.session_id != session_id
+        || draft.preview.token != token
+        || (live && expected != Some(&draft.preview.measurement))
+        || revision(&tx, draft.preview.day).map_err(|_| "storage_unavailable")? != draft.revision
+    {
+        return Err("stale_measurement".into());
+    }
+    if draft.preview.measurement.algorithm() == Some(algorithm) {
+        return Ok(draft.preview);
+    }
+    draft.preview.measurement = draft
+        .preview
+        .measurement
+        .reestimate(algorithm)
+        .ok_or("invalid_algorithm_input")?;
+    draft.preview.token = random_id()?;
+    let body = serde_json::to_string(&draft).map_err(|_| "invalid_algorithm_input")?;
+    tx.execute(
+        "UPDATE scale_drafts SET body=?1 WHERE session_id=?2",
+        params![body, session_id],
+    )
+    .map_err(|_| "storage_unavailable")?;
+    tx.commit().map_err(|_| "storage_unavailable")?;
+    Ok(draft.preview)
 }
 
 /// Cancels exactly this session and its pending review. Other sessions are unaffected.
@@ -406,7 +509,13 @@ pub fn confirm(session_id: &str, token: &str, replace_existing: bool) -> Result<
         .filter(|a| a.start.session_id == session_id)
     {
         let pending = pending()?.ok_or("The measurement is no longer stable")?;
-        if active.protocol.borrow().latest().as_ref() != Some(&pending.measurement) {
+        let latest = active
+            .protocol
+            .borrow()
+            .latest()
+            .as_ref()
+            .and_then(|m| active_measurement(&active, m));
+        if latest.as_ref() != Some(&pending.measurement) {
             return Err("The measurement has changed. Wait for a stable reading.".into());
         }
     }
@@ -939,6 +1048,128 @@ mod tests {
             replace,
             d.preview.measured_at_ms + 1,
         )
+    }
+
+    #[test]
+    fn selecting_an_algorithm_rotates_only_the_unsaved_review_and_survives_confirmation() {
+        let c = database();
+        let d = draft(&c, true);
+        keep(&c, &d);
+        let p = &d.preview;
+        let recalculated =
+            reestimate_in(&c, &p.session_id, &p.token, Algorithm::Wu2015, None, false).unwrap();
+        assert_ne!(recalculated.token, p.token);
+        assert_eq!(
+            recalculated.measurement.weight_grams,
+            p.measurement.weight_grams
+        );
+        assert_eq!(
+            recalculated.measurement.raw_impedances,
+            p.measurement.raw_impedances
+        );
+        assert_eq!(recalculated.measurement.profile, p.measurement.profile);
+        assert_eq!(recalculated.measured_at_ms, p.measured_at_ms);
+        assert_eq!(recalculated.day, p.day);
+        assert_eq!(
+            recalculated.measurement.algorithm(),
+            Some(Algorithm::Wu2015)
+        );
+        assert_ne!(recalculated.measurement.metrics, p.measurement.metrics);
+        assert!(weight_on(&c, p.day).unwrap().is_none());
+        assert!(confirm_draft(&c, &d, false).is_err());
+        confirm_in(
+            &c,
+            &p.session_id,
+            &recalculated.token,
+            false,
+            p.measured_at_ms + 1,
+        )
+        .unwrap();
+        let kept = measurement_on_in(&c, p.day).unwrap();
+        assert_eq!(kept.algorithm(), Some(Algorithm::Wu2015));
+        assert_eq!(kept, recalculated.measurement);
+        assert!(
+            reestimate_in(
+                &c,
+                &p.session_id,
+                &recalculated.token,
+                Algorithm::Segal,
+                None,
+                false
+            )
+            .is_err()
+        );
+        assert_eq!(measurement_on_in(&c, p.day).unwrap(), kept);
+    }
+
+    #[test]
+    fn reestimation_rejects_stale_tokens_live_evidence_and_record_changes() {
+        let c = database();
+        let d = draft(&c, true);
+        keep(&c, &d);
+        let p = &d.preview;
+        for (token, live, latest) in [("bad", false, None), (p.token.as_str(), true, None)] {
+            assert!(
+                reestimate_in(&c, &p.session_id, token, Algorithm::Sun2003, latest, live).is_err()
+            );
+        }
+        let same = reestimate_in(
+            &c,
+            &p.session_id,
+            &p.token,
+            Algorithm::Segal,
+            Some(&p.measurement),
+            true,
+        )
+        .unwrap();
+        assert_eq!(&same, p);
+        c.execute(
+            "INSERT INTO weights(day,kg,logged_at_ms) VALUES(?1,70,1)",
+            [p.day.to_string()],
+        )
+        .unwrap();
+        assert!(
+            reestimate_in(&c, &p.session_id, &p.token, Algorithm::Wu2015, None, false).is_err()
+        );
+        assert_eq!(weight_on(&c, p.day).unwrap(), Some(70.0));
+    }
+
+    #[test]
+    fn failed_reestimation_keeps_the_previous_token_and_draft_atomically() {
+        let c = database();
+        let d = draft(&c, true);
+        keep(&c, &d);
+        c.execute_batch("CREATE TRIGGER reject_model BEFORE UPDATE ON scale_drafts BEGIN SELECT RAISE(ABORT,'full'); END;").unwrap();
+        let p = &d.preview;
+        assert!(
+            reestimate_in(&c, &p.session_id, &p.token, Algorithm::Wu2015, None, false).is_err()
+        );
+        let body: String = c
+            .query_row("SELECT body FROM scale_drafts", [], |r| r.get(0))
+            .unwrap();
+        let still: Draft = serde_json::from_str(&body).unwrap();
+        assert!(still == d);
+        confirm_draft(&c, &d, false).unwrap();
+        assert_eq!(measurement_on_in(&c, p.day).unwrap(), p.measurement);
+    }
+
+    #[test]
+    fn backup_validation_accepts_confirmed_models_and_rejects_mixed_provenance() {
+        for algorithm in Algorithm::ALL {
+            let c = database();
+            let mut d = draft(&c, true);
+            d.preview.measurement = d.preview.measurement.reestimate(algorithm).unwrap();
+            keep(&c, &d);
+            confirm_draft(&c, &d, false).unwrap();
+            assert!(validate_saved(&c).is_ok());
+            c.execute(
+                "UPDATE body_metrics SET body=json_set(body,'$.model','foreign_model')",
+                [],
+            )
+            .unwrap();
+            assert!(validate_saved(&c).is_err());
+            assert_eq!(weight_on(&c, d.preview.day).unwrap(), Some(58.1));
+        }
     }
     #[test]
     fn measurement_lookup_is_read_only_and_retains_original_precision() {

@@ -204,6 +204,16 @@ AI only to turn text and images into drafts, using the owner's model account.
   Health profile & goals, Devices & connections, Recognition & consent, Data
   & backups, and About. Body profile opens a dedicated editor and the index
   shows completion status. The scale opens that editor directly when needed.
+  Body profile presents three exclusive algorithm rows below the profile,
+  each with its scope and limitations. Segal remains the default; Wu 2015 and
+  Sun 2003 always carry Experimental. The scale sheet keeps the chosen model
+  visible in a compact disclosure; choosing before connection changes the
+  default, choosing during review updates only the draft. Successful selection
+  folds the list to expose the new readings. Saving and dismissing are locked
+  during recalculation; late results cannot replace newer evidence. Unsupported
+  inputs explain why composition is unavailable and offer a model switch or
+  weight-only saving. Saved body metrics show their own model; body-fat charts
+  never join observations from different algorithms.
   Body profile asks for an actual birth date using a calendar/year selector
   or ISO date entry. Age is computed on the current local day; previous
   entered ages are labelled legacy and never converted to invented birthdays.

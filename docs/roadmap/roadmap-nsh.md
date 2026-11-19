@@ -293,7 +293,15 @@ Recommended sequence; this is planning, not a claim these items are implemented.
    - Birth date supplies current completed age, frozen with every measurement;
      legacy entered ages are retained honestly until replaced. Display-only
      BMI and estimated fat/fat-free/muscle/water masses reuse the measurement's
-     captured profile and existing model, without changing stored algorithms.
+     captured profile and model version; preference changes never rewrite saved readings.
+   - Algorithm selection supports legacy Segal plus experimental Wu 2015
+     and Sun 2003. The default is device-local; switching a reviewed draft
+     preserves original evidence, rotates its token and resets replacement
+     confirmation. New algorithms have explicit applicability guards and
+     versioned provenance, with legacy validation preserved. Sun uses its
+     independent TBW equation; muscle remains approximate. Experimental
+     device calibration and numerical accuracy are not physical acceptance
+     evidence. Review keeps body-fat trends separate by algorithm.
    - `navi-health::scale` validates advertisement identity, packet lengths,
      checksums, stable weight and ADC evidence, preserving original grams.
      Rust creates profile/time commands. Missing valid impedance gives a

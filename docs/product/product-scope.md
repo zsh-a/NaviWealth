@@ -237,6 +237,18 @@ The full target is:
   cannot be confirmed before stability. Details may derive BMI and estimated
   fat/fat-free/muscle/water masses from the same measurement; estimates keep
   their model provenance and do not claim numerical parity with vendor scores.
+  The owner can choose Segal (the legacy default), experimental Wu 2015, or
+  experimental Sun 2003 in Body profile for future sessions. The measurement
+  sheet can also recalculate its unsaved draft from the same original grams,
+  ADCs and captured profile, without reconnecting or changing that preference.
+  A changed draft rotates its confirmation token atomically and resets any
+  replacement confirmation. Models outside their supported input range return
+  weight only, with an explicit explanation and model-switch recovery; they
+  never fall back to another composition formula. Sun independently estimates
+  total body water; muscle remains a proportional approximation. Experimental
+  models use reference-converted impedance, not a verified device calibration.
+  Saved readings keep their model/version and are never recalculated by a
+  preference change. Review shows body-fat curves separately by algorithm.
   Same-day
   replacement requires a second confirmation; missing valid impedance offers
   weight only and is explicitly unfinished. A slow composition reading keeps

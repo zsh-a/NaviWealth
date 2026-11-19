@@ -1,6 +1,7 @@
 import {
   colorScheme,
   computed,
+  fontScale,
   locale,
   reduceMotion,
   Scroll,
@@ -21,12 +22,18 @@ export function ScalePanel(props: { close: () => void; busy: Signal<boolean> }) 
   const labels = copy[locale().toLowerCase().startsWith("zh") ? "zh" : "en"];
   const palette = computed(() => scaleNative.palette(colorScheme() === "dark"));
   const detailsOpen = signal(false);
+  const algorithmsOpen = signal(false);
   const {
     state,
     devices,
     remembered,
     finding,
     processing,
+    recalculating,
+    algorithms,
+    selectedAlgorithm,
+    activeAlgorithm,
+    chooseAlgorithm,
     compositionPhase,
     preview,
     liveReading,
@@ -43,6 +50,19 @@ export function ScalePanel(props: { close: () => void; busy: Signal<boolean> }) 
     openProfile,
   } = createScaleSession(labels, props.close, props.busy);
   const locked = props.busy;
+  const currentAlgorithm = computed(
+    () =>
+      preview()?.algorithm ??
+      activeAlgorithm() ??
+      algorithms().find((option) => option.id === selectedAlgorithm()),
+  );
+  const algorithmLocked = computed(
+    () =>
+      locked() ||
+      processing() ||
+      !profileLoaded() ||
+      (!preview() && (state() === "connecting" || state() === "measuring")),
+  );
   const progress = computed(() => {
     switch (state()) {
       case "scanning":
@@ -67,6 +87,13 @@ export function ScalePanel(props: { close: () => void; busy: Signal<boolean> }) 
     if (state() === "saved") return { label: labels.close, run: leave };
     const reading = preview();
     if (reading) {
+      if (reading.algorithm_unavailable && !replacement()) {
+        return {
+          label: labels.chooseAlgorithm,
+          run: () => algorithmsOpen.set(true),
+          disabled: processing(),
+        };
+      }
       if (!reading.measurement.metrics && compositionPhase() === "waiting" && !replacement()) {
         return { label: labels.compositionPending, run: () => {}, disabled: true };
       }
@@ -205,6 +232,144 @@ export function ScalePanel(props: { close: () => void; busy: Signal<boolean> }) 
               </Each>
             </View>
           </If>
+          <If when={currentAlgorithm() && state() !== "saved"}>
+            <View testID="scale-algorithms" style={{ gap: 8 }}>
+              <Button
+                accessibilityLabel={
+                  algorithmsOpen() ? labels.hideAlgorithms : labels.chooseAlgorithm
+                }
+                onPress={() => algorithmsOpen.set(!algorithmsOpen())}
+                disabled={locked()}
+                style={{
+                  minHeight: 52,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 12,
+                  paddingVertical: 8,
+                  borderBottomWidth: 0.5,
+                  borderColor: palette().line,
+                }}
+                activeStyle={{ opacity: 0.7 }}
+              >
+                <View
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    gap: 4,
+                    flexDirection: fontScale() > 1.2 ? "column" : "row",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <Text style={noteStyle()}>{labels.algorithm}</Text>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      gap: 6,
+                      flexShrink: 1,
+                      flexWrap: "wrap",
+                      alignItems: "baseline",
+                    }}
+                  >
+                    <Text style={{ ...textStyle(), fontWeight: 500 }}>
+                      {currentAlgorithm()?.name}
+                    </Text>
+                    <If when={currentAlgorithm()?.experimental}>
+                      <Text style={noteStyle()}>{labels.experimental}</Text>
+                    </If>
+                  </View>
+                </View>
+                <View
+                  style={{
+                    width: 7,
+                    height: 7,
+                    marginRight: 3,
+                    borderRightWidth: 1.5,
+                    borderBottomWidth: 1.5,
+                    borderColor: palette().muted,
+                    transform: [{ rotate: algorithmsOpen() ? "225deg" : "45deg" }],
+                  }}
+                />
+              </Button>
+              <If when={algorithmsOpen()}>
+                <View testID="scale-algorithm-options" style={{ gap: 4 }}>
+                  <Text style={noteStyle()}>
+                    {preview() ? labels.draftAlgorithmHint : labels.defaultAlgorithmHint}
+                  </Text>
+                  <Each of={algorithms()} key={(option) => option.id}>
+                    {(option) => (
+                      <Button
+                        accessibilityLabel={`${labels.chooseAlgorithm}: ${option().name}`}
+                        selected={currentAlgorithm()?.id === option().id}
+                        onPress={() => {
+                          void chooseAlgorithm(option().id).then(() => {
+                            if (currentAlgorithm()?.id === option().id) algorithmsOpen.set(false);
+                          });
+                        }}
+                        disabled={algorithmLocked()}
+                        style={{
+                          minHeight: 64,
+                          paddingVertical: 12,
+                          flexDirection: "row",
+                          gap: 12,
+                          borderBottomWidth: 0.5,
+                          borderColor: palette().line,
+                        }}
+                        activeStyle={{ opacity: 0.7 }}
+                      >
+                        <View
+                          style={{
+                            width: 18,
+                            height: 18,
+                            marginTop: 3,
+                            borderRadius: 9,
+                            borderWidth: 1,
+                            borderColor: palette().muted,
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <If when={currentAlgorithm()?.id === option().id}>
+                            <View
+                              style={{
+                                width: 8,
+                                height: 8,
+                                borderRadius: 4,
+                                backgroundColor: palette().ink,
+                              }}
+                            />
+                          </If>
+                        </View>
+                        <View style={{ flex: 1, minWidth: 0, gap: 4 }}>
+                          <Text
+                            style={{
+                              ...textStyle(),
+                              fontWeight: currentAlgorithm()?.id === option().id ? 600 : 400,
+                            }}
+                          >
+                            {option().name}
+                          </Text>
+                          <If when={option().experimental}>
+                            <Text style={{ ...noteStyle(), fontSize: 12.5 }}>
+                              {labels.experimental}
+                            </Text>
+                          </If>
+                          <Text style={noteStyle()}>{option().description}</Text>
+                          <If when={currentAlgorithm()?.id === option().id}>
+                            <Text style={noteStyle()}>{labels.selectedAlgorithm}</Text>
+                          </If>
+                        </View>
+                      </Button>
+                    )}
+                  </Each>
+                </View>
+              </If>
+              <If when={recalculating()}>
+                <Text android={{ accessibilityLiveRegion: "polite" }} style={noteStyle()}>
+                  {labels.recalculating}
+                </Text>
+              </If>
+            </View>
+          </If>
           <If
             when={
               profileLoaded() &&
@@ -318,6 +483,7 @@ export function ScalePanel(props: { close: () => void; busy: Signal<boolean> }) 
                 phase={compositionPhase}
                 replacement={replacement}
                 retainedDraft={() => message() === labels.draft}
+                recalculating={recalculating}
                 detailsOpen={detailsOpen}
                 palette={palette}
                 labels={labels}

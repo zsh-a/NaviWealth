@@ -7,7 +7,7 @@
 //! weight/ADC packets and the profile/time command are supported. History and
 //! multi-part signing/settings packets never become measurements.
 
-use crate::bodycomp::{self, BodyMetrics, Sex};
+use crate::bodycomp::{self, Algorithm, BodyMetrics, Sex};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -15,6 +15,16 @@ pub const SERVICE_UUID: &str = "0000ffb0-0000-1000-8000-00805f9b34fb";
 pub const WRITE_UUID: &str = "0000ffb1-0000-1000-8000-00805f9b34fb";
 pub const NOTIFY_UUID: &str = "0000ffb2-0000-1000-8000-00805f9b34fb";
 pub const ALGORITHM_VERSION: &str = "afu_wl_scale27_bia_v1";
+pub const WU2015_ALGORITHM_VERSION: &str = "afu_wl_scale27_wu2015_ffm_v1";
+pub const SUN2003_ALGORITHM_VERSION: &str = "afu_wl_scale27_sun2003_ffm_tbw_v1";
+
+fn algorithm_version(algorithm: Algorithm) -> &'static str {
+    match algorithm {
+        Algorithm::Segal => ALGORITHM_VERSION,
+        Algorithm::Wu2015 => WU2015_ALGORITHM_VERSION,
+        Algorithm::Sun2003 => SUN2003_ALGORITHM_VERSION,
+    }
+}
 const MIN_GRAMS: u32 = 20_000;
 const MAX_GRAMS: u32 = 0x3ffff;
 const MAX_ADC: usize = 5;
@@ -44,6 +54,31 @@ pub struct Measurement {
     pub algorithm_version: String,
 }
 impl Measurement {
+    /// Recognizes only exact recorded versions; unknown versions never acquire
+    /// an assumed model during validation, restore or explicit reestimation.
+    pub fn algorithm(&self) -> Option<Algorithm> {
+        match self.algorithm_version.as_str() {
+            ALGORITHM_VERSION => Some(Algorithm::Segal),
+            WU2015_ALGORITHM_VERSION => Some(Algorithm::Wu2015),
+            SUN2003_ALGORITHM_VERSION => Some(Algorithm::Sun2003),
+            _ => None,
+        }
+    }
+
+    /// Explicitly reestimates valid evidence using its ORIGINAL grams and
+    /// frozen profile. An inapplicable model yields a valid weight-only result;
+    /// invalid source evidence yields None. The source itself is never changed.
+    pub fn reestimate(&self, algorithm: Algorithm) -> Option<Self> {
+        self.valid().then(|| {
+            measurement(
+                self.weight_grams,
+                self.raw_impedances.clone(),
+                &self.profile,
+                algorithm,
+            )
+        })
+    }
+
     pub fn weight_kg(&self) -> f64 {
         f64::from(self.weight_grams) / 1000.0
     }
@@ -72,9 +107,11 @@ impl Measurement {
     }
     /// Checks provenance and recomputes derived values, including after restore.
     pub fn valid(&self) -> bool {
+        let Some(algorithm) = self.algorithm() else {
+            return false;
+        };
         self.profile.valid()
             && valid_grams(self.weight_grams)
-            && self.algorithm_version == ALGORITHM_VERSION
             && self.raw_impedances.len() <= MAX_ADC
             && self.raw_impedances.iter().all(|v| {
                 v.is_finite() && (0.0..=f64::from(u16::MAX)).contains(v) && v.fract() == 0.0
@@ -84,6 +121,7 @@ impl Measurement {
                     self.weight_grams,
                     self.raw_impedances.clone(),
                     &self.profile,
+                    algorithm,
                 )
     }
 }
@@ -283,17 +321,25 @@ impl Protocol {
 #[derive(Debug)]
 pub struct Session {
     profile: UserProfile,
+    algorithm: Algorithm,
     protocol: Protocol,
     latest: Option<Measurement>,
     live_reading: Option<LiveReading>,
 }
 impl Session {
     pub fn new(profile: UserProfile) -> Result<Self, ScaleError> {
+        Self::with_algorithm(profile, Algorithm::Segal)
+    }
+
+    /// Freezes a model for this session. Algorithm selection changes local
+    /// estimation only; it never changes BLE initialization or stability.
+    pub fn with_algorithm(profile: UserProfile, algorithm: Algorithm) -> Result<Self, ScaleError> {
         if !profile.valid() {
             return Err(ScaleError::Profile);
         }
         Ok(Self {
             profile,
+            algorithm,
             protocol: Protocol,
             latest: None,
             live_reading: None,
@@ -344,7 +390,7 @@ impl Session {
                 {
                     return Ok(None);
                 }
-                measurement(weight_grams, Vec::new(), &self.profile)
+                measurement(weight_grams, Vec::new(), &self.profile, self.algorithm)
             }
             Some(Event::Impedance {
                 weight_grams,
@@ -358,9 +404,19 @@ impl Session {
                     self.reset();
                     return Err(ScaleError::StaleMeasurement);
                 }
-                let candidate = measurement(weight_grams, raw_impedances, &self.profile);
-                if candidate.metrics.is_none()
-                    && self.latest.as_ref().is_some_and(|m| m.metrics.is_some())
+                let candidate =
+                    measurement(weight_grams, raw_impedances, &self.profile, self.algorithm);
+                // Retain usable resistance evidence for this stable load, not
+                // a particular model's ability to estimate composition. Hosts
+                // can reestimate with a different model while this Session's
+                // original model stays frozen. A changed usable resistance
+                // must reach that host even if our model rejects its prediction;
+                // empty/invalid resistance must never erase usable evidence.
+                if candidate.resistance_ohm.is_none()
+                    && self
+                        .latest
+                        .as_ref()
+                        .is_some_and(|m| m.resistance_ohm.is_some())
                 {
                     return Ok(None);
                 }
@@ -383,10 +439,16 @@ fn rounded_2(value: f64) -> f64 {
     (value * 100.0).round() / 100.0
 }
 
-fn measurement(weight_grams: u32, raw_impedances: Vec<f64>, profile: &UserProfile) -> Measurement {
+fn measurement(
+    weight_grams: u32,
+    raw_impedances: Vec<f64>,
+    profile: &UserProfile,
+    algorithm: Algorithm,
+) -> Measurement {
     let weight_kg = f64::from(weight_grams) / 1000.0;
-    // The five-electrode variant puts its whole-body channel last. Other
-    // variants use the first ADC, converted only when it is an ADC-scale value.
+    // Reference implementation's channel selection and ADC conversion only:
+    // this is a resistance proxy, NOT calibrated Z (Wu) or wrist-to-ankle R
+    // (Sun). Preserve this exact conversion for legacy measurement validation.
     let resistance_ohm = if raw_impedances.len() == 5 {
         raw_impedances.last().copied()
     } else {
@@ -402,12 +464,13 @@ fn measurement(weight_grams: u32, raw_impedances: Vec<f64>, profile: &UserProfil
         r.is_finite() && (bodycomp::MIN_RESISTANCE_OHM..=bodycomp::MAX_RESISTANCE_OHM).contains(r)
     });
     let metrics = resistance_ohm.and_then(|r| {
-        bodycomp::estimate(
+        bodycomp::estimate_with_algorithm(
             weight_kg,
             f64::from(profile.height_cm),
             profile.age_years,
             profile.sex,
             Some(r),
+            algorithm,
         )
     });
     Measurement {
@@ -416,7 +479,7 @@ fn measurement(weight_grams: u32, raw_impedances: Vec<f64>, profile: &UserProfil
         raw_impedances,
         metrics,
         profile: profile.clone(),
-        algorithm_version: ALGORITHM_VERSION.into(),
+        algorithm_version: algorithm_version(algorithm).into(),
     }
 }
 

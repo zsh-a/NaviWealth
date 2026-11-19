@@ -327,22 +327,53 @@ fn weight_card(days: Memo<Vec<Day>>) -> impl IntoElement {
                         })
                         .collect();
                     let goal = settings::goal_kg();
-                    let fat: Vec<(Day, f64)> = body_metrics::window(last, days_span)
+                    // A model switch is not a change in the body. Keep each
+                    // algorithm's observations in its own labelled curve.
+                    let mut fat = std::collections::BTreeMap::<String, Vec<(Day, f64)>>::new();
+                    for metric in body_metrics::window(last, days_span) {
+                        let algorithm =
+                            navi_health::bodycomp::Algorithm::from_model_id(&metric.metrics.model);
+                        let key = algorithm
+                            .map(|a| a.id())
+                            .unwrap_or(&metric.metrics.model)
+                            .to_owned();
+                        fat.entry(key)
+                            .or_default()
+                            .push((metric.day, metric.metrics.body_fat_percent));
+                    }
+                    let fat: Vec<_> = fat
                         .into_iter()
-                        .map(|m| (m.day, m.metrics.body_fat_percent))
+                        .filter(|(_, points)| points.len() >= 2)
                         .collect();
                     untracked(move || {
                         let charts =
                             view().child(trend(first, f64::from(days_span.max(1)), points, goal));
-                        match fat.len() {
-                            0..=1 => charts.into_element(),
-                            _ => charts
+                        match fat.is_empty() {
+                            true => charts.into_element(),
+                            false => charts
                                 .child(
                                     text(|| s().body_fat)
                                         .typo(Type::Caption)
                                         .text_color(color::MUTED),
                                 )
-                                .child(trend_percent(first, f64::from(days_span.max(1)), fat))
+                                .children(fat.into_iter().map(move |(model, points)| {
+                                    let label = navi_health::bodycomp::Algorithm::from_id(&model)
+                                        .map(crate::scale::algorithm_name)
+                                        .unwrap_or(s().scale_estimate);
+                                    view()
+                                        .mt_2()
+                                        .gap_1()
+                                        .child(
+                                            text(label)
+                                                .typo(Type::Caption)
+                                                .text_color(color::MUTED),
+                                        )
+                                        .child(trend_percent(
+                                            first,
+                                            f64::from(days_span.max(1)),
+                                            points,
+                                        ))
+                                }))
                                 .into_element(),
                         }
                     })

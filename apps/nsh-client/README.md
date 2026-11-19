@@ -85,6 +85,20 @@ compile none of it.
 
 ## AFU-WL scale
 
+Body profile includes an **Estimation algorithm** preference for new scale
+sessions: Segal BIA (legacy default), Wu 2015 (experimental), and Sun 2003
+(experimental). The scale sheet exposes the current choice and can recalculate
+an unsaved measurement from its original grams, ADCs and frozen profile.
+This changes only the draft, rotates its review token, and never reconnects,
+changes the default, or rewrites history. Failed recalculation keeps the old
+review intact. Out-of-range experimental models offer another algorithm or
+explicit weight-only saving rather than silently using Segal. Sun estimates
+water independently; muscle remains a coarse proportional estimate.
+The device's converted input is not verified against these models' original
+measurement setup. Wu is limited to adults aged 18–75, 39–125.5 kg, BMI
+15.9–43.1; Sun is limited to adults aged 18–94. Confirmed model versions
+survive backup/restore, and Review plots each algorithm separately.
+
 Connect scale is available in Settings, Today’s Body metrics overview and the
 manual weight editor. Today shows a full-width dated weight, weekly change,
 body fat and BMI; composition joins only on that weight’s day. Garmin vitals

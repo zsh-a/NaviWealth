@@ -6,7 +6,7 @@ use nsh_core::{prelude::*, storage::Storage};
 use serde::{Deserialize, Serialize};
 
 use crate::domain::{account::ModelAccount, meal::Day, weight};
-use navi_health::bodycomp::Sex;
+use navi_health::bodycomp::{Algorithm, Sex};
 
 const KEY: &str = "settings.v1";
 const KEY_SECRET: &str = "secret.model-key.v1";
@@ -50,6 +50,9 @@ pub struct Settings {
     /// The goal weight, in kilograms (`None` clears it).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub goal_kg: Option<f64>,
+    /// The default for new scale sessions, never a historical recalculation.
+    #[serde(default, deserialize_with = "read_scale_algorithm")]
+    pub scale_algorithm: Algorithm,
 }
 
 fn settings() -> Signal<Settings> {
@@ -176,6 +179,31 @@ pub fn age_on(birth_date: Day, today: Day) -> Option<u16> {
 fn read_birth_date<'de, D: serde::Deserializer<'de>>(reader: D) -> Result<Option<Day>, D::Error> {
     let value = Option::<serde_json::Value>::deserialize(reader)?;
     Ok(value.and_then(|v| v.as_str()?.parse().ok()))
+}
+
+fn read_scale_algorithm<'de, D: serde::Deserializer<'de>>(
+    reader: D,
+) -> Result<Algorithm, D::Error> {
+    let value = serde_json::Value::deserialize(reader)?;
+    Ok(value
+        .as_str()
+        .and_then(Algorithm::from_id)
+        .unwrap_or_default())
+}
+
+pub fn scale_algorithm() -> Algorithm {
+    settings().with(|s| s.scale_algorithm)
+}
+
+/// Publish only after the preference was actually kept. This writes no
+/// measurement and leaves credentials in their separate storage key.
+pub fn save_scale_algorithm(algorithm: Algorithm) -> Result<(), String> {
+    let mut next = settings().get_untracked();
+    next.scale_algorithm = algorithm;
+    let body = serde_json::to_string(&next).map_err(|_| "Invalid settings")?;
+    Storage::set_item(KEY, body).map_err(|_| "Could not keep the algorithm preference")?;
+    settings().set(next);
+    Ok(())
 }
 
 /// The sex the estimates need, when set (tracked).

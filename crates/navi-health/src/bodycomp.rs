@@ -1,9 +1,55 @@
 //! Body composition estimated from one scale measurement. The scale sends
 //! only weight and impedance; everything here is computed locally with
-//! published BIA formulas (Segal, Deurenberg), never received as official
+//! published BIA formulas, never received as official
 //! fields. Pure math: no I/O, no storage, no clock.
 
 use serde::{Deserialize, Serialize};
+
+/// Versioned estimating families. Experimental choices require usable BIA
+/// input and never fall back to another family when outside their range.
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Algorithm {
+    #[default]
+    Segal,
+    Wu2015,
+    Sun2003,
+}
+
+impl Algorithm {
+    pub const ALL: [Self; 3] = [Self::Segal, Self::Wu2015, Self::Sun2003];
+
+    pub const fn id(self) -> &'static str {
+        match self {
+            Self::Segal => "segal",
+            Self::Wu2015 => "wu2015",
+            Self::Sun2003 => "sun2003",
+        }
+    }
+
+    pub fn from_id(id: &str) -> Option<Self> {
+        Self::ALL.into_iter().find(|algorithm| algorithm.id() == id)
+    }
+
+    /// Identifies exact BIA model metadata for grouping historical trends.
+    /// The old BMI-only `deurenberg_bmi_fallback` deliberately returns None:
+    /// it must not be merged into a resistance-based Segal series.
+    pub fn from_model_id(id: &str) -> Option<Self> {
+        match id {
+            "segal_3a_male_lt20"
+            | "segal_3b_male_ge20"
+            | "segal_3c_female_lt30"
+            | "segal_3d_female_ge30" => Some(Self::Segal),
+            "wu2015_foot_to_foot_ffm" => Some(Self::Wu2015),
+            "sun2003_table5_male_ffm_tbw" | "sun2003_table5_female_ffm_tbw" => Some(Self::Sun2003),
+            _ => None,
+        }
+    }
+
+    pub const fn experimental(self) -> bool {
+        !matches!(self, Self::Segal)
+    }
+}
 
 /// Sex as the estimation formulas and the user profile need it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -123,6 +169,115 @@ pub fn estimate(
     metrics.valid().then_some(metrics)
 }
 
+/// Selects a deterministic model without changing the legacy `estimate` path.
+///
+/// `resistance_ohm` from the AFU-WL ADC conversion is a **reference resistance
+/// proxy**, not calibrated impedance Z or validated wrist-to-ankle resistance R.
+/// Both new choices are therefore experimental on this device.
+///
+/// Wu: Table 3, <https://doi.org/10.1186/s12937-015-0041-0>, standing 50 kHz
+/// foot-to-foot Z, healthy Asian subjects aged 16–75. We restrict to adults
+/// 18–75, weight 39–125.5 kg and BMI 15.9–43.1 (Results' observed range; the
+/// abstract reports 15.8). Sun: final race-combined Table 5, AJCN 77:331–340,
+/// <https://doi.org/10.1093/ajcn/77.2.331>, supine 50 kHz wrist-to-ankle R,
+/// sample aged 12–94; our adult subset is 18–94. Sun gives no hard weight or
+/// height limits, so only the existing profile height band 80–230 cm applies.
+/// These guards do not establish calibration or population validity.
+///
+/// New models reject unusable predictions rather than clamping them. Muscle
+/// remains a coarse lean-minus-assumed-bone derivation. Wu water remains 70%
+/// of lean share; Sun water uses its independent TBW equation (litres treated
+/// as kilograms for the displayed percentage). Neither is a direct measurement.
+pub fn estimate_with_algorithm(
+    weight_kg: f64,
+    height_cm: f64,
+    age_years: u16,
+    sex: Sex,
+    resistance_ohm: Option<f64>,
+    algorithm: Algorithm,
+) -> Option<BodyMetrics> {
+    if algorithm == Algorithm::Segal {
+        return estimate(weight_kg, height_cm, age_years, sex, resistance_ohm);
+    }
+    if !weight_kg.is_finite()
+        || weight_kg <= 0.0
+        || !height_cm.is_finite()
+        || !(80.0..=230.0).contains(&height_cm)
+    {
+        return None;
+    }
+    let resistance = resistance_ohm
+        .filter(|r| r.is_finite() && (MIN_RESISTANCE_OHM..=MAX_RESISTANCE_OHM).contains(r))?;
+    let index = height_cm * height_cm / resistance;
+    let (fat_free, water_litres, model) = match algorithm {
+        Algorithm::Segal => unreachable!(),
+        Algorithm::Wu2015 => {
+            let bmi = weight_kg / (height_cm / 100.0).powi(2);
+            if !(18..=75).contains(&age_years)
+                || !(39.0..=125.5).contains(&weight_kg)
+                || !(15.9..=43.1).contains(&bmi)
+            {
+                return None;
+            }
+            (
+                13.055 + 0.204 * weight_kg + 0.394 * index - 0.136 * f64::from(age_years)
+                    + 8.125 * f64::from(sex == Sex::Male),
+                None,
+                "wu2015_foot_to_foot_ffm",
+            )
+        }
+        Algorithm::Sun2003 => {
+            if !(18..=94).contains(&age_years) {
+                return None;
+            }
+            // Exact coefficients printed in the PRIMARY Table 5, p.336.
+            // Do not substitute higher precision coefficients from reviews.
+            // Original PDF copy (visually verified):
+            // https://www.egofit.de/wp-content/uploads/2012/09/Nutrition._2005_Feb_21_2_161-9.pdf
+            match sex {
+                Sex::Male => (
+                    -10.68 + 0.65 * index + 0.26 * weight_kg + 0.02 * resistance,
+                    Some(1.20 + 0.45 * index + 0.18 * weight_kg),
+                    "sun2003_table5_male_ffm_tbw",
+                ),
+                Sex::Female => (
+                    -9.53 + 0.69 * index + 0.17 * weight_kg + 0.02 * resistance,
+                    Some(3.75 + 0.45 * index + 0.11 * weight_kg),
+                    "sun2003_table5_female_ffm_tbw",
+                ),
+            }
+        }
+    };
+    let low = match sex {
+        Sex::Male => MIN_BODY_FAT_PERCENT.0,
+        Sex::Female => MIN_BODY_FAT_PERCENT.1,
+    };
+    let body_fat = 100.0 * (weight_kg - fat_free) / weight_kg;
+    if !fat_free.is_finite() || !(low..=MAX_BODY_FAT_PERCENT).contains(&body_fat) {
+        return None;
+    }
+    // An independent TBW prediction cannot exceed its FFM prediction.
+    if water_litres.is_some_and(|water| !water.is_finite() || water <= 0.0 || water > fat_free) {
+        return None;
+    }
+    let body_fat = rounded_1(body_fat);
+    let lean = 100.0 - body_fat;
+    let bone = match sex {
+        Sex::Male => BONE_PERCENT.0,
+        Sex::Female => BONE_PERCENT.1,
+    };
+    let metrics = BodyMetrics {
+        body_fat_percent: body_fat,
+        muscle_percent: rounded_1(lean - bone),
+        water_percent: rounded_1(
+            water_litres.map_or(lean * 0.70, |water| 100.0 * water / weight_kg),
+        ),
+        resistance_ohm: Some(rounded_2(resistance)),
+        model: model.into(),
+    };
+    metrics.valid().then_some(metrics)
+}
+
 /// The Segal equations: fat-free mass from impedance, chosen by sex and by
 /// whether the first pass already implies a high fat share.
 fn segal_fat_free_mass(
@@ -178,6 +333,258 @@ fn rounded_2(value: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn algorithm_ids_are_stable_and_unknown_ids_are_not_defaults() {
+        assert_eq!(Algorithm::default(), Algorithm::Segal);
+        for algorithm in Algorithm::ALL {
+            assert_eq!(Algorithm::from_id(algorithm.id()), Some(algorithm));
+            let json = format!("\"{}\"", algorithm.id());
+            assert_eq!(serde_json::to_string(&algorithm).unwrap(), json);
+            assert_eq!(serde_json::from_str::<Algorithm>(&json).unwrap(), algorithm);
+            assert_eq!(algorithm.experimental(), algorithm != Algorithm::Segal);
+        }
+        for id in ["", "unknown", "Wu2015", " segal", "sun_2003"] {
+            assert_eq!(Algorithm::from_id(id), None);
+            assert!(serde_json::from_str::<Algorithm>(&format!("\"{id}\"")).is_err());
+        }
+    }
+
+    #[test]
+    fn model_metadata_only_groups_exact_bia_families_and_keeps_bmi_fallback_separate() {
+        for model in [
+            "segal_3a_male_lt20",
+            "segal_3b_male_ge20",
+            "segal_3c_female_lt30",
+            "segal_3d_female_ge30",
+        ] {
+            assert_eq!(Algorithm::from_model_id(model), Some(Algorithm::Segal));
+        }
+        assert_eq!(
+            Algorithm::from_model_id("wu2015_foot_to_foot_ffm"),
+            Some(Algorithm::Wu2015)
+        );
+        for model in [
+            "sun2003_table5_male_ffm_tbw",
+            "sun2003_table5_female_ffm_tbw",
+        ] {
+            assert_eq!(Algorithm::from_model_id(model), Some(Algorithm::Sun2003));
+        }
+        for model in [
+            "",
+            "unknown",
+            "deurenberg_bmi_fallback",
+            "segal",
+            "segal_3e",
+            "wu2015",
+            "sun2003_table5_male_ffm_tbw_v2",
+        ] {
+            assert_eq!(Algorithm::from_model_id(model), None);
+        }
+    }
+
+    #[test]
+    fn explicit_segal_preserves_legacy_formulas_rounding_clamps_and_fallback() {
+        for sex in [Sex::Male, Sex::Female] {
+            for resistance in [None, Some(50.0), Some(506.0), Some(1500.0), Some(f64::NAN)] {
+                for weight in [0.0, 58.05, 90.0, 400.0] {
+                    assert_eq!(
+                        estimate_with_algorithm(
+                            weight,
+                            170.0,
+                            23,
+                            sex,
+                            resistance,
+                            Algorithm::Segal
+                        ),
+                        estimate(weight, 170.0, 23, sex, resistance)
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn wu2015_table3_both_sexes_match_independent_decimal_fixtures() {
+        // Hand-evaluated Table 3 inputs (not published participant records):
+        // W=80,H=175,Z=500,age=30,M -> FFM=57.5525, BF=28.059375%.
+        // W=60,H=165,Z=600,age=40,F -> FFM=37.73275, BF=37.112083...%.
+        for (weight, height, age, sex, resistance, fat, muscle, water) in [
+            (80.0, 175.0, 30, Sex::Male, 500.0, 28.1, 67.4, 50.3),
+            (60.0, 165.0, 40, Sex::Female, 600.0, 37.1, 58.9, 44.0),
+        ] {
+            let metrics = estimate_with_algorithm(
+                weight,
+                height,
+                age,
+                sex,
+                Some(resistance),
+                Algorithm::Wu2015,
+            )
+            .unwrap();
+            assert_eq!(metrics.body_fat_percent, fat);
+            assert_eq!(metrics.muscle_percent, muscle);
+            assert_eq!(metrics.water_percent, water);
+            assert_eq!(metrics.resistance_ohm, Some(resistance));
+            assert_eq!(metrics.model, "wu2015_foot_to_foot_ffm");
+        }
+    }
+
+    #[test]
+    fn sun2003_primary_table5_ffm_and_independent_tbw_match_decimal_fixtures() {
+        // Exact printed Table 5, manually evaluated synthetic inputs:
+        // M: W=80,H=175,R=500 -> FFM=59.9325 kg, TBW=43.1625 L.
+        // F: W=60,H=165,R=550 -> FFM=45.825 kg, TBW=32.625 L.
+        // These distinguish Table 5 from preliminary Table 4 and reviews'
+        // higher precision variants, notably R's 0.02 vs 0.015 coefficient.
+        for (weight, height, sex, resistance, fat, muscle, water, model) in [
+            (
+                80.0,
+                175.0,
+                Sex::Male,
+                500.0,
+                25.1,
+                70.4,
+                54.0,
+                "sun2003_table5_male_ffm_tbw",
+            ),
+            (
+                60.0,
+                165.0,
+                Sex::Female,
+                550.0,
+                23.6,
+                72.4,
+                54.4,
+                "sun2003_table5_female_ffm_tbw",
+            ),
+        ] {
+            let metrics = estimate_with_algorithm(
+                weight,
+                height,
+                30,
+                sex,
+                Some(resistance),
+                Algorithm::Sun2003,
+            )
+            .unwrap();
+            assert_eq!(metrics.body_fat_percent, fat);
+            assert_eq!(metrics.muscle_percent, muscle);
+            assert_eq!(metrics.water_percent, water);
+            assert_ne!(metrics.water_percent, rounded_1((100.0 - fat) * 0.70));
+            assert_eq!(metrics.model, model);
+            // Sun's selected Table 5 equations do not use age as a predictor.
+            assert_eq!(
+                Some(metrics),
+                estimate_with_algorithm(
+                    weight,
+                    height,
+                    70,
+                    sex,
+                    Some(resistance),
+                    Algorithm::Sun2003,
+                )
+            );
+        }
+    }
+
+    #[test]
+    fn experimental_models_need_adult_inputs_and_usable_resistance_without_fallback() {
+        for algorithm in [Algorithm::Wu2015, Algorithm::Sun2003] {
+            for resistance in [
+                None,
+                Some(0.0),
+                Some(99.9),
+                Some(1500.1),
+                Some(f64::INFINITY),
+                Some(f64::NAN),
+            ] {
+                assert!(
+                    estimate_with_algorithm(80.0, 175.0, 30, Sex::Male, resistance, algorithm)
+                        .is_none()
+                );
+            }
+            for age in [0, 5, 16, 17, 95, 120] {
+                assert!(
+                    estimate_with_algorithm(80.0, 175.0, age, Sex::Male, Some(500.0), algorithm)
+                        .is_none()
+                );
+            }
+            for (weight, height) in [
+                (0.0, 175.0),
+                (f64::NAN, 175.0),
+                (80.0, f64::INFINITY),
+                (80.0, 79.9),
+                (80.0, 230.1),
+            ] {
+                assert!(
+                    estimate_with_algorithm(weight, height, 30, Sex::Male, Some(500.0), algorithm)
+                        .is_none()
+                );
+            }
+            for age in [18, 75] {
+                assert!(
+                    estimate_with_algorithm(80.0, 175.0, age, Sex::Male, Some(500.0), algorithm)
+                        .is_some()
+                );
+            }
+            // Numerically impossible FFM must be refused, never clamped.
+            assert!(
+                estimate_with_algorithm(80.0, 175.0, 30, Sex::Male, Some(100.0), algorithm)
+                    .is_none()
+            );
+        }
+        for age in [76, 94] {
+            assert!(
+                estimate_with_algorithm(
+                    80.0,
+                    175.0,
+                    age,
+                    Sex::Male,
+                    Some(500.0),
+                    Algorithm::Wu2015
+                )
+                .is_none()
+            );
+            assert!(
+                estimate_with_algorithm(
+                    80.0,
+                    175.0,
+                    age,
+                    Sex::Male,
+                    Some(500.0),
+                    Algorithm::Sun2003
+                )
+                .is_some()
+            );
+        }
+        for (weight, height) in [(38.9, 150.0), (125.6, 180.0), (50.0, 190.0), (120.0, 160.0)] {
+            assert!(
+                estimate_with_algorithm(
+                    weight,
+                    height,
+                    30,
+                    Sex::Female,
+                    Some(600.0),
+                    Algorithm::Wu2015
+                )
+                .is_none()
+            );
+        }
+        for (weight, height) in [(39.0, 150.0), (125.5, 180.0)] {
+            assert!(
+                estimate_with_algorithm(
+                    weight,
+                    height,
+                    30,
+                    Sex::Female,
+                    Some(700.0),
+                    Algorithm::Wu2015
+                )
+                .is_some()
+            );
+        }
+    }
 
     #[test]
     fn segal_male_low_fat_matches_the_reference_reading() {

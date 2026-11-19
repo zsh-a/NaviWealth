@@ -10,6 +10,7 @@ export function ScaleReading(props: {
   phase: () => string;
   replacement: () => boolean;
   retainedDraft: () => boolean;
+  recalculating: () => boolean;
   detailsOpen: Signal<boolean>;
   palette: () => Palette;
   labels: ScaleCopy;
@@ -19,23 +20,29 @@ export function ScaleReading(props: {
   const detailStacked = computed(() => stacked() || windowSize().width < 360);
   const kg = () => (reading().measurement.weight_grams / 1000).toFixed(2);
   const status = () =>
-    reading().measurement.metrics
-      ? labels.complete
-      : props.phase() === "waiting"
-        ? labels.compositionPending
-        : props.phase() === "delayed"
-          ? labels.compositionDelayed
-          : labels.compositionIncomplete;
+    props.recalculating()
+      ? labels.recalculating
+      : reading().algorithm_unavailable
+        ? labels.algorithmUnavailable
+        : reading().measurement.metrics
+          ? labels.complete
+          : props.phase() === "waiting"
+            ? labels.compositionPending
+            : props.phase() === "delayed"
+              ? labels.compositionDelayed
+              : labels.compositionIncomplete;
   const hint = () =>
-    reading().measurement.metrics
-      ? props.retainedDraft()
-        ? labels.draft
-        : labels.reviewHint
-      : props.phase() === "waiting"
-        ? labels.compositionHint
-        : props.phase() === "delayed"
-          ? labels.compositionDelayedHint
-          : labels.noImpedance;
+    reading().algorithm_unavailable
+      ? labels.algorithmUnavailableHint
+      : reading().measurement.metrics
+        ? props.retainedDraft()
+          ? labels.draft
+          : labels.reviewHint
+        : props.phase() === "waiting"
+          ? labels.compositionHint
+          : props.phase() === "delayed"
+            ? labels.compositionDelayedHint
+            : labels.noImpedance;
   const noteStyle = () => ({ fontSize: 13, lineHeight: 19, color: palette().muted });
 
   function Metric(metric: {
@@ -262,13 +269,14 @@ export function ScaleReading(props: {
               value={`${reading().measurement.resistance_ohm?.toFixed(1)} Ω`}
             />
           </If>
+          <Detail label={labels.algorithm} value={reading().algorithm.name} />
           <If when={reading().measurement.metrics}>
             <Detail
               label={labels.estimateModel}
               value={
                 reading().measurement.metrics?.model.startsWith("segal")
                   ? "Segal BIA"
-                  : (reading().measurement.metrics?.model ?? "—")
+                  : `${reading().algorithm.name} · ${reading().measurement.metrics?.model ?? reading().measurement.algorithm_version}`
               }
             />
             <Text style={{ ...noteStyle(), paddingTop: 12 }}>{labels.derivedNote}</Text>

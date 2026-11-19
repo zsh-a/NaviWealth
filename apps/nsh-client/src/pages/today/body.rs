@@ -224,6 +224,32 @@ pub fn body_overview(day: Day) -> impl IntoElement {
         );
     let body = view()
         .gap_4()
+        .child(when(
+            move || data.with(|d| d.as_ref().and_then(|d| d.measurement.as_ref()).is_some()),
+            move || {
+                detail(
+                    || s().scale_algorithm,
+                    move || {
+                        data.with(|d| {
+                            d.as_ref()
+                                .and_then(|d| d.measurement.as_ref())
+                                .and_then(|m| m.algorithm())
+                                .map(|algorithm| {
+                                    if algorithm.experimental() {
+                                        format!(
+                                            "{} · {}",
+                                            crate::scale::algorithm_name(algorithm),
+                                            s().algorithm_experimental
+                                        )
+                                    } else {
+                                        crate::scale::algorithm_name(algorithm).to_owned()
+                                    }
+                                })
+                        })
+                    },
+                )
+            },
+        ))
         .child(detail(
             || s().weight,
             move || data.with(|d| d.as_ref().map(|d| format!("{} kg", s().kg(d.weight.kg)))),

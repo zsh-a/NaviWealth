@@ -1,6 +1,9 @@
 //! Body profile and weight goals. Valid changes are kept as they are made.
 
-use nsh_base::{CalendarEntry, CalendarItemKind, DateTime, PickedDate, date_picker, nav_page};
+use nsh_base::{
+    CalendarEntry, CalendarItemKind, DateTime, PickedDate, date_picker, nav_page, radio,
+    radio_group,
+};
 use nsh_core::{element::Screen, prelude::*};
 
 use super::parts::{status_bar, top_bar};
@@ -89,9 +92,90 @@ pub(crate) fn body_profile_page() -> Screen {
                                 .pt_2()
                                 .pb(move || px(safe_area().bottom.0 + 32.0))
                                 .gap_3()
-                                .child(card().p(px(space::CARD)).child(profile_form())),
+                                .child(card().p(px(space::CARD)).child(profile_form()))
+                                .child(algorithm_settings()),
                         ),
                 ),
+        )
+}
+
+fn algorithm_settings() -> impl IntoElement {
+    use navi_health::bodycomp::Algorithm;
+    view()
+        .mt_4()
+        .gap_3()
+        .child(
+            text(|| s().scale_algorithm)
+                .typo(Type::Headline)
+                .text_color(color::INK)
+                .role(AccessibilityRole::Header),
+        )
+        .child(
+            text(|| s().scale_algorithm_note)
+                .typo(Type::Subhead)
+                .text_color(color::MUTED),
+        )
+        .child(
+            radio_group().children(Algorithm::ALL.into_iter().map(|algorithm| {
+                let chosen = move || settings::scale_algorithm() == algorithm;
+                radio()
+                    .checked(chosen)
+                    .on_change(move |checked: &bool| {
+                        if *checked && settings::save_scale_algorithm(algorithm).is_err() {
+                            crate::ui::toast::show_toast(s().algorithm_save_failed, None);
+                        }
+                    })
+                    .flex_row()
+                    .gap_3()
+                    .py_3()
+                    .min_h(px(72.0))
+                    .items_start()
+                    .accessibility_label(move || {
+                        Some(
+                            format!(
+                                "{}, {}",
+                                s().scale_algorithm,
+                                crate::scale::algorithm_name(algorithm)
+                            )
+                            .into(),
+                        )
+                    })
+                    .active(|s| s.bg(color::SUNKEN))
+                    .focus_visible(|s| s.bg(color::SURFACE_2))
+                    .child(
+                        view()
+                            .flex_1()
+                            .min_w(px(0.0))
+                            .gap_1()
+                            .child(
+                                text(move || {
+                                    if algorithm.experimental() {
+                                        format!(
+                                            "{} · {}",
+                                            crate::scale::algorithm_name(algorithm),
+                                            s().algorithm_experimental
+                                        )
+                                    } else {
+                                        crate::scale::algorithm_name(algorithm).to_owned()
+                                    }
+                                })
+                                .typo(Type::Headline)
+                                .text_color(color::INK),
+                            )
+                            .child(
+                                text(move || crate::scale::algorithm_description(algorithm))
+                                    .typo(Type::Caption)
+                                    .text_color(color::MUTED),
+                            ),
+                    )
+                    .child(
+                        view()
+                            .w(px(24.0))
+                            .pt_1()
+                            .child(when(chosen, || icon(Icon::Check, 20.0, color::INK))),
+                    )
+                    .into_element()
+            })),
         )
 }
 

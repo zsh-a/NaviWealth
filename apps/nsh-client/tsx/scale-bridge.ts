@@ -1,6 +1,9 @@
 import { Scale } from "naviwealth/native";
 import { host } from "nsh";
 import type {
+  AlgorithmId,
+  AlgorithmOption,
+  Algorithms,
   Composition,
   LiveReading,
   MeasurementSummary,
@@ -106,6 +109,20 @@ function isIdentity(value: unknown): value is ScaleIdentity {
   return isRecord(value) && isString(value.id) && isString(value.name);
 }
 
+function isAlgorithmId(value: unknown): value is AlgorithmId {
+  return value === "segal" || value === "wu2015" || value === "sun2003";
+}
+
+function isAlgorithm(value: unknown): value is AlgorithmOption {
+  return (
+    isRecord(value) &&
+    isAlgorithmId(value.id) &&
+    isString(value.name) &&
+    isString(value.description) &&
+    typeof value.experimental === "boolean"
+  );
+}
+
 function readIdentity(value: unknown): ScaleIdentity | null {
   if (value === null || isIdentity(value)) return value;
   throw new Error("invalid_scale_identity");
@@ -115,6 +132,8 @@ function isPreview(value: unknown): value is Preview {
   if (!isRecord(value)) return false;
   const { device, measurement } = value;
   return (
+    isAlgorithm(value.algorithm) &&
+    typeof value.algorithm_unavailable === "boolean" &&
     isString(value.session_id) &&
     isString(value.token) &&
     isString(value.day) &&
@@ -122,6 +141,7 @@ function isPreview(value: unknown): value is Preview {
     (value.existing_kg === null || isNumber(value.existing_kg)) &&
     isIdentity(device) &&
     isRecord(measurement) &&
+    isString(measurement.algorithm_version) &&
     isRecord(measurement.profile) &&
     isNumber(measurement.profile.height_cm) &&
     isNumber(measurement.profile.age_years) &&
@@ -156,6 +176,28 @@ function isPalette(value: unknown): value is Palette {
 }
 
 export const scaleNative = {
+  async algorithms(): Promise<Algorithms> {
+    const value = await Scale.algorithms();
+    if (
+      !isRecord(value) ||
+      !isAlgorithmId(value.selected) ||
+      !Array.isArray(value.options) ||
+      !value.options.every(isAlgorithm) ||
+      new Set(value.options.map((option) => option.id)).size !== value.options.length ||
+      !value.options.some((option) => option.id === value.selected)
+    ) {
+      throw new Error("invalid_scale_algorithms");
+    }
+    return { selected: value.selected, options: value.options };
+  },
+  setAlgorithm: (id: AlgorithmId) => Scale.setAlgorithm(id),
+  async reestimate(sessionId: string, token: string, id: AlgorithmId): Promise<Preview> {
+    const value = readPreview(await Scale.reestimate(sessionId, token, id));
+    if (!value || value.session_id !== sessionId || value.algorithm.id !== id) {
+      throw new Error("invalid_scale_reestimate");
+    }
+    return value;
+  },
   palette(dark: boolean): Palette {
     const value = Scale.palette(dark);
     if (!isPalette(value)) throw new Error("invalid_scale_palette");

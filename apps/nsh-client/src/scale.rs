@@ -55,6 +55,35 @@ pub struct Scale;
 
 #[module]
 impl Scale {
+    /// Available local models and the preference for the next measurement.
+    pub fn algorithms(_cx: &mut ModuleCx) -> Value {
+        use navi_health::bodycomp::Algorithm;
+        json!({
+            "selected": crate::data::settings::scale_algorithm().id(),
+            "options": Algorithm::ALL.into_iter().map(algorithm_option).collect::<Vec<_>>(),
+        })
+    }
+
+    /// Keep the default model for future sessions without altering any draft.
+    pub fn set_algorithm(algorithm_id: String, _cx: &mut ModuleCx) -> Result<(), String> {
+        let algorithm =
+            navi_health::bodycomp::Algorithm::from_id(&algorithm_id).ok_or("unknown_algorithm")?;
+        crate::data::settings::save_scale_algorithm(algorithm)
+            .map_err(|_| "storage_unavailable".into())
+    }
+
+    /// Recalculate only an exact unsaved review, using its original evidence.
+    pub fn reestimate(
+        session_id: String,
+        token: String,
+        algorithm_id: String,
+        _cx: &mut ModuleCx,
+    ) -> Result<Value, String> {
+        let algorithm =
+            navi_health::bodycomp::Algorithm::from_id(&algorithm_id).ok_or("unknown_algorithm")?;
+        let preview = crate::data::scale::reestimate(&session_id, &token, algorithm)?;
+        Ok(display_preview(&preview))
+    }
     /// UI language; no credentials or profile leave this local bridge.
     pub fn language(_cx: &mut ModuleCx) -> String {
         if s().lang == Lang::Zh { "zh" } else { "en" }.into()
@@ -254,7 +283,30 @@ fn display_preview(preview: &crate::data::scale::Preview) -> Value {
         "measurement": preview.measurement,
         "existing_kg": preview.existing_kg,
         "summary": preview.measurement.summary(),
+        "algorithm": algorithm_option(preview.measurement.algorithm().expect("validated measurement has an algorithm")),
+        "algorithm_unavailable": preview.measurement.resistance_ohm.is_some() && preview.measurement.metrics.is_none(),
     })
+}
+
+pub(crate) fn algorithm_name(algorithm: navi_health::bodycomp::Algorithm) -> &'static str {
+    match algorithm {
+        navi_health::bodycomp::Algorithm::Segal => "Segal BIA",
+        navi_health::bodycomp::Algorithm::Wu2015 => "Wu 2015",
+        navi_health::bodycomp::Algorithm::Sun2003 => "Sun 2003",
+    }
+}
+
+pub(crate) fn algorithm_description(algorithm: navi_health::bodycomp::Algorithm) -> &'static str {
+    match algorithm {
+        navi_health::bodycomp::Algorithm::Segal => s().algorithm_segal_note,
+        navi_health::bodycomp::Algorithm::Wu2015 => s().algorithm_wu_note,
+        navi_health::bodycomp::Algorithm::Sun2003 => s().algorithm_sun_note,
+    }
+}
+
+fn algorithm_option(algorithm: navi_health::bodycomp::Algorithm) -> Value {
+    json!({"id":algorithm.id(),"name":algorithm_name(algorithm),
+        "description":algorithm_description(algorithm),"experimental":algorithm.experimental()})
 }
 
 fn profile() -> Option<protocol::UserProfile> {
