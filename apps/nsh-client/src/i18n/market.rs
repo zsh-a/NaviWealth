@@ -14,11 +14,25 @@ impl Strings {
             "Refreshing prices and FX…"
         }
     }
-    pub fn quotes_failed(&self) -> &'static str {
+    pub fn missing_rate_days(&self, currency: &str, count: usize) -> String {
         if self.zh() {
-            "部分价格或汇率未刷新，保留原值及日期。"
+            format!("有 {count} 天缺少 {currency} 汇率")
         } else {
-            "Some prices or FX rates could not refresh. Previous values and dates are kept."
+            format!("Days missing {currency} rates: {count}")
+        }
+    }
+    pub fn cost_holdings(&self, count: usize) -> String {
+        if self.zh() {
+            format!("{count} 项持仓按成本计入")
+        } else {
+            format!("Holdings valued at cost: {count}")
+        }
+    }
+    pub fn refresh_summary(&self, time: &str, updated: usize, failed: usize) -> String {
+        if self.zh() {
+            format!("{time} 刷新 · 更新 {updated} 项 · 失败 {failed} 项")
+        } else {
+            format!("Checked {time} · {updated} updated · {failed} failed")
         }
     }
 }

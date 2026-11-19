@@ -103,6 +103,17 @@ pub fn load() -> Result<(), String> {
     Ok(())
 }
 
+/// Publish only the two ledger slices affected by prices and FX.
+pub(super) fn publish_prices(
+    book: navi_finance::holdings::Book,
+    rates: Vec<navi_finance::currency::FxRate>,
+) {
+    update(|ledger| {
+        ledger.holdings = book.into();
+        ledger.rates = rates.into();
+    });
+}
+
 pub fn transactions() -> Vec<Transaction> {
     (*transactions_snapshot()).clone()
 }
@@ -520,6 +531,77 @@ mod tests {
         let mut app = Headless::start(EngineConfig::new(Root::of::<RemovalProbe>())).unwrap();
         app.wait_for("ready").unwrap();
         app.press("exercise removal").unwrap();
+        app.wait_for("done").unwrap();
+    }
+
+    #[component]
+    fn PriceReloadProbe() -> impl IntoElement {
+        use navi_finance::holdings::{self, Kind, Quote, Security, Trade, store};
+        let done = signal(false);
+        view()
+            .child(text(move || if done.get() { "done" } else { "ready" }))
+            .child(text("check price reload").on_press(move || {
+                db::open().unwrap();
+                load().unwrap();
+                let day = super::super::clock::today().0;
+                let security = Security::new("fund", "Fund").unwrap();
+                add_trade(
+                    Some(&security),
+                    &Trade {
+                        id: "opening".into(),
+                        security: security.id.clone(),
+                        at: day.at(0, 0, 0, 0),
+                        kind: Kind::Opening,
+                        quantity: holdings::SCALE,
+                        price: 2 * holdings::SCALE,
+                        amount: 0,
+                        fee: 0,
+                        cash: None,
+                    },
+                )
+                .unwrap();
+                let original = snapshot();
+                db::with(|c| {
+                    store::set_quote(
+                        c,
+                        &Quote {
+                            security: security.id,
+                            day,
+                            price: 5 * holdings::SCALE,
+                        },
+                        day,
+                    )
+                    .unwrap();
+                    // A price-only read must not touch snapshot history or the journal.
+                    c.execute_batch(
+                        "ALTER TABLE finance_valuation_snapshots RENAME TO hidden_snapshots;
+                                 ALTER TABLE finance_postings RENAME TO hidden_postings;
+                                 ALTER TABLE finance_trades RENAME TO hidden_trades;",
+                    )
+                    .unwrap();
+                })
+                .unwrap();
+                super::super::market::reload_prices().unwrap();
+                let next = snapshot();
+                assert!(Rc::ptr_eq(&original.transactions, &next.transactions));
+                assert!(Rc::ptr_eq(&original.accounts, &next.accounts));
+                assert!(Rc::ptr_eq(&original.checks, &next.checks));
+                assert_eq!(
+                    next.holdings
+                        .overview_with_rates(&next.transactions, day, &next.rates)
+                        .unwrap()
+                        .snapshot
+                        .net,
+                    500
+                );
+                done.set(true);
+            }))
+    }
+    #[test]
+    fn price_only_reload_updates_net_without_reading_or_publishing_the_journal() {
+        let mut app = Headless::start(EngineConfig::new(Root::of::<PriceReloadProbe>())).unwrap();
+        app.wait_for("ready").unwrap();
+        app.press("check price reload").unwrap();
         app.wait_for("done").unwrap();
     }
 

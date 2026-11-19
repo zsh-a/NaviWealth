@@ -435,7 +435,7 @@ flat, separated by space without hairlines, with muted 22 pt semantic icons
 and their existing valuation statuses. Activity rows retain hairlines.
 Asset changes carries the trend on a separate pushed page:
 a single ink line with a visible range and date endpoints, plus an accessible
-start/end summary; insufficient history gets explanatory text. Money keeps
+start/end summary. A missing FX rate or valuation error breaks the line. Isolated valid days get a dot. The chart lists the missing currencies and affected day counts. Money keeps
 tabular numerals and neutral ink, including gains and losses. Overview
 amounts and primary balance/value figures use grouped thousands and two
 decimal places through a display-only formatter that preserves exact minor
@@ -460,7 +460,14 @@ CNY, HKD and USD trading currencies. Manual creation offers compact currency
 choices; catalog selection sets currency automatically. Existing holdings keep
 their currency, and trade cash choices include only matching asset accounts.
 
-Assets has one visible quote refresh action inside its overview card.
+The overview names open holdings included at cost in an expandable row linking
+to each holding. Checked accounts show their latest check date. Holding rows
+stack the native value below the name on narrow screens and at larger text sizes.
+Historical estimates and net worth snapshots are separate views.
+
+Assets has one visible quote refresh action inside its overview card. Its
+completion time and update/failure counts cover both prices and FX; the price
+date on each holding row identifies the observation used for valuation.
 Tencent marks refresh in the
 foreground with a five-minute automatic throttle; manual refresh bypasses the
 throttle. Holding price captions distinguish manual input, Tencent observations,

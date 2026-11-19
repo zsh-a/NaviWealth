@@ -255,7 +255,7 @@ pub async fn backfill(from: Date, to: Date, force: bool) {
         }
         record_fetch(&key, warm, to, count, bad);
     }
-    if finance::load().is_err() {
+    if super::market::reload_prices().is_err() {
         failed += 1
     }
     state().set(Status {

@@ -4,7 +4,9 @@ use market_data_rs::{
     FetchOptions, MarketData, Symbol, Tencent, cache::NoCache, transport::HttpClient,
 };
 use navi_finance::{
-    catalog, holdings,
+    catalog,
+    currency::{Currency, FxRate},
+    holdings,
     market::{self, MarketQuote},
 };
 use nsh_core::prelude::*;
@@ -21,6 +23,8 @@ pub struct Status {
     pub refreshing: bool,
     pub failed: usize,
     pub updated: usize,
+    pub completed_at: Option<jiff::Timestamp>,
+    pub failed_items: Vec<String>,
 }
 #[derive(Clone, Default, PartialEq, Eq)]
 struct State {
@@ -68,6 +72,33 @@ pub fn load() -> Result<(), String> {
     state().update(|s| s.quotes = quotes);
     Ok(())
 }
+/// Read committed price inputs together, then publish provenance and valuations in one batch.
+pub(super) fn reload_prices() -> Result<(), String> {
+    let (quotes, book, rates) = db::with(|c| -> Result<_, String> {
+        let tx = c.unchecked_transaction().map_err(|e| e.to_string())?;
+        let quotes = market::load(&tx).map_err(|e| e.to_string())?;
+        let current = finance::holdings_snapshot();
+        let manual =
+            holdings::store::manual_quotes(&tx, &current.securities).map_err(|e| e.to_string())?;
+        let book = holdings::Book {
+            securities: current.securities.clone(),
+            trades: current.trades.clone(),
+            quotes: manual,
+        };
+        let book =
+            market::valued_book_with_quotes(&tx, book, &quotes).map_err(|e| e.to_string())?;
+        let rates = navi_finance::currency::rates(&tx).map_err(|e| e.to_string())?;
+        tx.commit().map_err(|e| e.to_string())?;
+        Ok((quotes, book, rates))
+    })
+    .ok_or("database unavailable")??;
+    batch(|| {
+        state().update(|s| s.quotes = quotes);
+        finance::publish_prices(book, rates);
+    });
+    Ok(())
+}
+
 pub(super) struct Client {
     pub(super) runtime: tokio::runtime::Runtime,
     service: MarketData,
@@ -251,10 +282,8 @@ fn fetch(bindings: Vec<catalog::SecurityBinding>) -> Result<Vec<QuoteResult>, St
         Ok(out)
     })
 }
-fn fetch_fx(
-    today: jiff::civil::Date,
-) -> Result<Vec<Result<navi_finance::currency::FxRate, String>>, String> {
-    use navi_finance::currency::Currency;
+type FxResult = (Currency, Result<FxRate, String>);
+fn fetch_fx(today: jiff::civil::Date) -> Result<Vec<FxResult>, String> {
     let client = client()?;
     client.runtime.block_on(async {
         let mut rows = Vec::new();
@@ -267,7 +296,7 @@ fn fetch_fx(
                 if bytes.len() > 16384 { return Err("FX response too large".into()); }
                 market::parse_fx(std::str::from_utf8(&bytes).map_err(|_| "invalid FX response")?, currency, today).map_err(|_| "invalid FX response".into())
             }.await;
-            rows.push(result);
+            rows.push((currency, result));
         }
         Ok(rows)
     })
@@ -287,7 +316,13 @@ pub async fn refresh(force: bool) {
     let bindings = match db::with(catalog::bindings) {
         Some(Ok(v)) => v,
         _ => {
-            state().update(|s| s.status.failed = 1);
+            state().update(|s| {
+                s.status = Status {
+                    failed: 1,
+                    completed_at: Some(now),
+                    ..Status::default()
+                }
+            });
             return;
         }
     };
@@ -324,31 +359,33 @@ pub async fn refresh(force: bool) {
         };
         s.attempted_at = Some(now)
     });
+    let symbols: Vec<_> = bindings.iter().map(|b| b.symbol.clone()).collect();
     let result = blocking(move || fetch(bindings)).await;
+    let mut failed_items = Vec::new();
     let mut failed = 0;
     let mut updated = 0;
     let mut succeeded = 0;
     match result {
         Ok(Ok(rows)) => {
-            for (_, result) in rows {
+            for (binding, result) in rows {
                 match result {
                     Ok(q) => match db::with(|c| market::save(c, &q, jiff::Timestamp::now())) {
                         Some(Ok(changed)) => {
                             updated += usize::from(changed);
                             succeeded += 1;
                         }
-                        _ => failed += 1,
+                        _ => failed_items.push(binding.symbol),
                     },
-                    Err(_) => failed += 1,
+                    Err(_) => failed_items.push(binding.symbol),
                 }
             }
         }
-        _ => failed += 1,
+        _ => failed_items.extend(symbols),
     }
     // Independent requests preserve successful quotes when a currency provider fails.
     match blocking(move || fetch_fx(today)).await {
         Ok(Ok(rows)) => {
-            for result in rows {
+            for (currency, result) in rows {
                 match result {
                     Ok(rate) => {
                         let saved = db::with(|c| {
@@ -367,27 +404,29 @@ pub async fn refresh(force: bool) {
                                 updated += usize::from(changed);
                                 succeeded += 1;
                             }
-                            _ => failed += 1,
+                            _ => failed_items.push(currency.code().to_owned()),
                         }
                     }
-                    Err(_) => failed += 1,
+                    Err(_) => failed_items.push(currency.code().to_owned()),
                 }
             }
         }
-        _ => failed += 1,
+        _ => failed_items.extend(["HKD".to_owned(), "USD".to_owned()]),
     }
     if succeeded > 0
         && let Err(error) = super::valuation::capture(false)
     {
         log::warn!("market: valuation capture failed: {error}");
     }
-    if load().is_err() || finance::load().is_err() {
+    if reload_prices().is_err() {
         failed += 1
     }
     state().update(|s| {
         s.status = Status {
             refreshing: false,
-            failed,
+            failed: failed + failed_items.len(),
+            failed_items,
+            completed_at: Some(jiff::Timestamp::now()),
             updated,
         }
     });
@@ -421,7 +460,7 @@ mod tests {
             q.validate(&binding, jiff::Timestamp::now()).unwrap();
             assert_eq!(q.currency, binding.currency);
         }
-        for rate in fetch_fx(
+        for (_, rate) in fetch_fx(
             jiff::Timestamp::now()
                 .to_zoned(jiff::tz::TimeZone::UTC)
                 .date(),

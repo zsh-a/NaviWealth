@@ -323,13 +323,21 @@ pub fn save(c: &Connection, q: &MarketQuote, now: Timestamp) -> Result<bool, Err
 }
 /// Keep all dated marks. Manual marks win a date tie; historical valuations
 /// can only see quotes whose trading day has already occurred.
-pub fn valued_book(c: &Connection, mut book: Book) -> Result<Book, Error> {
-    let mut quotes = load(c)?
-        .into_iter()
+pub fn valued_book(c: &Connection, book: Book) -> Result<Book, Error> {
+    valued_book_with_quotes(c, book, &load(c)?)
+}
+
+pub fn valued_book_with_quotes(
+    c: &Connection,
+    mut book: Book,
+    market: &[MarketQuote],
+) -> Result<Book, Error> {
+    let mut quotes = market
+        .iter()
         .map(|q| {
             let day = q.day();
             Quote {
-                security: q.security,
+                security: q.security.clone(),
                 day,
                 price: q.price,
             }

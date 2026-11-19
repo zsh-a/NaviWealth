@@ -108,6 +108,7 @@ fn opening_price_partial_sale_and_cash_survive_restart_without_double_counting()
     app.press("label:Back")?;
     app.wait_for("text:Manage")?;
     assert!(!app.shows("text:Index ETF"));
+    app.wait_for("Book balances")?;
     app.press("text:Manage")?;
     app.press("text:Closed holdings")?;
     app.press("label:/^Index ETF, 0.00 CNY/")?;

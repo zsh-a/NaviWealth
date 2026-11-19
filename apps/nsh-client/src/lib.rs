@@ -79,7 +79,6 @@ pub fn App(props: AppProps, cx: Scope<AppEvent>) -> impl IntoElement {
     tasks::mark_root();
     if let Err(error) = db::open()
         .and_then(|()| finance::load())
-        .and_then(|()| crate::data::valuation::load())
         .and_then(|()| capture::load())
         .and_then(|()| data::statement_import::load())
         .and_then(|()| data::catalog::load())

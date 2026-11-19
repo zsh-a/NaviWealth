@@ -383,8 +383,8 @@ Tencent provides dated quotes. Unpriced positions explicitly use native cost;
 known prices replace cost and are never applied to earlier days. Assets converts
 to CNY using dated Frankfurter ECB rates or manual rates under Manage → Exchange
 rates. Same-day manual quotes/rates take priority. Missing rates leave currencies
-visibly excluded from the known total; incomplete historical rates prevent a
-misleading full trend. Schema 14 includes exchange rates in backups. Other
+visibly excluded from the known total; historical dates with missing rates appear as gaps
+in the trend, with the affected currencies and day counts shown. Schema 14 includes exchange rates in backups. Other
 currencies and crypto are not supported; AI trade recognition remains excluded.
 
 `finance::holdings` owns six-decimal integer quantities/prices, cent rounding,
@@ -430,13 +430,17 @@ and symbol-keyed daily bars remain in the archive. Migration records existing
 marks/rates as baselines at migration time, never inventing original fetch times.
 Unchanged values add no audit revision. Manual FX rates keep same-day priority.
 
-Asset changes separates Recalculated (current ledger plus dated marks/rates)
-from Recorded (immutable observations at the shown instant). Automatic capture
+Asset changes has two views, Historical estimates (current ledger and dated
+prices and rates) and Net worth snapshots (observations at the shown instant). Automatic capture
 runs once per local day after a successful refresh, or on foreground entry for
 cash-only portfolios without a network request. Manual capture appends another
 observation. A snapshot copies native balances, positions, prices, actual rates,
 calculation inputs and integrity checksums; later edits never rewrite it.
-Missing FX is explicit and prevents a partial net-worth chart. Recorded values
+Missing FX leaves a gap on the chart. Schema 19 indexes the existing snapshot
+rows for daily lookups and chronological paging. The history view reads 30
+summaries per page and loads the full observation when its row expands.
+Quote refreshes and history backfills publish holdings and FX together.
+Opening a database and restoring a backup still validate the complete ledger. Recorded values
 are not end-of-day closing values; past observations are never fabricated.
 
 Backups include all three new tables. Migration, exact roundtrip, malformed

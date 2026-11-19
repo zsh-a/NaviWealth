@@ -116,7 +116,24 @@ pub fn assets_tab() -> impl IntoElement {
                                 .map(|c| c.code())
                                 .collect::<Vec<_>>()
                                 .join(" / ");
-                            let has_holdings = !portfolio.securities.is_empty();
+                            let mut has_open_holdings = false;
+                            let mut has_included_holdings = false;
+                            let mut at_cost = Vec::new();
+                            for sec in &portfolio.securities {
+                                let position = portfolio
+                                    .position(sec, today.0)
+                                    .expect("overview validated positions");
+                                if position.quantity == 0 {
+                                    continue;
+                                }
+                                has_open_holdings = true;
+                                if !valued.missing.contains(&sec.currency()) {
+                                    has_included_holdings = true;
+                                    if position.value.is_none() {
+                                        at_cost.push((sec.id.clone(), sec.name.clone()));
+                                    }
+                                }
+                            }
                             let balances = journal::balances(
                                 entries.iter().filter(|t| t.at.date() <= today.0),
                             );
@@ -141,6 +158,7 @@ pub fn assets_tab() -> impl IntoElement {
                                             .text_color(color::MUTED),
                                         )
                                         .child(net_figure(snapshot.net))
+                                        .child((!at_cost.is_empty()).then(|| cost_details(at_cost)))
                                         .child(quote_refresh_row())
                                         .child(incomplete.then(|| {
                                             row_button(|| nav::push(Route::ExchangeRates))
@@ -181,7 +199,7 @@ pub fn assets_tab() -> impl IntoElement {
                                                 .min_h(px(44.0))
                                                 .gap_3()
                                                 .child(
-                                                    text(if has_holdings {
+                                                    text(if has_included_holdings {
                                                         s().valuation_recorded
                                                     } else {
                                                         s().valuation_book
@@ -209,16 +227,7 @@ pub fn assets_tab() -> impl IntoElement {
                                     &checks,
                                 ))
                                 .child(
-                                    portfolio
-                                        .securities
-                                        .iter()
-                                        .any(|sec| {
-                                            portfolio
-                                                .position(sec, today.0)
-                                                .expect("validated holdings")
-                                                .quantity
-                                                > 0
-                                        })
+                                    has_open_holdings
                                         .then(|| super::super::holdings::section(false)),
                                 )
                                 .child(account_group(
@@ -471,11 +480,11 @@ fn account_group(
                                                 .text_color(color::INK)
                                                 .number_of_lines(1),
                                         )
-                                        .child(checked.is_none().then(|| {
-                                            text(|| s().account_unchecked)
+                                        .child(
+                                            text(detail)
                                                 .typo(Type::Caption)
-                                                .text_color(color::MUTED)
-                                        })),
+                                                .text_color(color::MUTED),
+                                        ),
                                 )
                                 .child(
                                     view().min_w(px(0.0)).flex_shrink(1.0_f32).child(amount_in(
@@ -530,53 +539,141 @@ fn net_figure(value: i64) -> impl IntoElement {
         )
 }
 
+fn cost_details(items: Vec<(String, String)>) -> impl IntoElement {
+    let expanded = signal(false);
+    let count = items.len();
+    view()
+        .child(
+            row_button(move || expanded.update(|v| *v = !*v))
+                .px_0()
+                .min_h(px(44.0))
+                .child(
+                    text(move || s().cost_holdings(count))
+                        .typo(Type::Subhead)
+                        .text_color(color::BODY),
+                )
+                .child(dynamic(move || {
+                    icon(
+                        if expanded.get() {
+                            Icon::ChevronDown
+                        } else {
+                            Icon::ChevronRight
+                        },
+                        16.0,
+                        color::MUTED,
+                    )
+                    .into_element()
+                })),
+        )
+        .child(when(
+            move || expanded.get(),
+            move || {
+                view()
+                    .test_id("cost-holdings")
+                    .children(items.iter().cloned().map(|(id, name)| {
+                        row_button(move || nav::push(Route::Holding(id.clone())))
+                            .child(text(name).typo(Type::Body).text_color(color::INK))
+                    }))
+            },
+        ))
+}
+
 fn quote_refresh_row() -> impl IntoElement {
     when(
         || {
             let book = finance::holdings_snapshot();
-            crate::data::catalog::bindings().iter().any(|b| {
-                book.securities
-                    .iter()
-                    .find(|s| s.id == b.security)
-                    .is_some_and(|s| {
-                        book.position(s, clock::today().0)
+            let bindings = crate::data::catalog::bindings();
+            finance::accounts()
+                .iter()
+                .any(|a| a.is_cash() && a.currency() != navi_finance::currency::Currency::CNY)
+                || book.securities.iter().any(|sec| {
+                    (sec.currency() != navi_finance::currency::Currency::CNY
+                        || bindings.iter().any(|b| b.security == sec.id))
+                        && book
+                            .position(sec, clock::today().0)
                             .is_ok_and(|p| p.quantity > 0)
-                    })
-            })
+                })
         },
         || {
+            let expanded = signal(false);
             view()
-                .flex_row()
-                .items_center()
-                .gap_3()
+                .gap_1()
                 .child(
-                    text(|| {
-                        if crate::data::market::status().failed > 0 {
-                            s().quotes_failed()
-                        } else {
-                            crate::i18n::catalog::copy("Market prices", "市场行情")
-                        }
-                    })
-                    .typo(Type::Caption)
-                    .text_color(color::MUTED)
-                    .flex_1(),
-                )
-                .child(
-                    Btn::ghost()
-                        .size(crate::ui::Size::Small)
-                        .label(|| {
-                            if crate::data::market::status().refreshing {
-                                s().refreshing_quotes()
+                    view()
+                        .flex_row()
+                        .items_center()
+                        .style_when(
+                            || font_scale() > 1.2 || window().width.0 < 350.0,
+                            |s| s.flex_col().items_start(),
+                        )
+                        .gap_3()
+                        .child(dynamic(move || {
+                            let status = crate::data::market::status();
+                            let summary = if let Some(at) = status.completed_at {
+                                let ms = at.as_millisecond();
+                                let time = format!(
+                                    "{} {}",
+                                    s().short_date(crate::domain::meal::Day(
+                                        clock::zoned(ms).date()
+                                    )),
+                                    clock::time_label(ms)
+                                );
+                                s().refresh_summary(&time, status.updated, status.failed)
                             } else {
-                                s().refresh_quotes()
+                                crate::i18n::catalog::copy("Prices and FX", "价格与汇率").to_owned()
+                            };
+                            let caption =
+                                text(summary).typo(Type::Caption).text_color(color::MUTED);
+                            if status.failed_items.is_empty() {
+                                caption.flex_1().into_element()
+                            } else {
+                                row_button(move || expanded.update(|open| *open = !*open))
+                                    .px_0()
+                                    .min_h(px(44.0))
+                                    .flex_1()
+                                    .child(caption)
+                                    .child(icon(
+                                        if expanded.get() {
+                                            Icon::ChevronDown
+                                        } else {
+                                            Icon::ChevronRight
+                                        },
+                                        16.0,
+                                        color::MUTED,
+                                    ))
+                                    .into_element()
                             }
-                            .into()
-                        })
-                        .disabled(|| crate::data::market::status().refreshing)
-                        .on_press(|| {
-                            crate::data::tasks::spawn_app(crate::data::market::refresh(true))
-                        }),
+                        }))
+                        .child(
+                            Btn::ghost()
+                                .size(crate::ui::Size::Small)
+                                .label(|| {
+                                    if crate::data::market::status().refreshing {
+                                        s().refreshing_quotes()
+                                    } else {
+                                        s().refresh_quotes()
+                                    }
+                                    .into()
+                                })
+                                .disabled(|| crate::data::market::status().refreshing)
+                                .on_press(move || {
+                                    expanded.set(false);
+                                    crate::data::tasks::spawn_app(crate::data::market::refresh(
+                                        true,
+                                    ))
+                                }),
+                        ),
                 )
+                .child(when(
+                    move || {
+                        expanded.get() && !crate::data::market::status().failed_items.is_empty()
+                    },
+                    || {
+                        text(|| crate::data::market::status().failed_items.join(" · "))
+                            .typo(Type::Caption)
+                            .text_color(color::BODY)
+                    },
+                ))
         },
     )
 }

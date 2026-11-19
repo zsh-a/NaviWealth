@@ -108,6 +108,8 @@ const MIGRATIONS: &[&str] = &[
     CREATE TRIGGER metrics_delete_revision AFTER DELETE ON body_metrics BEGIN
       INSERT INTO weight_revisions VALUES(OLD.day,1) ON CONFLICT(day) DO UPDATE SET revision=revision+1;
     END;",
+    // 19: indexed daily lookup and chronological snapshot pagination.
+    navi_finance::valuation::HISTORY_INDEXES,
 ];
 
 #[derive(Clone, Default)]

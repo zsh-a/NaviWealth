@@ -86,8 +86,7 @@ pub fn bind(binding: &SecurityBinding) -> Result<(), String> {
         .map_err(|e| e.to_string())?;
     // A re-link removed obsolete provider marks in the same database savepoint.
     // Reload reactive mirrors before showing this holding under its new identity.
-    super::market::load()?;
-    super::finance::load()?;
+    super::market::reload_prices()?;
     state().update(|s| s.revision = s.revision.wrapping_add(1));
     Ok(())
 }

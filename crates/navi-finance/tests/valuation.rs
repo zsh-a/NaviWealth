@@ -41,6 +41,7 @@ fn revisions_are_immutable_after_trade_quote_and_fx_changes() {
     store::add_trade(&c, Some(&security), &trade, day).unwrap();
     let first = valuation::record_current(&c, day, instant()).unwrap();
     assert_eq!(first.body.missing, vec![Currency::USD]);
+    assert_eq!(valuation::recorded_trend(&c).unwrap(), [(day, None)]);
     assert_eq!(first.body.holdings[0].quantity, 10 * holdings::SCALE);
     currency::save_rate(
         &c,
@@ -64,6 +65,10 @@ fn revisions_are_immutable_after_trade_quote_and_fx_changes() {
     .unwrap();
     let second = valuation::record_current(&c, day, instant()).unwrap();
     assert_eq!(second.body.net, 210000);
+    assert_eq!(
+        valuation::recorded_trend(&c).unwrap(),
+        [(day, Some(210000))]
+    );
     assert!(second.body.missing.is_empty());
     assert_eq!(second.body.holdings[0].source, "manual");
     store::remove_trade(&c, "opening").unwrap();
@@ -140,4 +145,25 @@ fn capture_rejects_fabricated_historical_day_and_allows_zero_manual_mark() {
     assert_eq!(saved.body.net, 0);
     assert_eq!(saved.body.holdings[0].price, Some(0));
     valuation::validate(&c).unwrap();
+}
+
+#[test]
+fn migrated_snapshots_page_by_observation_time_and_id() {
+    let c = fixture();
+    let day = date(2026, 11, 15);
+    let at = instant();
+    let later = at.checked_add(jiff::Span::new().nanoseconds(1)).unwrap();
+    assert!(valuation::record_if_absent(&c, day, at).unwrap());
+    let newer = valuation::record_current(&c, day, later).unwrap();
+    let tied = valuation::record_current(&c, day, later).unwrap();
+    let backdated = valuation::record_current(&c, day, at).unwrap();
+    c.execute_batch(valuation::HISTORY_INDEXES).unwrap();
+    assert!(!valuation::record_if_absent(&c, day, later).unwrap());
+    let first = valuation::summaries(&c, None, 1).unwrap();
+    assert_eq!(first[0].id, tied.id);
+    let next = valuation::summaries(&c, Some(&first[0].cursor()), 2).unwrap();
+    assert_eq!([next[0].id, next[1].id], [newer.id, backdated.id]);
+    let last = valuation::summaries(&c, Some(&next[1].cursor()), 2).unwrap();
+    assert_eq!(last.len(), 1);
+    assert_eq!(valuation::detail(&c, newer.id).unwrap(), newer);
 }

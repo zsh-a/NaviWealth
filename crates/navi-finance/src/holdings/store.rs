@@ -73,6 +73,11 @@ pub fn load(c: &Connection) -> Result<Book, Error> {
             cash,
         });
     }
+    book.quotes = manual_quotes(c, &book.securities)?;
+    Ok(book)
+}
+pub fn manual_quotes(c: &Connection, securities: &[Security]) -> Result<Vec<Quote>, Error> {
+    let mut quotes = Vec::new();
     let mut query = c.prepare("SELECT security,day,price FROM finance_quotes ORDER BY day")?;
     for row in query.query_map([], |r| {
         Ok((
@@ -82,16 +87,16 @@ pub fn load(c: &Connection) -> Result<Book, Error> {
         ))
     })? {
         let (security, day, price) = row?;
-        if price < 0 || !book.securities.iter().any(|s| s.id == security) {
+        if price < 0 || !securities.iter().any(|s| s.id == security) {
             return Err(Error::Invalid);
         }
-        book.quotes.push(Quote {
+        quotes.push(Quote {
             security,
             day: day.parse().map_err(|_| Error::Invalid)?,
             price,
         });
     }
-    Ok(book)
+    Ok(quotes)
 }
 
 pub fn validate(c: &Connection) -> Result<(), Error> {

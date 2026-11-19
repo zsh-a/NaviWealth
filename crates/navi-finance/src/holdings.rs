@@ -341,6 +341,26 @@ impl Book {
         };
         Ok(p)
     }
+    /// Daily valuations start at the first journal entry, using only information
+    /// available on each day. A failure on one day preserves the other dates.
+    pub fn valuation_range(
+        &self,
+        entries: &[Transaction],
+        rates: &[crate::currency::FxRate],
+        first: Date,
+        last: Date,
+    ) -> Vec<(Date, Result<ValuedOverview, Error>)> {
+        let start = entries
+            .iter()
+            .map(|entry| entry.at.date())
+            .min()
+            .map(|day| day.max(first));
+        std::iter::successors(start, |day| day.tomorrow().ok())
+            .take_while(|day| *day <= last)
+            .map(|day| (day, self.overview_with_rates(entries, day, rates)))
+            .collect()
+    }
+
     /// Convert native account balances and security marks using only rates known
     /// by the valuation day. Missing rates exclude that currency explicitly.
     pub fn overview_with_rates(
