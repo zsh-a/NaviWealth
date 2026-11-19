@@ -40,7 +40,7 @@ fn search_create_and_existing_holding_binding_preserve_identity() -> Result<(), 
     assert_eq!(b[0].security, before.securities[0].id);
     assert_eq!(b[0].symbol, "000001");
     app.press("label:Back")?;
-    app.press("text:Manage")?;
+    app.press("label:Manage")?;
     app.press("Add holding")?;
     app.type_text("label:Code, name or pinyin", "aapl")?;
     app.wait_for("label:/^Apple Inc., United States · AAPL/")?;

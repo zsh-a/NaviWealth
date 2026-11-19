@@ -76,7 +76,7 @@ pub fn disclosure(open: Signal<bool>, label: impl Fn() -> SharedString + 'static
         .flex_row()
         .items_center()
         .justify_between()
-        .min_h(px(44.0))
+        .min_h(px(48.0))
         .rounded(px(radius::BADGE))
         .focus_visible(|s| s.outline(px(2.0)).outline_color(color::INK))
         .active(|s| s.opacity(0.7))

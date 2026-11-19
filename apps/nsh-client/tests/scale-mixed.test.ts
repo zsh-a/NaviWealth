@@ -441,7 +441,7 @@ test("scale mixed: three Rust models recompute one live draft without reconnecti
   await app.press("Confirm and save");
   await app.waitFor("Measurement saved");
   await home(app);
-  await app.press("label:Body metrics, 58.1 kg");
+  await app.press("label:/^Body metrics, 58.1 kg, /");
   // The native overview reads the confirmed Measurement's algorithm version.
   await app.waitFor("text:Sun 2003 · Experimental");
   await app.waitFor("text:12.0%");
@@ -521,7 +521,7 @@ test("scale mixed: unsupported model is recoverable and never claims missing imp
   await app.press("Save weight only");
   await app.waitFor("Measurement saved");
   await home(app);
-  await app.waitFor("label:Body metrics, 58.1 kg");
+  await app.waitFor("label:/^Body metrics, 58.1 kg, /");
 }, 30000);
 
 test("scale mixed: changing the model resets replacement confirmation for the new review token", async () => {
@@ -583,9 +583,9 @@ test("scale mixed: native Rust settings open TSX, Rust-generated command and con
   await packet(app, sessionId, IMPEDANCE);
   expect(app.shows("id:scale-preview")).toBe(false);
   await home(app);
-  await app.waitFor("label:Body metrics, 58.1 kg");
+  await app.waitFor("label:/^Body metrics, 58.1 kg, /");
   expect(app.texts().join(" ")).toContain("Body fat");
-  await app.press("label:Body metrics, 58.1 kg");
+  await app.press("label:/^Body metrics, 58.1 kg, /");
   expect(app.texts().join(" ")).toContain("Scale estimate");
 }, 30000);
 
@@ -677,7 +677,7 @@ test("scale mixed: closing keeps a local draft and reopening does not reconnect"
   await app.press("Confirm and save");
   await app.waitFor("Measurement saved");
   await home(app);
-  await app.waitFor("label:Body metrics, 58.1 kg");
+  await app.waitFor("label:/^Body metrics, 58.1 kg, /");
 }, 30000);
 
 test("scale mixed: replacing a same-day measurement requires a second explicit confirmation", async () => {
@@ -688,7 +688,7 @@ test("scale mixed: replacing a same-day measurement requires a second explicit c
   await app.press("Confirm and save");
   await app.waitFor("Measurement saved");
   await home(app);
-  await app.waitFor("label:Body metrics, 58.1 kg");
+  await app.waitFor("label:/^Body metrics, 58.1 kg, /");
   await app.press("label:Settings");
   await app.scroll("Connect scale", 250);
   await app.press("Connect scale");
@@ -709,7 +709,7 @@ test("scale mixed: replacing a same-day measurement requires a second explicit c
   await app.press("Replace and save");
   await app.waitFor("Measurement saved");
   await home(app);
-  await app.waitFor("label:Body metrics, 61.0 kg");
+  await app.waitFor("label:/^Body metrics, 61.0 kg, /");
 }, 30000);
 
 test("scale mixed: first-use Android permission gate reaches native scan authorization", async () => {
@@ -873,7 +873,7 @@ test("scale mixed: background disconnect keeps a completed review and ignores la
   await app.press("Confirm and save");
   await app.waitFor("Measurement saved");
   await home(app);
-  await app.waitFor("label:Body metrics, 58.1 kg");
+  await app.waitFor("label:/^Body metrics, 58.1 kg, /");
 }, 30000);
 
 test("scale mixed: transient inactive permission UI does not cancel scanning", async () => {

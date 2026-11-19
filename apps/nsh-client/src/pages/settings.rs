@@ -258,7 +258,7 @@ fn recognition() -> impl IntoElement {
     card()
         .overflow_hidden()
         .child(entry_list_row(
-            Icon::Eye,
+            Icon::Sparkle,
             || s().vision_model,
             summary,
             tint,
@@ -311,7 +311,7 @@ fn goal() -> impl IntoElement {
             })
     };
     setting_details_row(
-        Icon::Chart,
+        Icon::Target,
         || s().daily_goal,
         || {
             settings::goal()

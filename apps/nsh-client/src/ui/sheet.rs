@@ -251,7 +251,7 @@ fn task_layout(
                 .test_id("task-actions")
                 .flex_shrink(0.0)
                 .px(px(space::GUTTER))
-                .pt_3()
+                .pt_2()
                 .pb_safe_area_plus(px(12.0))
                 .child(actions)
                 .child(super::toast::toast_view(|| 68.0)),

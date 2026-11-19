@@ -1,10 +1,8 @@
 //! Waiting and state: spinners, shimmering placeholders, badges, empty
 //! states, and the entrance every arriving piece of content shares.
 
-use std::time::Duration;
-
 use nsh_core::{
-    element::{AnimatedValue, ImageSrc, Timing},
+    element::{AnimatedValue, Animation, ImageSrc, Timing},
     prelude::*,
 };
 
@@ -32,13 +30,13 @@ pub fn spinner(size: f32, tint: impl IntoReactive<AdaptiveColor>) -> impl IntoEl
 pub fn shimmer() -> AnimatedValue {
     let sweep = animated_value(0.0);
     if !reduce_motion() {
-        spawn(async move {
-            loop {
-                sweep.set(0.0);
-                let _ = sweep.timing(1.0, 1300.0, Easing::EaseInOut).await;
-                timer(Duration::from_millis(250)).await;
-            }
-        });
+        let animation = Animation::sequence([
+            Animation::timing(&sweep, 1.0, Timing::new(1300.0, Easing::EaseInOut)),
+            Animation::delay(250.0),
+        ])
+        .looped(None);
+        animation.start();
+        cleanup(move || animation.stop());
     }
     sweep
 }

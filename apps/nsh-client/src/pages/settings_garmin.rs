@@ -44,7 +44,7 @@ pub fn garmin_section() -> impl IntoElement {
         });
     };
     super::settings::setting_details_row(
-        Icon::Server,
+        Icon::Watch,
         || s().garmin,
         summary,
         tint,

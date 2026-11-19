@@ -322,9 +322,9 @@ fn record_view(
 }
 
 fn amount_text(currency: &str, amount: &str) -> String {
-    if currency == "CNY" {
-        format!("¥{amount}")
-    } else {
-        format!("{currency} {amount}")
+    use navi_finance::{currency::Currency, money};
+    match (Currency::parse(currency), money::parse(amount, true)) {
+        (Some(currency), Some(value)) => crate::ui::currency::format(value, currency),
+        _ => format!("{currency} {amount}"),
     }
 }

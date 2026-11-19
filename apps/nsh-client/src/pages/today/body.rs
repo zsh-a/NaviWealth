@@ -77,11 +77,16 @@ pub fn summary(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
     .accessibility_label(move || {
         Some(
             format!(
-                "{}, {}",
+                "{}, {}{}",
                 s().body_metrics,
                 value()
                     .map(|v| format!("{v} kg"))
-                    .unwrap_or_else(|| "—".to_owned())
+                    .unwrap_or_else(|| "—".to_owned()),
+                if data.with(Option::is_some) {
+                    format!(", {}", date())
+                } else {
+                    String::new()
+                }
             )
             .into(),
         )
@@ -99,7 +104,7 @@ pub fn summary(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                     .min_w(px(0.0)),
             )
             .child(
-                text(date)
+                text(|| s().body_overview)
                     .typo(Type::Caption)
                     .text_color(color::MUTED)
                     .flex_shrink(1.0)
@@ -112,57 +117,72 @@ pub fn summary(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
         view()
             .test_id("body-primary")
             .flex_row()
-            .items_center()
-            .justify_between()
-            .gap_2()
-            .style_when(|| font_scale() > 1.2, |s| s.flex_col().items_start())
-            .child(stat(value, || "kg".into(), Scale::Tile))
+            .items_start()
+            .gap_3()
+            .style_when(|| font_scale() > 1.2, |s| s.flex_col())
             .child(
-                text(move || {
+                view()
+                    .flex_grow(2.0)
+                    .basis(px(0.0))
+                    .min_w(px(0.0))
+                    .style_when(|| font_scale() > 1.2, |s| s.flex_grow(0.0).basis(auto()))
+                    .gap_1()
+                    .child(
+                        text(|| s().weight)
+                            .typo(Type::Caption)
+                            .text_color(color::MUTED),
+                    )
+                    .child(
+                        view()
+                            .flex_row()
+                            .items_baseline()
+                            .flex_wrap()
+                            .gap_2()
+                            .child(stat(value, || "kg".into(), Scale::Tile))
+                            .child(
+                                text(move || {
+                                    let mut parts = Vec::new();
+                                    if data
+                                        .with(|d| d.as_ref().is_some_and(|d| d.weight.day < day()))
+                                    {
+                                        parts.push(date());
+                                    }
+                                    if let Some(delta) = data.with(|d| {
+                                        d.as_ref().and_then(|d| weights::weekly_change(d.weight))
+                                    }) {
+                                        parts.push(s().week_change(delta));
+                                    }
+                                    parts.join(" · ")
+                                })
+                                .typo(Type::Caption)
+                                .tabular_nums()
+                                .text_color(color::MUTED),
+                            ),
+                    ),
+            )
+            .child(fact(
+                || s().body_fat,
+                move || {
                     data.with(|d| {
                         d.as_ref()
-                            .and_then(|d| weights::weekly_change(d.weight))
-                            .map(|delta| s().week_change(delta))
-                            .unwrap_or_default()
+                            .and_then(|d| d.metrics.as_ref())
+                            .map(|m| format!("{:.1}%", m.body_fat_percent))
                     })
-                })
-                .typo(Type::Caption)
-                .tabular_nums()
-                .text_color(color::MUTED),
-            ),
+                },
+            ))
+            .child(fact(
+                || s().bmi,
+                move || data.with(|d| d.as_ref().and_then(|d| d.bmi).map(|v| format!("{v:.1}"))),
+            )),
     )
-    .child(
-        when(
-            move || data.with(Option::is_some),
-            move || {
-                view()
-                    .flex_row()
-                    .gap_4()
-                    .style_when(|| font_scale() > 1.2, |s| s.flex_col().gap_2())
-                    .child(fact(
-                        || s().body_fat,
-                        move || {
-                            data.with(|d| {
-                                d.as_ref()
-                                    .and_then(|d| d.metrics.as_ref())
-                                    .map(|m| format!("{:.1}%", m.body_fat_percent))
-                            })
-                        },
-                    ))
-                    .child(fact(
-                        || s().bmi,
-                        move || {
-                            data.with(|d| d.as_ref().and_then(|d| d.bmi).map(|v| format!("{v:.1}")))
-                        },
-                    ))
-            },
-        )
-        .otherwise(|| {
+    .child(when(
+        move || data.with(Option::is_none),
+        || {
             text(|| s().tap_to_log)
                 .typo(Type::Subhead)
                 .text_color(color::MUTED)
-        }),
-    )
+        },
+    ))
 }
 
 fn fact(
@@ -171,15 +191,13 @@ fn fact(
 ) -> impl IntoElement {
     view()
         .flex_1()
-        .style_when(|| font_scale() > 1.2, |s| s.flex_grow(0.0).basis(auto()))
         .min_w(px(0.0))
-        .flex_row()
-        .items_baseline()
-        .gap_2()
+        .gap_1()
+        .style_when(|| font_scale() > 1.2, |s| s.flex_grow(0.0).basis(auto()))
         .child(text(label).typo(Type::Caption).text_color(color::MUTED))
         .child(
             text(move || value().unwrap_or_else(|| "—".into()))
-                .typo(Type::Subhead)
+                .typo(Type::Figure)
                 .tabular_nums()
                 .text_color(color::INK),
         )

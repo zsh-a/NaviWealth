@@ -1,6 +1,6 @@
 //! Review copy kept together for both supported languages.
 use super::Strings;
-use navi_finance::money;
+use navi_finance::currency::Currency;
 impl Strings {
     pub fn recorded_spending(&self) -> &'static str {
         if self.zh() {
@@ -30,7 +30,12 @@ impl Strings {
             "More categories"
         }
     }
-    pub fn spending_comparison(&self, current: i64, previous: Option<i64>) -> String {
+    pub fn spending_comparison(
+        &self,
+        current: i64,
+        previous: Option<i64>,
+        currency: Currency,
+    ) -> String {
         let Some(previous) = previous else {
             return if self.zh() {
                 "上一对比时段没有支出记录"
@@ -40,16 +45,16 @@ impl Strings {
             .into();
         };
         let delta = i128::from(current) - i128::from(previous);
-        let amount = money::format(money::saturate(delta.abs()));
+        let amount = crate::ui::currency::difference_magnitude(current, previous, currency);
         match (self.zh(), delta.cmp(&0)) {
-            (true, std::cmp::Ordering::Greater) => format!("比上一对比时段多 ¥{amount}"),
-            (true, std::cmp::Ordering::Less) => format!("比上一对比时段少 ¥{amount}"),
+            (true, std::cmp::Ordering::Greater) => format!("比上一对比时段多 {amount}"),
+            (true, std::cmp::Ordering::Less) => format!("比上一对比时段少 {amount}"),
             (true, _) => "与上一对比时段持平".into(),
             (false, std::cmp::Ordering::Greater) => {
-                format!("¥{amount} more than the comparison period")
+                format!("{amount} more than the comparison period")
             }
             (false, std::cmp::Ordering::Less) => {
-                format!("¥{amount} less than the comparison period")
+                format!("{amount} less than the comparison period")
             }
             (false, _) => "Unchanged from the comparison period".into(),
         }

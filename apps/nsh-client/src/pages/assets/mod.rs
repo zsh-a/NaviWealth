@@ -1,7 +1,9 @@
 //! Assets answers what the recorded ledger says the owner owns. Account
 //! details and balance observations use the same journal as Today/Records.
 mod editor;
+mod mini;
 mod overview;
+mod overview_parts;
 mod trend;
 pub use overview::assets_tab;
 pub use trend::history_page;
@@ -21,7 +23,6 @@ use navi_finance::{
     account::{Account, AccountKind, defaults},
     assets,
     journal::{self, Transaction},
-    money,
 };
 use nsh_base::nav_page;
 use nsh_core::{element::Screen, prelude::*};
@@ -40,18 +41,14 @@ pub(super) fn amount_in(
     style: Type,
     currency: navi_finance::currency::Currency,
 ) -> impl IntoElement {
-    text(if currency == navi_finance::currency::Currency::CNY {
-        format!("¥{}", display_money(value))
-    } else {
-        format!("{} {}", currency.code(), display_money(value))
-    })
-    .typo(style)
-    .number_of_lines(1)
-    .shrink_to_fit(0.65)
-    .min_w(px(0.0))
-    .flex_shrink(1.0_f32)
-    .tabular_nums()
-    .text_color(color::INK)
+    text(crate::ui::currency::format(value, currency))
+        .typo(style)
+        .number_of_lines(1)
+        .shrink_to_fit(0.65)
+        .min_w(px(0.0))
+        .flex_shrink(1.0_f32)
+        .tabular_nums()
+        .text_color(color::INK)
 }
 
 pub fn account_page(name: &str) -> Screen {
@@ -168,9 +165,8 @@ pub fn account_page(name: &str) -> Screen {
                                             );
                                             let title = super::finance::transaction_title(&t);
                                             let label = format!(
-                                                "{title}, {} {}",
-                                                money::format(value),
-                                                a.currency().code()
+                                                "{title}, {}",
+                                                crate::ui::currency::format(value, a.currency())
                                             );
                                             view()
                                                 .child(

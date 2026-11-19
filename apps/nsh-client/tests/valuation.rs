@@ -109,7 +109,7 @@ fn price_history_exposes_daily_revisions_and_fx_audit() -> Result<(), String> {
     )
     .unwrap();
     app.press("label:Assets")?;
-    app.press("text:Manage")?;
+    app.press("label:Manage")?;
     app.press("Price history")?;
     app.wait_for("510300.SH · 2026-11-12")?;
     app.press("510300.SH · 2026-11-12")?;

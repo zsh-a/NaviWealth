@@ -6,6 +6,13 @@ use nsh_core::{element::ImageSrc, prelude::*};
 /// A glyph.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Icon {
+    Target,
+    Watch,
+    CloudLock,
+    CreditCard,
+    Import,
+    Profile,
+    Link,
     Photo,
     Wallet,
     Pencil,
@@ -42,6 +49,27 @@ pub enum Icon {
 impl Icon {
     fn body(self) -> &'static str {
         match self {
+            Icon::Target => {
+                r#"<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r=".8"/>"#
+            }
+            Icon::Watch => {
+                r#"<rect x="6" y="6" width="12" height="12" rx="4"/><path d="M9 6l1-4h4l1 4M9 18l1 4h4l1-4M12 9v3l2 1M18 10h2"/>"#
+            }
+            Icon::CloudLock => {
+                r#"<path d="M7 17H6a4 4 0 0 1-.5-8A6 6 0 0 1 17 7.5a4.5 4.5 0 0 1 3 7.5"/><rect x="9" y="14" width="8" height="7" rx="1.5"/><path d="M11 14v-2a2 2 0 0 1 4 0v2"/>"#
+            }
+            Icon::CreditCard => {
+                r#"<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M7 15h4"/>"#
+            }
+            Icon::Import => {
+                r#"<path d="M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5M12 3v12M7.5 10.5L12 15l4.5-4.5"/>"#
+            }
+            Icon::Profile => {
+                r#"<circle cx="12" cy="7" r="3.5"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/>"#
+            }
+            Icon::Link => {
+                r#"<path d="M10 7l2-2a5 5 0 0 1 7 7l-2 2M14 17l-2 2a5 5 0 0 1-7-7l2-2M8 16l8-8"/>"#
+            }
             Icon::Close => r#"<path d="M6 6l12 12M18 6L6 18"/>"#,
             Icon::Wallet => {
                 r#"<rect x="3" y="5" width="18" height="15" rx="3"/><path d="M4 5l13-2v2M21 10h-6v5h6M17 12.5h.01"/>"#

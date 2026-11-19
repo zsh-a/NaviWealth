@@ -33,14 +33,14 @@ fn category_drilldown_edits_the_original_transaction() -> Result<(), String> {
     app.wait_for("Recorded spending")?;
     app.wait_for("text:¥33.50")?;
     app.press("text:Dining")?;
-    app.wait_for("label:/^Lunch shop, −31.50 CNY/")?;
+    app.wait_for("label:/^Lunch shop, −¥31.50/")?;
     assert!(!app.shows("label:/^Bus, /"));
-    app.press("label:/^Lunch shop, −31.50 CNY/")?;
+    app.press("label:/^Lunch shop, −¥31.50/")?;
     app.clear("label:Amount")?;
     app.type_text("label:Amount", "42.00")?;
     app.press("Save transaction")?;
     app.wait_for_gone("Save transaction", GONE)?;
-    app.wait_for("label:/^Lunch shop, −42.00 CNY/")?;
+    app.wait_for("label:/^Lunch shop, −¥42.00/")?;
     Ok(())
 }
 #[test]

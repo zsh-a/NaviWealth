@@ -25,12 +25,12 @@ fn todays_weight_is_logged_kept_and_checked() -> Result<(), String> {
     // Typing appends: the field now reads 52.44, kept to one decimal.
     app.type_text("label:Weight", "2.44")?;
     app.press("Save weight")?;
-    app.wait_for("label:Body metrics, 52.4 kg")?;
+    app.wait_for("label:/^Body metrics, 52.4 kg, /")?;
     assert_eq!(stored_weights(dir.path()), [(today().to_string(), 52.4)]);
     drop(app);
 
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
-    app.wait_for("label:Body metrics, 52.4 kg")?;
+    app.wait_for("label:/^Body metrics, 52.4 kg, /")?;
     Ok(())
 }
 
@@ -41,14 +41,14 @@ fn deleting_a_weight_can_be_undone() -> Result<(), String> {
     app.press("text:Tap to log")?;
     app.type_text("label:Weight", "70")?;
     app.press("Save weight")?;
-    app.wait_for("label:Body metrics, 70.0 kg")?;
-    app.press("label:Body metrics, 70.0 kg")?;
+    app.wait_for("label:/^Body metrics, 70.0 kg, /")?;
+    app.press("label:/^Body metrics, 70.0 kg, /")?;
     app.press("Edit weight")?;
     app.press("Delete")?;
     app.wait_for("Weight deleted")?;
     assert!(stored_weights(dir.path()).is_empty());
     app.press("Undo")?;
-    app.wait_for("label:Body metrics, 70.0 kg")?;
+    app.wait_for("label:/^Body metrics, 70.0 kg, /")?;
     assert_eq!(stored_weights(dir.path()).len(), 1);
     Ok(())
 }
@@ -74,14 +74,14 @@ fn today_and_review_use_the_shared_average_at_large_text() -> Result<(), String>
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), Some(garmin_cn()));
     app.set_viewport(Size::new(Points(360.0), Points(800.0)))?;
     app.set_environment("larger text", |e| e.font_scale = 1.3)?;
-    app.wait_for("text:−0.7 · 7d")?;
+    app.wait_for("text:↓0.7 kg · 7d")?;
     let nodes = app.screen().layout_nodes();
     let caption = nodes
         .iter()
         .find(|node| {
             node.text
                 .as_ref()
-                .is_some_and(|t| t.text.text.as_str() == "−0.7 · 7d")
+                .is_some_and(|t| t.text.text.as_str() == "↓0.7 kg · 7d")
         })
         .expect("the caption is laid out");
     assert!(caption.bounds.origin.x.0 >= 20.0);
@@ -110,7 +110,7 @@ fn today_and_review_use_the_shared_average_at_large_text() -> Result<(), String>
     let content = nodes
         .iter()
         .filter_map(|n| n.text.as_ref())
-        .find(|t| t.text.text == "−0.7 · 7d")
+        .find(|t| t.text.text == "↓0.7 kg · 7d")
         .unwrap();
     let mut full_text = (*content.text).clone();
     full_text.max_lines = 0;
@@ -127,14 +127,14 @@ fn today_and_review_use_the_shared_average_at_large_text() -> Result<(), String>
     // The preceding complete calendar week spans six days between endpoints.
     app.press("label:Previous week")?;
     // Review leads with what changed.
-    app.wait_for("text:Weight trend −0.6 kg")?;
+    app.wait_for("text:Weight fell 0.6 kg.")?;
     app.wait_for("label:One sentence")?;
     app.press("label:Next week")?;
     assert!(!app.screen().enabled("label:Next week")?);
     app.press("This month")?;
     let delta = -f64::from(today().0.day() - 1) * 0.1;
     if delta != 0.0 {
-        app.wait_for(&format!("text:Weight trend −{:.1} kg", delta.abs()))?;
+        app.wait_for(&format!("text:Weight fell {:.1} kg.", delta.abs()))?;
     }
     Ok(())
 }
@@ -181,7 +181,7 @@ fn scale_context_shows_on_today_in_the_editor_in_review_and_records() -> Result<
     let (mut app, _) = start_in(Some(dir.path()), profile, None);
 
     // Today keeps three facts; goal context is disclosed in the overview.
-    app.wait_for("text:/\u{2212}0\\.5 \u{b7} 7d/")?;
+    app.wait_for("text:/↓0\\.5 kg · 7d/")?;
     app.wait_for("text:18.3%")?;
     app.wait_for("text:22.9")?;
 
@@ -229,9 +229,9 @@ fn body_summary_joins_by_day_and_dates_old_measurements() -> Result<(), String> 
         rusqlite::params![yesterday, json!({"body_fat_percent":18.3,"muscle_percent":76.9,"water_percent":56.9,"resistance_ohm":506.0,"model":"segal_3a_male_lt20"}).to_string()]).unwrap();
     drop(db);
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
-    app.wait_for("label:Body metrics, 70.0 kg")?;
+    app.wait_for("label:/^Body metrics, 70.0 kg, /")?;
     app.wait_for("text:18.3%")?;
-    app.press("label:Body metrics, 70.0 kg")?;
+    app.press("label:/^Body metrics, 70.0 kg, /")?;
     app.wait_for("Log weight")?;
     let dates: Vec<_> = app
         .screen()
@@ -255,7 +255,7 @@ fn body_summary_joins_by_day_and_dates_old_measurements() -> Result<(), String> 
     assert!(!app.shows("text:18.3%"));
     assert!(!app.shows("Measurement details"));
     app.press("label:Back")?;
-    app.wait_for("label:Body metrics, 70.0 kg")?;
+    app.wait_for("label:/^Body metrics, 70.0 kg, /")?;
     assert!(!app.shows("text:18.3%"));
     Ok(())
 }
@@ -284,7 +284,7 @@ fn longest_weight_never_squeezes_garmin_at_narrow_width_or_large_text() -> Resul
     for scale in [1.0, 1.3, 1.8] {
         app.set_viewport(Size::new(Points(320.0), Points(1000.0)))?;
         app.set_environment("font scale", |e| e.font_scale = scale)?;
-        app.wait_for("label:Body metrics, 400.0 kg")?;
+        app.wait_for("label:/^Body metrics, 400.0 kg, /")?;
         let nodes = app.screen().layout_nodes();
         for test_id in ["body-summary", "garmin-vitals"] {
             let root = nodes
@@ -400,7 +400,7 @@ fn body_overview_uses_the_confirmed_measurements_frozen_profile_and_mass() -> Re
     drop(db);
     let (mut app, _) = start_in(Some(dir.path()), settings, None);
     app.wait_for(&format!("text:{:.1}", expected.bmi.unwrap()))?;
-    app.press("label:Body metrics, 58.1 kg")?;
+    app.press("label:/^Body metrics, 58.1 kg, /")?;
     app.press("Measurement details")?;
     app.wait_for("text:170 cm · Age 23")?;
     app.wait_for(&format!("text:{:.2} kg", expected.fat_mass_kg.unwrap()))?;
@@ -443,7 +443,7 @@ fn body_overview_uses_the_confirmed_measurements_frozen_profile_and_mass() -> Re
     app.press("label:Back")?;
     app.wait_for("Measurement details")?;
     app.press("label:Back")?;
-    app.wait_for("label:Body metrics, 58.1 kg")?;
+    app.wait_for("label:/^Body metrics, 58.1 kg, /")?;
     assert_eq!(stored_weights(dir.path()), [(day, 58.1)]);
     drop(app);
     // Corrupt or stale same-day provenance is different from legacy data:
@@ -452,8 +452,8 @@ fn body_overview_uses_the_confirmed_measurements_frozen_profile_and_mass() -> Re
     db.execute("UPDATE weights SET kg=70", []).unwrap();
     drop(db);
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
-    app.wait_for("label:Body metrics, 70.0 kg")?;
-    app.press("label:Body metrics, 70.0 kg")?;
+    app.wait_for("label:/^Body metrics, 70.0 kg, /")?;
+    app.press("label:/^Body metrics, 70.0 kg, /")?;
     app.wait_for("text:Measure with your scale to add body composition.")?;
     assert!(!app.shows("Measurement details"));
     Ok(())

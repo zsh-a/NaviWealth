@@ -69,16 +69,16 @@ fn accounts_balances_rename_and_net_worth_survive_restart() -> Result<(), String
     app.press("label:Send")?;
     app.wait_for("Confirm and save")?;
     app.press("label:Close")?;
-    app.press("label:/^Cash, 1000.00 CNY/")?;
+    app.press("label:/^Cash, ¥1,000.00/")?;
     app.press("label:Rename account")?;
     app.clear("label:Account name")?;
     app.type_text("label:Account name", "Wallet")?;
     app.press("Save name")?;
     app.wait_for("Account renamed")?;
     app.press("label:Back")?;
-    app.wait_for("label:/^Wallet, 1000.00 CNY/")?;
+    app.wait_for("label:/^Wallet, ¥1,000.00/")?;
     // Creation stays available from the overview management menu.
-    app.press("text:Manage")?;
+    app.press("label:Manage")?;
     app.press("text:Add account")?;
     app.press("label:Account type")?;
     app.press("Credit / debt")?;
@@ -122,7 +122,7 @@ fn accounts_balances_rename_and_net_worth_survive_restart() -> Result<(), String
     );
     app.press("label:Assets")?;
     app.wait_for("label:¥750.00")?;
-    app.press("label:/^Card, 250.00 CNY/")?;
+    app.press("label:/^Card, ¥250.00/")?;
     // Reconfirming the same actual debt adds an observation, not fake spending.
     verify(&mut app, "250.00", true)?;
     assert_eq!(repository::transactions(&c).unwrap(), entries);
@@ -159,7 +159,7 @@ fn failed_balance_confirmation_preserves_preview_and_can_retry_once() -> Result<
     app.wait_for_gone("task-sheet", GONE)?;
     assert_eq!(repository::transactions(&c).unwrap().len(), 1);
     assert_eq!(repository::balance_checks(&c).unwrap().len(), 1);
-    app.press("label:/^Opening balance, 500.01 CNY/")?;
+    app.press("label:/^Opening balance, ¥500.01/")?;
     app.wait_for(
         "This entry comes from a balance check. Check the account again, or revoke this entry to recalculate its balance.",
     )?;
@@ -177,7 +177,7 @@ fn balance_entry_revocation_and_undo_keep_the_check_and_journal_together() -> Re
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
     let entries = repository::transactions(&db).unwrap();
     let checks = repository::balance_checks(&db).unwrap();
-    app.press("label:/^Opening balance, 500.00 CNY/")?;
+    app.press("label:/^Opening balance, ¥500.00/")?;
     app.on_dialog(|dialog| {
         assert_eq!(dialog.title.as_deref(), Some("Revoke this balance entry?"));
         let summary = dialog.message.as_deref().unwrap();
@@ -199,7 +199,7 @@ fn balance_entry_revocation_and_undo_keep_the_check_and_journal_together() -> Re
             .contains(&Account::parse("资产:Cash").unwrap())
     );
     app.press("Undo")?;
-    app.wait_for("label:/^Opening balance, 500.00 CNY/")?;
+    app.wait_for("label:/^Opening balance, ¥500.00/")?;
     assert_eq!(repository::transactions(&db).unwrap(), entries);
     assert_eq!(repository::balance_checks(&db).unwrap(), checks);
     Ok(())
@@ -210,7 +210,7 @@ fn manage_back_dirty_changes_and_account_receipt_share_one_sheet() -> Result<(),
     use nsh_testing::DialogAnswer;
     let (mut app, _) = start(Vec::new(), None);
     app.press("label:Assets")?;
-    app.press("text:Manage")?;
+    app.press("label:Manage")?;
     let sheet = app
         .screen()
         .layout_nodes()
@@ -280,7 +280,7 @@ fn manage_back_dirty_changes_and_account_receipt_share_one_sheet() -> Result<(),
     app.press("Create account")?;
     app.wait_for("Account added")?;
     app.wait_for_gone("task-sheet", GONE)?;
-    app.wait_for("text:Manage")?;
+    app.wait_for("label:Manage")?;
     app.press("Check balance")?;
     app.wait_for("label:Actual balance")?;
     Ok(())
@@ -298,7 +298,7 @@ fn saving_resets_the_task_and_a_swipe_leaves_the_whole_task() -> Result<(), Stri
     let mut app = Headless::start(config).expect("the app starts");
     app.wait_for("label:New entry")?;
     app.press("label:Assets")?;
-    app.press("text:Manage")?;
+    app.press("label:Manage")?;
     app.run_for(motion)?;
     app.press("task-sheet >> Add account")?;
     app.type_text("label:Account name", "Wallet")?;
@@ -306,7 +306,7 @@ fn saving_resets_the_task_and_a_swipe_leaves_the_whole_task() -> Result<(), Stri
     app.run_for(motion)?;
     assert_eq!(app.screen().count("task-sheet")?, 0);
     // The saved panel does not linger as task state: Manage opens its menu.
-    app.press("text:Manage")?;
+    app.press("label:Manage")?;
     app.run_for(motion)?;
     app.wait_for("task-sheet >> Add holding")?;
     app.back()?;
@@ -314,7 +314,7 @@ fn saving_resets_the_task_and_a_swipe_leaves_the_whole_task() -> Result<(), Stri
     assert_eq!(app.screen().count("task-sheet")?, 0);
 
     // A swipe from a panel leaves the task instead of bouncing to the menu.
-    app.press("text:Manage")?;
+    app.press("label:Manage")?;
     app.run_for(motion)?;
     app.press("task-sheet >> Add account")?;
     app.drag("task-sheet", Point::new(Points(0.0), Points(500.0)))?;
@@ -326,7 +326,7 @@ fn saving_resets_the_task_and_a_swipe_leaves_the_whole_task() -> Result<(), Stri
     );
 
     // A dirty panel asks first; keeping the edit keeps the panel.
-    app.press("text:Manage")?;
+    app.press("label:Manage")?;
     app.run_for(motion)?;
     app.press("task-sheet >> Add account")?;
     app.type_text("label:Account name", "Card")?;
@@ -351,7 +351,7 @@ fn a_showing_keyboard_lifts_a_task_sheet_without_resizing_it() -> Result<(), Str
     app.set_viewport(Size::new(Points(390.0), Points(844.0)))?;
     app.set_environment("still", |e| e.reduce_motion = true)?;
     app.press("label:Assets")?;
-    app.press("text:Manage")?;
+    app.press("label:Manage")?;
     app.press("task-sheet >> Add holding")?;
     app.wait_for("security-search")?;
     let frame = |app: &Headless| {

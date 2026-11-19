@@ -199,8 +199,11 @@ pub fn search_actions(manual: impl Fn() + Copy + 'static) -> impl IntoElement {
         .gap_2()
         .child(
             Btn::ghost()
+                .size(crate::ui::Size::Small)
                 .label(|| copy::manual().into())
-                .on_press(manual),
+                .on_press(manual)
+                .min_h(px(48.0))
+                .px_3(),
         )
         .child(view().flex_1().min_w(px(0.0)).child(catalog_status()))
 }

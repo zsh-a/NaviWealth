@@ -58,7 +58,12 @@ pub fn review_tab() -> impl IntoElement {
             .pt_safe_area_plus(px(10.0))
             .pb_4()
             .gap_4()
-            .child(header(period, back, days))
+            .child(
+                text(|| s().review)
+                    .typo(Type::LargeTitle)
+                    .text_color(color::INK)
+                    .role(AccessibilityRole::Header),
+            )
             .child(segmented(
                 vec![
                     Segment::new(Period::Week, || s().this_week.into()),
@@ -70,6 +75,7 @@ pub fn review_tab() -> impl IntoElement {
                     back.set(0);
                 },
             ))
+            .child(header(period, back, days))
             .child(summary(period, days, before))
             .child(intake_card(period, days))
             .child(super::finance_review::spending_section(
@@ -84,61 +90,51 @@ pub fn review_tab() -> impl IntoElement {
 /// The span over the title, and the steps to other periods.
 fn header(period: Signal<Period>, back: Signal<i32>, days: Memo<Vec<Day>>) -> impl IntoElement {
     let month = move || period.get() == Period::Month;
-    view()
-        .gap_2()
-        .px(px(4.0))
-        .pt_2()
-        .child(
-            text(|| s().review)
-                .typo(Type::LargeTitle)
-                .text_color(color::INK)
-                .role(AccessibilityRole::Header),
-        )
-        .child(
-            view()
-                .flex_row()
-                .items_center()
-                .gap_2()
-                .child(
-                    IconBtn::new(Icon::ChevronLeft, move || {
+    view().gap_2().px(px(4.0)).pt_2().child(
+        view()
+            .flex_row()
+            .items_center()
+            .gap_2()
+            .child(
+                IconBtn::new(Icon::ChevronLeft, move || {
+                    if month() {
+                        s().previous_month
+                    } else {
+                        s().previous_week
+                    }
+                    .into()
+                })
+                .on_press(move || back.update(|b| *b += 1)),
+            )
+            .child(
+                text(move || {
+                    days.with(|d| {
                         if month() {
-                            s().previous_month
+                            s().month_name(d[0])
                         } else {
-                            s().previous_week
+                            s().week_span(d[0], d[d.len() - 1])
                         }
-                        .into()
                     })
-                    .on_press(move || back.update(|b| *b += 1)),
-                )
-                .child(
-                    text(move || {
-                        days.with(|d| {
-                            if month() {
-                                s().month_name(d[0])
-                            } else {
-                                s().week_span(d[0], d[d.len() - 1])
-                            }
-                        })
-                    })
-                    .flex_1()
-                    .text_center()
-                    .typo(Type::Subhead)
-                    .tabular_nums()
-                    .text_color(color::BODY),
-                )
-                .child(
-                    IconBtn::new(Icon::ChevronRight, move || {
-                        if month() {
-                            s().next_month
-                        } else {
-                            s().next_week
-                        }
-                        .into()
-                    })
-                    .on_press(move || back.update(|b| *b = (*b - 1).max(0)))
-                    .disabled(move || back.get() == 0),
-                ),
-        )
+                })
+                .flex_1()
+                .text_center()
+                .typo(Type::Subhead)
+                .tabular_nums()
+                .text_color(color::BODY),
+            )
+            .child(
+                IconBtn::new(Icon::ChevronRight, move || {
+                    if month() {
+                        s().next_month
+                    } else {
+                        s().next_week
+                    }
+                    .into()
+                })
+                .on_press(move || back.update(|b| *b = (*b - 1).max(0)))
+                .disabled(move || back.get() == 0),
+            ),
+    )
 }
 
 fn label(title: fn() -> &'static str) -> impl IntoElement {
@@ -161,14 +157,42 @@ fn summary(
     before: Memo<Vec<Day>>,
 ) -> impl IntoElement {
     let line = computed(move || {
-        let average = intake_of(days.get()).average.map(|a| a.kcal);
-        let previous = intake_of(before.get()).average.map(|a| a.kcal);
-        let change = average
-            .zip(previous)
-            .map(|(a, p)| a - p)
-            .filter(|d| d.is_finite());
-        let weight = days.with(|d| review::weight_change(&weights::all(), d[0], d[d.len() - 1]));
-        s().review_summary(period.get() == Period::Month, change, weight)
+        let current_days = days.get();
+        let previous_days = before.get();
+        let from = current_days[0];
+        let to = *current_days.last().unwrap();
+        let full_end = if period.get() == Period::Month {
+            from.0.last_of_month()
+        } else {
+            from.plus_days(6).0
+        };
+        let previous_to = navi_finance::review::comparison_end(
+            from.0,
+            full_end,
+            previous_days[0].0,
+            previous_days.last().unwrap().0,
+            clock::today().0,
+        );
+        let average = intake_of(current_days).average.map(|a| a.kcal);
+        let previous = intake_of(
+            previous_days
+                .into_iter()
+                .filter(|d| d.0 <= previous_to)
+                .collect(),
+        )
+        .average
+        .map(|a| a.kcal);
+        let change = average.zip(previous).map(|(a, p)| a - p);
+        let weight = review::weight_change(&weights::all(), from, to);
+        let entries = crate::data::finance::transactions_snapshot();
+        let spending: Vec<_> = navi_finance::currency::Currency::ALL
+            .into_iter()
+            .filter_map(|currency| {
+                let value = navi_finance::review::spending_in(&entries, from.0, to.0, currency);
+                (value.records > 0).then(|| crate::ui::currency::format(value.total, currency))
+            })
+            .collect();
+        s().review_summary(average, change, weight, &spending)
     });
     when(
         move || line.with(Option::is_some),
@@ -244,7 +268,12 @@ fn intake_card(period: Signal<Period>, days: Memo<Vec<Day>>) -> impl IntoElement
                                         i.kcal.len(),
                                     )
                                 });
-                                s().intake_caption(goal.get(), over, logged, of)
+                                let caption_goal = if period.get() == Period::Month {
+                                    goal.get()
+                                } else {
+                                    None // The weekly chart already labels its goal line.
+                                };
+                                s().intake_caption(caption_goal, over, logged, of)
                             })
                             .typo(Type::Caption)
                             .tabular_nums()
@@ -346,8 +375,12 @@ fn weight_card(days: Memo<Vec<Day>>) -> impl IntoElement {
                         .filter(|(_, points)| points.len() >= 2)
                         .collect();
                     untracked(move || {
-                        let charts =
-                            view().child(trend(first, f64::from(days_span.max(1)), points, goal));
+                        let charts = view().gap_4().child(trend(
+                            first,
+                            f64::from(days_span.max(1)),
+                            points,
+                            goal,
+                        ));
                         match fat.is_empty() {
                             true => charts.into_element(),
                             false => charts

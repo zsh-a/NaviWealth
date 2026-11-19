@@ -123,16 +123,16 @@ pub mod space {
     pub const CARD: f32 = 20.0;
 }
 
-/// Control heights (touch: at least 44 pt).
+/// Control heights (touch: at least 48 pt).
 pub mod size {
     /// A screen's main action.
     pub const LARGE: f32 = 56.0;
     /// Ordinary buttons and fields.
     pub const MEDIUM: f32 = 50.0;
-    /// Compact buttons inside rows and cards (44 pt hit area kept).
+    /// Compact buttons inside rows and cards (48 pt hit area kept).
     pub const SMALL: f32 = 38.0;
     /// The touch target every pressable keeps.
-    pub const TOUCH: f32 = 44.0;
+    pub const TOUCH: f32 = 48.0;
 }
 
 /// Translucent layers; content cards and fields remain opaque.

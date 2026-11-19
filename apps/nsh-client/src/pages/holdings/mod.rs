@@ -1,5 +1,7 @@
 //! A compact portfolio inside Assets: one list, one detail, short editors.
 mod editor;
+mod list;
+mod receipt;
 use crate::{
     data::{clock, finance},
     domain::meal::Day,
@@ -8,11 +10,12 @@ use crate::{
     ui::{
         Btn, Icon, Type, Typo, Variant, color,
         field::note,
-        surface::{hairline, row_button},
+        surface::{card, hairline, row_button},
         toast::{show_toast, toast_view},
     },
 };
 pub use editor::{trade_editor, trade_task};
+pub use list::{closed_page, section};
 use navi_finance::{
     currency::Currency,
     holdings::{self, Kind, Security},
@@ -20,6 +23,7 @@ use navi_finance::{
 };
 use nsh_base::{alert_dialog, nav_page};
 use nsh_core::{element::Screen, prelude::*};
+pub(super) use receipt::trade_receipt;
 
 fn quote_caption(q: &holdings::Quote, currency: Currency) -> String {
     if let Some(bar) = crate::data::db::with(|c| navi_finance::history::effective_bar(c, q))
@@ -27,10 +31,9 @@ fn quote_caption(q: &holdings::Quote, currency: Currency) -> String {
         .flatten()
     {
         format!(
-            "{} {} {} · {}",
+            "{} {} · {}",
             crate::i18n::statement_import::copy("Daily close", "日线收盘"),
-            currency,
-            holdings::format_units(bar.close),
+            crate::ui::currency::unit_price(bar.close, currency),
             bar.day
         )
     } else if let Some(network) = crate::data::market::effective_quote(q) {
@@ -40,10 +43,9 @@ fn quote_caption(q: &holdings::Quote, currency: Currency) -> String {
             crate::i18n::catalog::market_price()
         };
         format!(
-            "{} {} {} · {}{}",
+            "{} {} · {}{}",
             label,
-            currency,
-            holdings::format_units(q.price),
+            crate::ui::currency::unit_price(q.price, currency),
             network.observed_at,
             if q.day < clock::today().0 {
                 format!(" · {}", crate::i18n::catalog::stale())
@@ -53,10 +55,9 @@ fn quote_caption(q: &holdings::Quote, currency: Currency) -> String {
         )
     } else {
         format!(
-            "{} {} {} · {}",
+            "{} {} · {}",
             s().manual_price,
-            currency,
-            holdings::format_units(q.price),
+            crate::ui::currency::unit_price(q.price, currency),
             s().short_date(Day(q.day))
         )
     }
@@ -104,138 +105,6 @@ pub(super) fn pair(
                 .typo(Type::Headline)
                 .tabular_nums()
                 .text_color(color::INK),
-        )
-}
-
-fn compact_holding_row() -> bool {
-    font_scale() > 1.2 || window().width.0 < 350.0
-}
-
-pub fn section(closed: bool) -> impl IntoElement {
-    dynamic(move || {
-        let book = finance::holdings();
-        let day = clock::today();
-        untracked(move || {
-            let positions: Vec<_> = book
-                .securities
-                .iter()
-                .filter_map(|sec| {
-                    let p = book.position(sec, day.0).expect("validated holdings");
-                    ((p.quantity == 0) == closed).then_some((sec, p))
-                })
-                .collect();
-            if positions.is_empty() {
-                return if closed {
-                    text(|| s().no_closed_holdings)
-                        .typo(Type::Body)
-                        .text_color(color::MUTED)
-                        .into_element()
-                } else {
-                    view().into_element()
-                };
-            }
-            view()
-                .gap_1()
-                .child((!closed).then(|| {
-                    text(|| s().holdings)
-                        .typo(Type::Subhead)
-                        .font_weight(FontWeight::SEMIBOLD)
-                        .text_color(color::MUTED)
-                        .role(AccessibilityRole::Header)
-                }))
-                .children(positions.into_iter().map(|(sec, p)| {
-                    let id = sec.id.clone();
-                    let status = if closed {
-                        s().holding_closed.into()
-                    } else {
-                        p.quote
-                            .as_ref()
-                            .map(|q| {
-                                format!(
-                                    "{} · {}",
-                                    crate::i18n::statement_import::copy("Price date", "价格日期"),
-                                    s().short_date(Day(q.day))
-                                )
-                            })
-                            .unwrap_or_else(|| s().unpriced.into())
-                    };
-                    let value = p.value.unwrap_or(p.cost);
-                    let label = format!(
-                        "{}, {} {}, {}",
-                        sec.name,
-                        money::format(value),
-                        sec.currency(),
-                        status
-                    );
-                    view().child(
-                        row_button(move || nav::push(Route::Holding(id.clone())))
-                            .accessibility_label(move || Some(label.clone().into()))
-                            .px_0()
-                            .py_3()
-                            .gap_3()
-                            .min_h(px(56.0))
-                            .child(crate::ui::icon(Icon::Chart, 22.0, color::MUTED))
-                            .child(
-                                view()
-                                    .flex_1()
-                                    .min_w(px(0.0))
-                                    .flex_row()
-                                    .items_center()
-                                    .gap_3()
-                                    .style_when(compact_holding_row, |s| {
-                                        s.flex_col().items_start().gap_1()
-                                    })
-                                    .child(
-                                        view()
-                                            .flex_1()
-                                            .min_w(px(0.0))
-                                            .gap_1()
-                                            .style_when(compact_holding_row, |s| s.w_full())
-                                            .child(
-                                                text(sec.name.clone())
-                                                    .typo(Type::Headline)
-                                                    .text_color(color::INK)
-                                                    .number_of_lines(2),
-                                            )
-                                            .child(
-                                                text(status)
-                                                    .typo(Type::Caption)
-                                                    .text_color(color::MUTED),
-                                            ),
-                                    )
-                                    .child(amount(value, sec.currency(), Type::Headline)),
-                            )
-                            .child(crate::ui::icon(Icon::ChevronRight, 16.0, color::MUTED)),
-                    )
-                }))
-                .into_element()
-        })
-    })
-}
-
-pub fn closed_page() -> Screen {
-    nav_page()
-        .title(|| s().closed_holdings)
-        .header_visible(false)
-        .status_bar(super::parts::status_bar)
-        .child(
-            view()
-                .flex_1()
-                .bg(color::CANVAS)
-                .child(super::parts::top_bar(
-                    || s().closed_holdings.into(),
-                    nav::pop,
-                    None,
-                ))
-                .child(
-                    scroll().flex_1().child(
-                        view()
-                            .px(px(crate::ui::space::GUTTER))
-                            .pt_4()
-                            .pb_safe_area_plus(px(24.0))
-                            .child(section(true)),
-                    ),
-                ),
         )
 }
 
@@ -302,120 +171,114 @@ pub fn holding_page(id: &str) -> Screen {
                                         .gap_3()
                                         .pt_4()
                                         .child(
-                                            text(|| s().market_value)
-                                                .typo(Type::Headline)
-                                                .text_color(color::BODY),
-                                        )
-                                        .child(amount(
-                                            p.value.unwrap_or(p.cost),
-                                            currency,
-                                            Type::Display,
-                                        ))
-                                        .child(
-                                            row_button(move || price.set(true))
-                                                .accessibility_label(|| {
-                                                    Some(s().update_price.into())
-                                                })
-                                                .px_0()
-                                                .min_h(px(48.0))
+                                            card()
+                                                .p_5()
+                                                .gap_3()
                                                 .child(
-                                                    text(caption)
-                                                        .typo(Type::Subhead)
-                                                        .text_color(color::MUTED)
-                                                        .flex_1(),
+                                                    text(|| s().market_value)
+                                                        .typo(Type::Headline)
+                                                        .text_color(color::BODY),
                                                 )
-                                                .child(crate::ui::icon(
-                                                    Icon::Pencil,
-                                                    18.0,
-                                                    color::INK,
+                                                .child(amount(
+                                                    p.value.unwrap_or(p.cost),
+                                                    currency,
+                                                    Type::Display,
+                                                ))
+                                                .child(
+                                                    row_button(move || price.set(true))
+                                                        .accessibility_label(|| {
+                                                            Some(s().update_price.into())
+                                                        })
+                                                        .px_0()
+                                                        .min_h(px(48.0))
+                                                        .child(
+                                                            text(caption)
+                                                                .typo(Type::Subhead)
+                                                                .text_color(color::MUTED)
+                                                                .flex_1(),
+                                                        )
+                                                        .child(crate::ui::icon(
+                                                            Icon::Pencil,
+                                                            18.0,
+                                                            color::INK,
+                                                        )),
+                                                )
+                                                .child(pair(
+                                                    s().quantity,
+                                                    holdings::format_units(p.quantity),
+                                                ))
+                                                .child(pair(
+                                                    s().unit_cost,
+                                                    p.average()
+                                                        .map(|v| {
+                                                            crate::ui::currency::unit_price(
+                                                                v, currency,
+                                                            )
+                                                        })
+                                                        .unwrap_or_else(|| "—".into()),
+                                                ))
+                                                .child(pair(
+                                                    s().holding_cost,
+                                                    crate::ui::currency::format(p.cost, currency),
+                                                ))
+                                                .child(pair(
+                                                    s().unrealized,
+                                                    unrealized_display(&p, currency),
+                                                ))
+                                                .child((p.realized != 0).then(|| {
+                                                    pair(
+                                                        s().realized,
+                                                        crate::ui::currency::signed(
+                                                            p.realized, currency,
+                                                        ),
+                                                    )
+                                                }))
+                                                .child((p.dividends != 0).then(|| {
+                                                    pair(
+                                                        s().dividends,
+                                                        crate::ui::currency::format(
+                                                            p.dividends,
+                                                            currency,
+                                                        ),
+                                                    )
+                                                })),
+                                        )
+                                        .child(
+                                            view()
+                                                .flex_row()
+                                                .gap_2()
+                                                .style_when(|| font_scale() > 1.2, |s| s.flex_col())
+                                                .child(detail_action(
+                                                    Icon::Link,
+                                                    || s().holding_link_action,
+                                                    crate::i18n::catalog::bind,
+                                                    move || picker.set(true),
+                                                ))
+                                                .child(detail_action(
+                                                    Icon::Plus,
+                                                    || s().holding_trade_action,
+                                                    || s().record_trade,
+                                                    move || trade.set(Some(sec.id.clone())),
+                                                ))
+                                                .child(detail_action(
+                                                    Icon::Chart,
+                                                    || s().holding_prices_action,
+                                                    || s().price_history,
+                                                    move || {
+                                                        nav::push(Route::PriceHistory(Some(
+                                                            id.get(),
+                                                        )))
+                                                    },
                                                 )),
                                         )
-                                        .child(
-                                            Btn::ghost()
-                                                .label(move || {
-                                                    crate::data::catalog::bindings()
-                                                        .into_iter()
-                                                        .find(|b| id.with(|v| *v == b.security))
-                                                        .map(|b| {
-                                                            format!(
-                                                                "{} · {} · {}",
-                                                                crate::i18n::catalog::market(
-                                                                    &b.market
-                                                                ),
-                                                                b.symbol,
-                                                                b.currency
-                                                            )
-                                                            .into()
-                                                        })
-                                                        .unwrap_or_else(|| {
-                                                            crate::i18n::catalog::bind().into()
-                                                        })
-                                                })
-                                                .on_press(move || picker.set(true)),
-                                        )
+                                        .child(binding_caption(id))
                                         .child(note(
                                             move || binding_error.get().map(Into::into),
                                             || true,
                                         ))
-                                        .child(pair(
-                                            s().quantity,
-                                            holdings::format_units(p.quantity),
-                                        ))
-                                        .child(pair(
-                                            s().unit_cost,
-                                            p.average()
-                                                .map(|v| {
-                                                    format!(
-                                                        "{} {}",
-                                                        currency,
-                                                        holdings::format_units(v)
-                                                    )
-                                                })
-                                                .unwrap_or_else(|| "—".into()),
-                                        ))
-                                        .child(pair(
-                                            s().holding_cost,
-                                            crate::ui::currency::format(p.cost, currency),
-                                        ))
-                                        .child(pair(
-                                            s().unrealized,
-                                            p.unrealized()
-                                                .map(|v| crate::ui::currency::format(v, currency))
-                                                .unwrap_or_else(|| "—".into()),
-                                        ))
-                                        .child(
-                                            Btn::tonal()
-                                                .label(|| s().record_trade.into())
-                                                .on_press(move || trade.set(Some(sec.id.clone()))),
-                                        )
-                                        .child((p.realized != 0).then(|| {
-                                            pair(
-                                                s().realized,
-                                                crate::ui::currency::format(p.realized, currency),
-                                            )
-                                        }))
-                                        .child((p.dividends != 0).then(|| {
-                                            pair(
-                                                s().dividends,
-                                                crate::ui::currency::format(p.dividends, currency),
-                                            )
-                                        }))
                                         .into_element()
                                 })
                             }))
-                            .child(
-                                Btn::ghost()
-                                    .label(|| {
-                                        crate::i18n::statement_import::copy(
-                                            "Price history",
-                                            "价格记录",
-                                        )
-                                        .into()
-                                    })
-                                    .on_press(move || {
-                                        nav::push(Route::PriceHistory(Some(id.get())))
-                                    }),
-                            )
                             .child(
                                 text(|| s().holding_history)
                                     .typo(Type::Title)
@@ -443,10 +306,9 @@ pub fn holding_page(id: &str) -> Screen {
                                             crate::ui::currency::format(t.amount, currency)
                                         } else {
                                             format!(
-                                                "{} × {} {}",
+                                                "{} × {}",
                                                 holdings::format_units(t.quantity),
-                                                currency,
-                                                holdings::format_units(t.price)
+                                                crate::ui::currency::unit_price(t.price, currency)
                                             )
                                         };
                                         let accessibility = format!("{label}, {detail}");
@@ -546,92 +408,67 @@ pub fn holding_page(id: &str) -> Screen {
         )
 }
 
-pub(super) fn trade_receipt(id: &str, close: impl Fn() + Copy + 'static) -> AnyElement {
-    let book = finance::holdings();
-    let Some(t) = book.trades.iter().find(|t| t.id == id).cloned() else {
-        return view().into_element();
+fn unrealized_display(position: &holdings::Position, currency: Currency) -> String {
+    let Some(gain) = position.unrealized() else {
+        return "—".into();
     };
-    let sec = book.securities.iter().find(|s| s.id == t.security).unwrap();
-    let error = signal(None::<String>);
-    let open = signal(true);
-    let close = move || {
-        open.set(false);
-        close();
+    let amount = crate::ui::currency::signed(gain, currency);
+    if position.cost <= 0 {
+        return amount;
+    }
+    let cost = i128::from(position.cost);
+    let tenths = (i128::from(gain).abs() * 1000 + cost / 2) / cost;
+    let sign = if gain < 0 {
+        "−"
+    } else if gain > 0 {
+        "+"
+    } else {
+        ""
     };
-    let header = view()
-        .flex_row()
-        .items_center()
+    format!("{amount} · {sign}{}.{:01}%", tenths / 10, tenths % 10)
+}
+
+fn detail_action(
+    glyph: Icon,
+    label: fn() -> &'static str,
+    accessible: fn() -> &'static str,
+    press: impl Fn() + 'static,
+) -> impl IntoElement {
+    Btn::secondary()
+        .icon(glyph)
+        .on_press(press)
+        .accessibility_label(move || Some(accessible().into()))
+        .flex_col()
+        .flex_1()
+        .basis(px(0.0))
+        .min_w(px(0.0))
+        .min_h(px(64.0))
+        .px_2()
+        .py_2()
+        .gap_1()
+        .style_when(|| font_scale() > 1.2, |s| s.flex_grow(0.0).basis(auto()))
         .child(
-            text(format!("{} · {}", kind_label(t.kind), sec.name))
-                .typo(Type::Title)
+            text(label)
+                .typo(Type::Subhead)
                 .text_color(color::INK)
-                .flex_1(),
+                .text_center(),
         )
-        .child(Btn::ghost().label(|| s().close.into()).on_press(close));
-    let body = view()
-        .gap_3()
-        .child(
-            text(s().long_date(Day(t.at.date())))
-                .typo(Type::Body)
-                .text_color(color::MUTED),
-        )
-        .child(if t.kind == Kind::Dividend {
-            pair(
-                s().dividend_amount,
-                crate::ui::currency::format(t.amount, sec.currency()),
-            )
-            .into_element()
-        } else {
-            view()
-                .gap_3()
-                .child(pair(s().quantity, holdings::format_units(t.quantity)))
-                .child(pair(
-                    s().trade_price,
-                    format!("{} {}", sec.currency(), holdings::format_units(t.price)),
-                ))
-                .into_element()
-        })
-        .child(pair(
-            s().fee,
-            crate::ui::currency::format(t.fee, sec.currency()),
-        ))
-        .child(
-            t.cash
-                .as_ref()
-                .map(|a| pair(s().cash_account, a.name().to_owned())),
-        );
-    let action = view()
-        .gap_2()
-        .child(note(move || error.get().map(Into::into), || true))
-        .child(
-            Btn::new(Variant::Danger)
-                .label(|| s().remove_trade.into())
-                .on_press(move || {
-                    let id = t.id.clone();
-                    let answer = alert_dialog()
-                        .title(s().holding_delete_title)
-                        .description(s().holding_delete_body)
-                        .cancel("keep", s().cancel)
-                        .destructive("delete", s().remove_trade)
-                        .show();
-                    spawn(async move {
-                        if answer
-                            .await
-                            .is_ok_and(|r| r.action.as_deref() == Some("delete"))
-                        {
-                            match finance::remove_trade(&id) {
-                                Ok(()) => {
-                                    close();
-                                    show_toast(s().trade_deleted, None);
-                                }
-                                Err(e) => {
-                                    log::error!("holdings: delete failed: {e}");
-                                    error.set(Some(failure(&e).into()));
-                                }
-                            }
-                        }
-                    });
-                }),
-        );
-    crate::ui::sheet::task_sheet(move || open.get(), close, header, body, action).into_element()
+}
+
+fn binding_caption(id: Stored<String>) -> impl IntoElement {
+    dynamic(move || {
+        let binding = crate::data::catalog::bindings()
+            .into_iter()
+            .find(|b| id.with(|v| *v == b.security));
+        view().child(binding.map(|b| {
+            text(format!(
+                "{} · {} · {}",
+                crate::i18n::catalog::market(&b.market),
+                b.symbol,
+                b.currency
+            ))
+            .typo(Type::Caption)
+            .text_color(color::MUTED)
+        }))
+    })
 }

@@ -18,7 +18,7 @@ use crate::{
 const CHART: f32 = 120.0;
 
 /// A bar per day against the goal's line; amber past it, ink for today,
-/// nothing for a day without meals (never a zero bar). Weekdays under a
+/// a hollow marker for a day without meals (never a zero bar). Weekdays under a
 /// week; every seventh day's date under a month.
 pub fn chart(days: Vec<Day>, kcal: Vec<Option<f64>>, goal: Option<f64>) -> impl IntoElement {
     let today = untracked(clock::today);
@@ -37,12 +37,18 @@ pub fn chart(days: Vec<Day>, kcal: Vec<Option<f64>>, goal: Option<f64>) -> impl 
             (Some(k), Some(g)) if *k > g => color::CAUTION,
             _ => color::LINE_STRONG,
         };
-        view().flex_1().h_full().justify_end().child(kcal.map(|k| {
-            view()
+        view().flex_1().h_full().justify_end().child(match kcal {
+            Some(k) => view()
                 .h(px((k / top) as f32 * CHART))
                 .rounded(px(if month { 3.0 } else { 7.0 }))
-                .bg(color)
-        }))
+                .bg(color),
+            None => view()
+                .h(px(6.0))
+                .rounded(px(3.0))
+                .border_1()
+                .border_color(color::LINE_STRONG)
+                .label(format!("{}, {}", s().short_date(*day), s().no_records)),
+        })
     });
     let labels = days.iter().enumerate().map(move |(i, day)| {
         let shown = !month || i % 7 == 0;
@@ -64,6 +70,12 @@ pub fn chart(days: Vec<Day>, kcal: Vec<Option<f64>>, goal: Option<f64>) -> impl 
     });
     view()
         .gap(px(8.0))
+        .child(goal.map(|g| {
+            text(format!("{} {}", s().chart_goal, format::kcal(g)))
+                .typo(Type::Caption)
+                .text_color(color::MUTED)
+                .text_right()
+        }))
         .child(
             view()
                 .h(px(CHART))
@@ -82,8 +94,12 @@ pub fn chart(days: Vec<Day>, kcal: Vec<Option<f64>>, goal: Option<f64>) -> impl 
                         .left_0()
                         .right_0()
                         .bottom(px((g / top) as f32 * CHART))
-                        .h(px(1.0))
-                        .bg(color::MUTED.opacity(0.5))
+                        .flex_row()
+                        .gap_1()
+                        .children(
+                            (0..30)
+                                .map(|_| view().flex_1().h(px(1.0)).bg(color::MUTED.opacity(0.5))),
+                        )
                         .pointer_events(PointerEvents::None)
                 })),
         )
@@ -184,7 +200,15 @@ pub fn trend(first: Day, span: f64, points: Vec<Weight>, goal: Option<f64>) -> A
     let high = kgs.iter().copied().fold(f64::NEG_INFINITY, f64::max);
     // At least 1 kg of range, so a flat week stays flat.
     let pad = ((1.0 - (high - low)) / 2.0).max(0.0) + 0.2;
+    let last = (days[days.len() - 1], kgs[kgs.len() - 1]);
     let rows = Rows::from_columns(days.len(), [("day".into(), days), ("kg".into(), kgs)]);
+    let hover = signal(None::<u32>);
+    let inspected = stored(
+        points
+            .iter()
+            .map(|w| format!("{} · {} kg", s().short_date(w.day), s().kg(w.kg)))
+            .collect::<Vec<_>>(),
+    );
     let line = plot()
         .h(px(64.0))
         .data(rows)
@@ -198,8 +222,13 @@ pub fn trend(first: Day, span: f64, points: Vec<Weight>, goal: Option<f64>) -> A
             domain: Some([low - pad, high + pad]),
             reverse: false,
         })
-        .interactive(false)
+        .interactive(true)
+        .on_hover_change(move |index: &Option<u32>| hover.set(*index))
+        .tooltip_content(inspection(hover, inspected))
+        .cross_line_style(|s| s.w(px(1.0)).bg(color::MUTED))
+        .dot_style(|s| s.size(px(6.0)).rounded_full().bg(color::INK))
         .child(line().text_color(color::INK).stroke_width(px(2.0)))
+        .child(latest_dot(last.0, last.1, "kg", color::INK))
         .child(match goal {
             // The goal rides the drawn range only; outside it the tiles
             // carry the distance instead.
@@ -215,7 +244,7 @@ pub fn trend(first: Day, span: f64, points: Vec<Weight>, goal: Option<f64>) -> A
                     .data(goal_rows)
                     .x(Some(RowAccessor::from("day")))
                     .y(Some(RowAccessor::from("goal")))
-                    .text_color(color::CAUTION)
+                    .text_color(color::CARBS)
                     .stroke_width(px(1.0))
                     .into_element()
             }
@@ -236,7 +265,18 @@ pub fn trend(first: Day, span: f64, points: Vec<Weight>, goal: Option<f64>) -> A
         )
         .child(caption(high))
         .child(line)
-        .child(caption(low))
+        .child(
+            view()
+                .flex_row()
+                .justify_between()
+                .child(caption(low))
+                .child(
+                    text(format!("{} kg", s().kg(last.1)))
+                        .typo(Type::Caption)
+                        .text_color(color::INK),
+                ),
+        )
+        .pb_3()
         .into_element()
 }
 
@@ -253,7 +293,15 @@ pub fn trend_percent(first: Day, span: f64, points: Vec<(Day, f64)>) -> AnyEleme
     let low = shares.iter().copied().fold(f64::INFINITY, f64::min);
     let high = shares.iter().copied().fold(f64::NEG_INFINITY, f64::max);
     let pad = ((1.0 - (high - low)) / 2.0).max(0.0) + 0.2;
+    let last = (days[days.len() - 1], shares[shares.len() - 1]);
     let rows = Rows::from_columns(days.len(), [("day".into(), days), ("fat".into(), shares)]);
+    let hover = signal(None::<u32>);
+    let inspected = stored(
+        points
+            .iter()
+            .map(|(day, share)| format!("{} · {share:.1}%", s().short_date(*day)))
+            .collect::<Vec<_>>(),
+    );
     let line = plot()
         .h(px(64.0))
         .data(rows)
@@ -267,8 +315,13 @@ pub fn trend_percent(first: Day, span: f64, points: Vec<(Day, f64)>) -> AnyEleme
             domain: Some([low - pad, high + pad]),
             reverse: false,
         })
-        .interactive(false)
-        .child(line().text_color(color::CAUTION).stroke_width(px(2.0)));
+        .interactive(true)
+        .on_hover_change(move |index: &Option<u32>| hover.set(*index))
+        .tooltip_content(inspection(hover, inspected))
+        .cross_line_style(|s| s.w(px(1.0)).bg(color::MUTED))
+        .dot_style(|s| s.size(px(6.0)).rounded_full().bg(color::INK))
+        .child(line().text_color(color::CARBS).stroke_width(px(2.0)))
+        .child(latest_dot(last.0, last.1, "fat", color::CARBS));
     let caption = |share| {
         text(format!("{share:.1}%"))
             .typo(Type::Caption)
@@ -279,6 +332,50 @@ pub fn trend_percent(first: Day, span: f64, points: Vec<(Day, f64)>) -> AnyEleme
         .gap_1()
         .child(caption(high))
         .child(line)
-        .child(caption(low))
+        .child(
+            view()
+                .flex_row()
+                .justify_between()
+                .child(caption(low))
+                .child(
+                    text(format!("{:.1}%", last.1))
+                        .typo(Type::Caption)
+                        .text_color(color::BODY),
+                ),
+        )
+        .pb_3()
         .into_element()
+}
+
+fn latest_dot(day: f64, value: f64, field: &'static str, tint: AdaptiveColor) -> impl IntoElement {
+    line()
+        .data(Some(Rows::from_columns(
+            1,
+            [("day".into(), vec![day]), (field.into(), vec![value])],
+        )))
+        .x(Some(RowAccessor::from("day")))
+        .y(Some(RowAccessor::from(field)))
+        .dot(true)
+        .text_color(tint)
+}
+
+fn inspection(hover: Signal<Option<u32>>, labels: Stored<Vec<String>>) -> impl IntoElement {
+    view()
+        .bg(color::SURFACE)
+        .px_2()
+        .py_1()
+        .rounded(px(8.0))
+        .child(
+            text(move || {
+                labels.with(|labels| {
+                    hover
+                        .get()
+                        .and_then(|i| labels.get(i as usize))
+                        .cloned()
+                        .unwrap_or_default()
+                })
+            })
+            .typo(Type::Caption)
+            .text_color(color::INK),
+        )
 }

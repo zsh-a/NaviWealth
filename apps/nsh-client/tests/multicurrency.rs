@@ -49,12 +49,12 @@ fn editing_foreign_expense_keeps_currency_and_category_after_restart() -> Result
     let dir = tempfile::tempdir().unwrap();
     seed(dir.path(), true);
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), Some(stub()));
-    app.press("label:/^Dollar lunch, −31.50 USD/")?;
+    app.press("label:/^Dollar lunch, −USD 31.50/")?;
     app.clear("label:Amount")?;
     app.type_text("label:Amount", "42.25")?;
     app.press("Save transaction")?;
     app.wait_for_gone("Save transaction", GONE)?;
-    app.wait_for("label:/^Dollar lunch, −42.25 USD/")?;
+    app.wait_for("label:/^Dollar lunch, −USD 42.25/")?;
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
     let entries = repository::transactions(&db).unwrap();
     let t = entries.iter().find(|t| t.id == "lunch").unwrap();
@@ -69,7 +69,7 @@ fn editing_foreign_expense_keeps_currency_and_category_after_restart() -> Result
     );
     drop(app);
     let (mut again, _) = start_in(Some(dir.path()), Vec::new(), Some(stub()));
-    again.wait_for("label:/^Dollar lunch, −42.25 USD/")?;
+    again.wait_for("label:/^Dollar lunch, −USD 42.25/")?;
     Ok(())
 }
 #[test]
@@ -113,7 +113,7 @@ fn missing_fx_is_visible_and_manual_rate_completes_valuation_after_restart() -> 
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), Some(stub()));
     app.press("label:Assets")?;
     app.wait_for("Known value · CNY")?;
-    app.press("text:Manage")?;
+    app.press("label:Manage")?;
     app.press("Exchange rates")?;
     app.press("text:USD → CNY")?;
     app.type_text("label:CNY per unit", "7.00")?;
@@ -129,7 +129,7 @@ fn missing_fx_is_visible_and_manual_rate_completes_valuation_after_restart() -> 
     drop(app);
     let (mut again, _) = start_in(Some(dir.path()), Vec::new(), Some(stub()));
     again.press("label:Assets")?;
-    again.wait_for("label:¥7000.00")?;
+    again.wait_for("label:¥7,000.00")?;
     assert!(!again.shows("Known value · CNY"));
     Ok(())
 }

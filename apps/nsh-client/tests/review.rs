@@ -80,7 +80,11 @@ fn sparse_logging_hides_the_over_goal_count() -> Result<(), String> {
     ];
     let (mut app, _) = start(entries, None);
     app.press("label:Review")?;
-    app.wait_for(&format!("text:Goal 500 · 1 of {} days logged", week_days()))?;
+    app.wait_for("text:Goal 500")?;
+    app.wait_for(&format!("text:1 of {} days logged", week_days()))?;
+    assert!(!app.shows("text:/Goal 500 ·/"));
+    app.press("This month")?;
+    app.wait_for("text:/Goal 500 · 1 of .* days logged/")?;
     Ok(())
 }
 

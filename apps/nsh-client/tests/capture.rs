@@ -136,7 +136,7 @@ fn account_completion_is_local_durable_and_never_posts_before_confirmation() -> 
     app.press("Confirm and save")?;
     app.wait_for("Saved Spending · ¥32.00")?;
     app.press("View")?;
-    app.wait_for("label:/^Lunch shop, −32.00 CNY/")?;
+    app.wait_for("label:/^Lunch shop, −¥32.00/")?;
     assert_eq!(
         navi_finance::repository::transactions(&db).unwrap().len(),
         1
@@ -252,7 +252,7 @@ fn natural_correction_then_batch_confirmation_is_atomic_and_survives_restart() -
         storage.entries().into_iter().collect(),
         None,
     );
-    app.wait_for("label:/^Lunch shop, −32.00 CNY/")?;
+    app.wait_for("label:/^Lunch shop, −¥32.00/")?;
     assert_eq!(
         navi_finance::repository::transactions(&db).unwrap(),
         entries

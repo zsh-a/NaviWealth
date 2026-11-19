@@ -105,7 +105,7 @@ fn press_motion(scale: nsh_core::element::AnimatedValue, down: bool, pressed: f3
 /// How big a button is: height, padding, text and icon together.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Size {
-    /// Inside rows and cards (the touch target stays 44 pt).
+    /// Inside rows and cards (the touch target stays 48 pt).
     Small,
     /// Ordinary actions.
     #[default]
@@ -419,7 +419,7 @@ pub fn chip(
         .justify_center()
         .rounded_full()
         .bg(color::SURFACE_2)
-        .hit_slop(EdgeInsets::all(px(4.0)))
+        .hit_slop(EdgeInsets::all(px((size::TOUCH - size::SMALL) / 2.0)))
         .transition_colors()
         .duration(motion::FAST)
         .hover(|s| s.bg(color::SUNKEN))

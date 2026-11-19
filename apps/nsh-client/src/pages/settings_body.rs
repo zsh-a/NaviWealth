@@ -34,7 +34,7 @@ pub(crate) fn open_body_profile() {
 
 pub(super) fn profile_row() -> impl IntoElement {
     super::settings::entry_list_row(
-        Icon::Sliders,
+        Icon::Profile,
         || s().body_profile,
         || {
             let complete = settings::height_cm().is_some()
@@ -405,7 +405,7 @@ pub(super) fn goal_weight() -> impl IntoElement {
             })
     };
     super::settings::setting_details_row(
-        Icon::Chart,
+        Icon::Scale,
         || s().goal_weight,
         || {
             settings::goal_kg()

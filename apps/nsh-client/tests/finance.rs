@@ -28,7 +28,7 @@ fn first_expense(app: &mut Headless) -> Result<(), String> {
     app.press("Done")?;
     app.press("Save transaction")?;
     app.wait_for_gone("Save transaction", GONE)?;
-    app.wait_for("label:/^Lunch shop, −31.50 CNY/")?;
+    app.wait_for("label:/^Lunch shop, −¥31.50/")?;
     Ok(())
 }
 
@@ -69,16 +69,16 @@ fn expense_income_and_transfer_share_one_balanced_persistent_journal() -> Result
     app.press("label:Records")?;
     app.wait_for("text:Spending ¥31.50")?;
     app.wait_for("label:Tomato pasta, 300 kcal")?;
-    app.wait_for(r"label:/^Employer, \+100.00 CNY/")?;
+    app.wait_for(r"label:/^Employer, \+¥100.00/")?;
     app.press("Money")?;
     app.wait_for_gone("label:Tomato pasta, 300 kcal", GONE)?;
-    app.wait_for("label:/^Lunch shop, −31.50 CNY/")?;
+    app.wait_for("label:/^Lunch shop, −¥31.50/")?;
     app.press("Meals")?;
     app.wait_for("label:Tomato pasta, 300 kcal")?;
     app.wait_for_gone("label:/^Lunch shop, /", GONE)?;
     drop(app);
     let (mut again, _) = start_in(Some(dir.path()), Vec::new(), None);
-    again.wait_for("label:/^Lunch shop, −31.50 CNY/")?;
+    again.wait_for("label:/^Lunch shop, −¥31.50/")?;
     assert_eq!(stored(dir.path()), entries);
     Ok(())
 }
@@ -114,7 +114,7 @@ fn edited_date_is_reachable_from_calendar_and_delete_can_be_undone() -> Result<(
     let dir = tempfile::tempdir().unwrap();
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
     first_expense(&mut app)?;
-    app.press("label:/^Lunch shop, −31.50 CNY/")?;
+    app.press("label:/^Lunch shop, −¥31.50/")?;
     let previous = today().plus_days(-1);
     app.press("Date")?;
     app.press("Yesterday")?;
@@ -125,21 +125,21 @@ fn edited_date_is_reachable_from_calendar_and_delete_can_be_undone() -> Result<(
     assert!(!app.shows("label:/^Lunch shop, /"));
     assert_eq!(stored(dir.path())[0].at.date(), previous.0);
     app.press("label:Records")?;
-    app.wait_for("label:/^Lunch shop, −42.25 CNY/")?;
+    app.wait_for("label:/^Lunch shop, −¥42.25/")?;
     app.press("label:Go to a day")?;
     if previous.0.month() != today().0.month() {
         app.press("label:Previous month")?;
     }
     app.press(&format!("label:{}", previous.0.strftime("%A, %B %-d")))?;
     app.wait_for("All days")?;
-    app.press("label:/^Lunch shop, −42.25 CNY/")?;
+    app.press("label:/^Lunch shop, −¥42.25/")?;
     app.press("Details")?;
     app.on_dialog(|_| DialogAnswer::Press("Delete transaction".into()));
     app.press("Delete transaction")?;
     app.wait_for("Undo")?;
     assert!(stored(dir.path()).is_empty());
     app.press("Undo")?;
-    app.wait_for("label:/^Lunch shop, −42.25 CNY/")?;
+    app.wait_for("label:/^Lunch shop, −¥42.25/")?;
     assert_eq!(stored(dir.path()).len(), 1);
     Ok(())
 }
@@ -150,7 +150,7 @@ fn delete_is_visible_above_the_keyboard_and_cancel_keeps_unsaved_changes() -> Re
     let dir = tempfile::tempdir().unwrap();
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
     first_expense(&mut app)?;
-    app.press("label:/^Lunch shop, −31.50 CNY/")?;
+    app.press("label:/^Lunch shop, −¥31.50/")?;
     app.set_viewport(Size::new(Points(360.0), Points(640.0)))?;
     app.set_environment("large text with keyboard", |env| {
         env.font_scale = 1.3;
@@ -195,7 +195,7 @@ fn failed_delete_and_failed_undo_can_retry_without_partial_postings() -> Result<
     let original = stored(dir.path());
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
     db.execute_batch("CREATE TRIGGER reject_delete BEFORE DELETE ON finance_postings WHEN OLD.position=1 BEGIN SELECT RAISE(ABORT,'full disk'); END;").unwrap();
-    app.press("label:/^Lunch shop, −31.50 CNY/")?;
+    app.press("label:/^Lunch shop, −¥31.50/")?;
     app.on_dialog(|_| DialogAnswer::Press("Delete transaction".into()));
     app.press("id:task-header >> label:Delete transaction")?;
     app.wait_for("Could not delete this record. Please try again.")?;
@@ -211,7 +211,7 @@ fn failed_delete_and_failed_undo_can_retry_without_partial_postings() -> Result<
     assert!(stored(dir.path()).is_empty());
     db.execute_batch("DROP TRIGGER reject_restore").unwrap();
     app.press("Try again")?;
-    app.wait_for("label:/^Lunch shop, −31.50 CNY/")?;
+    app.wait_for("label:/^Lunch shop, −¥31.50/")?;
     assert_eq!(stored(dir.path()), original);
     Ok(())
 }
@@ -222,7 +222,7 @@ fn undo_refuses_to_overwrite_a_newer_transaction_with_the_same_identity() -> Res
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
     first_expense(&mut app)?;
     let mut newer = stored(dir.path())[0].clone();
-    app.press("label:/^Lunch shop, −31.50 CNY/")?;
+    app.press("label:/^Lunch shop, −¥31.50/")?;
     app.on_dialog(|_| DialogAnswer::Press("Delete transaction".into()));
     app.press("id:task-header >> label:Delete transaction")?;
     app.wait_for("Transaction deleted")?;

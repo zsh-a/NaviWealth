@@ -76,7 +76,7 @@ fn tint() -> AdaptiveColor {
 /// Settings' backup entry: one row, one state, onto its own page.
 pub fn backup_row() -> impl IntoElement {
     entry_row(
-        Icon::Lock,
+        Icon::CloudLock,
         || s().backup,
         summary,
         tint,

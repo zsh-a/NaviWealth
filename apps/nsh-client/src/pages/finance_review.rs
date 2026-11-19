@@ -70,27 +70,6 @@ pub fn spending_section(
                             view()
                                 .gap_3()
                                 .child(
-                                    text(
-                                        s().spending_comparison(
-                                            current.total,
-                                            (previous.records > 0).then_some(previous.total),
-                                        )
-                                        .replace("¥", &format!("{} ", currency.code())),
-                                    )
-                                    .typo(Type::Body)
-                                    .text_color(color::BODY),
-                                )
-                                .child((previous.records > 0).then(|| {
-                                    text(format!(
-                                        "{} · {} – {}",
-                                        crate::i18n::catalog::copy("Compared with", "对比时段"),
-                                        s().short_date(p[0]),
-                                        s().short_date(Day(previous_to))
-                                    ))
-                                    .typo(Type::Caption)
-                                    .text_color(color::MUTED)
-                                }))
-                                .child(
                                     row_button(move || {
                                         nav::push(Route::Spending {
                                             from,
@@ -109,6 +88,25 @@ pub fn spending_section(
                                             .text_color(color::INK),
                                     ),
                                 )
+                                .child(
+                                    text(s().spending_comparison(
+                                        current.total,
+                                        (previous.records > 0).then_some(previous.total),
+                                        currency,
+                                    ))
+                                    .typo(Type::Caption)
+                                    .text_color(color::MUTED),
+                                )
+                                .child((previous.records > 0).then(|| {
+                                    text(format!(
+                                        "{} · {} – {}",
+                                        crate::i18n::catalog::copy("Compared with", "对比时段"),
+                                        s().short_date(p[0]),
+                                        s().short_date(Day(previous_to))
+                                    ))
+                                    .typo(Type::Caption)
+                                    .text_color(color::MUTED)
+                                }))
                                 .children(
                                     current
                                         .categories
@@ -118,6 +116,13 @@ pub fn spending_section(
                                             let title = Account::parse(&category)
                                                 .map(|a| super::finance::category_label(&a))
                                                 .unwrap_or_else(|_| category.clone());
+                                            let share = if current.total > 0 {
+                                                (amount as f64 / current.total as f64)
+                                                    .clamp(0.0, 1.0)
+                                                    as f32
+                                            } else {
+                                                0.0
+                                            };
                                             row_button(move || {
                                                 nav::push(Route::Spending {
                                                     from,
@@ -126,21 +131,54 @@ pub fn spending_section(
                                                     currency,
                                                 })
                                             })
-                                            .flex_row()
-                                            .items_center()
-                                            .justify_between()
+                                            .flex_col()
+                                            .items_stretch()
                                             .min_h(px(48.0))
                                             .px(px(0.0))
                                             .py(px(8.0))
-                                            .gap_3()
+                                            .gap_2()
                                             .child(
-                                                text(title).typo(Type::Body).text_color(color::INK),
+                                                view()
+                                                    .flex_row()
+                                                    .items_baseline()
+                                                    .gap_3()
+                                                    .child(
+                                                        text(title)
+                                                            .typo(Type::Body)
+                                                            .text_color(color::INK)
+                                                            .flex_1()
+                                                            .min_w(px(0.0)),
+                                                    )
+                                                    .child(
+                                                        text(crate::ui::currency::format(
+                                                            amount, currency,
+                                                        ))
+                                                        .typo(Type::Subhead)
+                                                        .tabular_nums()
+                                                        .text_color(color::BODY),
+                                                    ),
                                             )
                                             .child(
-                                                text(crate::ui::currency::format(amount, currency))
-                                                    .typo(Type::Subhead)
-                                                    .tabular_nums()
-                                                    .text_color(color::BODY),
+                                                view()
+                                                    .h(px(3.0))
+                                                    .flex_row()
+                                                    .rounded_full()
+                                                    .overflow_hidden()
+                                                    .bg(color::SUNKEN)
+                                                    .accessibility_elements_hidden(true)
+                                                    .child(
+                                                        view()
+                                                            .h_full()
+                                                            .basis(px(0.0))
+                                                            .flex_grow(share)
+                                                            .bg(color::CARBS),
+                                                    )
+                                                    .child(
+                                                        view()
+                                                            .h_full()
+                                                            .basis(px(0.0))
+                                                            .flex_grow(1.0 - share),
+                                                    ),
                                             )
                                         }),
                                 )

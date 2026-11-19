@@ -26,7 +26,7 @@ AI only to turn text and images into drafts, using the owner's model account.
   while an answer is still wanted — the question's tap-first options as
   chips of known accounts and categories. A turn that revised records
   collapses, once superseded, to an "Updated n records" badge. While the
-  model works the thread shows a spinner in its light with "Reading your
+  model works the thread shows shimmering record skeletons with "Reading your
   entry…"; a failure is a turn with Try again, Open settings and Keep
   previous result. No domain selection before input and no prefilled form
   as the main result. Missing values ask a concrete question; proposed new
@@ -35,8 +35,10 @@ AI only to turn text and images into drafts, using the owner's model account.
   whether an answer is needed, then full-width choices with short descriptions.
   The question and its choices are grouped together, with answer controls pinned below.
   No choice is preselected. Tapping stages a choice with a check; tapping again
-  clears it. Submit answers is the single primary continuation action, and the
-  composer accepts extra text or photos. Selection persists immediately, while
+  clears it. The composer’s always-visible round send button becomes Submit
+  answers / 提交答案 while questions are pending; there is no separate submit
+  row. It is disabled until the required answers are valid. The composer
+  accepts extra text or photos. Selection persists immediately, while
   the model is called only on submission. Historical decisions have no active
   choices and the owner turn records the submitted answers. Pending tools and
   failed continuations withhold confirmation until a final result arrives.
@@ -46,9 +48,12 @@ AI only to turn text and images into drafts, using the owner's model account.
   Undo; closing a nonempty draft reports that the draft is kept and no
   records were saved.
   The composer is the one stable input, pinned in the task actions above the
-  keyboard: an accessible photo icon on every owner turn, the input
+  keyboard, with 8 pt top padding in the shared action region: an accessible photo icon on every owner turn, the input
   (labelled What would you like to record? / 想记下什么？) and a round send
-  button. The action row above it swaps the task's current action:
+  button. Input starts at one line (48 pt), grows with its content up to
+  120 pt, and keeps the 48 pt photo and send controls aligned at its bottom.
+  An empty composer keeps its send button visible and disabled.
+  The action row above it swaps the task's current action:
   Recognize on the consent sheet, Review later while the model works,
   Set up without a model, and Confirm and save once the records are ready.
   The draft accepts up to four images across all turns. Unsent evidence appears
@@ -107,7 +112,12 @@ AI only to turn text and images into drafts, using the owner's model account.
 - **Today shows today:** the main card is health only: intake as the one
   Display figure, what is left of the goal, and the macro ring (below the
   figure at large text). Flat beneath it is a full-width Body metrics summary:
-  a dated weight, a separate weekly trend, then quiet body-fat and BMI facts.
+  three compact columns for weight, body fat and BMI. The seven-day trend
+  stays beside the weight in its column (↓0.5 kg · 7天), wrapping locally on
+  narrow screens. Today’s measurement date is omitted visually; an older date
+  shares the trend caption, while the accessible label always includes the date. The header’s explicit
+  Overview / 概览 control opens the same overview as the whole row. Large text
+  stacks the columns.
   Missing facts use a dash. Composition belongs to that weight's day, never
   a newer or older reading. Extra composition, goal distance and original
   measurement details live in the overview; its manual editor shares one
@@ -133,11 +143,23 @@ AI only to turn text and images into drafts, using the owner's model account.
   day's kcal, a weight chip that opens the weight editor), its meals as rows
   of one card; all / meals / weight / money; 21 days at a time. The calendar button
   opens a month calendar and shares the header with the statement import action.
+  In All days, consecutive weight-only entries collapse into one light
+  summary with the date span as its title and logged-day count plus oldest → newest
+  weight as secondary text. The whole row is one accessible button, labelled
+  Show daily records / 展开每日记录 with the full summary and a visible right
+  chevron; its expanded state exposes Collapse with a downward chevron. Mixed days break runs, single days remain individual,
+  and filters or a chosen day show individual entries. Day headers show spending
+  only for currencies with expense records; opening balances, adjustments,
+  income and transfers alone never create a zero-spending summary.
   A chosen day is shown alone, under a bar with its date, steps to adjacent
   days with records, and All days.
-- **Assets:** one overview card leads with net worth, followed by asset and
+- **Assets:** one overview card leads with net worth, followed by a quiet
+  30-day mini sparkline and signed change from 30 days ago, then asset and
   debt totals in two columns. Cash accounts, open holdings and debt accounts
   follow as flat rows on the canvas.
+  The sparkline reuses dated valuation history and keeps missing-rate gaps;
+  its comparison is omitted without both complete endpoints or records dating
+  back 30 days. Asset changes remains a visible link.
   With holdings, values use dated native-currency prices, falling back to cost
   when unpriced; without holdings, the basis is book balances. CNY, HKD and
   USD accounts and holdings retain their original amounts. The overview converts
@@ -159,7 +181,12 @@ AI only to turn text and images into drafts, using the owner's model account.
   through Manage → Closed holdings, with their history and trade actions;
   buying again returns a position to the overview automatically. A row opens
   a detail page with value, an explicit price-edit action, quantity, cost, unrealized
-  gain, Record trade, and newest-first activity. Realized gain and dividends
+  gain, and newest-first activity. The value and its facts share one card.
+  Unrealized gain shows an explicit signed amount and one-decimal percentage
+  of the domain cost basis (no percentage for zero cost). Link security, Record
+  trade and Price history are equal-width raised buttons beneath the card,
+  with icons above short localized labels. They fit one row at 360 pt and
+  stack at large text; full action names remain accessible; linked identity is a quiet caption. Realized gain and dividends
   appear when nonzero; unpriced unrealized gain is a dash. Opening a holding
   needs name, quantity and unit cost. Buy/sell use quantity, price and a cash
   account; dividends use amount and a cash account. Optional fees and date
@@ -185,11 +212,17 @@ AI only to turn text and images into drafts, using the owner's model account.
   have a discard guard. Opening and adjustment entries open a readable
   summary linked to the account; corrections go through another balance check.
 - **Review:** a calendar week (Monday first in Chinese and ISO locales) or
-  month, stepped back with a labelled stepper. It leads with one sentence of
-  what changed (daily average against the period before, weight trend),
-  then the intake card: a bar per day for a week, a calendar for a month
+  month, with its segmented control above the labelled period stepper.
+  It leads with a complete sentence combining observed daily-average intake,
+  its comparison when earlier data exists, weight change and recorded spending
+  in each available currency. Partial periods compare matching elapsed days;
+  missing observations never imply a zero or an invented comparison.
+  Next comes the intake card: a bar per day for a week, with a labelled dashed goal
+  line and low hollow placeholders for days without meals, a calendar for a month
   (shaded by share of the goal, amber past it, a dot on weighed days, today
-  outlined; a day opens in Records). Spending and weight follow, then the
+  outlined; a day opens in Records). The weekly caption gives only logged days,
+  since the goal line is labelled; the month caption retains the goal.
+  Spending and weight follow, then the
   one-line note and Garmin averages. An empty intake card shows a short message.
 - **Settings keep every change as it is made; there is no Save.** Recognition
   model / 识别模型 has its own page with one continuous form for API protocol,
@@ -246,13 +279,14 @@ AI only to turn text and images into drafts, using the owner's model account.
   offer Measure again. Saving weight alone remains an explicit secondary action;
   only valid composition is labelled complete. Late timers cannot overwrite
   completed, cancelled or reopened reviews.
-  All touch actions are at least 48 pt. Backup & restore shows automatic backup status
+  The shared `size::TOUCH` is 48 pt; icon controls, compact-button hit areas
+  disclosures and segmented choices keep that minimum. All touch actions are at least 48 pt. Backup & restore shows automatic backup status
   and the last outcome. About displays the installed version before opening
   update details. A changed model account requires consent again before
   sending text, images and account names.
 
 Missing records never read as zero: an empty day shows "—" and "Nothing
-logged yet", never 0 kcal; a day without meals has no bar and no shade.
+logged yet", never 0 kcal; a day without meals has no filled bar and no shade.
 
 ## Visual language: 墨与日光 · Ink & Daylight
 
@@ -332,7 +366,7 @@ Financial values, including gains and losses, stay in neutral ink.
   card's edge (weight rows, without a footprint, at the card inset). Amount
   and currency share a baseline,
   with a stacked layout for large text or long exact amounts. Asset rows use
-  existing semantic icons: Wallet for cash accounts, Minus for debt accounts
+  existing semantic icons: Wallet for cash accounts, CreditCard for debt accounts
   and Chart for holdings, without inferring account subtypes from names.
 - **Shape:** controls are pills; sheet 32 > card 24 > well 18 > field 16 >
   thumbnail 16 > badge 8. Cards and sheet top corners use continuous curves.
@@ -434,13 +468,17 @@ element labelled with the full exact amount. The two subordinate totals use
 flat, separated by space without hairlines, with muted 22 pt semantic icons
 and their existing valuation statuses. Activity rows retain hairlines.
 Asset changes carries the trend on a separate pushed page:
-a single ink line with a visible range and date endpoints, plus an accessible
-start/end summary. A missing FX rate or valuation error breaks the line. Isolated valid days get a dot. The chart lists the missing currencies and affected day counts. Money keeps
+a single ink line with a faint 6% ink area, visible range and dated start/end
+values, plus an accessible start/end summary. Scrubbing supports pointer, touch
+and keyboard inspection. History backfill is a tonal action. A missing FX rate or valuation error breaks the line. Isolated valid days get a dot. The chart lists the missing currencies and affected day counts. Money keeps
 tabular numerals and neutral ink, including gains and losses. Overview
 amounts and primary balance/value figures use grouped thousands and two
 decimal places through a display-only formatter that preserves exact minor
-units and editable input. Detailed cost and gain figures keep their existing
-money formatting and come from the domain calculation. Quantity, average
+units and editable input. Every financial display uses the shared exact currency formatter: CNY has
+a ¥ prefix, HKD/USD retain their code, with grouped thousands and two decimals.
+Signs precede the currency (−¥68.00, +USD 100.00); accessible names use the
+same amounts. Editors retain ungrouped decimal input. Cost and gain figures
+come from the domain calculation. Quantity, average
 unit cost and unit price retain up to six decimal places.
 
 Holding creation offers offline code/name/pinyin search before quantity and
@@ -449,7 +487,9 @@ the same task sheet at a stable height and shows market,
 code and currency; unsupported currencies and instrument types are visibly
 unavailable. Existing holdings require a separate link confirmation: catalog
 identity never replaces the holding's internal id, label, account or trades.
-Results settle after 120 ms and grow in batches of 16. The catalog keeps a
+Results settle after 120 ms and grow in batches of 16. The search footer
+uses a compact secondary manual-entry label with a 48 pt control, leaving
+room for catalog status beside the 48 pt refresh action at larger text sizes. The catalog keeps a
 normalized search index; decoding and verification of downloaded updates run
 off the engine thread before a short atomic installation. Stale refreshes
 cannot replace a newly loaded catalog. The bundled GitHub Releases catalog
@@ -487,6 +527,10 @@ cost/price share one row; secondary trade details remain collapsed initially.
 Review calls the money panel “Recorded spending”: its total reflects confirmed
 journal entries, with the three largest expense categories initially visible.
 The total and category rows open the corresponding editable transactions.
+Comparison or missing-comparison copy is a caption below the total. Each
+category row has a thin stone share track, calculated only for a positive
+net total and clamped to the available width; refunds keep their signed exact
+amount and have no positive share fill.
 A current partial week or month compares the same elapsed days in the preceding
 period; missing earlier records show no comparison rather than invented zeroes.
 
@@ -530,7 +574,7 @@ still.
 | Meal page | Scrolling | Photo drifts at half speed; the top bar frosts in once the panel slides under it | Bar switches at once |
 | Meal page | Analyzing | The AI's light passes over the photo (2 s loop); placeholders shimmer | No light, no shimmer |
 | Meal page | Results arrive | Rows rise in, staggered; the total eases up | Shown at once |
-| Capture | A turn arrives | It rises 14 pt and fades in, staggered; while the model works its turn shows the spinner in the AI's light | Shown at once |
+| Capture | A turn arrives | It rises 14 pt and fades in, staggered; while the model works record placeholders shimmer | Shown at once |
 | Segmented | Choice | Raised pill slides to the segment (spring) | Jumps |
 | Sheets | Open / close | Slide from the bottom over a fading scrim; swipe down to close | Appear / disappear |
 | Toggles | Checkbox / switch | Fill `instant`; knob slides `fast` | Instant |
@@ -595,3 +639,18 @@ History review captures are in `.impeccable/review/history/`, including the
 and both Asset changes modes. Headless flows cover expansion, mode switching
 and appending immutable observations. Desktop captures do not establish Android
 native behavior, rendering performance or physical-device TLS behavior.
+
+Home corner actions are 48 pt icon buttons with localized accessible names:
+Settings uses Sliders, Records import uses Import beside Calendar, and Assets
+Manage uses List. Settings rows use semantic members of the same 24 pt, 1.8 pt
+line family: Profile for body profile, Target for daily energy goal, Scale for
+goal weight and scale hardware, Watch for Garmin, Sparkle for recognition and
+CloudLock for encrypted backups. Sparkle and Scale retain their existing glyphs;
+new glyphs share the same round strokes. Financial signs never change ink color.
+
+Weight and body-fat plots use ink and the warm-stone ramp, with the latest
+point marked by a dot and a matching value below. Charts are spaced apart so
+axis captions cannot meet the next metric label. Full plots support scrubbing;
+mini sparklines pass touches through. Plot motion is unset (instant), and
+skeleton shimmer uses a native indefinite loop, stopped when its scope closes,
+and rests when reduced motion is enabled.

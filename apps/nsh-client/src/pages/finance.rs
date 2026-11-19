@@ -1272,7 +1272,10 @@ pub fn transaction_row(t: Transaction, on_press: impl Fn() + 'static) -> impl In
         .own_postings()
         .next()
         .map_or(Currency::CNY, |p| p.account.currency());
-    let accessibility = format!("{title}, {amount} {}, {sub}", currency.code());
+    let accessibility = format!(
+        "{title}, {}, {sub}",
+        crate::ui::currency::decorate(&amount, currency)
+    );
     // Keep the amount with its native currency on one baseline when it
     // fits. Larger system text moves it below the record's metadata.
     let amount_chars = amount.len();

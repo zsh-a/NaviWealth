@@ -58,7 +58,7 @@ pub fn segmented<T: Copy + PartialEq + 'static>(
                     }
                 })
                 .flex_1()
-                .min_h(px(38.0))
+                .min_h(px(48.0))
                 .items_center()
                 .justify_center()
                 .rounded_full()

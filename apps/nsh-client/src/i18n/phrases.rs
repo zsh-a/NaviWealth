@@ -96,50 +96,53 @@ impl Strings {
         }
     }
 
-    /// Review's one-line conclusion, what changed: the daily average
-    /// against the period before, then the weight trend. The figures below
-    /// it show the levels; `None` with no change to tell.
+    /// One sentence from observations, with comparisons only when both periods exist.
     pub fn review_summary(
         &self,
-        month: bool,
+        average: Option<f64>,
         change: Option<f64>,
         weight: Option<f64>,
+        spending: &[String],
     ) -> Option<String> {
-        let zh = self.zh();
         let mut parts = Vec::new();
-        if let Some(change) = change.filter(|c| c.round() != 0.0) {
-            let by = format::kcal(change.abs());
-            let more = change > 0.0;
-            parts.push(match (zh, month, more) {
-                (true, false, true) => format!("日均比上周多 {by} 千卡"),
-                (true, false, false) => format!("日均比上周少 {by} 千卡"),
-                (true, true, true) => format!("日均比上月多 {by} 千卡"),
-                (true, true, false) => format!("日均比上月少 {by} 千卡"),
-                (false, false, true) => format!("{by} kcal a day more than last week"),
-                (false, false, false) => format!("{by} kcal a day less than last week"),
-                (false, true, true) => format!("{by} kcal a day more than last month"),
-                (false, true, false) => format!("{by} kcal a day less than last month"),
-            });
+        if let Some(average) = average {
+            let mut intake = self
+                .review_average
+                .replace("{value}", &format::kcal(average));
+            if let Some(change) = change.filter(|v| v.is_finite()) {
+                let comparison = if change.round() == 0.0 {
+                    self.review_intake_same
+                } else if change > 0.0 {
+                    self.review_intake_more
+                } else {
+                    self.review_intake_less
+                };
+                intake.push_str(if self.zh() { "，" } else { ", " });
+                intake.push_str(&comparison.replace("{value}", &format::kcal(change.abs())));
+            }
+            parts.push(intake);
         }
-        if let Some(weight) = weight {
-            let kg = self.signed_kg(weight);
-            parts.push(if zh {
-                format!("体重趋势 {kg} kg")
+        if let Some(weight) = weight.filter(|v| v.is_finite()) {
+            let phrase = if (weight * 10.0).round() == 0.0 {
+                self.review_weight_same
+            } else if weight > 0.0 {
+                self.review_weight_up
             } else {
-                format!("weight trend {kg} kg")
-            });
+                self.review_weight_down
+            };
+            parts.push(phrase.replace("{value}", &self.kg(weight.abs())));
         }
-        let mut line = if zh {
-            parts.join("，")
-        } else {
-            parts.join(", ")
-        };
-        if line.is_empty() {
+        if !spending.is_empty() {
+            parts.push(self.review_spent.replace("{value}", &spending.join(" / ")));
+        }
+        if parts.is_empty() {
             return None;
         }
-        if !zh {
+        let mut line = parts.join(if self.zh() { "；" } else { "; " });
+        if !self.zh() {
             line[..1].make_ascii_uppercase();
         }
+        line.push_str(if self.zh() { "。" } else { "." });
         Some(line)
     }
 
@@ -209,11 +212,14 @@ impl Strings {
 
     /// The change over about a week, short enough for a vital's caption.
     pub fn week_change(&self, delta: f64) -> String {
-        if self.zh() {
-            format!("7天 {}", self.signed_kg(delta))
+        let arrow = if delta < 0.0 {
+            "↓"
+        } else if delta > 0.0 {
+            "↑"
         } else {
-            format!("{} · 7d", self.signed_kg(delta))
-        }
+            ""
+        };
+        format!("{arrow}{} kg · {}", self.kg(delta.abs()), self.seven_days)
     }
 
     /// A newer release found, by its version.
@@ -289,8 +295,29 @@ mod tests {
     }
 
     #[test]
+    fn review_sentence_does_not_invent_a_missing_comparison() {
+        for lang in [Lang::En, Lang::Zh] {
+            let s = strings(lang);
+            assert!(s.review_summary(None, None, None, &[]).is_none());
+            let line = s
+                .review_summary(Some(1850.0), None, Some(-0.5), &["¥142.00".into()])
+                .unwrap();
+            assert!(line.contains("1,850"));
+            assert!(line.contains("0.5"));
+            assert!(line.contains("¥142.00"));
+            assert!(!line.contains("comparison"));
+            assert!(!line.contains("对比"));
+            assert!(line.ends_with(if lang == Lang::En { "." } else { "。" }));
+            let compared = s
+                .review_summary(Some(1850.0), Some(-100.0), None, &[])
+                .unwrap();
+            assert!(compared.contains("100"));
+        }
+    }
+
+    #[test]
     fn vital_captions_are_compact_in_both_languages() {
-        assert_eq!(strings(Lang::En).week_change(-0.1), "−0.1 · 7d");
-        assert_eq!(strings(Lang::Zh).week_change(-0.1), "7天 −0.1");
+        assert_eq!(strings(Lang::En).week_change(-0.1), "↓0.1 kg · 7d");
+        assert_eq!(strings(Lang::Zh).week_change(-0.1), "↓0.1 kg · 7天");
     }
 }

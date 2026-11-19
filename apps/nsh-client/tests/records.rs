@@ -55,8 +55,8 @@ fn today_summarizes_spending_with_its_records_at_large_text() -> Result<(), Stri
     // balance is listed but is not spending.
     app.wait_for("text:/3 records · Spent ¥1,234.56/")?;
     app.wait_for("text:300")?;
-    app.wait_for("label:/^Initial funds, 100,000.00 CNY/")?;
-    app.wait_for("label:/^Groceries, −1,234.56 CNY/")?;
+    app.wait_for("label:/^Initial funds, ¥100,000.00/")?;
+    app.wait_for("label:/^Groceries, −¥1,234.56/")?;
     let locale = Locale::parse("zh-CN").unwrap();
     app.set_environment("Chinese", |e| {
         e.locale = locale;
@@ -64,8 +64,8 @@ fn today_summarizes_spending_with_its_records_at_large_text() -> Result<(), Stri
     })?;
     app.wait_for("text:/3 条 · 支出 ¥1,234.56/")?;
     app.press("label:记录")?;
-    app.wait_for("label:/^Initial funds, 100,000.00 CNY/")?;
-    app.press("label:/^Groceries, −1,234.56 CNY/")?;
+    app.wait_for("label:/^Initial funds, ¥100,000.00/")?;
+    app.press("label:/^Groceries, −¥1,234.56/")?;
     app.wait_for("label:金额")?;
     app.wait_for("1234.56")?;
     Ok(())
@@ -121,7 +121,7 @@ fn records_fold_weight_into_summary_and_weight_filter_opens_editor() -> Result<(
     app.press("text:Tap to log")?;
     app.type_text("label:Weight", "70")?;
     app.press("Save weight")?;
-    app.wait_for("label:Body metrics, 70.0 kg")?;
+    app.wait_for("label:/^Body metrics, 70.0 kg, /")?;
 
     app.press("label:Records")?;
     app.wait_for("text:300 kcal")?;
@@ -224,5 +224,35 @@ fn a_day_in_reviews_month_opens_in_records() -> Result<(), String> {
     // Today alone (it stays in this month on the 1st too).
     app.wait_for(&format!("text:{}", day.0.strftime("%a, %b %-d")))?;
     assert!(!app.shows("text:Yesterday"));
+    Ok(())
+}
+
+#[test]
+fn weight_only_runs_expand_to_visible_daily_editors() -> Result<(), String> {
+    let dir = tempfile::tempdir().unwrap();
+    let (app, _) = start_in(Some(dir.path()), pasta_today(), None);
+    drop(app);
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    for (back, kg) in [(1, 72.7), (2, 73.1), (4, 74.0)] {
+        db.execute(
+            "INSERT INTO weights (day, kg, logged_at_ms) VALUES (?1, ?2, 0)",
+            rusqlite::params![today().plus_days(-back).to_string(), kg],
+        )
+        .unwrap();
+    }
+    drop(db);
+    let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
+    app.press("label:Records")?;
+    app.wait_for("text:/3 weight-only days · 74.0 → 72.7 kg/")?;
+    assert!(!app.shows("label:/^Edit weight, /"));
+    app.press("label:/Show daily records$/")?;
+    app.wait_for("label:/Collapse daily records$/")?;
+    app.press("label:/^Edit weight, .*72.7 kg$/")?;
+    app.wait_for("label:Weight")?;
+    app.press("label:Back")?;
+    app.press("label:/Collapse daily records$/")?;
+    assert!(!app.shows("label:/^Edit weight, /"));
+    app.press("text:Weight")?;
+    assert!(!app.shows("label:/Show daily records$/"));
     Ok(())
 }

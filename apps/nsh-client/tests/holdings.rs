@@ -11,7 +11,7 @@ use nsh_testing::DialogAnswer;
 
 fn add_holding(app: &mut Headless, name: &str, qty: &str, cost: &str) -> Result<(), String> {
     app.press("label:Assets")?;
-    app.press("text:Manage")?;
+    app.press("label:Manage")?;
     app.press("Add holding")?;
     app.press("Enter manually")?;
     app.type_text("label:Name or code", name)?;
@@ -19,6 +19,81 @@ fn add_holding(app: &mut Headless, name: &str, qty: &str, cost: &str) -> Result<
     app.type_text("label:Cost per unit", cost)?;
     app.press("Save holding")?;
     app.wait_for("Record trade")?;
+    Ok(())
+}
+
+#[test]
+fn detail_actions_fit_narrow_widths_and_stack_at_large_text() -> Result<(), String> {
+    use nsh_core::{
+        ApproxTextEngine, TextEngine,
+        platform::{Locale, LocaleSettings},
+    };
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
+    app.press("label:Assets")?;
+    app.press("Add holding")?;
+    app.press("Enter manually")?;
+    app.type_text("label:Name or code", "Fund")?;
+    app.type_text("label:Quantity", "1000")?;
+    app.type_text("label:Cost per unit", "4.125")?;
+    app.press("Save holding")?;
+    app.wait_for("label:Record trade")?;
+    app.wait_for("text:¥4.125")?;
+    app.wait_for("text:1000 × ¥4.125")?;
+    for tag in ["en", "zh-CN"] {
+        let locale = Locale::parse(tag).unwrap();
+        app.set_environment("language", |e| {
+            e.locale = locale;
+            e.locale_settings = LocaleSettings::of(locale);
+        })?;
+        let labels = if tag == "en" {
+            ["Link code", "Trade", "Prices"]
+        } else {
+            ["关联代码", "记录交易", "价格记录"]
+        };
+        for width in [360.0, 390.0] {
+            app.set_viewport(Size::new(Points(width), Points(1000.0)))?;
+            for scale in [1.0, 1.8] {
+                app.set_environment("font scale", |e| e.font_scale = scale)?;
+                let nodes = app.screen().layout_nodes();
+                let mut buttons = Vec::new();
+                for label in labels {
+                    let node = nodes
+                        .iter()
+                        .find(|n| n.text.as_ref().is_some_and(|t| t.text.text == label))
+                        .unwrap();
+                    let button = nodes.iter().find(|n| n.id == node.parent).unwrap();
+                    assert!(button.bounds.size.height.0 >= 48.0);
+                    assert!(button.bounds.origin.x.0 >= 19.5);
+                    assert!(button.bounds.origin.x.0 + button.bounds.size.width.0 <= width - 19.5);
+                    let content = node.text.as_ref().unwrap();
+                    let mut written = (*content.text).clone();
+                    written.max_lines = 0;
+                    let measured = ApproxTextEngine.measure(
+                        &ApproxTextEngine.prepare(&written),
+                        Some(content.content.size.width),
+                    );
+                    assert!(
+                        measured.height.0 <= content.content.size.height.0 + 0.5,
+                        "{label} fits at {width}/{scale}"
+                    );
+                    buttons.push(button.bounds);
+                }
+                for pair in buttons.windows(2) {
+                    assert!(
+                        (pair[0].size.width.0 - pair[1].size.width.0).abs() <= 1.0,
+                        "equal actions at {tag}/{width}/{scale}: {pair:?}"
+                    );
+                    if scale == 1.0 {
+                        assert!((pair[0].origin.y.0 - pair[1].origin.y.0).abs() < 0.5);
+                        assert!(pair[0].origin.x.0 + pair[0].size.width.0 <= pair[1].origin.x.0);
+                    } else {
+                        assert!(pair[0].origin.y.0 + pair[0].size.height.0 <= pair[1].origin.y.0);
+                    }
+                }
+            }
+        }
+    }
     Ok(())
 }
 #[test]
@@ -76,7 +151,7 @@ fn opening_price_partial_sale_and_cash_survive_restart_without_double_counting()
     );
     app.press("label:Assets")?;
     app.wait_for("label:¥500.00")?;
-    app.press("label:/^Index ETF, 300.00 CNY/")?;
+    app.press("label:/^Index ETF, ¥300.00/")?;
     app.wait_for("text:¥300.00")?;
     app.press("label:/^Sell, 40 /")?;
     app.on_dialog(|_| DialogAnswer::Press("Delete trade".into()));
@@ -106,12 +181,12 @@ fn opening_price_partial_sale_and_cash_survive_restart_without_double_counting()
     app.press("Save trade")?;
     app.wait_for("Trade saved")?;
     app.press("label:Back")?;
-    app.wait_for("text:Manage")?;
+    app.wait_for("label:Manage")?;
     assert!(!app.shows("text:Index ETF"));
     app.wait_for("Book balances")?;
-    app.press("text:Manage")?;
+    app.press("label:Manage")?;
     app.press("text:Closed holdings")?;
-    app.press("label:/^Index ETF, 0.00 CNY/")?;
+    app.press("label:/^Index ETF, ¥0.00/")?;
     app.press("Record trade")?;
     app.type_text("label:Quantity", "10")?;
     app.type_text("label:Price per unit", "4")?;
@@ -120,7 +195,7 @@ fn opening_price_partial_sale_and_cash_survive_restart_without_double_counting()
     app.press("label:Back")?;
     app.wait_for("No closed holdings")?;
     app.press("label:Back")?;
-    app.wait_for("label:/^Index ETF, 50.00 CNY/")?;
+    app.wait_for("label:/^Index ETF, ¥50.00/")?;
     app.press("label:New entry")?;
     app.wait_for("What would you like to record?")?;
     Ok(())
