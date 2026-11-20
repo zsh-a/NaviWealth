@@ -370,12 +370,7 @@ pub fn effective_bar(
     c: &Connection,
     q: &crate::holdings::Quote,
 ) -> Result<Option<DailyBar>, Error> {
-    let manual: bool = c.query_row(
-        "SELECT EXISTS(SELECT 1 FROM finance_quotes WHERE security=?1 AND day=?2)",
-        params![q.security, q.day.to_string()],
-        |r| r.get(0),
-    )?;
-    if manual {
+    if has_manual_price(c, q)? {
         return Ok(None);
     }
     let binding = catalog::bindings(c)
@@ -429,4 +424,13 @@ pub fn all_daily_revisions(c: &Connection) -> Result<Vec<DailyBar>, Error> {
     }
     out.sort_by(|a, b| b.day.cmp(&a.day).then(b.fetched_at.cmp(&a.fetched_at)));
     Ok(out)
+}
+
+/// Manual observations win ties with market marks and daily closes.
+pub fn has_manual_price(c: &Connection, q: &crate::holdings::Quote) -> Result<bool, Error> {
+    Ok(c.query_row(
+        "SELECT EXISTS(SELECT 1 FROM finance_quotes WHERE security=?1 AND day=?2)",
+        params![q.security, q.day.to_string()],
+        |r| r.get(0),
+    )?)
 }

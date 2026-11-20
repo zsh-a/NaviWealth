@@ -69,7 +69,8 @@ fn accounts_balances_rename_and_net_worth_survive_restart() -> Result<(), String
     app.press("label:Send")?;
     app.wait_for("Confirm and save")?;
     app.press("label:Close")?;
-    app.press("label:/^Cash, ¥1,000.00/")?;
+    assert!(!app.shows("text:/^Last checked/"));
+    app.press("label:/^Cash, ¥1,000.00, Last checked/")?;
     app.press("label:Rename account")?;
     app.clear("label:Account name")?;
     app.type_text("label:Account name", "Wallet")?;
@@ -372,5 +373,78 @@ fn a_showing_keyboard_lifts_a_task_sheet_without_resizing_it() -> Result<(), Str
         "the sheet sits above the keyboard: {after:?}"
     );
     assert!(after.origin.y.0 >= 0.0, "and stays on screen: {after:?}");
+    Ok(())
+}
+
+#[test]
+fn narrow_large_text_keeps_account_suffixes_and_foreign_balances_readable() -> Result<(), String> {
+    use navi_finance::{account::AccountKind, currency::Currency};
+    use nsh_core::{ApproxTextEngine, TextEngine};
+    let dir = tempfile::tempdir().unwrap();
+    let (app, storage) = start_in(Some(dir.path()), Vec::new(), None);
+    drop(app);
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    let names = [
+        "Brokerage settlement account 1234",
+        "Brokerage settlement account 5678",
+    ];
+    for (index, name) in names.iter().enumerate() {
+        let account = Account::new_in(AccountKind::Assets, name, Currency::USD).unwrap();
+        repository::create_account(&db, &account).unwrap();
+        let entry = journal::Entry {
+            id: name.to_string(),
+            at: today().0.at(12, 0, 0, 0),
+            payee: String::new(),
+            note: String::new(),
+            source: journal::Source::Manual,
+        };
+        repository::save(
+            &db,
+            &journal::opening(entry, &account, 123456789 + index as i64).unwrap(),
+        )
+        .unwrap();
+    }
+    let (mut app, _) = start_in(
+        Some(dir.path()),
+        storage.entries().into_iter().collect(),
+        None,
+    );
+    app.set_viewport(Size::new(Points(360.0), Points(640.0)))?;
+    app.set_environment("large text", |env| env.font_scale = 1.5)?;
+    app.press("label:Assets")?;
+    let nodes = app.screen().layout_nodes();
+    for name in names {
+        let label = format!("{name} · USD");
+        let node = nodes
+            .iter()
+            .find(|n| n.text.as_ref().is_some_and(|t| t.text.text == label))
+            .unwrap();
+        let content = node.text.as_ref().unwrap();
+        let mut written = (*content.text).clone();
+        written.max_lines = 0;
+        let measured = ApproxTextEngine.measure(
+            &ApproxTextEngine.prepare(&written),
+            Some(content.content.size.width),
+        );
+        assert!(
+            measured.height.0 <= content.content.size.height.0 + 0.5,
+            "{label} clipped"
+        );
+    }
+    for value in ["USD 1,234,567.89", "USD 1,234,567.90"] {
+        let node = nodes
+            .iter()
+            .find(|n| {
+                n.test_id.as_deref() == Some("asset-row-value")
+                    && n.text.as_ref().is_some_and(|t| t.text.text == value)
+            })
+            .unwrap();
+        assert!(
+            node.bounds.size.width.0 > 0.0
+                && node.bounds.origin.x.0 + node.bounds.size.width.0 <= 360.0,
+            "{value}: {:?}",
+            node.bounds
+        );
+    }
     Ok(())
 }

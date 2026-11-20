@@ -1,11 +1,9 @@
 //! The asset overview is a scan of current values. History and maintenance
 //! have explicit entries so neither interrupts the account/position list.
 use super::overview_parts::*;
+use super::summary::net_summary;
 use super::*;
-use crate::ui::{
-    sheet::{fitted_task_sheet, task_host},
-    surface::card,
-};
+use crate::ui::sheet::{fitted_task_sheet, task_host};
 
 pub fn assets_tab() -> impl IntoElement {
     let manage = signal(false);
@@ -52,9 +50,11 @@ pub fn assets_tab() -> impl IntoElement {
                                     .role(AccessibilityRole::Header),
                             )
                             .child(
-                                IconBtn::new(Icon::List, || s().manage_assets.into())
+                                Btn::ghost()
+                                    .label(|| s().manage_assets.into())
                                     .on_press(move || manage.set(true))
-                                    .px_0(),
+                                    .accessibility_label(|| Some(s().manage_assets.into()))
+                                    .min_h(px(48.0)),
                             ),
                     )
                     .child(dynamic(move || {
@@ -108,14 +108,6 @@ pub fn assets_tab() -> impl IntoElement {
                                 .text_color(color::DANGER)
                                 .into_element();
                             };
-                            let snapshot = valued.snapshot;
-                            let incomplete = !valued.missing.is_empty();
-                            let missing = valued
-                                .missing
-                                .iter()
-                                .map(|c| c.code())
-                                .collect::<Vec<_>>()
-                                .join(" / ");
                             let mut has_open_holdings = false;
                             let mut has_included_holdings = false;
                             let mut at_cost = Vec::new();
@@ -140,88 +132,17 @@ pub fn assets_tab() -> impl IntoElement {
                             view()
                                 .gap_5()
                                 .child(
-                                    card()
-                                        .p_5()
-                                        .gap_3()
-                                        .child(
-                                            text(move || {
-                                                if incomplete {
-                                                    crate::i18n::statement_import::copy(
-                                                        "Known value · CNY",
-                                                        "已折算净值 · CNY",
-                                                    )
-                                                } else {
-                                                    s().portfolio_net
-                                                }
-                                            })
-                                            .typo(Type::Subhead)
-                                            .text_color(color::MUTED),
-                                        )
-                                        .child(net_figure(snapshot.net))
-                                        .child(super::mini::sparkline(
-                                            &entries, &portfolio, &rates, today,
+                                    view()
+                                        .gap_1()
+                                        .child(net_summary(
+                                            valued,
+                                            has_included_holdings,
+                                            at_cost,
+                                            super::trend::NetWorthHistory::load(
+                                                &entries, &portfolio, &rates, today,
+                                            ),
                                         ))
-                                        .child((!at_cost.is_empty()).then(|| cost_details(at_cost)))
-                                        .child(quote_refresh_row())
-                                        .child(incomplete.then(|| {
-                                            row_button(|| nav::push(Route::ExchangeRates))
-                                                .px_0()
-                                                .child(
-                                                text(format!(
-                                                    "{}: {missing}",
-                                                    crate::i18n::statement_import::copy(
-                                                        "Missing rates; these assets are excluded",
-                                                        "缺少汇率，以下币种未计入"
-                                                    )
-                                                ))
-                                                .typo(Type::Subhead)
-                                                .text_color(color::DANGER),
-                                            )
-                                        }))
-                                        .child(
-                                            view()
-                                                .flex_row()
-                                                .style_when(
-                                                    || {
-                                                        font_scale() > 1.2
-                                                            || window().width.0 < 350.0
-                                                    },
-                                                    |s| s.flex_col(),
-                                                )
-                                                .gap_4()
-                                                .py_2()
-                                                .child(total(s().total_assets, snapshot.assets))
-                                                .child(total(s().total_debt, snapshot.debt)),
-                                        )
-                                        .child(
-                                            row_button(|| nav::push(Route::AssetHistory))
-                                                .accessibility_label(|| {
-                                                    Some(s().asset_history.into())
-                                                })
-                                                .px_0()
-                                                .min_h(px(48.0))
-                                                .gap_3()
-                                                .child(
-                                                    text(if has_included_holdings {
-                                                        s().valuation_recorded
-                                                    } else {
-                                                        s().valuation_book
-                                                    })
-                                                    .typo(Type::Subhead)
-                                                    .text_color(color::MUTED)
-                                                    .flex_1(),
-                                                )
-                                                .child(
-                                                    text(|| s().asset_history)
-                                                        .typo(Type::Subhead)
-                                                        .text_color(color::INK),
-                                                )
-                                                .child(icon(
-                                                    Icon::ChevronRight,
-                                                    16.0,
-                                                    color::MUTED,
-                                                )),
-                                        ),
+                                        .child(quote_refresh_row()),
                                 )
                                 .child(account_group(
                                     AccountKind::Assets,

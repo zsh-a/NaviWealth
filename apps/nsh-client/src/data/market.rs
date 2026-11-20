@@ -28,7 +28,6 @@ pub struct Status {
 }
 #[derive(Clone, Default, PartialEq, Eq)]
 struct State {
-    quotes: Vec<MarketQuote>,
     status: Status,
     attempted_at: Option<jiff::Timestamp>,
 }
@@ -38,38 +37,79 @@ fn state() -> Signal<State> {
 pub fn status() -> Status {
     state().with(|s| s.status.clone())
 }
-pub fn quote(security: &str) -> Option<MarketQuote> {
-    let binding = super::catalog::bindings()
-        .into_iter()
-        .find(|b| b.security == security)?;
-    let canonical = market::canonical_binding(&binding)?;
-    state().with(|s| {
-        s.quotes
-            .iter()
-            .filter(|q| {
-                q.security == security && q.symbol == canonical && q.currency == binding.currency
-            })
-            .max_by_key(|q| q.observed_at)
-            .cloned()
-    })
-}
-/// Provenance for an effective network mark, excluding manual ties.
-pub fn effective_quote(effective: &holdings::Quote) -> Option<MarketQuote> {
-    let manual = db::with(holdings::store::load)?.ok()?;
-    if manual
-        .quotes
-        .iter()
-        .any(|q| q.security == effective.security && q.day >= effective.day)
-    {
-        return None;
+#[derive(Clone, Default, PartialEq, Eq)]
+struct Quotes(std::rc::Rc<Vec<MarketQuote>>);
+
+fn publish_quotes(quotes: Vec<MarketQuote>) {
+    let stored = global::<Quotes>();
+    if stored.with_untracked(|s| *s.0 != quotes) {
+        stored.set(Quotes(quotes.into()));
     }
-    quote(&effective.security).filter(|q| q.day() == effective.day && q.price == effective.price)
+}
+
+/// Resolve visible price labels from one set of bindings and sampled quotes per list.
+pub struct PriceSources {
+    bindings: Vec<catalog::SecurityBinding>,
+    quotes: std::rc::Rc<Vec<MarketQuote>>,
+}
+
+pub enum PriceSource {
+    Manual,
+    Close,
+    Sampled {
+        observed_at: jiff::Timestamp,
+        previous_close: bool,
+    },
+}
+
+impl PriceSources {
+    pub fn current() -> Self {
+        Self {
+            bindings: super::catalog::bindings(),
+            quotes: global::<Quotes>().with(|s| s.0.clone()),
+        }
+    }
+
+    pub fn binding(&self, security: &str) -> Option<&catalog::SecurityBinding> {
+        self.bindings.iter().find(|b| b.security == security)
+    }
+
+    pub fn source(&self, q: &holdings::Quote) -> Option<PriceSource> {
+        db::with(|c| {
+            if navi_finance::history::has_manual_price(c, q).ok()? {
+                return Some(PriceSource::Manual);
+            }
+            let binding = self.binding(&q.security)?;
+            if navi_finance::history::bars(c, binding, q.day, q.day)
+                .ok()?
+                .iter()
+                .any(|b| b.close == q.price)
+            {
+                return Some(PriceSource::Close);
+            }
+            let symbol = market::canonical_binding(binding)?;
+            self.quotes
+                .iter()
+                .find(|mark| {
+                    mark.security == q.security
+                        && mark.symbol == symbol
+                        && mark.currency == binding.currency
+                        && mark.price == q.price
+                        && mark.day() == q.day
+                })
+                .map(|mark| PriceSource::Sampled {
+                    observed_at: mark.observed_at,
+                    previous_close: mark.previous_close_only,
+                })
+        })
+        .flatten()
+    }
 }
 pub fn load() -> Result<(), String> {
     let quotes = db::with(market::load)
         .ok_or("database unavailable")?
         .map_err(|e| e.to_string())?;
-    state().update(|s| s.quotes = quotes);
+    publish_quotes(quotes);
     Ok(())
 }
 /// Read committed price inputs together, then publish provenance and valuations in one batch.
@@ -93,7 +133,7 @@ pub(super) fn reload_prices() -> Result<(), String> {
     })
     .ok_or("database unavailable")??;
     batch(|| {
-        state().update(|s| s.quotes = quotes);
+        publish_quotes(quotes);
         finance::publish_prices(book, rates);
     });
     Ok(())

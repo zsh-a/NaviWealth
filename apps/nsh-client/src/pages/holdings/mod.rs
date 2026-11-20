@@ -25,41 +25,44 @@ use nsh_base::{alert_dialog, nav_page};
 use nsh_core::{element::Screen, prelude::*};
 pub(super) use receipt::trade_receipt;
 
-fn quote_caption(q: &holdings::Quote, currency: Currency) -> String {
-    if let Some(bar) = crate::data::db::with(|c| navi_finance::history::effective_bar(c, q))
-        .and_then(Result::ok)
-        .flatten()
-    {
-        format!(
-            "{} {} · {}",
-            crate::i18n::statement_import::copy("Daily close", "日线收盘"),
-            crate::ui::currency::unit_price(bar.close, currency),
-            bar.day
-        )
-    } else if let Some(network) = crate::data::market::effective_quote(q) {
-        let label = if network.previous_close_only {
-            crate::i18n::catalog::previous_close()
-        } else {
-            crate::i18n::catalog::market_price()
-        };
-        format!(
-            "{} {} · {}{}",
-            label,
-            crate::ui::currency::unit_price(q.price, currency),
-            network.observed_at,
-            if q.day < clock::today().0 {
-                format!(" · {}", crate::i18n::catalog::stale())
-            } else {
-                String::new()
+/// The list uses source and date; details also show the native price and observation time.
+fn quote_caption(
+    q: &holdings::Quote,
+    sources: &crate::data::market::PriceSources,
+    detail_currency: Option<Currency>,
+) -> String {
+    use crate::data::market::PriceSource;
+    let mut date = s().short_date(Day(q.day));
+    let source = match sources.source(q) {
+        Some(PriceSource::Manual) => s().manual_price,
+        Some(PriceSource::Close) => crate::i18n::statement_import::copy("Daily close", "日线收盘"),
+        Some(PriceSource::Sampled {
+            observed_at,
+            previous_close,
+        }) => {
+            if detail_currency.is_some() {
+                date = clock::zoned(observed_at.as_millisecond())
+                    .strftime("%Y-%m-%d %H:%M %Z")
+                    .to_string();
+                if q.day < clock::today().0 {
+                    date.push_str(" · ");
+                    date.push_str(crate::i18n::catalog::stale());
+                }
             }
-        )
-    } else {
-        format!(
-            "{} {} · {}",
-            s().manual_price,
-            crate::ui::currency::unit_price(q.price, currency),
-            s().short_date(Day(q.day))
-        )
+            if previous_close {
+                crate::i18n::catalog::previous_close()
+            } else {
+                crate::i18n::catalog::market_price()
+            }
+        }
+        None => s().price_date,
+    };
+    match detail_currency {
+        Some(cur) => format!(
+            "{source} {} · {date}",
+            crate::ui::currency::unit_price(q.price, cur)
+        ),
+        None => format!("{source} · {date}"),
     }
 }
 
@@ -155,17 +158,20 @@ pub fn holding_page(id: &str) -> Screen {
                                     book.securities.iter().find(|s| s.id == *id).cloned()
                                 });
                                 let today = clock::today();
+                                let sources = crate::data::market::PriceSources::current();
                                 untracked(move || {
                                     let Some(sec) = sec else {
                                         return view().into_element();
                                     };
                                     let currency = sec.currency();
+                                    let binding = sources.binding(&sec.id);
+                                    let trade_style = if binding.is_some() { Variant::Primary } else { Variant::Secondary };
                                     let p =
                                         book.position(&sec, today.0).expect("validated holdings");
                                     let caption = p
                                         .quote
                                         .as_ref()
-                                        .map(|q| quote_caption(q, currency))
+                                        .map(|q| quote_caption(q, &sources, Some(currency)))
                                         .unwrap_or_else(|| s().unpriced.into());
                                     view()
                                         .gap_3()
@@ -196,6 +202,14 @@ pub fn holding_page(id: &str) -> Screen {
                                                                 .typo(Type::Subhead)
                                                                 .text_color(color::MUTED)
                                                                 .flex_1(),
+                                                        )
+                                                        .child(
+                                                            (p.quote.is_none() && p.quantity > 0)
+                                                                .then(|| {
+                                                                    text(crate::i18n::statement_import::copy("Add price", "录入价格"))
+                                                                        .typo(Type::Subhead)
+                                                                        .text_color(color::INK)
+                                                                }),
                                                         )
                                                         .child(crate::ui::icon(
                                                             Icon::Pencil,
@@ -249,19 +263,19 @@ pub fn holding_page(id: &str) -> Screen {
                                                 .gap_2()
                                                 .style_when(|| font_scale() > 1.2, |s| s.flex_col())
                                                 .child(detail_action(
-                                                    Icon::Link,
-                                                    || s().holding_link_action,
-                                                    crate::i18n::catalog::bind,
-                                                    move || picker.set(true),
-                                                ))
-                                                .child(detail_action(
-                                                    Icon::Plus,
+                                                    trade_style, Icon::Plus,
                                                     || s().holding_trade_action,
                                                     || s().record_trade,
                                                     move || trade.set(Some(sec.id.clone())),
                                                 ))
                                                 .child(detail_action(
-                                                    Icon::Chart,
+                                                    Variant::Secondary, Icon::Link,
+                                                    || s().holding_link_action,
+                                                    crate::i18n::catalog::bind,
+                                                    move || picker.set(true),
+                                                ))
+                                                .child(detail_action(
+                                                    Variant::Secondary, Icon::Chart,
                                                     || s().holding_prices_action,
                                                     || s().price_history,
                                                     move || {
@@ -271,7 +285,7 @@ pub fn holding_page(id: &str) -> Screen {
                                                     },
                                                 )),
                                         )
-                                        .child(binding_caption(id))
+                                        .child(binding.map(binding_caption))
                                         .child(note(
                                             move || binding_error.get().map(Into::into),
                                             || true,
@@ -429,12 +443,13 @@ fn unrealized_display(position: &holdings::Position, currency: Currency) -> Stri
 }
 
 fn detail_action(
+    style: Variant,
     glyph: Icon,
     label: fn() -> &'static str,
     accessible: fn() -> &'static str,
     press: impl Fn() + 'static,
 ) -> impl IntoElement {
-    Btn::secondary()
+    Btn::new(style)
         .icon(glyph)
         .on_press(press)
         .accessibility_label(move || Some(accessible().into()))
@@ -450,25 +465,23 @@ fn detail_action(
         .child(
             text(label)
                 .typo(Type::Subhead)
-                .text_color(color::INK)
+                .text_color(if style == Variant::Primary {
+                    color::ON_ACTION
+                } else {
+                    color::INK
+                })
                 .text_center(),
         )
 }
 
-fn binding_caption(id: Stored<String>) -> impl IntoElement {
-    dynamic(move || {
-        let binding = crate::data::catalog::bindings()
-            .into_iter()
-            .find(|b| id.with(|v| *v == b.security));
-        view().child(binding.map(|b| {
-            text(format!(
-                "{} · {} · {}",
-                crate::i18n::catalog::market(&b.market),
-                b.symbol,
-                b.currency
-            ))
-            .typo(Type::Caption)
-            .text_color(color::MUTED)
-        }))
-    })
+fn binding_caption(b: &navi_finance::catalog::SecurityBinding) -> AnyElement {
+    text(format!(
+        "{} · {} · {}",
+        crate::i18n::catalog::market(&b.market),
+        b.symbol,
+        b.currency
+    ))
+    .typo(Type::Caption)
+    .text_color(color::MUTED)
+    .into_element()
 }

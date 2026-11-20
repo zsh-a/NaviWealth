@@ -153,9 +153,9 @@ AI only to turn text and images into drafts, using the owner's model account.
   income and transfers alone never create a zero-spending summary.
   A chosen day is shown alone, under a bar with its date, steps to adjacent
   days with records, and All days.
-- **Assets:** one overview card leads with net worth, followed by a quiet
-  30-day mini sparkline and signed change from 30 days ago, then asset and
-  debt totals in two columns. Cash accounts, open holdings and debt accounts
+- **Assets:** one overview card leads with net worth. Excluded currencies link directly to
+  exchange rates beneath the figure. Asset and debt totals sit together above
+  a tappable trend footer with the sparkline and Asset changes link. Cash accounts, open holdings and debt accounts
   follow as flat rows on the canvas.
   The sparkline reuses dated valuation history and keeps missing-rate gaps;
   its comparison is omitted without both complete endpoints or records dating
@@ -183,9 +183,10 @@ AI only to turn text and images into drafts, using the owner's model account.
   a detail page with value, an explicit price-edit action, quantity, cost, unrealized
   gain, and newest-first activity. The value and its facts share one card.
   Unrealized gain shows an explicit signed amount and one-decimal percentage
-  of the domain cost basis (no percentage for zero cost). Link security, Record
-  trade and Price history are equal-width raised buttons beneath the card,
-  with icons above short localized labels. They fit one row at 360 pt and
+  of the domain cost basis (no percentage for zero cost). Record trade, Link security
+  and Price history are equal-width raised buttons beneath the card,
+  with icons above short localized labels. A linked holding emphasizes Record trade.
+  An unpriced open position offers Add price beside its cost basis. They fit one row at 360 pt and
   stack at large text; full action names remain accessible; linked identity is a quiet caption. Realized gain and dividends
   appear when nonzero; unpriced unrealized gain is a dash. Opening a holding
   needs name, quantity and unit cost. Buy/sell use quantity, price and a cash
@@ -500,12 +501,13 @@ CNY, HKD and USD trading currencies. Manual creation offers compact currency
 choices; catalog selection sets currency automatically. Existing holdings keep
 their currency, and trade cash choices include only matching asset accounts.
 
-The overview names open holdings included at cost in an expandable row linking
-to each holding. Checked accounts show their latest check date. Holding rows
-stack the native value below the name on narrow screens and at larger text sizes.
+A disclosure beside the net worth label counts included holdings valued at cost
+and opens links to those positions. Checked accounts keep their last check
+date in details and the spoken row label. Account and holding rows stack the
+native amount below the name on narrow screens, at large text sizes or for long amounts.
 Historical estimates and net worth snapshots are separate views.
 
-Assets has one visible quote refresh action inside its overview card. Its
+Assets has one visible quote refresh action below its overview card. Its
 completion time and update/failure counts cover both prices and FX; the price
 date on each holding row identifies the observation used for valuation.
 Tencent marks refresh in the
@@ -640,9 +642,9 @@ and both Asset changes modes. Headless flows cover expansion, mode switching
 and appending immutable observations. Desktop captures do not establish Android
 native behavior, rendering performance or physical-device TLS behavior.
 
-Home corner actions are 48 pt icon buttons with localized accessible names:
-Settings uses Sliders, Records import uses Import beside Calendar, and Assets
-Manage uses List. Settings rows use semantic members of the same 24 pt, 1.8 pt
+Home corner actions have localized accessible names and 48 pt touch targets.
+Settings uses Sliders and Records uses Import beside Calendar. Assets has a
+visible Manage text button. Settings rows use semantic members of the same 24 pt, 1.8 pt
 line family: Profile for body profile, Target for daily energy goal, Scale for
 goal weight and scale hardware, Watch for Garmin, Sparkle for recognition and
 CloudLock for encrypted backups. Sparkle and Scale retain their existing glyphs;

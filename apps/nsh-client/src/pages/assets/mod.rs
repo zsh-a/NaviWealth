@@ -4,6 +4,7 @@ mod editor;
 mod mini;
 mod overview;
 mod overview_parts;
+mod summary;
 mod trend;
 pub use overview::assets_tab;
 pub use trend::history_page;
@@ -49,6 +50,60 @@ pub(super) fn amount_in(
         .flex_shrink(1.0_f32)
         .tabular_nums()
         .text_color(color::INK)
+}
+
+/// One alignment grid for the account and holding sections, including their spoken status.
+pub(super) fn asset_row(
+    name: String,
+    amount: String,
+    status: String,
+    show_status: bool,
+    glyph: Icon,
+    press: impl Fn() + 'static,
+) -> impl IntoElement {
+    let label = format!("{name}, {amount}, {status}");
+    let long_amount = amount.chars().count() >= 16;
+    let stacked = move || font_scale() > 1.2 || window().width.0 < 350.0 || long_amount;
+    row_button(press)
+        .accessibility_label(move || Some(label.clone().into()))
+        .px_0()
+        .py_2()
+        .min_h(px(56.0))
+        .gap_3()
+        .child(icon(glyph, 22.0, color::MUTED))
+        .child(
+            view()
+                .flex_1()
+                .min_w(px(0.0))
+                .flex_row()
+                .items_center()
+                .gap_3()
+                .style_when(stacked, |s| s.flex_col().items_start().gap_1())
+                .child(
+                    view()
+                        .flex_1()
+                        .min_w(px(0.0))
+                        .gap_1()
+                        .style_when(stacked, |s| s.w_full().flex_grow(0.0).basis(auto()))
+                        .child(text(name).typo(Type::Headline).text_color(color::INK))
+                        .child(
+                            show_status
+                                .then(|| text(status).typo(Type::Caption).text_color(color::MUTED)),
+                        ),
+                )
+                .child(
+                    text(amount)
+                        .test_id("asset-row-value")
+                        .style_when(stacked, |s| s.w_full())
+                        .typo(Type::Headline)
+                        .text_color(color::INK)
+                        .tabular_nums()
+                        .number_of_lines(1)
+                        .shrink_to_fit(0.65)
+                        .min_w(px(0.0)),
+                ),
+        )
+        .child(icon(Icon::ChevronRight, 16.0, color::MUTED))
 }
 
 pub fn account_page(name: &str) -> Screen {

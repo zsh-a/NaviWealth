@@ -92,153 +92,21 @@ pub(super) fn account_group(
                 let name = crate::ui::currency::account_label(a);
                 let route = a.to_string();
                 let value = assets::displayed(a, balance);
-                let label = format!(
-                    "{name}, {}, {detail}",
-                    crate::ui::currency::format(value, a.currency())
-                );
-                view().child(
-                    row_button(move || nav::push(Route::Account(route.clone())))
-                        .accessibility_label(move || Some(label.clone().into()))
-                        .px_0()
-                        .py_3()
-                        .min_h(px(56.0))
-                        .gap_3()
-                        .child(icon(
-                            if kind == AccountKind::Assets {
-                                Icon::Wallet
-                            } else {
-                                Icon::CreditCard
-                            },
-                            22.0,
-                            color::MUTED,
-                        ))
-                        .child(
-                            view()
-                                .flex_1()
-                                .min_w(px(0.0))
-                                .flex_row()
-                                .items_center()
-                                .gap_3()
-                                .style_when(
-                                    || font_scale() > 1.2 || window().width.0 < 350.0,
-                                    |s| s.flex_col().items_start().gap_1(),
-                                )
-                                .child(
-                                    view()
-                                        .flex_1()
-                                        .min_w(px(0.0))
-                                        .gap_1()
-                                        .style_when(
-                                            || font_scale() > 1.2 || window().width.0 < 350.0,
-                                            |s| s.w_full(),
-                                        )
-                                        .child(
-                                            text(name)
-                                                .typo(Type::Headline)
-                                                .text_color(color::INK)
-                                                .number_of_lines(1),
-                                        )
-                                        .child(
-                                            text(detail)
-                                                .typo(Type::Caption)
-                                                .text_color(color::MUTED),
-                                        ),
-                                )
-                                .child(
-                                    view().min_w(px(0.0)).flex_shrink(1.0_f32).child(amount_in(
-                                        value,
-                                        Type::Headline,
-                                        a.currency(),
-                                    )),
-                                ),
-                        )
-                        .child(icon(Icon::ChevronRight, 16.0, color::MUTED)),
+                asset_row(
+                    name,
+                    crate::ui::currency::format(value, a.currency()),
+                    detail,
+                    checked.is_none(),
+                    if kind == AccountKind::Assets {
+                        Icon::Wallet
+                    } else {
+                        Icon::CreditCard
+                    },
+                    move || nav::push(Route::Account(route.clone())),
                 )
             }))
             .into_element(),
     )
-}
-
-pub(super) fn total(label: &'static str, value: i64) -> impl IntoElement {
-    view()
-        .flex_1()
-        .min_w(px(0.0))
-        .gap_1()
-        .child(text(label).typo(Type::Caption).text_color(color::MUTED))
-        .child(amount(value, Type::Body))
-}
-
-pub(super) fn net_figure(value: i64) -> impl IntoElement {
-    let written = display_money(value);
-    let (whole, fraction) = written.split_once('.').expect("money decimals");
-    view()
-        .flex_row()
-        .items_baseline()
-        .flex_wrap()
-        .min_w(px(0.0))
-        .accessible(true)
-        .label(move || crate::ui::currency::format(value, navi_finance::currency::Currency::CNY))
-        .child(
-            text(if value < 0 { "−¥" } else { "¥" })
-                .typo(Type::Figure)
-                .text_color(color::MUTED)
-                .mr_1(),
-        )
-        .child(
-            text(whole.trim_start_matches('-').to_owned())
-                .typo(Type::Display)
-                .min_w(px(0.0))
-                .flex_shrink(1.0_f32)
-                .number_of_lines(1)
-                .shrink_to_fit(0.35)
-                .tabular_nums()
-                .text_color(color::INK),
-        )
-        .child(
-            text(format!(".{fraction}"))
-                .typo(Type::Title)
-                .tabular_nums()
-                .text_color(color::MUTED),
-        )
-}
-
-pub(super) fn cost_details(items: Vec<(String, String)>) -> impl IntoElement {
-    let expanded = signal(false);
-    let count = items.len();
-    view()
-        .child(
-            row_button(move || expanded.update(|v| *v = !*v))
-                .px_0()
-                .min_h(px(48.0))
-                .child(
-                    text(move || s().cost_holdings(count))
-                        .typo(Type::Subhead)
-                        .text_color(color::BODY),
-                )
-                .child(dynamic(move || {
-                    icon(
-                        if expanded.get() {
-                            Icon::ChevronDown
-                        } else {
-                            Icon::ChevronRight
-                        },
-                        16.0,
-                        color::MUTED,
-                    )
-                    .into_element()
-                })),
-        )
-        .child(when(
-            move || expanded.get(),
-            move || {
-                view()
-                    .test_id("cost-holdings")
-                    .children(items.iter().cloned().map(|(id, name)| {
-                        row_button(move || nav::push(Route::Holding(id.clone())))
-                            .child(text(name).typo(Type::Body).text_color(color::INK))
-                    }))
-            },
-        ))
 }
 
 pub(super) fn quote_refresh_row() -> impl IntoElement {

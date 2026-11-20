@@ -47,9 +47,9 @@ fn detail_actions_fit_narrow_widths_and_stack_at_large_text() -> Result<(), Stri
             e.locale_settings = LocaleSettings::of(locale);
         })?;
         let labels = if tag == "en" {
-            ["Link code", "Trade", "Prices"]
+            ["Trade", "Link code", "Prices"]
         } else {
-            ["关联代码", "记录交易", "价格记录"]
+            ["记录交易", "关联代码", "价格记录"]
         };
         for width in [360.0, 390.0] {
             app.set_viewport(Size::new(Points(width), Points(1000.0)))?;
@@ -151,7 +151,7 @@ fn opening_price_partial_sale_and_cash_survive_restart_without_double_counting()
     );
     app.press("label:Assets")?;
     app.wait_for("label:¥500.00")?;
-    app.press("label:/^Index ETF, ¥300.00/")?;
+    app.press("label:/^Index ETF, ¥300.00, Manual price/")?;
     app.wait_for("text:¥300.00")?;
     app.press("label:/^Sell, 40 /")?;
     app.on_dialog(|_| DialogAnswer::Press("Delete trade".into()));

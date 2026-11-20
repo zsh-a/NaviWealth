@@ -50,7 +50,8 @@ fn price_history_exposes_daily_revisions_and_fx_audit() -> Result<(), String> {
         holdings::{self, Kind, Security, Trade, store},
     };
     let dir = tempfile::tempdir().unwrap();
-    let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
+    let (app, storage) = start_in(Some(dir.path()), Vec::new(), None);
+    drop(app);
     let c = rusqlite::Connection::open(database_in(dir.path())).unwrap();
     let day = jiff::civil::date(2026, 11, 12);
     let now = jiff::Timestamp::now();
@@ -108,7 +109,13 @@ fn price_history_exposes_daily_revisions_and_fx_audit() -> Result<(), String> {
         },
     )
     .unwrap();
+    let (mut app, _) = start_in(
+        Some(dir.path()),
+        storage.entries().into_iter().collect(),
+        None,
+    );
     app.press("label:Assets")?;
+    app.wait_for("label:/^Index, ¥6.00, Daily close/")?;
     app.press("label:Manage")?;
     app.press("Price history")?;
     app.wait_for("510300.SH · 2026-11-12")?;
@@ -168,5 +175,50 @@ fn missing_historical_fx_keeps_known_values_and_cost_details_accessible() -> Res
     app.press("label:Asset changes")?;
     app.wait_for("Days missing USD rates: 2")?;
     app.wait_for("text:/¥7.00 – ¥7.00/")?;
+    Ok(())
+}
+
+#[test]
+fn trend_compares_exactly_thirty_days_and_drills_into_the_same_start() -> Result<(), String> {
+    use navi_finance::{
+        account::Account,
+        journal::{self, Entry, Source},
+        repository,
+    };
+    let dir = tempfile::tempdir().unwrap();
+    let (app, storage) = start_in(Some(dir.path()), Vec::new(), None);
+    drop(app);
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    let cash = Account::parse("资产:Cash").unwrap();
+    repository::create_account(&db, &cash).unwrap();
+    let opening = |id: &str, days: i32, amount: i64| {
+        let entry = Entry {
+            id: id.into(),
+            at: today().plus_days(days).0.at(12, 0, 0, 0),
+            payee: String::new(),
+            note: String::new(),
+            source: Source::Manual,
+        };
+        repository::save(&db, &journal::opening(entry, &cash, amount).unwrap()).unwrap();
+    };
+    opening("recent", -29, 9500);
+    let restart = || {
+        start_in(
+            Some(dir.path()),
+            storage.entries().into_iter().collect(),
+            None,
+        )
+        .0
+    };
+    let mut app = restart();
+    app.press("label:Assets")?;
+    assert!(!app.shows("text:/^Since 30 days ago/"));
+    drop(app);
+    opening("baseline", -30, 10000);
+    let mut app = restart();
+    app.press("label:Assets")?;
+    app.wait_for("Since 30 days ago +¥95.00")?;
+    app.press("label:/^Asset changes, Since 30 days ago/")?;
+    app.wait_for("text:/¥100.00 – ¥195.00/")?;
     Ok(())
 }

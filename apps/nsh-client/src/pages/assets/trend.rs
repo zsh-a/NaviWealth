@@ -6,12 +6,18 @@ use crate::{
     i18n::s,
     ui::{Type, Typo, color},
 };
-use navi_finance::{journal::Transaction, valuation};
+use navi_finance::{
+    currency::{Currency, FxRate},
+    holdings::Book,
+    journal::Transaction,
+    valuation,
+};
 use nsh_base::plot::{Curve, Scale, area, line, plot};
 use nsh_core::{
     element::{RowAccessor, Rows},
     prelude::*,
 };
+use std::collections::BTreeMap;
 
 pub fn history_page() -> nsh_core::element::Screen {
     use crate::{
@@ -78,34 +84,65 @@ pub fn history_page() -> nsh_core::element::Screen {
         )
 }
 
+const TREND_DAYS: i32 = 30;
+
+/// Both charts use the same available dates, complete valuations and missing-rate gaps.
+pub(super) struct NetWorthHistory {
+    pub points: Vec<(jiff::civil::Date, Option<i64>)>,
+    missing: BTreeMap<Currency, usize>,
+    errors: usize,
+}
+
+impl NetWorthHistory {
+    pub fn load(entries: &[Transaction], book: &Book, rates: &[FxRate], today: Day) -> Self {
+        let mut history = Self {
+            points: Vec::new(),
+            missing: BTreeMap::new(),
+            errors: 0,
+        };
+        for (day, valuation) in
+            book.valuation_range(entries, rates, today.plus_days(-TREND_DAYS).0, today.0)
+        {
+            let value = match valuation {
+                Ok(v) if v.missing.is_empty() => Some(v.snapshot.net),
+                Ok(v) => {
+                    for currency in v.missing {
+                        *history.missing.entry(currency).or_default() += 1;
+                    }
+                    None
+                }
+                Err(_) => {
+                    history.errors += 1;
+                    None
+                }
+            };
+            history.points.push((day, value));
+        }
+        history
+    }
+
+    pub fn change(&self) -> Option<i64> {
+        let &(first, start) = self.points.first()?;
+        let &(last, end) = self.points.last()?;
+        if Day(last).days_since(Day(first)) != TREND_DAYS {
+            return None;
+        }
+        end?.checked_sub(start?)
+    }
+}
+
 pub fn chart(
     entries: &[Transaction],
-    portfolio: &navi_finance::holdings::Book,
-    rates: &[navi_finance::currency::FxRate],
+    portfolio: &Book,
+    rates: &[FxRate],
     today: Day,
 ) -> AnyElement {
     let has_holdings = !portfolio.securities.is_empty();
-    let mut points = Vec::new();
-    let mut missing = std::collections::BTreeMap::new();
-    let mut errors = 0;
-    for (day, valuation) in
-        portfolio.valuation_range(entries, rates, today.plus_days(-29).0, today.0)
-    {
-        let value = match valuation {
-            Ok(v) if v.missing.is_empty() => Some(v.snapshot.net),
-            Ok(v) => {
-                for currency in v.missing {
-                    *missing.entry(currency).or_insert(0usize) += 1;
-                }
-                None
-            }
-            Err(_) => {
-                errors += 1;
-                None
-            }
-        };
-        points.push((day, value));
-    }
+    let NetWorthHistory {
+        points,
+        missing,
+        errors,
+    } = NetWorthHistory::load(entries, portfolio, rates, today);
     let mut panel = view().gap_2();
     if points.len() < 2 {
         panel = panel.child(
@@ -157,7 +194,7 @@ fn history_refresh(today: Day) -> impl IntoElement {
                 .busy(|| history::status().running)
                 .on_press(move || {
                     tasks::spawn_app(async move {
-                        history::backfill(today.plus_days(-29).0, today.0, true).await;
+                        history::backfill(today.plus_days(-TREND_DAYS).0, today.0, true).await;
                     })
                 }),
         )
@@ -183,6 +220,16 @@ fn history_refresh(today: Day) -> impl IntoElement {
         }))
 }
 
+/// A contiguous run of complete daily valuations for either plot.
+pub(super) fn segment_rows(run: &[(jiff::civil::Date, Option<i64>)], first: Day) -> Rows {
+    let days = run
+        .iter()
+        .map(|(d, _)| f64::from(Day(*d).days_since(first)))
+        .collect();
+    let values = run.iter().map(|(_, v)| v.unwrap() as f64 / 100.0).collect();
+    Rows::from_columns(run.len(), [("day".into(), days), ("value".into(), values)])
+}
+
 fn plot_points(points: Vec<(jiff::civil::Date, Option<i64>)>, title: &'static str) -> AnyElement {
     let first = Day(points[0].0);
     let today = Day(points.last().unwrap().0);
@@ -198,12 +245,7 @@ fn plot_points(points: Vec<(jiff::civil::Date, Option<i64>)>, title: &'static st
         .split(|p| p.1.is_none())
         .filter(|run| !run.is_empty())
     {
-        let days = run
-            .iter()
-            .map(|(d, _)| f64::from(Day(*d).days_since(first)))
-            .collect();
-        let values = run.iter().map(|(_, v)| v.unwrap() as f64 / 100.0).collect();
-        let rows = Rows::from_columns(run.len(), [("day".into(), days), ("value".into(), values)]);
+        let rows = segment_rows(run, first);
         segments.push(
             area()
                 .data(Some(rows.clone()))

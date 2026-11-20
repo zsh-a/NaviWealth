@@ -113,8 +113,7 @@ fn missing_fx_is_visible_and_manual_rate_completes_valuation_after_restart() -> 
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), Some(stub()));
     app.press("label:Assets")?;
     app.wait_for("Known value · CNY")?;
-    app.press("label:Manage")?;
-    app.press("Exchange rates")?;
+    app.press("USD excluded · Add exchange rate")?;
     app.press("text:USD → CNY")?;
     app.type_text("label:CNY per unit", "7.00")?;
     app.press("Save rate")?;

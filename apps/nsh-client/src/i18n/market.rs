@@ -21,6 +21,20 @@ impl Strings {
             format!("Days missing {currency} rates: {count}")
         }
     }
+    pub fn excluded_currencies(&self, codes: &str) -> String {
+        if self.zh() {
+            format!("{codes} 未计入 · 补充汇率")
+        } else {
+            format!("{codes} excluded · Add exchange rate")
+        }
+    }
+    pub fn cost_count(&self, count: usize) -> String {
+        if self.zh() {
+            format!("{count} 项按成本计")
+        } else {
+            format!("{count} at cost")
+        }
+    }
     pub fn cost_holdings(&self, count: usize) -> String {
         if self.zh() {
             format!("{count} 项持仓按成本计入")
@@ -30,9 +44,17 @@ impl Strings {
     }
     pub fn refresh_summary(&self, time: &str, updated: usize, failed: usize) -> String {
         if self.zh() {
-            format!("{time} 刷新 · 更新 {updated} 项 · 失败 {failed} 项")
+            if failed == 0 {
+                format!("{time} · 已更新 {updated} 项")
+            } else {
+                format!("{time} · 已更新 {updated} 项，{failed} 项更新失败")
+            }
         } else {
-            format!("Checked {time} · {updated} updated · {failed} failed")
+            if failed == 0 {
+                format!("{time} · {updated} updated")
+            } else {
+                format!("{time} · {updated} updated · {failed} failed")
+            }
         }
     }
 }
