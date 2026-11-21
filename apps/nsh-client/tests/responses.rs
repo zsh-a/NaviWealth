@@ -194,6 +194,7 @@ fn responses_choice_and_native_reasoning_survive_restart_and_image_followup() ->
             ImageData::new(detail.get_ref().clone()),
         )]
     });
+    app.press("Add details")?;
     app.press("Attach image")?;
     app.wait_for("Remove image")?;
     app.press("Submit answers")?;

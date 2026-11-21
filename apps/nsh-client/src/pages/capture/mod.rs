@@ -22,8 +22,8 @@ use crate::{
         feedback::{Tone, appear, badge, shimmer, skeleton},
         field::{note, text_input},
         radius,
-        sheet::{fitted_task_sheet, initial_focus, retained},
-        surface::{card, disclosure, hairline},
+        sheet::{conversation_sheet, initial_focus, retained},
+        surface::card,
         toast::{show_receipt, show_toast},
         toggle::checkbox_row,
     },
@@ -50,7 +50,12 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
     crate::ui::toast::clear_notice();
     spawn(photos::load(initial.image_names()));
     let id = stored(initial.id.clone());
+    let replying = signal(
+        !initial.correction.is_empty()
+            || initial.has_staged_images() && !initial.transcript.is_empty(),
+    );
     let draft = signal(initial);
+    summary::track_revisions(draft);
     let error = signal(None::<String>);
     let manual = signal(false);
     let consenting = signal(None::<ModelAccount>);
@@ -148,6 +153,7 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                 }
                 // The sent message now lives in the thread.
                 input.set(String::new());
+                replying.set(false);
                 consenting.set(None);
                 dismiss_keyboard();
             }
@@ -192,6 +198,106 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
             )),
         );
     };
+    let focus = if draft.with_untracked(|d| d.transcript.is_empty()) {
+        initial_focus()
+    } else {
+        element_ref()
+    };
+    let editing = move || choosing.get().is_none() && consenting.get().is_none();
+    let first_turn = move || draft.with(|d| d.transcript.is_empty());
+    let awaiting_answers = move || draft.with(|d| d.pending_ask_user().is_some());
+    let send_disabled = move || {
+        picking.get()
+            || settings::ready_account().is_none()
+            || draft.with(|d| {
+                d.status == Status::Analyzing
+                    || if let Some(request) = d.pending_ask_user() {
+                        request
+                            .validate_answers(&d.answers, &input.get(), d.has_staged_images())
+                            .is_err()
+                    } else {
+                        input.get().trim().is_empty() && !d.has_staged_images()
+                    }
+            })
+    };
+    let entry_field = move || {
+        text_input(input)
+            .element_ref(&focus)
+            .multiline(true)
+            .min_h(px(48.0))
+            .bg(AdaptiveColor::TRANSPARENT)
+            .border(px(0.0))
+            .focus(|s| s.bg(AdaptiveColor::TRANSPARENT).border(px(0.0)))
+            .h(move || {
+                px(if input.get().is_empty() {
+                    48.0
+                } else {
+                    input_height.get()
+                })
+            })
+            .on_content_size_change(move |size: &nsh_core::Size<Points>| {
+                input_height.set((size.height.0 + 16.0).clamp(48.0, 120.0));
+            })
+            .min_w(px(0.0))
+            .label(|| s().capture_prompt)
+            .placeholder(move || {
+                if draft.with(|d| d.transcript.is_empty()) {
+                    s().capture_placeholder
+                } else {
+                    s().capture_reply_hint
+                }
+            })
+    };
+    let photo_button = move || {
+        IconBtn::new(Icon::Photo, || s().capture_photo.into())
+            .variant(Variant::Tonal)
+            .on_press(attach)
+            .disabled(move || {
+                picking.get()
+                    || draft.with(|d| {
+                        d.status == Status::Analyzing || d.image_names().len() >= MAX_ATTACHMENTS
+                    })
+            })
+    };
+    let send_button = move || {
+        when(
+            move || !awaiting_answers(),
+            move || {
+                IconBtn::new(Icon::Send, || s().capture_send.into())
+                    .variant(Variant::Primary)
+                    .on_press(send)
+                    .disabled(send_disabled)
+            },
+        )
+    };
+    let writing_surface = || view().bg(color::SURFACE_2).rounded(px(radius::WELL)).p_2();
+    let composer = move || {
+        writing_surface().child(entry_field().w_full()).child(
+            view()
+                .flex_row()
+                .items_center()
+                .justify_between()
+                .child(photo_button())
+                .child(send_button()),
+        )
+    };
+    let reply_bar = move || {
+        let empty = move || input.get().trim().is_empty() && !draft.with(|d| d.has_staged_images());
+        writing_surface()
+            .flex_row()
+            .items_end()
+            .child(photo_button())
+            .child(entry_field().flex_1())
+            .child(when(empty, move || {
+                IconBtn::new(Icon::Close, || s().cancel.into())
+                    .variant(Variant::Ghost)
+                    .on_press(move || {
+                        dismiss_keyboard();
+                        replying.set(false);
+                    })
+            }))
+            .child(when(move || !empty(), send_button))
+    };
     let header = view()
         .flex_row()
         .items_center()
@@ -202,6 +308,7 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                 IconBtn::new(Icon::ChevronLeft, || s().back.into())
                     .variant(Variant::Ghost)
                     .on_press(move || {
+                        error.set(None);
                         choosing.set(None);
                         consenting.set(None);
                     })
@@ -209,8 +316,13 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
         ))
         .child(
             text(move || {
-                if choosing.get().is_some() {
-                    s().capture_choose_account
+                if let Some(choice) = choosing.get() {
+                    match choice {
+                        accounts::Choice::Value(_) => s().edit,
+                        accounts::Choice::Account { .. } => s().capture_choose_account,
+                    }
+                } else if awaiting_answers() {
+                    s().capture_clarify
                 } else if draft.with(|d| d.records.is_empty()) {
                     s().new_entry
                 } else {
@@ -237,6 +349,10 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                 .variant(Variant::Ghost)
                 .on_press(close),
         );
+    let header = view()
+        .gap_2()
+        .child(header)
+        .child(when(move || editing() && first_turn(), composer));
     let body = view()
         .gap_4()
         .child(dynamic(move || {
@@ -246,7 +362,15 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
             let d = draft.get();
             untracked(move || {
                 if let Some(choice) = choice {
-                    accounts::picker(draft, input, error, choosing, choice).into_element()
+                    match choice {
+                        accounts::Choice::Account { index, destination } => {
+                            accounts::picker(draft, input, error, choosing, index, destination)
+                                .into_element()
+                        }
+                        accounts::Choice::Value(index) => {
+                            summary::edit_value(draft, input, error, choosing, index)
+                        }
+                    }
                 } else if let Some(account) = consent {
                     view()
                         .gap_4()
@@ -279,6 +403,7 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                         .into_element()
                 } else {
                     let sheets = Sheets::get();
+                    let offer_manual = d.transcript.is_empty() || d.status == Status::Failed;
                     view()
                         .gap_4()
                         .child(thread::thread(
@@ -288,10 +413,31 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                             (!d.transcript.is_empty() && d.has_staged_images())
                                 .then(|| thread::staged_images(&d, draft)),
                         )
-                        .child(hairline(0.0))
-                        .child(disclosure(manual, || s().capture_manual.into()))
+                        .child(offer_manual.then(|| {
+                            view()
+                                .role(AccessibilityRole::Button)
+                                .focus_visible(|s| s.outline(px(2.0)).outline_color(color::INK))
+                                .active(|s| s.opacity(0.7))
+                                .on_press(move || manual.update(|open| *open = !*open))
+                                .min_h(px(48.0))
+                                .self_start()
+                                .flex_row()
+                                .items_center()
+                                .gap_1()
+                                .optional_label(|| Some(s().capture_manual.into()))
+                                .accessibility_state(move || AccessibilityState {
+                                    expanded: Some(manual.get()),
+                                    ..Default::default()
+                                })
+                                .child(
+                                    text(|| s().capture_manual)
+                                        .typo(Type::Subhead)
+                                        .text_color(color::BODY),
+                                )
+                                .child(crate::ui::surface::disclosure_chevron(manual))
+                        }))
                         .child(when(
-                            move || manual.get(),
+                            move || offer_manual && manual.get(),
                             move || {
                                 view()
                                     .gap_2()
@@ -323,22 +469,35 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                                     ))
                             },
                         ))
-                        .child(favorites::favorites_row(close))
+                        .child(first_turn().then(|| favorites::favorites_row(close)))
                         .into_element()
                 }
             })
         }))
         .child(note(move || error.get().map(Into::into), || true));
-    // The composer is the one stable input, so typing never rebuilds it.
-    // The row above it swaps the task's current action. Focus follows an
-    // editing draft's sheet opening only.
-    let focus = if draft.with_untracked(|d| d.transcript.is_empty()) {
-        initial_focus()
-    } else {
-        element_ref()
-    };
     let actions = view()
         .gap_2()
+        .child(when(
+            move || editing() && !first_turn() && draft.with(|d| d.status != Status::Analyzing),
+            move || {
+                view()
+                    .child(when(
+                        move || !replying.get(),
+                        move || {
+                            Btn::ghost()
+                                .label(|| s().capture_add_detail.into())
+                                .on_press(move || {
+                                    replying.set(true);
+                                    spawn(async move {
+                                        next_frame().await;
+                                        focus.focus();
+                                    });
+                                })
+                        },
+                    ))
+                    .child(when(move || replying.get(), reply_bar))
+            },
+        ))
         .child(dynamic(move || {
             let status = draft.with(|d| d.status);
             let consent = consenting.get();
@@ -348,6 +507,8 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                 d.correction = input.get();
                 capture::ready(&d)
             };
+            let composing = replying.get();
+            let pending_answers = awaiting_answers();
             let connected = settings::ready_account().is_some();
             untracked(move || {
                 if picking_account {
@@ -381,7 +542,14 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                         })
                         .into_element();
                 }
-                if ready_now {
+                if pending_answers {
+                    return Btn::primary()
+                        .label(|| s().capture_submit_answers.into())
+                        .disabled(send_disabled)
+                        .on_press(send)
+                        .into_element();
+                }
+                if ready_now && !composing {
                     return Btn::primary()
                         .label(move || {
                             let n = draft.with(|d| d.records.len());
@@ -423,93 +591,19 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                 }
                 view().into_element()
             })
-        }))
-        .child(when(
-            move || choosing.get().is_none() && consenting.get().is_none(),
-            move || {
-                view()
-                    .flex_row()
-                    .gap_2()
-                    .items_end()
-                    .child(
-                        IconBtn::new(Icon::Photo, || s().capture_photo.into())
-                            .variant(Variant::Tonal)
-                            .on_press(attach)
-                            .disabled(move || {
-                                picking.get()
-                                    || draft.with(|d| {
-                                        d.status == Status::Analyzing
-                                            || d.image_names().len() >= MAX_ATTACHMENTS
-                                    })
-                            }),
-                    )
-                    .child(
-                        text_input(input)
-                            .element_ref(&focus)
-                            .multiline(true)
-                            .min_h(px(48.0))
-                            .h(move || {
-                                px(if input.get().is_empty() {
-                                    48.0
-                                } else {
-                                    input_height.get()
-                                })
-                            })
-                            .on_content_size_change(move |size: &nsh_core::Size<Points>| {
-                                input_height.set((size.height.0 + 16.0).clamp(48.0, 120.0));
-                            })
-                            .flex_1()
-                            .min_w(px(0.0))
-                            .label(|| s().capture_prompt)
-                            .placeholder(move || {
-                                if draft.with(|d| d.transcript.is_empty()) {
-                                    s().capture_placeholder
-                                } else {
-                                    s().capture_reply_hint
-                                }
-                            }),
-                    )
-                    .child(
-                        IconBtn::new(Icon::Send, move || {
-                            if draft.with(|d| d.pending_ask_user().is_some()) {
-                                s().capture_submit_answers.into()
-                            } else {
-                                s().capture_send.into()
-                            }
-                        })
-                        .variant(Variant::Primary)
-                        .on_press(send)
-                        .disabled(move || {
-                            picking.get()
-                                || settings::ready_account().is_none()
-                                || draft.with(|d| {
-                                    d.status == Status::Analyzing
-                                        || if let Some(request) = d.pending_ask_user() {
-                                            request
-                                                .validate_answers(
-                                                    &d.answers,
-                                                    &input.get(),
-                                                    d.has_staged_images(),
-                                                )
-                                                .is_err()
-                                        } else {
-                                            input.get().trim().is_empty() && !d.has_staged_images()
-                                        }
-                                })
-                        }),
-                    )
-            },
-        ));
-    fitted_task_sheet(
+        }));
+    conversation_sheet(
         move || sheets.capture.get(),
         move || {
             if choosing.get_untracked().is_some() || consenting.get_untracked().is_some() {
+                error.set(None);
                 choosing.set(None);
                 consenting.set(None);
             } else {
                 close();
             }
         },
+        move || !first_turn() || !editing(),
         header,
         body,
         actions,

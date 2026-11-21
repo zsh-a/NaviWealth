@@ -22,6 +22,9 @@ struct TaskHost {
 }
 
 #[derive(Clone)]
+struct ConversationKeyboard;
+
+#[derive(Clone)]
 struct KeyboardBudget(Rc<dyn Fn() -> bool>);
 
 /// Inside a task host, how a swipe or a backdrop press leaves the whole task
@@ -198,7 +201,7 @@ pub fn task_sheet(
     body: impl IntoElement,
     actions: impl IntoElement,
 ) -> impl IntoElement {
-    task_layout(open, close, header, body, actions, true)
+    task_layout(open, close, header, body, actions, || Some(540.0))
 }
 
 /// Content-led capture: short drafts stay compact; long results scroll under
@@ -210,7 +213,23 @@ pub fn fitted_task_sheet(
     body: impl IntoElement,
     actions: impl IntoElement,
 ) -> impl IntoElement {
-    task_layout(open, close, header, body, actions, false)
+    task_layout(open, close, header, body, actions, || None)
+}
+
+/// Capture starts content-sized. A conversation occupies the available screen
+/// above the live keyboard, including when reopened directly into review.
+pub fn conversation_sheet(
+    open: impl Fn() -> bool + 'static,
+    close: impl Fn() + 'static,
+    expanded: impl Fn() -> bool + Copy + 'static,
+    header: impl IntoElement,
+    body: impl IntoElement,
+    actions: impl IntoElement,
+) -> impl IntoElement {
+    provide_context(ConversationKeyboard);
+    task_layout(open, close, header, body, actions, move || {
+        expanded().then_some(f32::INFINITY)
+    })
 }
 
 fn task_layout(
@@ -219,7 +238,7 @@ fn task_layout(
     header: impl IntoElement,
     body: impl IntoElement,
     actions: impl IntoElement,
-    fill: bool,
+    fill_height: impl Fn() -> Option<f32> + Copy + 'static,
 ) -> impl IntoElement {
     // One height calculation, shared with the outer shell. The grabber uses 20pt.
     let planned = untracked(planned_keyboard);
@@ -228,8 +247,8 @@ fn task_layout(
     let layout = view()
         .max_h(move || px(available()))
         .style_when(
-            move || fill,
-            move |s| s.h(move || px(available().min(540.0))),
+            move || fill_height().is_some(),
+            move |s| s.h(move || px(available().min(fill_height().unwrap_or_default()))),
         )
         .child(
             view()
@@ -242,7 +261,7 @@ fn task_layout(
         .child(
             scroll()
                 .flex_shrink(1.0)
-                .style_when(move || fill, |s| s.flex_1())
+                .style_when(move || fill_height().is_some(), |s| s.flex_1())
                 .min_h(px(0.0))
                 .child(view().px(px(space::GUTTER)).py_2().child(body)),
         )
@@ -271,9 +290,10 @@ const KEYBOARD_GAP: f32 = 20.0;
 const KEYBOARD_GUESS: f32 = 0.38;
 
 fn height_budget(planned: Option<f32>) -> impl Fn() -> f32 + Copy {
+    let conversation = use_context::<ConversationKeyboard>().is_some();
     let budget = stored(use_context::<KeyboardBudget>());
     move || {
-        if budget.with(|b| b.as_ref().is_some_and(|b| !(b.0)())) {
+        if conversation || budget.with(|b| b.as_ref().is_some_and(|b| !(b.0)())) {
             (window().height.0 * 0.92 - keyboard_height().0).max(140.0)
         } else {
             sheet_height(planned)
@@ -312,6 +332,7 @@ fn shell(
     content: impl IntoElement,
 ) -> impl IntoElement {
     let lifecycle = use_context::<Lifecycle>();
+    let live_keyboard = use_context::<ConversationKeyboard>().is_some();
     let opened = lifecycle.as_ref().map(|l| l.opened);
     let planned = untracked(planned_keyboard);
     let height = height_budget(planned);
@@ -330,7 +351,12 @@ fn shell(
         })
         .on_open_change(move |event: &SheetEvent| {
             if let SheetEvent::OpenChange(false, reason) = event {
-                close(*reason);
+                if live_keyboard && *reason == OpenChangeReason::Cancel && keyboard_height().0 > 0.0
+                {
+                    dismiss_keyboard();
+                } else {
+                    close(*reason);
+                }
             }
         })
         .close_on_swipe(true)

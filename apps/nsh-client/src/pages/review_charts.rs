@@ -18,7 +18,7 @@ use crate::{
 const CHART: f32 = 120.0;
 
 /// A bar per day against the goal's line; amber past it, ink for today,
-/// a hollow marker for a day without meals (never a zero bar). Weekdays under a
+/// a blank column for a day without meals (never a zero bar). Weekdays under a
 /// week; every seventh day's date under a month.
 pub fn chart(days: Vec<Day>, kcal: Vec<Option<f64>>, goal: Option<f64>) -> impl IntoElement {
     let today = untracked(clock::today);
@@ -37,18 +37,21 @@ pub fn chart(days: Vec<Day>, kcal: Vec<Option<f64>>, goal: Option<f64>) -> impl 
             (Some(k), Some(g)) if *k > g => color::CAUTION,
             _ => color::LINE_STRONG,
         };
-        view().flex_1().h_full().justify_end().child(match kcal {
-            Some(k) => view()
-                .h(px((k / top) as f32 * CHART))
-                .rounded(px(if month { 3.0 } else { 7.0 }))
-                .bg(color),
-            None => view()
-                .h(px(6.0))
-                .rounded(px(3.0))
-                .border_1()
-                .border_color(color::LINE_STRONG)
-                .label(format!("{}, {}", s().short_date(*day), s().no_records)),
-        })
+        let reading = kcal.map_or_else(
+            || s().no_records.to_owned(),
+            |k| format!("{} {}", format::kcal(k), s().kcal),
+        );
+        view()
+            .flex_1()
+            .h_full()
+            .justify_end()
+            .label(format!("{}, {reading}", s().short_date(*day)))
+            .child(kcal.map(|k| {
+                view()
+                    .h(px(((k / top) as f32 * CHART).max(1.0)))
+                    .rounded(px(if month { 3.0 } else { 7.0 }))
+                    .bg(color)
+            }))
     });
     let labels = days.iter().enumerate().map(move |(i, day)| {
         let shown = !month || i % 7 == 0;

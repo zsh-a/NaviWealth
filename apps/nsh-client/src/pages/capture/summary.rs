@@ -6,7 +6,7 @@ use crate::{
         format,
     },
     i18n::s,
-    ui::{Icon, Type, Typo, color, icon, surface::hairline},
+    ui::{Icon, Type, Typo, color, icon},
 };
 use navi_finance::{
     account::Account,
@@ -53,11 +53,70 @@ pub fn saved_message(draft: &Draft) -> String {
     s().capture_saved_detail(label, &value)
 }
 
+/// The latest edit is briefly marked when its draft card comes back into view.
+#[derive(Clone, Copy)]
+struct Revisions(Signal<Vec<usize>>);
+
+pub(super) fn track_revisions(draft: Signal<Draft>) {
+    let records = computed(move || draft.with(|d| d.records.clone()));
+    let previous = stored(records.get_untracked());
+    let changed = signal(Vec::new());
+    provide_context(Revisions(changed));
+    effect(move || {
+        let next = records.get();
+        let marks = previous.with(|old| {
+            if old.is_empty() {
+                return Vec::new();
+            }
+            next.iter()
+                .enumerate()
+                .filter_map(|(i, r)| (old.get(i) != Some(r)).then_some(i))
+                .collect()
+        });
+        previous.replace(next);
+        let marked = !marks.is_empty();
+        changed.set(marks);
+        if marked {
+            set_timeout(std::time::Duration::from_millis(1500), move || {
+                changed.set(Vec::new())
+            });
+        }
+    });
+}
+
 pub fn records(draft: &Draft, choosing: Signal<Option<super::accounts::Choice>>) -> AnyElement {
+    let revisions = use_context::<Revisions>();
     view()
         .gap_4()
         .children(draft.records.iter().enumerate().map(|(index, record)| {
-            record_view(record, index, choosing, draft.status == Status::Ready)
+            let editable = draft.status == Status::Ready && draft.pending_ask_user().is_none();
+            view()
+                .bg(color::SURFACE_2)
+                .border(px(1.0))
+                .border_color(move || {
+                    if revisions.is_some_and(|r| r.0.with(|ids| ids.contains(&index))) {
+                        color::LINE_STRONG
+                    } else {
+                        AdaptiveColor::TRANSPARENT
+                    }
+                })
+                .rounded(px(crate::ui::radius::WELL))
+                .p_4()
+                .gap_2()
+                .child(record_view(record, index, choosing, editable))
+                .child(editable.then(|| {
+                    let label = match record {
+                        Record::Money { .. } => s().capture_edit_amount,
+                        Record::Meal { .. } => s().capture_edit_meal,
+                        Record::Weight { .. } => s().edit_weight,
+                    };
+                    crate::ui::Btn::ghost()
+                        .label(move || label.into())
+                        .on_press(move || {
+                            dismiss_keyboard();
+                            choosing.set(Some(super::accounts::Choice::Value(index)));
+                        })
+                }))
         }))
         .into_element()
 }
@@ -103,7 +162,10 @@ fn account_line(
     nsh_base::button()
         .on_press(move || {
             dismiss_keyboard();
-            choosing.set(Some(super::accounts::Choice { index, destination }));
+            choosing.set(Some(super::accounts::Choice::Account {
+                index,
+                destination,
+            }));
         })
         .accessibility_label(Some(format!("{label}, {value}").into()))
         .flex_row()
@@ -231,7 +293,6 @@ fn record_view(
                     .typo(Type::Body)
                     .text_color(color::CAUTION)
                 }))
-                .child(hairline(0.0))
                 .into_element()
         }
         Record::Meal {
@@ -290,7 +351,6 @@ fn record_view(
                         .typo(Type::Subhead)
                         .text_color(color::CAUTION),
                 )
-                .child(hairline(0.0))
                 .into_element()
         }
         Record::Weight { day, kg } => view()
@@ -316,9 +376,86 @@ fn record_view(
                     .typo(Type::Subhead)
                     .text_color(color::CAUTION)
             }))
-            .child(hairline(0.0))
             .into_element(),
     }
+}
+
+/// Edits a single recognized value locally. Confirmation still owns every ledger/health write.
+pub(super) fn edit_value(
+    draft: Signal<Draft>,
+    input: Signal<String>,
+    error: Signal<Option<String>>,
+    choosing: Signal<Option<super::accounts::Choice>>,
+    index: usize,
+) -> AnyElement {
+    let Some(record) = draft.with_untracked(|d| d.records.get(index).cloned()) else {
+        return view().into_element();
+    };
+    let (label, current) = match record {
+        Record::Money { draft, .. } => (s().money_amount, draft.amount.unwrap_or_default()),
+        Record::Meal { estimate, .. } => (s().name, estimate.title.unwrap_or_default()),
+        Record::Weight { kg, .. } => (s().weight, kg.to_string()),
+    };
+    let value = signal(current);
+    view()
+        .gap_4()
+        .child(crate::ui::field::field(
+            label,
+            crate::ui::field::text_input(value).label(label),
+        ))
+        .child(
+            crate::ui::Btn::primary()
+                .label(|| s().done.into())
+                .on_press(move || {
+                    let mut next = draft.get_untracked();
+                    if next.status != Status::Ready || next.pending_ask_user().is_some() {
+                        return;
+                    }
+                    let written = value.get_untracked();
+                    let written = written.trim();
+                    match next.records.get_mut(index) {
+                        Some(Record::Money { draft, .. })
+                            if navi_finance::money::parse(written, false)
+                                .is_some_and(|n| n > 0) =>
+                        {
+                            draft.amount = Some(written.into())
+                        }
+                        Some(Record::Meal { estimate, .. }) if !written.is_empty() => {
+                            estimate.title = Some(written.into())
+                        }
+                        Some(Record::Weight { kg, .. }) => match written
+                            .parse()
+                            .ok()
+                            .filter(|v| crate::domain::weight::valid_kg(*v))
+                        {
+                            Some(v) => *kg = v,
+                            None => {
+                                error.set(Some(s().error_weight.into()));
+                                return;
+                            }
+                        },
+                        Some(Record::Money { .. }) => {
+                            error.set(Some(s().capture_need_amount.into()));
+                            return;
+                        }
+                        _ => {
+                            error.set(Some(s().error_name.into()));
+                            return;
+                        }
+                    }
+                    next.correction = input.get_untracked();
+                    if let Err(cause) = crate::data::capture::put(next.clone()) {
+                        log::error!("capture: could not keep edited value: {cause}");
+                        error.set(Some(s().error_transaction_storage.into()));
+                        return;
+                    }
+                    dismiss_keyboard();
+                    error.set(None);
+                    draft.set(next);
+                    choosing.set(None);
+                }),
+        )
+        .into_element()
 }
 
 fn amount_text(currency: &str, amount: &str) -> String {

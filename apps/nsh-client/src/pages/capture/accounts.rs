@@ -10,9 +10,9 @@ use crate::{
 };
 
 #[derive(Clone, Copy, PartialEq)]
-pub struct Choice {
-    pub index: usize,
-    pub destination: bool,
+pub enum Choice {
+    Account { index: usize, destination: bool },
+    Value(usize),
 }
 
 pub fn picker(
@@ -20,11 +20,12 @@ pub fn picker(
     input: Signal<String>,
     error: Signal<Option<String>>,
     choosing: Signal<Option<Choice>>,
-    choice: Choice,
+    index: usize,
+    destination: bool,
 ) -> impl IntoElement {
     let current = draft.get_untracked();
-    let (selected, other) = match current.records.get(choice.index) {
-        Some(Record::Money { draft: money, .. }) if choice.destination => {
+    let (selected, other) = match current.records.get(index) {
+        Some(Record::Money { draft: money, .. }) if destination => {
             (money.other_account.clone(), money.account.clone())
         }
         Some(Record::Money { draft: money, .. }) => {
@@ -32,7 +33,7 @@ pub fn picker(
         }
         _ => (None, None),
     };
-    let currency = match current.records.get(choice.index) {
+    let currency = match current.records.get(index) {
         Some(Record::Money { draft: money, .. }) => {
             navi_finance::currency::Currency::parse(&money.currency)
         }
@@ -45,7 +46,7 @@ pub fn picker(
     view()
         .gap_2()
         .child(
-            text(if choice.destination {
+            text(if destination {
                 s().capture_need_destination
             } else {
                 s().capture_need_account
@@ -66,11 +67,10 @@ pub fn picker(
                 if next.status != Status::Ready {
                     return;
                 }
-                let Some(Record::Money { draft: money, .. }) = next.records.get_mut(choice.index)
-                else {
+                let Some(Record::Money { draft: money, .. }) = next.records.get_mut(index) else {
                     return;
                 };
-                let other = if choice.destination {
+                let other = if destination {
                     &money.account
                 } else {
                     &money.other_account
@@ -83,7 +83,7 @@ pub fn picker(
                 {
                     return;
                 }
-                let target: &mut Option<Account> = if choice.destination {
+                let target: &mut Option<Account> = if destination {
                     &mut money.other_account
                 } else {
                     &mut money.account

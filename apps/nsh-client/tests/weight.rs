@@ -127,14 +127,17 @@ fn today_and_review_use_the_shared_average_at_large_text() -> Result<(), String>
     // The preceding complete calendar week spans six days between endpoints.
     app.press("label:Previous week")?;
     // Review leads with what changed.
-    app.wait_for("text:Weight fell 0.6 kg.")?;
+    app.wait_for("text:7-day average weight fell 0.6 kg over this period.")?;
     app.wait_for("label:One sentence")?;
     app.press("label:Next week")?;
     assert!(!app.screen().enabled("label:Next week")?);
     app.press("This month")?;
     let delta = -f64::from(today().0.day() - 1) * 0.1;
     if delta != 0.0 {
-        app.wait_for(&format!("text:Weight fell {:.1} kg.", delta.abs()))?;
+        app.wait_for(&format!(
+            "text:7-day average weight fell {:.1} kg over this period.",
+            delta.abs()
+        ))?;
     }
     Ok(())
 }

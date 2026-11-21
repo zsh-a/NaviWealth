@@ -31,6 +31,12 @@ pub(super) fn thread(
         count
     };
     arrived.replace(count);
+    let exchange_start = draft
+        .transcript
+        .iter()
+        .rposition(|turn| matches!(turn, Turn::Owner { .. } | Turn::ToolAnswer { .. }))
+        .unwrap_or(0);
+    let mut earlier = Vec::new();
     let mut items: Vec<AnyElement> = Vec::new();
     for (index, turn) in draft.transcript.iter().enumerate() {
         let element = match turn {
@@ -104,7 +110,7 @@ pub(super) fn thread(
                 records, questions, ..
             } => {
                 let column = view().gap_2().flex_1().min_w(px(0.0));
-                let column = if *records > 0 && live == Some(index) {
+                let column = if *records > 0 && live == Some(index) && index >= exchange_start {
                     column.child(summary::records(draft, choosing))
                 } else if *records > 0 {
                     column.child(badge(
@@ -127,6 +133,10 @@ pub(super) fn thread(
                     .into_element()
             }
         };
+        if index < exchange_start {
+            earlier.push(element);
+            continue;
+        }
         items.push(if index >= from {
             appear((index - from) as u32, element).into_element()
         } else {
@@ -229,7 +239,26 @@ pub(super) fn thread(
                 .into_element(),
         );
     }
-    view().gap_4().children(items).into_element()
+    if draft.status == Status::Ready
+        && !draft.records.is_empty()
+        && live.is_none_or(|index| index < exchange_start)
+        && draft.pending_ask_user().is_none()
+    {
+        items.push(summary::records(draft, choosing));
+    }
+    let history = signal(false);
+    view()
+        .gap_5()
+        .children(items)
+        .child((!earlier.is_empty()).then(|| {
+            nsh_base::collapsible()
+                .open(move || history.get())
+                .content(view().gap_4().children(earlier))
+                .child(crate::ui::surface::disclosure(history, || {
+                    s().capture_history.into()
+                }))
+        }))
+        .into_element()
 }
 
 /// The model's light as a hairline edge beside its turns.
@@ -290,15 +319,13 @@ fn question_turn(
     send: impl Fn() + Copy + 'static,
 ) -> AnyElement {
     let asked = view()
-        .self_start()
-        .max_w(px(320.0))
         .bg(color::SURFACE_2)
         .rounded(px(18.0))
         .px(px(14.0))
         .py(px(9.0))
         .child(
             text(question.text.clone())
-                .typo(Type::Body)
+                .typo(Type::Title)
                 .text_color(color::INK),
         )
         .into_element();

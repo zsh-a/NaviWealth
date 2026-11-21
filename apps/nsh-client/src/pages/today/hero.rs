@@ -1,5 +1,5 @@
 //! The day at a glance: the energy so far as a large figure counting up,
-//! what is left of the goal, a compact ring of where the energy came from,
+//! what is left of the goal, a compact goal progress ring,
 //! and the macros in grams.
 
 use nsh_core::prelude::*;
@@ -11,7 +11,7 @@ use crate::{
     ui::{
         Type, Typo, color,
         figures::{Scale, counted, stat},
-        ring::{RingData, energy_ring},
+        ring::goal_ring,
         space,
         surface::card,
     },
@@ -27,15 +27,7 @@ pub fn hero(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
     let goal = computed(settings::goal);
     let total = move || summary.with(|summary| summary.total);
     let logged = move || summary.with(|summary| summary.meals > 0);
-    let fill = move || match goal.get() {
-        Some(goal) if goal > 0.0 => (total().kcal / goal).clamp(0.0, 1.0) as f32,
-        _ if total().kcal > 0.0 => 1.0,
-        _ => 0.0,
-    };
-    let ring = move || RingData {
-        shares: total().energy_split().shares().map(|share| share as f32),
-        fill: fill(),
-    };
+    let progress = move || goal.get().filter(|g| *g > 0.0).map(|g| total().kcal / g);
     card()
         .px(px(space::CARD))
         .pt(px(22.0))
@@ -71,12 +63,14 @@ pub fn hero(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                         )),
                 )
                 .child(when(
-                    move || logged() && total().kcal > 0.0,
+                    move || logged() && progress().is_some(),
                     move || {
                         view()
                             .size(px(RING))
                             .flex_shrink_0()
-                            .child(energy_ring(RING, STROKE, ring))
+                            .child(goal_ring(RING, STROKE, move || {
+                                progress().unwrap_or_default() as f32
+                            }))
                             .child(
                                 view()
                                     .absolute()
@@ -84,11 +78,11 @@ pub fn hero(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                                     .items_center()
                                     .justify_center()
                                     .child(
-                                        text(move || match goal.get() {
-                                            Some(g) if g > 0.0 && logged() => {
-                                                format!("{:.0}%", total().kcal / g * 100.0)
-                                            }
-                                            _ => String::new(),
+                                        text(move || {
+                                            format!(
+                                                "{:.0}%",
+                                                progress().unwrap_or_default() * 100.0
+                                            )
                                         })
                                         .typo(Type::Callout)
                                         .font_weight(FontWeight::SEMIBOLD)
@@ -104,17 +98,9 @@ pub fn hero(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                 .flex_row()
                 .gap_4()
                 .flex_wrap()
-                .child(macro_mark(
-                    color::PROTEIN,
-                    || s().protein,
-                    move || total().protein,
-                ))
-                .child(macro_mark(
-                    color::CARBS,
-                    || s().carbs,
-                    move || total().carbs,
-                ))
-                .child(macro_mark(color::FAT, || s().fat, move || total().fat))
+                .child(macro_mark(|| s().protein, move || total().protein))
+                .child(macro_mark(|| s().carbs, move || total().carbs))
+                .child(macro_mark(|| s().fat, move || total().fat))
         }))
 }
 
@@ -142,20 +128,9 @@ fn caption(total: Nutrients, logged: bool, goal: Option<f64>) -> String {
     }
 }
 
-fn macro_mark(
-    tint: AdaptiveColor,
-    name: fn() -> &'static str,
-    grams: impl Fn() -> f64 + 'static,
-) -> impl IntoElement {
-    view()
-        .flex_row()
-        .items_center()
-        .gap(px(6.0))
-        .child(view().size(px(6.0)).rounded_full().bg(tint))
-        .child(
-            text(move || format!("{} {}g", name(), format::grams(grams())))
-                .typo(Type::Caption)
-                .tabular_nums()
-                .text_color(color::MUTED),
-        )
+fn macro_mark(name: fn() -> &'static str, grams: impl Fn() -> f64 + 'static) -> impl IntoElement {
+    text(move || format!("{} {} g", name(), format::grams(grams())))
+        .typo(Type::Subhead)
+        .tabular_nums()
+        .text_color(color::BODY)
 }

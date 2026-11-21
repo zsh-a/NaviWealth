@@ -68,8 +68,10 @@ confirmation; drafts live in SQLite and stay out of backups.
    motion. A chunked transport is a separate future decision, not part of
    this one.
 7. **Same home for the thread.** Capture keeps its sheet entry beside the
-   tab bar; the thread scrolls inside the sheet with the input pinned
-   above the keyboard and the confirm action fixed. Capture does not
+   tab bar. The first entry field sits under the title. On later turns the
+   panel expands to the available screen above the keyboard. The latest exchange
+   stays visible, earlier messages fold, and the footer offers a reply on demand
+   alongside the current action. Capture does not
    become a tab, page or destination.
 
 ## Alternatives Considered

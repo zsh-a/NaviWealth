@@ -149,8 +149,7 @@ fn intake_of(days: Vec<Day>) -> Intake {
     review::intake(&summaries)
 }
 
-/// The period in one sentence: the daily average against the period
-/// before, and the weight trend.
+/// One measured change across the period.
 fn summary(
     period: Signal<Period>,
     days: Memo<Vec<Day>>,
@@ -184,15 +183,7 @@ fn summary(
         .map(|a| a.kcal);
         let change = average.zip(previous).map(|(a, p)| a - p);
         let weight = review::weight_change(&weights::all(), from, to);
-        let entries = crate::data::finance::transactions_snapshot();
-        let spending: Vec<_> = navi_finance::currency::Currency::ALL
-            .into_iter()
-            .filter_map(|currency| {
-                let value = navi_finance::review::spending_in(&entries, from.0, to.0, currency);
-                (value.records > 0).then(|| crate::ui::currency::format(value.total, currency))
-            })
-            .collect();
-        s().review_summary(average, change, weight, &spending)
+        s().review_summary(change, weight)
     });
     when(
         move || line.with(Option::is_some),
@@ -219,11 +210,33 @@ fn intake_card(period: Signal<Period>, days: Memo<Vec<Day>>) -> impl IntoElement
                 .child(when(
                     move || average().is_some(),
                     move || {
-                        stat(
-                            move || average().map(format::kcal),
-                            || s().kcal.to_owned(),
-                            Scale::Hero,
-                        )
+                        view()
+                            .gap_1()
+                            .child(stat(
+                                move || average().map(format::kcal),
+                                || s().kcal_per_logged_day.to_owned(),
+                                Scale::Hero,
+                            ))
+                            .child(
+                                text(move || {
+                                    let (over, logged, of) = intake.with(|i| {
+                                        (
+                                            goal.get().map_or(0, |g| review::over_goal(&i.kcal, g)),
+                                            i.logged_days,
+                                            i.kcal.len(),
+                                        )
+                                    });
+                                    let caption_goal = if period.get() == Period::Month {
+                                        goal.get()
+                                    } else {
+                                        None // The weekly chart already labels its goal line.
+                                    };
+                                    s().intake_caption(caption_goal, over, logged, of)
+                                })
+                                .typo(Type::Caption)
+                                .tabular_nums()
+                                .text_color(color::MUTED),
+                            )
                     },
                 )),
         )
@@ -259,26 +272,6 @@ fn intake_card(period: Signal<Period>, days: Memo<Vec<Day>>) -> impl IntoElement
                                 untracked(move || chart(days, kcal, goal).into_element())
                             }
                         }))
-                        .child(
-                            text(move || {
-                                let (over, logged, of) = intake.with(|i| {
-                                    (
-                                        goal.get().map_or(0, |g| review::over_goal(&i.kcal, g)),
-                                        i.logged_days,
-                                        i.kcal.len(),
-                                    )
-                                });
-                                let caption_goal = if period.get() == Period::Month {
-                                    goal.get()
-                                } else {
-                                    None // The weekly chart already labels its goal line.
-                                };
-                                s().intake_caption(caption_goal, over, logged, of)
-                            })
-                            .typo(Type::Caption)
-                            .tabular_nums()
-                            .text_color(color::MUTED),
-                        )
                         .child(macros(intake))
                 },
             )

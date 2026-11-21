@@ -82,7 +82,6 @@ pub mod color {
     /// Energy from fat: the light step.
     pub const FAT: AdaptiveColor = c(0xB5B0A6, 0x6E6A63);
     /// Energy the macronutrients do not explain.
-    pub const OTHER: AdaptiveColor = c(0xDAD7D0, 0x45433F);
     /// A logged day in the month calendar at its fullest, from the same
     /// stone ramp; lighter days fade it toward the surface.
     pub const HEAT: AdaptiveColor = c(0xC4BFB5, 0x5E5A54);
@@ -231,12 +230,8 @@ pub mod motion {
     pub const INSTANT: f32 = 120.0;
     /// A press, a control's state.
     pub const FAST: f32 = 180.0;
-    /// Moving into place: a selection sliding, a glyph swapping.
-    pub const BASE: f32 = 240.0;
     /// Reveals: a result arriving.
     pub const SLOW: f32 = 380.0;
-    /// Unhurried entrances: the ring filling, figures counting.
-    pub const SLOWER: f32 = 640.0;
 
     /// Rows arriving one after another, this far apart (capped at 8).
     pub const STAGGER: f32 = 50.0;

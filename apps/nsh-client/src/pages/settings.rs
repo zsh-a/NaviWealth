@@ -202,17 +202,7 @@ pub(super) fn setting_details_row(
                 .focus_visible(|s| s.bg(color::SURFACE_2))
                 .child(icon_well(glyph))
                 .child(entry_text(label, summary, tint))
-                .child(
-                    view()
-                        .rotate(move || {
-                            Radians(if open.get() {
-                                std::f32::consts::FRAC_PI_2
-                            } else {
-                                0.0
-                            })
-                        })
-                        .child(icon(Icon::ChevronRight, 18.0, color::MUTED)),
-                ),
+                .child(crate::ui::surface::disclosure_chevron(open)),
         )
 }
 

@@ -17,7 +17,7 @@ use super::{
     drafts::drafts_section,
     finance::transaction_row,
     home::Sheets,
-    rows::{INSET, TEXT_INSET, divider, meal_row, weight_row},
+    rows::{INSET, divider, leading_width, meal_row, text_inset, weight_row},
 };
 use crate::{
     data::{clock, finance, meals, photos, weights},
@@ -294,6 +294,12 @@ fn focus_bar(focus: Signal<Option<Day>>, days: Memo<Vec<DayRecords>>) -> impl In
 }
 
 fn day_section(records: DayRecords) -> impl IntoElement {
+    let leading = leading_width(
+        records
+            .entries
+            .iter()
+            .any(|entry| matches!(entry, Entry::Meal(meal) if meal.photo.is_some())),
+    );
     let sheets = Sheets::get();
     let today = untracked(clock::today);
     let title = match today.days_since(records.day) {
@@ -411,13 +417,13 @@ fn day_section(records: DayRecords) -> impl IntoElement {
                             let inset = if matches!(entry, Entry::Weight(_)) {
                                 INSET
                             } else {
-                                TEXT_INSET
+                                text_inset(leading)
                             };
                             let row = match entry {
-                                Entry::Meal(meal) => meal_row(meal).into_element(),
+                                Entry::Meal(meal) => meal_row(meal, leading).into_element(),
                                 Entry::Transaction(transaction) => {
                                     let id = transaction.id.clone();
-                                    transaction_row(transaction, move || {
+                                    transaction_row(transaction, leading, move || {
                                         sheets.finance.set(Some(id.clone()))
                                     })
                                     .into_element()

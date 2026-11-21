@@ -26,13 +26,21 @@ pub const INSET: f32 = space::CARD;
 pub const LEAD: f32 = 12.0;
 /// Where the text of a row with a leading footprint starts; its divider
 /// starts here too, so hairlines underline text rather than icons.
-pub const TEXT_INSET: f32 = LEAD + THUMB + 14.0;
+pub fn text_inset(leading: f32) -> f32 {
+    LEAD + leading + 14.0
+}
+
+pub const ICON_COLUMN: f32 = 28.0;
+
+pub fn leading_width(has_photo: bool) -> f32 {
+    if has_photo { THUMB } else { ICON_COLUMN }
+}
 
 /// The leading footprint of a row without a photo: its semantic icon, small
 /// and quiet, so the column aligns without reading as a column of icons.
-pub fn glyph(icon: Icon, height: f32) -> View {
+pub fn glyph(icon: Icon, width: f32, height: f32) -> View {
     view()
-        .w(px(THUMB))
+        .w(px(width))
         .h(px(height))
         .flex_shrink_0()
         .items_center()
@@ -46,7 +54,7 @@ pub fn divider(leading: f32) -> View {
 }
 
 /// A saved meal; pressing it opens it.
-pub fn meal_row(meal: Meal) -> impl IntoElement {
+pub fn meal_row(meal: Meal, leading: f32) -> impl IntoElement {
     let id = meal.id.clone();
     let total = meal.total();
     let label = format!(
@@ -64,7 +72,7 @@ pub fn meal_row(meal: Meal) -> impl IntoElement {
         .accessibility_label(move || Some(label.clone().into()))
         .child(match photo {
             Some(photo) => thumbnail(photo).into_element(),
-            None => glyph(Icon::Utensils, THUMB).into_element(),
+            None => glyph(Icon::Utensils, leading, THUMB).into_element(),
         })
         .child(
             view()

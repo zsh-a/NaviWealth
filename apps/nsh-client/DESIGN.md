@@ -35,9 +35,8 @@ AI only to turn text and images into drafts, using the owner's model account.
   whether an answer is needed, then full-width choices with short descriptions.
   The question and its choices are grouped together, with answer controls pinned below.
   No choice is preselected. Tapping stages a choice with a check; tapping again
-  clears it. The composer’s always-visible round send button becomes Submit
-  answers / 提交答案 while questions are pending; there is no separate submit
-  row. It is disabled until the required answers are valid. The composer
+  clears it. Pending questions show a labelled Submit answers / 提交答案 button
+  beneath the options. It enables when the required answers are valid. The composer
   accepts extra text or photos. Selection persists immediately, while
   the model is called only on submission. Historical decisions have no active
   choices and the owner turn records the submitted answers. Pending tools and
@@ -47,13 +46,15 @@ AI only to turn text and images into drafts, using the owner's model account.
   separate from Confirm and save; Discard draft is a header action with
   Undo; closing a nonempty draft reports that the draft is kept and no
   records were saved.
-  The composer is the one stable input, pinned in the task actions above the
-  keyboard, with 8 pt top padding in the shared action region: an accessible photo icon on every owner turn, the input
-  (labelled What would you like to record? / 想记下什么？) and a round send
+  The first entry opens a compact writing surface under the title. After sending,
+  the conversation uses the available height above the live keyboard. Earlier exchanges
+  fold under Earlier messages. Add details opens the reply surface on demand.
+  Both writing surfaces group a photo control, the input
+  (labelled What would you like to record? / 想记下什么？) and, for ordinary messages, a round send
   button. Input starts at one line (48 pt), grows with its content up to
   120 pt, and keeps the 48 pt photo and send controls aligned at its bottom.
   An empty composer keeps its send button visible and disabled.
-  The action row above it swaps the task's current action:
+  The footer shows the task's current action:
   Recognize on the consent sheet, Review later while the model works,
   Set up without a model, and Confirm and save once the records are ready.
   The draft accepts up to four images across all turns. Unsent evidence appears
@@ -62,6 +63,8 @@ AI only to turn text and images into drafts, using the owner's model account.
   questions or unsent evidence withhold confirmation.
   Only a draft with no thread yet requests initial focus after the sheet
   opens; a ready result stays readable.
+  Each record supports a local edit to its amount, meal name or weight. Edits
+  persist in the draft and the final confirmation writes the batch.
   Account rows in a ready result open an existing-account picker in the same
   sheet. Transfer source and destination lists exclude the other account;
   internal holding accounts are never offered. Selection first persists the
@@ -86,8 +89,8 @@ AI only to turn text and images into drafts, using the owner's model account.
   or a backdrop press leaves the whole task, after the panel's discard
   guard. Saving closes the shared sheet before its panel resets, so the
   sheet leaves with the form rather than swapping the menu in.
-  Capture uses `fitted_task_sheet`: short content determines its height,
-  while longer results scroll at the available-height limit. The management
+  Capture uses a content-sized entry sheet, then expands to 92% of the window
+  less the visible keyboard. Android Back dismisses the keyboard first. The management
   menu and compact account editor also fit their content. Other task
   editors retain `task_sheet`'s filled height, capped at 540 pt. Both plan
   for the keyboard when they open (the last height it reached, else 38% of
@@ -110,8 +113,9 @@ AI only to turn text and images into drafts, using the owner's model account.
 - **No hidden gestures.** Every action is a visible control; nothing
   depends on a long press.
 - **Today shows today:** the main card is health only: intake as the one
-  Display figure, what is left of the goal, and the macro ring (below the
-  figure at large text). Flat beneath it is a full-width Body metrics summary:
+  Display figure, what is left of the goal, and a progress ring when a goal is set. The ring fills up to one
+  turn and its center reports the actual percentage, including values above
+  100%. Protein, carbohydrate and fat appear separately in grams. Flat beneath it is a full-width Body metrics summary:
   three compact columns for weight, body fat and BMI. The seven-day trend
   stays beside the weight in its column (↓0.5 kg · 7天), wrapping locally on
   narrow screens. Today’s measurement date is omitted visually; an older date
@@ -125,7 +129,7 @@ AI only to turn text and images into drafts, using the owner's model account.
   opens entry directly. A reading panel uses the sheet's space; entry reserves
   the keyboard. Sleep and Body Battery occupy a separate equal-width row
   once Garmin is connected, stacking at large text (a Garmin vital opens all
-  of the day's Garmin data). Then today's records, whose header carries the count
+  of the day's Garmin data). Then today's records, newest first, whose header carries the count
   and the day's spending in each currency ("3 条 · 支出 ¥12.00"): spending
   is summarized beside the records it adds up. Opening balances and
   adjustments remain in the timeline with quieter labels and amounts; they
@@ -214,15 +218,14 @@ AI only to turn text and images into drafts, using the owner's model account.
   summary linked to the account; corrections go through another balance check.
 - **Review:** a calendar week (Monday first in Chinese and ISO locales) or
   month, with its segmented control above the labelled period stepper.
-  It leads with a complete sentence combining observed daily-average intake,
-  its comparison when earlier data exists, weight change and recorded spending
-  in each available currency. Partial periods compare matching elapsed days;
+  The headline shows one observed change, preferring the period’s weight change
+  and falling back to intake per logged day when both periods have entries. Partial periods compare matching elapsed days;
   missing observations never imply a zero or an invented comparison.
   Next comes the intake card: a bar per day for a week, with a labelled dashed goal
-  line and low hollow placeholders for days without meals, a calendar for a month
+  line and labelled empty columns for days without meals, a calendar for a month
   (shaded by share of the goal, amber past it, a dot on weighed days, today
-  outlined; a day opens in Records). The weekly caption gives only logged days,
-  since the goal line is labelled; the month caption retains the goal.
+  outlined; a day opens in Records). Coverage sits directly beneath intake per logged day. The monthly caption
+  includes the goal, which the weekly chart labels on its reference line.
   Spending and weight follow, then the
   one-line note and Garmin averages. An empty intake card shows a short message.
 - **Settings keep every change as it is made; there is no Save.** Recognition
@@ -359,7 +362,9 @@ Financial values, including gains and losses, stay in neutral ink.
   intake, Assets' net worth), repeated rows, sheets and framed tools.
   Secondary figures (vitals, Review's weight and Garmin averages) lie flat
   on the canvas, grouped by hairlines and space. Cards never nest.
-- **Rows** for meals and money share a 52 pt leading footprint. A meal without
+- **Rows** for meals and money share a 28 pt icon column. A group with any meal
+  photo reserves 52 pt for every leading cell. Transfers use the source and
+  destination as the title, with the transfer label and time below. A meal without
   a photo uses the semantic food icon; financial rows use their semantic
   icon (Check for opening balances and adjustments; Sliders stays Settings).
   Footprint icons are 20 pt and muted so the column aligns without reading
@@ -561,7 +566,7 @@ reviews reveal rows in batches of 50. A changed journal requires review again.
 
 ## Motion inventory
 
-Tokens: instant 120 ms, fast 180, base 240, slow 380, slower 640; settle
+Tokens: instant 120 ms, fast 180, slow 380; settle
 curve `cubic-bezier(0.22, 1, 0.36, 1)`; press spring (600 / 38); rise 14 pt;
 stagger 50 ms (8 at most). Reduced motion: every item below is instant or
 still.
@@ -570,8 +575,7 @@ still.
 |---|---|---|---|
 | All | Button press | Spring to 0.98 (cards and tiles 0.98, icon buttons 0.96), deeper fill; primary sheen clears and lift lowers | Fill and surface state only; no scale spring |
 | Home | Tab chosen | The bar's pill slides to the tab (native spring) | Jumps |
-| Today | Day's energy changes | Ring segments sweep to their new ends, `slower`; the figure eases to its new value | Set at once |
-| Today | Meals arrive (open, save, undo) | Rows rise 14 pt and fade in, staggered | Shown at once |
+| Today | Day's energy changes | The goal arc moves to its new endpoint in 180 ms; the figure eases to its new value | Set at once |
 | All | Toast | Slides up and fades, `slow`; its action (Undo) restores | Shown at once |
 | Meal page | Scrolling | Photo drifts at half speed; the top bar frosts in once the panel slides under it | Bar switches at once |
 | Meal page | Analyzing | The AI's light passes over the photo (2 s loop); placeholders shimmer | No light, no shimmer |

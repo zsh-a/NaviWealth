@@ -190,9 +190,19 @@ pub fn apply() {
             account::{Account, defaults},
             recognition::{Kind, MoneyDraft},
         };
+        let zh = Lang::from_language(locale().language()) == Lang::Zh;
+        let t = |en: &'static str, cn: &'static str| if zh { cn } else { en };
         let missing = route.as_deref() == Some("capture-missing");
         let mut draft = crate::data::capture::new();
-        draft.input = "Lunch 32 yuan, paid from Wallet".into();
+        draft.input = if route.as_deref() == Some("capture-ask") {
+            t("Lunch was 32 yuan", "午餐花了 32 元。")
+        } else {
+            t(
+                "Lunch 32 yuan, paid from Wallet",
+                "午餐花了 32 元，用钱包付的。",
+            )
+        }
+        .into();
         draft.model = "preview-model".into();
         draft.status = Status::Ready;
         draft.records = vec![Record::Money {
@@ -209,7 +219,7 @@ pub fn apply() {
                 other_account: None,
                 category: Some(defaults::expense("餐饮")),
                 time: None,
-                payee: "Lunch".into(),
+                payee: t("Lunch", "午餐").into(),
                 note: String::new(),
             },
         }];
@@ -217,13 +227,13 @@ pub fn apply() {
         // turn with the records and, while the account is missing, the
         // question with its tap-first answers. The reply is a display stub;
         // a preview never sends it back to a model.
-        let question = Question {
-            text: "Which account was used?".into(),
-            options: if missing {
-                vec!["Wallet".into(), "Cash".into(), "Bank".into()]
-            } else {
-                Vec::new()
-            },
+        let questions: Vec<Question> = if missing {
+            vec![Question {
+                text: "Which account was used?".into(),
+                options: vec!["Wallet".into(), "Cash".into(), "Bank".into()],
+            }]
+        } else {
+            Vec::new()
         };
         draft.transcript = vec![
             Turn::Owner {
@@ -233,21 +243,18 @@ pub fn apply() {
             },
             Turn::Assistant {
                 provider_output: None,
-                reply: serde_json::json!({"records":[], "questions":[
-                    {"text": question.text, "options": question.options}
-                ]})
-                .to_string(),
+                reply: serde_json::json!({"records":[], "questions": questions}).to_string(),
                 records: draft.records.len(),
-                questions: vec![question],
+                questions,
             },
         ];
         if route.as_deref() == Some("capture-ask") {
             let input = serde_json::json!({"questions":[{
-                "id":"relation", "text":"Do these images show the same purchase?",
-                "reason":"An order and a payment can be evidence for one transaction.",
+                "id":"account", "text":t("Which account paid for lunch?", "这笔午餐从哪个账户支付？"),
+                "reason":t("The entry includes an amount but no payment account.", "已识别金额，还需要确认付款账户。"),
                 "required":true, "options":[
-                    {"id":"same","label":"Same purchase","description":"Combine the evidence into one record."},
-                    {"id":"separate","label":"Separate purchases","description":"Keep two records for review."}
+                    {"id":"wallet","label":t("Wallet", "钱包"),"description":t("Cash payment", "用现金支付")},
+                    {"id":"bank","label":t("Bank card", "银行卡"),"description":t("Paid from a bank account", "从银行账户扣款")}
                 ]
             }]});
             let blocks = serde_json::json!([{"type":"tool_use","id":"preview-ask","name":"ask_user","input":input}]);

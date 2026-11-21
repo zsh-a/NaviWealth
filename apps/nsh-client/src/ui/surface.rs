@@ -81,19 +81,19 @@ pub fn disclosure(open: Signal<bool>, label: impl Fn() -> SharedString + 'static
         .focus_visible(|s| s.outline(px(2.0)).outline_color(color::INK))
         .active(|s| s.opacity(0.7))
         .child(text(label).typo(Type::Headline).text_color(color::INK))
-        .child(
-            view()
-                .transition_transform()
-                .duration(motion::BASE)
-                .rotate(move || {
-                    Radians(if open.get() {
-                        std::f32::consts::FRAC_PI_2
-                    } else {
-                        0.0
-                    })
-                })
-                .child(icon(Icon::ChevronRight, 18.0, color::MUTED)),
-        )
+        .child(disclosure_chevron(open))
+}
+
+pub fn disclosure_chevron(open: Signal<bool>) -> impl IntoElement {
+    view()
+        .rotate(move || {
+            Radians(if open.get() {
+                std::f32::consts::PI
+            } else {
+                0.0
+            })
+        })
+        .child(icon(Icon::ChevronDown, 18.0, color::MUTED))
 }
 
 /// A quiet label above a group of settings.

@@ -96,32 +96,8 @@ impl Strings {
         }
     }
 
-    /// One sentence from observations, with comparisons only when both periods exist.
-    pub fn review_summary(
-        &self,
-        average: Option<f64>,
-        change: Option<f64>,
-        weight: Option<f64>,
-        spending: &[String],
-    ) -> Option<String> {
-        let mut parts = Vec::new();
-        if let Some(average) = average {
-            let mut intake = self
-                .review_average
-                .replace("{value}", &format::kcal(average));
-            if let Some(change) = change.filter(|v| v.is_finite()) {
-                let comparison = if change.round() == 0.0 {
-                    self.review_intake_same
-                } else if change > 0.0 {
-                    self.review_intake_more
-                } else {
-                    self.review_intake_less
-                };
-                intake.push_str(if self.zh() { "，" } else { ", " });
-                intake.push_str(&comparison.replace("{value}", &format::kcal(change.abs())));
-            }
-            parts.push(intake);
-        }
+    /// Lead with one measured change, using comparable intake when weight is unavailable.
+    pub fn review_summary(&self, change: Option<f64>, weight: Option<f64>) -> Option<String> {
         if let Some(weight) = weight.filter(|v| v.is_finite()) {
             let phrase = if (weight * 10.0).round() == 0.0 {
                 self.review_weight_same
@@ -130,24 +106,20 @@ impl Strings {
             } else {
                 self.review_weight_down
             };
-            parts.push(phrase.replace("{value}", &self.kg(weight.abs())));
+            return Some(phrase.replace("{value}", &self.kg(weight.abs())));
         }
-        if !spending.is_empty() {
-            parts.push(self.review_spent.replace("{value}", &spending.join(" / ")));
-        }
-        if parts.is_empty() {
-            return None;
-        }
-        let mut line = parts.join(if self.zh() { "；" } else { "; " });
-        if !self.zh() {
-            line[..1].make_ascii_uppercase();
-        }
-        line.push_str(if self.zh() { "。" } else { "." });
-        Some(line)
+        let change = change.filter(|v| v.is_finite())?;
+        let phrase = if change.round() == 0.0 {
+            self.review_intake_same
+        } else if change > 0.0 {
+            self.review_intake_more
+        } else {
+            self.review_intake_less
+        };
+        Some(phrase.replace("{value}", &format::kcal(change.abs())))
     }
 
-    /// Under the intake chart: the goal and the days past it, and how many
-    /// days have meals.
+    /// Coverage beside the average and, for a calendar, its goal context.
     pub fn intake_caption(
         &self,
         goal: Option<f64>,
@@ -298,19 +270,11 @@ mod tests {
     fn review_sentence_does_not_invent_a_missing_comparison() {
         for lang in [Lang::En, Lang::Zh] {
             let s = strings(lang);
-            assert!(s.review_summary(None, None, None, &[]).is_none());
-            let line = s
-                .review_summary(Some(1850.0), None, Some(-0.5), &["¥142.00".into()])
-                .unwrap();
-            assert!(line.contains("1,850"));
+            assert!(s.review_summary(None, None).is_none());
+            let line = s.review_summary(Some(-100.0), Some(-0.5)).unwrap();
             assert!(line.contains("0.5"));
-            assert!(line.contains("¥142.00"));
-            assert!(!line.contains("comparison"));
-            assert!(!line.contains("对比"));
-            assert!(line.ends_with(if lang == Lang::En { "." } else { "。" }));
-            let compared = s
-                .review_summary(Some(1850.0), Some(-100.0), None, &[])
-                .unwrap();
+            assert!(!line.contains("100"));
+            let compared = s.review_summary(Some(-100.0), None).unwrap();
             assert!(compared.contains("100"));
         }
     }

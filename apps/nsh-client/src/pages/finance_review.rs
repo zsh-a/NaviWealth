@@ -262,6 +262,7 @@ pub fn spending_page(from: Day, to: Day, category: Option<String>, currency: Cur
                                             view()
                                                 .child(super::finance::transaction_row(
                                                     t,
+                                                    super::rows::ICON_COLUMN,
                                                     move || edit.set(Some(id.clone())),
                                                 ))
                                                 .child(hairline(0.0))

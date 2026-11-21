@@ -111,6 +111,11 @@ fn account_completion_is_local_durable_and_never_posts_before_confirmation() -> 
     db.execute_batch("DROP TRIGGER reject_draft").unwrap();
     app.press("label:Cash")?;
     app.wait_for("label:Account, Cash")?;
+    app.press("Edit amount")?;
+    app.clear("label:Amount")?;
+    app.type_text("label:Amount", "35.05")?;
+    app.press("Done")?;
+    app.wait_for("text:¥35.05")?;
     assert!(app.screen().enabled("Confirm and save")?);
     app.press("label:Close")?;
     app.wait_for("Draft kept; no records saved")?;
@@ -134,9 +139,9 @@ fn account_completion_is_local_durable_and_never_posts_before_confirmation() -> 
     app.press("label:Review records")?;
     app.wait_for("label:Account, Cash")?;
     app.press("Confirm and save")?;
-    app.wait_for("Saved Spending · ¥32.00")?;
+    app.wait_for("Saved Spending · ¥35.05")?;
     app.press("View")?;
-    app.wait_for("label:/^Lunch shop, −¥32.00/")?;
+    app.wait_for("label:/^Lunch shop, −¥35.05/")?;
     assert_eq!(
         navi_finance::repository::transactions(&db).unwrap().len(),
         1
@@ -172,12 +177,23 @@ fn natural_correction_then_batch_confirmation_is_atomic_and_survives_restart() -
     app.press("label:Send")?;
     app.wait_for("Which account was used?")?;
     assert!(!app.shows("text:/^Confirm and save/"));
+    app.press("Add details")?;
     app.type_text(
         "label:What would you like to record?",
         "Use Cash; the amount is 32 yuan",
     )?;
     app.press("label:Send")?;
     app.wait_for("text:¥32.00")?;
+    app.press("Edit meal name")?;
+    app.clear("label:Name")?;
+    app.type_text("label:Name", "Lunch noodles")?;
+    app.press("Done")?;
+    app.wait_for("text:Lunch noodles")?;
+    app.press("Edit weight")?;
+    app.clear("label:Weight")?;
+    app.type_text("label:Weight", "74.3")?;
+    app.press("Done")?;
+    app.wait_for("text:74.3 kg")?;
     assert!(app.screen().enabled("text:/^Confirm and save/")?);
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
     assert!(
@@ -224,7 +240,7 @@ fn natural_correction_then_batch_confirmation_is_atomic_and_survives_restart() -
     assert_eq!(
         db.query_row("SELECT kg FROM weights", [], |r| r.get::<_, f64>(0))
             .unwrap(),
-        74.2
+        74.3
     );
     assert_eq!(
         db.query_row("SELECT COUNT(*) FROM capture_drafts", [], |r| r
@@ -325,6 +341,9 @@ fn compact_photo_and_text_composer_keeps_the_same_draft_across_back_and_reopen()
     );
     assert!(app.screen().enabled("label:Send")?);
     app.back()?;
+    app.wait_for("task-sheet")?;
+    app.set_environment("IME dismissed", |e| e.keyboard_height = Points(0.0))?;
+    app.back()?;
     app.wait_for_gone("task-sheet", GONE)?;
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
     let before: (String, String) = db
@@ -397,16 +416,34 @@ fn thread_questions_answer_by_tap_and_reopen_keeps_the_conversation() -> Result<
         })),
     )]));
     let (mut app, storage) = start_in(Some(dir.path()), account(true), Some(stub.clone()));
+    app.set_viewport(nsh_core::geometry::Size::new(
+        nsh_core::geometry::Points(390.0),
+        nsh_core::geometry::Points(844.0),
+    ))?;
     app.press("label:New entry")?;
     app.type_text("label:What would you like to record?", "Lunch 32 yuan")?;
     app.press("label:Send")?;
     app.wait_for("Which account was used?")?;
     app.wait_for("text:Bank")?;
+    let sheet = app
+        .screen()
+        .layout_nodes()
+        .into_iter()
+        .find(|n| n.test_id.as_deref() == Some("task-sheet"))
+        .unwrap();
+    assert!(
+        sheet.bounds.size.height.0 > 700.0,
+        "review uses the available phone height"
+    );
+    app.wait_for("text:Submit answers")?;
     assert!(
         !app.screen().enabled("Submit answers")?,
         "required choice is never preselected"
     );
-    app.scroll("label:Bank", nsh_core::geometry::Points(120.0))?;
+    assert!(
+        !app.shows("label:Attach image"),
+        "reply tools are collapsed while choosing"
+    );
     app.press("label:Bank")?;
     app.press("label:Cash")?;
     assert_eq!(
@@ -530,6 +567,7 @@ fn image_only_followup_replays_each_view_in_its_original_turn_after_restart() ->
             ImageData::new(detail.get_ref().clone()),
         )]
     });
+    app.press("Add details")?;
     app.press("Attach image")?;
     app.wait_for("Remove image")?;
     assert!(

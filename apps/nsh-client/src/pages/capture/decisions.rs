@@ -39,7 +39,7 @@ pub fn questions(
                         .gap_1()
                         .child(
                             text(question.text.clone())
-                                .typo(Type::Headline)
+                                .typo(Type::Title)
                                 .text_color(color::INK),
                         )
                         .child(current.then(|| {
@@ -58,7 +58,7 @@ pub fn questions(
                 )
                 .child(open.then(|| {
                     view()
-                        .gap_1()
+                        .gap_2()
                         .children(question.options.iter().map(move |option| {
                             let call_id = call_id.clone();
                             let question_id = question_id.clone();
@@ -91,9 +91,9 @@ pub fn questions(
                                     Err(_) => error.set(Some(s().error_transaction_storage.into())),
                                 }
                             })
-                            .min_h(px(48.0))
-                            .px_3()
-                            .py_2()
+                            .min_h(px(56.0))
+                            .px_4()
+                            .py_3()
                             .accessibility_label(Some(label.clone().into()))
                             .selected(checked)
                             .bg(if checked {

@@ -1,4 +1,4 @@
-//! The day's meals, oldest first, as rows of one card led by each meal's
+//! The day's meals, newest first, as rows of one card led by each meal's
 //! photo; a calm empty state when the day has none.
 
 use navi_finance::journal::Transaction;
@@ -11,11 +11,10 @@ use crate::{
     pages::{
         finance::transaction_row,
         home::Sheets,
-        rows::{TEXT_INSET, divider, meal_row},
+        rows::{divider, leading_width, meal_row, text_inset},
     },
     ui::{
         Type, Typo, color,
-        feedback::appear,
         surface::{card, section_header},
     },
 };
@@ -50,11 +49,22 @@ pub fn meal_list(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                     .map(Record::Transaction),
             )
             .collect();
-        records.sort_by_key(|r| match r {
-            Record::Meal(m) => clock::zoned(m.logged_at_ms).time(),
-            Record::Transaction(t) => t.at.time(),
+        records.sort_by_key(|r| {
+            std::cmp::Reverse(match r {
+                Record::Meal(m) => clock::zoned(m.logged_at_ms).time(),
+                Record::Transaction(t) => t.at.time(),
+            })
         });
         records
+    });
+    let leading = computed(move || {
+        list.with(|records| {
+            leading_width(
+                records
+                    .iter()
+                    .any(|r| matches!(r, Record::Meal(meal) if meal.photo.is_some())),
+            )
+        })
     });
     // Kept photos load off the engine thread as the day's meals change.
     effect(move || {
@@ -113,25 +123,27 @@ pub fn meal_list(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                     card().overflow_hidden().child(each(
                         list,
                         |record: &Record| record.key(),
-                        move |meal, index| {
-                            appear(
-                                index.get_untracked() as u32,
-                                view()
-                                    .child(when(move || index.get() > 0, || divider(TEXT_INSET)))
-                                    .child(dynamic(move || {
-                                        let meal = meal.get();
-                                        untracked(move || match meal {
-                                            Record::Meal(meal) => meal_row(meal).into_element(),
-                                            Record::Transaction(transaction) => {
-                                                let id = transaction.id.clone();
-                                                transaction_row(transaction, move || {
-                                                    sheets.finance.set(Some(id.clone()))
-                                                })
-                                                .into_element()
-                                            }
-                                        })
-                                    })),
-                            )
+                        move |record, index| {
+                            dynamic(move || {
+                                let record = record.get();
+                                let width = leading.get();
+                                let has_divider = index.get() > 0;
+                                untracked(move || {
+                                    let row = match record {
+                                        Record::Meal(meal) => meal_row(meal, width).into_element(),
+                                        Record::Transaction(transaction) => {
+                                            let id = transaction.id.clone();
+                                            transaction_row(transaction, width, move || {
+                                                sheets.finance.set(Some(id.clone()))
+                                            })
+                                            .into_element()
+                                        }
+                                    };
+                                    view()
+                                        .child(has_divider.then(|| divider(text_inset(width))))
+                                        .child(row)
+                                })
+                            })
                         },
                     ))
                 },

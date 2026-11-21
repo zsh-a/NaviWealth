@@ -1194,7 +1194,11 @@ pub(super) fn transaction_title(t: &Transaction) -> String {
 
 /// A ledger row for Today and Records. Transfers explicitly say Transfer and
 /// never acquire a spending sign merely because money leaves one own account.
-pub fn transaction_row(t: Transaction, on_press: impl Fn() + 'static) -> impl IntoElement {
+pub fn transaction_row(
+    t: Transaction,
+    leading: f32,
+    on_press: impl Fn() + 'static,
+) -> impl IntoElement {
     let investment = matches!(t.source, Source::Investment { .. });
     let system_record = super::assets::balance_title(&t).is_some();
     let investment_cash = match &t.source {
@@ -1206,7 +1210,6 @@ pub fn transaction_row(t: Transaction, on_press: impl Fn() + 'static) -> impl In
         _ => None,
     };
     let parsed = if investment { None } else { parts(&t) };
-    let title = transaction_title(&t);
     let amount = parsed
         .as_ref()
         .map(|p| {
@@ -1263,15 +1266,28 @@ pub fn transaction_row(t: Transaction, on_press: impl Fn() + 'static) -> impl In
                 .map(|p| p.account.name().to_owned())
                 .unwrap_or_default()
         });
-    let sub = format!(
-        "{kind} · {accounts} · {:02}:{:02}",
-        t.at.hour(),
-        t.at.minute()
-    );
-    let currency = t
-        .own_postings()
-        .next()
-        .map_or(Currency::CNY, |p| p.account.currency());
+    let time = format!("{:02}:{:02}", t.at.hour(), t.at.minute());
+    let transfer = parsed.as_ref().is_some_and(|p| p.0 == Kind::Transfer);
+    let (title, sub) = if transfer {
+        let payee = t.payee.trim();
+        let sub = if payee.is_empty() || payee == kind {
+            format!("{kind} · {time}")
+        } else {
+            format!("{kind} · {time} · {payee}")
+        };
+        (accounts, sub)
+    } else {
+        (
+            transaction_title(&t),
+            format!("{kind} · {time} · {accounts}"),
+        )
+    };
+    let currency = parsed
+        .as_ref()
+        .map(|p| p.1.currency())
+        .or_else(|| investment_cash.as_ref().map(|a| a.currency()))
+        .or_else(|| t.own_postings().next().map(|p| p.account.currency()))
+        .unwrap_or(Currency::CNY);
     let accessibility = format!(
         "{title}, {}, {sub}",
         crate::ui::currency::decorate(&amount, currency)
@@ -1313,6 +1329,7 @@ pub fn transaction_row(t: Transaction, on_press: impl Fn() + 'static) -> impl In
         .accessibility_label(move || Some(accessibility.clone().into()))
         .child(super::rows::glyph(
             glyph,
+            leading,
             if system_record {
                 36.0
             } else {
@@ -1328,7 +1345,7 @@ pub fn transaction_row(t: Transaction, on_press: impl Fn() + 'static) -> impl In
                     text(title)
                         .typo(title_style)
                         .text_color(tint)
-                        .number_of_lines(1),
+                        .number_of_lines(if transfer { 2 } else { 1 }),
                 )
                 .child(
                     text(sub)
