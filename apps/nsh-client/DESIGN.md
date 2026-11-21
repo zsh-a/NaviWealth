@@ -103,7 +103,11 @@ AI only to turn text and images into drafts, using the owner's model account.
   editors retain `task_sheet`'s filled height, capped at 540 pt. Both plan
   for the keyboard when they open (the last height it reached, else 38% of
   the window). The NSH sheet lifts the panel by the keyboard height above the
-  bottom safe area. The panel, scroll area and actions keep their size until
+  bottom safe area. NSH 0.6.1 presents each sheet in a dialog window whose
+  root Android already lays out above the keyboard, so the app measures that
+  root and places the panel so its content meets the keyboard instead of
+  floating a keyboard's height above it (`panel_bottom` in `src/ui/sheet.rs`,
+  `tests/keyboard_sheet.rs`); hosts that do not shrink the root keep the lift. The panel, scroll area and actions keep their size until
   a keyboard exceeds the planned height. Toasts belong to the active sheet while
   it is open, so Undo cannot be covered by its backdrop. Opening capture clears
   old informational notices and saved receipts; Undo messages keep their normal

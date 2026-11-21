@@ -317,6 +317,24 @@ fn sheet_height(planned: Option<f32>) -> f32 {
     (top - planned - KEYBOARD_GAP).min(live).max(140.0)
 }
 
+/// Where a sheet's panel stands above the bottom of its dialog's root, given
+/// the root's measured height. NSH 0.6.1 presents every sheet in a dialog;
+/// on Android that window lays its root out above the keyboard, yet
+/// `nsh_base` still lifts the panel by the keyboard the activity reports,
+/// so the sheet floated a keyboard's height above it. The intended place is
+/// `nsh_base`'s own: the panel's bottom inset padding (kept for the
+/// navigation bar) behind the keyboard, which covers that bar, so the
+/// content ends just above it. Measured from a root that already ends
+/// `shrunk` above the window's bottom, that is `nsh_base`'s lift less the
+/// shrink; the shrink also stands in for a keyboard the activity does not
+/// report. A host that does not shrink the root keeps `nsh_base`'s lift.
+/// The panel moves; it never resizes with the keyboard.
+fn panel_bottom(root_height: Option<f32>) -> f32 {
+    let shrunk = root_height.map_or(0.0, |h| (window().height.0 - h).max(0.0));
+    let keyboard = keyboard_height().0.max(shrunk);
+    (keyboard - safe_area().bottom.0).max(0.0) - shrunk
+}
+
 fn shell(
     open: impl Fn() -> bool + 'static,
     close: impl Fn(OpenChangeReason) + 'static,
@@ -327,6 +345,8 @@ fn shell(
     let opened = lifecycle.as_ref().map(|l| l.opened);
     let planned = untracked(planned_keyboard);
     let height = height_budget(planned);
+    // The dialog root's height, from an overlay that covers it.
+    let root = signal(None::<f32>);
     sheet()
         .open(move || Some(open()))
         .on_open(move |_: &()| {
@@ -356,7 +376,16 @@ fn shell(
             material::glass(s, Glass::Sheet)
                 .rounded_t(px(radius::SHEET))
                 .border_curve(BorderCurve::Continuous)
+                .bottom(move || px(panel_bottom(root.get())))
         })
+        .child(
+            overlay()
+                .absolute()
+                .inset_0()
+                .pointer_events(PointerEvents::None)
+                .accessibility_elements_hidden(true)
+                .on_layout(move |frame: &Bounds<Points>| root.set(Some(frame.size.height.0))),
+        )
         .child(
             view()
                 .test_id("task-sheet")
