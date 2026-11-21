@@ -15,8 +15,7 @@ pub enum Glass {
 }
 
 /// Android reports its API level; backdrop rendering starts at API 31.
-/// NSH 0.5's GTK renderer does not draw backdrop filters. These paths keep
-/// a solid surface so unsupported blur never exposes sharp text underneath.
+/// The GTK preview uses a solid dock, as do older Android versions.
 fn backdrop_available() -> bool {
     match os() {
         Os::Android => os_version().0 >= 31,

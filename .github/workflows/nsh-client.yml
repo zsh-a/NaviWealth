@@ -21,7 +21,7 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
-  NSH_VERSION: v0.5.0
+  NSH_VERSION: v0.6.1
   # What nsh-platform-linux links (as nsh's own CI installs them).
   LINUX_PACKAGES: clang libclang-dev libgtk-4-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
 
@@ -143,16 +143,29 @@ jobs:
           name: naviwealth-release-arm64-v8a
           path: artifact
       - name: Sum the APK and write the notes
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           cd artifact
           sha256sum NaviWealth.apk > SHA256SUMS
           cd ..
           tag="${GITHUB_REF#refs/tags/}"
-          prev=$(git tag --sort=-creatordate | grep '^nsh-v' | sed -n '2p')
+          gh api --paginate 'repos/{owner}/{repo}/releases?per_page=100' \
+            --jq '.[] | select(.draft == false and .prerelease == false) | .tag_name | select(startswith("nsh-v"))' > published-tags.txt
+          prev=
+          while IFS= read -r candidate; do
+            if git merge-base --is-ancestor "refs/tags/$candidate" "${GITHUB_SHA}^"; then
+              prev=$candidate
+              break
+            fi
+          done < published-tags.txt
           {
             git log -1 --format=%b
-            printf '\n\n[Full changes](https://github.com/%s/compare/%s...%s)\n\n[Release build](https://github.com/%s/actions/runs/%s) · commit `%s`.\n' \
-              "$GITHUB_REPOSITORY" "$prev" "$tag" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" "$GITHUB_SHA"
+            if [[ -n "$prev" ]]; then
+              printf '\n[Full changes](https://github.com/%s/compare/%s...%s)\n' "$GITHUB_REPOSITORY" "$prev" "$tag"
+            fi
+            printf '\n[Release build](https://github.com/%s/actions/runs/%s) · commit `%s`.\n' \
+              "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" "$GITHUB_SHA"
           } > notes.md
           title="$(git tag -l --format='%(contents:subject)' "$tag")"
           printf '%s' "$tag" > tag.txt

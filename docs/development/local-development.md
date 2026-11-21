@@ -88,7 +88,7 @@ Rules and known pitfalls:
 - Non-interactive shells do not source `~/.zshenv`; scripts must export the
   Android/Java variables themselves. Symptom: `apksigner: exec: java: not
   found` right after a successful `libnsh.so` build.
-- The app-owned BLE host script first invokes pinned NSH 0.5.0 packaging,
+- The app-owned BLE host script first invokes pinned NSH 0.6.1 packaging,
   then Gradle; generic `nsh run` / `nsh package` hosts omit BLE handlers. NSH configures the
   NDK linker and cc environment. Bare `cargo check --target
   x86_64-linux-android` fails in cc-rs with `failed to find tool

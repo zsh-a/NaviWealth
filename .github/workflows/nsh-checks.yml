@@ -33,7 +33,7 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
-  NSH_VERSION: v0.5.0
+  NSH_VERSION: v0.6.1
 
 jobs:
   client:

@@ -274,7 +274,7 @@ Recommended sequence; this is planning, not a claim these items are implemented.
    **Implemented 2026-11-18, physical acceptance pending:** a small TSX root
    mounts the existing Rust App and a scale sheet. An app-owned Kotlin/Gradle
    host exposes six session-scoped BLE operations through `host.call` and sends
-   bounded events. The build pins NSH 0.5.0 Java classes and consumer rules,
+   bounded events. The original build pinned NSH 0.5.0 Java classes and consumer rules,
    and packages the app-linked mixed `libnsh.so`, never the embedding archive's
    generic native library. `tool/build-nsh-android-host.sh` is the release build
    path; package id and signing policy stay unchanged.
@@ -339,7 +339,7 @@ Recommended sequence; this is planning, not a claim these items are implemented.
 
    Protocol wire examples are independently implemented from the
    [AFU-WL reference](https://github.com/Mzdyl/ant-afu-welland-scale);
-   [NSH 0.5.0 embedding](https://github.com/longbridge/nsh/blob/v0.5.0/docs/dev/embedding.md)
+   [NSH 0.6.1 embedding](https://github.com/longbridge/nsh/blob/v0.6.1/docs/dev/embedding.md)
    defines the mixed Host Channel boundary.
 
 4. **Conversational capture thread.** Implemented ahead of its gates
@@ -367,5 +367,5 @@ Recommended sequence; this is planning, not a claim these items are implemented.
   question and, for a new record type, a removal or written reason.
 - Keep domain truth in `navi-finance` / `navi-health`; the UI only presents
   and confirms. New crates need a current caller.
-- Pin NSH 0.5.0 behind local UI adapters; upgrade only with device evidence.
+- Pin NSH 0.6.1 behind local UI adapters; upgrade only with device evidence.
 - Record headless tests and Android device evidence separately.

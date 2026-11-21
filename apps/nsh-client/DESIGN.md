@@ -91,9 +91,9 @@ AI only to turn text and images into drafts, using the owner's model account.
   menu and compact account editor also fit their content. Other task
   editors retain `task_sheet`'s filled height, capped at 540 pt. Both plan
   for the keyboard when they open (the last height it reached, else 38% of
-  the window), so a showing keyboard only lifts the whole panel through a
-  native `env()` margin; the panel, its scroll area and actions keep their
-  size. Only a keyboard taller than planned still shrinks the sheet. Toasts belong to the active sheet while
+  the window). The NSH sheet lifts the panel by the keyboard height above the
+  bottom safe area. The panel, scroll area and actions keep their size until
+  a keyboard exceeds the planned height. Toasts belong to the active sheet while
   it is open, so Undo cannot be covered by its backdrop. Opening capture clears
   old informational notices and saved receipts; Undo messages keep their normal
   lifetime. A receipt's View cannot navigate behind a newly opened draft.
@@ -418,8 +418,7 @@ grey patch). Media readability comes from the dark mask
 even when backdrop blur is unavailable.
 
 The dock falls back to fully opaque `SURFACE`, with no
-backdrop filter, on Linux and Android below API 31. NSH 0.5's GTK renderer
-does not render backdrop filters. Android API 31 and above takes the blur
+backdrop filter, on Linux and Android below API 31. Android API 31 and above takes the blur
 path; its rendering and performance remain unverified on a real device.
 The home dock also becomes opaque while a home-owned sheet is open or a
 pushed route is active. This is a local home lifecycle rule, not a global

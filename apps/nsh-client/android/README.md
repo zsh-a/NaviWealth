@@ -6,7 +6,7 @@ estimates and confirmed database writes remain in Rust.
 
 ## Build
 
-Use NSH **0.5.0**, Android SDK/API 35, build tools 35.0.1, an Android NDK for
+Use NSH **0.6.1**, Android SDK/API 35, build tools 35.0.1, an Android NDK for
 NSH's native build, and JDK 17. The checked Gradle wrapper pins Gradle 8.13;
 AGP 8.9.2 and Kotlin 2.1.20 are pinned in the build files. Target API 35 stays
 aligned with the validated NSH host; newer SDKs preinstalled on CI runners do
@@ -27,7 +27,7 @@ building the mixed native library. `prepare` builds the mixed APK and extracts
 inputs without running Gradle. `NSH_BIN` selects the CLI; `NSH_MIXED_APK` can
 reuse a previously built mixed APK; `NSH_ANDROID_AAR` can select the matching
 SDK. The script installs the CLI-matched Android runtime when it is missing,
-before pinning the runtime path, and verifies the exact 0.5.0 Java SDK digest. The default embedding
+before pinning the runtime path, and verifies the exact 0.6.1 Java SDK digest. The default embedding
 SDK download also verifies its pinned official release archive checksum.
 
 The automatic `nsh checks` workflow runs the runtime-only preparation, release

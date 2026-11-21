@@ -911,13 +911,11 @@ mod tests {
         app.press("Begin").unwrap();
         app.press("Stable").unwrap();
         app.wait_for("Review").unwrap();
-        let db_path = std::fs::read_dir(dir.path())
-            .unwrap()
-            .flatten()
-            .map(|entry| entry.path().join("naviwealth.sqlite"))
-            .find(|path| path.is_file())
-            .expect("NSH created the database in the app's data directory");
-        let db = Connection::open(db_path).unwrap();
+        let db = Connection::open_with_flags(
+            dir.path().join("naviwealth.sqlite"),
+            rusqlite::OpenFlags::SQLITE_OPEN_READ_WRITE,
+        )
+        .unwrap();
         db.execute_batch(
             "CREATE TRIGGER fail_delete BEFORE DELETE ON scale_drafts
              BEGIN SELECT RAISE(ABORT, 'temporary write failure'); END;",

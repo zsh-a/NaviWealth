@@ -301,8 +301,7 @@ fn planned_keyboard() -> Option<f32> {
 }
 
 /// A sheet's height limit. It already leaves room for the planned keyboard,
-/// so showing the keyboard only moves the sheet (its margin follows the
-/// keyboard natively) instead of resizing its panel, scroll area and
+/// so the native sheet can lift its panel without resizing the scroll area and
 /// actions on every frame of the keyboard's motion. Only a keyboard taller
 /// than planned (a larger input method) still shrinks it.
 fn sheet_height(planned: Option<f32>) -> f32 {
@@ -357,9 +356,6 @@ fn shell(
             material::glass(s, Glass::Sheet)
                 .rounded_t(px(radius::SHEET))
                 .border_curve(BorderCurve::Continuous)
-                // The whole panel rides above the keyboard (a native env()
-                // term); its size does not change while the keyboard moves.
-                .mb_keyboard()
         })
         .child(
             view()

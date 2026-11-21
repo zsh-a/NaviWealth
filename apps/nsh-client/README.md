@@ -1,7 +1,7 @@
 # NaviWealth native client (NSH)
 
 NaviWealth's native client, with Rust pages and a small TSX hardware entry on [NSH](https://github.com/longbridge/nsh)
-0.5.0. Capture turns a description or photos into reviewable money, meal or
+0.6.1. Capture turns a description or photos into reviewable money, meal or
 weight drafts using the owner's model. The home has four tabs: Today
 (spending, intake and vitals), Records (all history), Assets (accounts, book balances and net worth), and Review
 (the week or month). The capture button accepts a description or image and
@@ -38,8 +38,7 @@ The client adapts those contracts to reactive signals and composes capture and
 scale transactions with device-local evidence. Provider wire
 formats live in `../../third_party/agent-runtime/crates/llm-protocol`; request
 policy lives in `llm-client`. NSH supplies its platform fetch transport rather
-than the reqwest adapter. NSH 0.5.0 returns whole response bodies; recognition does not require
-streaming. Each saved estimate records its model and prompt version.
+than the reqwest adapter. Recognition reads the full response body from this transport. Each saved estimate records its model and prompt version.
 
 ## Commands
 
@@ -130,7 +129,7 @@ These are display-only and do not change stored evidence or old algorithms.
 They are not guaranteed to match the manufacturer's proprietary composition
 model; unknown visceral-fat/body-age/protein scores are not fabricated.
 
-Use NSH CLI **0.5.0** for mixed checks and builds. The host build script pins the
+Use NSH CLI **0.6.1** for mixed checks and builds. The host build script pins the
 matching Java inputs and extracts the app-linked native library from the NSH
 mixed package. Plain `nsh run --target android` uses the generic development
 host and does not provide these BLE handlers. The production unsigned APK is
@@ -186,13 +185,11 @@ Wrong passphrases, changed files, invalid records and newer schemas leave
 existing records intact. Settings and credentials stay on this device. Older
 daily-name backups remain readable.
 
-WebDAV uses a Rust `ureq` adapter on a blocking worker, since NSH 0.5's
-Android `HttpURLConnection` and default headless transport restrict WebDAV
-extension methods. TLS uses WebPKI roots; redirects never carry credentials
+WebDAV uses a Rust `ureq` adapter on a blocking worker for the required
+HTTP extension methods. TLS uses WebPKI roots; redirects never carry credentials
 onward. Plain HTTP is limited to loopback for isolated tests. The backup flows
 start their own HTTP server and exercise real PUT/MKCOL/PROPFIND/GET requests;
-they need no live service or personal key. Local file export is not
-implemented: NSH 0.5.0 has no save or share dialog on Android.
+they need no live service or personal key. Local file export on Android remains pending.
 
 ## Desktop previews
 

@@ -15,8 +15,8 @@ unsafe_code = "forbid"
 all = { level = "warn", priority = -1 }
 
 [dependencies]
-nsh-core = "0.5.0"
-nsh-base = { version = "0.5.0", default-features = false, features = ["plot"] }
+nsh-core = "=0.6.1"
+nsh-base = { version = "=0.6.1", default-features = false, features = ["plot"] }
 log = "0.4"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -34,9 +34,9 @@ rusqlite = { version = "0.42", features = ["bundled"] }
 # Backups: Argon2id from the passphrase, XChaCha20-Poly1305 over the database.
 argon2 = "0.6"
 chacha20poly1305 = "0.11"
-getrandom = "0.3"
+getrandom = { version = "0.3", features = ["std"] }
 thiserror = "2"
-# NSH 0.5's Android HttpURLConnection rejects WebDAV extension methods.
+# WebDAV needs HTTP extension methods such as PROPFIND and MKCOL.
 ureq = { version = "3", default-features = false, features = ["rustls"] }
 url = "2"
 market-data-rs = { path = "../../third_party/market-data-rs/crates/market-data", default-features = false }
@@ -49,20 +49,20 @@ webpki-roots = "1"
 env_logger = "0.11"
 
 [target.'cfg(target_os = "linux")'.dependencies]
-nsh-platform-linux = { version = "0.5.0", default-features = false }
+nsh-platform-linux = { version = "=0.6.1", default-features = false }
 
 [target.'cfg(target_os = "macos")'.dependencies]
-nsh-platform-macos = { version = "0.5.0", default-features = false }
+nsh-platform-macos = { version = "=0.6.1", default-features = false }
 
 [target.'cfg(target_os = "windows")'.dependencies]
-nsh-platform-windows = { version = "0.5.0", default-features = false }
+nsh-platform-windows = { version = "=0.6.1", default-features = false }
 
 [dev-dependencies]
 tempfile = "3"
 rusqlite = { version = "0.42", features = ["bundled"] }
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp"] }
-nsh-engine = { version = "0.5.0", default-features = false }
-nsh-testing = { version = "0.5.0", default-features = false }
+nsh-engine = { version = "=0.6.1", default-features = false }
+nsh-testing = { version = "=0.6.1", default-features = false }
 
 # Line tables keep backtraces readable while test binaries stay small; full
 # debug info grew the target directory to about 30 GB.

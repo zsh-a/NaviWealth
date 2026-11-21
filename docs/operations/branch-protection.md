@@ -41,7 +41,7 @@ checks that are present for the changed paths.
 
 The `nsh client` manual workflow checks `apps/nsh-client` and its mixed flows,
 then runs `tool/build-nsh-android-host.sh release` (Gradle unit tests, lint and
-assembly). The app-owned host packages the app-linked NSH 0.5.0 native library
+assembly). The app-owned host packages the app-linked NSH 0.6.1 native library
 and TSX bundle; it preserves the package id and private storage location,
 and signs an arm64-v8a APK — `naviwealth-release-arm64-v8a` (the diagnostic
 build is `naviwealth-diagnostic-arm64-v8a`) — with the fixed repository
@@ -53,7 +53,8 @@ freshly generated debug keys.
 
 A build of an `nsh-v*` tag publishes its own release: the verified APK as
 `NaviWealth.apk`, a `SHA256SUMS` of it, and notes taken from the release
-commit plus links to the full changes and the build. Releases are titled
+commit plus links to the build and changes since the previous published NSH
+release in the tag’s history. Releases are titled
 after the tag's subject, `NaviWealth NSH vX.Y.Z (build N)` — the earlier
 `NaviWealth Health NSH` wording is retired with v0.9.0. Dispatches on a
 branch verify without publishing.

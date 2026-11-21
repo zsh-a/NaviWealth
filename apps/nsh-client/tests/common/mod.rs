@@ -131,26 +131,11 @@ pub fn picks_a_photo(app: &mut Headless) {
     });
 }
 
-/// The database the app keeps under `dir`.
+/// NSH uses the configured app data directory as supplied.
 pub fn database_in(dir: &Path) -> PathBuf {
-    fn find(dir: &Path) -> Option<PathBuf> {
-        for entry in std::fs::read_dir(dir).ok()?.flatten() {
-            let path = entry.path();
-            if path
-                .file_name()
-                .is_some_and(|name| name == "naviwealth.sqlite")
-            {
-                return Some(path);
-            }
-            if path.is_dir()
-                && let Some(found) = find(&path)
-            {
-                return Some(found);
-            }
-        }
-        None
-    }
-    find(dir).expect("the app keeps a database")
+    let path = dir.join("naviwealth.sqlite");
+    assert!(path.is_file(), "the app keeps its database at {path:?}");
+    path
 }
 
 /// The stored meal bodies under `dir`, oldest first.
@@ -309,12 +294,10 @@ pub fn attach_capture(app: &mut Headless) -> Result<(), String> {
 pub const CATALOG_SAMPLE: &str =
     include_str!("../../../../tool/asset_catalog/tests/fixtures/catalog-sample.ndjson");
 
-/// Writes the sample catalog seed beside the database under `dir` (the
-/// engine nests instance data, and so the seed, below `default/`).
+/// Writes the sample catalog seed beside the database in the app data directory.
 pub fn seed_catalog(dir: &Path) {
-    let seed = dir.join("default").join("catalog-seed.ndjson");
-    std::fs::create_dir_all(seed.parent().unwrap()).expect("the instance dir");
-    std::fs::write(seed, CATALOG_SAMPLE).expect("the catalog seed is written");
+    std::fs::write(dir.join("catalog-seed.ndjson"), CATALOG_SAMPLE)
+        .expect("the catalog seed is written");
 }
 
 /// Check the native failure dialog while allowing the editor to keep its state.
