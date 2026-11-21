@@ -1,6 +1,7 @@
-//! Backup and restore: a WebDAV folder, its account, the backup passphrase,
-//! and the restore list. It lives on its own page; Settings carries one row
-//! that says whether the day is protected and when it was last backed up.
+//! Backup and restore: the backup passphrase, backup files on this device
+//! ([`super::settings_backup_file`]), a WebDAV folder with its account, and
+//! the WebDAV restore list. It lives on its own page; Settings carries one
+//! row that says whether the day is protected and when it was last backed up.
 
 use nsh_base::{alert_dialog, nav_page};
 use nsh_core::{
@@ -11,6 +12,7 @@ use nsh_core::{
 use super::{
     parts::{status_bar, top_bar},
     settings::entry_row,
+    settings_backup_file::file_group,
 };
 use crate::{
     data::{
@@ -44,6 +46,8 @@ pub fn failure_copy(failure: Failure) -> String {
         Failure::NotABackup => s().backup_not_backup.to_owned(),
         Failure::Newer => s().backup_newer.to_owned(),
         Failure::Storage => s().backup_storage.to_owned(),
+        Failure::NoPassphrase => s().backup_no_passphrase().to_owned(),
+        Failure::Unavailable => s().backup_unavailable().to_owned(),
     }
 }
 
@@ -57,7 +61,15 @@ fn summary() -> String {
     };
     let outcome = match (backup::status(), backup::last_backup_ms()) {
         (Status::Idle, Some(ms)) => s().backup_last(&s().short_date(clock::day_of(ms))),
-        (Status::Idle, None) if !configured => return automatic.to_owned(),
+        (Status::Idle, None) if !configured => {
+            return match backup::last_export_ms() {
+                Some(ms) => format!(
+                    "{automatic} · {}",
+                    s().backup_last_export(&s().short_date(clock::day_of(ms)))
+                ),
+                None => automatic.to_owned(),
+            };
+        }
         _ => status_line(),
     };
     format!("{automatic} · {outcome}")
@@ -86,14 +98,16 @@ pub fn backup_row() -> impl IntoElement {
 
 /// What the last restore or listing came to, said under the buttons.
 #[derive(Clone, PartialEq)]
-struct Note {
-    text: String,
-    ok: bool,
+pub(super) struct Note {
+    pub(super) text: String,
+    pub(super) ok: bool,
 }
 
-/// The backup page: the WebDAV folder, the passphrase, and the restore list.
+/// The backup page: the passphrase, backup files, the WebDAV folder and
+/// its restore list. The passphrase comes first because every way of
+/// backing up uses it.
 pub fn backup_page() -> Screen {
-    let (folder, encryption, actions) = form();
+    let (encryption, file, folder, actions) = form();
     nav_page()
         .title(|| SharedString::from(s().backup))
         .header_visible(false)
@@ -113,11 +127,14 @@ pub fn backup_page() -> Screen {
                                 .pt_2()
                                 .pb(move || px(safe_area().bottom.0 + 32.0))
                                 .gap_3()
-                                .child(group_label(|| s().backup_group_folder))
-                                .child(folder)
-                                .child(view().h_3())
                                 .child(group_label(|| s().backup_group_encryption))
                                 .child(encryption)
+                                .child(view().h_3())
+                                .child(group_label(|| s().backup_group_file()))
+                                .child(file)
+                                .child(view().h_3())
+                                .child(group_label(|| s().backup_group_folder))
+                                .child(folder)
                                 .child(view().h_3())
                                 .child(group_label(|| s().backup_group_restore))
                                 .child(actions),
@@ -126,9 +143,15 @@ pub fn backup_page() -> Screen {
         )
 }
 
-/// The page's three groups, split out of one signal scope: the folder, the
-/// passphrase that encrypts, and the actions with the restore list.
-fn form() -> (impl IntoElement, impl IntoElement, impl IntoElement) {
+/// The page's groups, split out of one signal scope: the passphrase that
+/// encrypts, backup files, the WebDAV folder, and its actions with the
+/// restore list.
+fn form() -> (
+    impl IntoElement,
+    impl IntoElement,
+    impl IntoElement,
+    impl IntoElement,
+) {
     let kept = untracked(backup::folder);
     let url = signal(kept.url.clone());
     let username = signal(kept.username.clone());
@@ -207,36 +230,35 @@ fn form() -> (impl IntoElement, impl IntoElement, impl IntoElement) {
                 .masked(|| true)
                 .auto_capitalize(AutoCapitalize::None)
                 .auto_correct(false),
-        ));
-    let encryption = card()
-        .p(px(space::CARD))
-        .gap_3()
-        .child(
-            field(
-                || s().backup_passphrase,
-                text_input(passphrase)
-                    .masked(|| true)
-                    .auto_capitalize(AutoCapitalize::None)
-                    .auto_correct(false)
-                    .placeholder(move || {
-                        if backup::has_passphrase() {
-                            s().backup_passphrase_kept.to_owned()
-                        } else {
-                            String::new()
-                        }
-                    })
-                    .style_when(passphrase_short, |s| s.border_color(color::DANGER)),
-            )
-            .child(note(
-                || Some(s().backup_passphrase_note.into()),
-                passphrase_short,
-            )),
-        )
+        ))
         .child(
             text(|| s().backup_note)
                 .typo(Type::Caption)
                 .text_color(color::MUTED),
         );
+    let encryption = card().p(px(space::CARD)).gap_3().child(
+        field(
+            || s().backup_passphrase,
+            text_input(passphrase)
+                .label(|| s().backup_passphrase)
+                .masked(|| true)
+                .auto_capitalize(AutoCapitalize::None)
+                .auto_correct(false)
+                .placeholder(move || {
+                    if backup::has_passphrase() {
+                        s().backup_passphrase_kept.to_owned()
+                    } else {
+                        String::new()
+                    }
+                })
+                .style_when(passphrase_short, |s| s.border_color(color::DANGER)),
+        )
+        .child(note(
+            || Some(s().backup_passphrase_note.into()),
+            passphrase_short,
+        )),
+    );
+    let file = file_group(passphrase);
     let actions = card()
         .p(px(space::CARD))
         .gap_3()
@@ -286,7 +308,7 @@ fn form() -> (impl IntoElement, impl IntoElement, impl IntoElement) {
             let names = listed.get();
             untracked(move || names.map(|names| restore_list(names, listed, message)))
         }));
-    (folder, encryption, actions)
+    (encryption, file, folder, actions)
 }
 
 fn status_line() -> String {

@@ -149,7 +149,7 @@ are never filled in. Records All shows the day's weight as a chip in its header 
 the Weight filter keeps individual measurements without deltas.
 Garmin averages each measurement over the days that contain it.
 
-Settings → Backup accepts an HTTPS WebDAV folder (for example Jianguoyun,
+Settings → Backup also accepts an HTTPS WebDAV folder (for example Jianguoyun,
 Nextcloud or Synology), account, app password and a backup passphrase of at
 least eight characters. Save and back up applies immediately. With this set
 up, opening or resuming the app makes one backup per local calendar day; this
@@ -189,7 +189,22 @@ WebDAV uses a Rust `ureq` adapter on a blocking worker for the required
 HTTP extension methods. TLS uses WebPKI roots; redirects never carry credentials
 onward. Plain HTTP is limited to loopback for isolated tests. The backup flows
 start their own HTTP server and exercise real PUT/MKCOL/PROPFIND/GET requests;
-they need no live service or personal key. Local file export on Android remains pending.
+they need no live service or personal key.
+
+Backup files need no WebDAV. The backup page leads with the passphrase, then
+Export backup file and Restore from file…, each using the typed passphrase or
+else the kept one. Export seals the same `NWBK` bundle (meal photos optional,
+on by default) into the app's `exports` folder, keeping only the newest file,
+and hands it to the system share sheet (`share` capability, NSH's
+`FilesProvider`); without a share sheet, as on desktops, a save dialog writes a
+copy. A dismissed sheet is not an export; a completed one is shown as Last
+exported on the page and, while automatic backups are off, on the Settings row.
+A typed passphrase that sealed an export becomes the kept one; one that opened a
+restored file is kept only when none was, so a restore never changes the
+passphrase later backups use. A picked file is decrypted and validated before the
+same atomic replacement as a WebDAV restore. `tests/backup_file.rs` covers share
+and save, fresh-install restore, missing passphrases, wrong passphrases and
+malformed files. Android share-sheet behavior still needs device evidence.
 
 ## Desktop previews
 

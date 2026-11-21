@@ -2,6 +2,7 @@
 //! transactions for capture, measuring evidence and encrypted backup/restore.
 
 pub mod backup;
+pub mod backup_file;
 pub mod body_metrics;
 pub mod catalog;
 pub mod clock;

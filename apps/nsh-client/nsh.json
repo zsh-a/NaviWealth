@@ -24,6 +24,7 @@
     "notifications": true,
     "audio": true,
     "openUrl": true,
+    "share": true,
     "windows": true,
     "host": [
       "ble.status",

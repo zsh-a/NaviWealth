@@ -39,6 +39,10 @@ pub enum Failure {
     NotABackup,
     Newer,
     Storage,
+    /// A backup file needs a passphrase of at least 8 characters, typed or kept.
+    NoPassphrase,
+    /// The device offers neither a share sheet nor a save dialog.
+    Unavailable,
 }
 
 impl From<DavError> for Failure {
@@ -76,6 +80,9 @@ struct Kept {
     folder: Folder,
     last_backup_ms: Option<i64>,
     last_backup_day: Option<String>,
+    /// When a backup file was last handed to the share sheet or saved.
+    #[serde(default)]
+    last_export_ms: Option<i64>,
 }
 
 #[derive(Clone, Default, PartialEq)]
@@ -134,6 +141,48 @@ pub fn status() -> Status {
 /// When the last backup was put (tracked).
 pub fn last_backup_ms() -> Option<i64> {
     state().with(|s| s.kept.last_backup_ms)
+}
+
+/// When a backup file was last exported (tracked).
+pub fn last_export_ms() -> Option<i64> {
+    state().with(|s| s.kept.last_export_ms)
+}
+
+/// The kept passphrase, when it is long enough to seal (untracked).
+pub(super) fn kept_passphrase() -> Option<String> {
+    state().with_untracked(|s| {
+        (s.passphrase.chars().count() >= backup::MIN_PASSPHRASE).then(|| s.passphrase.clone())
+    })
+}
+
+/// Keeps `passphrase` for every later backup, WebDAV and file alike.
+pub(super) fn keep_passphrase(passphrase: String) {
+    let _ = Storage::set_item(KEY_PASSPHRASE, passphrase.clone());
+    state().update(|s| s.passphrase = passphrase);
+}
+
+/// Notes that a backup file left the app.
+pub(super) fn exported(at_ms: i64) {
+    state().update(|s| {
+        s.kept.last_export_ms = Some(at_ms);
+        persist(&s.kept);
+    });
+}
+
+/// Marks a backup file operation as running, so WebDAV work waits for it;
+/// the status it replaced comes back from [`release`]. `None` when busy.
+pub(super) fn claim() -> Option<Status> {
+    let previous = state().with_untracked(|s| s.status);
+    if previous == Status::Running {
+        return None;
+    }
+    state().update(|s| s.status = Status::Running);
+    Some(previous)
+}
+
+/// Ends a file operation: the WebDAV status it replaced stands again.
+pub(super) fn release(previous: Status) {
+    state().update(|s| s.status = previous);
 }
 
 /// Keeps the folder and, when given, a new passphrase.
@@ -242,36 +291,43 @@ pub async fn restore(name: String) -> Result<(), Failure> {
         let (_, bundle) = background(async move { backup::open(&file, &passphrase) })
             .await
             .map_err(|_| Failure::Storage)??;
-        let photos = photos::prepare_restore(bundle.photos)
-            .await
-            .map_err(|error| {
-                log::error!("backup: could not prepare restored photos: {error}");
-                Failure::Storage
-            })?;
-        db::replace_with(&bundle.database, photos.renamed()).map_err(|error| match error {
-            db::RestoreError::Newer => Failure::Newer,
-            db::RestoreError::Unreadable => Failure::NotABackup,
-            db::RestoreError::Storage => Failure::Storage,
-        })?;
-        photos.commit();
-        meals::load().map_err(|_| Failure::Storage)?;
-        favorites::load().map_err(|_| Failure::Storage)?;
-        notes::load();
-        weights::load();
-        body_metrics::load();
-        garmin::load();
-        finance::load().map_err(|_| Failure::Storage)?;
-        super::statement_import::load().map_err(|_| Failure::Storage)?;
-        super::catalog::load().map_err(|_| Failure::Storage)?;
-        super::market::load().map_err(|_| Failure::Storage)?;
-        super::history::clear_attempts();
-        super::valuation::invalidate();
-        state().update(|s| {
-            s.kept.last_backup_day = Some(clock::today().to_string());
-            persist(&s.kept);
-        });
-        Ok(())
+        apply(bundle).await
     }
     .await;
     finish(result)
+}
+
+/// Puts an opened backup in place: its photos are prepared, the records
+/// replaced in one transaction, then every in-memory view reloads. A
+/// failure before the replacement leaves the device as it was.
+pub(super) async fn apply(bundle: Bundle) -> Result<(), Failure> {
+    let photos = photos::prepare_restore(bundle.photos)
+        .await
+        .map_err(|error| {
+            log::error!("backup: could not prepare restored photos: {error}");
+            Failure::Storage
+        })?;
+    db::replace_with(&bundle.database, photos.renamed()).map_err(|error| match error {
+        db::RestoreError::Newer => Failure::Newer,
+        db::RestoreError::Unreadable => Failure::NotABackup,
+        db::RestoreError::Storage => Failure::Storage,
+    })?;
+    photos.commit();
+    meals::load().map_err(|_| Failure::Storage)?;
+    favorites::load().map_err(|_| Failure::Storage)?;
+    notes::load();
+    weights::load();
+    body_metrics::load();
+    garmin::load();
+    finance::load().map_err(|_| Failure::Storage)?;
+    super::statement_import::load().map_err(|_| Failure::Storage)?;
+    super::catalog::load().map_err(|_| Failure::Storage)?;
+    super::market::load().map_err(|_| Failure::Storage)?;
+    super::history::clear_attempts();
+    super::valuation::invalidate();
+    state().update(|s| {
+        s.kept.last_backup_day = Some(clock::today().to_string());
+        persist(&s.kept);
+    });
+    Ok(())
 }

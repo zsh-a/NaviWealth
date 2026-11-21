@@ -298,7 +298,11 @@ AI only to turn text and images into drafts, using the owner's model account.
   completed, cancelled or reopened reviews.
   The shared `size::TOUCH` is 48 pt; icon controls, compact-button hit areas
   disclosures and segmented choices keep that minimum. All touch actions are at least 48 pt. Backup & restore shows automatic backup status
-  and the last outcome. About displays the installed version before opening
+  and the last outcome. Its page leads with the passphrase every backup uses,
+  then Backup file (Include meal photos, Export backup file as the primary
+  action, Restore from file… beside it, Last exported), then the WebDAV
+  folder and WebDAV backups. A missing passphrase is said before any sheet
+  or picker opens; a dismissed share sheet says nothing. About displays the installed version before opening
   update details. A changed model account requires consent again before
   sending text, images and account names.
 

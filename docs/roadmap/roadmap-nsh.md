@@ -2,7 +2,7 @@
 
 Status: active sequencing SSOT; replaces the previous Now/Next plans.
 
-Last reviewed: 2026-11-15.
+Last reviewed: 2026-11-21.
 
 ## Contract And Baseline
 
@@ -72,8 +72,9 @@ health-only Review; Assets arrives with Phase 3.
    preserve previous backups. Backups made by hand carry meal photos; the
    daily one and credentials are without them. Real HTTP
    headless flows cover folder creation, upload, listing, restoration, errors
-   and cross-day resume. Remaining: Android device verification and local
-   file export (NSH 0.5.0 has no save or share dialog on Android). The implementation contract is in
+   and cross-day resume. Local backup files (2026-11-21) use the NSH 0.6.1
+   share sheet for export and a file pick for restore, without WebDAV.
+   Remaining: Android device verification. The implementation contract is in
    `apps/nsh-client/README.md`, “Health review and backups”.
 
 6. **Tabs and capture (Product Scope, Interaction Model).** Implemented:
@@ -257,8 +258,9 @@ Recommended sequence; this is planning, not a claim these items are implemented.
    physical device; verify migration to the current schema, real statement picking,
    mixed currency settlement, CN/HK/US TLS refresh, background/resume and keyboard/Back
    behavior. Restore an encrypted backup into a clean install and compare
-   balances, quantities, prices and recorded valuations. Supply a native local
-   export/share path so recovery does not require WebDAV configuration.
+   balances, quantities, prices and recorded valuations. The local
+   export/share path exists (2026-11-21, headless only): verify that the
+   Android share sheet, Files and the picker round-trip the file.
 2. **Close one financial month.** Extend the existing Review with recorded
    spending, net-worth change and a drill-down explaining deposits/withdrawals,
    price changes, FX and balance adjustments. State missing data instead of

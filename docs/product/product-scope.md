@@ -2,7 +2,7 @@
 
 Status: active product SSOT for the NSH client.
 
-Last reviewed: 2026-11-19.
+Last reviewed: 2026-11-21.
 
 ## Document Contract
 
@@ -281,10 +281,11 @@ The full target is:
   credentials, nothing sent — at most daily on open and on demand from
   Settings. A newer `nsh-v*` release shows its notes and a link to its
   release page; downloading and installing stay the owner's steps.
-  The current Health increment uses an owner-configured WebDAV folder for
-  daily foreground backups (without photos) and manual backup/restore
-  (with meal photos), excluding credentials. Local file export waits for a
-  save or share dialog on Android in NSH.
+  An owner-configured WebDAV folder receives daily foreground backups
+  (without photos) and manual backup/restore (with meal photos), excluding
+  credentials. Without WebDAV, Export backup file hands the same encrypted
+  file (photos optional) to the system share sheet, and Restore from file
+  recovers a fresh install from a picked file with its passphrase.
 
 ## Removed
 

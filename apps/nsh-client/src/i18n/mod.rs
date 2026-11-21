@@ -3,6 +3,7 @@
 //! not translated word for word. Read it in bindings (`move || s().today`)
 //! so a language change follows.
 
+pub(crate) mod backup_file;
 pub(crate) mod catalog;
 mod en;
 pub(crate) mod market;
