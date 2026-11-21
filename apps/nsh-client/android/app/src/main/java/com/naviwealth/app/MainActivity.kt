@@ -10,23 +10,28 @@ import com.longbridge.nsh.NaviStandalone
 class MainActivity : Activity() {
     private lateinit var nsh: NaviStandalone
     private lateinit var ble: ScaleBleBridge
+    private lateinit var shares: IncomingShare
 
     override fun onCreate(state: Bundle?) {
         super.onCreate(state)
         NaviStandalone.configure(this)
         nsh = NaviStandalone(this)
         ble = ScaleBleBridge(this, nsh)
+        shares = IncomingShare(this, nsh)
         setContentView(nsh)
         nsh.handleNotificationIntent(intent)
         if (state == null) nsh.handleUrlSchemeIntent(intent)
         // Handlers exist before evaluating the TSX bundle.
         nsh.loadNaviWealth()
+        // A share that launched the app; a recreated activity already had it.
+        if (state == null) shares.receive(intent)
     }
 
     override fun onStart() { super.onStart(); if (::ble.isInitialized) ble.onForeground() }
     override fun onStop() { if (::ble.isInitialized) ble.onBackground(); super.onStop() }
     override fun onDestroy() {
         if (::ble.isInitialized) ble.destroy()
+        if (::shares.isInitialized) shares.destroy()
         if (::nsh.isInitialized) nsh.destroy()
         super.onDestroy()
     }
@@ -38,6 +43,7 @@ class MainActivity : Activity() {
         super.onNewIntent(intent)
         nsh.handleNotificationIntent(intent)
         nsh.handleUrlSchemeIntent(intent)
+        shares.receive(intent)
     }
     @Suppress("DEPRECATION")
     @Deprecated("Android 12 and earlier back handling")

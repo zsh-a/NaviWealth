@@ -16,7 +16,10 @@ use super::{
     week_review::review_tab,
 };
 use crate::{
-    data::clock,
+    data::{
+        clock,
+        incoming::{self, Opened},
+    },
     domain::meal::Day,
     i18n::s,
     nav::{self, Route, Tab},
@@ -25,7 +28,7 @@ use crate::{
         material::{self, Glass},
         sheet::{bottom_sheet, retained, task_host_with_keyboard},
         space,
-        toast::toast_host,
+        toast::{show_toast, toast_host},
     },
 };
 
@@ -67,6 +70,19 @@ pub struct Sheets {
 }
 
 impl Sheets {
+    /// Whether a home sheet is showing (tracked); it may hold unsaved input.
+    fn any_open(&self) -> bool {
+        self.capture.get()
+            || self.setup.get()
+            || self.weight.with(Option::is_some)
+            || self.body.with(Option::is_some)
+            || self.finance.with(Option::is_some)
+            || self.garmin.get()
+            || self.jump.get()
+    }
+}
+
+impl Sheets {
     /// The home's sheets; only the home's tabs call it.
     pub fn get() -> Self {
         use_context::<Sheets>().expect("the home provides its sheets")
@@ -79,6 +95,33 @@ impl Sheets {
             capture: None,
         });
     }
+}
+
+/// Shows what another app shared. A statement opens its review at once;
+/// pushing a page closes nothing. The capture draft (unsent) and notices
+/// show on the home, so they wait until no page or home sheet covers it:
+/// nothing unsaved is closed and every notice is seen.
+fn open_shared(sheets: Sheets) {
+    effect(move || {
+        let Some(opened) = incoming::request() else {
+            return;
+        };
+        if opened != Opened::Statement && (!nav::open().is_empty() || sheets.any_open()) {
+            return;
+        }
+        untracked(|| {
+            incoming::clear();
+            match opened {
+                Opened::Statement => nav::push(Route::StatementImport),
+                Opened::Capture(id) => {
+                    sheets.capture_draft.set(Some(id));
+                    sheets.capture.set(true);
+                }
+                Opened::StatementBusy => show_toast(s().incoming_statement_busy(), None),
+                Opened::Unsupported => show_toast(s().incoming_unsupported(), None),
+            }
+        });
+    });
 }
 
 pub fn home_page() -> Screen {
@@ -95,6 +138,7 @@ pub fn home_page() -> Screen {
         records_all: signal(false),
     };
     provide_context(sheets);
+    open_shared(sheets);
     // Keep the departing editor's budget until its native host unmounts;
     // setting weight=None alone must not expand it during the exit slide.
     let body_editing = signal(false);

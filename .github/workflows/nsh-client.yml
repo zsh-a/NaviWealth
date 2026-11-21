@@ -85,6 +85,7 @@ jobs:
         run: |
           nsh check
           nsh test tests/scale-mixed.test.ts --filter "scale mixed"
+          nsh test tests/share-mixed.test.ts --filter "share mixed"
       - name: Package the mixed app in the Android BLE host
         env:
           DIAGNOSTICS: ${{ inputs.diagnostics }}

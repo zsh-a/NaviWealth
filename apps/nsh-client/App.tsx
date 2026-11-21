@@ -3,8 +3,10 @@ import { Sheet } from "nsh/base";
 import { App } from "naviwealth/native";
 import { ScalePanel } from "./tsx/ScalePanel";
 import { scaleNative } from "./tsx/scale-bridge";
+import { forwardShares } from "./tsx/share-bridge";
 
 function MixedApp() {
+  forwardShares();
   const open = signal(false);
   const scaleBusy = signal(false);
   const palette = computed(() => scaleNative.palette(colorScheme() === "dark"));

@@ -84,12 +84,30 @@ Cancellation, backgrounding, destruction and Bluetooth-off close the current
 session; generation fences reject late callbacks. Permission dialogs that
 complete after cancellation cannot resume an old measurement.
 
+## Sharing into the app
+
+`MainActivity` is `singleTask`, so another app's share reaches the running
+instance (`onNewIntent`) instead of starting a second engine and SQLite writer.
+It accepts `SEND`/`SEND_MULTIPLE` for `image/*`, `text/plain`, CSV and XLSX.
+`IncomingShare` copies the shared text (at most 4,000 characters) and up to
+four `content:` streams of at most 25 MB each into app-private
+`files/naviwealth-incoming/` off the main thread; `file:` URIs and this app's
+own provider are refused, and copies left by an earlier process are deleted on
+start. It then sends one `share.received` event (`{text, files:[{path, name,
+mime}]}`), which NSH keeps until the TSX entry listens, so a share that
+launched the app is not lost. Rust reads only plain files directly inside that
+folder, removes each copy, and opens images/text as an unsent capture draft or
+a statement file in its review (`src/data/incoming.rs`). No model call, record
+or upload happens without the owner. There is no host call to whitelist.
+
 ## Evidence boundary
 
 Kotlin compilation, unit tests and Android lint check the host without a
 physical scale. Full measurement, GATT behavior, permission revocation,
 suspend/resume and upgrade data retention
-still require physical-device evidence.
+still require physical-device evidence, as do sharing from Alipay, WeChat,
+Gallery and Files (cold start and running) and `singleTask` behavior with
+notifications and the system Back.
 
 On a physical phone running the side-by-side debug APK, run
 `adb -s <phone-serial> logcat -T 1 -v threadtime NaviScale:I '*:S'`

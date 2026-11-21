@@ -77,6 +77,12 @@ AI only to turn text and images into drafts, using the owner's model account.
   A successful confirmation reports the single record's kind and value, or
   the batch count. Its View action opens the common day in Records, or the
   unfiltered all-days timeline when the batch spans days.
+  Content shared from another app opens this sheet with the shared images
+  staged as unsent evidence and the text in the composer; the owner sends it
+  like any first message (consent included). It waits while a pushed page or
+  home sheet covers the home, then opens, so nothing unsaved is closed. A
+  shared statement opens the statement review at once, never replacing one in
+  progress (a notice says so); anything else shows one notice.
   The thread is kept with its draft and never outlives it: confirming
   consumes it, discarding deletes it, and reopening a draft shows the whole
   conversation. An older single-question draft migrates into the thread as
@@ -558,12 +564,6 @@ amount and have no positive share fill.
 A current partial week or month compares the same elapsed days in the preceding
 period; missing earlier records show no comparison rather than invented zeroes.
 
-Statement files enter through the import action on Records.
-This opens a full review page rather than recognition: account
-mapping, selected rows, possible duplicates, corrections and skipped-line reasons
-stay on device through restart. Only confirmation posts selected entries, with
-mapping rules saved together. The fixed footer shows the selected count; long
-reviews reveal rows in batches of 50. A changed journal requires review again.
 The “Net worth change” card follows it: the signed CNY change as the card's
 figure (LargeTitle, neutral ink), then a caption naming the close it starts
 from with both values (`11月15日 周日收盘 ¥55,320.20 → ¥55,433.20`). Below are
@@ -577,6 +577,12 @@ openings and corrections are bookkeeping, not gains. A missing rate replaces
 the figure and parts with one sentence naming the currencies; no partial split
 is shown. Without a ledger the card is absent.
 
+Statement files enter through the import action on Records.
+This opens a full review page rather than recognition: account
+mapping, selected rows, possible duplicates, corrections and skipped-line reasons
+stay on device through restart. Only confirmation posts selected entries, with
+mapping rules saved together. The fixed footer shows the selected count; long
+reviews reveal rows in batches of 50. A changed journal requires review again.
 
 ## Platform decisions
 

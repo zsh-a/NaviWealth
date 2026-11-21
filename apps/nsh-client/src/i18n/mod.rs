@@ -6,9 +6,10 @@
 pub(crate) mod backup_file;
 pub(crate) mod catalog;
 mod en;
+pub(crate) mod incoming;
 pub(crate) mod market;
-mod phrases;
 pub(crate) mod net_worth;
+mod phrases;
 pub(crate) mod statement_import;
 mod zh;
 

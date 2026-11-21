@@ -70,6 +70,13 @@ Updated 2026-11-14: the owner chose text-or-image capture with fewer forms.
   Missing money fields stay missing and prevent confirmation; a named new
   account is shown as new and created only when confirmed. AI never selects a funding
   account merely because a payment app appears in a screenshot.
+- Sharing to NaviWealth from another app (Android share sheet) is the same
+  capture without the extra steps: shared screenshots or photos (up to four)
+  and text open as an unsent capture draft, and nothing is sent to a model
+  until the owner sends it with the usual consent. A shared Alipay CSV,
+  WeChat XLSX or CMB text statement opens the statement review instead.
+  Anything else is declined with a notice. (Owner direction 2026-11-21: no
+  new record type, one more way into the existing composer.)
 - Recognition never blocks navigation. Input and results are local drafts,
   shared between Today and Records. Leaving while recognition runs keeps it
   running under the app root; a run interrupted by restart can be retried.

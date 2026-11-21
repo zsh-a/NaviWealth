@@ -5,6 +5,7 @@
 mod data;
 pub mod domain;
 mod i18n;
+mod incoming;
 mod nav;
 mod pages;
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
@@ -29,7 +30,10 @@ use crate::{
 /// The app's UI set (`nsh.json` `"rust"`).
 #[native_module("naviwealth/native")]
 fn native(registry: &mut Registry) {
-    registry.register::<App>().module::<scale::Scale>();
+    registry
+        .register::<App>()
+        .module::<scale::Scale>()
+        .module::<incoming::Incoming>();
 }
 
 /// For headless tests: no quotes or exchange rates from the public
@@ -44,6 +48,22 @@ pub fn disable_live_market_data() {
 #[doc(hidden)]
 pub fn set_live_updates(live: bool) {
     data::updates::set_live(live);
+}
+
+/// Shares queued for the next app start, as the TSX entry would forward them.
+static STARTUP_SHARES: std::sync::Mutex<Vec<data::incoming::Shared>> =
+    std::sync::Mutex::new(Vec::new());
+
+/// For headless tests: a share (`Incoming.receive`'s JSON) the next app start
+/// receives once its data is loaded, as from the TSX entry.
+#[doc(hidden)]
+pub fn share_on_start(shared: serde_json::Value) -> Result<(), String> {
+    let shared = serde_json::from_value(shared).map_err(|e| e.to_string())?;
+    STARTUP_SHARES
+        .lock()
+        .map_err(|_| "poisoned".to_owned())?
+        .push(shared);
+    Ok(())
 }
 
 /// The optional capabilities supplied by the mixed TSX entry.
@@ -130,6 +150,13 @@ pub fn App(props: AppProps, cx: Scope<AppEvent>) -> impl IntoElement {
         }
     });
     settings::load();
+    for shared in STARTUP_SHARES
+        .lock()
+        .map(|mut queued| std::mem::take(&mut *queued))
+        .unwrap_or_default()
+    {
+        data::incoming::receive(shared);
+    }
     data::keyboard::track();
     spawn(photos::sweep_orphans());
     data::market::start();

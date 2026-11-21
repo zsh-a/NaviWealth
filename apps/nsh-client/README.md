@@ -51,13 +51,14 @@ nsh run                                     # GTK desktop window (phone-sized)
 nsh run --target android                    # emulator/device dev host: build, debug-sign, install, launch
 nsh check                                   # mixed TSX/native type check
 nsh test tests/scale-mixed.test.ts           # mixed scale flow with local host fixtures
+nsh test tests/share-mixed.test.ts           # shares from other apps through the TSX entry
 bash ../../tool/build-nsh-android-host.sh release # app-owned Android host, unsigned arm64 APK
 bash ../../tool/build-nsh-android-host.sh debug   # side-by-side com.naviwealth.app.bledev APK
 ```
 
 From `apps/nsh-client`, install the local TS formatter with `npm ci` and run
 `npm run format` before committing. `npm run format:check` runs the same check as
-release CI. Both commands cover `App.tsx`, `tsx/` and `tests/scale-mixed.test.ts`.
+release CI. Both commands cover `App.tsx`, `tsx/`, `tests/scale-mixed.test.ts` and `tests/share-mixed.test.ts`.
 Run `nsh check` for the native bridge and TSX type check.
 
 Debugging on Android from WSL2 against a Windows-side emulator (adb over

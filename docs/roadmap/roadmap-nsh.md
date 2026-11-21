@@ -370,6 +370,15 @@ Recommended sequence; this is planning, not a claim these items are implemented.
    tool-result continuation; no automatic tool loop runs. Remaining:
    real-model quality and Android keyboard/device verification.
 
+5. **Share into capture.** Implemented 2026-11-21: the Android host accepts
+   shared images, text, CSV and XLSX, copies them into app-private storage and
+   announces them to the TSX entry; Rust opens images/text as an unsent
+   capture draft and statements in their review (`src/data/incoming.rs`,
+   `android/README.md` "Sharing into the app"). Headless flows, mixed TSX
+   tests, Kotlin compilation and strict lint pass. Remaining: physical-device
+   evidence for sharing from Alipay, WeChat, Gallery and Files, cold start
+   versus running, and `singleTask` with notifications and Back.
+
 ## Operating Rules
 
 - Product Scope decides features; a new feature needs a daily or weekly
