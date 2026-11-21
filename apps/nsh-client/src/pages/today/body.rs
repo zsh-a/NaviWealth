@@ -158,7 +158,8 @@ pub fn summary(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                                 .tabular_nums()
                                 .text_color(color::MUTED),
                             ),
-                    ),
+                    )
+                    .child(dynamic(move || weight_spark(day()))),
             )
             .child(fact(
                 || s().body_fat,
@@ -178,9 +179,18 @@ pub fn summary(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
     .child(when(
         move || data.with(Option::is_none),
         || {
-            text(|| s().tap_to_log)
-                .typo(Type::Subhead)
-                .text_color(color::MUTED)
+            // Looks like what it does: the whole summary opens entry.
+            view()
+                .flex_row()
+                .items_center()
+                .gap(px(6.0))
+                .child(icon(Icon::Plus, 16.0, color::INK))
+                .child(
+                    text(|| s().tap_to_log)
+                        .typo(Type::Subhead)
+                        .font_weight(FontWeight::SEMIBOLD)
+                        .text_color(color::INK),
+                )
         },
     ))
 }
@@ -504,4 +514,77 @@ fn detail(
                 .tabular_nums()
                 .text_color(color::INK),
         )
+}
+
+/// The last two weeks of weight as a quiet line under the figure, latest
+/// point marked; absent with fewer than two readings. Decorative: the
+/// figure and its weekly change carry the values for screen readers.
+fn weight_spark(day: Day) -> Option<AnyElement> {
+    use nsh_base::plot::{Curve, Scale, line, plot};
+    use nsh_core::element::{RowAccessor, Rows};
+    const DAYS: i32 = 14;
+    let start = day.plus_days(-(DAYS - 1));
+    let points: Vec<_> = weights::window(day, DAYS)
+        .into_iter()
+        .filter(|w| w.day >= start && w.day <= day)
+        .collect();
+    if points.len() < 2 {
+        return None;
+    }
+    let low = points.iter().map(|w| w.kg).fold(f64::INFINITY, f64::min);
+    let high = points
+        .iter()
+        .map(|w| w.kg)
+        .fold(f64::NEG_INFINITY, f64::max);
+    let pad = ((high - low) * 0.15).max(0.2);
+    let rows = |list: &[Weight]| {
+        Rows::from_columns(
+            list.len(),
+            [
+                (
+                    "day".into(),
+                    list.iter()
+                        .map(|w| f64::from(w.day.days_since(start)))
+                        .collect(),
+                ),
+                ("kg".into(), list.iter().map(|w| w.kg).collect()),
+            ],
+        )
+    };
+    let last = &points[points.len() - 1..];
+    let chart = plot()
+        .h(px(22.0))
+        .interactive(false)
+        .x_scale(Scale::Linear {
+            domain: Some([0.0, f64::from(DAYS - 1)]),
+            reverse: false,
+        })
+        .y_scale(Scale::Linear {
+            domain: Some([low - pad, high + pad]),
+            reverse: false,
+        })
+        .child(
+            line()
+                .data(Some(rows(&points)))
+                .x(Some(RowAccessor::from("day")))
+                .y(Some(RowAccessor::from("kg")))
+                .curve(Curve::Linear)
+                .stroke_width(px(1.5))
+                .text_color(color::INK.opacity(0.45)),
+        )
+        .child(
+            line()
+                .data(Some(rows(last)))
+                .x(Some(RowAccessor::from("day")))
+                .y(Some(RowAccessor::from("kg")))
+                .dot(true)
+                .text_color(color::INK),
+        );
+    Some(
+        view()
+            .mt_1()
+            .accessibility_elements_hidden(true)
+            .child(chart)
+            .into_element(),
+    )
 }

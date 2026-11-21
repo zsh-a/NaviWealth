@@ -15,7 +15,7 @@ fn first_balance_creates_one_daily_snapshot_and_history_pages_older_revisions() 
     app.press("Review difference")?;
     app.press("Confirm balance")?;
     app.press("label:Back")?;
-    app.press("label:Asset changes")?;
+    app.press("label:/^Asset changes/")?;
     let basis = "History recalculated from current records and dated prices. Edits can change these values.";
     assert!(!app.shows(basis));
     app.press("Valuation basis")?;
@@ -214,7 +214,7 @@ fn missing_historical_fx_keeps_known_values_and_cost_details_accessible() -> Res
     app.press("id:cost-holdings >> text:USD fund")?;
     app.wait_for("Record trade")?;
     app.press("label:Back")?;
-    app.press("label:Asset changes")?;
+    app.press("label:/^Asset changes/")?;
     let warning = format!(
         "Missing USD rate · {missing_day} – {}",
         today().plus_days(-8).0

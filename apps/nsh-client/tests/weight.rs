@@ -8,11 +8,11 @@ use common::*;
 fn todays_weight_is_logged_kept_and_checked() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
-    app.wait_for("text:Tap to log")?;
+    app.wait_for("text:Log weight")?;
     assert!(!app.shows("text:Connect"));
     assert!(!app.shows("text:Sleep"));
     assert!(!app.shows("text:Body Battery"));
-    app.press("text:Tap to log")?;
+    app.press("text:Log weight")?;
     app.wait_for("Save weight")?;
     app.type_text("label:Weight", "5")?;
     app.press("Save weight")?;
@@ -38,7 +38,7 @@ fn todays_weight_is_logged_kept_and_checked() -> Result<(), String> {
 fn deleting_a_weight_can_be_undone() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
-    app.press("text:Tap to log")?;
+    app.press("text:Log weight")?;
     app.type_text("label:Weight", "70")?;
     app.press("Save weight")?;
     app.wait_for("label:/^Body metrics, 70.0 kg, /")?;
@@ -205,7 +205,13 @@ fn scale_context_shows_on_today_in_the_editor_in_review_and_records() -> Result<
     app.press("label:Review")?;
     app.wait_for("text:30 days")?;
     app.press("90 days")?;
-    let first = today().plus_days(-89).to_string();
+    // Axis ends read as local short dates, with the year only across years.
+    let (start, end) = (today().plus_days(-89).0, today().0);
+    let first = if start.year() == end.year() {
+        start.strftime("%b %-d").to_string()
+    } else {
+        start.strftime("%b %-d, %Y").to_string()
+    };
     app.wait_for(&format!("text:{first}"))?;
     app.press("text:Expand chart >> nth=0")?;
     app.wait_for("text:Collapse")?;

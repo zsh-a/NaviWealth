@@ -52,7 +52,7 @@ fn detail_prioritizes_trade_and_keeps_price_and_listing_actions_readable() -> Re
             e.locale_settings = LocaleSettings::of(locale);
         })?;
         let labels = if tag == "en" {
-            ["Trade", "Link code", "Prices"]
+            ["Trade", "Link code", "Price history"]
         } else {
             ["记录交易", "关联代码", "价格记录"]
         };

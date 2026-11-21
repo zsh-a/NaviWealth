@@ -291,7 +291,7 @@ pub(super) fn confirm_delete(
         "{}\n{} · {}\n{}\n\n{}",
         transaction_title(&entry),
         s().long_date(crate::domain::meal::Day(entry.at.date())),
-        entry.at.time().strftime("%H:%M"),
+        clock::clock_time(entry.at.hour() as u8, entry.at.minute() as u8),
         accounts,
         if balance {
             s().revoke_balance_body
@@ -1266,21 +1266,28 @@ pub fn transaction_row(
                 .map(|p| p.account.name().to_owned())
                 .unwrap_or_default()
         });
-    let time = format!("{:02}:{:02}", t.at.hour(), t.at.minute());
+    let time = clock::clock_time(t.at.hour() as u8, t.at.minute() as u8);
     let transfer = parsed.as_ref().is_some_and(|p| p.0 == Kind::Transfer);
-    let (title, sub) = if transfer {
+    // The amount's sign and the leading icon already say "spending"; the
+    // account leads so narrow rows truncate the time, not the account.
+    let expense = parsed.as_ref().is_some_and(|p| p.0 == Kind::Expense);
+    let (title, sub, spoken_sub) = if transfer {
         let payee = t.payee.trim();
         let sub = if payee.is_empty() || payee == kind {
             format!("{kind} · {time}")
         } else {
             format!("{kind} · {time} · {payee}")
         };
-        (accounts, sub)
-    } else {
+        (accounts, sub.clone(), sub)
+    } else if expense {
         (
             transaction_title(&t),
-            format!("{kind} · {time} · {accounts}"),
+            format!("{accounts} · {time}"),
+            format!("{kind} · {accounts} · {time}"),
         )
+    } else {
+        let sub = format!("{kind} · {accounts} · {time}");
+        (transaction_title(&t), sub.clone(), sub)
     };
     let currency = parsed
         .as_ref()
@@ -1289,7 +1296,7 @@ pub fn transaction_row(
         .or_else(|| t.own_postings().next().map(|p| p.account.currency()))
         .unwrap_or(Currency::CNY);
     let accessibility = format!(
-        "{title}, {}, {sub}",
+        "{title}, {}, {spoken_sub}",
         crate::ui::currency::decorate(&amount, currency)
     );
     // Keep the amount with its native currency on one baseline when it

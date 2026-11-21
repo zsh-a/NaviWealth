@@ -1,11 +1,11 @@
 //! The day at a glance: the energy so far as a large figure counting up,
-//! what is left of the goal, a compact goal progress ring,
-//! and the macros in grams.
+//! what is left of the goal, a compact goal progress ring, the macros in
+//! grams and, once the ledger is in use, the day's spending.
 
 use nsh_core::prelude::*;
 
 use crate::{
-    data::{meals, settings},
+    data::{finance, meals, settings},
     domain::{format, meal::Day, nutrition::Nutrients},
     i18n::s,
     ui::{
@@ -13,15 +13,15 @@ use crate::{
         figures::{Scale, counted, stat},
         ring::goal_ring,
         space,
-        surface::card,
+        surface::{card, hairline},
     },
 };
 
 const RING: f32 = 84.0;
 const STROKE: f32 = 9.0;
 
-/// The glance card of `day`: one domain, one headline number. Spending is
-/// summarized beside the records it adds up, not here.
+/// The glance card of `day`: intake is the one headline number; the day's
+/// spending sits beneath it once the ledger has any entry.
 pub fn hero(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
     let summary = computed(move || meals::summary(day()));
     let goal = computed(settings::goal);
@@ -51,7 +51,17 @@ pub fn hero(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                                 .font_weight(FontWeight::SEMIBOLD)
                                 .text_color(color::MUTED),
                         )
-                        .child(figure(total, logged))
+                        .child(
+                            when(logged, move || figure(total, logged))
+                                // Before the first meal: a sentence, not a
+                                // dash the size of a figure.
+                                .otherwise(|| {
+                                    text(|| s().nothing_logged)
+                                        .typo(Type::Title)
+                                        .text_color(color::INK)
+                                        .pt_1()
+                                }),
+                        )
                         .child(when(
                             move || !logged() || goal.get().is_some_and(|goal| goal > 0.0),
                             move || {
@@ -102,6 +112,67 @@ pub fn hero(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                 .child(macro_mark(|| s().carbs, move || total().carbs))
                 .child(macro_mark(|| s().fat, move || total().fat))
         }))
+        .child(spending(day))
+}
+
+/// The day's spending in each currency (exact, never converted; opening
+/// balances, adjustments, income and transfers are not spending). A dash
+/// when nothing was spent; absent until the ledger has any entry.
+fn spending(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
+    let ledger = computed(|| !finance::transactions_snapshot().is_empty());
+    let spent = computed(move || {
+        let entries = finance::transactions_snapshot();
+        let date = day().0;
+        navi_finance::currency::Currency::ALL
+            .into_iter()
+            .filter_map(|currency| {
+                let spending = navi_finance::review::spending_in(&entries, date, date, currency);
+                (spending.records > 0)
+                    .then(|| crate::ui::currency::format(spending.total, currency))
+            })
+            .collect::<Vec<_>>()
+    });
+    let value = move || {
+        spent.with(|spent| {
+            if spent.is_empty() {
+                "—".to_owned()
+            } else {
+                spent.join(" / ")
+            }
+        })
+    };
+    when(
+        move || ledger.get(),
+        move || {
+            view().gap(px(14.0)).child(hairline(0.0)).child(
+                view()
+                    .flex_row()
+                    .items_center()
+                    .justify_between()
+                    .gap_3()
+                    .flex_wrap()
+                    .accessible(true)
+                    .label(move || format!("{}, {}", s().spent_today, value()))
+                    .child(
+                        text(|| s().spent_today)
+                            .typo(Type::Subhead)
+                            .text_color(color::MUTED),
+                    )
+                    .child(
+                        text(value)
+                            .typo(Type::Headline)
+                            .tabular_nums()
+                            .text_color(move || {
+                                if spent.with(Vec::is_empty) {
+                                    color::MUTED
+                                } else {
+                                    color::INK
+                                }
+                            }),
+                    ),
+            )
+        },
+    )
 }
 
 /// The energy counting up, or a dash before anything is logged (missing
@@ -122,7 +193,7 @@ fn figure(
 /// that nothing is logged yet.
 fn caption(total: Nutrients, logged: bool, goal: Option<f64>) -> String {
     match (logged, goal) {
-        (false, _) => s().nothing_logged.to_owned(),
+        (false, _) => s().intake_hint.to_owned(),
         (true, Some(goal)) if goal > 0.0 => s().goal_status(total.kcal, goal),
         (true, _) => s().kcal_today.to_owned(),
     }

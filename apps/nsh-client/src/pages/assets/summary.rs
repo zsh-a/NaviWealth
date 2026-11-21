@@ -14,13 +14,23 @@ pub(super) fn net_summary(
     } else {
         s().valuation_book
     };
-    let footer = history.change().map(|delta| {
-        format!(
-            "{} {}",
-            s().net_change_30d,
-            crate::ui::currency::signed(delta, navi_finance::currency::Currency::CNY)
-        )
-    });
+    // A full 30-day comparison when the history reaches back that far, else
+    // the change since the first complete valuation; never an invented one.
+    let footer = history
+        .change()
+        .map(|delta| (s().net_change_30d, delta))
+        .or_else(|| {
+            history
+                .since_first()
+                .filter(|delta| *delta != 0)
+                .map(|delta| (s().net_change_since_first, delta))
+        })
+        .map(|(label, delta)| {
+            format!(
+                "{label} {}",
+                crate::ui::currency::signed(delta, navi_finance::currency::Currency::CNY)
+            )
+        });
     let history_label = footer
         .as_ref()
         .map(|change| format!("{}, {change}", s().asset_history))

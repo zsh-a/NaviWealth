@@ -132,6 +132,7 @@ pub fn chart_from(
                             Some((day, value)) => {
                                 let value =
                                     value.map(|v| unit.format(v)).unwrap_or_else(|| "—".into());
+                                let day = s().short_date(Day(*day));
                                 format!(
                                     "{} · {} {value} · {day}",
                                     copy("No observations in this period", "时段内暂无记录"),
@@ -202,12 +203,15 @@ fn series(title: String, points: &[Point], unit: Unit, from: Date, end: Date) ->
         })
         .collect();
     let height = if points.len() == 1 { 64.0 } else { 152.0 };
+    // The axis starts at the first observation in the window, so a short
+    // history fills the plot instead of leaving an empty band on the left.
+    let axis_from = points.first().map_or(from, |p| p.0.max(from));
     view()
         .gap_1()
         .child(
             InspectionPlot {
                 title,
-                from,
+                from: axis_from,
                 end,
                 domain: [-pad, extent + pad],
                 samples,
@@ -235,7 +239,7 @@ pub(crate) fn date_caption(day: Date, from: Date, end: Date) -> String {
     if from.year() == end.year() {
         s().long_date(Day(day))
     } else {
-        day.to_string()
+        s().axis_date(Day(day), true)
     }
 }
 
@@ -293,12 +297,13 @@ mod tests {
         let mut app = Headless::start(EngineConfig::new(Root::of::<StalePrice>())).unwrap();
         app.wait_for("text:¥2").unwrap();
         app.press("7D").unwrap();
-        app.wait_for("text:No observations in this period · Last quote ¥2 · 2026-02-22")
+        app.wait_for("text:No observations in this period · Last quote ¥2 · Sun, Feb 22")
             .unwrap();
         assert!(!app.shows("id:trend-value"));
         app.press("All").unwrap();
         app.wait_for("text:¥2").unwrap();
-        app.wait_for("text:2026-01-30").unwrap();
+        // The axis starts at the first observation, not the older journal start.
+        app.wait_for("text:Jan 30").unwrap();
         assert!(!app.shows("text:¥3"));
     }
 

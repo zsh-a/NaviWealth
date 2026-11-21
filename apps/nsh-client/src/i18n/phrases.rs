@@ -26,6 +26,23 @@ impl Strings {
         }
     }
 
+    /// A chart-axis day (`Oct 23`, `10月23日`), with its year when asked
+    /// (`Oct 23, 2025`, `2025年10月23日`).
+    pub fn axis_date(&self, day: Day, with_year: bool) -> String {
+        let date = day.0;
+        match (self.zh(), with_year) {
+            (true, true) => format!("{}年{}月{}日", date.year(), date.month(), date.day()),
+            (true, false) => format!("{}月{}日", date.month(), date.day()),
+            (false, true) => format!(
+                "{} {}, {}",
+                self.month_short(date.month()),
+                date.day(),
+                date.year()
+            ),
+            (false, false) => format!("{} {}", self.month_short(date.month()), date.day()),
+        }
+    }
+
     /// A day in brief (`Fri, Nov 13`, `11月13日 周五`).
     pub fn short_date(&self, day: Day) -> String {
         let date = day.0;

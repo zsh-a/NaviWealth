@@ -1,5 +1,8 @@
 //! Explicit local account selection updates only the draft, never the ledger.
-use navi_finance::account::Account;
+use navi_finance::{
+    account::{Account, AccountKind},
+    recognition::Kind,
+};
 use nsh_core::prelude::*;
 
 use crate::{
@@ -12,6 +15,7 @@ use crate::{
 #[derive(Clone, Copy, PartialEq)]
 pub enum Choice {
     Account { index: usize, destination: bool },
+    Category(usize),
     Value(usize),
 }
 
@@ -112,4 +116,70 @@ pub fn picker(
             )
             .child(checked.then(|| icon(Icon::Check, 20.0, color::INK)))
         }))
+}
+
+/// Chooses the category of a recognized spending or income record from the
+/// existing categories in its currency; the draft alone changes.
+pub fn category_picker(
+    draft: Signal<Draft>,
+    input: Signal<String>,
+    error: Signal<Option<String>>,
+    choosing: Signal<Option<Choice>>,
+    index: usize,
+) -> impl IntoElement {
+    let current = draft.get_untracked();
+    let Some(Record::Money { draft: money, .. }) = current.records.get(index) else {
+        return view().into_element();
+    };
+    let kind = if money.kind == Kind::Income {
+        AccountKind::Income
+    } else {
+        AccountKind::Expenses
+    };
+    let currency = navi_finance::currency::Currency::parse(&money.currency)
+        .unwrap_or(navi_finance::currency::Currency::CNY);
+    let selected = money.category.clone();
+    let categories: std::collections::BTreeSet<Account> = finance::accounts()
+        .into_iter()
+        .filter(|a| a.kind() == kind)
+        .map(|a| a.in_currency(currency))
+        .collect();
+    view()
+        .gap_1()
+        .children(categories.into_iter().map(move |category| {
+            let name = super::super::finance::category_label(&category);
+            let checked = selected.as_ref() == Some(&category);
+            row_button(move || {
+                let mut next = draft.get_untracked();
+                if next.status != Status::Ready {
+                    return;
+                }
+                let Some(Record::Money { draft: money, .. }) = next.records.get_mut(index) else {
+                    return;
+                };
+                money.category = Some(category.clone());
+                next.correction = input.get_untracked();
+                match capture::put(next.clone()) {
+                    Ok(()) => {
+                        error.set(None);
+                        draft.set(next);
+                        choosing.set(None);
+                    }
+                    Err(cause) => {
+                        log::error!("capture: category selection could not be kept: {cause}");
+                        error.set(Some(s().error_transaction_storage.into()));
+                    }
+                }
+            })
+            .px_0()
+            .accessibility_label(Some(name.clone().into()))
+            .child(
+                text(name)
+                    .typo(Type::Headline)
+                    .text_color(color::INK)
+                    .flex_1(),
+            )
+            .child(checked.then(|| icon(Icon::Check, 20.0, color::INK)))
+        }))
+        .into_element()
 }

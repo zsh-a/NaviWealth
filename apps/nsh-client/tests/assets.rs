@@ -88,7 +88,7 @@ fn accounts_balances_rename_and_net_worth_survive_restart() -> Result<(), String
     verify(&mut app, "250.00", true)?;
     app.press("label:Back")?;
     app.wait_for("label:¥750.00")?;
-    app.press("label:Asset changes")?;
+    app.press("label:/^Asset changes/")?;
     app.press("Valuation basis")?;
     app.wait_for("Includes backdated entries, balance adjustments and price changes.")?;
     app.press("label:Back")?;

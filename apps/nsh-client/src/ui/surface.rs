@@ -40,7 +40,6 @@ pub fn section_header(
         .justify_between()
         .min_h(px(36.0))
         .gap_3()
-        .px(px(2.0))
         .child(
             text(title)
                 .typo(Type::Headline)

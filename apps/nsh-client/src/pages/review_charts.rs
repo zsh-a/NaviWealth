@@ -40,10 +40,15 @@ pub fn chart(days: Vec<Day>, kcal: Vec<Option<f64>>, goal: Option<f64>) -> impl 
             || s().no_records.to_owned(),
             |k| format!("{} {}", format::kcal(k), s().kcal),
         );
+        // Every day keeps a faint track so a sparse week still reads as a
+        // week; only logged days get a filled bar (no meals is never zero).
         view()
             .flex_1()
             .h_full()
             .justify_end()
+            .bg(color::TRACK.opacity(0.7))
+            .rounded(px(if month { 3.0 } else { 7.0 }))
+            .overflow_hidden()
             .label(format!("{}, {reading}", s().short_date(*day)))
             .child(kcal.map(|k| {
                 view()

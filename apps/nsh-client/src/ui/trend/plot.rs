@@ -1,6 +1,9 @@
 //! Shared pointer, keyboard and accessibility inspection for dated measurements.
 use super::{Date, Day};
-use crate::ui::{Type, Typo, color};
+use crate::{
+    i18n::s,
+    ui::{Type, Typo, color},
+};
 use nsh_base::plot::{Curve, PlotAccessibilityValue, Scale, area, grid, line, plot};
 use nsh_core::{
     TouchEvent, TouchPhase,
@@ -254,13 +257,13 @@ impl InspectionPlot {
                     .flex_row()
                     .justify_between()
                     .child(
-                        text(from.to_string())
+                        text(s().axis_date(Day(from), from.year() != end.year()))
                             .typo(Type::Caption)
                             .tabular_nums()
                             .text_color(color::MUTED),
                     )
                     .child({
-                        text(end.to_string())
+                        text(s().axis_date(Day(end), from.year() != end.year()))
                             .typo(Type::Caption)
                             .tabular_nums()
                             .text_color(color::MUTED)

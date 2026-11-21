@@ -80,20 +80,6 @@ pub fn meal_list(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
             spawn(photos::load(names));
         }
     });
-    // The day's spending sits with the records it adds up (exact amounts in
-    // each currency; opening balances and adjustments are not spending).
-    let spent = computed(move || {
-        let entries = finance::transactions_snapshot();
-        let date = day().0;
-        navi_finance::currency::Currency::ALL
-            .into_iter()
-            .filter_map(|currency| {
-                let spending = navi_finance::review::spending_in(&entries, date, date, currency);
-                (spending.records > 0)
-                    .then(|| crate::ui::currency::format(spending.total, currency))
-            })
-            .collect::<Vec<_>>()
-    });
     let count = move || list.with(Vec::len);
     view()
         .gap_3()
@@ -106,7 +92,7 @@ pub fn meal_list(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                         return String::new();
                     }
                     let meals_only = list.with(|l| l.iter().all(|r| matches!(r, Record::Meal(_))));
-                    spent.with(|spent| s().records_summary(n, meals_only, spent))
+                    s().records_summary(n, meals_only)
                 })
                 .typo(Type::Subhead)
                 .tabular_nums()

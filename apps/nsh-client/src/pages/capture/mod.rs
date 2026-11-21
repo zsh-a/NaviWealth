@@ -21,7 +21,7 @@ use crate::{
         Btn, Icon, IconBtn, Type, Typo, Variant, chip, color,
         feedback::{appear, spinner},
         field::{note, text_input},
-        radius,
+        icon, radius,
         sheet::{conversation_sheet, initial_focus, retained},
         toast::{show_receipt, show_toast},
         toggle::checkbox_row,
@@ -319,6 +319,7 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                     match choice {
                         accounts::Choice::Value(_) => s().edit,
                         accounts::Choice::Account { .. } => s().capture_choose_account,
+                        accounts::Choice::Category(_) => s().category,
                     }
                 } else if awaiting_answers() {
                     s().capture_clarify
@@ -364,6 +365,10 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                     match choice {
                         accounts::Choice::Account { index, destination } => {
                             accounts::picker(draft, input, error, choosing, index, destination)
+                                .into_element()
+                        }
+                        accounts::Choice::Category(index) => {
+                            accounts::category_picker(draft, input, error, choosing, index)
                                 .into_element()
                         }
                         accounts::Choice::Value(index) => {
@@ -483,8 +488,9 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                     .child(when(
                         move || !replying.get(),
                         move || {
-                            Btn::ghost()
-                                .label(|| s().capture_add_detail.into())
+                            // Shaped like the composer it opens, so the
+                            // conversation reads as one continuing thread.
+                            nsh_base::button()
                                 .on_press(move || {
                                     replying.set(true);
                                     spawn(async move {
@@ -492,6 +498,26 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                                         focus.focus();
                                     });
                                 })
+                                .accessibility_label(Some(s().capture_add_detail.into()))
+                                .flex_row()
+                                .items_center()
+                                .gap(px(10.0))
+                                .min_h(px(52.0))
+                                .px(px(16.0))
+                                .bg(color::SURFACE_2)
+                                .rounded(px(radius::WELL))
+                                .transition_colors()
+                                .duration(crate::ui::motion::INSTANT)
+                                .active(|s| s.bg(color::SUNKEN))
+                                .focus_visible(|s| s.outline(px(2.0)).outline_color(color::INK))
+                                .child(icon(Icon::Photo, 20.0, color::MUTED))
+                                .child(
+                                    text(|| s().capture_add_detail)
+                                        .typo(Type::Body)
+                                        .text_color(color::MUTED)
+                                        .flex_1()
+                                        .number_of_lines(1),
+                                )
                         },
                     ))
                     .child(when(move || replying.get(), reply_bar))

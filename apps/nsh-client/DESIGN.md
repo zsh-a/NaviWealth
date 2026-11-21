@@ -45,7 +45,9 @@ AI only to turn text and images into drafts, using the owner's model account.
   Undo; closing a nonempty draft reports that the draft is kept.
   The first entry opens a compact writing surface under the title. After sending,
   the conversation uses the available height above the live keyboard. Earlier exchanges
-  fold under Earlier messages. Add text or photos opens the reply surface on demand.
+  fold under Earlier messages. A composer-shaped pill (photo glyph and the muted
+  label Add text or photos / 补充文字或图片) sits above the footer action and
+  opens the reply surface on demand.
   Both writing surfaces group a photo control, the input
   (labelled What would you like to record? / 想记下什么？) and, for ordinary messages, a round send
   button. Input starts at one line (48 pt), grows with its content up to
@@ -60,10 +62,13 @@ AI only to turn text and images into drafts, using the owner's model account.
   questions or unsent evidence withhold confirmation.
   Only a draft with no thread yet requests initial focus after the sheet
   opens; a ready result stays readable.
-  Each record supports a local edit to its amount, meal name or weight. Edits
-  persist in the draft and the final confirmation writes the batch.
-  Account rows in a ready result open an existing-account picker in the same
-  sheet. Transfer source and destination lists exclude the other account;
+  Each record supports a local edit to its amount, meal name or weight: the
+  record's main figure is that control, marked with a muted pencil and named
+  Edit amount / Edit meal / Edit weight. Edits persist in the draft and the
+  final confirmation writes the batch.
+  Account and category rows in a ready result open a picker in the same
+  sheet, each with a trailing chevron; categories list the existing expense
+  or income categories in the record's currency. Transfer source and destination lists exclude the other account;
   internal holding accounts are never offered. Selection first persists the
   draft, then returns to the result, without calling the model or posting a
   transaction. With no eligible account, the picker explains how to name a
@@ -109,13 +114,18 @@ AI only to turn text and images into drafts, using the owner's model account.
   account changes are explained instead of overwriting newer data.
 - **No hidden gestures.** Every action is a visible control; nothing
   depends on a long press.
-- **Today shows today:** the main card is health only: intake as the one
+- **Today shows today:** the main card leads with intake as the one
   Display figure, what is left of the goal, and a progress ring when a goal is set. The ring fills up to one
   turn and its center reports the actual percentage, including values above
-  100%. Protein, carbohydrate and fat appear separately in grams. Flat beneath it is a full-width Body metrics summary:
+  100%. Protein, carbohydrate and fat appear separately in grams. Once the
+  ledger has any entry, a hairline separates Spent today / 今日支出 with the
+  day's spending in each currency (a dash when nothing was spent). Before the
+  first meal the figure is replaced by the sentence Nothing logged yet and a
+  hint to use +, never a figure-sized dash. Flat beneath it is a full-width Body metrics summary:
   three compact columns for weight, body fat and BMI. The seven-day trend
   stays beside the weight in its column (↓0.5 kg · 7天), wrapping locally on
-  narrow screens. Today’s measurement date is omitted visually; an older date
+  narrow screens, with a decorative 14-day line beneath it (latest point
+  marked, hidden from screen readers) once two readings exist. Today’s measurement date is omitted visually; an older date
   shares the trend caption, while the accessible label always includes the date. The header’s explicit
   Overview / 概览 control opens the same overview as the whole row. Large text
   stacks the columns.
@@ -123,12 +133,14 @@ AI only to turn text and images into drafts, using the owner's model account.
   a newer or older reading. Extra composition, goal distance and original
   measurement details live in the overview; its manual editor shares one
   native sheet and returns to the overview. With no weight, the summary
-  opens entry directly. A reading panel uses the sheet's space; entry reserves
+  opens entry directly and shows Log weight / 记录体重 with a plus in ink. A reading panel uses the sheet's space; entry reserves
   the keyboard. Sleep and Body Battery occupy a separate equal-width row
   once Garmin is connected, stacking at large text (a Garmin vital opens all
   of the day's Garmin data). Then today's records, newest first, whose header carries the count
-  and the day's spending in each currency ("3 条 · 支出 ¥12.00"): spending
-  is summarized beside the records it adds up. Opening balances and
+  ("3 条"). Spending rows read account then time ("Wallet · 16:30"); the sign
+  and icon already say spending, so narrow rows truncate the time, not the
+  account. Other kinds keep their label first, and every time follows the
+  device's 12/24-hour setting. Opening balances and
   adjustments remain in the timeline with quieter labels and amounts; they
   are not spending. Groups are 24 pt apart, the records 32 pt below the
   vitals. Before any meals are logged, the card omits the empty ring and macro
@@ -158,8 +170,11 @@ AI only to turn text and images into drafts, using the owner's model account.
   a tappable trend footer with the sparkline and Asset changes link. Cash accounts, open holdings and debt accounts
   follow as flat rows on the canvas.
   The sparkline reuses dated valuation history and keeps missing-rate gaps;
-  its comparison is omitted without both complete endpoints or records dating
-  back 30 days. Asset changes remains a visible link.
+  a soft ink wash fills beneath the line and the latest valuation is dotted.
+  The caption shows the 30-day change when records reach back that far, else
+  the nonzero change since the first complete valuation; without both
+  complete endpoints it falls back to the valuation basis. Asset changes
+  remains a visible link.
   With holdings, values use dated native-currency prices, falling back to cost
   when unpriced; without holdings, the basis is book balances. CNY, HKD and
   USD accounts and holdings retain their original amounts. The overview converts
@@ -214,11 +229,12 @@ AI only to turn text and images into drafts, using the owner's model account.
   summary linked to the account; corrections go through another balance check.
 - **Review:** a calendar week (Monday first in Chinese and ISO locales) or
   month, with its segmented control above the labelled period stepper.
-  The headline shows one observed change, preferring the period’s weight change
+  The headline (Title, a step above section headers) shows one observed change, preferring the period’s weight change
   and falling back to intake per logged day when both periods have entries. Partial periods compare matching elapsed days;
   missing observations never imply a zero or an invented comparison.
-  Next comes the intake card: a bar per day for a week, with a labelled dashed goal
-  line and labelled empty columns for days without meals, a calendar for a month
+  Next comes the intake card: a bar per day for a week, every day on a faint
+  full-height track, with a labelled dashed goal line and labelled empty
+  columns (track only) for days without meals, a calendar for a month
   (shaded by share of the goal, amber past it, a dot on weighed days, today
   outlined; a day opens in Records). Coverage sits directly beneath intake per logged day. The monthly caption
   includes the goal, which the weekly chart labels on its reference line.
@@ -473,7 +489,10 @@ FX pairs, estimated net worth and saved snapshots share that inspection surface.
 Touch or drag horizontally to inspect an observation. Mouse, keyboard and screen-reader
 stepping update the same readout. The seven- and thirty-day windows include
 today and the preceding six or twenty-nine calendar days. Older records unlock
-All. An empty recent window shows the latest available observation date. History fills automatically while the app is active. A missing FX rate or valuation error breaks the line. Isolated valid days get a dot. The chart lists missing currencies and affected dates in the displayed window. Money keeps
+All. The plotted axis starts at the window's first observation, so a short
+history fills the plot; axis ends and dates read as local short dates
+(Oct 23 / 10月23日), adding the year only when the ends span years.
+An empty recent window shows the latest available observation date. History fills automatically while the app is active. A missing FX rate or valuation error breaks the line. Isolated valid days get a dot. The chart lists missing currencies and affected dates in the displayed window. Money keeps
 tabular numerals and neutral ink, including gains and losses. Overview
 amounts and primary balance/value figures use grouped thousands and two
 decimal places through a display-only formatter that preserves exact minor
@@ -641,7 +660,9 @@ and appending immutable observations. Desktop captures do not establish Android
 native behavior, rendering performance or physical-device TLS behavior.
 
 Home corner actions have localized accessible names and 48 pt touch targets.
-Settings uses Sliders and Records uses Import beside Calendar. Assets has a
+Settings uses Sliders and Records uses Import (a page with an inward arrow,
+so it never reads as download) beside Calendar. A holding's price history
+action is labelled Price history / 价格记录. Assets has a
 visible Manage text button. Settings rows use semantic members of the same 24 pt, 1.8 pt
 line family: Profile for body profile, Target for daily energy goal, Scale for
 goal weight and scale hardware, Watch for Garmin, Server for recognition and

@@ -51,9 +51,10 @@ fn today_summarizes_spending_with_its_records_at_large_text() -> Result<(), Stri
     app.set_viewport(Size::new(Points(360.0), Points(640.0)))?;
     app.set_environment("large text", |e| e.font_scale = 2.0)?;
     app.wait_for("Intake")?;
-    // Spending is summarized beside the records it adds up; the opening
-    // balance is listed but is not spending.
-    app.wait_for("text:/3 records · Spent ¥1,234.56/")?;
+    // Spending is summarized in the day's card; the opening balance is
+    // listed but is not spending.
+    app.wait_for("text:3 records")?;
+    app.wait_for("label:Spent today, ¥1,234.56")?;
     app.wait_for("text:300")?;
     app.wait_for("label:/^Initial funds, ¥100,000.00/")?;
     app.wait_for("label:/^Groceries, −¥1,234.56/")?;
@@ -62,7 +63,8 @@ fn today_summarizes_spending_with_its_records_at_large_text() -> Result<(), Stri
         e.locale = locale;
         e.locale_settings = LocaleSettings::of(locale);
     })?;
-    app.wait_for("text:/3 条 · 支出 ¥1,234.56/")?;
+    app.wait_for("text:3 条")?;
+    app.wait_for("label:今日支出, ¥1,234.56")?;
     app.press("label:记录")?;
     app.wait_for("label:/^Initial funds, ¥100,000.00/")?;
     app.press("label:/^Groceries, −¥1,234.56/")?;
@@ -118,7 +120,7 @@ fn a_meal_logged_late_lands_on_its_day_in_records() -> Result<(), String> {
 fn records_fold_weight_into_summary_and_weight_filter_opens_editor() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
     let (mut app, _) = start_in(Some(dir.path()), pasta_today(), None);
-    app.press("text:Tap to log")?;
+    app.press("text:Log weight")?;
     app.type_text("label:Weight", "70")?;
     app.press("Save weight")?;
     app.wait_for("label:/^Body metrics, 70.0 kg, /")?;
@@ -158,7 +160,7 @@ fn records_without_any_entry_say_so() -> Result<(), String> {
 #[test]
 fn weight_only_day_has_a_summary_that_opens_its_editor() -> Result<(), String> {
     let (mut app, _) = start(Vec::new(), None);
-    app.press("text:Tap to log")?;
+    app.press("text:Log weight")?;
     app.type_text("label:Weight", "72.9")?;
     app.press("Save weight")?;
     app.press("label:Records")?;

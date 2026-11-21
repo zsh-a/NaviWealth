@@ -104,19 +104,6 @@ pub fn records(draft: &Draft, choosing: Signal<Option<super::accounts::Choice>>)
                 .p_4()
                 .gap_2()
                 .child(record_view(record, index, choosing, editable))
-                .child(editable.then(|| {
-                    let label = match record {
-                        Record::Money { .. } => s().capture_edit_amount,
-                        Record::Meal { .. } => s().capture_edit_meal,
-                        Record::Weight { .. } => s().edit_weight,
-                    };
-                    crate::ui::Btn::ghost()
-                        .label(move || label.into())
-                        .on_press(move || {
-                            dismiss_keyboard();
-                            choosing.set(Some(super::accounts::Choice::Value(index)));
-                        })
-                }))
         }))
         .into_element()
 }
@@ -159,13 +146,25 @@ fn account_line(
         .as_ref()
         .map(|_| account(value))
         .unwrap_or_else(|| s().capture_choose_account.into());
+    choice_line(
+        label,
+        value,
+        choosing,
+        super::accounts::Choice::Account { index, destination },
+    )
+}
+
+/// A labelled value that opens its picker in the same sheet.
+fn choice_line(
+    label: &'static str,
+    value: String,
+    choosing: Signal<Option<super::accounts::Choice>>,
+    choice: super::accounts::Choice,
+) -> AnyElement {
     nsh_base::button()
         .on_press(move || {
             dismiss_keyboard();
-            choosing.set(Some(super::accounts::Choice::Account {
-                index,
-                destination,
-            }));
+            choosing.set(Some(choice));
         })
         .accessibility_label(Some(format!("{label}, {value}").into()))
         .flex_row()
@@ -184,6 +183,36 @@ fn account_line(
                 .text_right(),
         )
         .child(icon(Icon::ChevronRight, 16.0, color::MUTED))
+        .into_element()
+}
+
+/// A record's main figure; editable, it is the control that edits it, with
+/// a pencil so the affordance is visible.
+fn edit_figure(
+    figure: View,
+    label: &'static str,
+    index: usize,
+    choosing: Signal<Option<super::accounts::Choice>>,
+    editable: bool,
+) -> AnyElement {
+    if !editable {
+        return figure.into_element();
+    }
+    nsh_base::button()
+        .on_press(move || {
+            dismiss_keyboard();
+            choosing.set(Some(super::accounts::Choice::Value(index)));
+        })
+        .accessibility_label(Some(label.into()))
+        .flex_row()
+        .items_center()
+        .gap_2()
+        .min_h(px(48.0))
+        .rounded(px(8.0))
+        .active(|s| s.bg(color::SUNKEN))
+        .focus_visible(|s| s.outline(px(2.0)).outline_color(color::INK))
+        .child(figure.flex_1().min_w(px(0.0)))
+        .child(icon(Icon::Pencil, 18.0, color::MUTED))
         .into_element()
 }
 
@@ -214,7 +243,7 @@ fn record_view(
                 .err();
             view()
                 .gap_3()
-                .child(
+                .child(edit_figure(
                     view()
                         .flex_row()
                         .items_baseline()
@@ -237,7 +266,11 @@ fn record_view(
                             .tabular_nums()
                             .text_color(color::INK),
                         ),
-                )
+                    s().capture_edit_amount,
+                    index,
+                    choosing,
+                    editable,
+                ))
                 .child(line(|| s().transaction_date, s().long_date(*day), false))
                 .child(account_line(
                     if draft.kind == Kind::Transfer {
@@ -261,6 +294,17 @@ fn record_view(
                         editable,
                     )
                     .into_element()
+                } else if editable {
+                    choice_line(
+                        s().category,
+                        draft
+                            .category
+                            .as_ref()
+                            .map(super::super::finance::category_label)
+                            .unwrap_or_else(|| s().capture_choose_category.into()),
+                        choosing,
+                        super::accounts::Choice::Category(index),
+                    )
                 } else {
                     line(
                         s().category,
@@ -317,12 +361,18 @@ fn record_view(
                     .typo(Type::Subhead)
                     .text_color(color::MUTED),
                 )
-                .child(
-                    text(format!("{} {}", format::kcal(total.kcal), s().kcal))
-                        .typo(Type::LargeTitle)
-                        .tabular_nums()
-                        .text_color(color::INK),
-                )
+                .child(edit_figure(
+                    view().child(
+                        text(format!("{} {}", format::kcal(total.kcal), s().kcal))
+                            .typo(Type::LargeTitle)
+                            .tabular_nums()
+                            .text_color(color::INK),
+                    ),
+                    s().capture_edit_meal,
+                    index,
+                    choosing,
+                    editable,
+                ))
                 .child((total.extra.is_some()).then(|| {
                     let extra = total.extra.unwrap_or_default();
                     let complete = estimate
@@ -360,12 +410,18 @@ fn record_view(
                     .typo(Type::Headline)
                     .text_color(color::INK),
             )
-            .child(
-                text(format!("{kg:.1} kg"))
-                    .typo(Type::LargeTitle)
-                    .tabular_nums()
-                    .text_color(color::INK),
-            )
+            .child(edit_figure(
+                view().child(
+                    text(format!("{kg:.1} kg"))
+                        .typo(Type::LargeTitle)
+                        .tabular_nums()
+                        .text_color(color::INK),
+                ),
+                s().edit_weight,
+                index,
+                choosing,
+                editable,
+            ))
             .child(
                 text(s().long_date(*day))
                     .typo(Type::Subhead)

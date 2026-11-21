@@ -61,7 +61,7 @@ impl Icon {
                 r#"<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M7 15h4"/>"#
             }
             Icon::Import => {
-                r#"<path d="M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5M12 3v12M7.5 10.5L12 15l4.5-4.5"/>"#
+                r#"<path d="M14 3H8a2 2 0 0 0-2 2v4M14 3l5 5v11a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2v-2M14 3v5h5M3 13h9M9 10l3 3-3 3"/>"#
             }
             Icon::Profile => {
                 r#"<circle cx="12" cy="7" r="3.5"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/>"#

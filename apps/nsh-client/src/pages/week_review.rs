@@ -188,8 +188,10 @@ fn summary(
     when(
         move || line.with(Option::is_some),
         move || {
+            // The period's one observed change leads the page as a
+            // statement, a step above section headers.
             text(move || line.get().unwrap_or_default())
-                .typo(Type::Headline)
+                .typo(Type::Title)
                 .text_color(color::INK)
                 .px(px(4.0))
         },

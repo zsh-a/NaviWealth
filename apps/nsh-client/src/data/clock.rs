@@ -82,6 +82,11 @@ pub fn hour_minute(ms: i64) -> (u8, u8) {
 /// the user's setting.
 pub fn time_label(ms: i64) -> String {
     let (hour, minute) = hour_minute(ms);
+    clock_time(hour, minute)
+}
+
+/// A wall-clock time in the user's 12- or 24-hour preference.
+pub fn clock_time(hour: u8, minute: u8) -> String {
     format_time(hour, minute, locale_settings().hour_cycle.twelve_hour())
 }
 

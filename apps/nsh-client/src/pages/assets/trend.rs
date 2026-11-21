@@ -126,6 +126,17 @@ impl NetWorthHistory {
         }
         end?.checked_sub(start?)
     }
+
+    /// The change from the earliest complete valuation to today's, when the
+    /// history is too short for [`Self::change`] and both ends are known.
+    pub fn since_first(&self) -> Option<i64> {
+        let &(last, end) = self.points.last()?;
+        let &(first, start) = self.points.iter().find(|p| p.1.is_some())?;
+        if first == last {
+            return None;
+        }
+        end?.checked_sub(start?)
+    }
 }
 
 fn estimate_panel(window: Signal<Window>, basis: Signal<bool>) -> AnyElement {
