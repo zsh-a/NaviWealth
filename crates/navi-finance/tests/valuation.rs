@@ -159,11 +159,11 @@ fn migrated_snapshots_page_by_observation_time_and_id() {
     let backdated = valuation::record_current(&c, day, at).unwrap();
     c.execute_batch(valuation::HISTORY_INDEXES).unwrap();
     assert!(!valuation::record_if_absent(&c, day, later).unwrap());
-    let first = valuation::summaries(&c, None, 1).unwrap();
+    let first = valuation::summaries(&c, day, day, None, 1).unwrap();
     assert_eq!(first[0].id, tied.id);
-    let next = valuation::summaries(&c, Some(&first[0].cursor()), 2).unwrap();
+    let next = valuation::summaries(&c, day, day, Some(&first[0].cursor()), 2).unwrap();
     assert_eq!([next[0].id, next[1].id], [newer.id, backdated.id]);
-    let last = valuation::summaries(&c, Some(&next[1].cursor()), 2).unwrap();
+    let last = valuation::summaries(&c, day, day, Some(&next[1].cursor()), 2).unwrap();
     assert_eq!(last.len(), 1);
     assert_eq!(valuation::detail(&c, newer.id).unwrap(), newer);
 }

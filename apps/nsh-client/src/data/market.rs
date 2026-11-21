@@ -40,7 +40,7 @@ pub struct PriceSources {
 
 pub enum PriceSource {
     Manual,
-    Close,
+    Close(String),
     Sampled {
         observed_at: jiff::Timestamp,
         previous_close: bool,
@@ -65,12 +65,12 @@ impl PriceSources {
                 return Some(PriceSource::Manual);
             }
             let binding = self.binding(&q.security)?;
-            if navi_finance::history::bars(c, binding, q.day, q.day)
+            if let Some(bar) = navi_finance::history::bars(c, binding, q.day, q.day)
                 .ok()?
-                .iter()
-                .any(|b| b.close == q.price)
+                .into_iter()
+                .find(|b| b.close == q.price)
             {
-                return Some(PriceSource::Close);
+                return Some(PriceSource::Close(bar.provider));
             }
             let symbol = market::canonical_binding(binding)?;
             self.quotes

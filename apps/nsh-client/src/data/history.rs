@@ -26,10 +26,16 @@ pub fn daily_history(
         .map_err(|e| e.to_string())
 }
 
-pub fn changes(security: Option<&str>, limit: i64) -> Result<Vec<store::AuditRevision>, String> {
-    db::with(|c| store::audit_rows(c, security, limit))
-        .ok_or("database unavailable")?
-        .map_err(|e| e.to_string())
+pub fn changes(security: Option<&str>, limit: i64) -> Result<Vec<store::PriceChange>, String> {
+    let book = finance::holdings_snapshot();
+    db::with(|c| {
+        store::audit_rows(c, security, limit)?
+            .into_iter()
+            .map(|row| row.price_change(&book.securities))
+            .collect::<Result<Vec<_>, store::Error>>()
+    })
+    .ok_or("database unavailable")?
+    .map_err(|e| e.to_string())
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]

@@ -65,7 +65,7 @@ pub(super) fn panel() -> impl IntoElement {
                                             format!(
                                                 "{} · {}",
                                                 r.day,
-                                                super::source_label(&r.source)
+                                                crate::i18n::market::source_label(&r.source)
                                             )
                                         })
                                         .unwrap_or_else(
@@ -91,6 +91,6 @@ pub(super) fn panel() -> impl IntoElement {
             } else {
                 copy("CNY per HK dollar", "1 港元兑人民币")
             };
-            untracked(|| trend::chart(title.into(), points, Unit::Rate, window))
+            untracked(|| trend::chart(title.into(), points, Unit::Rate, window, today))
         }))
 }

@@ -48,7 +48,7 @@ pub(super) static STRINGS: Strings = Strings {
     update_price: "更新价格",
     price_saved: "价格已更新",
     price_date: "价格日期",
-    manual_price: "手动价格",
+    manual_source: "手动",
     unpriced: "未定价 · 按成本计入",
     holding_closed: "已清仓",
     fee: "手续费（可选）",

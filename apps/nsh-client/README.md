@@ -342,8 +342,9 @@ draft when leaving a picker. Saving a new account stays on Assets and offers
 Check balance in the confirmation notice.
 The global capture action is a 56-point ink circle with a line plus, centered
 beside the dock. Its accessible name remains New entry / 新记录.
-Asset changes opens the full 30-day dated valuation chart and basis notes;
-it explicitly distinguishes recorded value changes from investment returns.
+Asset changes opens the dated valuation chart. Its default period spans the last
+30 calendar days including today. Valuation basis expands for details on how
+backdated entries, prices and balance adjustments change the estimates.
 Account details show dated entries, with older entries loaded in batches.
 The owner can create asset/liability accounts and rename them without merging
 accounts. Renaming updates postings, import mappings, balance observations and
@@ -394,7 +395,7 @@ Tencent provides dated quotes. Unpriced positions explicitly use native cost;
 known prices replace cost and are never applied to earlier days. Assets converts
 to CNY using dated rates. Frankfurter ECB rates update automatically and can be inspected under Manage → Prices & rates. Same-day manual quotes/rates take priority. Missing rates leave currencies
 visibly excluded from the known total; historical dates with missing rates appear as gaps
-in the trend, with the affected currencies and day counts shown. Schema 14 includes exchange rates in backups. Other
+in the trend, with the affected currencies and dates shown for the selected window. Schema 14 includes exchange rates in backups. Other
 currencies and crypto are not supported; AI trade recognition remains excluded.
 
 `finance::holdings` owns six-decimal integer quantities/prices, cent rounding,
@@ -439,7 +440,9 @@ Manage → Prices & rates brings current exchange rates, daily closes and saved 
 into one page. Select a currency pair to inspect its dated trend. Opening this view also requests
 recent history for both supported pairs. Holdings show their observed unit prices
 in the trading currency. The full charts support dragging, keyboard inspection
-and switching date windows. Expand a daily close for OHLC,
+and switching date windows. Recent windows end today, including for a stale
+quote. All reaches the earliest available history. The overview independently
+compares today's valuation with the valuation exactly 30 days ago. Expand a daily close for OHLC,
 source and revisions. Holding details open the same page filtered to the security.
 A changed binding clears only its active network marks: the old observations
 and symbol-keyed daily bars remain in the archive. Migration records existing

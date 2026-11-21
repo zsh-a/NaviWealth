@@ -5,7 +5,7 @@
 
 pub(crate) mod catalog;
 mod en;
-mod market;
+pub(crate) mod market;
 mod phrases;
 pub(crate) mod statement_import;
 mod zh;
@@ -61,7 +61,7 @@ pub struct Strings {
     pub update_price: &'static str,
     pub price_saved: &'static str,
     pub price_date: &'static str,
-    pub manual_price: &'static str,
+    pub manual_source: &'static str,
     pub unpriced: &'static str,
     pub holding_closed: &'static str,
     pub fee: &'static str,

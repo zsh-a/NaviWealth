@@ -16,7 +16,10 @@ fn first_balance_creates_one_daily_snapshot_and_history_pages_older_revisions() 
     app.press("Confirm balance")?;
     app.press("label:Back")?;
     app.press("label:Asset changes")?;
-    app.wait_for("History recalculated from current records and dated prices. Edits can change these values.")?;
+    let basis = "History recalculated from current records and dated prices. Edits can change these values.";
+    assert!(!app.shows(basis));
+    app.press("Valuation basis")?;
+    app.wait_for(basis)?;
     app.press("Net worth snapshots")?;
     app.wait_for("text:/^Recorded at /")?;
     assert!(!app.shows("Record current valuation"));
@@ -49,7 +52,7 @@ fn price_history_exposes_daily_revisions_and_fx_audit() -> Result<(), String> {
     let (app, storage) = start_in(Some(dir.path()), Vec::new(), None);
     drop(app);
     let c = rusqlite::Connection::open(database_in(dir.path())).unwrap();
-    let day = jiff::civil::date(2026, 11, 12);
+    let day = today().plus_days(-2).0;
     let now = jiff::Timestamp::now();
     let security = Security::new("index", "Index").unwrap();
     let trade = Trade {
@@ -130,8 +133,8 @@ fn price_history_exposes_daily_revisions_and_fx_audit() -> Result<(), String> {
         None,
     );
     app.press("label:Assets")?;
-    app.wait_for("label:/^Index, ¥6.00, Daily close/")?;
-    app.press("label:/^Index, ¥6.00, Daily close/")?;
+    app.wait_for("label:/^Index, ¥6.00, Tencent unadjusted close/")?;
+    app.press("label:/^Index, ¥6.00, Tencent unadjusted close/")?;
     app.wait_for("id:trend-value")?;
     app.wait_for("text:¥6")?;
     app.press("label:Back")?;
@@ -150,8 +153,8 @@ fn price_history_exposes_daily_revisions_and_fx_audit() -> Result<(), String> {
     app.press("HKD → CNY")?;
     app.wait_for("text:0.912345")?;
     app.press("Daily closes")?;
-    app.wait_for("510300.SH · 2026-11-12")?;
-    app.press("510300.SH · 2026-11-12")?;
+    app.wait_for(&format!("510300.SH · {day}"))?;
+    app.press(&format!("510300.SH · {day}"))?;
     app.wait_for("Open 4 · High 6 · Low 4 · Close 6")?;
     app.wait_for("Open 4 · High 5 · Low 4 · Close 5")?;
     app.press("Changes")?;
@@ -175,7 +178,7 @@ fn missing_historical_fx_keeps_known_values_and_cost_details_accessible() -> Res
     let trade = Trade {
         id: "opening".into(),
         security: security.id.clone(),
-        at: today().plus_days(-3).0.at(8, 0, 0, 0),
+        at: today().plus_days(-9).0.at(8, 0, 0, 0),
         kind: Kind::Opening,
         quantity: holdings::SCALE,
         price: holdings::SCALE,
@@ -184,11 +187,18 @@ fn missing_historical_fx_keeps_known_values_and_cost_details_accessible() -> Res
         cash: None,
     };
     store::add_trade(&c, Some(&security), &trade, today().0).unwrap();
+    let missing_day = trade.at.date();
+    let observed_at = trade
+        .at
+        .to_zoned(jiff::tz::TimeZone::UTC)
+        .unwrap()
+        .timestamp();
+    navi_finance::valuation::record_current(&c, missing_day, observed_at).unwrap();
     currency::save_rate(
         &c,
         &FxRate {
             currency: Currency::USD,
-            day: today().plus_days(-1).0,
+            day: today().plus_days(-7).0,
             rate: 7 * holdings::SCALE,
             source: "manual".into(),
         },
@@ -205,13 +215,27 @@ fn missing_historical_fx_keeps_known_values_and_cost_details_accessible() -> Res
     app.wait_for("Record trade")?;
     app.press("label:Back")?;
     app.press("label:Asset changes")?;
-    app.wait_for("Days missing USD rates: 2")?;
+    let warning = format!(
+        "Missing USD rate · {missing_day} – {}",
+        today().plus_days(-8).0
+    );
+    app.wait_for(&warning)?;
     app.wait_for("text:¥7.00")?;
+    app.press("7D")?;
+    app.wait_for_gone(&warning, GONE)?;
+    app.wait_for("text:¥7.00")?;
+    app.press("Net worth snapshots")?;
+    let snapshot_warning = format!("Missing exchange rates · {missing_day}");
+    app.wait_for(&snapshot_warning)?;
+    app.wait_for("text:/^Known value .*Missing FX USD/")?;
+    app.press("7D")?;
+    app.wait_for_gone(&snapshot_warning, GONE)?;
+    assert!(!app.shows("text:/^Known value .*Missing FX USD/"));
     Ok(())
 }
 
 #[test]
-fn trend_compares_exactly_thirty_days_and_drills_into_the_same_start() -> Result<(), String> {
+fn overview_compares_thirty_days_ago_while_estimates_use_calendar_windows() -> Result<(), String> {
     use navi_finance::{
         account::Account,
         journal::{self, Entry, Source},
@@ -251,6 +275,11 @@ fn trend_compares_exactly_thirty_days_and_drills_into_the_same_start() -> Result
     app.press("label:Assets")?;
     app.wait_for("Since 30 days ago +¥95.00")?;
     app.press("label:/^Asset changes, Since 30 days ago/")?;
+    app.wait_for("text:¥195.00")?;
+    assert!(!app.shows("text:/¥100.00 – ¥195.00/"));
+    app.press("All")?;
     app.wait_for("text:/¥100.00 – ¥195.00/")?;
+    app.press("30D")?;
+    app.wait_for_gone("text:/¥100.00 – ¥195.00/", GONE)?;
     Ok(())
 }

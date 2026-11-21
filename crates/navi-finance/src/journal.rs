@@ -278,18 +278,35 @@ fn balance_against(
     }
 }
 
+/// Keep the full sum while replaying the journal. Saturation applies only
+/// when a balance is read, so a later refund can bring it back into range.
+#[derive(Default)]
+pub(crate) struct BalanceTotals<'a>(BTreeMap<&'a Account, i128>);
+
+impl<'a> BalanceTotals<'a> {
+    pub(crate) fn add(&mut self, entry: &'a Transaction) {
+        for posting in &entry.postings {
+            *self.0.entry(&posting.account).or_default() += i128::from(posting.amount);
+        }
+    }
+
+    pub(crate) fn balances(&self) -> BTreeMap<Account, Minor> {
+        self.0
+            .iter()
+            .map(|(&account, &sum)| (account.clone(), money::saturate(sum)))
+            .collect()
+    }
+}
+
 /// Every account's balance over `transactions`.
 pub fn balances<'a>(
     transactions: impl IntoIterator<Item = &'a Transaction>,
 ) -> BTreeMap<Account, Minor> {
-    let mut totals: BTreeMap<Account, i128> = BTreeMap::new();
-    for posting in transactions.into_iter().flat_map(|t| &t.postings) {
-        *totals.entry(posting.account.clone()).or_default() += i128::from(posting.amount);
+    let mut totals = BalanceTotals::default();
+    for entry in transactions {
+        totals.add(entry);
     }
-    totals
-        .into_iter()
-        .map(|(account, total)| (account, money::saturate(total)))
-        .collect()
+    totals.balances()
 }
 
 /// `account`'s balance at the end of `day`.

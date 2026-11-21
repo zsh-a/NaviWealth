@@ -23,7 +23,7 @@ fn add_holding(app: &mut Headless, name: &str, qty: &str, cost: &str) -> Result<
 }
 
 #[test]
-fn detail_actions_fit_narrow_widths_and_stack_at_large_text() -> Result<(), String> {
+fn detail_prioritizes_trade_and_keeps_price_and_listing_actions_readable() -> Result<(), String> {
     use nsh_core::{
         ApproxTextEngine, TextEngine,
         platform::{Locale, LocaleSettings},
@@ -40,6 +40,11 @@ fn detail_actions_fit_narrow_widths_and_stack_at_large_text() -> Result<(), Stri
     app.wait_for("label:Record trade")?;
     app.wait_for("text:¥4.125")?;
     app.wait_for("text:1000 × ¥4.125")?;
+    app.press("label:Update price")?;
+    app.type_text("label:Price", "6.25")?;
+    app.press("text:Update price")?;
+    app.wait_for("Price updated")?;
+    assert_eq!(app.screen().count("text:¥6.25")?, 1);
     for tag in ["en", "zh-CN"] {
         let locale = Locale::parse(tag).unwrap();
         app.set_environment("language", |e| {
@@ -52,7 +57,7 @@ fn detail_actions_fit_narrow_widths_and_stack_at_large_text() -> Result<(), Stri
             ["记录交易", "关联代码", "价格记录"]
         };
         for width in [360.0, 390.0] {
-            app.set_viewport(Size::new(Points(width), Points(1000.0)))?;
+            app.set_viewport(Size::new(Points(width), Points(640.0)))?;
             for scale in [1.0, 1.8] {
                 app.set_environment("font scale", |e| e.font_scale = scale)?;
                 let nodes = app.screen().layout_nodes();
@@ -61,7 +66,7 @@ fn detail_actions_fit_narrow_widths_and_stack_at_large_text() -> Result<(), Stri
                     let node = nodes
                         .iter()
                         .find(|n| n.text.as_ref().is_some_and(|t| t.text.text == label))
-                        .unwrap();
+                        .unwrap_or_else(|| panic!("missing {label} at {tag}/{width}/{scale}"));
                     let button = nodes.iter().find(|n| n.id == node.parent).unwrap();
                     assert!(button.bounds.size.height.0 >= 48.0);
                     assert!(button.bounds.origin.x.0 >= 19.5);
@@ -79,17 +84,22 @@ fn detail_actions_fit_narrow_widths_and_stack_at_large_text() -> Result<(), Stri
                     );
                     buttons.push(button.bounds);
                 }
-                for pair in buttons.windows(2) {
+                let [trade, link, history] = buttons.as_slice() else {
+                    unreachable!()
+                };
+                assert!(trade.origin.y.0 + trade.size.height.0 < 180.0);
+                assert!(trade.origin.y.0 + trade.size.height.0 <= link.origin.y.0);
+                assert!(link.origin.y.0 + link.size.height.0 <= history.origin.y.0);
+                let plot = nodes
+                    .iter()
+                    .find(|n| n.test_id.as_deref() == Some("trend-inspector"))
+                    .unwrap();
+                assert!(history.origin.y.0 + history.size.height.0 <= plot.bounds.origin.y.0);
+                if scale == 1.0 {
                     assert!(
-                        (pair[0].size.width.0 - pair[1].size.width.0).abs() <= 1.0,
-                        "equal actions at {tag}/{width}/{scale}: {pair:?}"
+                        plot.bounds.origin.y.0 + plot.bounds.size.height.0 <= 640.0,
+                        "trade and price plot should fit the first screen at {tag}/{width}"
                     );
-                    if scale == 1.0 {
-                        assert!((pair[0].origin.y.0 - pair[1].origin.y.0).abs() < 0.5);
-                        assert!(pair[0].origin.x.0 + pair[0].size.width.0 <= pair[1].origin.x.0);
-                    } else {
-                        assert!(pair[0].origin.y.0 + pair[0].size.height.0 <= pair[1].origin.y.0);
-                    }
                 }
             }
         }
@@ -151,7 +161,7 @@ fn opening_price_partial_sale_and_cash_survive_restart_without_double_counting()
     );
     app.press("label:Assets")?;
     app.wait_for("label:¥500.00")?;
-    app.press("label:/^Index ETF, ¥300.00, Manual price/")?;
+    app.press("label:/^Index ETF, ¥300.00, Manual ·/")?;
     app.wait_for("text:¥300.00")?;
     app.press("label:/^Sell, 40 /")?;
     app.on_dialog(|_| DialogAnswer::Press("Delete trade".into()));

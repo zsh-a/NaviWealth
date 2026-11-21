@@ -198,6 +198,89 @@ pub struct AuditRevision {
     pub body: String,
     pub received_at: String,
 }
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum Instrument {
+    Security {
+        name: String,
+        currency: Option<crate::currency::Currency>,
+    },
+    ExchangeRate(crate::currency::Currency),
+}
+
+/// A change as it was recorded, independent of the current market binding.
+#[derive(Debug)]
+pub struct PriceChange {
+    pub instrument: Instrument,
+    pub day: Date,
+    pub received_at: Timestamp,
+    pub value: i64,
+    pub source: Option<String>,
+    pub symbol: Option<String>,
+    pub previous_binding: bool,
+    pub baseline: bool,
+}
+
+impl AuditRevision {
+    pub fn price_change(
+        self,
+        securities: &[crate::holdings::Security],
+    ) -> Result<PriceChange, Error> {
+        use crate::currency::Currency;
+        let body: serde_json::Value =
+            serde_json::from_str(&self.body).map_err(|_| Error::Invalid)?;
+        let previous_binding = self.kind == "market_quote_unbound";
+        let (instrument, value, source, symbol) = match self.kind.as_str() {
+            "fx_rate" => (
+                Instrument::ExchangeRate(Currency::parse(&self.item_key).ok_or(Error::Invalid)?),
+                body["rate"].as_i64().ok_or(Error::Invalid)?,
+                body["source"].as_str(),
+                None,
+            ),
+            "manual_quote" | "market_quote" | "market_quote_unbound" => {
+                let quote = if previous_binding {
+                    &body["quote"]
+                } else {
+                    &body
+                };
+                let security = securities.iter().find(|s| s.id == self.item_key);
+                let manual = self.kind == "manual_quote";
+                // Manual rows, including migrated baselines, carry their source in
+                // the row kind. Their unit is the immutable security currency.
+                let currency = if manual {
+                    security.map(crate::holdings::Security::currency)
+                } else {
+                    quote["currency"].as_str().and_then(Currency::parse)
+                };
+                (
+                    Instrument::Security {
+                        name: security.map(|s| s.name.clone()).unwrap_or(self.item_key),
+                        currency,
+                    },
+                    quote["price"].as_i64().ok_or(Error::Invalid)?,
+                    if manual {
+                        Some("manual")
+                    } else {
+                        quote["provider"].as_str()
+                    },
+                    quote["symbol"].as_str(),
+                )
+            }
+            _ => return Err(Error::Invalid),
+        };
+        Ok(PriceChange {
+            instrument,
+            day: self.day.parse().map_err(|_| Error::Invalid)?,
+            received_at: self.received_at.parse().map_err(|_| Error::Invalid)?,
+            value,
+            source: source.filter(|s| !s.trim().is_empty()).map(str::to_owned),
+            symbol: symbol.map(str::to_owned),
+            previous_binding,
+            baseline: body["baseline"].as_bool().unwrap_or(false),
+        })
+    }
+}
+
 pub fn audit(c: &Connection) -> Result<Vec<AuditRevision>, Error> {
     audit_rows(c, None, -1)
 }

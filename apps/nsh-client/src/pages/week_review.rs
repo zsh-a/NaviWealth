@@ -12,7 +12,7 @@ use nsh_core::prelude::*;
 use super::{
     home::Sheets,
     review_calendar::{Pick, calendar, month_days},
-    review_charts::{chart, macros, trend, trend_percent},
+    review_charts::{chart, health_trend, macros},
 };
 use crate::{
     data::{body_metrics, clock, garmin, meals, settings, weights},
@@ -328,24 +328,15 @@ fn weight_card(days: Memo<Vec<Day>>) -> impl IntoElement {
                     move |r| range.set(r),
                 ))
                 .child(dynamic(move || {
-                    let history = weights::all();
-                    let span = days
-                        .with(|d| d.last().copied())
-                        .map(|last| (last, range.get_untracked().days()));
-                    let Some((last, days_span)) = span else {
-                        return view().into_element();
-                    };
+                    let last = days.with(|d| d[d.len() - 1]).min(clock::today());
+                    let days_span = range.get().days();
+                    // The first plotted mean also needs the preceding six days.
+                    let history = weights::window(last, days_span + 6);
                     let first = last.plus_days(1 - days_span);
-                    let points: Vec<crate::domain::weight::Weight> = (0..days_span)
-                        .filter_map(|offset| {
+                    let points = (0..days_span)
+                        .map(|offset| {
                             let day = first.plus_days(offset);
-                            crate::domain::weight::trend_weight(&history, day).map(|kg| {
-                                crate::domain::weight::Weight {
-                                    day,
-                                    kg,
-                                    logged_at_ms: 0,
-                                }
-                            })
+                            (day, crate::domain::weight::trend_weight(&history, day))
                         })
                         .collect();
                     let goal = settings::goal_kg();
@@ -368,11 +359,14 @@ fn weight_card(days: Memo<Vec<Day>>) -> impl IntoElement {
                         .filter(|(_, points)| points.len() >= 2)
                         .collect();
                     untracked(move || {
-                        let charts = view().gap_4().child(trend(
+                        let charts = view().gap_4().child(health_trend(
+                            s().trend_average.into(),
                             first,
-                            f64::from(days_span.max(1)),
+                            last,
                             points,
                             goal,
+                            color::INK,
+                            |v| format!("{} kg", s().kg(v)),
                         ));
                         match fat.is_empty() {
                             true => charts.into_element(),
@@ -386,19 +380,15 @@ fn weight_card(days: Memo<Vec<Day>>) -> impl IntoElement {
                                     let label = navi_health::bodycomp::Algorithm::from_id(&model)
                                         .map(crate::scale::algorithm_name)
                                         .unwrap_or(s().scale_estimate);
-                                    view()
-                                        .mt_2()
-                                        .gap_1()
-                                        .child(
-                                            text(label)
-                                                .typo(Type::Caption)
-                                                .text_color(color::MUTED),
-                                        )
-                                        .child(trend_percent(
-                                            first,
-                                            f64::from(days_span.max(1)),
-                                            points,
-                                        ))
+                                    health_trend(
+                                        label.into(),
+                                        first,
+                                        last,
+                                        points.into_iter().map(|(d, v)| (d, Some(v))).collect(),
+                                        None,
+                                        color::CARBS,
+                                        |v| format!("{v:.1}%"),
+                                    )
                                 }))
                                 .into_element(),
                         }

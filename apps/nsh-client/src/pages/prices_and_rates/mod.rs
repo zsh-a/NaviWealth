@@ -2,18 +2,21 @@
 mod rates;
 
 use crate::{
-    data::{finance, history},
-    i18n::{s, statement_import::copy},
+    data::{clock::observation_time, finance, history},
+    i18n::{market::source_label, s, statement_import::copy},
     nav,
     ui::{
         Btn, Type, Typo, color,
         segmented::{Segment, segmented},
         space,
-        surface::{hairline, row_button},
+        surface::{disclosure_chevron, hairline, row_button},
     },
 };
-use navi_finance::history::{AuditRevision, DailyBar};
 use navi_finance::holdings::format_units;
+use navi_finance::{
+    currency::Currency,
+    history::{DailyBar, Instrument, PriceChange},
+};
 use nsh_core::{element::Screen, prelude::*};
 
 pub(crate) fn title() -> &'static str {
@@ -144,11 +147,36 @@ fn archive<T: 'static, E: IntoElement + 'static>(
     })
 }
 
+fn observation_row(
+    title: String,
+    detail: String,
+    value: String,
+    expanded: Signal<bool>,
+) -> impl IntoElement {
+    row_button(move || expanded.update(|v| *v = !*v))
+        .px_0()
+        .child(
+            view()
+                .flex_1()
+                .min_w(px(0.0))
+                .gap_1()
+                .child(text(title).typo(Type::Headline).text_color(color::INK))
+                .child(text(detail).typo(Type::Caption).text_color(color::MUTED)),
+        )
+        .child(
+            text(value)
+                .typo(Type::Body)
+                .tabular_nums()
+                .text_color(color::INK),
+        )
+        .child(disclosure_chevron(expanded))
+}
+
 fn bar_row(rows: Vec<DailyBar>) -> impl IntoElement {
     let last = rows.last().expect("group is nonempty").clone();
     let expanded = signal(false);
     let title = format!("{} · {}", last.symbol, last.day);
-    let value = format!("{} {}", last.currency, format_units(last.close));
+    let value = crate::ui::currency::observed_price(last.close, Currency::parse(&last.currency));
     let detail = format!(
         "{} · {} {}",
         source_label(&last.provider),
@@ -156,25 +184,7 @@ fn bar_row(rows: Vec<DailyBar>) -> impl IntoElement {
         copy("versions", "个版本")
     );
     view()
-        .child(
-            row_button(move || expanded.update(|v| *v = !*v))
-                .px_0()
-                .py_3()
-                .child(
-                    view()
-                        .flex_1()
-                        .min_w(px(0.0))
-                        .gap_1()
-                        .child(text(title).typo(Type::Headline).text_color(color::INK))
-                        .child(text(detail).typo(Type::Caption).text_color(color::MUTED)),
-                )
-                .child(
-                    text(value)
-                        .typo(Type::Body)
-                        .tabular_nums()
-                        .text_color(color::INK),
-                ),
-        )
+        .child(observation_row(title, detail, value, expanded))
         .child(dynamic(move || {
             let mut v = view().gap_2();
             if expanded.get() {
@@ -200,7 +210,7 @@ fn bar_row(rows: Vec<DailyBar>) -> impl IntoElement {
                                 "{} · {} {}{}",
                                 source_label(&r.provider),
                                 copy("Fetched", "获取于"),
-                                local_time(r.fetched_at),
+                                observation_time(r.fetched_at),
                                 r.volume
                                     .map(|n| format!(
                                         " · {} {n}",
@@ -218,98 +228,41 @@ fn bar_row(rows: Vec<DailyBar>) -> impl IntoElement {
         .child(hairline(0.0))
 }
 
-fn audit_row(row: AuditRevision) -> impl IntoElement {
-    let body: serde_json::Value = serde_json::from_str(&row.body).unwrap_or_default();
-    let quote = body.get("quote").unwrap_or(&body);
-    let source = body
-        .get("source")
-        .and_then(|v| v.as_str())
-        .or_else(|| quote.get("provider").and_then(|v| v.as_str()))
-        .unwrap_or(copy("Manual", "手动"));
-    let label = match row.kind.as_str() {
-        "fx_rate" => format!("{} → CNY", row.item_key),
-        _ => finance::holdings_snapshot()
-            .securities
-            .iter()
-            .find(|s| s.id == row.item_key)
-            .map(|s| s.name.clone())
-            .unwrap_or(row.item_key.clone()),
-    };
-    let amount = quote
-        .get("price")
-        .or_else(|| body.get("rate"))
-        .and_then(|v| v.as_i64())
-        .map(format_units)
-        .unwrap_or_default();
-    let amount = if row.kind == "fx_rate" {
-        amount
-    } else {
-        let currency = quote
-            .get("currency")
-            .and_then(|v| v.as_str())
-            .map(str::to_owned)
-            .or_else(|| {
-                finance::holdings_snapshot()
-                    .securities
-                    .iter()
-                    .find(|s| s.id == row.item_key)
-                    .map(|s| s.currency().code().to_string())
-            })
-            .unwrap_or_default();
-        format!("{currency} {amount}")
+fn audit_row(row: PriceChange) -> impl IntoElement {
+    let (label, amount) = match row.instrument {
+        Instrument::ExchangeRate(currency) => {
+            (format!("{currency} → CNY"), format_units(row.value))
+        }
+        Instrument::Security { name, currency } => (
+            name,
+            crate::ui::currency::observed_price(row.value, currency),
+        ),
     };
     let expanded = signal(false);
     let detail = format!(
         "{} · {}{}",
         row.day,
-        source_label(source),
-        if row.kind == "market_quote_unbound" {
+        source_label(row.source.as_deref().unwrap_or_default()),
+        if row.previous_binding {
             copy(" · Previous binding", " · 原绑定")
         } else {
             ""
         }
     );
-    let baseline = body
-        .get("baseline")
-        .and_then(|v| v.as_bool())
-        .unwrap_or(false);
     let provenance = format!(
         "{} {}{}",
-        if baseline {
+        if row.baseline {
             copy("Existing record retained at", "原有记录留存于")
         } else {
             copy("Recorded at", "记录于")
         },
-        row.received_at
-            .parse()
-            .map(local_time)
-            .unwrap_or(row.received_at.clone()),
-        quote
-            .get("symbol")
-            .and_then(|v| v.as_str())
-            .map(|s| format!(" · {s}"))
+        observation_time(row.received_at),
+        row.symbol
+            .map(|symbol| format!(" · {symbol}"))
             .unwrap_or_default()
     );
     view()
-        .child(
-            row_button(move || expanded.update(|v| *v = !*v))
-                .px_0()
-                .py_3()
-                .child(
-                    view()
-                        .flex_1()
-                        .min_w(px(0.0))
-                        .gap_1()
-                        .child(text(label).typo(Type::Headline).text_color(color::INK))
-                        .child(text(detail).typo(Type::Caption).text_color(color::MUTED)),
-                )
-                .child(
-                    text(amount)
-                        .typo(Type::Body)
-                        .tabular_nums()
-                        .text_color(color::INK),
-                ),
-        )
+        .child(observation_row(label, detail, amount, expanded))
         .child(when(
             move || expanded.get(),
             move || {
@@ -320,25 +273,4 @@ fn audit_row(row: AuditRevision) -> impl IntoElement {
             },
         ))
         .child(hairline(0.0))
-}
-
-fn source_label(source: &str) -> &str {
-    match source {
-        "manual" => copy("Manual", "手动"),
-        "tencent:raw" => copy("Tencent · unadjusted", "腾讯 · 不复权"),
-        "tencent" => copy("Tencent", "腾讯"),
-        "frankfurter:ecb" => "ECB",
-        other => other,
-    }
-}
-
-fn local_time(instant: jiff::Timestamp) -> String {
-    let at = crate::data::clock::zoned(instant.as_millisecond());
-    format!(
-        "{} {:02}:{:02}:{:02}",
-        at.date(),
-        at.hour(),
-        at.minute(),
-        at.second()
-    )
 }

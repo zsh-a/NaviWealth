@@ -230,12 +230,65 @@ fn audit_is_transactional_manual_fx_and_rebinding_preserve_revisions() {
     )
     .unwrap();
     assert!(market::load(&c).unwrap().is_empty());
-    assert!(
-        history::audit(&c)
-            .unwrap()
-            .iter()
-            .any(|r| r.kind == "market_quote_unbound" && r.body.contains("510300"))
+    let securities = store::load(&c).unwrap().securities;
+    let changed = history::audit(&c)
+        .unwrap()
+        .into_iter()
+        .map(|row| row.price_change(&securities).unwrap())
+        .collect::<Vec<_>>();
+    let unbound = changed.iter().find(|r| r.previous_binding).unwrap();
+    assert_eq!(unbound.symbol.as_deref(), Some("510300.SH"));
+    assert_eq!(unbound.source.as_deref(), Some("tencent"));
+    assert_eq!(unbound.value, q.price);
+    assert_eq!(unbound.day, day);
+    assert!(changed.iter().any(|r| r.instrument
+        == history::Instrument::ExchangeRate(Currency::USD)
+        && r.value == 7_100_000
+        && r.source.as_deref() == Some("manual")));
+}
+
+#[test]
+fn audit_projection_keeps_legacy_units_and_only_attributes_confirmed_sources() {
+    use navi_finance::currency::Currency;
+    let security = Security::new_in("fund", "US fund", Currency::USD).unwrap();
+    let make = |kind: &str, key: &str, body: &str| history::AuditRevision {
+        id: 1,
+        kind: kind.into(),
+        item_key: key.into(),
+        day: "2026-11-10".into(),
+        received_at: "2026-11-15T01:02:03Z".into(),
+        body: body.into(),
+    };
+    let migrated = make(
+        "manual_quote",
+        "fund",
+        r#"{"price":1234567,"baseline":true}"#,
+    )
+    .price_change(&[security])
+    .unwrap();
+    assert_eq!(
+        migrated.instrument,
+        history::Instrument::Security {
+            name: "US fund".into(),
+            currency: Some(Currency::USD),
+        }
     );
+    assert!(migrated.baseline);
+    assert_eq!(migrated.source.as_deref(), Some("manual"));
+    assert_eq!(migrated.day, date(2026, 11, 10));
+    assert_eq!(migrated.received_at, ts("2026-11-15T01:02:03Z"));
+    for (body, expected) in [
+        (
+            r#"{"rate":7000100,"source":"custom:reference"}"#,
+            Some("custom:reference"),
+        ),
+        (r#"{"rate":7000100}"#, None),
+    ] {
+        let change = make("fx_rate", "USD", body).price_change(&[]).unwrap();
+        assert_eq!(change.source.as_deref(), expected);
+        assert_eq!(change.value, 7_000_100);
+    }
+    assert!(make("fx_rate", "USD", "invalid").price_change(&[]).is_err());
 }
 
 #[test]

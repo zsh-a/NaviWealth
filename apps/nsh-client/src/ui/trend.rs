@@ -6,12 +6,10 @@ use crate::{
 };
 use jiff::civil::Date;
 use navi_finance::{currency::Currency, holdings};
-use nsh_base::plot::{Curve, PlotAccessibilityValue, Scale, area, grid, line, plot};
-use nsh_core::{
-    TouchEvent, TouchPhase,
-    element::{RowAccessor, Rows},
-    prelude::*,
-};
+use nsh_core::prelude::*;
+
+mod plot;
+pub(crate) use plot::{InspectionPlot, Sample};
 
 pub type Point = (Date, Option<i64>);
 
@@ -23,6 +21,14 @@ pub enum Unit {
 }
 
 impl Unit {
+    fn last_record_label(self) -> &'static str {
+        match self {
+            Self::Price(_) => copy("Last quote", "最近报价"),
+            Self::Rate => copy("Last rate", "最近汇率"),
+            Self::Money => copy("Last valuation", "最近估值"),
+        }
+    }
+
     fn format(self, n: i64) -> String {
         match self {
             Self::Money => currency::format(n, Currency::CNY),
@@ -41,6 +47,14 @@ pub enum Window {
 }
 
 impl Window {
+    pub(crate) fn start(self, today: Date, earliest: Date) -> Date {
+        match self {
+            Self::Week => Day(today).plus_days(-6).0,
+            Self::Month => Day(today).plus_days(-29).0,
+            Self::All => earliest,
+        }
+    }
+
     fn label(self) -> &'static str {
         match self {
             Self::Week => copy("7D", "7天"),
@@ -51,27 +65,36 @@ impl Window {
 }
 
 /// Inputs are in ascending date order. An explicit missing valuation breaks its line.
-pub fn chart(title: String, points: Vec<Point>, unit: Unit, window: Signal<Window>) -> AnyElement {
-    let (Some(&(start, _)), Some(&(end, _))) = (points.first(), points.last()) else {
-        return card()
-            .p_5()
-            .gap_2()
-            .child(text(title).typo(Type::Headline).text_color(color::INK))
-            .child(
-                text(copy("No observations yet", "暂无历史记录"))
-                    .typo(Type::Subhead)
-                    .text_color(color::MUTED),
-            )
-            .into_element();
-    };
-    let span = Day(end).days_since(Day(start));
+pub fn chart(
+    title: String,
+    points: Vec<Point>,
+    unit: Unit,
+    window: Signal<Window>,
+    today: Date,
+) -> AnyElement {
+    let earliest = points.first().map_or(today, |p| p.0.min(today));
+    chart_from(title, points, unit, window, today, earliest)
+}
+
+/// Estimates can query only the requested days while still offering all available history.
+pub fn chart_from(
+    title: String,
+    mut points: Vec<Point>,
+    unit: Unit,
+    window: Signal<Window>,
+    today: Date,
+    earliest: Date,
+) -> AnyElement {
+    points.truncate(points.partition_point(|p| p.0 <= today));
+    let span = Day(today).days_since(Day(earliest));
     let active = move || match window.get() {
-        Window::All if span <= 30 => Window::Month,
+        Window::All if span < 30 => Window::Month,
         other => other,
     };
+    let has_history = !points.is_empty() || earliest < today;
     let options = [Window::Week, Window::Month, Window::All]
         .into_iter()
-        .filter(move |w| span > 7 && (*w != Window::All || span > 30));
+        .filter(move |w| has_history && (*w != Window::All || span >= 30));
     let title = stored(title);
     let data = stored(points);
     card()
@@ -100,282 +123,120 @@ pub fn chart(title: String, points: Vec<Point>, unit: Unit, window: Signal<Windo
                 })),
         )
         .child(dynamic(move || {
-            let period = active();
-            let days = match period {
-                Window::Week => 7,
-                Window::Month => 30,
-                Window::All => span,
-            };
-            let from = Day(end).plus_days(-days).0.max(start);
+            let from = active().start(today, earliest);
             data.with(|points| {
                 let visible = &points[points.partition_point(|p| p.0 < from)..];
-                untracked(|| series(title.get(), visible, unit, from, end))
+                untracked(|| {
+                    if visible.is_empty() {
+                        let message = match points.last() {
+                            Some((day, value)) => {
+                                let value =
+                                    value.map(|v| unit.format(v)).unwrap_or_else(|| "—".into());
+                                format!(
+                                    "{} · {} {value} · {day}",
+                                    copy("No observations in this period", "时段内暂无记录"),
+                                    unit.last_record_label()
+                                )
+                            }
+                            None => copy("No observations yet", "暂无历史记录").to_owned(),
+                        };
+                        return empty(message);
+                    }
+                    series(title.get(), visible, unit, from, today)
+                })
             })
         }))
         .into_element()
 }
 
-fn series(title: String, points: &[Point], unit: Unit, from: Date, end: Date) -> AnyElement {
-    let height = if points.len() == 1 { 64.0 } else { 152.0 };
-    let Some(low) = points.iter().filter_map(|p| p.1).min() else {
-        return text(copy(
-            "No complete observations in this period",
-            "此时段暂无完整数据",
-        ))
+fn empty(message: String) -> AnyElement {
+    text(message)
         .typo(Type::Subhead)
         .text_color(color::MUTED)
         .py_4()
-        .into_element();
+        .into_element()
+}
+
+fn series(title: String, points: &[Point], unit: Unit, from: Date, end: Date) -> AnyElement {
+    let Some(low) = points.iter().filter_map(|p| p.1).min() else {
+        return empty(
+            copy(
+                "No complete observations in this period",
+                "此时段暂无完整数据",
+            )
+            .into(),
+        );
     };
     let high = points.iter().filter_map(|p| p.1).max().unwrap();
-    // Subtract in integer space before projecting to pixels (e.g. one cent near i64::MAX).
-    let y = |v| (i128::from(v) - i128::from(low)) as f64;
-    let extent = y(high);
+    // Offset in integer space before projecting to pixels (one cent near i64::MAX still matters).
+    let offset = |v| (i128::from(v) - i128::from(low)) as f64;
+    let extent = offset(high);
     let pad = (extent * 0.13).max(1.0);
-    let domain = [-pad, extent + pad];
-    let span = f64::from(Day(end).days_since(Day(from)));
-    let x = |d| f64::from(Day(d).days_since(Day(from)));
-    let x_domain = if span == 0.0 {
-        [-1.0, 1.0]
-    } else {
-        [0.0, span]
-    };
-    let mut marks = Vec::new();
-    for run in points.split(|p| p.1.is_none()).filter(|r| !r.is_empty()) {
-        let rows = Rows::from_columns(
-            run.len(),
-            [
-                ("day".into(), run.iter().map(|p| x(p.0)).collect()),
-                ("v".into(), run.iter().map(|p| y(p.1.unwrap())).collect()),
-            ],
-        );
-        if run.len() > 1 {
-            marks.push(
-                area()
-                    .data(Some(rows.clone()))
-                    .x(Some("day".into()))
-                    .y1(Some("v".into()))
-                    .y0(Some(domain[0].into()))
-                    .curve(Curve::Linear)
-                    .fill_color(color::INK.opacity(0.055))
-                    .into_element(),
-            );
-        }
-        marks.push(
-            line()
-                .data(Some(rows))
-                .x(Some("day".into()))
-                .y(Some("v".into()))
-                .curve(Curve::Linear)
-                .dot(run.len() == 1)
-                .dot_style(|s| s.size(px(5.0)).rounded_full().bg(color::INK))
-                .text_color(color::INK)
-                .stroke_width(px(2.25))
-                .into_element(),
-        );
-    }
-    // Include incomplete days in the inspection index so touching a gap reads as missing.
     let baseline = points.first().and_then(|p| p.1);
-    let labels = stored(
-        points
-            .iter()
-            .map(|&(day, value)| {
-                let date = if from.year() == end.year() {
-                    s().long_date(Day(day))
-                } else {
-                    day.to_string()
-                };
-                let value_label = value.map(|v| unit.format(v)).unwrap_or_else(|| "—".into());
-                let change = value
-                    .zip(baseline)
-                    .and_then(|(current, start)| current.checked_sub(start));
-                let detail = match change {
-                    Some(delta) if delta != 0 => format!(
-                        "{date}  ·  {} {}{}",
-                        copy("From start", "较期初"),
-                        if delta > 0 { "+" } else { "" },
-                        unit.format(delta)
-                    ),
-                    _ => date.clone(),
-                };
-                (detail, value_label)
-            })
-            .collect::<Vec<_>>(),
-    );
-    let last = points.len() - 1;
-    let inspected = signal(None::<usize>);
-    let current = move || inspected.get().unwrap_or(last);
-    let width = signal(0.0_f32);
-    let positions = stored(
-        points
-            .iter()
-            .map(|p| {
-                (
-                    ((x(p.0) - x_domain[0]) / (x_domain[1] - x_domain[0])) as f32,
-                    p.1.map(|v| (1.0 - (y(v) - domain[0]) / (domain[1] - domain[0])) as f32),
-                )
-            })
-            .collect::<Vec<_>>(),
-    );
-    let inspect = move |offset: f32| {
-        let w = width.get_untracked();
-        if w <= 0.0 {
-            return;
-        }
-        let fraction = (offset / w).clamp(0.0, 1.0);
-        let i = positions.with(|p| {
-            let right = p.partition_point(|v| v.0 < fraction).min(last);
-            if right > 0 && (fraction - p[right - 1].0).abs() <= (p[right].0 - fraction).abs() {
-                right - 1
-            } else {
-                right
+    let samples = points
+        .iter()
+        .map(|&(day, value)| {
+            let mut caption = date_caption(day, from, end);
+            if let Some(delta) = value
+                .zip(baseline)
+                .and_then(|(v, first)| v.checked_sub(first))
+                .filter(|d| *d != 0)
+            {
+                caption = format!(
+                    "{caption}  ·  {} {}{}",
+                    if points[0].0 == from {
+                        copy("From start", "较期初")
+                    } else {
+                        copy("From first record", "较首条记录")
+                    },
+                    if delta > 0 { "+" } else { "" },
+                    unit.format(delta)
+                );
             }
-        });
-        inspected.set(Some(i));
-    };
-    let cursor_x = move || positions.with(|p| p[current()].0) * width.get();
-    let rows = Rows::from_columns(
-        points.len(),
-        [("day".into(), points.iter().map(|p| x(p.0)).collect())],
-    );
-    let summary = format!(
-        "{} {} – {}",
-        s().value_range,
-        unit.format(low),
-        unit.format(high)
-    );
+            Sample {
+                day,
+                y: value.map(offset),
+                caption,
+                value: value.map(|v| unit.format(v)).unwrap_or_else(|| "—".into()),
+            }
+        })
+        .collect();
+    let height = if points.len() == 1 { 64.0 } else { 152.0 };
     view()
         .gap_1()
         .child(
-            text(move || labels.with(|v| v[current()].1.clone()))
-                .test_id("trend-value")
-                .typo(Type::LargeTitle)
-                .tabular_nums()
-                .text_color(color::INK)
-                .number_of_lines(1)
-                .shrink_to_fit(0.55),
+            InspectionPlot {
+                title,
+                from,
+                end,
+                domain: [-pad, extent + pad],
+                samples,
+                color: color::INK,
+                goal: None,
+            }
+            .draw(move || height),
         )
-        .child(
-            text(move || labels.with(|v| v[current()].0.clone()))
-                .test_id("trend-date")
-                .typo(Type::Caption)
-                .text_color(color::MUTED),
-        )
-        .child(
-            view()
-                .relative()
-                .h(px(height))
-                .my_2()
-                .on_layout(move |b: &Bounds<Points>| width.set(b.size.width.0))
-                .child(
-                    plot()
-                        .h_full()
-                        .data(rows)
-                        .x(Some(RowAccessor::from("day")))
-                        .x_scale(Scale::Linear {
-                            domain: Some(x_domain),
-                            reverse: false,
-                        })
-                        .y_scale(Scale::Linear {
-                            domain: Some(domain),
-                            reverse: false,
-                        })
-                        .interactive(true)
-                        .on_hover_change(move |i: &Option<u32>| {
-                            inspected.set(i.map(|v| v as usize))
-                        })
-                        .accessibility_label(move || Some(title.clone().into()))
-                        .accessibility_value(move || {
-                            Some(PlotAccessibilityValue {
-                                text: Some(
-                                    labels
-                                        .with(|v| {
-                                            format!("{} · {}", v[current()].0, v[current()].1)
-                                        })
-                                        .into(),
-                                ),
-                                ..Default::default()
-                            })
-                        })
-                        .child(
-                            grid()
-                                .y(Some(vec![domain[0], extent / 2.0, domain[1]]))
-                                .stroke_width(px(0.75))
-                                .text_color(color::LINE),
-                        )
-                        .children(marks),
-                )
-                .child(when(
-                    move || inspected.get().is_some(),
-                    move || {
-                        view()
-                            .absolute()
-                            .top_0()
-                            .bottom_0()
-                            .left(move || px(cursor_x()))
-                            .w(px(1.0))
-                            .bg(color::FAINT)
-                            .pointer_events(PointerEvents::None)
-                    },
-                ))
-                .child(dynamic(move || {
-                    let cy = positions.with(|p| p[current()].1);
-                    cy.map(|v| {
-                        view()
-                            .absolute()
-                            .left(move || px(cursor_x() - 4.0))
-                            .top(px(v * height - 4.0))
-                            .size(px(8.0))
-                            .rounded_full()
-                            .bg(color::INK)
-                            .border_1()
-                            .border_color(color::SURFACE)
-                            .pointer_events(PointerEvents::None)
-                    })
-                    .unwrap_or_else(view)
-                    .into_element()
-                }))
-                .child(
-                    view()
-                        .absolute()
-                        .inset_0()
-                        .test_id("trend-inspector")
-                        .on_touch(move |e: &TouchEvent| {
-                            if e.phase == TouchPhase::Cancel {
-                                inspected.set(None);
-                            } else if let Some(p) = e.points.iter().find(|p| p.changed) {
-                                inspect(p.location.x.0);
-                            }
-                        })
-                        .on_mouse_move(move |e: &MouseEvent| inspect(e.position.x.0))
-                        .on_mouse_leave(move |_: &MouseEvent| inspected.set(None)),
-                ),
-        )
-        .child((from != end).then(|| {
-            view()
-                .flex_row()
-                .justify_between()
-                .child(
-                    text(from.to_string())
-                        .typo(Type::Caption)
-                        .tabular_nums()
-                        .text_color(color::MUTED),
-                )
-                .child({
-                    text(end.to_string())
-                        .typo(Type::Caption)
-                        .tabular_nums()
-                        .text_color(color::MUTED)
-                })
-        }))
         .child((low != high).then(|| {
-            text(summary)
-                .pt_1()
-                .typo(Type::Caption)
-                .tabular_nums()
-                .text_color(color::MUTED)
+            text(format!(
+                "{} {} – {}",
+                s().value_range,
+                unit.format(low),
+                unit.format(high)
+            ))
+            .pt_1()
+            .typo(Type::Caption)
+            .tabular_nums()
+            .text_color(color::MUTED)
         }))
         .into_element()
+}
+
+pub(crate) fn date_caption(day: Date, from: Date, end: Date) -> String {
+    if from.year() == end.year() {
+        s().long_date(Day(day))
+    } else {
+        day.to_string()
+    }
 }
 
 #[cfg(test)]
@@ -387,16 +248,58 @@ mod tests {
     #[component]
     fn TrendProbe() -> impl IntoElement {
         let day = Day(jiff::civil::date(2026, 11, 20));
-        chart(
+        series(
             "Net worth".into(),
-            vec![
+            &[
                 (day.plus_days(-2).0, Some(100)),
                 (day.plus_days(-1).0, None),
                 (day.0, Some(-200)),
             ],
             Unit::Money,
-            signal(Window::Month),
+            day.plus_days(-2).0,
+            day.0,
         )
+    }
+
+    #[component]
+    fn StalePrice() -> impl IntoElement {
+        let today = Day(jiff::civil::date(2026, 3, 1));
+        chart(
+            "Unit price".into(),
+            vec![
+                (today.plus_days(-30).0, Some(1_000_000)),
+                (today.plus_days(-7).0, Some(2_000_000)),
+                (today.plus_days(1).0, Some(3_000_000)),
+            ],
+            Unit::Price(Currency::CNY),
+            signal(Window::Month),
+            today.0,
+        )
+    }
+
+    #[test]
+    fn calendar_windows_keep_stale_quotes_out_and_offer_the_saved_history() {
+        let today = jiff::civil::date(2026, 3, 1);
+        let oldest = jiff::civil::date(2025, 12, 20);
+        assert_eq!(
+            Window::Week.start(today, oldest),
+            jiff::civil::date(2026, 2, 23)
+        );
+        assert_eq!(
+            Window::Month.start(today, oldest),
+            jiff::civil::date(2026, 1, 31)
+        );
+        assert_eq!(Window::All.start(today, oldest), oldest);
+        let mut app = Headless::start(EngineConfig::new(Root::of::<StalePrice>())).unwrap();
+        app.wait_for("text:¥2").unwrap();
+        app.press("7D").unwrap();
+        app.wait_for("text:No observations in this period · Last quote ¥2 · 2026-02-22")
+            .unwrap();
+        assert!(!app.shows("id:trend-value"));
+        app.press("All").unwrap();
+        app.wait_for("text:¥2").unwrap();
+        app.wait_for("text:2026-01-30").unwrap();
+        assert!(!app.shows("text:¥3"));
     }
 
     #[test]

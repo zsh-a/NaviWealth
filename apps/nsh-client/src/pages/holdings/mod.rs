@@ -10,7 +10,7 @@ use crate::{
     ui::{
         Btn, Icon, Type, Typo, Variant, color,
         field::note,
-        surface::{card, hairline, row_button},
+        surface::{hairline, row_button},
         toast::{show_toast, toast_view},
     },
 };
@@ -25,22 +25,23 @@ use nsh_base::{alert_dialog, nav_page};
 use nsh_core::{element::Screen, prelude::*};
 pub(super) use receipt::trade_receipt;
 
-/// The list uses source and date; details also show the native price and observation time.
+/// The chart already supplies the unit price; its source line identifies the observation.
 fn quote_caption(
     q: &holdings::Quote,
     sources: &crate::data::market::PriceSources,
-    detail_currency: Option<Currency>,
+    show_observed_time: bool,
 ) -> String {
-    use crate::data::market::PriceSource;
+    use crate::{data::market::PriceSource, i18n::market::source_label};
     let mut date = s().short_date(Day(q.day));
-    let source = match sources.source(q) {
-        Some(PriceSource::Manual) => s().manual_price,
-        Some(PriceSource::Close) => crate::i18n::statement_import::copy("Daily close", "日线收盘"),
+    let observed = sources.source(q);
+    let source = match observed {
+        Some(PriceSource::Manual) => source_label("manual"),
+        Some(PriceSource::Close(ref provider)) => source_label(provider),
         Some(PriceSource::Sampled {
             observed_at,
             previous_close,
         }) => {
-            if detail_currency.is_some() {
+            if show_observed_time {
                 date = clock::zoned(observed_at.as_millisecond())
                     .strftime("%Y-%m-%d %H:%M %Z")
                     .to_string();
@@ -52,18 +53,12 @@ fn quote_caption(
             if previous_close {
                 crate::i18n::catalog::previous_close()
             } else {
-                crate::i18n::catalog::market_price()
+                source_label("tencent")
             }
         }
-        None => s().price_date,
+        None => source_label(""),
     };
-    match detail_currency {
-        Some(cur) => format!(
-            "{source} {} · {date}",
-            crate::ui::currency::unit_price(q.price, cur)
-        ),
-        None => format!("{source} · {date}"),
-    }
+    format!("{source} · {date}")
 }
 
 pub(super) fn kind_label(kind: Kind) -> &'static str {
@@ -82,12 +77,6 @@ pub(super) fn failure(error: &holdings::Error) -> &'static str {
         holdings::Error::Invalid | holdings::Error::Overflow => s().holding_error,
         _ => s().error_transaction_storage,
     }
-}
-pub(super) fn amount(value: i64, currency: Currency, style: Type) -> impl IntoElement {
-    text(crate::ui::currency::format(value, currency))
-        .typo(style)
-        .tabular_nums()
-        .text_color(color::INK)
 }
 pub(super) fn pair(
     label: impl IntoReactive<SharedString>,
@@ -159,6 +148,8 @@ pub fn holding_page(id: &str) -> Screen {
                                     book.securities.iter().find(|s| s.id == *id).cloned()
                                 });
                                 let today = clock::today();
+                                // Rebuild formatted quote and listing metadata when the language changes.
+                                let _ = locale();
                                 let sources = crate::data::market::PriceSources::current();
                                 untracked(move || {
                                     let Some(sec) = sec else {
@@ -166,81 +157,58 @@ pub fn holding_page(id: &str) -> Screen {
                                     };
                                     let currency = sec.currency();
                                     let binding = sources.binding(&sec.id);
-                                    let trade_style = if binding.is_some() {
-                                        Variant::Primary
-                                    } else {
-                                        Variant::Secondary
-                                    };
                                     let p =
                                         book.position(&sec, today.0).expect("validated holdings");
-                                    let caption = p
-                                        .quote
-                                        .as_ref()
-                                        .map(|q| quote_caption(q, &sources, Some(currency)))
-                                        .unwrap_or_else(|| s().unpriced.into());
+                                    let value = crate::ui::currency::format(
+                                        p.value.unwrap_or(p.cost),
+                                        currency,
+                                    );
+                                    let quote =
+                                        p.quote.as_ref().map(|q| quote_caption(q, &sources, true));
                                     view()
                                         .gap_3()
-                                        .pt_4()
-                                        .child(
-                                            card()
-                                                .p_5()
-                                                .gap_3()
-                                                .child(
-                                                    text(|| s().market_value)
-                                                        .typo(Type::Headline)
-                                                        .text_color(color::BODY),
-                                                )
-                                                .child(amount(
-                                                    p.value.unwrap_or(p.cost),
-                                                    currency,
-                                                    Type::Display,
-                                                ))
-                                                .child(price_line(
-                                                    caption,
-                                                    (binding.is_none() && p.quantity > 0)
-                                                        .then_some(price),
-                                                    p.quote.is_none(),
-                                                )),
-                                        )
-                                        .child(crate::ui::trend::chart(
-                                            crate::i18n::catalog::copy("Unit price", "单位价格")
-                                                .into(),
-                                            book.dated_prices(&sec, today.0)
-                                                .into_iter()
-                                                .map(|(day, price)| (day, Some(price)))
-                                                .collect(),
-                                            crate::ui::trend::Unit::Price(currency),
-                                            chart_window,
-                                        ))
+                                        .pt_3()
                                         .child(
                                             view()
-                                                .flex_row()
-                                                .gap_2()
-                                                .style_when(|| font_scale() > 1.2, |s| s.flex_col())
-                                                .child(detail_action(
-                                                    trade_style,
-                                                    Icon::Plus,
-                                                    || s().holding_trade_action,
-                                                    || s().record_trade,
+                                                .gap_1()
+                                                .child(valuation_header(
+                                                    value,
+                                                    p.value.is_none() && p.quantity > 0,
                                                     move || trade.set(Some(id.get())),
                                                 ))
-                                                .child(detail_action(
-                                                    Variant::Secondary,
-                                                    Icon::Link,
-                                                    || s().holding_link_action,
-                                                    crate::i18n::catalog::bind,
-                                                    move || picker.set(true),
-                                                ))
-                                                .child(detail_action(
-                                                    Variant::Secondary,
-                                                    Icon::Chart,
-                                                    || s().holding_prices_action,
-                                                    || s().price_history,
+                                                .child(listing_link(binding, picker))
+                                                .child(note(
+                                                    move || binding_error.get().map(Into::into),
+                                                    || true,
+                                                )),
+                                        )
+                                        .child(hairline(0.0))
+                                        .child(
+                                            view()
+                                                .gap_1()
+                                                .child(price_controls(
+                                                    quote,
+                                                    (binding.is_none() && p.quantity > 0)
+                                                        .then_some(price),
                                                     move || {
                                                         nav::push(Route::PricesAndRates(Some(
                                                             id.get(),
                                                         )))
                                                     },
+                                                ))
+                                                .child(crate::ui::trend::chart(
+                                                    crate::i18n::catalog::copy(
+                                                        "Unit price",
+                                                        "单位价格",
+                                                    )
+                                                    .into(),
+                                                    book.dated_prices(&sec, today.0)
+                                                        .into_iter()
+                                                        .map(|(day, price)| (day, Some(price)))
+                                                        .collect(),
+                                                    crate::ui::trend::Unit::Price(currency),
+                                                    chart_window,
+                                                    today.0,
                                                 )),
                                         )
                                         .child(
@@ -287,11 +255,6 @@ pub fn holding_page(id: &str) -> Screen {
                                                     )
                                                 })),
                                         )
-                                        .child(binding.map(binding_caption))
-                                        .child(note(
-                                            move || binding_error.get().map(Into::into),
-                                            || true,
-                                        ))
                                         .into_element()
                                 })
                             }))
@@ -444,65 +407,138 @@ fn unrealized_display(position: &holdings::Position, currency: Currency) -> Stri
     format!("{amount} · {sign}{}.{:01}%", tenths / 10, tenths % 10)
 }
 
-fn price_line(caption: String, editor: Option<Signal<bool>>, missing: bool) -> AnyElement {
-    let caption = text(caption).typo(Type::Subhead).text_color(color::MUTED);
+fn valuation_header(
+    value: String,
+    at_cost: bool,
+    record_trade: impl Fn() + 'static,
+) -> impl IntoElement {
+    view()
+        .gap_1()
+        .child(
+            view()
+                .flex_row()
+                .items_center()
+                .gap_2()
+                .child(
+                    text(|| s().market_value)
+                        .typo(Type::Headline)
+                        .text_color(color::BODY)
+                        .flex_1(),
+                )
+                .child(
+                    Btn::primary()
+                        .size(crate::ui::Size::Small)
+                        .icon(Icon::Plus)
+                        .label(|| s().holding_trade_action.into())
+                        .on_press(record_trade)
+                        .min_h(px(48.0))
+                        .accessibility_label(|| Some(s().record_trade.into())),
+                ),
+        )
+        .child(
+            text(value)
+                .typo(Type::Display)
+                .text_color(color::INK)
+                .tabular_nums()
+                .number_of_lines(1)
+                .shrink_to_fit(0.55),
+        )
+        .child(at_cost.then(|| {
+            text(|| s().unpriced)
+                .typo(Type::Subhead)
+                .text_color(color::MUTED)
+        }))
+}
+
+fn price_controls(
+    quote: Option<String>,
+    editor: Option<Signal<bool>>,
+    history: impl Fn() + 'static,
+) -> impl IntoElement {
+    view()
+        .flex_row()
+        .items_center()
+        .gap_2()
+        .style_when(|| font_scale() > 1.2, |s| s.flex_col().items_start())
+        .child(
+            view()
+                .flex_1()
+                .min_w(px(0.0))
+                .style_when(|| font_scale() > 1.2, |s| s.flex_grow(0.0).basis(auto()))
+                .child(price_line(quote, editor)),
+        )
+        .child(
+            Btn::ghost()
+                .size(crate::ui::Size::Small)
+                .label(|| s().holding_prices_action.into())
+                .on_press(history)
+                .min_h(px(48.0))
+                .accessibility_label(|| Some(s().price_history.into())),
+        )
+}
+
+fn price_line(caption: Option<String>, editor: Option<Signal<bool>>) -> AnyElement {
     let Some(editor) = editor else {
-        return caption.into_element();
+        return caption
+            .map(|caption| {
+                text(caption)
+                    .typo(Type::Subhead)
+                    .text_color(color::MUTED)
+                    .into_element()
+            })
+            .unwrap_or_else(|| view().into_element());
     };
+    let caption =
+        caption.unwrap_or_else(|| crate::i18n::catalog::copy("Add price", "录入价格").into());
     row_button(move || editor.set(true))
         .accessibility_label(|| Some(s().update_price.into()))
         .px_0()
         .min_h(px(48.0))
-        .child(caption.flex_1())
-        .child(missing.then(|| {
-            text(crate::i18n::statement_import::copy("Add price", "录入价格"))
+        .gap_2()
+        .child(
+            text(caption)
                 .typo(Type::Subhead)
-                .text_color(color::INK)
-        }))
-        .child(crate::ui::icon(Icon::Pencil, 18.0, color::INK))
+                .text_color(color::BODY)
+                .flex_shrink(1.0),
+        )
+        .child(crate::ui::icon(Icon::Pencil, 16.0, color::MUTED))
         .into_element()
 }
 
-fn detail_action(
-    style: Variant,
-    glyph: Icon,
-    label: fn() -> &'static str,
-    accessible: fn() -> &'static str,
-    press: impl Fn() + 'static,
-) -> impl IntoElement {
-    Btn::new(style)
-        .icon(glyph)
-        .on_press(press)
-        .accessibility_label(move || Some(accessible().into()))
-        .flex_col()
-        .flex_1()
-        .basis(px(0.0))
-        .min_w(px(0.0))
-        .min_h(px(64.0))
-        .px_2()
-        .py_2()
-        .gap_1()
-        .style_when(|| font_scale() > 1.2, |s| s.flex_grow(0.0).basis(auto()))
+fn listing_link(
+    binding: Option<&navi_finance::catalog::SecurityBinding>,
+    picker: Signal<bool>,
+) -> AnyElement {
+    let identity = binding.map(|b| {
+        format!(
+            "{} · {} · {}",
+            crate::i18n::catalog::market(&b.market),
+            b.symbol,
+            b.currency
+        )
+    });
+    let label = identity
+        .clone()
+        .unwrap_or_else(|| s().holding_link_action.into());
+    row_button(move || picker.set(true))
+        .accessibility_label(move || {
+            Some(match &identity {
+                Some(name) => format!("{name}, {}", crate::i18n::catalog::bind()).into(),
+                None => crate::i18n::catalog::bind().into(),
+            })
+        })
+        .self_start()
+        .justify_start()
+        .px_0()
+        .min_h(px(48.0))
+        .gap_2()
+        .child(crate::ui::icon(Icon::Link, 16.0, color::MUTED))
         .child(
             text(label)
                 .typo(Type::Subhead)
-                .text_color(if style == Variant::Primary {
-                    color::ON_ACTION
-                } else {
-                    color::INK
-                })
-                .text_center(),
+                .text_color(color::BODY)
+                .flex_shrink(1.0),
         )
-}
-
-fn binding_caption(b: &navi_finance::catalog::SecurityBinding) -> AnyElement {
-    text(format!(
-        "{} · {} · {}",
-        crate::i18n::catalog::market(&b.market),
-        b.symbol,
-        b.currency
-    ))
-    .typo(Type::Caption)
-    .text_color(color::MUTED)
-    .into_element()
+        .child(crate::ui::icon(Icon::ChevronRight, 14.0, color::MUTED))
+        .into_element()
 }

@@ -205,6 +205,11 @@ fn scale_context_shows_on_today_in_the_editor_in_review_and_records() -> Result<
     app.press("label:Review")?;
     app.wait_for("text:30 days")?;
     app.press("90 days")?;
+    let first = today().plus_days(-89).to_string();
+    app.wait_for(&format!("text:{first}"))?;
+    app.press("text:Expand chart >> nth=0")?;
+    app.wait_for("text:Collapse")?;
+    app.press("text:Collapse")?;
     app.wait_for("text:Body fat")?;
 
     // Records: the weight row carries the estimate.

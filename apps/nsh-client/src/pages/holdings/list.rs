@@ -40,7 +40,7 @@ pub fn section(closed: bool) -> impl IntoElement {
                     } else {
                         p.quote
                             .as_ref()
-                            .map(|q| quote_caption(q, &sources, None))
+                            .map(|q| quote_caption(q, &sources, false))
                             .unwrap_or_else(|| s().unpriced.into())
                     };
                     let value = p.value.unwrap_or(p.cost);

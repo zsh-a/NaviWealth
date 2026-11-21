@@ -26,6 +26,18 @@ pub fn unit_price(value: i64, currency: Currency) -> String {
     )
 }
 
+/// Archived observations without an identifiable native unit retain their digits.
+pub fn observed_price(value: i64, currency: Option<Currency>) -> String {
+    match currency {
+        Some(currency) => unit_price(value, currency),
+        None => format!(
+            "{} · {}",
+            navi_finance::holdings::format_units(value),
+            crate::i18n::catalog::copy("Unknown currency", "币种未知"),
+        ),
+    }
+}
+
 /// Explicit sign for changes and gains, using the same exact display path.
 pub fn signed(amount: i64, currency: Currency) -> String {
     let formatted = format(amount, currency);

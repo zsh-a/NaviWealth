@@ -48,7 +48,7 @@ pub(super) static STRINGS: Strings = Strings {
     update_price: "Update price",
     price_saved: "Price updated",
     price_date: "Price date",
-    manual_price: "Manual price",
+    manual_source: "Manual",
     unpriced: "No price · valued at cost",
     holding_closed: "Position closed",
     fee: "Fee (optional)",

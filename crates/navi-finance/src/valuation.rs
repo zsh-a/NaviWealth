@@ -381,20 +381,23 @@ impl Summary {
 /// Keyset pagination uses the same timestamp/id ordering for ties on every page.
 pub fn summaries(
     c: &Connection,
+    from: Date,
+    to: Date,
     before: Option<&Cursor>,
     limit: u32,
 ) -> Result<Vec<Summary>, Error> {
-    const SELECT: &str = "SELECT id,captured_at,json_extract(body,'$.net'),json_extract(body,'$.missing') FROM finance_valuation_snapshots";
+    const SELECT: &str = "SELECT id,captured_at,json_extract(body,'$.net'),json_extract(body,'$.missing') FROM finance_valuation_snapshots WHERE day BETWEEN ?2 AND ?3";
     const ORDER: &str = " ORDER BY rtrim(captured_at,'Z') DESC,id DESC LIMIT ?1";
     let filter = if before.is_some() {
-        " WHERE rtrim(captured_at,'Z') <= ?2 AND (rtrim(captured_at,'Z'),id) < (?2,?3)"
+        " AND rtrim(captured_at,'Z') <= ?4 AND (rtrim(captured_at,'Z'),id) < (?4,?5)"
     } else {
         ""
     };
     let mut q = c.prepare(&format!("{SELECT}{filter}{ORDER}"))?;
+    let (from, to) = (from.to_string(), to.to_string());
     let mut rows = match before {
-        Some(cursor) => q.query(params![limit, cursor.time, cursor.id])?,
-        None => q.query([limit])?,
+        Some(cursor) => q.query(params![limit, from, to, cursor.time, cursor.id])?,
+        None => q.query(params![limit, from, to])?,
     };
     let mut result = Vec::new();
     while let Some(row) = rows.next()? {

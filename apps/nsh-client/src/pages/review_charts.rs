@@ -1,17 +1,16 @@
 //! The Review tab's charts: a bar per day against the goal, the average
 //! macros, and the weight's line.
 
-use nsh_base::plot::{Scale, line, plot};
-use nsh_core::{
-    element::{RowAccessor, Rows},
-    prelude::*,
-};
+use nsh_core::prelude::*;
 
 use crate::{
     data::clock,
-    domain::{format, meal::Day, review::Intake, weight::Weight},
+    domain::{format, meal::Day, review::Intake},
     i18n::s,
-    ui::{Type, Typo, color},
+    ui::{
+        Btn, Type, Typo, color,
+        trend::{InspectionPlot, Sample, date_caption},
+    },
 };
 
 /// The chart's height.
@@ -188,197 +187,69 @@ pub fn macros(intake: Memo<Intake>) -> impl IntoElement {
         ))
 }
 
-/// The period's weights as a line, each at its day, with the goal weight as
-/// a second line when it sits inside the drawn range; nothing with fewer
-/// than two points.
-pub fn trend(first: Day, span: f64, points: Vec<Weight>, goal: Option<f64>) -> AnyElement {
-    if points.len() < 2 {
+/// Health keeps its selected review period and original measured precision.
+pub fn health_trend(
+    title: String,
+    first: Day,
+    last: Day,
+    points: Vec<(Day, Option<f64>)>,
+    goal: Option<f64>,
+    tint: AdaptiveColor,
+    format: fn(f64) -> String,
+) -> AnyElement {
+    let mut values = points.iter().filter_map(|p| p.1);
+    let Some(initial) = values.next() else {
         return view().into_element();
-    }
-    let (days, kgs): (Vec<f64>, Vec<f64>) = points
-        .iter()
-        .map(|w| (f64::from(w.day.days_since(first)), w.kg))
-        .unzip();
-    let low = kgs.iter().copied().fold(f64::INFINITY, f64::min);
-    let high = kgs.iter().copied().fold(f64::NEG_INFINITY, f64::max);
-    // At least 1 kg of range, so a flat week stays flat.
+    };
+    let (low, high) = values.fold((initial, initial), |(l, h), v| (l.min(v), h.max(v)));
     let pad = ((1.0 - (high - low)) / 2.0).max(0.0) + 0.2;
-    let last = (days[days.len() - 1], kgs[kgs.len() - 1]);
-    let rows = Rows::from_columns(days.len(), [("day".into(), days), ("kg".into(), kgs)]);
-    let hover = signal(None::<u32>);
-    let inspected = stored(
-        points
-            .iter()
-            .map(|w| format!("{} · {} kg", s().short_date(w.day), s().kg(w.kg)))
-            .collect::<Vec<_>>(),
-    );
-    let line = plot()
-        .h(px(64.0))
-        .data(rows)
-        .x(Some(RowAccessor::from("day")))
-        .y(Some(RowAccessor::from("kg")))
-        .x_scale(Scale::Linear {
-            domain: Some([0.0, (span - 1.0).max(1.0)]),
-            reverse: false,
+    let samples = points
+        .into_iter()
+        .map(|(day, y)| Sample {
+            day: day.0,
+            y,
+            caption: date_caption(day.0, first.0, last.0),
+            value: y.map(format).unwrap_or_else(|| "—".into()),
         })
-        .y_scale(Scale::Linear {
-            domain: Some([low - pad, high + pad]),
-            reverse: false,
-        })
-        .interactive(true)
-        .on_hover_change(move |index: &Option<u32>| hover.set(*index))
-        .tooltip_content(inspection(hover, inspected))
-        .cross_line_style(|s| s.w(px(1.0)).bg(color::MUTED))
-        .dot_style(|s| s.size(px(6.0)).rounded_full().bg(color::INK))
-        .child(line().text_color(color::INK).stroke_width(px(2.0)))
-        .child(latest_dot(last.0, last.1, "kg", color::INK))
-        .child(match goal {
-            // The goal rides the drawn range only; outside it the tiles
-            // carry the distance instead.
-            Some(goal) if (low - pad..=high + pad).contains(&goal) => {
-                let goal_rows = Rows::from_columns(
-                    2,
-                    [
-                        ("day".into(), vec![0.0, (span - 1.0).max(1.0)]),
-                        ("goal".into(), vec![goal, goal]),
-                    ],
-                );
-                line()
-                    .data(goal_rows)
-                    .x(Some(RowAccessor::from("day")))
-                    .y(Some(RowAccessor::from("goal")))
-                    .text_color(color::CARBS)
-                    .stroke_width(px(1.0))
-                    .into_element()
+        .collect();
+    let expanded = signal(false);
+    view()
+        .gap_1()
+        .child(
+            view()
+                .flex_row()
+                .items_center()
+                .gap_2()
+                .child(
+                    text(title.clone())
+                        .typo(Type::Headline)
+                        .text_color(color::BODY)
+                        .flex_1(),
+                )
+                .child(
+                    Btn::ghost()
+                        .label(move || {
+                            if expanded.get() {
+                                crate::i18n::catalog::copy("Collapse", "收起")
+                            } else {
+                                crate::i18n::catalog::copy("Expand chart", "展开图表")
+                            }
+                            .into()
+                        })
+                        .on_press(move || expanded.update(|v| *v = !*v)),
+                ),
+        )
+        .child(
+            InspectionPlot {
+                title,
+                from: first.0,
+                end: last.0,
+                domain: [low - pad, high + pad],
+                samples,
+                color: tint,
+                goal,
             }
-            _ => view().into_element(),
-        });
-    let caption = |kg| {
-        text(format!("{} kg", s().kg(kg)))
-            .typo(Type::Caption)
-            .tabular_nums()
-            .text_color(color::MUTED)
-    };
-    view()
-        .gap_1()
-        .child(
-            text(|| s().trend_average)
-                .typo(Type::Caption)
-                .text_color(color::MUTED),
+            .draw(move || if expanded.get() { 180.0 } else { 88.0 }),
         )
-        .child(caption(high))
-        .child(line)
-        .child(
-            view()
-                .flex_row()
-                .justify_between()
-                .child(caption(low))
-                .child(
-                    text(format!("{} kg", s().kg(last.1)))
-                        .typo(Type::Caption)
-                        .text_color(color::INK),
-                ),
-        )
-        .pb_3()
         .into_element()
-}
-
-/// The period's estimated body-fat shares as a line, each at its day;
-/// nothing with fewer than two.
-pub fn trend_percent(first: Day, span: f64, points: Vec<(Day, f64)>) -> AnyElement {
-    if points.len() < 2 {
-        return view().into_element();
-    }
-    let (days, shares): (Vec<f64>, Vec<f64>) = points
-        .iter()
-        .map(|(day, fat)| (f64::from(day.days_since(first)), *fat))
-        .unzip();
-    let low = shares.iter().copied().fold(f64::INFINITY, f64::min);
-    let high = shares.iter().copied().fold(f64::NEG_INFINITY, f64::max);
-    let pad = ((1.0 - (high - low)) / 2.0).max(0.0) + 0.2;
-    let last = (days[days.len() - 1], shares[shares.len() - 1]);
-    let rows = Rows::from_columns(days.len(), [("day".into(), days), ("fat".into(), shares)]);
-    let hover = signal(None::<u32>);
-    let inspected = stored(
-        points
-            .iter()
-            .map(|(day, share)| format!("{} · {share:.1}%", s().short_date(*day)))
-            .collect::<Vec<_>>(),
-    );
-    let line = plot()
-        .h(px(64.0))
-        .data(rows)
-        .x(Some(RowAccessor::from("day")))
-        .y(Some(RowAccessor::from("fat")))
-        .x_scale(Scale::Linear {
-            domain: Some([0.0, (span - 1.0).max(1.0)]),
-            reverse: false,
-        })
-        .y_scale(Scale::Linear {
-            domain: Some([low - pad, high + pad]),
-            reverse: false,
-        })
-        .interactive(true)
-        .on_hover_change(move |index: &Option<u32>| hover.set(*index))
-        .tooltip_content(inspection(hover, inspected))
-        .cross_line_style(|s| s.w(px(1.0)).bg(color::MUTED))
-        .dot_style(|s| s.size(px(6.0)).rounded_full().bg(color::INK))
-        .child(line().text_color(color::CARBS).stroke_width(px(2.0)))
-        .child(latest_dot(last.0, last.1, "fat", color::CARBS));
-    let caption = |share| {
-        text(format!("{share:.1}%"))
-            .typo(Type::Caption)
-            .tabular_nums()
-            .text_color(color::MUTED)
-    };
-    view()
-        .gap_1()
-        .child(caption(high))
-        .child(line)
-        .child(
-            view()
-                .flex_row()
-                .justify_between()
-                .child(caption(low))
-                .child(
-                    text(format!("{:.1}%", last.1))
-                        .typo(Type::Caption)
-                        .text_color(color::BODY),
-                ),
-        )
-        .pb_3()
-        .into_element()
-}
-
-fn latest_dot(day: f64, value: f64, field: &'static str, tint: AdaptiveColor) -> impl IntoElement {
-    line()
-        .data(Some(Rows::from_columns(
-            1,
-            [("day".into(), vec![day]), (field.into(), vec![value])],
-        )))
-        .x(Some(RowAccessor::from("day")))
-        .y(Some(RowAccessor::from(field)))
-        .dot(true)
-        .text_color(tint)
-}
-
-fn inspection(hover: Signal<Option<u32>>, labels: Stored<Vec<String>>) -> impl IntoElement {
-    view()
-        .bg(color::SURFACE)
-        .px_2()
-        .py_1()
-        .rounded(px(8.0))
-        .child(
-            text(move || {
-                labels.with(|labels| {
-                    hover
-                        .get()
-                        .and_then(|i| labels.get(i as usize))
-                        .cloned()
-                        .unwrap_or_default()
-                })
-            })
-            .typo(Type::Caption)
-            .text_color(color::INK),
-        )
 }

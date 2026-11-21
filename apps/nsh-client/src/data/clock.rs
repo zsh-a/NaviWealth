@@ -85,6 +85,14 @@ pub fn time_label(ms: i64) -> String {
     format_time(hour, minute, locale_settings().hour_cycle.twelve_hour())
 }
 
+/// Device-local timestamp for dated market revisions and valuation snapshots.
+pub fn observation_time(instant: Timestamp) -> String {
+    instant
+        .to_zoned(zone())
+        .strftime("%Y-%m-%d %H:%M:%S")
+        .to_string()
+}
+
 /// A time of day in 24- or 12-hour form.
 pub fn format_time(hour: u8, minute: u8, twelve_hour: bool) -> String {
     if twelve_hour {

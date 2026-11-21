@@ -1,10 +1,25 @@
 use super::Strings;
+
+pub(crate) fn source_label(source: &str) -> &str {
+    use super::catalog::copy;
+    match source {
+        "manual" => super::s().manual_source,
+        "base" => copy("Base currency", "本位币"),
+        "cost" => copy("Cost", "成本"),
+        "tencent" => super::catalog::market_price(),
+        "tencent:raw" => copy("Tencent unadjusted close", "腾讯未复权收盘价"),
+        "frankfurter:ecb" => copy("ECB", "欧洲央行"),
+        "dated" | "" => copy("Unknown source", "来源未知"),
+        other => other,
+    }
+}
+
 impl Strings {
-    pub fn missing_rate_days(&self, currency: &str, count: usize) -> String {
+    pub fn missing_rate(&self, currency: &str) -> String {
         if self.zh() {
-            format!("有 {count} 天缺少 {currency} 汇率")
+            format!("缺少 {currency} 汇率")
         } else {
-            format!("Days missing {currency} rates: {count}")
+            format!("Missing {currency} rate")
         }
     }
     pub fn excluded_currencies(&self, codes: &str) -> String {

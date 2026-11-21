@@ -220,7 +220,7 @@ The full target is:
   measurement day and frozen with the measurement; old entered ages remain
   a labelled fallback until the owner supplies a birth date. The goal weight (Settings) shows the day's
   distance to it in Today's Body metrics overview and as a line in Review's weight chart, which has
-  30- and 90-day windows. Nothing is estimated from a manually entered
+  30- and 90-day windows. Weight and body-fat charts expand in place and share the financial charts’ dated readout and inspection gestures. Nothing is estimated from a manually entered
   weight: composition arrives only with a scale measurement. Today calls this
   summary Body metrics: a full-width dated weight with a separate weekly trend,
   body-fat and BMI facts. It joins composition on the kept weight's day;
@@ -321,8 +321,11 @@ stored as truth.
 
 
 Historical prices remain a secondary Assets task: daily closes and corrections
-are inspectable beneath Manage or a holding detail. Asset changes distinguishes
-recalculated history from immutable observations captured at the shown time.
+are inspectable beneath Manage or a holding detail. The last seven and thirty
+calendar days include today. Older observations remain accessible in All.
+Asset changes distinguishes recalculated history from immutable observations
+captured at the shown time. Its chart, gap notices and snapshot list follow
+the selected dates. The overview compares today with exactly thirty days ago.
 Missing FX stays explicit; neither retroactive snapshots nor closing-net-worth
 claims are inferred from an ordinary foreground capture. Historical retrieval
 uses the existing public data providers and preserves native currencies.

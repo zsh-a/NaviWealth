@@ -166,8 +166,8 @@ AI only to turn text and images into drafts, using the owner's model account.
   to CNY using the latest rate on or before its date; missing rates label the
   figure as known value and name the excluded currencies. A history with missing
   dated rates shows an explicit message instead of an incomplete chart. The visible
-  short valuation basis links to Asset changes, which holds the 30-day chart,
-  full valuation basis and a note that changes are not investment returns.
+  trend footer opens Asset changes. Its valuation basis expands on demand, and
+  missing-rate notices name the affected dates in the selected window.
   Each holding keeps its manual price date or cost-fallback label. Unchecked
   accounts keep a visible label; ordinary last-check dates live in account
   details and remain in the row's accessible description. Internal holding
@@ -181,13 +181,13 @@ AI only to turn text and images into drafts, using the owner's model account.
   through Manage → Closed holdings, with their history and trade actions;
   buying again returns a position to the overview automatically. A row opens
   a detail page with value, the price source, quantity, cost, unrealized
-  gain, and newest-first activity. The value and its facts share one card.
-  Unrealized gain shows an explicit signed amount and one-decimal percentage
-  of the domain cost basis (no percentage for zero cost). Record trade, Link security
-  and Price history are equal-width raised buttons beneath the card,
-  with icons above short localized labels. A linked holding emphasizes Record trade.
-  An unlinked open position without a price offers Add price beside its cost basis. They fit one row at 360 pt and
-  stack at large text; full action names remain accessible; linked identity is a quiet caption. Realized gain and dividends
+  gain, and newest-first activity. The valuation leads the page with Record trade and
+  the full native amount. An unpriced open holding labels its cost fallback.
+  A linked market and code opens the listing picker; an unlinked position
+  shows Link code. Price history and the latest quote source sit beside the
+  unit-price chart, with manual pricing available for unlinked open positions.
+  At large text sizes the price actions stack. Unrealized gain shows its signed
+  amount and one-decimal percentage of cost when the cost is positive. Realized gain and dividends
   appear when nonzero; unpriced unrealized gain is a dash. Opening a holding
   needs name, quantity and unit cost. Buy/sell use quantity, price and a cash
   account; dividends use amount and a cash account. Optional fees and date
@@ -472,8 +472,9 @@ Asset changes carries the trend on a separate pushed page:
 a single ink line with a soft area fill and a dated value above it. Holding unit prices,
 FX pairs, estimated net worth and saved snapshots share that inspection surface.
 Touch or drag horizontally to inspect an observation. Mouse, keyboard and screen-reader
-stepping update the same readout. Date windows offer seven or thirty days when
-meaningful, and the full stored series when it exceeds thirty days. History fills automatically while the app is active. A missing FX rate or valuation error breaks the line. Isolated valid days get a dot. The chart lists the missing currencies and affected day counts. Money keeps
+stepping update the same readout. The seven- and thirty-day windows include
+today and the preceding six or twenty-nine calendar days. Older records unlock
+All. An empty recent window shows the latest available observation date. History fills automatically while the app is active. A missing FX rate or valuation error breaks the line. Isolated valid days get a dot. The chart lists missing currencies and affected dates in the displayed window. Money keeps
 tabular numerals and neutral ink, including gains and losses. Overview
 amounts and primary balance/value figures use grouped thousands and two
 decimal places through a display-only formatter that preserves exact minor
@@ -648,8 +649,10 @@ goal weight and scale hardware, Watch for Garmin, Server for recognition and
 CloudLock for encrypted backups. Icons share the same round strokes. Financial signs never change ink color.
 
 Weight and body-fat plots use ink and the warm-stone ramp, with the latest
-point marked by a dot and a matching value below. Charts are spaced apart so
-axis captions cannot meet the next metric label. Full plots support scrubbing;
+point marked by a dot. Their fixed readout above the line uses the same selection
+and accessible description as asset charts. Each chart expands in place, keeping
+the selected day. Weight retains its goal line in range and body-fat curves stay
+separate by estimation algorithm. Full plots support scrubbing;
 mini sparklines pass touches through. Plot motion is unset (instant), and
 skeleton shimmer uses a native indefinite loop, stopped when its scope closes,
 and rests when reduced motion is enabled.

@@ -325,3 +325,64 @@ fn multi_currency_overview_converts_marks_and_exposes_dated_missing_rates() {
     assert_eq!(result.snapshot.net, 210000);
     assert!(result.missing.is_empty());
 }
+
+#[test]
+fn daily_range_matches_individual_valuations_across_changes_gaps_and_overflow() {
+    use navi_finance::currency::{Currency, FxRate};
+    let day = |d| date(2026, 11, d);
+    let security = Security::new_in("etf", "US ETF", Currency::USD).unwrap();
+    let book = Book {
+        securities: vec![security.clone()],
+        trades: vec![trade("opening", Kind::Opening, "10", "20", 0, 3)],
+        // Input order is authoritative for equal-date quotes (manual mark last).
+        quotes: [(9, 8), (4, 22), (9, 10_000)]
+            .map(|(d, price)| Quote {
+                security: security.id.clone(),
+                day: day(d),
+                price: price * holdings::SCALE,
+            })
+            .to_vec(),
+    };
+    let (_, mut entries) = holdings::replay(&security, &book.trades, day(20)).unwrap();
+    let cash_entry = journal::opening(
+        Entry {
+            id: "cash".into(),
+            at: day(12).at(12, 0, 0, 0),
+            payee: String::new(),
+            note: String::new(),
+            source: Source::Manual,
+        },
+        &cash(),
+        1000,
+    )
+    .unwrap();
+    entries.insert(0, cash_entry);
+    let rates = [
+        (11, 6_000_000, "ecb"),
+        (8, i64::MAX, "manual"),
+        (5, 7_000_000, "manual"),
+        (11, 7_000_001, "manual"),
+        (5, -1, "invalid"),
+    ]
+    .map(|(d, rate, source)| FxRate {
+        currency: Currency::USD,
+        day: day(d),
+        rate,
+        source: source.into(),
+    });
+    // Cover both first-entry clipping and the running balance at a mid-history start.
+    for start in [1, 6, 10, 12] {
+        let series = book.valuation_range(&entries, &rates, day(start), day(15));
+        assert_eq!(series.first().unwrap().0, day(start.max(3)));
+        assert_eq!(series.last().unwrap().0, day(15));
+        for (at, actual) in series {
+            let expected = book.overview_with_rates(&entries, at, &rates);
+            assert_eq!(expected.is_err(), (9..=10).contains(&at.day()));
+            assert_eq!(
+                actual.map_err(|e| e.to_string()),
+                expected.map_err(|e| e.to_string()),
+                "{at}"
+            );
+        }
+    }
+}

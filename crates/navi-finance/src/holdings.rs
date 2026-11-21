@@ -5,12 +5,13 @@ pub mod store;
 use crate::{
     account::{Account, AccountKind, defaults},
     assets,
-    currency::Currency,
+    currency::{Currency, FxRate},
     journal::{Posting, Source, Transaction},
     money::{self, Minor},
 };
 use jiff::civil::{Date, DateTime};
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 
 pub const SCALE: i64 = 1_000_000;
 pub const ACCOUNT_PREFIX: &str = "持仓·";
@@ -341,9 +342,17 @@ impl Book {
     }
 
     pub fn position(&self, security: &Security, day: Date) -> Result<Position, Error> {
+        self.position_at_quotes(security, day, &self.quotes)
+    }
+
+    fn position_at_quotes(
+        &self,
+        security: &Security,
+        day: Date,
+        quotes: &[Quote],
+    ) -> Result<Position, Error> {
         let (mut p, _) = replay(security, &self.trades, day)?;
-        p.quote = self
-            .quotes
+        p.quote = quotes
             .iter()
             .filter(|q| q.security == security.id && q.day <= day)
             .max_by_key(|q| q.day)
@@ -367,14 +376,85 @@ impl Book {
         first: Date,
         last: Date,
     ) -> Vec<(Date, Result<ValuedOverview, Error>)> {
-        let start = entries
+        let Some(start) = entries
             .iter()
             .map(|entry| entry.at.date())
             .min()
-            .map(|day| day.max(first));
-        std::iter::successors(start, |day| day.tomorrow().ok())
+            .map(|day| day.max(first))
+            .filter(|day| *day <= last)
+        else {
+            return vec![];
+        };
+        let mut balances = crate::journal::BalanceTotals::default();
+        #[derive(Default)]
+        struct Changes<'a> {
+            entries: Vec<&'a Transaction>,
+            quotes: Vec<&'a Quote>,
+            rates: Vec<&'a FxRate>,
+        }
+        let mut changes = BTreeMap::<Date, Changes>::new();
+        for entry in entries {
+            let day = entry.at.date();
+            if day < start {
+                balances.add(entry);
+            } else if day <= last {
+                changes.entry(day).or_default().entries.push(entry);
+            }
+        }
+        for trade in &self.trades {
+            let day = trade.at.date();
+            if (start..=last).contains(&day) {
+                changes.entry(day).or_default();
+            }
+        }
+        for quote in self.quotes.iter().filter(|q| q.day <= last) {
+            changes
+                .entry(quote.day.max(start))
+                .or_default()
+                .quotes
+                .push(quote);
+        }
+        for rate in rates.iter().filter(|r| r.day <= last && r.rate > 0) {
+            changes
+                .entry(rate.day.max(start))
+                .or_default()
+                .rates
+                .push(rate);
+        }
+        // Only the opening bucket spans multiple dates. A stable sort keeps the
+        // input's last quote/rate on same-day ties, as in position() and rate_in().
+        if let Some(opening) = changes.get_mut(&start) {
+            opening.quotes.sort_by_key(|q| q.day);
+            opening.rates.sort_by_key(|r| r.day);
+        }
+        let mut marks: Vec<Quote> = vec![];
+        let mut fx: Vec<FxRate> = vec![];
+        let mut previous: Option<ValuedOverview> = None;
+        std::iter::successors(Some(start), |day| day.tomorrow().ok())
             .take_while(|day| *day <= last)
-            .map(|day| (day, self.overview_with_rates(entries, day, rates)))
+            .map(|day| {
+                if let Some(changes) = changes.remove(&day) {
+                    for entry in changes.entries {
+                        balances.add(entry);
+                    }
+                    for quote in changes.quotes {
+                        marks.retain(|old| old.security != quote.security);
+                        marks.push(quote.clone());
+                    }
+                    for rate in changes.rates {
+                        fx.retain(|old| old.currency != rate.currency);
+                        fx.push(rate.clone());
+                    }
+                    previous = None;
+                }
+                let value = match &previous {
+                    Some(value) => Ok(value.clone()),
+                    None => self
+                        .value_balances(balances.balances(), day, &fx, &marks)
+                        .inspect(|value| previous = Some(value.clone())),
+                };
+                (day, value)
+            })
             .collect()
     }
 
@@ -386,9 +466,19 @@ impl Book {
         day: Date,
         rates: &[crate::currency::FxRate],
     ) -> Result<ValuedOverview, Error> {
-        let mut balances = crate::journal::balances(entries.iter().filter(|t| t.at.date() <= day));
+        let balances = crate::journal::balances(entries.iter().filter(|t| t.at.date() <= day));
+        self.value_balances(balances, day, rates, &self.quotes)
+    }
+
+    fn value_balances(
+        &self,
+        mut balances: BTreeMap<Account, Minor>,
+        day: Date,
+        rates: &[FxRate],
+        quotes: &[Quote],
+    ) -> Result<ValuedOverview, Error> {
         for security in &self.securities {
-            let p = self.position(security, day)?;
+            let p = self.position_at_quotes(security, day, quotes)?;
             if let Some(value) = p.value {
                 let balance = balances.entry(security.account.clone()).or_default();
                 *balance = balance
