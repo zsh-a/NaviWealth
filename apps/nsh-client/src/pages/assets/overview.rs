@@ -3,7 +3,7 @@
 use super::overview_parts::*;
 use super::summary::net_summary;
 use super::*;
-use crate::ui::sheet::{fitted_task_sheet, task_host};
+use crate::ui::sheet::{fitted_task_sheet, task_host_with_keyboard};
 
 pub fn assets_tab() -> impl IntoElement {
     let manage = signal(false);
@@ -131,19 +131,14 @@ pub fn assets_tab() -> impl IntoElement {
                             );
                             view()
                                 .gap_5()
-                                .child(
-                                    view()
-                                        .gap_1()
-                                        .child(net_summary(
-                                            valued,
-                                            has_included_holdings,
-                                            at_cost,
-                                            super::trend::NetWorthHistory::load(
-                                                &entries, &portfolio, &rates, today,
-                                            ),
-                                        ))
-                                        .child(quote_refresh_row()),
-                                )
+                                .child(net_summary(
+                                    valued,
+                                    has_included_holdings,
+                                    at_cost,
+                                    super::trend::NetWorthHistory::load(
+                                        &entries, &portfolio, &rates, today,
+                                    ),
+                                ))
                                 .child(account_group(
                                     AccountKind::Assets,
                                     &accounts,
@@ -165,9 +160,10 @@ pub fn assets_tab() -> impl IntoElement {
                     })),
             ),
         )
-        .child(task_host(
+        .child(task_host_with_keyboard(
             move || manage.get(),
             move || manage.set(false),
+            move || task.get() != 0,
             move || {
                 dynamic(move || {
                     let panel = task.get();
@@ -217,29 +213,11 @@ pub fn assets_tab() -> impl IntoElement {
                                         .gap_1()
                                         .child(group_label(|| s().manage_group_data))
                                         .child(nav_row(
-                                            || {
-                                                crate::i18n::statement_import::copy(
-                                                    "Exchange rates",
-                                                    "汇率",
-                                                )
-                                            },
-                                            Icon::Refresh,
-                                            move || {
-                                                manage.set(false);
-                                                nav::push(Route::ExchangeRates);
-                                            },
-                                        ))
-                                        .child(nav_row(
-                                            || {
-                                                crate::i18n::statement_import::copy(
-                                                    "Price history",
-                                                    "价格与汇率记录",
-                                                )
-                                            },
+                                            super::super::prices_and_rates::title,
                                             Icon::Chart,
                                             move || {
                                                 manage.set(false);
-                                                nav::push(Route::PriceHistory(None));
+                                                nav::push(Route::PricesAndRates(None));
                                             },
                                         ))
                                         .child(nav_row(

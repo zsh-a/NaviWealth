@@ -1,32 +1,27 @@
 use super::*;
 
-pub(super) fn recorded_panel(notice: Signal<String>) -> AnyElement {
+pub(super) fn recorded_panel(window: Signal<Window>) -> AnyElement {
     observations::watch();
-    let mut panel = view().gap_4()
-        .child(text(copy("Observations captured at the time shown. Later edits do not change them. These are not end-of-day closing values.", "留存的是所示时刻的估值，后续修改不会改变它们；并非当日收盘净值。")).typo(Type::Subhead).text_color(color::MUTED))
-        .child(crate::ui::Btn::secondary().label(||copy("Record current valuation", "留存当前估值").into()).on_press(move || {
-            notice.set(match crate::data::valuation::capture(true) {Ok(())=>copy("Valuation recorded", "估值已留存").into(),Err(e)=>format!("{}: {e}",copy("Could not record", "留存失败"))});
-        }))
-        .child(when(move||!notice.get().is_empty(),move||text(move ||notice.get()).typo(Type::Caption).text_color(color::MUTED)));
+    let mut panel = view().gap_4();
     let Ok(daily) = observations::read(valuation::recorded_trend) else {
         return panel.child(history_read_error()).into_element();
     };
     if daily.is_empty() {
         return panel
             .child(
-                text(copy(
-                    "No recorded valuations yet. Record the current value to start a history.",
-                    "尚无留存估值。留存当前估值后开始积累历史。",
-                ))
-                .typo(Type::Body)
-                .text_color(color::MUTED),
+                text(copy("No net worth snapshots yet.", "暂无净值快照。"))
+                    .typo(Type::Body)
+                    .text_color(color::MUTED),
             )
             .into_element();
     }
     let partial = daily.iter().any(|p| p.1.is_none());
-    if daily.len() >= 2 && daily.iter().any(|p| p.1.is_some()) {
-        panel = panel.child(plot_points(daily, copy("Recorded net worth", "留存净值")));
-    }
+    panel = panel.child(trend::chart(
+        copy("Recorded net worth", "留存净值").into(),
+        daily,
+        Unit::Money,
+        window,
+    ));
     if partial {
         panel = panel.child(
             text(copy(

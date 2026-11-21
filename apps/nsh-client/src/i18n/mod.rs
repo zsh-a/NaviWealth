@@ -18,7 +18,6 @@ use crate::domain::{format, meal::Day, nutrition::ExtraNutrients, recognition::L
 pub struct Strings {
     pub lang: Lang,
     // Holdings
-    pub portfolio_trend: &'static str,
     pub manage_assets: &'static str,
     pub asset_history: &'static str,
     pub closed_holdings: &'static str,
@@ -116,8 +115,6 @@ pub struct Strings {
     pub account_exists: &'static str,
     pub rename_running: &'static str,
     pub account_created: &'static str,
-    pub assets_trend: &'static str,
-    pub assets_trend_empty: &'static str,
     pub balance_readonly: &'static str,
     pub close: &'static str,
     // Ledger

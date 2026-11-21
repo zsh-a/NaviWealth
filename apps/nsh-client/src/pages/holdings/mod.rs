@@ -115,6 +115,7 @@ pub fn holding_page(id: &str) -> Screen {
     let id = stored(id.to_owned());
     let trade = signal(None::<String>);
     let price = signal(false);
+    let chart_window = signal(crate::ui::trend::Window::Month);
     let picker = signal(false);
     let binding_error = signal(None::<String>);
     let receipt = signal(None::<String>);
@@ -165,7 +166,11 @@ pub fn holding_page(id: &str) -> Screen {
                                     };
                                     let currency = sec.currency();
                                     let binding = sources.binding(&sec.id);
-                                    let trade_style = if binding.is_some() { Variant::Primary } else { Variant::Secondary };
+                                    let trade_style = if binding.is_some() {
+                                        Variant::Primary
+                                    } else {
+                                        Variant::Secondary
+                                    };
                                     let p =
                                         book.position(&sec, today.0).expect("validated holdings");
                                     let caption = p
@@ -190,33 +195,58 @@ pub fn holding_page(id: &str) -> Screen {
                                                     currency,
                                                     Type::Display,
                                                 ))
-                                                .child(
-                                                    row_button(move || price.set(true))
-                                                        .accessibility_label(|| {
-                                                            Some(s().update_price.into())
-                                                        })
-                                                        .px_0()
-                                                        .min_h(px(48.0))
-                                                        .child(
-                                                            text(caption)
-                                                                .typo(Type::Subhead)
-                                                                .text_color(color::MUTED)
-                                                                .flex_1(),
-                                                        )
-                                                        .child(
-                                                            (p.quote.is_none() && p.quantity > 0)
-                                                                .then(|| {
-                                                                    text(crate::i18n::statement_import::copy("Add price", "录入价格"))
-                                                                        .typo(Type::Subhead)
-                                                                        .text_color(color::INK)
-                                                                }),
-                                                        )
-                                                        .child(crate::ui::icon(
-                                                            Icon::Pencil,
-                                                            18.0,
-                                                            color::INK,
-                                                        )),
-                                                )
+                                                .child(price_line(
+                                                    caption,
+                                                    (binding.is_none() && p.quantity > 0)
+                                                        .then_some(price),
+                                                    p.quote.is_none(),
+                                                )),
+                                        )
+                                        .child(crate::ui::trend::chart(
+                                            crate::i18n::catalog::copy("Unit price", "单位价格")
+                                                .into(),
+                                            book.dated_prices(&sec, today.0)
+                                                .into_iter()
+                                                .map(|(day, price)| (day, Some(price)))
+                                                .collect(),
+                                            crate::ui::trend::Unit::Price(currency),
+                                            chart_window,
+                                        ))
+                                        .child(
+                                            view()
+                                                .flex_row()
+                                                .gap_2()
+                                                .style_when(|| font_scale() > 1.2, |s| s.flex_col())
+                                                .child(detail_action(
+                                                    trade_style,
+                                                    Icon::Plus,
+                                                    || s().holding_trade_action,
+                                                    || s().record_trade,
+                                                    move || trade.set(Some(id.get())),
+                                                ))
+                                                .child(detail_action(
+                                                    Variant::Secondary,
+                                                    Icon::Link,
+                                                    || s().holding_link_action,
+                                                    crate::i18n::catalog::bind,
+                                                    move || picker.set(true),
+                                                ))
+                                                .child(detail_action(
+                                                    Variant::Secondary,
+                                                    Icon::Chart,
+                                                    || s().holding_prices_action,
+                                                    || s().price_history,
+                                                    move || {
+                                                        nav::push(Route::PricesAndRates(Some(
+                                                            id.get(),
+                                                        )))
+                                                    },
+                                                )),
+                                        )
+                                        .child(
+                                            view()
+                                                .gap_2()
+                                                .py_2()
                                                 .child(pair(
                                                     s().quantity,
                                                     holdings::format_units(p.quantity),
@@ -256,34 +286,6 @@ pub fn holding_page(id: &str) -> Screen {
                                                         ),
                                                     )
                                                 })),
-                                        )
-                                        .child(
-                                            view()
-                                                .flex_row()
-                                                .gap_2()
-                                                .style_when(|| font_scale() > 1.2, |s| s.flex_col())
-                                                .child(detail_action(
-                                                    trade_style, Icon::Plus,
-                                                    || s().holding_trade_action,
-                                                    || s().record_trade,
-                                                    move || trade.set(Some(sec.id.clone())),
-                                                ))
-                                                .child(detail_action(
-                                                    Variant::Secondary, Icon::Link,
-                                                    || s().holding_link_action,
-                                                    crate::i18n::catalog::bind,
-                                                    move || picker.set(true),
-                                                ))
-                                                .child(detail_action(
-                                                    Variant::Secondary, Icon::Chart,
-                                                    || s().holding_prices_action,
-                                                    || s().price_history,
-                                                    move || {
-                                                        nav::push(Route::PriceHistory(Some(
-                                                            id.get(),
-                                                        )))
-                                                    },
-                                                )),
                                         )
                                         .child(binding.map(binding_caption))
                                         .child(note(
@@ -440,6 +442,25 @@ fn unrealized_display(position: &holdings::Position, currency: Currency) -> Stri
         ""
     };
     format!("{amount} · {sign}{}.{:01}%", tenths / 10, tenths % 10)
+}
+
+fn price_line(caption: String, editor: Option<Signal<bool>>, missing: bool) -> AnyElement {
+    let caption = text(caption).typo(Type::Subhead).text_color(color::MUTED);
+    let Some(editor) = editor else {
+        return caption.into_element();
+    };
+    row_button(move || editor.set(true))
+        .accessibility_label(|| Some(s().update_price.into()))
+        .px_0()
+        .min_h(px(48.0))
+        .child(caption.flex_1())
+        .child(missing.then(|| {
+            text(crate::i18n::statement_import::copy("Add price", "录入价格"))
+                .typo(Type::Subhead)
+                .text_color(color::INK)
+        }))
+        .child(crate::ui::icon(Icon::Pencil, 18.0, color::INK))
+        .into_element()
 }
 
 fn detail_action(

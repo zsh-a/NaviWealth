@@ -2,7 +2,8 @@
 mod common;
 use common::*;
 #[test]
-fn recorded_mode_starts_empty_and_manual_capture_appends_revisions() -> Result<(), String> {
+fn first_balance_creates_one_daily_snapshot_and_history_pages_older_revisions() -> Result<(), String>
+{
     let dir = tempfile::tempdir().unwrap();
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
     app.press("label:Assets")?;
@@ -17,20 +18,15 @@ fn recorded_mode_starts_empty_and_manual_capture_appends_revisions() -> Result<(
     app.press("label:Asset changes")?;
     app.wait_for("History recalculated from current records and dated prices. Edits can change these values.")?;
     app.press("Net worth snapshots")?;
-    app.wait_for("No recorded valuations yet. Record the current value to start a history.")?;
-    app.press("Record current valuation")?;
-    app.wait_for("Valuation recorded")?;
+    app.wait_for("text:/^Recorded at /")?;
+    assert!(!app.shows("Record current valuation"));
     let c = rusqlite::Connection::open(database_in(dir.path())).unwrap();
-    assert_eq!(navi_finance::valuation::load(&c).unwrap().len(), 1);
-    app.press("Record current valuation")?;
-    assert_eq!(navi_finance::valuation::load(&c).unwrap().len(), 2);
     app.press("Historical estimates")?;
-    app.wait_for("History recalculated from current records and dated prices. Edits can change these values.")?;
     app.press("Net worth snapshots")?;
-    app.wait_for("Observations captured at the time shown. Later edits do not change them. These are not end-of-day closing values.")?;
+    assert_eq!(navi_finance::valuation::load(&c).unwrap().len(), 1);
     // Reopen with more than one page, including identical capture instants.
     app.press("Historical estimates")?;
-    for _ in 0..29 {
+    for _ in 0..30 {
         navi_finance::valuation::record_current(&c, today().0, jiff::Timestamp::now()).unwrap();
     }
     app.press("Net worth snapshots")?;
@@ -109,6 +105,25 @@ fn price_history_exposes_daily_revisions_and_fx_audit() -> Result<(), String> {
         },
     )
     .unwrap();
+    let older = day.checked_sub(jiff::Span::new().days(12)).unwrap();
+    currency::save_rates(
+        &c,
+        &[
+            FxRate {
+                currency: Currency::USD,
+                day: older,
+                rate: 7_200_015,
+                source: "frankfurter:ecb".into(),
+            },
+            FxRate {
+                currency: Currency::HKD,
+                day,
+                rate: 912_345,
+                source: "frankfurter:ecb".into(),
+            },
+        ],
+    )
+    .unwrap();
     let (mut app, _) = start_in(
         Some(dir.path()),
         storage.entries().into_iter().collect(),
@@ -116,15 +131,32 @@ fn price_history_exposes_daily_revisions_and_fx_audit() -> Result<(), String> {
     );
     app.press("label:Assets")?;
     app.wait_for("label:/^Index, ¥6.00, Daily close/")?;
+    app.press("label:/^Index, ¥6.00, Daily close/")?;
+    app.wait_for("id:trend-value")?;
+    app.wait_for("text:¥6")?;
+    app.press("label:Back")?;
     app.press("label:Manage")?;
-    app.press("Price history")?;
+    app.press("Prices & rates")?;
+    app.wait_for("text:7.1")?;
+    app.drag_and_hold(
+        "id:trend-inspector",
+        nsh_core::geometry::point(nsh_core::geometry::px(-140.0), nsh_core::geometry::px(0.0)),
+    )?;
+    app.wait_for("text:7.200015")?;
+    app.drop_held()?;
+    app.press("7D")?;
+    app.wait_for("text:7.1")?;
+    assert!(!app.shows("text:/7.200015/"));
+    app.press("HKD → CNY")?;
+    app.wait_for("text:0.912345")?;
+    app.press("Daily closes")?;
     app.wait_for("510300.SH · 2026-11-12")?;
     app.press("510300.SH · 2026-11-12")?;
     app.wait_for("Open 4 · High 6 · Low 4 · Close 6")?;
     app.wait_for("Open 4 · High 5 · Low 4 · Close 5")?;
     app.press("Changes")?;
     app.wait_for("USD → CNY")?;
-    app.press("USD → CNY")?;
+    app.press("text:USD → CNY >> nth=1")?;
     app.wait_for("7.1")?;
     Ok(())
 }
@@ -174,7 +206,7 @@ fn missing_historical_fx_keeps_known_values_and_cost_details_accessible() -> Res
     app.press("label:Back")?;
     app.press("label:Asset changes")?;
     app.wait_for("Days missing USD rates: 2")?;
-    app.wait_for("text:/¥7.00 – ¥7.00/")?;
+    app.wait_for("text:¥7.00")?;
     Ok(())
 }
 

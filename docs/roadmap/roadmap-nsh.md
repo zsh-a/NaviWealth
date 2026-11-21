@@ -184,8 +184,7 @@ Started before the (now canceled) Flutter import by the owner's choice
   Android device, system Back and real IME verification remain outstanding.
 - Catalog and quote increment implemented (2026-11-15): offline code/name/pinyin
   lookup uses the securities catalog, downloaded from the rolling release;
-  updates
-  check lazily on picker use at most every 24 hours, with manual refresh.
+  the picker checks automatically, daily after success and after a short cooldown on failure.
   Schema 12 separates replaceable listing data from explicit holding bindings.
   Existing manual holdings require confirmation; links preserve internal ids,
   accounts, labels, trades and cost. This first catalog increment supported
@@ -193,8 +192,7 @@ Started before the (now canceled) Flutter import by the owner's choice
   Compressed/content hashes, schema, size, header count and checksum are verified
   before atomic catalog replacement; failures retain the offline catalog.
 - Tencent is the single quote provider, through the shared market-data SDK.
-  Foreground refresh has a five-minute throttle and Assets offers a manual
-  refresh. Schema 13 stores dated provider marks separately from manual marks.
+  Foreground refresh checks each requested symbol or currency at most once per five minutes. Schema 13 stores dated provider marks separately from manual marks.
   Manual prices win on the same or newer day; stale/previous-close marks retain
   their provenance. Failed refreshes keep prior prices, and a changed binding
   atomically archives marks for the previous symbol before clearing the active
@@ -214,7 +212,7 @@ Started before the (now canceled) Flutter import by the owner's choice
 - Historical observations increment implemented (2026-11-15): schema 15 keeps
   immutable raw OHLCV revisions and transactional price/FX audit; schema 16
   keeps immutable valuation observations. CN/HK/US daily history and HKD/USD
-  reference rates backfill 30 days after successful updates, with manual retry,
+  reference rates backfill 30 days automatically, including when current quotes fail, with
   per-market dates, bounded requests and durable throttling. Daily closes and
   intraday marks retain distinct provenance; same-day manual values win.
   Rebinding preserves archived observations. Asset changes separates current

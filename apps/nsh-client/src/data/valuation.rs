@@ -18,17 +18,11 @@ pub fn read<T>(
         .ok_or("database unavailable")?
         .map_err(|e| e.to_string())
 }
-pub fn capture(manual: bool) -> Result<(), String> {
+pub fn capture() -> Result<(), String> {
     let now = super::clock::now_ms();
     let day = super::clock::day_of(now).0;
     let at = jiff::Timestamp::from_millisecond(now).map_err(|e| e.to_string())?;
-    let saved = read(|c| {
-        if manual {
-            valuation::record_current(c, day, at).map(|_| true)
-        } else {
-            valuation::record_if_absent(c, day, at)
-        }
-    })?;
+    let saved = read(|c| valuation::record_if_absent(c, day, at))?;
     if saved {
         invalidate();
     }

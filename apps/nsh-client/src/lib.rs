@@ -132,6 +132,7 @@ pub fn App(props: AppProps, cx: Scope<AppEvent>) -> impl IntoElement {
     settings::load();
     data::keyboard::track();
     spawn(photos::sweep_orphans());
+    data::market::start();
     // Midnight, and coming back to the app, move "today" on.
     set_interval(Duration::from_secs(30), clock::tick);
     effect(move || {
@@ -139,7 +140,6 @@ pub fn App(props: AppProps, cx: Scope<AppEvent>) -> impl IntoElement {
             untracked(clock::tick);
             tasks::spawn_app(garmin::refresh(false));
             data::updates::check(false);
-            tasks::spawn_app(data::market::refresh(false));
             tasks::spawn_app(async {
                 let _ = backup::backup_now(false).await;
             });

@@ -8,18 +8,30 @@ use navi_finance::{
 };
 use nsh_core::{prelude::*, storage::Storage};
 use std::time::Duration;
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct Status {
-    pub running: bool,
-    pub updated: usize,
-    pub failed: usize,
+#[derive(Clone, Default, PartialEq)]
+struct Revision(u64);
+
+pub fn watch() {
+    global::<Revision>().with(|_| ());
 }
-fn state() -> Signal<Status> {
-    global::<Status>()
+fn invalidate() {
+    global::<Revision>().update(|rev| rev.0 = rev.0.wrapping_add(1));
 }
-pub fn status() -> Status {
-    state().with(Clone::clone)
+pub fn daily_history(
+    security: Option<&str>,
+    limit: i64,
+) -> Result<Vec<Vec<store::DailyBar>>, String> {
+    db::with(|c| store::daily_history(c, security, limit))
+        .ok_or("database unavailable")?
+        .map_err(|e| e.to_string())
 }
+
+pub fn changes(security: Option<&str>, limit: i64) -> Result<Vec<store::AuditRevision>, String> {
+    db::with(|c| store::audit_rows(c, security, limit))
+        .ok_or("database unavailable")?
+        .map_err(|e| e.to_string())
+}
+
 #[derive(serde::Serialize, serde::Deserialize)]
 struct Attempt {
     key: String,
@@ -30,6 +42,10 @@ struct Attempt {
     failed: bool,
 }
 const ATTEMPTS: &str = "history.attempts.v1";
+pub(super) fn clear_attempts() {
+    Storage::remove_item(ATTEMPTS);
+    invalidate();
+}
 fn attempts() -> Vec<Attempt> {
     Storage::get_item(ATTEMPTS)
         .and_then(|s| serde_json::from_str(&s).ok())
@@ -148,10 +164,7 @@ fn bar_start(from: Date, first_trade: Date) -> Date {
 }
 /// The requested interval is capped at one year and excludes unfinished market days.
 /// Empty provider results remain missing history, never fabricated coverage.
-pub async fn backfill(from: Date, to: Date, force: bool) {
-    if state().with_untracked(|s| s.running) {
-        return;
-    }
+pub(super) async fn backfill(from: Date, to: Date, epoch: u64, currencies: &[Currency]) {
     let today = super::clock::today().0;
     let from = from.max(
         today
@@ -166,7 +179,7 @@ pub async fn backfill(from: Date, to: Date, force: bool) {
     let bindings = match db::with(catalog::bindings) {
         Some(Ok(v)) => v,
         _ => {
-            state().update(|s| s.failed = 1);
+            log::warn!("history: could not read bindings");
             return;
         }
     };
@@ -178,10 +191,6 @@ pub async fn backfill(from: Date, to: Date, force: bool) {
                 .any(|t| t.security == b.security && t.at.date() <= to)
         })
         .collect();
-    state().set(Status {
-        running: true,
-        ..Status::default()
-    });
     let mut updated = 0;
     let mut failed = 0;
     for b in bindings {
@@ -198,11 +207,17 @@ pub async fn backfill(from: Date, to: Date, force: bool) {
         }
         let start = bar_start(from, first_trade);
         let key = format!("{}:{}:{}", b.market, b.symbol, b.currency);
-        if !force && !fetch_due(&key, start, to) {
+        if !fetch_due(&key, start, to) {
             continue;
+        }
+        if lifecycle() != nsh_core::platform::Lifecycle::Active {
+            break;
         }
         let query = b.clone();
         let result = blocking(move || fetch_bar(&query, start, to)).await;
+        if market::generation() != epoch {
+            return;
+        }
         let mut count = 0;
         let mut bad = true;
         if let Ok(Ok(rows)) = result {
@@ -226,25 +241,23 @@ pub async fn backfill(from: Date, to: Date, force: bool) {
     }
     // Warm-up supplies the last published rate before a weekend start; never forward-fill backwards.
     let warm = from.checked_sub(jiff::Span::new().days(10)).unwrap_or(from);
-    for currency in [Currency::HKD, Currency::USD]
-        .into_iter()
-        .filter(|currency| {
-            finance::accounts()
-                .iter()
-                .any(|a| a.currency() == *currency)
-                || book.securities.iter().any(|s| s.currency() == *currency)
-        })
-    {
+    for &currency in currencies {
         let key = format!("fx:{currency}");
-        if !force && !fetch_due(&key, warm, to) {
+        if !fetch_due(&key, warm, to) {
             continue;
         }
+        if lifecycle() != nsh_core::platform::Lifecycle::Active {
+            break;
+        }
         let result = blocking(move || fetch_fx(currency, warm, to, today)).await;
+        if market::generation() != epoch {
+            return;
+        }
         let mut count = 0;
         let mut bad = true;
         if let Ok(Ok(rows)) = result
             && !rows.is_empty()
-            && let Some(Ok(changed)) = db::with(|c| currency::save_rates(c, &rows))
+            && let Ok(changed) = finance::store_rates(&rows)
         {
             updated += changed;
             count = rows.len();
@@ -255,14 +268,15 @@ pub async fn backfill(from: Date, to: Date, force: bool) {
         }
         record_fetch(&key, warm, to, count, bad);
     }
-    if super::market::reload_prices().is_err() {
-        failed += 1
+    if updated > 0 {
+        if super::market::reload_prices().is_err() {
+            failed += 1;
+        }
+        invalidate();
     }
-    state().set(Status {
-        running: false,
-        updated,
-        failed,
-    });
+    if failed > 0 {
+        log::warn!("history: {failed} updates failed");
+    }
 }
 #[cfg(test)]
 mod tests {

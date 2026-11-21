@@ -32,8 +32,7 @@ pub enum Route {
     AssetHistory,
     ClosedHoldings,
     StatementImport,
-    ExchangeRates,
-    PriceHistory(Option<String>),
+    PricesAndRates(Option<String>),
     Spending {
         from: Day,
         to: Day,

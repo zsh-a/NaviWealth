@@ -392,8 +392,7 @@ accounts; a holding's currency stays fixed after creation.
 
 Tencent provides dated quotes. Unpriced positions explicitly use native cost;
 known prices replace cost and are never applied to earlier days. Assets converts
-to CNY using dated Frankfurter ECB rates or manual rates under Manage → Exchange
-rates. Same-day manual quotes/rates take priority. Missing rates leave currencies
+to CNY using dated rates. Frankfurter ECB rates update automatically and can be inspected under Manage → Prices & rates. Same-day manual quotes/rates take priority. Missing rates leave currencies
 visibly excluded from the known total; historical dates with missing rates appear as gaps
 in the trend, with the affected currencies and day counts shown. Schema 14 includes exchange rates in backups. Other
 currencies and crypto are not supported; AI trade recognition remains excluded.
@@ -426,16 +425,22 @@ Unfinished current-market days are excluded conservatively, even after the
 session closes; current quotes remain separately labeled. Historical raw daily
 closes supersede same-day intraday marks; same-day manual prices take priority.
 
-Successful foreground quote/rate updates also backfill the last 30 days.
-Asset changes offers a manual retry. Fetches are single-flight and bounded to
+While the app is active, opening it, resuming, adding a required currency or binding,
+and a five-minute timer schedule the required quotes and rates. Opening Prices & rates
+also requests both supported foreign rates. A single worker coalesces requests and
+backfills the last 30 days independently of current quote success. Fetches are single-flight and bounded to
 one year plus a ten-day prior-price warm-up per request, with a six-hour success TTL and five-minute failure TTL;
-only used foreign currencies are fetched. A ten-day price/FX warm-up permits prior
+FX requests cover portfolio currencies and the pairs displayed in the rates view. A ten-day price/FX warm-up permits prior
 published rates across weekends without using future rates. Empty responses
 remain missing data, not a coverage guarantee. No minute/tick history or
 corporate-action-adjusted return series is implemented.
 
-Manage → Price history lists daily closes and saved corrections, with OHLC,
-source and revisions on expansion. Holding details offer a filtered entry.
+Manage → Prices & rates brings current exchange rates, daily closes and saved changes
+into one page. Select a currency pair to inspect its dated trend. Opening this view also requests
+recent history for both supported pairs. Holdings show their observed unit prices
+in the trading currency. The full charts support dragging, keyboard inspection
+and switching date windows. Expand a daily close for OHLC,
+source and revisions. Holding details open the same page filtered to the security.
 A changed binding clears only its active network marks: the old observations
 and symbol-keyed daily bars remain in the archive. Migration records existing
 marks/rates as baselines at migration time, never inventing original fetch times.
@@ -443,9 +448,9 @@ Unchanged values add no audit revision. Manual FX rates keep same-day priority.
 
 Asset changes has two views, Historical estimates (current ledger and dated
 prices and rates) and Net worth snapshots (observations at the shown instant). Automatic capture
-runs once per local day after a successful refresh, or on foreground entry for
-cash-only portfolios without a network request. Manual capture appends another
-observation. A snapshot copies native balances, positions, prices, actual rates,
+runs once per local day when the ledger has transactions or trades, using the
+stored observations available after the foreground quote check. Cash-only CNY
+portfolios are captured locally. A snapshot copies native balances, positions, prices, actual rates,
 calculation inputs and integrity checksums; later edits never rewrite it.
 Missing FX leaves a gap on the chart. Schema 19 indexes the existing snapshot
 rows for daily lookups and chronological paging. The history view reads 30
@@ -463,4 +468,4 @@ public TLS checks cover CN 510300, HK 00700, US AAPL/BRK.B and both FX pairs;
 Android platform behavior still requires device verification.
 
 Desktop preview: add `history` to the existing `holdings,multicurrency,fx`
-flags and use `NW_PREVIEW_ROUTE=price-history` or `asset-history`.
+flags and use `NW_PREVIEW_ROUTE=prices-and-rates` or `asset-history`.

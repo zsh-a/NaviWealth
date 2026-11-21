@@ -5,7 +5,6 @@ use crate::domain::recognition::Lang;
 
 pub(super) static STRINGS: Strings = Strings {
     lang: Lang::En,
-    portfolio_trend: "30-day value · recorded prices",
     manage_assets: "Manage",
     asset_history: "Asset changes",
     closed_holdings: "Closed holdings",
@@ -102,8 +101,6 @@ pub(super) static STRINGS: Strings = Strings {
     account_exists: "An account with this name already exists.",
     rename_running: "Recognition is running. Rename the account after it finishes.",
     account_created: "Account added",
-    assets_trend: "Book value · last 30 days",
-    assets_trend_empty: "The trend appears once the ledger spans at least two days.",
     balance_readonly: "This entry comes from a balance check. Check the account again, or revoke this entry to recalculate its balance.",
     close: "Close",
     capture_unspecified: "Not specified",

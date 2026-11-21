@@ -124,19 +124,12 @@ pub fn accounts() -> Vec<Account> {
 pub fn holdings() -> navi_finance::holdings::Book {
     (*holdings_snapshot()).clone()
 }
-pub fn rates() -> Vec<navi_finance::currency::FxRate> {
-    (*rates_snapshot()).clone()
-}
-pub fn save_rate(rate: navi_finance::currency::FxRate) -> Result<(), String> {
-    db::with(|c| navi_finance::currency::save_rate(c, &rate))
+pub(crate) fn store_rates(rates: &[navi_finance::currency::FxRate]) -> Result<usize, String> {
+    db::with(|c| navi_finance::currency::save_rates(c, rates))
         .ok_or("database unavailable")?
-        .map_err(|e| e.to_string())?;
-    let rates = db::with(navi_finance::currency::rates)
-        .ok_or("database unavailable")?
-        .map_err(|e| e.to_string())?;
-    update(|s| s.rates = rates.into());
-    Ok(())
+        .map_err(|error| error.to_string())
 }
+
 fn reflect(saved: navi_finance::holdings::store::Saved) {
     let started = Instant::now();
     let book = db::with(|c| navi_finance::market::valued_book(c, saved.book.clone()))

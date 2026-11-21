@@ -1,7 +1,7 @@
 //! Currency identities and exact dated exchange rates. One foreign unit is quoted in CNY millionths.
 use crate::money::Minor;
 use jiff::civil::Date;
-use navi_storage::sqlite::{Connection, OptionalExtension, params};
+use navi_storage::sqlite::{Connection, params};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 #[derive(
@@ -43,6 +43,17 @@ pub struct FxRate {
     pub rate: i64,
     pub source: String,
 }
+impl FxRate {
+    fn validate(&self) -> Result<(), FxError> {
+        if self.rate <= 0
+            || self.source.trim().is_empty()
+            || (self.currency == Currency::CNY && self.rate != RATE_SCALE)
+        {
+            return Err(FxError::Invalid);
+        }
+        Ok(())
+    }
+}
 #[derive(Debug, thiserror::Error)]
 pub enum FxError {
     #[error("invalid exchange rate")]
@@ -63,18 +74,19 @@ pub fn convert_to_cny(amount: Minor, rate: i64) -> Result<Minor, FxError> {
 pub fn save_rate(conn: &Connection, r: &FxRate) -> Result<(), FxError> {
     save_rates(conn, std::slice::from_ref(r)).map(|_| ())
 }
-/// Atomically persist a dated provider batch, preserving manual date ties.
+/// Atomically store dated observations and their changes. Manual rates win same-day ties.
 pub fn save_rates(conn: &Connection, rows: &[FxRate]) -> Result<usize, FxError> {
     let tx = conn.unchecked_transaction()?;
     let mut updated = 0;
     for r in rows {
-        if r.rate <= 0
-            || r.source.trim().is_empty()
-            || (r.currency == Currency::CNY && r.rate != RATE_SCALE)
-        {
-            return Err(FxError::Invalid);
-        }
-        let changed=tx.execute("INSERT INTO finance_fx_rates(currency,day,rate,source) VALUES(?1,?2,?3,?4) ON CONFLICT(currency,day) DO UPDATE SET rate=excluded.rate,source=excluded.source WHERE (finance_fx_rates.source != 'manual' OR excluded.source = 'manual') AND (finance_fx_rates.rate != excluded.rate OR finance_fx_rates.source != excluded.source)",params![r.currency.code(),r.day.to_string(),r.rate,r.source])?;
+        r.validate()?;
+        let changed = tx.execute(
+            "INSERT INTO finance_fx_rates(currency,day,rate,source) VALUES(?1,?2,?3,?4)
+             ON CONFLICT(currency,day) DO UPDATE SET rate=excluded.rate,source=excluded.source
+             WHERE (finance_fx_rates.source != 'manual' OR excluded.source = 'manual')
+               AND (finance_fx_rates.rate != excluded.rate OR finance_fx_rates.source != excluded.source)",
+            params![r.currency.code(), r.day.to_string(), r.rate, r.source],
+        )?;
         updated += changed;
         if changed > 0 {
             crate::history::record(
@@ -102,59 +114,51 @@ pub fn rate_on(
             source: "base".into(),
         }));
     }
-    let row:Option<(String,i64,String)>=conn.query_row("SELECT day,rate,source FROM finance_fx_rates WHERE currency=?1 AND day<=?2 ORDER BY day DESC LIMIT 1",params![currency.code(),day.to_string()],|r|Ok((r.get(0)?,r.get(1)?,r.get(2)?))).optional()?;
-    row.map(|(d, rate, source)| {
-        let day = d.parse().map_err(|_| FxError::Invalid)?;
-        if rate <= 0 || source.trim().is_empty() {
-            return Err(FxError::Invalid);
-        }
-        Ok(FxRate {
-            currency,
-            day,
-            rate,
-            source,
-        })
-    })
-    .transpose()
+    let mut q = conn.prepare(
+        "SELECT currency,day,rate,source FROM finance_fx_rates
+         WHERE currency=?1 AND day<=?2 ORDER BY day DESC LIMIT 1",
+    )?;
+    let mut rows = q.query(params![currency.code(), day.to_string()])?;
+    rows.next()?.map(read_rate).transpose()
 }
+fn read_rate(row: &navi_storage::sqlite::Row<'_>) -> Result<FxRate, FxError> {
+    let code: String = row.get(0)?;
+    let currency = Currency::parse(&code).ok_or(FxError::Invalid)?;
+    let date: String = row.get(1)?;
+    let day: Date = date.parse().map_err(|_| FxError::Invalid)?;
+    if day.to_string() != date {
+        return Err(FxError::Invalid);
+    }
+    let rate = FxRate {
+        currency,
+        day,
+        rate: row.get(2)?,
+        source: row.get(3)?,
+    };
+    rate.validate()?;
+    Ok(rate)
+}
+
 pub fn validate(conn: &Connection) -> Result<(), FxError> {
     let mut q = conn.prepare("SELECT currency,day,rate,source FROM finance_fx_rates")?;
     let mut rows = q.query([])?;
-    while let Some(r) = rows.next()? {
-        let c: String = r.get(0)?;
-        let d: String = r.get(1)?;
-        let rate: i64 = r.get(2)?;
-        let source: String = r.get(3)?;
-        let c = Currency::parse(&c).ok_or(FxError::Invalid)?;
-        let parsed: Date = d.parse().map_err(|_| FxError::Invalid)?;
-        if parsed.to_string() != d {
-            return Err(FxError::Invalid);
-        }
-        if rate <= 0 || source.trim().is_empty() || (c == Currency::CNY && rate != RATE_SCALE) {
-            return Err(FxError::Invalid);
-        }
+    while let Some(row) = rows.next()? {
+        read_rate(row)?;
     }
     Ok(())
 }
 
 pub fn rates(conn: &Connection) -> Result<Vec<FxRate>, FxError> {
-    validate(conn)?;
     let mut q = conn
         .prepare("SELECT currency,day,rate,source FROM finance_fx_rates ORDER BY day,currency")?;
     let mut rows = q.query([])?;
     let mut out = Vec::new();
-    while let Some(r) = rows.next()? {
-        let c: String = r.get(0)?;
-        let d: String = r.get(1)?;
-        out.push(FxRate {
-            currency: Currency::parse(&c).ok_or(FxError::Invalid)?,
-            day: d.parse().map_err(|_| FxError::Invalid)?,
-            rate: r.get(2)?,
-            source: r.get(3)?,
-        });
+    while let Some(row) = rows.next()? {
+        out.push(read_rate(row)?);
     }
     Ok(out)
 }
+
 pub fn rate_in(rates: &[FxRate], currency: Currency, day: Date) -> Option<FxRate> {
     if currency == Currency::CNY {
         return Some(FxRate {

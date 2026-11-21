@@ -373,13 +373,14 @@ pub fn apply() {
             .unwrap();
         }
         if has("fx") {
-            finance::save_rate(FxRate {
+            finance::store_rates(&[FxRate {
                 currency: Currency::USD,
                 day,
                 rate: 7_000_000,
-                source: "manual".into(),
-            })
+                source: "frankfurter:ecb".into(),
+            }])
             .unwrap();
+            crate::data::market::reload_prices().unwrap();
         }
     }
     if has("history") {
@@ -411,13 +412,49 @@ pub fn apply() {
                 volume: Some(658140),
                 fetched_at: first,
             };
+            // Sample dated observations for inspecting trends in desktop previews.
+            let closes = [396, 399, 397, 405, 401, 402, 409, 413, 409, 407, 410, 414];
+            let usd = [
+                71342, 71307, 71362, 71288, 71219, 71260, 71193, 71176, 71204, 71150, 71183, 71134,
+            ];
+            let dates = (3..30)
+                .map(|n| clock::today().plus_days(-n).0)
+                .filter(|d| d.weekday().to_monday_zero_offset() < 5)
+                .take(closes.len())
+                .collect::<Vec<_>>();
+            let mut bars = Vec::new();
+            let mut rates = Vec::new();
+            for ((&date, close), rate) in dates.iter().rev().zip(closes).zip(usd) {
+                let close = close * 10_000;
+                bars.push(DailyBar {
+                    day: date,
+                    open: close,
+                    high: close + 20_000,
+                    low: close - 20_000,
+                    close,
+                    ..bar.clone()
+                });
+                for (currency, value) in [
+                    (navi_finance::currency::Currency::USD, rate * 100),
+                    (navi_finance::currency::Currency::HKD, rate * 13),
+                ] {
+                    rates.push(navi_finance::currency::FxRate {
+                        currency,
+                        day: date,
+                        rate: value,
+                        source: "frankfurter:ecb".into(),
+                    });
+                }
+            }
+            history::save_bars(c, &binding, &bars, now).unwrap();
+            navi_finance::currency::save_rates(c, &rates).unwrap();
             history::save_bars(c, &binding, &[bar.clone()], now).unwrap();
             bar.close = 4_090_000;
             bar.fetched_at = now;
             history::save_bars(c, &binding, &[bar], now).unwrap();
         });
         finance::load().unwrap();
-        crate::data::valuation::capture(true).unwrap();
+        crate::data::valuation::capture().unwrap();
     }
     match route.as_deref() {
         Some(r) if r.starts_with("new:") => {
@@ -445,8 +482,7 @@ pub fn apply() {
         }
         Some("review" | "review-month") => nav::select(nav::Tab::Review),
         Some("records") => nav::select(nav::Tab::Records),
-        Some("price-history") => nav::push(Route::PriceHistory(None)),
-        Some("exchange-rates") => nav::push(Route::ExchangeRates),
+        Some("prices-and-rates") => nav::push(Route::PricesAndRates(None)),
         Some("statement-import") => {
             if let Ok(path) = env::var("NW_PREVIEW_STATEMENT")
                 && let Ok(bytes) = std::fs::read(&path)

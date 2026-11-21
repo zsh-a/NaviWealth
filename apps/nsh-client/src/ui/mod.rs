@@ -16,6 +16,7 @@ pub mod surface;
 pub mod theme;
 pub mod toast;
 pub mod toggle;
+pub mod trend;
 
 use nsh_core::{LineHeight, element::BoxShadow, prelude::*};
 

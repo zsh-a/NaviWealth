@@ -264,6 +264,7 @@ pub async fn restore(name: String) -> Result<(), Failure> {
         super::statement_import::load().map_err(|_| Failure::Storage)?;
         super::catalog::load().map_err(|_| Failure::Storage)?;
         super::market::load().map_err(|_| Failure::Storage)?;
+        super::history::clear_attempts();
         super::valuation::invalidate();
         state().update(|s| {
             s.kept.last_backup_day = Some(clock::today().to_string());

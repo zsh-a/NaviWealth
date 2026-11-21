@@ -3,7 +3,7 @@ use crate::{
     data::catalog,
     i18n::{catalog as copy, s},
     ui::{
-        Btn, Icon, IconBtn, Type, Typo, Variant, color,
+        Btn, Type, Typo, color,
         field::text_input,
         sheet::{initial_focus, retained, task_sheet},
         surface::{hairline, row_button},
@@ -53,7 +53,12 @@ impl Search {
         }
     }
     pub fn input(self) -> impl IntoElement {
-        crate::data::tasks::spawn_app(async { catalog::refresh(false).await });
+        crate::data::tasks::spawn_app(async { catalog::refresh().await });
+        set_interval(Duration::from_secs(300), || {
+            if lifecycle() == nsh_core::platform::Lifecycle::Active {
+                crate::data::tasks::spawn_app(catalog::refresh());
+            }
+        });
         let focus = initial_focus();
         text_input(self.query)
             .test_id("security-search")
@@ -83,7 +88,19 @@ impl Search {
             ))
             .child(when(
                 move || !self.settled.get().trim().is_empty() && entries.get().is_empty(),
-                || text(copy::empty).typo(Type::Body).text_color(color::MUTED),
+                || {
+                    text(|| {
+                        if catalog::available() {
+                            copy::empty()
+                        } else if catalog::status() == catalog::Status::Failed {
+                            copy::copy("Catalog unavailable", "证券目录暂不可用")
+                        } else {
+                            copy::copy("Loading listings…", "正在载入证券目录…")
+                        }
+                    })
+                    .typo(Type::Body)
+                    .text_color(color::MUTED)
+                },
             ))
             .child(each(
                 move || {
@@ -162,50 +179,13 @@ impl Search {
             ))
     }
 }
-pub fn catalog_status() -> impl IntoElement {
-    view()
-        .flex_row()
-        .items_center()
-        .gap_2()
-        .child(
-            text(move || {
-                if catalog::status() == catalog::Status::Failed {
-                    copy::copy("Offline · update failed", "离线可用 · 更新失败")
-                } else if catalog::status() == catalog::Status::Updating {
-                    copy::copy("Updating…", "正在更新…")
-                } else {
-                    copy::copy("Offline catalog", "离线目录")
-                }
-            })
-            .label(|| copy::status(catalog::status()))
-            .typo(Type::Caption)
-            .text_color(color::MUTED)
-            .flex_1()
-            .min_w(px(0.0)),
-        )
-        .child(
-            IconBtn::new(Icon::Refresh, || copy::refresh().into())
-                .variant(Variant::Ghost)
-                .on_press(|| {
-                    crate::data::tasks::spawn_app(async { catalog::refresh(true).await });
-                })
-                .disabled(|| catalog::status() == catalog::Status::Updating),
-        )
-}
 pub fn search_actions(manual: impl Fn() + Copy + 'static) -> impl IntoElement {
-    view()
-        .flex_row()
-        .items_center()
-        .gap_2()
-        .child(
-            Btn::ghost()
-                .size(crate::ui::Size::Small)
-                .label(|| copy::manual().into())
-                .on_press(manual)
-                .min_h(px(48.0))
-                .px_3(),
-        )
-        .child(view().flex_1().min_w(px(0.0)).child(catalog_status()))
+    Btn::ghost()
+        .size(crate::ui::Size::Small)
+        .label(|| copy::manual().into())
+        .on_press(manual)
+        .min_h(px(48.0))
+        .px_3()
 }
 pub fn selector(open: Signal<bool>, choose: impl Fn(Entry) + Copy + 'static) -> impl IntoElement {
     retained(

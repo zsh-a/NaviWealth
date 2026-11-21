@@ -154,8 +154,7 @@ AI only to turn text and images into drafts, using the owner's model account.
   income and transfers alone never create a zero-spending summary.
   A chosen day is shown alone, under a bar with its date, steps to adjacent
   days with records, and All days.
-- **Assets:** one overview card leads with net worth. Excluded currencies link directly to
-  exchange rates beneath the figure. Asset and debt totals sit together above
+- **Assets:** one overview card leads with net worth. Excluded currencies appear beneath the figure. Asset and debt totals sit together above
   a tappable trend footer with the sparkline and Asset changes link. Cash accounts, open holdings and debt accounts
   follow as flat rows on the canvas.
   The sparkline reuses dated valuation history and keeps missing-rate gaps;
@@ -173,7 +172,7 @@ AI only to turn text and images into drafts, using the owner's model account.
   accounts keep a visible label; ordinary last-check dates live in account
   details and remain in the row's accessible description. Internal holding
   cost accounts stay out of the account list. Manage opens one bottom sheet
-  with Add account, Add holding, Exchange rates and Closed holdings. No accounts or holdings
+  with Add account, Add holding, Prices & rates and Closed holdings. No accounts or holdings
   shows a short empty state with Add account as the main action and Add holding
   as a quiet alternative. The global text/image capture button remains the
   main record entry.
@@ -181,13 +180,13 @@ AI only to turn text and images into drafts, using the owner's model account.
   and average unit cost live in details. Closed positions remain accessible
   through Manage → Closed holdings, with their history and trade actions;
   buying again returns a position to the overview automatically. A row opens
-  a detail page with value, an explicit price-edit action, quantity, cost, unrealized
+  a detail page with value, the price source, quantity, cost, unrealized
   gain, and newest-first activity. The value and its facts share one card.
   Unrealized gain shows an explicit signed amount and one-decimal percentage
   of the domain cost basis (no percentage for zero cost). Record trade, Link security
   and Price history are equal-width raised buttons beneath the card,
   with icons above short localized labels. A linked holding emphasizes Record trade.
-  An unpriced open position offers Add price beside its cost basis. They fit one row at 360 pt and
+  An unlinked open position without a price offers Add price beside its cost basis. They fit one row at 360 pt and
   stack at large text; full action names remain accessible; linked identity is a quiet caption. Realized gain and dividends
   appear when nonzero; unpriced unrealized gain is a dash. Opening a holding
   needs name, quantity and unit cost. Buy/sell use quantity, price and a cash
@@ -470,9 +469,11 @@ element labelled with the full exact amount. The two subordinate totals use
 flat, separated by space without hairlines, with muted 22 pt semantic icons
 and their existing valuation statuses. Activity rows retain hairlines.
 Asset changes carries the trend on a separate pushed page:
-a single ink line with a faint 6% ink area, visible range and dated start/end
-values, plus an accessible start/end summary. Scrubbing supports pointer, touch
-and keyboard inspection. History backfill is a tonal action. A missing FX rate or valuation error breaks the line. Isolated valid days get a dot. The chart lists the missing currencies and affected day counts. Money keeps
+a single ink line with a soft area fill and a dated value above it. Holding unit prices,
+FX pairs, estimated net worth and saved snapshots share that inspection surface.
+Touch or drag horizontally to inspect an observation. Mouse, keyboard and screen-reader
+stepping update the same readout. Date windows offer seven or thirty days when
+meaningful, and the full stored series when it exceeds thirty days. History fills automatically while the app is active. A missing FX rate or valuation error breaks the line. Isolated valid days get a dot. The chart lists the missing currencies and affected day counts. Money keeps
 tabular numerals and neutral ink, including gains and losses. Overview
 amounts and primary balance/value figures use grouped thousands and two
 decimal places through a display-only formatter that preserves exact minor
@@ -490,13 +491,12 @@ code and currency; unsupported currencies and instrument types are visibly
 unavailable. Existing holdings require a separate link confirmation: catalog
 identity never replaces the holding's internal id, label, account or trades.
 Results settle after 120 ms and grow in batches of 16. The search footer
-uses a compact secondary manual-entry label with a 48 pt control, leaving
-room for catalog status beside the 48 pt refresh action at larger text sizes. The catalog keeps a
+offers a compact secondary manual-entry action with a 48 pt touch target. The catalog keeps a
 normalized search index; decoding and verification of downloaded updates run
 off the engine thread before a short atomic installation. Stale refreshes
 cannot replace a newly loaded catalog. The bundled GitHub Releases catalog
-checks for updates when the picker opens,
-at most once per 24 hours, with a manual retry and an explicit offline fallback.
+checks when the picker opens. Successful checks are cached for 24 hours. A failed
+check is retried after five minutes while the picker is in use.
 Mainland China, Hong Kong and US stocks and ETFs can be linked in their
 CNY, HKD and USD trading currencies. Manual creation offers compact currency
 choices; catalog selection sets currency automatically. Existing holdings keep
@@ -508,16 +508,13 @@ date in details and the spoken row label. Account and holding rows stack the
 native amount below the name on narrow screens, at large text sizes or for long amounts.
 Historical estimates and net worth snapshots are separate views.
 
-Assets has one visible quote refresh action below its overview card. Its
-completion time and update/failure counts cover both prices and FX; the price
-date on each holding row identifies the observation used for valuation.
-Tencent marks refresh in the
-foreground with a five-minute automatic throttle; manual refresh bypasses the
-throttle. Holding price captions distinguish manual input, Tencent observations,
+Assets displays the last stored observations immediately. The holding price date
+identifies the quote used for valuation. Foreground updates fetch newly needed
+symbols and currencies, with a five-minute throttle per item. Holding price captions distinguish manual input, Tencent observations,
 previous close and earlier dates. A manual mark wins on the same or a newer
 date; a failed network request keeps the last dated mark. Unpriced holdings
-remain visibly valued at cost. Exchange rates shows dated HKD/CNY and USD/CNY
-observations and a compact manual rate editor. Manual rates take precedence over
+remain visibly valued at cost. The Rates tab in Prices & rates shows dated HKD/CNY and USD/CNY
+observations with their dates and sources. Manual rates take precedence over
 network rates on the same day; no rate is applied before its recorded date.
 Cross-currency transfers require separate sent and received amounts and preserve
 both native values. Schema 14 backs up rates with the ledger. Other currencies,
@@ -629,9 +626,10 @@ environment; desktop captures do not prove Android blur or frame timing.
 
 
 Historical financial data stays below the Assets overview. Asset changes uses
-one two-option segmented control for Recalculated / Recorded, with a single
-contextual action in each mode. Price history is a flat, paginated list under
-Manage or a holding detail; OHLC, source and revisions expand inline. Retain
+one two-option segmented control for Historical estimates / Net worth snapshots.
+Both views update automatically. Manage opens Prices & rates with Rates, Daily closes
+and Changes tabs. A holding opens directly to its own Daily closes and Changes.
+The history lists are paginated, with OHLC, source and revisions expanding inline. Retain
 native currency beside security prices, show local observation times without
 raw timestamp precision, and suppress empty status messages. Partial FX
 observations never masquerade as complete net worth or closing-day values.

@@ -20,6 +20,7 @@ struct State {
     status: Status,
     revision: u64,
     generation: u64,
+    attempted: Option<i64>,
 }
 impl PartialEq for State {
     fn eq(&self, o: &Self) -> bool {
@@ -50,6 +51,7 @@ pub fn load() -> Result<(), String> {
         s.revision = s.revision.wrapping_add(1);
         // A restore/reload invalidates any in-flight download or worker.
         s.generation = s.generation.wrapping_add(1);
+        s.attempted = None;
         s.status = Status::Idle;
     });
     Ok(())
@@ -61,6 +63,9 @@ pub fn search_page(query: &str, offset: usize, limit: usize) -> Vec<Entry> {
             .map(|c| c.search_page(query, offset, limit))
             .unwrap_or_default()
     })
+}
+pub fn available() -> bool {
+    state().with(|s| s.catalog.is_some())
 }
 pub fn status() -> Status {
     state().with(|s| s.status)
@@ -99,7 +104,7 @@ async fn get(url: &str, limit: usize) -> Result<Vec<u8>, String> {
     }
     Ok(response.body)
 }
-pub async fn refresh(force: bool) {
+pub async fn refresh() {
     if status() == Status::Updating {
         return;
     }
@@ -107,12 +112,18 @@ pub async fn refresh(force: bool) {
     let checked = Storage::get_item(CHECKED)
         .and_then(|s| s.parse::<i64>().ok())
         .unwrap_or(0);
-    if !force && now.saturating_sub(checked) < 24 * 60 * 60 * 1000 {
+    if (0..86_400_000).contains(&now.saturating_sub(checked))
+        || state().with_untracked(|s| {
+            s.attempted
+                .is_some_and(|at| (0..300_000).contains(&(now - at)))
+        })
+    {
         return;
     }
     let generation = state().with_untracked(|s| s.generation.wrapping_add(1));
     state().update(|s| {
         s.generation = generation;
+        s.attempted = Some(now);
         s.status = Status::Updating;
     });
     let current = || state().with_untracked(|s| s.generation == generation);
@@ -124,7 +135,6 @@ pub async fn refresh(force: bool) {
         let m =
             catalog::Manifest::parse(std::str::from_utf8(&raw).map_err(|_| "invalid manifest")?)
                 .map_err(|e| e.to_string())?;
-        let _ = Storage::set_item(CHECKED, now.to_string());
         let newer =
             state().with_untracked(|s| s.catalog.as_ref().is_none_or(|c| m.newer(&c.header)));
         if !newer {
@@ -157,7 +167,10 @@ pub async fn refresh(force: bool) {
         return;
     }
     match result {
-        Ok(status) => state().update(|s| s.status = status),
+        Ok(status) => {
+            let _ = Storage::set_item(CHECKED, now.to_string());
+            state().update(|s| s.status = status)
+        }
         Err(e) => {
             log::warn!("catalog refresh failed; retaining offline listings: {e}");
             state().update(|s| s.status = Status::Failed)
@@ -183,7 +196,7 @@ mod tests {
                 move || if settled.get() { "settled" } else { "waiting" },
             ))
             .child(text("refresh").on_press(|| {
-                spawn(refresh(true));
+                spawn(refresh());
             }))
             .child(text("reload").on_press(move || {
                 let before = version();
@@ -222,7 +235,7 @@ mod tests {
         app.wait_for("text:/catalog Idle/").unwrap();
     }
     #[test]
-    fn failed_verification_keeps_the_manual_retry_available() {
+    fn failed_verification_retries_after_the_short_cooldown() {
         let manifest = serde_json::json!({
             "schema": 1, "version": "v1.20990101", "checksum": "0000000000000000", "count": 1,
             "sha256": "0".repeat(64), "gzip_sha256": "0".repeat(64), "gzip_size": 1,
@@ -236,6 +249,8 @@ mod tests {
         corrupt.status = 200;
         corrupt.body = vec![0];
         let mut config = EngineConfig::new(Root::of::<RefreshProbe>());
+        let now = std::time::SystemTime::now();
+        config.clock = nsh_core::time::Clock::manual(now);
         config.storage = Some(MemoryStorage::new(Vec::new()));
         config.network = Some(Arc::new(StubNetwork::new([
             (format!("GET {BASE}catalog-manifest.json"), response),
@@ -243,7 +258,10 @@ mod tests {
         ])));
         let mut app = Headless::start(config).unwrap();
         app.wait_for("text:/catalog Idle/").unwrap();
-        for _ in 0..2 {
+        for attempt in 0..2 {
+            if attempt == 1 {
+                app.set_system_time(now + Duration::from_secs(301)).unwrap();
+            }
             app.press("refresh").unwrap();
             app.wait_for("text:/catalog Updating/").unwrap();
             app.wait_for("text:/catalog Failed/").unwrap();

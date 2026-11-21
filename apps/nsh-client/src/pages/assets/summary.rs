@@ -86,17 +86,9 @@ pub(super) fn net_summary(
                         .map(|c| c.code())
                         .collect::<Vec<_>>()
                         .join(" / ");
-                    row_button(|| nav::push(Route::ExchangeRates))
-                        .px_0()
-                        .py_1()
-                        .min_h(px(48.0))
-                        .child(
-                            text(s().excluded_currencies(&codes))
-                                .typo(Type::Subhead)
-                                .text_color(color::CAUTION)
-                                .flex_1(),
-                        )
-                        .child(icon(Icon::ChevronRight, 16.0, color::CAUTION))
+                    text(s().excluded_currencies(&codes))
+                        .typo(Type::Subhead)
+                        .text_color(color::CAUTION)
                 })),
         )
         .child(

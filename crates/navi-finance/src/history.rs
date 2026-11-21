@@ -96,50 +96,40 @@ pub fn revisions(
         return Ok(vec![]);
     }
     let mut q=c.prepare("SELECT market,symbol,currency,provider,day,open,high,low,close,volume,fetched_at FROM finance_daily_bars WHERE market=?1 AND symbol=?2 AND currency=?3 AND day>=?4 AND day<=?5 ORDER BY day,revision")?;
-    let rows = q.query_map(
-        params![
-            b.market,
-            symbol,
-            b.currency,
-            from.to_string(),
-            to.to_string()
-        ],
-        |r| {
-            Ok((
-                r.get::<_, String>(0)?,
-                r.get::<_, String>(1)?,
-                r.get::<_, String>(2)?,
-                r.get::<_, String>(3)?,
-                r.get::<_, String>(4)?,
-                r.get(5)?,
-                r.get(6)?,
-                r.get(7)?,
-                r.get(8)?,
-                r.get(9)?,
-                r.get::<_, String>(10)?,
-            ))
-        },
-    )?;
+    let mut rows = q.query(params![
+        b.market,
+        symbol,
+        b.currency,
+        from.to_string(),
+        to.to_string()
+    ])?;
     let mut out = vec![];
-    for r in rows {
-        let (market, symbol, currency, provider, day, open, high, low, close, volume, fetched_at) =
-            r?;
-        out.push(DailyBar {
-            market,
-            symbol,
-            currency,
-            provider,
-            day: day.parse().map_err(|_| Error::Invalid)?,
-            open,
-            high,
-            low,
-            close,
-            volume,
-            fetched_at: fetched_at.parse().map_err(|_| Error::Invalid)?,
-        });
+    while let Some(row) = rows.next()? {
+        out.push(read_bar(row)?);
     }
     out.sort_by_key(|row| (row.day, row.fetched_at));
     Ok(out)
+}
+fn read_bar(row: &navi_storage::sqlite::Row<'_>) -> Result<DailyBar, Error> {
+    Ok(DailyBar {
+        market: row.get(0)?,
+        symbol: row.get(1)?,
+        currency: row.get(2)?,
+        provider: row.get(3)?,
+        day: row
+            .get::<_, String>(4)?
+            .parse()
+            .map_err(|_| Error::Invalid)?,
+        open: row.get(5)?,
+        high: row.get(6)?,
+        low: row.get(7)?,
+        close: row.get(8)?,
+        volume: row.get(9)?,
+        fetched_at: row
+            .get::<_, String>(10)?
+            .parse()
+            .map_err(|_| Error::Invalid)?,
+    })
 }
 /// Latest received revision at the newest fetch time for each trading date.
 pub fn bars(
@@ -209,10 +199,21 @@ pub struct AuditRevision {
     pub received_at: String,
 }
 pub fn audit(c: &Connection) -> Result<Vec<AuditRevision>, Error> {
+    audit_rows(c, None, -1)
+}
+
+/// Most recent changes globally or for one holding, including its previous bindings.
+pub fn audit_rows(
+    c: &Connection,
+    security: Option<&str>,
+    limit: i64,
+) -> Result<Vec<AuditRevision>, Error> {
     let mut q = c.prepare(
-        "SELECT id,kind,item_key,day,body,received_at FROM finance_price_audit ORDER BY id DESC",
+        "SELECT id,kind,item_key,day,body,received_at FROM finance_price_audit
+         WHERE ?1 IS NULL OR (kind != 'fx_rate' AND item_key = ?1)
+         ORDER BY id DESC LIMIT ?2",
     )?;
-    Ok(q.query_map([], |r| {
+    Ok(q.query_map(params![security, limit], |r| {
         Ok(AuditRevision {
             id: r.get(0)?,
             kind: r.get(1)?,
@@ -385,45 +386,64 @@ pub fn effective_bar(
         .find(|b| b.close == q.price))
 }
 
-/// Full archive, including listings no longer bound to a holding.
-pub fn all_daily_revisions(c: &Connection) -> Result<Vec<DailyBar>, Error> {
+/// The newest listing/dates and all their revisions, oldest revision first within a date.
+pub fn daily_history(
+    c: &Connection,
+    security: Option<&str>,
+    limit: i64,
+) -> Result<Vec<Vec<DailyBar>>, Error> {
     if !exists(c)? {
         return Ok(vec![]);
     }
-    let mut q = c.prepare("SELECT DISTINCT market,symbol,currency FROM finance_daily_bars")?;
-    let ids = q
-        .query_map([], |r| {
-            Ok((
-                r.get::<_, String>(0)?,
-                r.get::<_, String>(1)?,
-                r.get::<_, String>(2)?,
-            ))
-        })?
-        .collect::<Result<Vec<_>, _>>()?;
-    let mut out = vec![];
-    for (market, symbol, currency) in ids {
-        let raw = if market == "us_stock" {
-            symbol.trim_end_matches(".US").to_string()
-        } else if market == "hk_stock" {
-            symbol.trim_end_matches(".HK").to_string()
-        } else {
-            symbol.split('.').next().unwrap_or("").to_string()
+    let binding = if let Some(id) = security {
+        let Some(b) = catalog::bindings(c)
+            .map_err(|_| Error::Invalid)?
+            .into_iter()
+            .find(|b| b.security == id)
+        else {
+            return Ok(vec![]);
         };
-        let binding = SecurityBinding {
-            security: "history".into(),
-            market,
-            symbol: raw,
-            currency,
-        };
-        if binding.validate().is_err()
-            || market::canonical_binding(&binding).as_ref() != Some(&symbol)
+        let symbol = market::canonical_binding(&b).ok_or(Error::Invalid)?;
+        Some((b.market, symbol, b.currency))
+    } else {
+        None
+    };
+    let mut q = c.prepare(
+        "WITH dates AS (
+             SELECT DISTINCT day,market,symbol,currency FROM finance_daily_bars
+             WHERE ?1 IS NULL OR (market=?1 AND symbol=?2 AND currency=?3)
+             ORDER BY day DESC,market,symbol,currency LIMIT ?4
+         )
+         SELECT b.market,b.symbol,b.currency,b.provider,b.day,b.open,b.high,b.low,b.close,b.volume,b.fetched_at
+         FROM dates JOIN finance_daily_bars b USING(day,market,symbol,currency)
+         ORDER BY b.day DESC,b.market,b.symbol,b.currency,b.revision"
+    )?;
+    let mut rows = q.query(params![
+        binding.as_ref().map(|b| &b.0),
+        binding.as_ref().map(|b| &b.1),
+        binding.as_ref().map(|b| &b.2),
+        limit
+    ])?;
+    let mut groups: Vec<Vec<DailyBar>> = Vec::new();
+    while let Some(row) = rows.next()? {
+        let bar = read_bar(row)?;
+        if let Some(group) = groups.last_mut()
+            && group.first().is_some_and(|r| {
+                r.day == bar.day
+                    && r.market == bar.market
+                    && r.symbol == bar.symbol
+                    && r.currency == bar.currency
+            })
         {
-            return Err(Error::Invalid);
+            group.push(bar);
+        } else {
+            groups.push(vec![bar]);
         }
-        out.extend(revisions(c, &binding, Date::MIN, Date::MAX)?);
     }
-    out.sort_by(|a, b| b.day.cmp(&a.day).then(b.fetched_at.cmp(&a.fetched_at)));
-    Ok(out)
+    for group in &mut groups {
+        group.sort_by_key(|r| r.fetched_at);
+    }
+    Ok(groups)
 }
 
 /// Manual observations win ties with market marks and daily closes.

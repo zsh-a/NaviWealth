@@ -32,9 +32,8 @@ pub use settings::settings_page;
 pub(crate) use settings_body::{body_profile_page, open_body_profile};
 pub use settings_model::model_page;
 
-pub(crate) mod exchange_rates;
 mod review_note;
 pub(crate) mod security_picker;
 pub(crate) mod statement_import;
 
-pub mod price_history;
+pub mod prices_and_rates;

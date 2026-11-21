@@ -1,7 +1,9 @@
-//! Read-only provenance, kept one level below the asset workspace.
+//! One workspace for dated prices, rates and their provenance.
+mod rates;
+
 use crate::{
-    data::{db, finance, history},
-    i18n::statement_import::copy,
+    data::{finance, history},
+    i18n::{s, statement_import::copy},
     nav,
     ui::{
         Btn, Type, Typo, color,
@@ -10,66 +12,136 @@ use crate::{
         surface::{hairline, row_button},
     },
 };
-use navi_finance::{
-    catalog,
-    history::{AuditRevision, DailyBar},
-    holdings::format_units,
-};
+use navi_finance::history::{AuditRevision, DailyBar};
+use navi_finance::holdings::format_units;
 use nsh_core::{element::Screen, prelude::*};
-use std::collections::BTreeMap;
+
+pub(crate) fn title() -> &'static str {
+    copy("Prices & rates", "价格与汇率")
+}
+
+#[derive(Clone, Copy, PartialEq)]
+enum Section {
+    Rates,
+    Closes,
+    Changes,
+}
 
 pub fn page(security: Option<String>) -> Screen {
+    let scoped = security.is_some();
     let security = stored(security);
-    let revisions = signal(false);
-    let limit = signal(30usize);
-    nsh_base::nav_page().header_visible(false).status_bar(super::parts::status_bar)
-        .child(view().flex_1().bg(color::CANVAS)
-            .child(super::parts::top_bar(|| copy("Price history", "价格与汇率记录").into(), nav::pop, None))
-            .child(scroll().flex_1().child(view().px(px(space::GUTTER)).gap_4().pb_safe_area_plus(px(24.0))
-                .child(segmented(vec![Segment::new(false, || copy("Daily closes", "每日收盘").into()), Segment::new(true, || copy("Changes", "修改记录").into())], move || revisions.get(), move |v| {revisions.set(v);limit.set(30);} ))
+    let section = signal(if scoped {
+        Section::Closes
+    } else {
+        Section::Rates
+    });
+    let mut segments = Vec::new();
+    if !scoped {
+        segments.push(Segment::new(Section::Rates, || {
+            copy("Rates", "汇率").into()
+        }));
+    }
+    segments.push(Segment::new(Section::Closes, || {
+        copy("Daily closes", "每日收盘").into()
+    }));
+    segments.push(Segment::new(Section::Changes, || {
+        copy("Changes", "变更记录").into()
+    }));
+    nsh_base::nav_page()
+        .header_visible(false)
+        .status_bar(super::parts::status_bar)
+        .child(
+            view()
+                .flex_1()
+                .bg(color::CANVAS)
+                .child(super::parts::top_bar(
+                    move || if scoped { s().price_history } else { title() }.into(),
+                    nav::pop,
+                    None,
+                ))
+                .child(view().px(px(space::GUTTER)).pb_3().child(segmented(
+                    segments,
+                    move || section.get(),
+                    move |v| section.set(v),
+                )))
                 .child(dynamic(move || {
-                    let _ = finance::holdings();
-                    let _ = finance::rates();
-                    let _ = history::status();
                     let selected = security.get();
-                    let audit = revisions.get();
-                    let count = limit.get();
+                    let tab = section.get();
                     untracked(move || {
-                        let result = db::with(|c| {
-                            let bindings = catalog::bindings(c).map_err(|e|e.to_string())?;
-                            let bars = navi_finance::history::all_daily_revisions(c).map_err(|e|e.to_string())?;
-                            let changes = navi_finance::history::audit(c).map_err(|e|e.to_string())?;
-                            Ok::<_, String>((bindings, bars, changes))
-                        }).unwrap_or_else(||Err("database unavailable".into()));
-                        let Ok((bindings,bars,changes)) = result else {
-                            return text(copy("Could not read history. Reopen this page to retry.", "暂时无法读取记录，请重新打开此页重试。")).typo(Type::Body).text_color(color::DANGER).into_element();
+                        let content = match tab {
+                            Section::Rates => rates::panel().into_element(),
+                            Section::Closes => archive(
+                                move |limit| history::daily_history(selected.as_deref(), limit),
+                                bar_row,
+                                || copy("No daily closes yet", "暂无收盘价"),
+                            )
+                            .into_element(),
+                            Section::Changes => archive(
+                                move |limit| history::changes(selected.as_deref(), limit),
+                                audit_row,
+                                || copy("No changes yet", "暂无变更记录"),
+                            )
+                            .into_element(),
                         };
-                        let binding=selected.as_ref().and_then(|id|bindings.iter().find(|b|b.security==*id));
-                        let mut panel=view().gap_1();
-                        let total;
-                        if audit {
-                            let rows:Vec<_>=changes.into_iter().filter(|r|selected.as_ref().is_none_or(|id|r.item_key==*id)).collect();
-                            total=rows.len();
-                            panel=panel.child(text(copy("Saved changes remain available after corrections or a security rebind.", "修正价格或重新绑定标的后，原记录仍会保留。")).typo(Type::Subhead).text_color(color::MUTED).mb_3());
-                            for row in rows.into_iter().take(count) {panel=panel.child(audit_row(row));}
-                        } else {
-                            let mut groups:BTreeMap<_,Vec<DailyBar>>=BTreeMap::new();
-                            for bar in bars {
-                                if selected.is_some() && !binding.is_some_and(|b| b.market==bar.market && b.currency==bar.currency && navi_finance::market::canonical_binding(b).as_ref()==Some(&bar.symbol)) {continue}
-                                groups.entry((bar.day,bar.market.clone(),bar.symbol.clone(),bar.currency.clone())).or_default().push(bar);
-                            }
-                            total=groups.len();
-                            panel=panel.child(text(copy("Unadjusted daily prices. Unfinished trading days are excluded; tap a row for OHLC and revisions.", "保存不复权日线，不含尚未结束的交易日。点按查看开高低收及修订版本。")).typo(Type::Subhead).text_color(color::MUTED).mb_3());
-                            for (_,mut rows) in groups.into_iter().rev().take(count) {
-                                rows.sort_by_key(|r|r.fetched_at);
-                                panel=panel.child(bar_row(rows));
-                            }
-                        }
-                        if total==0 {panel=panel.child(text(copy("No stored records yet. Fill history from Asset changes, or refresh prices and rates.", "尚无记录。可在资产变化中补全历史，或刷新价格与汇率。")).typo(Type::Body).text_color(color::MUTED).py_5());}
-                        if total>count {panel=panel.child(Btn::ghost().label(||copy("Show more", "查看更多").into()).on_press(move||limit.update(|v|*v+=30)));}
-                        panel.into_element()
+                        scroll()
+                            .flex_1()
+                            .child(
+                                view()
+                                    .px(px(space::GUTTER))
+                                    .pb_safe_area_plus(px(24.0))
+                                    .child(content),
+                            )
+                            .into_element()
                     })
-                })))))
+                })),
+        )
+}
+
+fn archive<T: 'static, E: IntoElement + 'static>(
+    read: impl Fn(i64) -> Result<Vec<T>, String> + 'static,
+    row: fn(T) -> E,
+    empty: fn() -> &'static str,
+) -> impl IntoElement {
+    let limit = signal(30usize);
+    dynamic(move || {
+        let _ = finance::holdings_snapshot();
+        let _ = finance::rates_snapshot();
+        history::watch();
+        let count = limit.get();
+        let result = read(count as i64 + 1);
+        untracked(move || {
+            let mut list = view().gap_1();
+            match result {
+                Err(_) => {
+                    list = list.child(
+                        text(copy("Could not load records", "暂时无法读取记录"))
+                            .typo(Type::Body)
+                            .text_color(color::DANGER),
+                    )
+                }
+                Ok(rows) if rows.is_empty() => {
+                    list = list.child(
+                        text(empty())
+                            .typo(Type::Body)
+                            .text_color(color::MUTED)
+                            .py_5(),
+                    )
+                }
+                Ok(rows) => {
+                    let more = rows.len() > count;
+                    list = list.children(rows.into_iter().take(count).map(row));
+                    if more {
+                        list = list.child(
+                            Btn::ghost()
+                                .label(|| copy("Show more", "查看更多").into())
+                                .on_press(move || limit.update(|n| *n += 30)),
+                        );
+                    }
+                }
+            }
+            list.into_element()
+        })
+    })
 }
 
 fn bar_row(rows: Vec<DailyBar>) -> impl IntoElement {
@@ -156,11 +228,11 @@ fn audit_row(row: AuditRevision) -> impl IntoElement {
         .unwrap_or(copy("Manual", "手动"));
     let label = match row.kind.as_str() {
         "fx_rate" => format!("{} → CNY", row.item_key),
-        _ => finance::holdings()
+        _ => finance::holdings_snapshot()
             .securities
-            .into_iter()
+            .iter()
             .find(|s| s.id == row.item_key)
-            .map(|s| s.name)
+            .map(|s| s.name.clone())
             .unwrap_or(row.item_key.clone()),
     };
     let amount = quote
@@ -177,7 +249,7 @@ fn audit_row(row: AuditRevision) -> impl IntoElement {
             .and_then(|v| v.as_str())
             .map(str::to_owned)
             .or_else(|| {
-                finance::holdings()
+                finance::holdings_snapshot()
                     .securities
                     .iter()
                     .find(|s| s.id == row.item_key)

@@ -41,8 +41,7 @@ pub fn shell() -> impl IntoElement {
                     Route::StatementImport => {
                         crate::pages::statement_import::statement_import_page()
                     }
-                    Route::PriceHistory(id) => crate::pages::price_history::page(id),
-                    Route::ExchangeRates => crate::pages::exchange_rates::page(),
+                    Route::PricesAndRates(id) => crate::pages::prices_and_rates::page(id),
                 };
                 // Back on iOS and Android is the system's: it pops the page
                 // natively, and the routes follow.

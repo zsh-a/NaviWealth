@@ -94,6 +94,12 @@ fn backfill_revision_retries_stale_results_and_binding_archive() {
         book.position(&s, date(2026, 11, 12)).unwrap().value,
         Some(60000)
     );
+    let latest = history::daily_history(&c, Some(&s.id), 1).unwrap();
+    assert_eq!(latest.len(), 1);
+    assert_eq!(
+        latest[0].iter().map(|r| r.close).collect::<Vec<_>>(),
+        [5_000_000, 6_000_000]
+    );
     catalog::bind(
         &c,
         &SecurityBinding {
@@ -102,6 +108,12 @@ fn backfill_revision_retries_stale_results_and_binding_archive() {
         },
     )
     .unwrap();
+    assert!(
+        history::daily_history(&c, Some(&s.id), 10)
+            .unwrap()
+            .is_empty()
+    );
+    assert_eq!(history::daily_history(&c, None, 10).unwrap().len(), 2);
     assert!(history::save_bars(&c, &b, &[bar(3, 4_100_000)], now).is_err());
     assert_eq!(
         history::bars(&c, &b, date(2026, 11, 1), date(2026, 11, 14))
@@ -178,6 +190,9 @@ fn audit_is_transactional_manual_fx_and_rebinding_preserve_revisions() {
     )
     .unwrap();
     assert_eq!(history::audit(&c).unwrap().len(), 4);
+    assert_eq!(history::audit_rows(&c, None, 1).unwrap().len(), 1);
+    assert_eq!(history::audit_rows(&c, Some("etf"), 10).unwrap().len(), 2);
+    assert!(history::audit_rows(&c, Some("USD"), 10).unwrap().is_empty());
     c.execute_batch("CREATE TRIGGER reject_audit BEFORE INSERT ON finance_price_audit BEGIN SELECT RAISE(ABORT,'audit unavailable'); END;").unwrap();
     assert!(
         store::set_quote(

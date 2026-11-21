@@ -18,25 +18,10 @@ use std::{
     time::Duration,
 };
 
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
-pub struct Status {
-    pub refreshing: bool,
-    pub failed: usize,
-    pub updated: usize,
-    pub completed_at: Option<jiff::Timestamp>,
-    pub failed_items: Vec<String>,
-}
-#[derive(Clone, Default, PartialEq, Eq)]
-struct State {
-    status: Status,
-    attempted_at: Option<jiff::Timestamp>,
-}
-fn state() -> Signal<State> {
-    global::<State>()
-}
-pub fn status() -> Status {
-    state().with(|s| s.status.clone())
-}
+mod automatic;
+pub(super) use automatic::generation;
+pub use automatic::start;
+
 #[derive(Clone, Default, PartialEq, Eq)]
 struct Quotes(std::rc::Rc<Vec<MarketQuote>>);
 
@@ -110,10 +95,11 @@ pub fn load() -> Result<(), String> {
         .ok_or("database unavailable")?
         .map_err(|e| e.to_string())?;
     publish_quotes(quotes);
+    automatic::invalidate();
     Ok(())
 }
 /// Read committed price inputs together, then publish provenance and valuations in one batch.
-pub(super) fn reload_prices() -> Result<(), String> {
+pub(crate) fn reload_prices() -> Result<(), String> {
     let (quotes, book, rates) = db::with(|c| -> Result<_, String> {
         let tx = c.unchecked_transaction().map_err(|e| e.to_string())?;
         let quotes = market::load(&tx).map_err(|e| e.to_string())?;
@@ -323,11 +309,11 @@ fn fetch(bindings: Vec<catalog::SecurityBinding>) -> Result<Vec<QuoteResult>, St
     })
 }
 type FxResult = (Currency, Result<FxRate, String>);
-fn fetch_fx(today: jiff::civil::Date) -> Result<Vec<FxResult>, String> {
+fn fetch_fx(currencies: Vec<Currency>, today: jiff::civil::Date) -> Result<Vec<FxResult>, String> {
     let client = client()?;
     client.runtime.block_on(async {
         let mut rows = Vec::new();
-        for currency in [Currency::HKD, Currency::USD] {
+        for currency in currencies {
             let result = async {
                 let response = client.http.get(format!("https://api.frankfurter.dev/v2/providers/ecb/rates?base={currency}&quotes=CNY"))
                     .timeout(Duration::from_secs(12)).send().await.map_err(|_| "FX request failed")?
@@ -341,140 +327,52 @@ fn fetch_fx(today: jiff::civil::Date) -> Result<Vec<FxResult>, String> {
         Ok(rows)
     })
 }
-/// Single-flight with a five-minute foreground TTL. Force bypasses TTL only.
-pub async fn refresh(force: bool) {
-    let now = jiff::Timestamp::now();
-    if state().with_untracked(|s| {
-        s.status.refreshing
-            || (!force
-                && s.attempted_at
-                    .is_some_and(|t| now.as_second() - t.as_second() < 300))
-    }) {
+type FetchRates = fn(Vec<Currency>, jiff::civil::Date) -> Result<Vec<FxResult>, String>;
+
+/// Keep successful observations even when a different provider is unavailable.
+async fn update(
+    fetch_rates: FetchRates,
+    quotes: Vec<catalog::SecurityBinding>,
+    currencies: Vec<Currency>,
+    day: jiff::civil::Date,
+    epoch: u64,
+) {
+    if quotes.is_empty() && currencies.is_empty() {
         return;
     }
-    let book = finance::holdings();
-    let bindings = match db::with(catalog::bindings) {
-        Some(Ok(v)) => v,
-        _ => {
-            state().update(|s| {
-                s.status = Status {
-                    failed: 1,
-                    completed_at: Some(now),
-                    ..Status::default()
-                }
-            });
-            return;
-        }
-    };
-    let bindings: Vec<_> = bindings
-        .into_iter()
-        .filter(|b| {
-            book.securities
-                .iter()
-                .find(|s| s.id == b.security)
-                .is_some_and(|s| {
-                    book.position(s, clock::today().0)
-                        .is_ok_and(|p| p.quantity > 0)
-                })
-        })
-        .collect();
-    if !force
-        && bindings.is_empty()
-        && !finance::accounts()
-            .iter()
-            .any(|a| a.currency() != navi_finance::currency::Currency::CNY)
-    {
-        if !finance::transactions().is_empty()
-            && let Err(error) = super::valuation::capture(false)
-        {
-            log::warn!("market: cash valuation capture failed: {error}");
-        }
-        return;
-    }
-    let today = clock::today().0;
-    state().update(|s| {
-        s.status = Status {
-            refreshing: true,
-            ..Status::default()
-        };
-        s.attempted_at = Some(now)
-    });
-    let symbols: Vec<_> = bindings.iter().map(|b| b.symbol.clone()).collect();
-    let result = blocking(move || fetch(bindings)).await;
-    let mut failed_items = Vec::new();
-    let mut failed = 0;
-    let mut updated = 0;
-    let mut succeeded = 0;
-    match result {
-        Ok(Ok(rows)) => {
-            for (binding, result) in rows {
-                match result {
-                    Ok(q) => match db::with(|c| market::save(c, &q, jiff::Timestamp::now())) {
-                        Some(Ok(changed)) => {
-                            updated += usize::from(changed);
-                            succeeded += 1;
-                        }
-                        _ => failed_items.push(binding.symbol),
-                    },
-                    Err(_) => failed_items.push(binding.symbol),
-                }
-            }
-        }
-        _ => failed_items.extend(symbols),
-    }
-    // Independent requests preserve successful quotes when a currency provider fails.
-    match blocking(move || fetch_fx(today)).await {
-        Ok(Ok(rows)) => {
-            for (currency, result) in rows {
-                match result {
-                    Ok(rate) => {
-                        let saved = db::with(|c| {
-                            use navi_finance::currency;
-                            if currency::rates(c)?.iter().any(|r| {
-                                r.currency == rate.currency
-                                    && r.day == rate.day
-                                    && r.source == "manual"
-                            }) {
-                                return Ok::<_, currency::FxError>(false);
-                            }
-                            Ok(currency::save_rates(c, std::slice::from_ref(&rate))? > 0)
-                        });
-                        match saved {
-                            Some(Ok(changed)) => {
-                                updated += usize::from(changed);
-                                succeeded += 1;
-                            }
-                            _ => failed_items.push(currency.code().to_owned()),
-                        }
+    let mut changed = false;
+    if !quotes.is_empty() {
+        match blocking(move || fetch(quotes)).await {
+            Ok(Ok(rows)) if generation() == epoch => {
+                for (binding, result) in rows {
+                    match result.and_then(|q| {
+                        db::with(|c| market::save(c, &q, jiff::Timestamp::now()))
+                            .ok_or("database unavailable")?
+                            .map_err(|e| e.to_string())
+                    }) {
+                        Ok(saved) => changed |= saved,
+                        Err(e) => log::warn!("quote {}: {e}", binding.symbol),
                     }
-                    Err(_) => failed_items.push(currency.code().to_owned()),
                 }
             }
+            _ => log::debug!("quote update unavailable or superseded"),
         }
-        _ => failed_items.extend(["HKD".to_owned(), "USD".to_owned()]),
     }
-    if succeeded > 0
-        && let Err(error) = super::valuation::capture(false)
-    {
-        log::warn!("market: valuation capture failed: {error}");
-    }
-    if reload_prices().is_err() {
-        failed += 1
-    }
-    state().update(|s| {
-        s.status = Status {
-            refreshing: false,
-            failed: failed + failed_items.len(),
-            failed_items,
-            completed_at: Some(jiff::Timestamp::now()),
-            updated,
+    if !currencies.is_empty() && generation() == epoch {
+        match blocking(move || fetch_rates(currencies, day)).await {
+            Ok(Ok(rows)) if generation() == epoch => {
+                for (currency, result) in rows {
+                    match result.and_then(|r| finance::store_rates(&[r])) {
+                        Ok(n) => changed |= n > 0,
+                        Err(e) => log::warn!("FX {currency}: {e}"),
+                    }
+                }
+            }
+            _ => log::debug!("FX update unavailable or superseded"),
         }
-    });
-    if succeeded > 0 {
-        let from = today
-            .checked_sub(jiff::Span::new().days(29))
-            .unwrap_or(today);
-        super::history::backfill(from, today, false).await;
+    }
+    if changed && let Err(e) = reload_prices() {
+        log::warn!("market: cannot publish prices: {e}");
     }
 }
 
@@ -501,6 +399,7 @@ mod tests {
             assert_eq!(q.currency, binding.currency);
         }
         for (_, rate) in fetch_fx(
+            vec![Currency::HKD, Currency::USD],
             jiff::Timestamp::now()
                 .to_zoned(jiff::tz::TimeZone::UTC)
                 .date(),

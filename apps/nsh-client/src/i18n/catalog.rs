@@ -45,23 +45,6 @@ pub fn body() -> &'static str {
         "请核对市场与代码。关联仅用于行情；持仓名称、交易和成本记录保留原样。",
     )
 }
-pub fn refresh() -> &'static str {
-    copy("Update catalog", "更新证券目录")
-}
-pub fn status(status: crate::data::catalog::Status) -> &'static str {
-    use crate::data::catalog::Status::*;
-    match status {
-        Idle => copy("Available offline", "离线可用"),
-        Updating => copy("Updating catalog…", "正在更新目录…"),
-        Current => copy("Catalog is up to date", "目录已是最新"),
-        Updated => copy("Catalog updated", "目录已更新"),
-        Failed => copy(
-            "Update failed. Offline catalog is still available; try again.",
-            "更新失败，离线目录仍可用。可重试更新。",
-        ),
-    }
-}
-
 pub fn market_price() -> &'static str {
     copy("Tencent price", "腾讯行情")
 }

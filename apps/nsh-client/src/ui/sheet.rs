@@ -113,14 +113,6 @@ pub fn is_task_panel() -> bool {
 
 /// One native sheet for a menu and all of its task panels. Embedded task sheets
 /// contribute their layout and dismissal guard without making another overlay.
-pub fn task_host(
-    open: impl Fn() -> bool + Copy + 'static,
-    close: impl Fn() + Copy + 'static,
-    content: impl Fn() -> AnyElement + 'static,
-) -> impl IntoElement {
-    task_host_with_keyboard(open, close, || true, content)
-}
-
 /// A reading panel can use the full sheet. Switching to entry reserves the
 /// keyboard's space using the same native host, without stacked overlays.
 pub fn task_host_with_keyboard(

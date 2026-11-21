@@ -108,28 +108,38 @@ fn cross_currency_transfer_records_both_explicit_amounts() -> Result<(), String>
     Ok(())
 }
 #[test]
-fn missing_fx_is_visible_and_manual_rate_completes_valuation_after_restart() -> Result<(), String> {
+fn missing_fx_and_stored_provider_rates_are_visible_without_update_controls() -> Result<(), String>
+{
     let dir = tempfile::tempdir().unwrap();
     seed(dir.path(), false);
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), Some(stub()));
     app.press("label:Assets")?;
-    app.wait_for("Known value · CNY")?;
-    app.press("USD excluded · Add exchange rate")?;
-    app.press("text:USD → CNY")?;
-    app.type_text("label:CNY per unit", "7.00")?;
-    app.press("Save rate")?;
-    app.wait_for_gone("Save rate", GONE)?;
-    app.wait_for("text:/^1 USD = 7/")?;
-    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
-    let rate = currency::rate_on(&db, Currency::USD, today().0)
-        .unwrap()
-        .unwrap();
-    assert_eq!(rate.rate, 7_000_000);
-    assert_eq!(rate.source, "manual");
+    app.wait_for("USD excluded · Missing rate")?;
+    app.press("label:Manage")?;
+    app.press("Prices & rates")?;
+    app.wait_for("text:USD → CNY")?;
+    assert!(!app.shows("Save rate") && !app.shows("Refresh prices and rates"));
     drop(app);
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    currency::save_rate(
+        &db,
+        &currency::FxRate {
+            currency: Currency::USD,
+            day: today().0,
+            rate: 7_000_000,
+            source: "frankfurter:ecb".into(),
+        },
+    )
+    .unwrap();
     let (mut again, _) = start_in(Some(dir.path()), Vec::new(), Some(stub()));
     again.press("label:Assets")?;
     again.wait_for("label:¥7,000.00")?;
     assert!(!again.shows("Known value · CNY"));
+    again.press("label:Manage")?;
+    again.press("Prices & rates")?;
+    again.wait_for("text:/ECB$/")?;
+    again.press("Changes")?;
+    again.press("text:USD → CNY")?;
+    again.wait_for("text:/^Recorded at /")?;
     Ok(())
 }

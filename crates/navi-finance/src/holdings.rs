@@ -323,6 +323,23 @@ impl Book {
         }
         Ok(())
     }
+    /// One observed price per date, with the same date-tie precedence as `position`.
+    pub fn dated_prices(
+        &self,
+        security: &Security,
+        through: Date,
+    ) -> std::collections::BTreeMap<Date, i64> {
+        let mut prices = std::collections::BTreeMap::new();
+        for quote in self
+            .quotes
+            .iter()
+            .filter(|q| q.security == security.id && q.day <= through)
+        {
+            prices.insert(quote.day, quote.price);
+        }
+        prices
+    }
+
     pub fn position(&self, security: &Security, day: Date) -> Result<Position, Error> {
         let (mut p, _) = replay(security, &self.trades, day)?;
         p.quote = self

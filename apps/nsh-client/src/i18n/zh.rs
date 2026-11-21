@@ -5,7 +5,6 @@ use crate::domain::recognition::Lang;
 
 pub(super) static STRINGS: Strings = Strings {
     lang: Lang::Zh,
-    portfolio_trend: "近30天资产变化 · 按已记录价格",
     manage_assets: "管理",
     asset_history: "资产变化",
     closed_holdings: "已清仓持仓",
@@ -102,8 +101,6 @@ pub(super) static STRINGS: Strings = Strings {
     account_exists: "已有同名账户，请使用其他名称。",
     rename_running: "正在识别记录，请完成后再修改账户名称。",
     account_created: "账户已添加",
-    assets_trend: "近30天账面变化",
-    assets_trend_empty: "有两天以上流水后显示变化趋势。",
     balance_readonly: "这笔记录由余额核对生成。可重新核对账户，或撤销本次记录并重新计算余额。",
     close: "关闭",
     capture_unspecified: "未提供",
