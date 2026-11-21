@@ -238,8 +238,9 @@ AI only to turn text and images into drafts, using the owner's model account.
   (shaded by share of the goal, amber past it, a dot on weighed days, today
   outlined; a day opens in Records). Coverage sits directly beneath intake per logged day. The monthly caption
   includes the goal, which the weekly chart labels on its reference line.
-  Spending and weight follow, then the
-  one-line note and Garmin averages. An empty intake card shows a short message.
+  Spending, the net-worth change and weight follow, then the
+  one-line note and Garmin averages. A ledger-only period without weight or
+  intake comparisons leads with its net-worth change instead. An empty intake card shows a short message.
 - **Settings keep every change as it is made; there is no Save.** Recognition
   model / 识别模型 has its own page with one continuous form for API protocol,
   base URL, model and key. The protocol field shows the current choice;
@@ -563,6 +564,19 @@ mapping, selected rows, possible duplicates, corrections and skipped-line reason
 stay on device through restart. Only confirmation posts selected entries, with
 mapping rules saved together. The fixed footer shows the selected count; long
 reviews reveal rows in batches of 50. A changed journal requires review again.
+The “Net worth change” card follows it: the signed CNY change as the card's
+figure (LargeTitle, neutral ink), then a caption naming the close it starts
+from with both values (`11月15日 周日收盘 ¥55,320.20 → ¥55,433.20`). Below are
+only the nonzero parts in a fixed order — income, spending, investments,
+opening balances, balance corrections, exchange rates — each a label with a
+signed amount in one right-aligned column. Investments expand per holding and
+the two correction parts list their entries; those rows are visible
+disclosures with a rotating chevron, and an entry opens its editor or balance
+summary. A caption says recorded amounts convert at opening rates and that
+openings and corrections are bookkeeping, not gains. A missing rate replaces
+the figure and parts with one sentence naming the currencies; no partial split
+is shown. Without a ledger the card is absent.
+
 
 ## Platform decisions
 

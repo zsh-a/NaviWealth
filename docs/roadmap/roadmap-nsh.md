@@ -246,7 +246,8 @@ directly after archiving.
   (`npx wrangler d1 export naviwealth --remote --output=d1-archive.sql`; database
   id `77b6d007-be46-432a-a0f6-8c74e3124997`, Worker `naviwealth-backend`); then
   delete the Worker and D1.
-- Remaining: complete Review with spending and net worth.
+- Review now shows recorded spending and the net-worth change with its
+  attribution (2026-11-21).
 - Exit: restore from an NSH export on a clean install succeeds; two weeks of
   NSH as the only app.
 
@@ -261,11 +262,17 @@ Recommended sequence; this is planning, not a claim these items are implemented.
    balances, quantities, prices and recorded valuations. The local
    export/share path exists (2026-11-21, headless only): verify that the
    Android share sheet, Files and the picker round-trip the file.
-2. **Close one financial month.** Extend the existing Review with recorded
-   spending, net-worth change and a drill-down explaining deposits/withdrawals,
-   price changes, FX and balance adjustments. State missing data instead of
-   labeling all net-worth movement as investment return. Keep four tabs and
-   expose detail on demand; a monthly budget is lower priority.
+2. **Close one financial month.** Implemented 2026-11-21: Review's
+   net-worth change uses `navi_finance::attribution`, which splits the change
+   between two closes into income, spending, investments (unrealized change
+   plus realized gains and dividends, per holding), opening balances, balance
+   corrections and exchange rates (the exact remainder, zero in CNY alone).
+   The parts sum to the change; a missing rate makes the result incomplete
+   rather than partial. Investments and corrections drill down in place.
+   Contract fixtures cover CNY flows, holdings, FX revaluation and exchange
+   spread, mid-period currencies and missing rates; headless flows cover the
+   card, drill-down, missing rates and the ledger-only headline. Remaining:
+   the optional monthly budget (lower priority) and device evidence.
 3. **Weight body composition and the scale link.** Built ahead of the radio
    (implemented): `bodycomp` estimation in `navi-health` (Segal/Deurenberg
    from impedance, ported from the AFU-WL reference tool, fixture-tested), a

@@ -8,6 +8,7 @@ pub(crate) mod catalog;
 mod en;
 pub(crate) mod market;
 mod phrases;
+pub(crate) mod net_worth;
 pub(crate) mod statement_import;
 mod zh;
 

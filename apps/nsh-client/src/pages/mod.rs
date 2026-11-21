@@ -8,6 +8,7 @@ pub(crate) mod finance;
 pub(crate) mod finance_review;
 pub(crate) mod holdings;
 pub(crate) mod home;
+mod net_worth_review;
 mod parts;
 mod records;
 mod records_jump;

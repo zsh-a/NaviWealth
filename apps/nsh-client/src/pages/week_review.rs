@@ -1,12 +1,14 @@
 //! The Review tab: a week or a calendar month in review. The daily average
 //! intake and its change from the period before, a bar per day against the
 //! goal for a week (days past it in amber, today in ink, nothing for a day
-//! without meals) or a calendar for a month, the weight's change and line,
-//! and Garmin's averages. Earlier periods are a step back; a short personal
+//! without meals) or a calendar for a month, recorded spending, the
+//! net-worth change and its parts, the weight's change and line, and
+//! Garmin's averages. Earlier periods are a step back; a short personal
 //! note is kept on its day.
 
 use std::rc::Rc;
 
+use navi_finance::{attribution::Outcome, currency::Currency};
 use nsh_core::prelude::*;
 
 use super::{
@@ -81,6 +83,7 @@ pub fn review_tab() -> impl IntoElement {
             .child(super::finance_review::spending_section(
                 days, before, period,
             ))
+            .child(super::net_worth_review::net_worth_section(days))
             .child(weight_card(days))
             .child(super::review_note::note_editor(days))
             .child(recovery_card(days)),
@@ -172,6 +175,7 @@ fn summary(
             previous_days.last().unwrap().0,
             clock::today().0,
         );
+        let net_worth = super::net_worth_review::period_outcome(&current_days);
         let average = intake_of(current_days).average.map(|a| a.kcal);
         let previous = intake_of(
             previous_days
@@ -183,7 +187,15 @@ fn summary(
         .map(|a| a.kcal);
         let change = average.zip(previous).map(|(a, p)| a - p);
         let weight = review::weight_change(&weights::all(), from, to);
+        // Health leads; a ledger-only period still gets its one change.
         s().review_summary(change, weight)
+            .or_else(|| match net_worth {
+                Some(Outcome::Complete(a)) if a.change() != 0 => Some(s().net_worth_summary(
+                    &crate::ui::currency::format(a.change().abs(), Currency::CNY),
+                    a.change() > 0,
+                )),
+                _ => None,
+            })
     });
     when(
         move || line.with(Option::is_some),

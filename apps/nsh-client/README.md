@@ -4,7 +4,8 @@ NaviWealth's native client, with Rust pages and a small TSX hardware entry on [N
 0.6.1. Capture turns a description or photos into reviewable money, meal or
 weight drafts using the owner's model. The home has four tabs: Today
 (spending, intake and vitals), Records (all history), Assets (accounts, book balances and net worth), and Review
-(the week or month). The capture button accepts a description or image and
+(the week or month, with recorded spending and the attributed net-worth
+change). The capture button accepts a description or image and
 keeps a draft for confirmation. Settings keep each change as it is made;
 manual entry and account management work without a model account. Design
 standards and the motion inventory: `DESIGN.md`.

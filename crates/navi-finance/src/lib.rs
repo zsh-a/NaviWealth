@@ -16,6 +16,7 @@ pub fn sha256_hex(bytes: &[u8]) -> String {
 
 pub mod account;
 pub mod assets;
+pub mod attribution;
 pub mod catalog;
 pub mod currency;
 pub mod history;

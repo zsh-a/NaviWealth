@@ -97,7 +97,11 @@ Updated 2026-11-14: the owner chose text-or-image capture with fewer forms.
   dated trend and valuation basis. Closed positions reappear after buying again.
   A single icon-only plus beside the tab bar opens capture; its accessible
   name is New entry / 新记录. Account and holding creation stay in Manage.
-- Review leads with one sentence of what changed against the period before;
+- Review leads with one sentence of what changed against the period before
+  (weight, then intake, then net worth for a ledger-only period). Its
+  net-worth change splits into income, spending, investments, opening
+  balances, balance corrections and exchange rates, which sum to the change
+  exactly; missing rates are named instead of shown as a partial split;
   a month is a calendar whose days open in Records, which has the same
   calendar; a chosen day is shown alone, stepping to neighbouring days.
 
