@@ -18,7 +18,7 @@ fn an_empty_day_explains_what_to_do() -> Result<(), String> {
 fn logging_without_an_account_explains_the_setup() -> Result<(), String> {
     let (mut app, _) = start(Vec::new(), None);
     app.press("label:New entry")?;
-    app.wait_for("Connect your model to create a draft. Manual entry is available below.")?;
+    app.wait_for("Connect a model to recognize entries.")?;
     assert!(app.picks().is_empty());
     Ok(())
 }
@@ -54,7 +54,7 @@ fn a_photo_is_sent_only_after_consent_and_becomes_editable_foods() -> Result<(),
     let dir = tempfile::tempdir().unwrap();
     let (mut app, _) = start_in(Some(dir.path()), account(false), Some(stub.clone()));
     attach_capture(&mut app)?;
-    app.wait_for("Create a draft with your model")?;
+    app.wait_for("Send to your model?")?;
     app.wait_for("text:/api.anthropic.com/")?;
     assert!(stub.requests().is_empty(), "nothing is sent before consent");
 
@@ -106,7 +106,7 @@ fn declining_consent_sends_nothing() -> Result<(), String> {
     let stub = network(200, record_reply(vec![meal_record()]));
     let (mut app, _) = start(account(false), Some(stub.clone()));
     attach_capture(&mut app)?;
-    app.wait_for("Create a draft with your model")?;
+    app.wait_for("Send to your model?")?;
     app.press("label:Back")?;
     app.wait_for("Attach image")?;
     assert!(stub.requests().is_empty());
@@ -500,11 +500,11 @@ fn body_profile_age_advances_at_the_local_birthday_after_resume() -> Result<(), 
     app.set_environment("resume", |e| e.lifecycle = Lifecycle::Active)?;
     app.press("label:Settings")?;
     app.press("label:Body profile, Complete")?;
-    app.wait_for("text:/^Age: 34[.]/")?;
+    app.wait_for("text:Age · 34")?;
     app.set_environment("background", |e| e.lifecycle = Lifecycle::Background)?;
     app.set_system_time(now + Duration::from_secs(60))?;
     app.set_environment("resume", |e| e.lifecycle = Lifecycle::Active)?;
-    app.wait_for("text:/^Age: 35[.]/")?;
+    app.wait_for("text:Age · 35")?;
     assert_eq!(
         storage.entries()["settings.v1"],
         original,
@@ -532,7 +532,7 @@ fn body_profile_birth_date_copy_and_calendar_are_available_in_chinese() -> Resul
         "opening the calendar must not save a date"
     );
     app.type_text("label:出生日期", "2000-02-29")?;
-    app.wait_for("text:/^年龄:/")?;
+    app.wait_for("text:/^年龄 · /")?;
     app.press("label:选择出生日期")?;
     app.press("label:2000-02-28")?;
     app.wait_for("label:出生日期")?;

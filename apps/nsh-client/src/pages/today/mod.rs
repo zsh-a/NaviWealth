@@ -90,7 +90,7 @@ fn setup_row() -> impl IntoElement {
                 .min_h(px(48.0))
                 .px_0()
                 .accessibility_label(|| Some(s().setup_title.into()))
-                .child(ai_mark(28.0))
+                .child(icon(Icon::Server, 20.0, color::MUTED))
                 .child(
                     text(|| s().setup_title)
                         .flex_1()
@@ -102,19 +102,6 @@ fn setup_row() -> impl IntoElement {
     )
 }
 
-/// The AI's mark: a sparkle on a soft disc of its light.
-fn ai_mark(side: f32) -> impl IntoElement {
-    view()
-        .size(px(side))
-        .rounded_full()
-        .items_center()
-        .justify_center()
-        .bg_linear_to_br()
-        .gradient_from(color::AI_FROM.opacity(0.16))
-        .gradient_to(color::AI_TO.opacity(0.16))
-        .child(icon(Icon::Sparkle, side * 0.48, color::AI_FROM))
-}
-
 /// Why photos need an account, from the main action, with both ways on.
 pub fn setup_sheet(sheets: Sheets) -> impl IntoElement {
     let open = sheets.setup;
@@ -124,7 +111,6 @@ pub fn setup_sheet(sheets: Sheets) -> impl IntoElement {
         move || open.set(false),
         view()
             .gap_5()
-            .child(ai_mark(56.0))
             .child(
                 view()
                     .gap_2()

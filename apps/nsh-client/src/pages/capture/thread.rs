@@ -1,7 +1,7 @@
 use super::*;
 
 /// The conversation so far: owner messages on the right, the model's turns
-/// on the left with its light. While it works, the thread shows it waiting;
+/// on the left. While it works, the thread shows it waiting;
 /// a failure is one of its turns, with the ways back.
 pub(super) fn thread(
     draft: &Draft,
@@ -53,19 +53,7 @@ pub(super) fn thread(
             }
             Turn::AskUser { request } => {
                 let open = index == latest && draft.status == Status::Ready;
-                view()
-                    .flex_row()
-                    .gap_2()
-                    .items_stretch()
-                    .child(ai_mark())
-                    .child(decisions::questions(
-                        request,
-                        draft,
-                        signal_draft,
-                        input,
-                        error,
-                        open,
-                    ))
+                decisions::questions(request, draft, signal_draft, input, error, open)
                     .into_element()
             }
             Turn::ToolAnswer {
@@ -109,28 +97,22 @@ pub(super) fn thread(
             Turn::Assistant {
                 records, questions, ..
             } => {
-                let column = view().gap_2().flex_1().min_w(px(0.0));
+                let column = view().gap_2().min_w(px(0.0));
                 let column = if *records > 0 && live == Some(index) && index >= exchange_start {
                     column.child(summary::records(draft, choosing))
                 } else if *records > 0 {
-                    column.child(badge(
-                        s().capture_thread_updated(*records),
-                        Tone::Ai,
-                        Some(Icon::Sparkle),
-                    ))
+                    column.child(
+                        text(s().capture_thread_updated(*records))
+                            .typo(Type::Subhead)
+                            .text_color(color::MUTED),
+                    )
                 } else {
                     column
                 };
                 let column = column.children(questions.iter().map(|question| {
                     question_turn(question, index == latest && !ready, input, send)
                 }));
-                view()
-                    .flex_row()
-                    .gap_2()
-                    .items_stretch()
-                    .child(ai_mark())
-                    .child(column)
-                    .into_element()
+                column.into_element()
             }
         };
         if index < exchange_start {
@@ -144,37 +126,16 @@ pub(super) fn thread(
         });
     }
     if draft.status == Status::Analyzing {
-        let sweep = shimmer();
         items.push(
             view()
                 .flex_row()
-                .gap_2()
-                .items_stretch()
-                .child(ai_mark())
+                .gap_3()
+                .items_center()
+                .child(spinner(18.0, color::MUTED))
                 .child(
-                    view()
-                        .gap_3()
-                        .flex_1()
-                        .min_w(px(0.0))
-                        .child(
-                            text(|| s().capture_reading)
-                                .typo(Type::Headline)
-                                .text_color(color::INK),
-                        )
-                        .children((0..2).map(|_| {
-                            card()
-                                .p_4()
-                                .gap_3()
-                                .accessibility_elements_hidden(true)
-                                .child(skeleton(Some(140.0), 16.0, sweep))
-                                .child(skeleton(None, 24.0, sweep))
-                                .child(skeleton(Some(180.0), 12.0, sweep))
-                        }))
-                        .child(
-                            text(|| s().capture_background)
-                                .typo(Type::Subhead)
-                                .text_color(color::MUTED),
-                        ),
+                    text(|| s().capture_reading)
+                        .typo(Type::Body)
+                        .text_color(color::BODY),
                 )
                 .into_element(),
         );
@@ -189,7 +150,6 @@ pub(super) fn thread(
                 .flex_row()
                 .gap_2()
                 .items_stretch()
-                .child(ai_mark())
                 .child(
                     view()
                         .gap_2()
@@ -261,20 +221,7 @@ pub(super) fn thread(
         .into_element()
 }
 
-/// The model's light as a hairline edge beside its turns.
-fn ai_mark() -> impl IntoElement {
-    view()
-        .w(px(2.0))
-        .self_stretch()
-        .min_h(px(16.0))
-        .rounded_full()
-        .bg_linear_to_b()
-        .gradient_from(color::AI_FROM)
-        .gradient_to(color::AI_TO)
-        .accessibility_elements_hidden(true)
-}
-
-/// The owner's message: its photo beside an ink pill, on the right.
+/// The owner's message and its photos, aligned to the right.
 fn owner_turn(message: &str, images: &[String]) -> AnyElement {
     let mut row = view()
         .flex_row()
@@ -296,14 +243,14 @@ fn owner_turn(message: &str, images: &[String]) -> AnyElement {
         row = row.child(
             view()
                 .max_w(px(300.0))
-                .bg(color::ACTION)
+                .bg(color::SURFACE_2)
                 .rounded(px(18.0))
                 .px(px(14.0))
                 .py(px(9.0))
                 .child(
                     text(body.to_owned())
                         .typo(Type::Body)
-                        .text_color(color::ON_ACTION),
+                        .text_color(color::BODY),
                 ),
         );
     }
@@ -383,9 +330,14 @@ pub(super) fn staged_images(draft: &Draft, signal_draft: Signal<Draft>) -> impl 
     view()
         .gap_2()
         .child((!names.is_empty()).then(|| {
-            text(|| s().capture_image_hint)
-                .typo(Type::Caption)
-                .text_color(color::MUTED)
+            text(format!(
+                "{} · {}/{}",
+                s().capture_images,
+                draft.image_names().len(),
+                MAX_ATTACHMENTS
+            ))
+            .typo(Type::Caption)
+            .text_color(color::MUTED)
         }))
         .children(names.into_iter().map(|name| {
             let image_name = name.clone();

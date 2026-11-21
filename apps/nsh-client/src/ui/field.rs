@@ -159,5 +159,5 @@ fn styled(input: Input) -> Input {
         .text_color(color::INK)
         .placeholder_color(|| nsh_core::prelude::color(color::MUTED))
         .caret_color(|| nsh_core::prelude::color(color::INK))
-        .selection_color(|| nsh_core::prelude::color(color::AI_TO.opacity(0.3)))
+        .selection_color(|| nsh_core::prelude::color(color::INK.opacity(0.2)))
 }

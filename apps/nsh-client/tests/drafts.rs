@@ -106,8 +106,8 @@ fn a_recognition_cut_short_by_a_restart_can_be_tried_again() -> Result<(), Strin
         storage.entries().into_iter().collect(),
         Some(stub.clone()),
     );
-    app.wait_for("label:Could not finish. Your input and previous result are kept.")?;
-    app.press("label:Could not finish. Your input and previous result are kept.")?;
+    app.wait_for("label:Recognition failed. Your draft is kept.")?;
+    app.press("label:Recognition failed. Your draft is kept.")?;
     app.press("Try again")?;
     app.wait_for("text:White rice")?;
     assert_eq!(stub.requests().len(), 1, "the kept photo is sent again");

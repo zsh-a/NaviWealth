@@ -248,7 +248,7 @@ fn recognition() -> impl IntoElement {
     card()
         .overflow_hidden()
         .child(entry_list_row(
-            Icon::Sparkle,
+            Icon::Server,
             || s().vision_model,
             summary,
             tint,

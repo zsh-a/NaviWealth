@@ -154,9 +154,9 @@ fn responses_choice_and_native_reasoning_survive_restart_and_image_followup() ->
     let (mut app, storage) = start_in(Some(dir.path()), responses_account(), Some(stub.clone()));
     attach_capture(&mut app)?;
     app.wait_for("Does the label describe this meal?")?;
-    assert!(!app.screen().enabled("Submit answers")?);
+    assert!(!app.screen().enabled("Continue")?);
     app.press("label:Same meal")?;
-    assert!(app.screen().enabled("Submit answers")?);
+    assert!(app.screen().enabled("Continue")?);
     assert_eq!(
         calls.load(Ordering::SeqCst),
         1,
@@ -164,7 +164,7 @@ fn responses_choice_and_native_reasoning_survive_restart_and_image_followup() ->
     );
     assert!(stored_meals(dir.path()).is_empty());
     app.press("label:Close")?;
-    app.wait_for("Draft kept; no records saved")?;
+    app.wait_for("Draft kept")?;
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
     let kept: Value = serde_json::from_str(
         &db.query_row::<String, _, _>("SELECT body FROM capture_drafts", [], |r| r.get(0))
@@ -181,7 +181,7 @@ fn responses_choice_and_native_reasoning_survive_restart_and_image_followup() ->
     );
     app.press("label:Review records")?;
     app.wait_for("Does the label describe this meal?")?;
-    assert!(app.screen().enabled("Submit answers")?);
+    assert!(app.screen().enabled("Continue")?);
     assert_eq!(calls.load(Ordering::SeqCst), 1);
     let mut detail = Cursor::new(Vec::new());
     RgbImage::from_pixel(48, 128, image::Rgb([240, 240, 240]))
@@ -194,10 +194,10 @@ fn responses_choice_and_native_reasoning_survive_restart_and_image_followup() ->
             ImageData::new(detail.get_ref().clone()),
         )]
     });
-    app.press("Add details")?;
+    app.press("Add text or photos")?;
     app.press("Attach image")?;
     app.wait_for("Remove image")?;
-    app.press("Submit answers")?;
+    app.press("Continue")?;
     app.wait_for("Confirm and save")?;
     assert_eq!(calls.load(Ordering::SeqCst), 2);
     assert!(

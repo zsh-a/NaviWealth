@@ -1,4 +1,4 @@
-//! Recognition drafts as cards edged in the AI's light, pinned on Today
+//! Recognition drafts pinned on Today
 //! and atop Records: being read (a shimmer), ready to confirm, or needing
 //! the owner (no food found, failed). Pressing one opens it.
 
@@ -76,7 +76,7 @@ pub fn drafts_section(heading: bool) -> impl IntoElement {
                             .accessibility_label(move || Some(title.into()))
                             .rounded(px(radius::CARD))
                             .bg(color::SURFACE)
-                            .child(icon(Icon::Sparkle, 22.0, color::AI_FROM))
+                            .child(icon(Icon::Pencil, 22.0, color::MUTED))
                             .child(
                                 view()
                                     .gap_1()
@@ -151,9 +151,7 @@ fn card(draft: PendingMeal) -> impl IntoElement {
         .bind_scale(&scale)
         .p(px(1.5))
         .rounded(px(radius::CARD))
-        .bg_linear_to_br()
-        .gradient_from(color::AI_FROM)
-        .gradient_to(color::AI_TO)
+        .bg(color::LINE)
         .lift(&shadow::CARD)
         .child(
             view()
@@ -178,11 +176,7 @@ fn card(draft: PendingMeal) -> impl IntoElement {
                                     Type::Headline
                                 })
                                 .font_weight(FontWeight::SEMIBOLD)
-                                .text_color(if analyzing {
-                                    color::AI_FROM
-                                } else {
-                                    color::INK
-                                })
+                                .text_color(if analyzing { color::BODY } else { color::INK })
                                 .number_of_lines(1),
                         )
                         .child(match detail {
@@ -221,7 +215,7 @@ fn trailing(status: PendingStatus) -> AnyElement {
                     .text_color(color::ON_ACTION),
             )
             .into_element(),
-        PendingStatus::Analyzing => icon(Icon::Sparkle, 22.0, color::AI_FROM).into_element(),
+        PendingStatus::Analyzing => crate::ui::feedback::spinner(20.0, color::MUTED).into_element(),
         PendingStatus::NoFood | PendingStatus::Failed => {
             icon(Icon::ChevronRight, 18.0, color::FAINT).into_element()
         }

@@ -223,7 +223,6 @@ pub fn assets_tab() -> impl IntoElement {
                                                     "汇率",
                                                 )
                                             },
-                                            || s().manage_rates_note,
                                             Icon::Refresh,
                                             move || {
                                                 manage.set(false);
@@ -237,7 +236,6 @@ pub fn assets_tab() -> impl IntoElement {
                                                     "价格与汇率记录",
                                                 )
                                             },
-                                            || s().manage_prices_note,
                                             Icon::Chart,
                                             move || {
                                                 manage.set(false);
@@ -246,7 +244,6 @@ pub fn assets_tab() -> impl IntoElement {
                                         ))
                                         .child(nav_row(
                                             || s().closed_holdings,
-                                            || s().manage_closed_note,
                                             Icon::Bookmark,
                                             move || {
                                                 manage.set(false);

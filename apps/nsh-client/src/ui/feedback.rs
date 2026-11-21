@@ -69,8 +69,6 @@ pub fn skeleton(width: Option<f32>, height: f32, sweep: AnimatedValue) -> View {
 pub enum Tone {
     /// A classification: neutral.
     Neutral,
-    /// The model's estimate: neutral, with the AI's light on its glyph.
-    Ai,
     /// Worth a look.
     Caution,
 }
@@ -79,7 +77,6 @@ impl Tone {
     fn colors(self) -> (AdaptiveColor, AdaptiveColor, AdaptiveColor) {
         match self {
             Tone::Neutral => (color::SURFACE_2, color::MUTED, color::MUTED),
-            Tone::Ai => (color::SURFACE_2, color::MUTED, color::AI_FROM),
             Tone::Caution => (color::CAUTION_SOFT, color::CAUTION, color::CAUTION),
         }
     }
@@ -113,11 +110,7 @@ pub fn badge(
 
 /// A quiet explanation where content would be: a glyph in a soft circle,
 /// a title and what to do next.
-pub fn empty_state(
-    glyph: Icon,
-    title: impl IntoReactive<SharedString>,
-    body: impl IntoReactive<SharedString>,
-) -> View {
+pub fn empty_state(glyph: Icon, title: impl IntoReactive<SharedString>) -> View {
     view()
         .items_center()
         .gap_4()
@@ -133,21 +126,12 @@ pub fn empty_state(
                 .child(icon(glyph, 28.0, color::INK)),
         )
         .child(
-            view()
-                .items_center()
-                .gap_1()
-                .child(
-                    text(title)
-                        .typo(Type::Headline)
-                        .text_color(color::INK)
-                        .text_center(),
-                )
-                .child(
-                    text(body)
-                        .typo(Type::Callout)
-                        .text_color(color::MUTED)
-                        .text_center(),
-                ),
+            view().items_center().gap_1().child(
+                text(title)
+                    .typo(Type::Headline)
+                    .text_color(color::INK)
+                    .text_center(),
+            ),
         )
 }
 

@@ -101,6 +101,7 @@ pub(crate) fn body_profile_page() -> Screen {
 
 fn algorithm_settings() -> impl IntoElement {
     use navi_health::bodycomp::Algorithm;
+    let details = signal(false);
     view()
         .mt_4()
         .gap_3()
@@ -115,6 +116,9 @@ fn algorithm_settings() -> impl IntoElement {
                 .typo(Type::Subhead)
                 .text_color(color::MUTED),
         )
+        .child(crate::ui::surface::disclosure(details, || {
+            s().algorithm_details.into()
+        }))
         .child(
             radio_group().children(Algorithm::ALL.into_iter().map(|algorithm| {
                 let chosen = move || settings::scale_algorithm() == algorithm;
@@ -128,7 +132,7 @@ fn algorithm_settings() -> impl IntoElement {
                     .flex_row()
                     .gap_3()
                     .py_3()
-                    .min_h(px(72.0))
+                    .min_h(px(52.0))
                     .items_start()
                     .accessibility_label(move || {
                         Some(
@@ -162,11 +166,14 @@ fn algorithm_settings() -> impl IntoElement {
                                 .typo(Type::Headline)
                                 .text_color(color::INK),
                             )
-                            .child(
-                                text(move || crate::scale::algorithm_description(algorithm))
-                                    .typo(Type::Caption)
-                                    .text_color(color::MUTED),
-                            ),
+                            .child(when(
+                                move || details.get(),
+                                move || {
+                                    text(move || crate::scale::algorithm_description(algorithm))
+                                        .typo(Type::Subhead)
+                                        .text_color(color::MUTED)
+                                },
+                            )),
                     )
                     .child(
                         view()
@@ -269,9 +276,9 @@ fn profile_form() -> impl IntoElement {
                     } else if let Ok(Some(date)) = date_value()
                         && let Some(age) = settings::age_on(date, clock::today())
                     {
-                        format!("{}: {age}. {}", s().age_years, s().birth_date_note).into()
+                        format!("{} · {age}", s().age_years).into()
                     } else {
-                        s().birth_date_note.into()
+                        return None;
                     })
                 },
                 date_error,

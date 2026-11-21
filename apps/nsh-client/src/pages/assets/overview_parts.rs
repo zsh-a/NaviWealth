@@ -32,10 +32,9 @@ pub(super) fn action_row(
         .child(icon(Icon::ChevronRight, 16.0, color::MUTED))
 }
 
-/// A data entry: a quiet glyph, its name and a scope note.
+/// A management destination.
 pub(super) fn nav_row(
     label: impl Fn() -> &'static str + Copy + 'static,
-    note: impl Fn() -> &'static str + Copy + 'static,
     glyph: Icon,
     press: impl Fn() + 'static,
 ) -> impl IntoElement {
@@ -46,12 +45,10 @@ pub(super) fn nav_row(
         .gap_3()
         .child(icon(glyph, 20.0, color::MUTED))
         .child(
-            view()
+            text(label)
                 .flex_1()
-                .min_w(px(0.0))
-                .gap_1()
-                .child(text(label).typo(Type::Headline).text_color(color::INK))
-                .child(text(note).typo(Type::Subhead).text_color(color::MUTED)),
+                .typo(Type::Headline)
+                .text_color(color::INK),
         )
         .child(icon(Icon::ChevronRight, 16.0, color::MUTED))
 }

@@ -200,13 +200,7 @@ pub fn records_tab() -> impl IntoElement {
             .child(
                 when(
                     move || days.with(Vec::is_empty),
-                    || {
-                        card().child(empty_state(
-                            Icon::List,
-                            || s().no_records,
-                            || s().no_records_body,
-                        ))
-                    },
+                    || card().child(empty_state(Icon::List, || s().no_records)),
                 )
                 .otherwise(move || {
                     view()

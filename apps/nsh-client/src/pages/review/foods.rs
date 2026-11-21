@@ -229,7 +229,7 @@ fn source_badge(source: &FoodSource, check: bool) -> AnyElement {
     match (source, check) {
         (_, true) => badge(|| s().badge_check, Tone::Caution, Some(Icon::Alert)).into_element(),
         (FoodSource::Estimate, false) => {
-            badge(|| s().badge_estimate, Tone::Ai, Some(Icon::Sparkle)).into_element()
+            badge(|| s().badge_estimate, Tone::Neutral, None).into_element()
         }
         (FoodSource::Catalog { .. }, false) => badge("USDA", Tone::Neutral, None).into_element(),
         (FoodSource::Manual, false) => {
@@ -287,7 +287,7 @@ fn state_card_for(draft: Draft, phase: Phase) -> AnyElement {
     let manual: Rc<dyn Fn()> = Rc::new(move || draft.editing.set(Some(Editing::New)));
     let (glyph, danger, title, body, primary): (Icon, bool, String, String, Action) = match &phase {
         Phase::NeedsAccount => (
-            Icon::Sparkle,
+            Icon::Server,
             false,
             strings.setup_title.into(),
             strings.setup_body.into(),

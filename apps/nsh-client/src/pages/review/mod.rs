@@ -353,7 +353,7 @@ fn status_line(draft: Draft) -> impl IntoElement {
             .get()
             .map(|(host, model)| (Icon::Lock, s().sent_to(&host, &model))),
         Phase::Ready if draft.model.with(Option::is_some) && !draft.is_saved_meal() => {
-            Some((Icon::Sparkle, s().estimate_hint.to_owned()))
+            Some((Icon::Utensils, s().estimate_hint.to_owned()))
         }
         _ => None,
     };

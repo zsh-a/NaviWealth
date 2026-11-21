@@ -44,10 +44,10 @@ confirmation; drafts live in SQLite and stay out of backups.
    stay missing and block confirmation; estimates stay marked; a named new
    account is created only on confirm; the consent gate is unchanged.
 4. **Decisions use one tool.** The model calls only `ask_user`, with one
-   to three questions. Each has a stable ID, question text, reason, required
+   to three questions. Each has a stable ID, question text, a reason when useful, required
    flag and up to four choices with IDs, labels and descriptions. Nothing is
    preselected. Choices are staged locally, can be changed, and are submitted
-   together through Submit answers; text and image-only evidence remain valid
+   together through Continue; text and image-only evidence remain valid
    responses. Required questions need an answer or supplemental evidence;
    optional questions may be omitted. Omitting a question is not consent to an
    invented fact. Missing money fields still prevent confirmation.

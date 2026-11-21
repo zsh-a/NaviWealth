@@ -36,26 +36,31 @@ pub fn questions(
                 .gap_2()
                 .child(
                     view()
-                        .gap_1()
+                        .flex_row()
+                        .items_baseline()
+                        .gap_2()
                         .child(
                             text(question.text.clone())
+                                .flex_1()
+                                .min_w(px(0.0))
                                 .typo(Type::Title)
                                 .text_color(color::INK),
                         )
                         .child(current.then(|| {
-                            let status = if question.required {
+                            text(if question.required {
                                 s().capture_required
                             } else {
                                 s().capture_optional
-                            };
-                            let detail = if question.reason.is_empty() {
-                                status.to_owned()
-                            } else {
-                                format!("{status} · {}", question.reason)
-                            };
-                            text(detail).typo(Type::Subhead).text_color(color::MUTED)
+                            })
+                            .typo(Type::Caption)
+                            .text_color(color::MUTED)
                         })),
                 )
+                .child((current && !question.reason.trim().is_empty()).then(|| {
+                    text(question.reason.clone())
+                        .typo(Type::Subhead)
+                        .text_color(color::MUTED)
+                }))
                 .child(open.then(|| {
                     view()
                         .gap_2()
@@ -117,10 +122,5 @@ pub fn questions(
                             .child(checked.then(|| icon(Icon::Check, 20.0, color::INK)))
                         }))
                 }))
-        }))
-        .child(open.then(|| {
-            text(|| s().capture_answer_hint)
-                .typo(Type::Caption)
-                .text_color(color::MUTED)
         }))
 }

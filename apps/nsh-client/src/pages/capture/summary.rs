@@ -349,7 +349,7 @@ fn record_view(
                 .child(
                     text(|| s().estimate_hint)
                         .typo(Type::Subhead)
-                        .text_color(color::CAUTION),
+                        .text_color(color::MUTED),
                 )
                 .into_element()
         }

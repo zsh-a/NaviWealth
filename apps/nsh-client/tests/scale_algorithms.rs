@@ -25,6 +25,12 @@ fn profile_algorithm_choice_is_kept_without_changing_the_body_profile() -> Resul
             .accessibility_state("label:Estimation algorithm, Segal BIA")?
             .selected
     );
+    let range = "text:/^Ages 18–75/";
+    assert!(!app.shows(range));
+    app.press("Compare methods")?;
+    app.wait_for(range)?;
+    app.press("Compare methods")?;
+    app.wait_for_gone(range, GONE)?;
     app.press("label:Estimation algorithm, Wu 2015")?;
     assert!(
         app.screen()

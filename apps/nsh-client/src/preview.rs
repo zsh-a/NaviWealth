@@ -251,10 +251,10 @@ pub fn apply() {
         if route.as_deref() == Some("capture-ask") {
             let input = serde_json::json!({"questions":[{
                 "id":"account", "text":t("Which account paid for lunch?", "这笔午餐从哪个账户支付？"),
-                "reason":t("The entry includes an amount but no payment account.", "已识别金额，还需要确认付款账户。"),
+                "reason":"",
                 "required":true, "options":[
-                    {"id":"wallet","label":t("Wallet", "钱包"),"description":t("Cash payment", "用现金支付")},
-                    {"id":"bank","label":t("Bank card", "银行卡"),"description":t("Paid from a bank account", "从银行账户扣款")}
+                    {"id":"wallet","label":t("Wallet", "钱包"),"description":""},
+                    {"id":"bank","label":t("Bank card", "银行卡"),"description":""}
                 ]
             }]});
             let blocks = serde_json::json!([{"type":"tool_use","id":"preview-ask","name":"ask_user","input":input}]);

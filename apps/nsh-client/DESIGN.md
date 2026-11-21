@@ -19,23 +19,21 @@ AI only to turn text and images into drafts, using the owner's model account.
   in a viewport that ends above the dock and system inset.
 - **Capture:** one bounded conversation
   ([Capture Conversation](../../docs/architecture/capture-conversation.md)). The
-  description or photo is the thread's first message on the right, in an ink
-  pill; the model's turns sit on the left behind a 2 pt iris-to-sky
-  hairline. A turn carries the record summaries inline (the same readable
+  description or photo is the thread's first message on the right on a neutral surface. Results and questions use the full
+  content width. A turn carries the record summaries inline (the same readable
   cards as before), one to three clarifying questions as quiet wells, and —
   while an answer is still wanted — the question's tap-first options as
   chips of known accounts and categories. A turn that revised records
-  collapses, once superseded, to an "Updated n records" badge. While the
-  model works the thread shows shimmering record skeletons with "Reading your
-  entry…"; a failure is a turn with Try again, Open settings and Keep
+  collapses, once superseded, to an "Updated n records" line. While the
+  model works the thread shows a small spinner and a single status line; a failure is a turn with Try again, Open settings and Keep
   previous result. No domain selection before input and no prefilled form
   as the main result. Missing values ask a concrete question; proposed new
   accounts are marked. Multiple records show their count on confirmation.
-  New model decisions use `ask_user`: each question shows its reason and
-  whether an answer is needed, then full-width choices with short descriptions.
+  New model decisions use `ask_user`: each question shows whether an answer is needed and full-width choices. A reason or option
+  description appears when it adds context to the choice.
   The question and its choices are grouped together, with answer controls pinned below.
   No choice is preselected. Tapping stages a choice with a check; tapping again
-  clears it. Pending questions show a labelled Submit answers / 提交答案 button
+  clears it. Pending questions show a labelled Continue / 继续 button
   beneath the options. It enables when the required answers are valid. The composer
   accepts extra text or photos. Selection persists immediately, while
   the model is called only on submission. Historical decisions have no active
@@ -44,11 +42,10 @@ AI only to turn text and images into drafts, using the owner's model account.
   Manual meal/money/weight actions are secondary under one disclosure;
   favorites remain directly available with Undo. Close is a labelled cross,
   separate from Confirm and save; Discard draft is a header action with
-  Undo; closing a nonempty draft reports that the draft is kept and no
-  records were saved.
+  Undo; closing a nonempty draft reports that the draft is kept.
   The first entry opens a compact writing surface under the title. After sending,
   the conversation uses the available height above the live keyboard. Earlier exchanges
-  fold under Earlier messages. Add details opens the reply surface on demand.
+  fold under Earlier messages. Add text or photos opens the reply surface on demand.
   Both writing surfaces group a photo control, the input
   (labelled What would you like to record? / 想记下什么？) and, for ordinary messages, a round send
   button. Input starts at one line (48 pt), grows with its content up to
@@ -241,6 +238,7 @@ AI only to turn text and images into drafts, using the owner's model account.
   Health profile & goals, Devices & connections, Recognition & consent, Data
   & backups, and About. Body profile opens a dedicated editor and the index
   shows completion status. The scale opens that editor directly when needed.
+  Compare methods reveals the scope and calibration notes for all three options.
   Body profile presents three exclusive algorithm rows below the profile,
   each with its scope and limitations. Segal remains the default; Wu 2015 and
   Sun 2003 always carry Experimental. The scale sheet keeps the chosen model
@@ -296,8 +294,7 @@ logged yet", never 0 kcal; a day without meals has no filled bar and no shade.
 
 A warm daylight canvas, white surfaces lifted by soft light, and ink for
 everything that acts. The interface is monochrome; the food's photos carry
-the color. Color is reserved for state: the AI's iris-to-sky light while it
-works, amber past a goal or for estimates to check, red for destructive
+the color. Recognition uses neutral ink. Amber is reserved past a goal or for estimates to check, red for destructive
 actions, green for a passed connection. Data never gets decorative color:
 the macronutrients are three steps of one warm-stone ramp. Dark is a deep
 graphite with white ink, surfaces separated by tone and a hairline.
@@ -309,7 +306,6 @@ graphite with white ink, surfaces separated by tone and a hairline.
 | Decorative / inactive | `FAINT` (tertiary marks such as chevrons, disabled controls and unavailable dates) |
 | Action | `ACTION` (ink), `ACTION_PRESSED`, `ACTION_SHEEN`, `ON_ACTION` |
 | Floating material | `ON_GLASS_MUTED` (dock labels), `GLASS_EDGE` |
-| AI | `AI_FROM` → `AI_TO` (analysis light, estimate marks) |
 | Status | `DANGER(_SOFT)`, `CAUTION(_SOFT)` (past a goal, estimates to check), `POSITIVE` |
 | Data | `PROTEIN` / `CARBS` / `FAT` (dark / middle / light stone), `OTHER`, `TRACK`, `HEAT` (calendar shade) |
 | Media | `ON_MEDIA`, `MEDIA_SCRIM`, `PHOTO_WELL` |
@@ -578,9 +574,9 @@ still.
 | Today | Day's energy changes | The goal arc moves to its new endpoint in 180 ms; the figure eases to its new value | Set at once |
 | All | Toast | Slides up and fades, `slow`; its action (Undo) restores | Shown at once |
 | Meal page | Scrolling | Photo drifts at half speed; the top bar frosts in once the panel slides under it | Bar switches at once |
-| Meal page | Analyzing | The AI's light passes over the photo (2 s loop); placeholders shimmer | No light, no shimmer |
+| Meal page | Analyzing | A spinner accompanies the status caption | Static status caption |
 | Meal page | Results arrive | Rows rise in, staggered; the total eases up | Shown at once |
-| Capture | A turn arrives | It rises 14 pt and fades in, staggered; while the model works record placeholders shimmer | Shown at once |
+| Capture | A turn arrives | It rises 14 pt and fades in, staggered | Shown at once |
 | Segmented | Choice | Raised pill slides to the segment (spring) | Jumps |
 | Sheets | Open / close | Slide from the bottom over a fading scrim; swipe down to close | Appear / disappear |
 | Toggles | Checkbox / switch | Fill `instant`; knob slides `fast` | Instant |
@@ -650,9 +646,8 @@ Home corner actions have localized accessible names and 48 pt touch targets.
 Settings uses Sliders and Records uses Import beside Calendar. Assets has a
 visible Manage text button. Settings rows use semantic members of the same 24 pt, 1.8 pt
 line family: Profile for body profile, Target for daily energy goal, Scale for
-goal weight and scale hardware, Watch for Garmin, Sparkle for recognition and
-CloudLock for encrypted backups. Sparkle and Scale retain their existing glyphs;
-new glyphs share the same round strokes. Financial signs never change ink color.
+goal weight and scale hardware, Watch for Garmin, Server for recognition and
+CloudLock for encrypted backups. Icons share the same round strokes. Financial signs never change ink color.
 
 Weight and body-fat plots use ink and the warm-stone ramp, with the latest
 point marked by a dot and a matching value below. Charts are spaced apart so

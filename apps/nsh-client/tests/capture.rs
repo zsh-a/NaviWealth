@@ -118,7 +118,7 @@ fn account_completion_is_local_durable_and_never_posts_before_confirmation() -> 
     app.wait_for("text:¥35.05")?;
     assert!(app.screen().enabled("Confirm and save")?);
     app.press("label:Close")?;
-    app.wait_for("Draft kept; no records saved")?;
+    app.wait_for("Draft kept")?;
     assert_eq!(stub.requests().len(), 1, "account selection never calls AI");
     assert!(
         navi_finance::repository::transactions(&db)
@@ -177,13 +177,15 @@ fn natural_correction_then_batch_confirmation_is_atomic_and_survives_restart() -
     app.press("label:Send")?;
     app.wait_for("Which account was used?")?;
     assert!(!app.shows("text:/^Confirm and save/"));
-    app.press("Add details")?;
+    app.press("Add text or photos")?;
     app.type_text(
         "label:What would you like to record?",
         "Use Cash; the amount is 32 yuan",
     )?;
     app.press("label:Send")?;
     app.wait_for("text:¥32.00")?;
+    // The second draft sits below the money card in this mixed batch.
+    app.scroll("Edit meal name", nsh_core::geometry::Points(240.0))?;
     app.press("Edit meal name")?;
     app.clear("label:Name")?;
     app.type_text("label:Name", "Lunch noodles")?;
@@ -435,9 +437,9 @@ fn thread_questions_answer_by_tap_and_reopen_keeps_the_conversation() -> Result<
         sheet.bounds.size.height.0 > 700.0,
         "review uses the available phone height"
     );
-    app.wait_for("text:Submit answers")?;
+    app.wait_for("text:Continue")?;
     assert!(
-        !app.screen().enabled("Submit answers")?,
+        !app.screen().enabled("Continue")?,
         "required choice is never preselected"
     );
     assert!(
@@ -451,10 +453,10 @@ fn thread_questions_answer_by_tap_and_reopen_keeps_the_conversation() -> Result<
         1,
         "selection and changing it stay local"
     );
-    assert!(app.screen().enabled("Submit answers")?);
+    assert!(app.screen().enabled("Continue")?);
     assert!(!app.shows("text:/^Confirm and save/"));
     app.press("label:Close")?;
-    app.wait_for("Draft kept; no records saved")?;
+    app.wait_for("Draft kept")?;
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
     let body: String = db
         .query_row("SELECT body FROM capture_drafts", [], |r| r.get(0))
@@ -478,7 +480,7 @@ fn thread_questions_answer_by_tap_and_reopen_keeps_the_conversation() -> Result<
     app.press("label:Review records")?;
     app.wait_for("Which account was used?")?;
     assert!(
-        app.screen().enabled("Submit answers")?,
+        app.screen().enabled("Continue")?,
         "staged selection survives restart"
     );
     assert_eq!(
@@ -486,7 +488,7 @@ fn thread_questions_answer_by_tap_and_reopen_keeps_the_conversation() -> Result<
         1,
         "reopening never resumes the model"
     );
-    app.press("Submit answers")?;
+    app.press("Continue")?;
     app.wait_for("text:¥32.00")?;
     assert!(app.screen().enabled("text:/^Confirm and save/")?);
     assert_eq!(calls.load(Ordering::SeqCst), 2);
@@ -545,7 +547,7 @@ fn image_only_followup_replays_each_view_in_its_original_turn_after_restart() ->
     );
     assert!(stored_meals(dir.path()).is_empty());
     app.press("label:Close")?;
-    app.wait_for("Draft kept; no records saved")?;
+    app.wait_for("Draft kept")?;
     drop(app);
 
     let second = network(200, record_reply(vec![meal_record()]));
@@ -567,14 +569,14 @@ fn image_only_followup_replays_each_view_in_its_original_turn_after_restart() ->
             ImageData::new(detail.get_ref().clone()),
         )]
     });
-    app.press("Add details")?;
+    app.press("Add text or photos")?;
     app.press("Attach image")?;
     app.wait_for("Remove image")?;
     assert!(
-        app.screen().enabled("Submit answers")?,
+        app.screen().enabled("Continue")?,
         "an image-only answer can be sent"
     );
-    app.press("Submit answers")?;
+    app.press("Continue")?;
     app.wait_for("Confirm and save")?;
     assert!(stored_meals(dir.path()).is_empty());
 
@@ -665,7 +667,7 @@ fn failed_tool_continuation_retries_the_submitted_answer_without_duplicate_turns
     app.press("label:Send")?;
     app.wait_for("Which account was used?")?;
     app.press("label:Cash")?;
-    app.press("Submit answers")?;
+    app.press("Continue")?;
     app.wait_for("Open settings…")?;
     assert!(!app.shows("text:/^Confirm and save/"));
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
@@ -736,11 +738,11 @@ fn optional_refinement_can_be_skipped_without_fabricating_an_answer() -> Result<
     app.press("label:Send")?;
     app.wait_for("Any preparation detail to add?")?;
     assert!(
-        app.screen().enabled("Submit answers")?,
+        app.screen().enabled("Continue")?,
         "optional details can be skipped explicitly"
     );
     assert_eq!(calls.load(Ordering::SeqCst), 1);
-    app.press("Submit answers")?;
+    app.press("Continue")?;
     app.wait_for("Confirm and save")?;
     let requests = stub.requests();
     assert_eq!(requests.len(), 2);
@@ -841,7 +843,7 @@ fn unsent_views_can_be_removed_and_four_views_survive_reopen_without_recognition
         "four views fill the draft's image allowance"
     );
     app.press("label:Close")?;
-    app.wait_for("Draft kept; no records saved")?;
+    app.wait_for("Draft kept")?;
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
     let body: String = db
         .query_row("SELECT body FROM capture_drafts", [], |r| r.get(0))

@@ -19,11 +19,10 @@ use crate::{
     nav::{self, Route},
     ui::{
         Btn, Icon, IconBtn, Type, Typo, Variant, chip, color,
-        feedback::{Tone, appear, badge, shimmer, skeleton},
+        feedback::{appear, spinner},
         field::{note, text_input},
         radius,
         sheet::{conversation_sheet, initial_focus, retained},
-        surface::card,
         toast::{show_receipt, show_toast},
         toggle::checkbox_row,
     },

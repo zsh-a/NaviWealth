@@ -1,10 +1,6 @@
 //! The meal's photo as the page's header: full-bleed under the status bar,
 //! drifting slower than the page as it scrolls and stretching when pulled
-//! (both natively, from the scroll offset). While the model works, the AI's
-//! light passes over the photo and a frosted caption says what is
-//! happening; when it is done, the caption lifts and the result is named.
-
-use std::time::Duration;
+//! (both natively, from the scroll offset). A caption shows recognition status.
 
 use nsh_core::{element::AnimatedValue, prelude::*};
 
@@ -12,9 +8,8 @@ use super::draft::{Draft, Phase};
 use crate::{
     i18n::s,
     ui::{
-        Icon, Type, Typo, color,
+        Type, Typo, color,
         feedback::{appear, spinner},
-        icon, motion,
         theme::material,
     },
 };
@@ -38,27 +33,6 @@ pub fn photo_header(draft: Draft, scroll: AnimatedValue) -> impl IntoElement {
 
 fn header(draft: Draft, scroll: AnimatedValue, height: f32) -> impl IntoElement {
     let analyzing = move || draft.phase.get() == Phase::Analyzing;
-    let veil = animated_value(0.0);
-    let scan = animated_value(0.0);
-    effect(move || {
-        let on = analyzing();
-        let still = untracked(reduce_motion);
-        if still {
-            veil.set(if on { 1.0 } else { 0.0 });
-            return;
-        }
-        veil.timing(if on { 1.0 } else { 0.0 }, motion::SLOW, motion::SETTLE);
-        if on {
-            // The effect's next run (the analysis ending) stops the loop.
-            spawn(async move {
-                loop {
-                    scan.set(0.0);
-                    let _ = scan.timing(1.0, 2000.0, Easing::EaseInOut).await;
-                    timer(Duration::from_millis(200)).await;
-                }
-            });
-        }
-    });
     let uri = move || draft.photo.with(|p| p.as_ref().map(|p| p.uri.clone()));
     let wide = [-400.0, 0.0, 1200.0];
     view()
@@ -114,47 +88,12 @@ fn header(draft: Draft, scroll: AnimatedValue, height: f32) -> impl IntoElement 
                 .gradient_to(color::MEDIA_SCRIM.opacity(0.0))
                 .pointer_events(PointerEvents::None),
         )
-        .child(beam(scan, veil, height))
-        .child(caption(draft, veil))
+        .child(when(analyzing, move || caption(draft)))
         .child(result_chip(draft))
 }
 
-/// The AI's light passing over the photo while analyzing.
-fn beam(scan: AnimatedValue, veil: AnimatedValue, height: f32) -> impl IntoElement {
-    let band = (height * 0.5).max(80.0);
-    view()
-        .absolute()
-        .left_0()
-        .right_0()
-        .top_0()
-        .h(px(band))
-        .bind_opacity(&veil)
-        .bind_translate_y(&scan.interpolate(&[0.0, 1.0], &[-band, height]))
-        .bg_linear_to_b()
-        .gradient_from(color::AI_FROM.opacity(0.0))
-        .gradient_via(color::AI_TO.opacity(0.34))
-        .gradient_to(color::AI_FROM.opacity(0.0))
-        .pointer_events(PointerEvents::None)
-}
-
-/// The frosted caption while analyzing.
-fn caption(draft: Draft, veil: AnimatedValue) -> impl IntoElement {
-    let step = signal(0_usize);
-    set_interval(Duration::from_millis(2400), move || {
-        step.update(|step| *step = (*step + 1).min(2));
-    });
-    effect(move || {
-        if draft.phase.get() == Phase::Analyzing {
-            step.set(0);
-        }
-    });
-    let line = move || {
-        if draft.slow.get() {
-            s().still_working
-        } else {
-            s().analyzing_steps[step.get()]
-        }
-    };
+/// A single status line while the estimate is pending.
+fn caption(draft: Draft) -> impl IntoElement {
     view()
         .absolute()
         .left_4()
@@ -168,30 +107,18 @@ fn caption(draft: Draft, veil: AnimatedValue) -> impl IntoElement {
         .rounded(px(20.0))
         .bg(color::MEDIA_SCRIM.opacity(material::MEDIA_OPACITY))
         .backdrop_blur(px(18.0))
-        .bind_opacity(&veil)
-        .bind_translate_y(&veil.interpolate(&[0.0, 1.0], &[10.0, 0.0]))
         .pointer_events(PointerEvents::None)
         .child(spinner(20.0, color::ON_MEDIA))
         .child(
-            view()
-                .flex_1()
-                .gap(px(1.0))
-                .child(
-                    text(|| s().analyzing)
-                        .typo(Type::Headline)
-                        .text_color(color::ON_MEDIA),
-                )
-                .child(dynamic(move || {
-                    let line = line();
-                    untracked(|| {
-                        appear(
-                            0,
-                            text(line)
-                                .typo(Type::Subhead)
-                                .text_color(color::ON_MEDIA.opacity(0.8)),
-                        )
-                    })
-                })),
+            text(move || {
+                if draft.slow.get() {
+                    s().still_working
+                } else {
+                    s().analyzing
+                }
+            })
+            .typo(Type::Body)
+            .text_color(color::ON_MEDIA),
         )
 }
 
@@ -218,7 +145,6 @@ fn result_chip(draft: Draft) -> impl IntoElement {
                     .rounded_full()
                     .bg(color::MEDIA_SCRIM.opacity(material::MEDIA_OPACITY))
                     .backdrop_blur(px(18.0))
-                    .child(icon(Icon::Sparkle, 15.0, color::ON_MEDIA))
                     .child(
                         text(move || s().food_count(draft.foods.with(Vec::len)))
                             .typo(Type::Caption)

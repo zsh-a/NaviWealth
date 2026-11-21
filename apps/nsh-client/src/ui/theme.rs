@@ -3,8 +3,7 @@
 //! "墨与日光 · Ink & Daylight": a warm daylight canvas, white surfaces lifted
 //! by soft light, and ink for everything that acts: buttons, selection,
 //! focus. The interface itself is monochrome so that the food (its photos
-//! and its nutrition colors) carries the color. An iris-to-sky light marks
-//! the moments the AI works. Every color is an `AdaptiveColor`, so light and
+//! and its nutrition colors) carries the color. Every color is an `AdaptiveColor`, so light and
 //! dark (a deep graphite with white ink) switch natively.
 
 use nsh_core::{
@@ -61,9 +60,6 @@ pub mod color {
         light: super::rgba(0xFFFFFFB8).to_hsla(),
         dark: super::rgba(0xFFFFFF20).to_hsla(),
     };
-    /// The AI's light, from iris to sky: analysis, estimates.
-    pub const AI_FROM: AdaptiveColor = c(0x7B61FF, 0x9B87FF);
-    pub const AI_TO: AdaptiveColor = c(0x22B8F0, 0x48C9F5);
 
     /// Destructive actions and errors.
     pub const DANGER: AdaptiveColor = c(0xAE303B, 0xFF6369);
