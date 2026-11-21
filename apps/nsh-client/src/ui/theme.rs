@@ -217,6 +217,20 @@ pub mod shadow {
     pub const NONE: [BoxShadow; 0] = [];
 }
 
+/// Typefaces. The engine resolves a family from the app's registered font
+/// assets first, then the system. Both roles fall back to the platform sans
+/// until the app ships its own faces: put a `.ttf` in the crate's
+/// `assets/` directory, list it with `assets!()`, and set these constants
+/// to its family name — every text picks the change up through
+/// [`Typo`](crate::ui::Typo).
+pub mod font {
+    /// Body, labels and controls.
+    pub const TEXT: &str = "sans-serif";
+    /// The figures: Display and Figure sizes. A face with a tabular-minded
+    /// numeral set earns its keep here first.
+    pub const DISPLAY: &str = "sans-serif";
+}
+
 /// Motion: durations in ms, curves and springs. Reduced motion turns every
 /// one of them off.
 pub mod motion {

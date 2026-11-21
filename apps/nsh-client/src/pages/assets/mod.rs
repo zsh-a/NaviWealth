@@ -16,7 +16,7 @@ use crate::{
     nav::{self, Route},
     ui::{
         Btn, Icon, IconBtn, Type, Typo, Variant, color, icon, radius, space,
-        surface::{group_label, hairline, row_button},
+        surface::{card, group_label, hairline, row_button},
         toast::toast_view,
     },
 };
@@ -53,6 +53,7 @@ pub(super) fn amount_in(
 }
 
 /// One alignment grid for the account and holding sections, including their spoken status.
+/// It sits inside its group's card; the card clips its press wash.
 pub(super) fn asset_row(
     name: String,
     amount: String,
@@ -66,7 +67,7 @@ pub(super) fn asset_row(
     let stacked = move || font_scale() > 1.2 || window().width.0 < 350.0 || long_amount;
     row_button(press)
         .accessibility_label(move || Some(label.clone().into()))
-        .px_0()
+        .px(px(space::CARD))
         .py_2()
         .min_h(px(56.0))
         .gap_3()

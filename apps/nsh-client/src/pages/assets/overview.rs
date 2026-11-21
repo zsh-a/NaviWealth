@@ -35,7 +35,7 @@ pub fn assets_tab() -> impl IntoElement {
                 view()
                     .px(px(space::GUTTER))
                     .pt_safe_area_plus(px(12.0))
-                    .pb_4()
+                    .pb(move || px(crate::pages::home::dock_top_inset() + 12.0))
                     .gap_5()
                     .child(
                         view()
@@ -69,34 +69,32 @@ pub fn assets_tab() -> impl IntoElement {
                         let today = clock::today();
                         untracked(move || {
                             if accounts.is_empty() && portfolio.securities.is_empty() {
-                                return view()
-                                    .gap_3()
-                                    .py_5()
-                                    .child(
-                                        text(|| s().assets_empty)
-                                            .typo(Type::Title)
-                                            .text_color(color::INK),
-                                    )
-                                    .child(
-                                        text(|| s().assets_empty_body)
-                                            .typo(Type::Body)
-                                            .text_color(color::MUTED),
-                                    )
-                                    .child(
-                                        Btn::primary().label(|| s().add_account.into()).on_press(
-                                            move || {
-                                                create.set(true);
-                                                manage.set(true);
-                                            },
+                                return crate::ui::feedback::empty_state(Icon::Wallet, || {
+                                    s().assets_empty.into()
+                                })
+                                .note(|| s().assets_empty_body.into())
+                                .action(
+                                    view()
+                                        .items_center()
+                                        .gap_2()
+                                        .child(
+                                            Btn::primary()
+                                                .label(|| s().add_account.into())
+                                                .on_press(move || {
+                                                    create.set(true);
+                                                    manage.set(true);
+                                                }),
+                                        )
+                                        .child(
+                                            Btn::ghost().label(|| s().add_holding.into()).on_press(
+                                                move || {
+                                                    holding.set(Some(String::new()));
+                                                    manage.set(true);
+                                                },
+                                            ),
                                         ),
-                                    )
-                                    .child(Btn::ghost().label(|| s().add_holding.into()).on_press(
-                                        move || {
-                                            holding.set(Some(String::new()));
-                                            manage.set(true);
-                                        },
-                                    ))
-                                    .into_element();
+                                )
+                                .into_element();
                             }
                             let valued = portfolio.overview_with_rates(&entries, today.0, &rates);
                             let Ok(valued) = valued else {

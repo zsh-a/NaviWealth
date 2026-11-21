@@ -349,10 +349,10 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                 .variant(Variant::Ghost)
                 .on_press(close),
         );
-    let header = view()
-        .gap_2()
-        .child(header)
-        .child(when(move || editing() && first_turn(), composer));
+    // The composer lives at the bottom for the whole task: the first message
+    // and every later correction are typed in the same place, in the thumb
+    // zone, above the keyboard.
+    let header = view().gap_2().child(header);
     let body = view()
         .gap_4()
         .child(dynamic(move || {
@@ -481,6 +481,7 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
         .child(note(move || error.get().map(Into::into), || true));
     let actions = view()
         .gap_2()
+        .child(when(move || editing() && first_turn(), composer))
         .child(when(
             move || editing() && !first_turn() && draft.with(|d| d.status != Status::Analyzing),
             move || {

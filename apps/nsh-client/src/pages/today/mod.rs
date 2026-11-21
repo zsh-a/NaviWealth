@@ -23,8 +23,10 @@ use crate::{
     i18n::s,
     nav::{self, Route},
     ui::{
-        Btn, Icon, IconBtn, Size, Type, Typo, color, icon, sheet::bottom_sheet, space,
-        surface::row_button,
+        Btn, Icon, IconBtn, Size, Type, Typo, color, icon,
+        sheet::bottom_sheet,
+        space,
+        surface::{card, row_button},
     },
 };
 
@@ -35,7 +37,7 @@ pub fn today_tab() -> impl IntoElement {
         view()
             .px(px(space::GUTTER))
             .pt_safe_area_plus(px(10.0))
-            .pb_4()
+            .pb(move || px(crate::pages::home::dock_top_inset() + 12.0))
             // Groups breathe more than their parts: 24 pt between the summary
             // groups, 32 pt before the day's records.
             .gap_6()
@@ -86,18 +88,20 @@ fn setup_row() -> impl IntoElement {
     when(
         || settings::ready_account().is_none(),
         || {
-            row_button(|| nav::push(Route::Settings))
-                .min_h(px(48.0))
-                .px_0()
-                .accessibility_label(|| Some(s().setup_title.into()))
-                .child(icon(Icon::Server, 20.0, color::MUTED))
-                .child(
-                    text(|| s().setup_title)
-                        .flex_1()
-                        .typo(Type::Subhead)
-                        .text_color(color::BODY),
-                )
-                .child(icon(Icon::ChevronRight, 16.0, color::MUTED))
+            card().overflow_hidden().child(
+                row_button(|| nav::push(Route::Settings))
+                    .min_h(px(52.0))
+                    .py_2()
+                    .accessibility_label(|| Some(s().setup_title.into()))
+                    .child(icon(Icon::Server, 20.0, color::MUTED))
+                    .child(
+                        text(|| s().setup_title)
+                            .flex_1()
+                            .typo(Type::Subhead)
+                            .text_color(color::BODY),
+                    )
+                    .child(icon(Icon::ChevronRight, 16.0, color::MUTED)),
+            )
         },
     )
 }

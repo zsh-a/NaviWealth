@@ -108,31 +108,77 @@ pub fn badge(
         )
 }
 
-/// A quiet explanation where content would be: a glyph in a soft circle,
-/// a title and what to do next.
-pub fn empty_state(glyph: Icon, title: impl IntoReactive<SharedString>) -> View {
-    view()
-        .items_center()
-        .gap_4()
-        .px_6()
-        .py_8()
-        .child(
-            view()
-                .size(px(64.0))
-                .rounded_full()
-                .items_center()
-                .justify_center()
-                .bg(color::SURFACE_2)
-                .child(icon(glyph, 28.0, color::INK)),
-        )
-        .child(
-            view().items_center().gap_1().child(
-                text(title)
-                    .typo(Type::Headline)
-                    .text_color(color::INK)
-                    .text_center(),
-            ),
-        )
+/// A quiet explanation where content would be: a glyph in a soft circle, a
+/// title, an optional note and an optional next step. Every page's empty
+/// state is this one figure; chain [`EmptyState::note`] and
+/// [`EmptyState::action`] before finishing.
+pub fn empty_state(glyph: Icon, title: impl Fn() -> SharedString + 'static) -> EmptyState {
+    EmptyState {
+        glyph,
+        title: Box::new(title),
+        note: None,
+        action: None,
+    }
+}
+
+/// The configurable empty state [`empty_state`] returns.
+pub struct EmptyState {
+    glyph: Icon,
+    title: Box<dyn Fn() -> SharedString>,
+    note: Option<Box<dyn Fn() -> SharedString>>,
+    action: Option<AnyElement>,
+}
+
+impl EmptyState {
+    /// A quiet line under the title.
+    pub fn note(mut self, note: impl Fn() -> SharedString + 'static) -> Self {
+        self.note = Some(Box::new(note));
+        self
+    }
+
+    /// The next step, as a button row.
+    pub fn action(mut self, action: impl IntoElement) -> Self {
+        self.action = Some(action.into_element());
+        self
+    }
+}
+
+impl IntoElement for EmptyState {
+    fn into_element(self) -> AnyElement {
+        view()
+            .items_center()
+            .gap_4()
+            .px_6()
+            .py_8()
+            .child(
+                view()
+                    .size(px(64.0))
+                    .rounded_full()
+                    .items_center()
+                    .justify_center()
+                    .bg(color::SURFACE_2)
+                    .child(icon(self.glyph, 28.0, color::INK)),
+            )
+            .child(
+                view()
+                    .items_center()
+                    .gap_1()
+                    .child(
+                        text(self.title)
+                            .typo(Type::Headline)
+                            .text_color(color::INK)
+                            .text_center(),
+                    )
+                    .child(self.note.map(|note| {
+                        text(note)
+                            .typo(Type::Callout)
+                            .text_color(color::MUTED)
+                            .text_center()
+                    })),
+            )
+            .child(self.action)
+            .into_element()
+    }
 }
 
 /// Wraps `child` so it fades in rising a few points when it is made;

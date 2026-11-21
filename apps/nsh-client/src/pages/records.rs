@@ -149,14 +149,13 @@ pub fn records_tab() -> impl IntoElement {
         view()
             .px(px(space::GUTTER))
             .pt_safe_area_plus(px(10.0))
-            .pb_4()
+            .pb(move || px(crate::pages::home::dock_top_inset() + 12.0))
             .gap_5()
             .child(
                 view()
                     .flex_row()
                     .items_center()
-                    .gap_3()
-                    .px(px(4.0))
+                    .gap_2()
                     .pt_2()
                     .child(
                         text(|| s().records)
@@ -167,15 +166,17 @@ pub fn records_tab() -> impl IntoElement {
                             .role(AccessibilityRole::Header),
                     )
                     .child(
-                        IconBtn::new(Icon::Import, || {
-                            crate::i18n::statement_import::title().into()
-                        })
-                        .on_press(|| crate::nav::push(crate::nav::Route::StatementImport)),
-                    )
-                    .child(
                         IconBtn::new(Icon::Calendar, || s().go_to_day.into())
                             .variant(Variant::Ghost)
                             .on_press(move || sheets.jump.set(true)),
+                    )
+                    .child(
+                        // The primary way money is recorded gets words, not
+                        // an icon to guess.
+                        Btn::ghost()
+                            .label(|| crate::i18n::statement_import::title().into())
+                            .on_press(|| crate::nav::push(crate::nav::Route::StatementImport))
+                            .min_h(px(48.0)),
                     ),
             )
             .child(
@@ -200,7 +201,20 @@ pub fn records_tab() -> impl IntoElement {
             .child(
                 when(
                     move || days.with(Vec::is_empty),
-                    || card().child(empty_state(Icon::List, || s().no_records)),
+                    move || {
+                        // The header's 导入账单 already names the import path;
+                        // the empty state offers the one universal entry.
+                        card().child(
+                            empty_state(Icon::List, || s().no_records.into()).action(
+                                Btn::primary()
+                                    .label(|| s().new_entry.into())
+                                    .on_press(move || {
+                                        sheets.capture_draft.set(None);
+                                        sheets.capture.set(true);
+                                    }),
+                            ),
+                        )
+                    },
                 )
                 .otherwise(move || {
                     view()
@@ -347,55 +361,44 @@ fn day_section(records: DayRecords) -> impl IntoElement {
                         .flex_1()
                         .role(AccessibilityRole::Header),
                 )
-                .child(
-                    kcal.clone()
-                        .filter(|_| records.spending.is_none())
-                        .map(|kcal| {
+                .child(weight),
+        )
+        // One meta row under the day's title: spending, intake, each foreign
+        // currency's own line. No negative margins.
+        .child(
+            (records.spending.is_some() || kcal.is_some() || !records.foreign_spending.is_empty())
+                .then(|| {
+                    view()
+                        .flex_row()
+                        .flex_wrap()
+                        .gap_3()
+                        .px(px(4.0))
+                        .child(records.spending.map(|amount| {
+                            text(format!(
+                                "{} ¥{}",
+                                s().spending,
+                                crate::ui::currency::grouped(amount)
+                            ))
+                            .typo(Type::Subhead)
+                            .tabular_nums()
+                            .text_color(color::MUTED)
+                        }))
+                        .child(kcal.map(|kcal| {
                             text(kcal)
                                 .typo(Type::Subhead)
                                 .tabular_nums()
                                 .text_color(color::MUTED)
-                                .number_of_lines(1)
-                        }),
-                )
-                .child(weight),
-        )
-        .child(records.spending.map(|amount| {
-            view()
-                .flex_row()
-                .gap_3()
-                .px(px(4.0))
-                .mt(px(-8.0))
-                .child(
-                    text(format!(
-                        "{} ¥{}",
-                        s().spending,
-                        crate::ui::currency::grouped(amount)
-                    ))
-                    .typo(Type::Subhead)
-                    .tabular_nums()
-                    .text_color(color::MUTED),
-                )
-                .child(kcal.map(|kcal| {
-                    text(kcal)
-                        .typo(Type::Subhead)
-                        .tabular_nums()
-                        .text_color(color::MUTED)
-                }))
-        }))
-        .children(
-            records
-                .foreign_spending
-                .into_iter()
-                .map(|(currency, amount)| {
-                    text(format!(
-                        "{} {}",
-                        s().spending,
-                        crate::ui::currency::format(amount, currency)
-                    ))
-                    .typo(Type::Subhead)
-                    .tabular_nums()
-                    .text_color(color::MUTED)
+                        }))
+                        .children(records.foreign_spending.iter().map(|(currency, amount)| {
+                            text(format!(
+                                "{} {}",
+                                s().spending,
+                                crate::ui::currency::format(*amount, *currency)
+                            ))
+                            .typo(Type::Subhead)
+                            .tabular_nums()
+                            .text_color(color::MUTED)
+                        }))
                 }),
         )
         .child((!records.entries.is_empty()).then(|| {

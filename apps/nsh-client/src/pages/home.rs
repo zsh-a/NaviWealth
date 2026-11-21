@@ -4,7 +4,11 @@
 //! tab can open. Pages pushed over the home cover the bar.
 
 use nsh_base::{nav_page, tab, tabs};
-use nsh_core::{Haptic, element::Screen, prelude::*};
+use nsh_core::{
+    Haptic,
+    element::{Easing, Screen},
+    prelude::*,
+};
 
 use super::{
     capture::capture_editor,
@@ -26,6 +30,7 @@ use crate::{
     ui::{
         Icon, IconBtn, Type, Typo, Variant, color, icon,
         material::{self, Glass},
+        motion,
         sheet::{bottom_sheet, retained, task_host_with_keyboard},
         space,
         toast::{show_toast, toast_host},
@@ -44,7 +49,7 @@ enum BodyPanel {
 }
 
 /// Top edge of the dock, measured from the bottom of the home surface.
-fn dock_top_inset() -> f32 {
+pub(crate) fn dock_top_inset() -> f32 {
     DOCK + DOCK_GAP + safe_area().bottom.0
 }
 
@@ -234,12 +239,28 @@ fn tab_name(tab: Tab) -> &'static str {
     }
 }
 
-/// A tab's content, laid out only while it is chosen.
+/// A tab's content, laid out only while it is chosen. Content scrolls
+/// beneath the glass dock; the tab's tail keeps its own clearance. A chosen
+/// tab fades in over the previous one, quick enough to read as a state
+/// change rather than a wait.
 fn pane(tab: Tab, content: impl IntoElement) -> impl IntoElement {
+    let shown = animated_value(1.0);
+    let mounted = stored(false);
+    effect(move || {
+        if nav::tab() == tab && !mounted.replace(true) {
+            return; // The first tab is already on screen; it does not fade in.
+        }
+        if nav::tab() == tab && !reduce_motion() {
+            shown.set(0.0);
+            shown.timing(1.0, motion::FAST, Easing::EaseOut);
+        } else if nav::tab() == tab {
+            shown.set(1.0);
+        }
+    });
     view()
         .absolute()
         .inset_0()
-        .bottom(|| px(dock_top_inset() + 8.0))
+        .bind_opacity(&shown)
         .style_when(move || nav::tab() != tab, |s| s.hidden())
         .accessibility_elements_hidden(move || nav::tab() != tab)
         .child(content)

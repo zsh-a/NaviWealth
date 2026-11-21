@@ -26,7 +26,7 @@ use crate::{
     i18n::s,
     nav::{self, Tab},
     ui::{
-        Icon, IconBtn, Type, Typo, color,
+        Icon, IconBtn, Type, Typo, chip, color,
         figures::{Scale, stat},
         segmented::{Segment, segmented},
         space,
@@ -58,7 +58,7 @@ pub fn review_tab() -> impl IntoElement {
         view()
             .px(px(space::GUTTER))
             .pt_safe_area_plus(px(10.0))
-            .pb_4()
+            .pb(move || px(crate::pages::home::dock_top_inset() + 12.0))
             .gap_4()
             .child(
                 text(|| s().review)
@@ -85,8 +85,8 @@ pub fn review_tab() -> impl IntoElement {
             ))
             .child(super::net_worth_review::net_worth_section(days))
             .child(weight_card(days))
-            .child(super::review_note::note_editor(days))
-            .child(recovery_card(days)),
+            .child(recovery_card(days))
+            .child(super::review_note::note_editor(days)),
     )
 }
 
@@ -323,9 +323,8 @@ fn weight_card(days: Memo<Vec<Day>>) -> impl IntoElement {
     when(
         move || latest().is_some(),
         move || {
-            view()
-                .px(px(4.0))
-                .pt_2()
+            card()
+                .p(px(space::CARD))
                 .gap_3()
                 .child(label(|| s().weight_week))
                 .child(stat(
@@ -333,14 +332,21 @@ fn weight_card(days: Memo<Vec<Day>>) -> impl IntoElement {
                     || "kg".to_owned(),
                     Scale::Tile,
                 ))
-                .child(segmented(
-                    vec![
-                        Segment::new(WeightRange::D30, || s().range_30d.into()),
-                        Segment::new(WeightRange::D90, || s().range_90d.into()),
-                    ],
-                    move || range.get(),
-                    move |r| range.set(r),
-                ))
+                .child(
+                    view()
+                        .flex_row()
+                        .gap_2()
+                        .child(chip(
+                            || s().range_30d.into(),
+                            move || range.get() == WeightRange::D30,
+                            move || range.set(WeightRange::D30),
+                        ))
+                        .child(chip(
+                            || s().range_90d.into(),
+                            move || range.get() == WeightRange::D90,
+                            move || range.set(WeightRange::D90),
+                        )),
+                )
                 .child(dynamic(move || {
                     let last = days.with(|d| d[d.len() - 1]).min(clock::today());
                     let days_span = range.get().days();
@@ -394,13 +400,15 @@ fn weight_card(days: Memo<Vec<Day>>) -> impl IntoElement {
                                     let label = navi_health::bodycomp::Algorithm::from_id(&model)
                                         .map(crate::scale::algorithm_name)
                                         .unwrap_or(s().scale_estimate);
+                                    // The fat curves stay a step lighter than the
+                                    // weight line: one ink family, depth instead of hue.
                                     health_trend(
                                         label.into(),
                                         first,
                                         last,
                                         points.into_iter().map(|(d, v)| (d, Some(v))).collect(),
                                         None,
-                                        color::CARBS,
+                                        color::INK.opacity(0.55),
                                         |v| format!("{v:.1}%"),
                                     )
                                 }))
@@ -445,8 +453,9 @@ fn recovery_card(days: Memo<Vec<Day>>) -> impl IntoElement {
     when(
         move || averages.with(|a| a.days > 0),
         move || {
-            view()
-                .gap(px(10.0))
+            card()
+                .p(px(space::CARD))
+                .gap_2()
                 .child(
                     view()
                         .flex_row()

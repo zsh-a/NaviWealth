@@ -189,7 +189,7 @@ pub(super) static STRINGS: Strings = Strings {
     error_transaction_date: "Enter a valid date and time, such as 2026-11-14 and 18:30.",
     error_account: "Choose an account or enter a name of 1–40 characters without colons.",
     error_transfer: "Choose two different accounts for a transfer.",
-    error_transaction: "This entry cannot be edited in the simple form.",
+    error_transaction: "This entry can't be edited here yet.",
     error_transaction_storage: "Could not save changes. Check device storage and try again.",
     finance_discard_body: "Your transaction changes have not been saved.",
     storage_unavailable: "Local data unavailable",

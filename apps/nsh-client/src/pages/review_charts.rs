@@ -34,7 +34,9 @@ pub fn chart(days: Vec<Day>, kcal: Vec<Option<f64>>, goal: Option<f64>) -> impl 
         let color = match (kcal, goal) {
             _ if *day == today => color::INK,
             (Some(k), Some(g)) if *k > g => color::CAUTION,
-            _ => color::LINE_STRONG,
+            // Ordinary days sit one ink step below today's full bar; a
+            // deeper fill would read as emphasis the number does not carry.
+            _ => color::INK.opacity(0.42),
         };
         let reading = kcal.map_or_else(
             || s().no_records.to_owned(),
@@ -105,7 +107,7 @@ pub fn chart(days: Vec<Day>, kcal: Vec<Option<f64>>, goal: Option<f64>) -> impl 
                         .gap_1()
                         .children(
                             (0..30)
-                                .map(|_| view().flex_1().h(px(1.0)).bg(color::MUTED.opacity(0.5))),
+                                .map(|_| view().flex_1().h(px(1.5)).bg(color::MUTED.opacity(0.5))),
                         )
                         .pointer_events(PointerEvents::None)
                 })),

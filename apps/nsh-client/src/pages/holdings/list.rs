@@ -25,7 +25,7 @@ pub fn section(closed: bool) -> impl IntoElement {
                 };
             }
             view()
-                .gap_1()
+                .gap_2()
                 .child((!closed).then(|| {
                     text(|| s().holdings)
                         .typo(Type::Subhead)
@@ -33,26 +33,32 @@ pub fn section(closed: bool) -> impl IntoElement {
                         .text_color(color::MUTED)
                         .role(AccessibilityRole::Header)
                 }))
-                .children(positions.into_iter().map(|(sec, p)| {
-                    let id = sec.id.clone();
-                    let status = if closed {
-                        s().holding_closed.into()
-                    } else {
-                        p.quote
-                            .as_ref()
-                            .map(|q| quote_caption(q, &sources, false))
-                            .unwrap_or_else(|| s().unpriced.into())
-                    };
-                    let value = p.value.unwrap_or(p.cost);
-                    super::super::assets::asset_row(
-                        sec.name.clone(),
-                        crate::ui::currency::format(value, sec.currency()),
-                        status,
-                        true,
-                        Icon::Chart,
-                        move || nav::push(Route::Holding(id.clone())),
-                    )
-                }))
+                .child(
+                    card()
+                        .overflow_hidden()
+                        .children(positions.into_iter().enumerate().map(|(index, (sec, p))| {
+                            let id = sec.id.clone();
+                            let status = if closed {
+                                s().holding_closed.into()
+                            } else {
+                                p.quote
+                                    .as_ref()
+                                    .map(|q| quote_caption(q, &sources, false))
+                                    .unwrap_or_else(|| s().unpriced.into())
+                            };
+                            let value = p.value.unwrap_or(p.cost);
+                            view()
+                                .child((index > 0).then(|| hairline(space::CARD)))
+                                .child(super::super::assets::asset_row(
+                                    sec.name.clone(),
+                                    crate::ui::currency::format(value, sec.currency()),
+                                    status,
+                                    true,
+                                    Icon::Chart,
+                                    move || nav::push(Route::Holding(id.clone())),
+                                ))
+                        })),
+                )
                 .into_element()
         })
     })

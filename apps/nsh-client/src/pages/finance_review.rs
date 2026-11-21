@@ -160,7 +160,7 @@ pub fn spending_section(
                                             )
                                             .child(
                                                 view()
-                                                    .h(px(3.0))
+                                                    .h(px(4.0))
                                                     .flex_row()
                                                     .rounded_full()
                                                     .overflow_hidden()
@@ -171,7 +171,9 @@ pub fn spending_section(
                                                             .h_full()
                                                             .basis(px(0.0))
                                                             .flex_grow(share)
-                                                            .bg(color::CARBS),
+                                                            // Ink, not the macro ramp: money
+                                                            // shares are data, not nutrition.
+                                                            .bg(color::INK.opacity(0.5)),
                                                     )
                                                     .child(
                                                         view()

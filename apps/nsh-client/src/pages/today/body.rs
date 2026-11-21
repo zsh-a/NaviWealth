@@ -12,6 +12,7 @@ use crate::{
         figures::{Scale, stat},
         icon,
         sheet::task_sheet,
+        space,
         surface::{HAIRLINE, disclosure, row_button},
     },
 };
@@ -70,7 +71,7 @@ pub fn summary(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
     })
     .flex_col()
     .items_stretch()
-    .px_0()
+    .px(px(space::CARD))
     .py_2()
     .gap_3()
     .min_w(px(0.0))

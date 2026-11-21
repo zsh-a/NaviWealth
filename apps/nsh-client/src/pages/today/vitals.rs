@@ -12,8 +12,8 @@ use crate::{
     ui::{
         Icon, Type, Typo, color,
         figures::{Scale, stat},
-        icon,
-        surface::HAIRLINE,
+        icon, space,
+        surface::{HAIRLINE, card, hairline},
         theme::{motion, radius},
     },
 };
@@ -30,64 +30,68 @@ pub fn vitals(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
             nav::push(Route::Settings);
         }
     };
-    view()
-        .gap_4()
+    card()
+        .overflow_hidden()
         .child(
             view()
                 .test_id("body-summary")
                 .child(super::body::summary(day)),
         )
         .child(when(has_garmin, move || {
-            view()
-                .test_id("garmin-vitals")
-                .flex_row()
-                .items_stretch()
-                .style_when(|| font_scale() > 1.2, |s| s.flex_col())
-                .child(tile(
-                    Icon::Moon,
-                    || s().sleep,
-                    move || {
-                        summary.with(|d| {
-                            d.as_ref()
-                                .and_then(|d| d.sleep_seconds)
-                                .map(|v| s().sleep_time(v))
-                        })
-                    },
-                    || "",
-                    move || {
-                        summary
-                            .with(|d| {
+            view().child(hairline(space::CARD)).child(
+                view()
+                    .test_id("garmin-vitals")
+                    .flex_row()
+                    .items_stretch()
+                    .px(px(space::CARD - 6.0))
+                    .py(px(4.0))
+                    .style_when(|| font_scale() > 1.2, |s| s.flex_col())
+                    .child(tile(
+                        Icon::Moon,
+                        || s().sleep,
+                        move || {
+                            summary.with(|d| {
                                 d.as_ref()
-                                    .and_then(|d| d.sleep_score)
-                                    .map(|v| s().sleep_score(v))
+                                    .and_then(|d| d.sleep_seconds)
+                                    .map(|v| s().sleep_time(v))
                             })
-                            .unwrap_or_default()
-                    },
-                    open_garmin,
-                ))
-                .child(divider())
-                .child(tile(
-                    Icon::Bolt,
-                    || s().body_battery,
-                    move || {
-                        summary.with(|d| {
-                            d.as_ref()
-                                .and_then(|d| d.body_battery_high)
-                                .map(|v| v.to_string())
-                        })
-                    },
-                    || "",
-                    move || {
-                        summary
-                            .with(|d| {
+                        },
+                        || "",
+                        move || {
+                            summary
+                                .with(|d| {
+                                    d.as_ref()
+                                        .and_then(|d| d.sleep_score)
+                                        .map(|v| s().sleep_score(v))
+                                })
+                                .unwrap_or_default()
+                        },
+                        open_garmin,
+                    ))
+                    .child(divider())
+                    .child(tile(
+                        Icon::Bolt,
+                        || s().body_battery,
+                        move || {
+                            summary.with(|d| {
                                 d.as_ref()
-                                    .and_then(|d| d.resting_hr)
-                                    .map(|v| format!("{} {v}", s().resting))
+                                    .and_then(|d| d.body_battery_high)
+                                    .map(|v| v.to_string())
                             })
-                            .unwrap_or_default()
-                    },
-                    open_garmin,
-                ))
+                        },
+                        || "",
+                        move || {
+                            summary
+                                .with(|d| {
+                                    d.as_ref()
+                                        .and_then(|d| d.resting_hr)
+                                        .map(|v| format!("{} {v}", s().resting))
+                                })
+                                .unwrap_or_default()
+                        },
+                        open_garmin,
+                    )),
+            )
         }))
 }
 

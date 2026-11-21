@@ -26,10 +26,17 @@ pub use theme::{Type, color, motion, radius, space};
 
 /// Text roles on any styled element ([`Type`]).
 pub trait Typo: Styled + Sized {
-    /// Sets the size, line height, weight and tracking of `role`.
+    /// Sets the family, size, line height, weight and tracking of `role`.
     fn typo(self, role: Type) -> Self {
         let (size, line, weight, tracking) = role.metrics();
+        // The figures speak in their own voice, once the app ships one;
+        // everything else keeps the text face.
+        let family = match role {
+            Type::Display | Type::Figure => theme::font::DISPLAY,
+            _ => theme::font::TEXT,
+        };
         let styled = self
+            .font_family(family)
             .text_size(px(size))
             .line_height(LineHeight::Points(px(line)))
             .font_weight(FontWeight(weight));

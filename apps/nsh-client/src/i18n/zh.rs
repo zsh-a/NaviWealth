@@ -189,7 +189,7 @@ pub(super) static STRINGS: Strings = Strings {
     error_transaction_date: "请输入有效的日期和时间，例如 2026-11-14 和 18:30。",
     error_account: "请选择账户，或填写 1–40 字的账户名称，不含冒号。",
     error_transfer: "转出和转入账户不能相同。",
-    error_transaction: "这笔账目暂不支持在简易表单中编辑。",
+    error_transaction: "这笔账目暂不支持在此编辑。",
     error_transaction_storage: "未能保存修改。请检查设备存储空间后重试。",
     finance_discard_body: "这笔账目的修改尚未保存。",
     storage_unavailable: "无法打开本地数据",

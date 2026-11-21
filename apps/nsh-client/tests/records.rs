@@ -67,6 +67,10 @@ fn today_summarizes_spending_with_its_records_at_large_text() -> Result<(), Stri
     app.wait_for("label:今日支出, ¥1,234.56")?;
     app.press("label:记录")?;
     app.wait_for("label:/^Initial funds, ¥100,000.00/")?;
+    // Content scrolls beneath the glass dock; at large text the day's card
+    // reaches under it. Bring the row clear of the dock before pressing, as
+    // a finger would after a small scroll.
+    app.scroll("label:/^Groceries, −¥1,234.56/", Points(120.0))?;
     app.press("label:/^Groceries, −¥1,234.56/")?;
     app.wait_for("label:金额")?;
     app.wait_for("1234.56")?;

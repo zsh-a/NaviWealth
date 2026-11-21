@@ -271,8 +271,10 @@ fn question_turn(
         .px(px(14.0))
         .py(px(9.0))
         .child(
+            // Headline, not Title: the model's question must not shout over
+            // the owner's own words beside it.
             text(question.text.clone())
-                .typo(Type::Title)
+                .typo(Type::Headline)
                 .text_color(color::INK),
         )
         .into_element();
