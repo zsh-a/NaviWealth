@@ -132,8 +132,10 @@ pub mod size {
 
 /// Translucent layers; content cards and fields remain opaque.
 pub mod material {
-    pub const DOCK_OPACITY: f32 = 0.80;
-    pub const DOCK_BLUR: f32 = 20.0;
+    /// Light enough that the page keeps moving under the dock; the dock's
+    /// own text tints keep their contrast on the mix.
+    pub const DOCK_OPACITY: f32 = 0.72;
+    pub const DOCK_BLUR: f32 = 24.0;
     /// Readable even over an entirely white photo, with or without blur.
     pub const MEDIA_OPACITY: f32 = 0.64;
     pub const MEDIA_PRESSED_OPACITY: f32 = 0.74;
@@ -206,10 +208,11 @@ pub mod shadow {
         layer(2.0, 6.0, 0.0, 0x0A0A0B1F),
         layer(8.0, 20.0, -6.0, 0x0A0A0B30),
     ];
-    /// A narrow floating navigation surface.
+    /// A narrow floating navigation surface. The spread shadow carries the
+    /// "off the page" lift the glass alone cannot say.
     pub const DOCK: [BoxShadow; 2] = [
-        layer(1.0, 3.0, 0.0, 0x1A14080A),
-        layer(5.0, 18.0, -5.0, 0x1A14081F),
+        layer(2.0, 4.0, 0.0, 0x0A0A0B2E),
+        layer(8.0, 28.0, -6.0, 0x0A0A0B45),
     ];
     /// The selected segment on its track.
     pub const SEGMENT: [BoxShadow; 1] = [layer(2.0, 6.0, 0.0, 0x1A140814)];

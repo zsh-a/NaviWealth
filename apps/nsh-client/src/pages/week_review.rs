@@ -14,7 +14,7 @@ use nsh_core::prelude::*;
 use super::{
     home::Sheets,
     review_calendar::{Pick, calendar, month_days},
-    review_charts::{chart, health_trend, macros},
+    review_charts::{chart, health_trend},
 };
 use crate::{
     data::{body_metrics, clock, garmin, meals, settings, weights},
@@ -27,7 +27,8 @@ use crate::{
     nav::{self, Tab},
     ui::{
         Icon, IconBtn, Type, Typo, chip, color,
-        figures::{Scale, stat},
+        feedback::appear,
+        figures::{Scale, counted, macro_tiles, stat},
         segmented::{Segment, segmented},
         space,
         surface::card,
@@ -59,7 +60,8 @@ pub fn review_tab() -> impl IntoElement {
             .px(px(space::GUTTER))
             .pt_safe_area_plus(px(10.0))
             .pb(move || px(crate::pages::home::dock_top_inset() + 12.0))
-            .gap_4()
+            // Sections breathe at 24: the page reads as chapters, not a stack.
+            .gap(px(24.0))
             .child(
                 text(|| s().review)
                     .typo(Type::LargeTitle)
@@ -121,9 +123,11 @@ fn header(period: Signal<Period>, back: Signal<i32>, days: Memo<Vec<Day>>) -> im
                 })
                 .flex_1()
                 .text_center()
-                .typo(Type::Subhead)
+                // The period switcher is navigation, not metadata: it reads
+                // like one, with the touch targets its chevrons already have.
+                .typo(Type::Headline)
                 .tabular_nums()
-                .text_color(color::BODY),
+                .text_color(color::INK),
             )
             .child(
                 IconBtn::new(Icon::ChevronRight, move || {
@@ -220,7 +224,12 @@ fn intake_card(period: Signal<Period>, days: Memo<Vec<Day>>) -> impl IntoElement
         .child(
             view()
                 .gap(px(6.0))
-                .child(label(|| s().daily_intake))
+                // The card's title speaks in the page's voice, not a caption's.
+                .child(
+                    text(|| s().daily_intake)
+                        .typo(Type::Headline)
+                        .text_color(color::INK),
+                )
                 .child(when(
                     move || average().is_some(),
                     move || {
@@ -274,11 +283,16 @@ fn intake_card(period: Signal<Period>, days: Memo<Vec<Day>>) -> impl IntoElement
                                         nav::select(Tab::Records);
                                         sheets.jump_to.set(Some(day));
                                     });
-                                    calendar(
-                                        month_days(&days, &kcal, &weighed),
-                                        goal,
-                                        start,
-                                        Some(pick),
+                                    // The calendar fades in on arrival, the
+                                    // same entrance the bars grow with.
+                                    appear(
+                                        0,
+                                        calendar(
+                                            month_days(&days, &kcal, &weighed),
+                                            goal,
+                                            start,
+                                            Some(pick),
+                                        ),
                                     )
                                     .into_element()
                                 })
@@ -286,7 +300,31 @@ fn intake_card(period: Signal<Period>, days: Memo<Vec<Day>>) -> impl IntoElement
                                 untracked(move || chart(days, kcal, goal).into_element())
                             }
                         }))
-                        .child(macros(intake))
+                        // The macros speak the meal preview's language; the
+                        // small nutrients fold into one quiet line.
+                        .child(macro_tiles(
+                            [|| s().protein, || s().carbs, || s().fat],
+                            move || intake.with(|i| i.average.unwrap_or_default()),
+                            move || intake.with(|i| i.average.is_some()),
+                        ))
+                        .child(when(
+                            move || {
+                                intake.with(|i| i.average.as_ref().and_then(|a| a.extra).is_some())
+                            },
+                            move || {
+                                text(move || {
+                                    let extra = intake
+                                        .with(|i| i.average.as_ref().and_then(|a| a.extra))
+                                        .unwrap_or_default();
+                                    // The average cannot know each day's food
+                                    // completeness; it claims neither way.
+                                    s().extras_line(&extra, true)
+                                })
+                                .typo(Type::Caption)
+                                .tabular_nums()
+                                .text_color(color::MUTED)
+                            },
+                        ))
                 },
             )
             .otherwise(|| {
@@ -320,17 +358,24 @@ fn weight_card(days: Memo<Vec<Day>>) -> impl IntoElement {
         weights::window(last, last.days_since(first) + 1)
     });
     let latest = move || entries.with(|e| e.last().copied());
+    // The card's lead figure rolls to each new reading instead of jumping;
+    // it lives here so an edit animates across the card's lifetime.
+    let shown = counted(move || latest().map(|w| w.kg).unwrap_or(0.0));
     when(
         move || latest().is_some(),
         move || {
             card()
                 .p(px(space::CARD))
                 .gap_3()
-                .child(label(|| s().weight_week))
+                .child(
+                    text(|| s().weight_week)
+                        .typo(Type::Headline)
+                        .text_color(color::INK),
+                )
                 .child(stat(
-                    move || latest().map(|w| s().kg(w.kg)),
+                    move || latest().is_some().then(|| s().kg(shown.get())),
                     || "kg".to_owned(),
-                    Scale::Tile,
+                    Scale::Section,
                 ))
                 .child(
                     view()
@@ -456,6 +501,11 @@ fn recovery_card(days: Memo<Vec<Day>>) -> impl IntoElement {
             card()
                 .p(px(space::CARD))
                 .gap_2()
+                .child(
+                    text(|| s().recovery)
+                        .typo(Type::Headline)
+                        .text_color(color::INK),
+                )
                 .child(
                     view()
                         .flex_row()

@@ -44,11 +44,39 @@ pub fn counted(value: impl Fn() -> f64 + 'static) -> Signal<f64> {
     shown
 }
 
+/// The fraction a figure has grown to, 0 rising to 1 on its entrance
+/// (`delay_ms` after it is made, a few points apart between siblings). It
+/// starts at 1 with reduced motion.
+pub fn grown(delay_ms: u32) -> Signal<f32> {
+    let rise = signal(if reduce_motion() { 1.0 } else { 0.0 });
+    if !reduce_motion() {
+        spawn(async move {
+            if delay_ms > 0 {
+                timer(Duration::from_millis(u64::from(delay_ms))).await;
+            }
+            let started = nsh_core::time::now();
+            loop {
+                timer(Duration::from_millis(16)).await;
+                let t =
+                    (started.elapsed().as_secs_f64() * 1000.0 / f64::from(motion::SLOW)).min(1.0);
+                let eased = 1.0 - (1.0 - t).powi(3);
+                rise.set(eased as f32);
+                if t >= 1.0 {
+                    break;
+                }
+            }
+        });
+    }
+    rise
+}
+
 /// How large a [`stat`] is.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Scale {
-    /// The one headline number of a card or page.
+    /// The one headline number of a page.
     Hero,
+    /// A card's lead figure, one step under the page's hero.
+    Section,
     /// A number among others in a row or grid.
     Tile,
 }
@@ -57,13 +85,14 @@ impl Scale {
     fn number(self) -> Type {
         match self {
             Scale::Hero => Type::Display,
+            Scale::Section => Type::LargeTitle,
             Scale::Tile => Type::Figure,
         }
     }
 
     fn unit(self) -> Type {
         match self {
-            Scale::Hero => Type::Callout,
+            Scale::Hero | Scale::Section => Type::Callout,
             Scale::Tile => Type::Caption,
         }
     }

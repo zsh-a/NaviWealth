@@ -386,6 +386,7 @@ pub struct Strings {
     pub intake: &'static str,
     pub trend_average: &'static str,
     pub weight_week: &'static str,
+    pub recovery: &'static str,
     pub avg_sleep: &'static str,
     pub no_week_data: &'static str,
     pub webdav_url: &'static str,

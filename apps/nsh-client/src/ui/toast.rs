@@ -15,6 +15,8 @@ use super::{
 
 /// How long a message stays.
 pub const SHOWN_FOR: Duration = Duration::from_millis(4500);
+/// How long its exit takes before the state lets go of it.
+const EXIT_FOR: Duration = Duration::from_millis(220);
 
 #[derive(Clone, Default, PartialEq)]
 struct Message {
@@ -22,6 +24,8 @@ struct Message {
     text: SharedString,
     action: Option<SharedString>,
     keep_on_new_task: bool,
+    /// Leaving: the bubble fades and sinks before the state removes it.
+    leaving: bool,
 }
 
 #[derive(Clone, Default, PartialEq)]
@@ -68,11 +72,36 @@ fn show(
             text,
             action: label,
             keep_on_new_task,
+            leaving: false,
         });
     });
 }
 
+/// Begins the exit: the bubble fades and sinks, then the state lets go.
+/// An action offered stays tappable until the removal lands.
 fn dismiss(id: u64) {
+    let leaving =
+        state().with_untracked(|s| s.current.as_ref().is_some_and(|m| m.id == id && !m.leaving));
+    if !leaving {
+        return;
+    }
+    if reduce_motion() {
+        remove(id);
+        return;
+    }
+    state().update(|state| {
+        if let Some(message) = state.current.as_mut().filter(|m| m.id == id) {
+            message.leaving = true;
+        }
+    });
+    spawn(async move {
+        timer(EXIT_FOR).await;
+        remove(id);
+    });
+}
+
+/// Removes the message at once: its action ran, or motion is reduced.
+fn remove(id: u64) {
     if state().with_untracked(|s| s.current.as_ref().is_some_and(|m| m.id == id)) {
         ACTION.with(|slot| slot.borrow_mut().take());
         state().update(|state| state.current = None);
@@ -81,6 +110,8 @@ fn dismiss(id: u64) {
 
 /// A new task retires informational notices and old receipts. An offered Undo action
 /// keeps its normal lifetime so opening a sheet cannot silently take it away.
+/// The removal is instant: the new surface takes over without a lingering
+/// bubble fading behind it.
 pub fn clear_notice() {
     let id = state().with_untracked(|s| {
         s.current
@@ -89,7 +120,7 @@ pub fn clear_notice() {
             .map(|m| m.id)
     });
     if let Some(id) = id {
-        dismiss(id);
+        remove(id);
     }
 }
 
@@ -134,6 +165,16 @@ fn bubble(message: Message) -> impl IntoElement {
         shown.timing(1.0, motion::SLOW, Easing::EaseOut);
     }
     let id = message.id;
+    // Leaving reverses the entrance on the same bound values: the bubble
+    // sinks the few points it rose and fades before the state removes it.
+    let leaving = stored(message.leaving);
+    effect(move || {
+        let leaving_now =
+            state().with(|s| s.current.as_ref().is_some_and(|m| m.id == id && m.leaving));
+        if leaving_now && !leaving.replace(true) && !still {
+            shown.timing(0.0, motion::FAST, Easing::EaseIn);
+        }
+    });
     view()
         .bind_opacity(&shown)
         .bind_translate_y(&shown.interpolate(&[0.0, 1.0], &[16.0, 0.0]))

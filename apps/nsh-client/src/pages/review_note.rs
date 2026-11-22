@@ -3,10 +3,7 @@ use crate::{
     data::notes,
     domain::meal::Day,
     i18n::s,
-    ui::{
-        Type, Typo, color,
-        field::{field, text_input},
-    },
+    ui::{Type, Typo, color, field::text_input, space, surface::card},
 };
 use nsh_core::prelude::*;
 
@@ -17,8 +14,16 @@ pub fn note_editor(days: Memo<Vec<Day>>) -> impl IntoElement {
             let entries = notes::between(first, last);
             let (day, initial) = entries.last().cloned().unwrap_or((last, String::new()));
             let value = signal(initial);
-            view()
+            // The note closes the page in the cards' own language: a title,
+            // the period's earlier notes, and one quiet well to write in.
+            card()
+                .p(px(space::CARD))
                 .gap_3()
+                .child(
+                    text(move || format!("{} · {}", s().review_note, s().long_date(day)))
+                        .typo(Type::Headline)
+                        .text_color(color::INK),
+                )
                 .children(
                     entries
                         .into_iter()
@@ -29,8 +34,7 @@ pub fn note_editor(days: Memo<Vec<Day>>) -> impl IntoElement {
                                 .text_color(color::MUTED)
                         }),
                 )
-                .child(field(
-                    move || format!("{} · {}", s().review_note, s().long_date(day)),
+                .child(
                     text_input(value)
                         .label(|| s().review_note)
                         .placeholder(|| s().review_note_hint)
@@ -38,7 +42,7 @@ pub fn note_editor(days: Memo<Vec<Day>>) -> impl IntoElement {
                             value.set(text.to_owned());
                             notes::set(day, text);
                         }),
-                ))
+                )
         })
     })
 }

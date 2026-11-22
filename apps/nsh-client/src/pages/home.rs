@@ -246,24 +246,45 @@ fn tab_name(tab: Tab) -> &'static str {
 fn pane(tab: Tab, content: impl IntoElement) -> impl IntoElement {
     let shown = animated_value(1.0);
     let mounted = stored(false);
+    let was_index = stored(untracked(|| tab_index(nav::tab())));
+    // The incoming pane arrives from where the user went: right for a step
+    // right, left for a step left, so the tabs read as places on one line.
+    let slide = animated_value(0.0);
     effect(move || {
-        if nav::tab() == tab && !mounted.replace(true) {
-            return; // The first tab is already on screen; it does not fade in.
+        let now = nav::tab();
+        let prev = was_index.replace(tab_index(now));
+        if now != tab {
+            return;
         }
-        if nav::tab() == tab && !reduce_motion() {
-            shown.set(0.0);
-            shown.timing(1.0, motion::FAST, Easing::EaseOut);
-        } else if nav::tab() == tab {
+        if !mounted.replace(true) {
+            return; // The first tab is already on screen; it does not arrive.
+        }
+        if reduce_motion() {
             shown.set(1.0);
+            slide.set(0.0);
+            return;
         }
+        shown.set(0.0);
+        slide.set(if tab_index(now) >= prev { 12.0 } else { -12.0 });
+        shown.timing(1.0, motion::FAST, Easing::EaseOut);
+        slide.timing(0.0, motion::FAST, motion::SETTLE);
     });
     view()
         .absolute()
         .inset_0()
         .bind_opacity(&shown)
+        .bind_translate_x(&slide)
         .style_when(move || nav::tab() != tab, |s| s.hidden())
         .accessibility_elements_hidden(move || nav::tab() != tab)
         .child(content)
+}
+
+/// A tab's place in the dock, for the direction of its arrival.
+fn tab_index(tab: Tab) -> usize {
+    Tab::ALL
+        .iter()
+        .position(|known| *known == tab)
+        .unwrap_or_default()
 }
 
 fn dock(sheets: Sheets) -> impl IntoElement {
@@ -307,14 +328,30 @@ fn dock(sheets: Sheets) -> impl IntoElement {
                 .children(Tab::ALL.map(tab_item)),
         )
         .child(
+            // The plus dips toward the rising capture sheet and settles
+            // back, one motion shared with what it opened.
             IconBtn::new(Icon::Plus, || s().new_entry.into())
                 .variant(Variant::Primary)
                 .side(56.0)
                 .on_press(move || {
                     sheets.capture_draft.set(None);
                     sheets.capture.set(true);
-                }),
+                })
+                .bind_scale(&capture_lift(sheets.capture)),
         )
+}
+
+/// Scales the plus down while the capture sheet it opened rises; reduced
+/// motion keeps it still.
+fn capture_lift(open: Signal<bool>) -> AnimatedValue {
+    let lift = animated_value(1.0);
+    effect(move || {
+        if open.get() && !reduce_motion() {
+            lift.set(0.92);
+            lift.timing(1.0, motion::FAST, motion::SETTLE);
+        }
+    });
+    lift
 }
 
 fn tab_item(tab_of: Tab) -> impl IntoElement {
@@ -332,6 +369,18 @@ fn tab_item(tab_of: Tab) -> impl IntoElement {
         Tab::Review => Icon::Chart,
         Tab::Assets => Icon::Wallet,
     };
+    // The freshly chosen icon pops once, on the press spring, and the
+    // indicator keeps its native slide.
+    let pop = animated_value(1.0);
+    let was_chosen = stored(untracked(|| nav::tab() == tab_of));
+    effect(move || {
+        let chosen_now = chosen();
+        let was = was_chosen.replace(chosen_now);
+        if chosen_now && !was && !reduce_motion() {
+            pop.set(1.08);
+            pop.timing(1.0, motion::FAST, motion::SETTLE);
+        }
+    });
     tab()
         .selected(chosen)
         .on_press(move |_: &()| {
@@ -341,6 +390,7 @@ fn tab_item(tab_of: Tab) -> impl IntoElement {
             }
         })
         .accessibility_label(move || Some(tab_name(tab_of).into()))
+        .bind_scale(&pop)
         .flex_1()
         .h(px(DOCK - 12.0))
         .items_center()

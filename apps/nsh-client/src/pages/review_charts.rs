@@ -1,14 +1,15 @@
-//! The Review tab's charts: a bar per day against the goal, the average
-//! macros, and the weight's line.
+//! The Review tab's charts: a bar per day against the goal, and the weight's
+//! line.
 
 use nsh_core::prelude::*;
 
 use crate::{
     data::clock,
-    domain::{format, meal::Day, review::Intake},
+    domain::{format, meal::Day},
     i18n::s,
     ui::{
         Btn, Type, Typo, color,
+        figures::{counted, grown},
         trend::{InspectionPlot, Sample, date_caption},
     },
 };
@@ -18,7 +19,8 @@ const CHART: f32 = 120.0;
 
 /// A bar per day against the goal's line; amber past it, ink for today,
 /// a blank column for a day without meals (never a zero bar). Weekdays under a
-/// week; every seventh day's date under a month.
+/// week; every seventh day's date under a month. Bars grow from the baseline
+/// on arrival, a few points apart, capped so a month does not wait.
 pub fn chart(days: Vec<Day>, kcal: Vec<Option<f64>>, goal: Option<f64>) -> impl IntoElement {
     let today = untracked(clock::today);
     let top = kcal
@@ -30,35 +32,40 @@ pub fn chart(days: Vec<Day>, kcal: Vec<Option<f64>>, goal: Option<f64>) -> impl 
         * 1.08;
     let month = days.len() > 7;
     let gap = if month { 3.0 } else { 10.0 };
-    let bars = days.iter().zip(&kcal).map(|(day, kcal)| {
-        let color = match (kcal, goal) {
-            _ if *day == today => color::INK,
-            (Some(k), Some(g)) if *k > g => color::CAUTION,
-            // Ordinary days sit one ink step below today's full bar; a
-            // deeper fill would read as emphasis the number does not carry.
-            _ => color::INK.opacity(0.42),
-        };
-        let reading = kcal.map_or_else(
-            || s().no_records.to_owned(),
-            |k| format!("{} {}", format::kcal(k), s().kcal),
-        );
-        // Every day keeps a faint track so a sparse week still reads as a
-        // week; only logged days get a filled bar (no meals is never zero).
-        view()
-            .flex_1()
-            .h_full()
-            .justify_end()
-            .bg(color::TRACK.opacity(0.7))
-            .rounded(px(if month { 3.0 } else { 7.0 }))
-            .overflow_hidden()
-            .label(format!("{}, {reading}", s().short_date(*day)))
-            .child(kcal.map(|k| {
-                view()
-                    .h(px(((k / top) as f32 * CHART).max(1.0)))
-                    .rounded(px(if month { 3.0 } else { 7.0 }))
-                    .bg(color)
-            }))
-    });
+    let bars = days
+        .iter()
+        .zip(&kcal)
+        .enumerate()
+        .map(|(index, (day, kcal))| {
+            let color = match (kcal, goal) {
+                _ if *day == today => color::INK,
+                (Some(k), Some(g)) if *k > g => color::CAUTION,
+                // Ordinary days sit one ink step below today's full bar; a
+                // deeper fill would read as emphasis the number does not carry.
+                _ => color::INK.opacity(0.42),
+            };
+            let reading = kcal.map_or_else(
+                || s().no_records.to_owned(),
+                |k| format!("{} {}", format::kcal(k), s().kcal),
+            );
+            // Every day keeps a faint track so a sparse week still reads as a
+            // week; only logged days get a filled bar (no meals is never zero).
+            let rise = grown((index.min(14) * 20) as u32);
+            view()
+                .flex_1()
+                .h_full()
+                .justify_end()
+                .bg(color::TRACK.opacity(0.7))
+                .rounded(px(if month { 3.0 } else { 7.0 }))
+                .overflow_hidden()
+                .label(format!("{}, {reading}", s().short_date(*day)))
+                .child(kcal.map(move |k| {
+                    view()
+                        .h(move || px(((k / top) as f32 * CHART).max(1.0) * rise.get()))
+                        .rounded(px(if month { 3.0 } else { 7.0 }))
+                        .bg(color)
+                }))
+        });
     let labels = days.iter().enumerate().map(move |(i, day)| {
         let shown = !month || i % 7 == 0;
         text(if shown {
@@ -115,85 +122,6 @@ pub fn chart(days: Vec<Day>, kcal: Vec<Option<f64>>, goal: Option<f64>) -> impl 
         .child(view().flex_row().gap(px(gap)).children(labels))
 }
 
-pub fn macros(intake: Memo<Intake>) -> impl IntoElement {
-    let mark = |tint: AdaptiveColor,
-                name: fn() -> &'static str,
-                unit: fn() -> &'static str,
-                grams: Box<dyn Fn() -> f64>| {
-        view()
-            .flex_row()
-            .items_center()
-            .gap(px(6.0))
-            .child(view().size(px(6.0)).rounded_full().bg(tint))
-            .child(
-                text(move || format!("{} {}{}", name(), format::grams(grams()), unit()))
-                    .typo(Type::Caption)
-                    .tabular_nums()
-                    .text_color(color::MUTED),
-            )
-    };
-    let avg = move || intake.with(|i| i.average.unwrap_or_default());
-    view()
-        .flex_col()
-        .gap(px(8.0))
-        .child(
-            view()
-                .flex_row()
-                .gap_4()
-                .child(mark(
-                    color::PROTEIN,
-                    || s().protein,
-                    || "g",
-                    Box::new(move || avg().protein),
-                ))
-                .child(mark(
-                    color::CARBS,
-                    || s().carbs,
-                    || "g",
-                    Box::new(move || avg().carbs),
-                ))
-                .child(mark(
-                    color::FAT,
-                    || s().fat,
-                    || "g",
-                    Box::new(move || avg().fat),
-                )),
-        )
-        .child(when(
-            move || avg().extra.is_some(),
-            move || {
-                let extra = avg().extra.unwrap_or_default();
-                view()
-                    .flex_row()
-                    .gap_4()
-                    .child(mark(
-                        color::MUTED,
-                        || s().fiber,
-                        || "g",
-                        Box::new(move || extra.fiber),
-                    ))
-                    .child(mark(
-                        color::MUTED,
-                        || s().sugars,
-                        || "g",
-                        Box::new(move || extra.sugars),
-                    ))
-                    .child(mark(
-                        color::MUTED,
-                        || s().sodium,
-                        || s().mg_unit,
-                        Box::new(move || extra.sodium * 1000.0),
-                    ))
-                    .child(mark(
-                        color::MUTED,
-                        || s().sat_fat,
-                        || "g",
-                        Box::new(move || extra.sat_fat),
-                    ))
-            },
-        ))
-}
-
 /// Health keeps its selected review period and original measured precision.
 pub fn health_trend(
     title: String,
@@ -220,6 +148,10 @@ pub fn health_trend(
         })
         .collect();
     let expanded = signal(false);
+    // Expanding springs the plot's own height; the reveal reads as one
+    // motion, not a relayout. `counted` owns the animation so the same
+    // figure rolls both ways.
+    let height = counted(move || if expanded.get() { 180.0 } else { 88.0 });
     view()
         .gap_1()
         .child(
@@ -228,9 +160,11 @@ pub fn health_trend(
                 .items_center()
                 .gap_2()
                 .child(
+                    // A series label under the card's title, not a second one
+                    // competing with it.
                     text(title.clone())
-                        .typo(Type::Headline)
-                        .text_color(color::BODY)
+                        .typo(Type::Subhead)
+                        .text_color(color::MUTED)
                         .flex_1(),
                 )
                 .child(
@@ -256,7 +190,7 @@ pub fn health_trend(
                 color: tint,
                 goal,
             }
-            .draw(move || if expanded.get() { 180.0 } else { 88.0 }),
+            .draw(move || height.get() as f32),
         )
         .into_element()
 }

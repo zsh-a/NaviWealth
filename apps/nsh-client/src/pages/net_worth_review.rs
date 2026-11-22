@@ -18,6 +18,7 @@ use crate::{
     ui::{
         Type, Typo, color,
         currency::{format, signed},
+        figures::counted,
         space,
         surface::{card, disclosure_chevron, row_button},
     },
@@ -50,6 +51,15 @@ struct Detail {
 
 pub fn net_worth_section(days: Memo<Vec<Day>>) -> impl IntoElement {
     let edit = signal(None::<String>);
+    // The change figure lives above the rebuild boundary so a confirmed
+    // entry rolls the number instead of jumping it.
+    let change = computed(move || {
+        period_outcome(&days.get()).and_then(|outcome| match outcome {
+            Outcome::Complete(a) => Some(a.change()),
+            _ => None,
+        })
+    });
+    let shown = counted(move || change.get().map(|v| v as f64).unwrap_or(0.0));
     view()
         .child(dynamic(move || {
             let days = days.get();
@@ -64,7 +74,7 @@ pub fn net_worth_section(days: Memo<Vec<Day>>) -> impl IntoElement {
                             .text_color(color::MUTED),
                     )
                     .into_element(),
-                Some(Outcome::Complete(a)) => complete(a, start_day, edit).into_element(),
+                Some(Outcome::Complete(a)) => complete(a, start_day, edit, shown).into_element(),
             })
         }))
         .child(super::finance::finance_editor(edit))
@@ -73,14 +83,18 @@ pub fn net_worth_section(days: Memo<Vec<Day>>) -> impl IntoElement {
 fn frame() -> View {
     card().p(px(space::CARD)).gap_3().child(
         text(|| s().net_worth_change())
-            .typo(Type::Caption)
-            .text_color(color::MUTED),
+            .typo(Type::Headline)
+            .text_color(color::INK),
     )
 }
 
-fn complete(a: Attribution, start_day: Day, edit: Signal<Option<String>>) -> View {
+fn complete(
+    a: Attribution,
+    start_day: Day,
+    edit: Signal<Option<String>>,
+    shown: Signal<f64>,
+) -> View {
     let cny = |amount| format(amount, Currency::CNY);
-    let change = signed(a.change(), Currency::CNY);
     let parts: Vec<_> = a
         .parts()
         .into_iter()
@@ -89,8 +103,7 @@ fn complete(a: Attribution, start_day: Day, edit: Signal<Option<String>>) -> Vie
         .collect();
     frame()
         .child(
-            // The caption above names it for screen readers.
-            text(change)
+            text(move || signed(shown.get().round() as i64, Currency::CNY))
                 .typo(Type::LargeTitle)
                 .tabular_nums()
                 .text_color(color::INK),

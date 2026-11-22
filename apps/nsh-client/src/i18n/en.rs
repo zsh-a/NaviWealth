@@ -365,6 +365,7 @@ pub(super) static STRINGS: Strings = Strings {
     intake: "Intake",
     trend_average: "7-day average",
     weight_week: "Weight",
+    recovery: "Recovery",
     avg_sleep: "Sleep",
     no_week_data: "Nothing logged in this period.",
     webdav_url: "WebDAV folder",

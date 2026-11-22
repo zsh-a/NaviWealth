@@ -365,6 +365,7 @@ pub(super) static STRINGS: Strings = Strings {
     intake: "摄入",
     trend_average: "7天均值",
     weight_week: "体重",
+    recovery: "恢复",
     avg_sleep: "睡眠",
     no_week_data: "这段时间没有记录。",
     webdav_url: "WebDAV 文件夹",

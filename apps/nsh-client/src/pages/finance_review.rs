@@ -5,13 +5,29 @@ use crate::{
     i18n::s,
     nav::{self, Route},
     ui::{
-        Btn, Type, Typo, color, space,
+        Btn, Type, Typo, chip, color,
+        figures::counted,
+        space,
         surface::{card, hairline, row_button},
     },
 };
 use navi_finance::{account::Account, currency::Currency, review};
 use nsh_base::nav_page;
 use nsh_core::{element::Screen, prelude::*};
+
+/// The currencies the ledger holds, as chips beside the card's title.
+fn currency_chips(selected: Signal<Currency>) -> impl IntoElement {
+    view()
+        .flex_row()
+        .gap_2()
+        .children(Currency::ALL.into_iter().map(move |c| {
+            chip(
+                move || c.code().into(),
+                move || selected.get() == c,
+                move || selected.set(c),
+            )
+        }))
+}
 
 pub fn spending_section(
     days: Memo<Vec<Day>>,
@@ -20,6 +36,21 @@ pub fn spending_section(
 ) -> impl IntoElement {
     let more = signal(false);
     let selected = signal(Currency::CNY);
+    // The card's figure lives above the rebuild boundary so an edited
+    // ledger rolls the number instead of jumping it.
+    let total = computed(move || {
+        let d = days.get();
+        let from = d[0];
+        let to = Day(d[d.len() - 1].0.min(clock::today().0));
+        review::spending_in(
+            &finance::transactions_snapshot(),
+            from.0,
+            to.0,
+            selected.get(),
+        )
+        .total
+    });
+    let shown = counted(move || total.get() as f64);
     when(
         || !finance::transactions_snapshot().is_empty(),
         move || {
@@ -44,23 +75,44 @@ pub fn spending_section(
                 let current = review::spending_in(&entries, from.0, to.0, currency);
                 let previous = review::spending_in(&entries, p[0].0, previous_to, currency);
                 let expanded = more.get();
+                // One caption: the delta sentence names the compared span
+                // instead of a second line under it.
+                let mut comparison = s().spending_comparison(
+                    current.total,
+                    (previous.records > 0).then_some(previous.total),
+                    currency,
+                );
+                if previous.records > 0 {
+                    comparison.push_str(&format!(
+                        " · {} – {}",
+                        s().short_date(p[0]),
+                        s().short_date(Day(previous_to))
+                    ));
+                }
                 untracked(move || {
                     card()
                         .p(px(space::CARD))
                         .gap_3()
                         .child(
-                            text(s().recorded_spending())
-                                .typo(Type::Caption)
-                                .text_color(color::MUTED),
+                            view()
+                                .flex_row()
+                                .items_center()
+                                .gap_2()
+                                .child(
+                                    text(s().recorded_spending())
+                                        .typo(Type::Headline)
+                                        .text_color(color::INK)
+                                        .flex_1(),
+                                )
+                                .child(when(
+                                    || {
+                                        finance::accounts()
+                                            .iter()
+                                            .any(|a| a.currency() != Currency::CNY)
+                                    },
+                                    move || currency_chips(selected),
+                                )),
                         )
-                        .child(when(
-                            || {
-                                finance::accounts()
-                                    .iter()
-                                    .any(|a| a.currency() != Currency::CNY)
-                            },
-                            move || crate::ui::currency::picker(selected),
-                        ))
                         .child(if current.records == 0 {
                             text(s().spending_empty())
                                 .typo(Type::Subhead)
@@ -82,31 +134,22 @@ pub fn spending_section(
                                     .px(px(0.0))
                                     .py(px(4.0))
                                     .child(
-                                        text(crate::ui::currency::format(current.total, currency))
-                                            .typo(Type::LargeTitle)
-                                            .tabular_nums()
-                                            .text_color(color::INK),
+                                        text(move || {
+                                            crate::ui::currency::format(
+                                                shown.get() as i64,
+                                                currency,
+                                            )
+                                        })
+                                        .typo(Type::LargeTitle)
+                                        .tabular_nums()
+                                        .text_color(color::INK),
                                     ),
                                 )
                                 .child(
-                                    text(s().spending_comparison(
-                                        current.total,
-                                        (previous.records > 0).then_some(previous.total),
-                                        currency,
-                                    ))
-                                    .typo(Type::Caption)
-                                    .text_color(color::MUTED),
+                                    text(comparison)
+                                        .typo(Type::Caption)
+                                        .text_color(color::MUTED),
                                 )
-                                .child((previous.records > 0).then(|| {
-                                    text(format!(
-                                        "{} · {} – {}",
-                                        crate::i18n::catalog::copy("Compared with", "对比时段"),
-                                        s().short_date(p[0]),
-                                        s().short_date(Day(previous_to))
-                                    ))
-                                    .typo(Type::Caption)
-                                    .text_color(color::MUTED)
-                                }))
                                 .children(
                                     current
                                         .categories
