@@ -269,5 +269,16 @@ fn short_history_names_the_first_convertible_day_in_its_change() -> Result<(), S
         "Since {} +¥7,000.00",
         first_complete.strftime("%b %-d, %Y")
     ))?;
+    app.press("label:/^Asset changes, Since/")?;
+    app.wait_for("text:+¥7,000.00")?;
+    app.wait_for("text:Opening balances")?;
+    assert!(!app.shows("text:/^Missing USD rate/"));
+    app.press("30D")?;
+    app.wait_for(&format!(
+        "Missing USD rate · {start} – {}",
+        first_complete.yesterday().unwrap()
+    ))?;
+    app.press("Comparison")?;
+    app.wait_for("text:+¥7,000.00")?;
     Ok(())
 }

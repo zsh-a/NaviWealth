@@ -121,7 +121,7 @@ fn a_missing_rate_is_said_instead_of_a_partial_split() -> Result<(), String> {
         repository::save(db, &t.unwrap()).unwrap();
     });
     app.press("label:Review")?;
-    app.wait_for("text:Missing USD rates — the change can't be fully explained yet.")?;
+    app.wait_for("text:Missing exchange rates · USD")?;
     assert!(!app.shows("text:/^Net worth (rose|fell)/"));
     assert!(!app.shows("text:/close ¥/"));
     Ok(())
@@ -165,7 +165,9 @@ fn assets_explains_the_inspected_close_from_the_first_plotted_close() -> Result<
     });
     app.press("label:Assets")?;
     app.press("label:/^Asset changes/")?;
-    app.press("Change breakdown")?;
+    // A short, complete history uses its first recorded day, with the
+    // explanation already open. The normal 30-day control covers these dates.
+    assert!(!app.shows("text:Comparison"));
     let baseline = today().plus_days(-2).0.strftime("%b %-d, %Y");
     app.wait_for(&format!("text:/Since {baseline} −¥12.50$/"))?;
     app.wait_for("text:−¥12.50")?;
@@ -223,8 +225,45 @@ fn assets_does_not_shift_the_baseline_past_a_missing_dated_rate() -> Result<(), 
     app.press("label:Assets")?;
     app.press("label:/^Asset changes/")?;
     app.press("Change breakdown")?;
-    app.wait_for("text:Missing USD rates — the change can't be fully explained yet.")?;
+    app.wait_for("text:Missing exchange rates · USD")?;
     assert!(!app.shows("text:Exchange rates"));
+    Ok(())
+}
+
+#[test]
+fn disjoint_missing_currency_ranges_open_their_own_dates() -> Result<(), String> {
+    let usd = Account::parse("资产/USD:Broker").unwrap();
+    let (mut app, _dir) = seeded(|db| {
+        for (id, days, amount) in [
+            ("Early", -10, 2_000),
+            ("Settled", -8, -2_000),
+            ("First", -6, 10_000),
+            ("Closed", -4, -10_000),
+            ("Second", -2, 3_000),
+        ] {
+            let txn = journal::adjustment(
+                entry(id, today().plus_days(days).0, Source::Manual),
+                &usd,
+                amount,
+            )
+            .unwrap();
+            repository::save(db, &txn).unwrap();
+        }
+    });
+    app.press("label:Assets")?;
+    app.press("label:/^Asset changes/")?;
+    app.press("Missing USD rate · 7 days")?;
+    for (from, to) in [(-10, -9), (-6, -5), (-2, 0)] {
+        let span = format!(
+            "{} – {}",
+            today().plus_days(from).0,
+            today().plus_days(to).0
+        );
+        app.press(&format!("Missing USD rate · {span}"))?;
+        app.wait_for("text:USD → CNY")?;
+        app.wait_for(&format!("text:{span}"))?;
+        app.press("label:Back")?;
+    }
     Ok(())
 }
 

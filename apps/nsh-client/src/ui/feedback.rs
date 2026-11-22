@@ -108,15 +108,11 @@ pub fn badge(
         )
 }
 
-/// A quiet explanation where content would be: a glyph in a soft circle, a
-/// title, an optional note and an optional next step. Every page's empty
-/// state is this one figure; chain [`EmptyState::note`] and
-/// [`EmptyState::action`] before finishing.
+/// An empty state with a title and an optional action.
 pub fn empty_state(glyph: Icon, title: impl Fn() -> SharedString + 'static) -> EmptyState {
     EmptyState {
         glyph,
         title: Box::new(title),
-        note: None,
         action: None,
     }
 }
@@ -125,17 +121,10 @@ pub fn empty_state(glyph: Icon, title: impl Fn() -> SharedString + 'static) -> E
 pub struct EmptyState {
     glyph: Icon,
     title: Box<dyn Fn() -> SharedString>,
-    note: Option<Box<dyn Fn() -> SharedString>>,
     action: Option<AnyElement>,
 }
 
 impl EmptyState {
-    /// A quiet line under the title.
-    pub fn note(mut self, note: impl Fn() -> SharedString + 'static) -> Self {
-        self.note = Some(Box::new(note));
-        self
-    }
-
     /// The next step, as a button row.
     pub fn action(mut self, action: impl IntoElement) -> Self {
         self.action = Some(action.into_element());
@@ -160,21 +149,10 @@ impl IntoElement for EmptyState {
                     .child(icon(self.glyph, 28.0, color::INK)),
             )
             .child(
-                view()
-                    .items_center()
-                    .gap_1()
-                    .child(
-                        text(self.title)
-                            .typo(Type::Headline)
-                            .text_color(color::INK)
-                            .text_center(),
-                    )
-                    .child(self.note.map(|note| {
-                        text(note)
-                            .typo(Type::Callout)
-                            .text_color(color::MUTED)
-                            .text_center()
-                    })),
+                text(self.title)
+                    .typo(Type::Headline)
+                    .text_color(color::INK)
+                    .text_center(),
             )
             .child(self.action)
             .into_element()

@@ -46,22 +46,16 @@ impl Strings {
     pub fn net_worth_missing(&self, missing: &[Currency]) -> String {
         let codes: Vec<_> = missing.iter().map(|c| c.code()).collect();
         if self.zh() {
-            format!(
-                "缺少 {} 汇率，暂时无法完整拆解净资产变化。",
-                codes.join("、")
-            )
+            format!("缺少 {} 汇率", codes.join("、"))
         } else {
-            format!(
-                "Missing {} rates — the change can't be fully explained yet.",
-                codes.join(", ")
-            )
+            format!("Missing exchange rates · {}", codes.join(", "))
         }
     }
     pub fn net_worth_basis(&self) -> &'static str {
         if self.zh() {
-            "收支按期初汇率折算，汇率变动单列。期初余额和余额校准是记账调整，不是收益。"
+            "收支按期初汇率折算。"
         } else {
-            "Recorded amounts convert at the opening rates; rate moves are listed separately. Opening balances and corrections are bookkeeping, not gains."
+            "Income and spending use the opening exchange rates."
         }
     }
     pub fn net_worth_other_investments(&self) -> &'static str {

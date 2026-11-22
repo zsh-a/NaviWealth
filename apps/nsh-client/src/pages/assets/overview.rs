@@ -73,7 +73,6 @@ pub fn assets_tab() -> impl IntoElement {
                                 return crate::ui::feedback::empty_state(Icon::Wallet, || {
                                     s().assets_empty.into()
                                 })
-                                .note(|| s().assets_empty_body.into())
                                 .action(
                                     view()
                                         .items_center()
@@ -99,8 +98,8 @@ pub fn assets_tab() -> impl IntoElement {
                             }
                             let Some(overview) = overview else {
                                 return text(crate::i18n::statement_import::copy(
-                                    "Cannot convert these amounts. Check exchange rates.",
-                                    "无法折算这些金额，请检查汇率。",
+                                    "Valuation unavailable",
+                                    "估值暂不可用",
                                 ))
                                 .typo(Type::Body)
                                 .text_color(color::DANGER)
@@ -108,12 +107,19 @@ pub fn assets_tab() -> impl IntoElement {
                             };
                             view()
                                 .gap_5()
-                                .child(net_summary(
-                                    overview.clone(),
-                                    super::trend::NetWorthHistory::load(
-                                        &entries, &portfolio, &rates, today,
-                                    ),
-                                ))
+                                .child(
+                                    (!overview.balances.is_empty()
+                                        || !checks.is_empty()
+                                        || !portfolio.securities.is_empty())
+                                    .then(|| {
+                                        net_summary(
+                                            overview.clone(),
+                                            super::trend::NetWorthHistory::load(
+                                                &entries, &portfolio, &rates, today,
+                                            ),
+                                        )
+                                    }),
+                                )
                                 .child(account_group(
                                     AccountKind::Assets,
                                     &accounts,

@@ -135,9 +135,11 @@ pub(super) fn breakdown(a: &Attribution, edit: Signal<Option<String>>) -> View {
                 .into_element()
         })
         .child(
-            text(|| s().net_worth_basis())
-                .typo(Type::Caption)
-                .text_color(color::MUTED),
+            (a.exchange != 0 && (a.income != 0 || a.spending != 0)).then(|| {
+                text(|| s().net_worth_basis())
+                    .typo(Type::Caption)
+                    .text_color(color::MUTED)
+            }),
         )
 }
 

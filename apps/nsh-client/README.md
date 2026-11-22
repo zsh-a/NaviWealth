@@ -360,12 +360,13 @@ Manage opens account/holding creation and closed-holding history. Fully closed
 positions leave the overview automatically and return after another purchase.
 Account and holding creation replace the content of the same management sheet;
 security search stays inside the holding task. Back preserves the current
-draft when leaving a picker. Saving a new account stays on Assets and offers
-Check balance in the confirmation notice.
+draft when leaving a picker. A new account stays on Assets with a persistent
+Set opening balance action until it has a posting or balance check. An account
+with a confirmed zero displays its zero balance.
 The global capture action is a 56-point ink circle with a line plus, centered
 beside the dock. Its accessible name remains New entry / 新记录.
-Asset changes opens the dated valuation chart. Its default period spans the last
-30 calendar days including today. Valuation basis expands for details on how
+Opening a change amount carries the overview’s start and end dates into the
+chart and opens the breakdown. The ordinary 30-day window includes today. Valuation basis expands for details on how
 backdated entries, prices and balance adjustments change the estimates.
 Account details show dated entries, with older entries loaded in batches.
 The owner can create asset/liability accounts and rename them without merging
@@ -461,7 +462,10 @@ corporate-action-adjusted return series is implemented.
 Manage → Prices & rates brings current exchange rates, daily closes and saved changes
 into one page. Select a currency pair to inspect its dated trend. Opening this view also requests
 recent history for both supported pairs. Holdings show their observed unit prices
-in the trading currency. The full charts support dragging, keyboard inspection
+in the trading currency below quantity, cost and unrealized gain. A single
+quote shows its value and provenance. Trades can create and select a cash
+account in their own currency. Dividend amounts and unit prices keep separate
+draft values. The full charts support dragging, keyboard inspection
 and switching date windows. Recent windows end today, including for a stale
 quote. All reaches the earliest available history. The overview independently
 compares today's valuation with the valuation exactly 30 days ago. Expand a daily close for OHLC,

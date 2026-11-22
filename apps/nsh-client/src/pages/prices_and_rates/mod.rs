@@ -1,5 +1,6 @@
 //! One workspace for dated prices, rates and their provenance.
 mod rates;
+pub(crate) use rates::historical_rate;
 
 use crate::{
     data::{

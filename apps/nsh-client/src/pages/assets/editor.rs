@@ -2,7 +2,6 @@ use crate::{
     data::{clock, finance},
     domain::meal::Day,
     i18n::s,
-    nav::{self, Route},
     ui::{
         Btn, Type, Typo, color,
         field::{field, note, text_input},
@@ -260,6 +259,7 @@ pub fn account_task(
                                     s().create_account.into()
                                 }
                             })
+                            .disabled(move || name.get().trim().is_empty())
                             .on_press(move || {
                                 let Ok(account) = Account::new_in(
                                     kind.get_untracked(),
@@ -292,19 +292,7 @@ pub fn account_task(
                                         if own.is_some() {
                                             show_toast(s().account_renamed, None);
                                         } else {
-                                            let route = account.to_string();
-                                            crate::ui::toast::show_receipt(
-                                                s().account_created,
-                                                (
-                                                    s().check_balance.into(),
-                                                    std::rc::Rc::new(move || {
-                                                        CHECK_CREATED.with(|v| {
-                                                            *v.borrow_mut() = Some(route.clone())
-                                                        });
-                                                        nav::push(Route::Account(route.clone()));
-                                                    }),
-                                                ),
-                                            );
+                                            show_toast(s().account_created, None);
                                         }
                                     }
                                 }
@@ -323,7 +311,11 @@ struct Preview {
     actual: i64,
 }
 
-pub fn balance_editor(open: Signal<bool>, own: Signal<Account>) -> impl IntoElement {
+pub fn balance_editor(
+    open: Signal<bool>,
+    own: Signal<Account>,
+    opening: Memo<bool>,
+) -> impl IntoElement {
     retained(
         move || open.get().then_some(()),
         move |_| {
@@ -359,10 +351,16 @@ pub fn balance_editor(open: Signal<bool>, own: Signal<Account>) -> impl IntoElem
                     .items_center()
                     .gap_2()
                     .child(
-                        text(|| s().check_balance)
-                            .typo(Type::Title)
-                            .text_color(color::INK)
-                            .flex_1(),
+                        text(move || {
+                            if opening.get() {
+                                s().opening_balance
+                            } else {
+                                s().check_balance
+                            }
+                        })
+                        .typo(Type::Title)
+                        .text_color(color::INK)
+                        .flex_1(),
                     )
                     .child(
                         Btn::ghost()
@@ -582,18 +580,4 @@ fn pair(label: &'static str, value: i64, currency: Currency) -> impl IntoElement
                 .flex_1(),
         )
         .child(super::amount_in(value, Type::Figure, currency))
-}
-
-thread_local! { static CHECK_CREATED: std::cell::RefCell<Option<String>> = const { std::cell::RefCell::new(None) }; }
-
-pub(super) fn take_created_check(account: &str) -> bool {
-    CHECK_CREATED.with(|v| {
-        let mut next = v.borrow_mut();
-        if next.as_deref() == Some(account) {
-            next.take();
-            true
-        } else {
-            false
-        }
-    })
 }

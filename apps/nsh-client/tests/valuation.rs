@@ -10,13 +10,14 @@ fn first_balance_creates_one_daily_snapshot_and_history_pages_older_revisions() 
     app.press("text:Add account")?;
     app.type_text("label:Account name", "Cash")?;
     app.press("Create account")?;
-    app.press("Check balance")?;
+    app.wait_for_gone("task-sheet", GONE)?;
+    app.press("Set opening balance")?;
     app.type_text("label:Actual balance", "100.00")?;
     app.press("Review difference")?;
     app.press("Confirm balance")?;
     app.press("label:Back")?;
     app.press("label:/^Asset changes/")?;
-    let basis = "History recalculated from current records and dated prices. Edits can change these values.";
+    let basis = "Calculated from the ledger, dated prices and exchange rates.";
     assert!(!app.shows(basis));
     app.press("Valuation basis")?;
     app.wait_for(basis)?;
@@ -135,8 +136,8 @@ fn price_history_exposes_daily_revisions_and_fx_audit() -> Result<(), String> {
     app.press("label:Assets")?;
     app.wait_for("label:/^Index, ¥6.00, Tencent unadjusted close/")?;
     app.press("label:/^Index, ¥6.00, Tencent unadjusted close/")?;
-    app.wait_for("id:trend-value")?;
     app.wait_for("text:¥6")?;
+    assert!(!app.shows("id:trend-inspector"));
     app.press("Price history")?;
     app.wait_for(&format!("510300.SH · {day}"))?;
     app.press("label:Back")?;
@@ -224,6 +225,11 @@ fn missing_historical_fx_keeps_known_values_and_cost_details_accessible() -> Res
     );
     app.wait_for(&warning)?;
     app.wait_for("text:¥7.00")?;
+    app.press(&warning)?;
+    app.wait_for("text:USD → CNY")?;
+    app.wait_for(&format!("text:{missing_day} – {}", today().plus_days(-8).0))?;
+    app.press("label:Back")?;
+    app.wait_for(&warning)?;
     app.press("7D")?;
     app.wait_for_gone(&warning, GONE)?;
     app.wait_for("text:¥7.00")?;
@@ -238,7 +244,8 @@ fn missing_historical_fx_keeps_known_values_and_cost_details_accessible() -> Res
 }
 
 #[test]
-fn overview_compares_thirty_days_ago_while_estimates_use_calendar_windows() -> Result<(), String> {
+fn overview_opens_the_exact_comparison_and_calendar_windows_remain_available() -> Result<(), String>
+{
     use navi_finance::{
         account::Account,
         journal::{self, Entry, Source},
@@ -279,10 +286,30 @@ fn overview_compares_thirty_days_ago_while_estimates_use_calendar_windows() -> R
     app.wait_for("Since 30 days ago +¥95.00")?;
     app.press("label:/^Asset changes, Since 30 days ago/")?;
     app.wait_for("text:¥195.00")?;
-    assert!(!app.shows("text:/¥100.00 – ¥195.00/"));
-    app.press("All")?;
+    app.wait_for("text:+¥95.00")?;
     app.wait_for("text:/¥100.00 – ¥195.00/")?;
+    assert!(
+        !app.shows("text:Comparison"),
+        "All already covers the exact comparison"
+    );
     app.press("30D")?;
     app.wait_for_gone("text:/¥100.00 – ¥195.00/", GONE)?;
+    app.press("All")?;
+    app.wait_for("text:+¥95.00")?;
+
+    drop(app);
+    opening("older", -50, 500);
+    let mut app = restart();
+    app.press("label:Assets")?;
+    app.press("label:/^Asset changes, Since 30 days ago/")?;
+    app.wait_for("text:+¥95.00")?;
+    app.wait_for("text:/¥105.00 – ¥200.00/")?;
+    app.press("7D")?;
+    app.wait_for_gone("text:/¥105.00 – ¥200.00/", GONE)?;
+    app.press("Comparison")?;
+    app.wait_for("text:/¥105.00 – ¥200.00/")?;
+    app.press("Net worth snapshots")?;
+    app.press("Historical estimates")?;
+    app.wait_for("text:+¥95.00")?;
     Ok(())
 }

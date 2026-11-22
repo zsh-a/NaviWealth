@@ -207,8 +207,9 @@ AI only to turn text and images into drafts, using the owner's model account.
   to CNY using the latest rate on or before its date. When rates are missing,
   the headline and subtotals identify the included amounts. Tapping an excluded
   currency opens its rate and identifies the affected accounts and holdings.
-  Asset changes marks the affected dates and gaps in the historical chart.
-  Its valuation basis expands on demand. The change breakdown uses Review’s
+  Each historical FX gap opens its currency pair for the affected dates.
+  Opening the overview’s change amount shows the same dates and expands its
+  breakdown. Other windows and the snapshot view remain available. The change breakdown uses Review’s
   attribution over the interval from the chart’s first point to the inspected day.
   Each holding keeps its manual price date or cost-fallback label. Unchecked
   accounts keep a visible label; ordinary last-check dates live in account
@@ -225,9 +226,10 @@ AI only to turn text and images into drafts, using the owner's model account.
   a detail page with value, the price source, quantity, cost, unrealized
   gain, and newest-first activity. The valuation leads the page with Record trade and
   the full native amount. An unpriced open holding labels its cost fallback.
-  A linked market and code opens the listing picker; an unlinked position
-  shows Link code. Price history and the latest quote source sit beside the
-  unit-price chart, with manual pricing available for unlinked open positions.
+  Unrealized gain, quantity and cost follow the headline, above pricing and
+  listing actions. A single dated price has a compact value and source line.
+  Two or more dated prices enable the chart. A linked market and code opens
+  the listing picker. Unlinked positions offer Link code and manual pricing.
   At large text sizes the price actions stack. Unrealized gain shows its signed
   amount and one-decimal percentage of cost when the cost is positive. Realized gain and dividends
   appear when nonzero; unpriced unrealized gain is a dash. Opening a holding
@@ -235,14 +237,18 @@ AI only to turn text and images into drafts, using the owner's model account.
   account. Dividends use amount and a cash account. The fixed footer shows the
   account’s net debit or credit including fees above Save. Price history opens
   on the source of the displayed price. Optional fees and date
-  sit under Details. Date and cash pickers replace the same sheet body;
-  Back preserves the draft. Unsaved trade input has a discard guard. Prices
+  sit under Details. Dividend amounts and trade unit prices have separate draft
+  values. The cash picker can create an account in the trade currency and
+  return it to the draft. Saving the trade is a separate action. Date and
+  cash pickers share the sheet body and Back preserves the trade. Unsaved trade input has a discard guard. Prices
   have their own compact amount-and-date sheet. Activity opens a receipt
   with an explicit, confirmed remove action.
 - **Own accounts:** creation leads with the name and compact type/currency
-  choices; the balance can be checked later. Creation stays on Assets and
-  offers Check balance in the confirmation notice. Account rows open the
-  book balance or debt, latest check status and newest-first activity.
+  choices. Creation stays on Assets. Accounts without activity or a balance
+  observation offer Set opening balance in their row. The account name opens
+  its details. After a first check, a confirmed zero is displayed like any
+  other amount. Account details show the book balance or debt, latest check
+  status and newest-first activity.
   Expanding the last check shows dated observations, including matches.
   Each adjustment opens its original posting. Show earlier pages through
   history. The pencil action renames the account.
@@ -605,8 +611,10 @@ symbols and currencies, with a five-minute throttle per item. Holding price capt
 previous close and earlier dates. A manual mark wins on the same or a newer
 date; a failed network request keeps the last dated mark. Unpriced holdings
 remain visibly valued at cost. The Rates tab in Prices & rates shows dated HKD/CNY and USD/CNY
-observations with their dates and sources. Manual rates take precedence over
-network rates on the same day; no rate is applied before its recorded date.
+observations with their dates and sources. The pair view shows the state of
+its automatic fetch. Opening a historical gap keeps its currency and dates in
+view. Manual rates take precedence over network rates on the same day. Rates
+apply from their recorded date.
 Cross-currency transfers require separate sent and received amounts and preserve
 both native values. Schema 14 backs up rates with the ledger. Other currencies,
 crypto and allocation remain outside this increment. Android

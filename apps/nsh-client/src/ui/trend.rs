@@ -44,6 +44,10 @@ pub enum Window {
     #[default]
     Month,
     All,
+    Comparison {
+        from: Date,
+        to: Date,
+    },
 }
 
 impl Window {
@@ -59,6 +63,7 @@ impl Window {
             Self::Week => Day(today).plus_days(-6).0,
             Self::Month => Day(today).plus_days(-29).0,
             Self::All => earliest,
+            Self::Comparison { from, .. } => from,
         }
     }
 
@@ -67,7 +72,42 @@ impl Window {
             Self::Week => copy("7D", "7天"),
             Self::Month => copy("30D", "30天"),
             Self::All => copy("All", "全部"),
+            Self::Comparison { .. } => copy("Comparison", "本次对比"),
         }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub(crate) struct ChartDates {
+    pub today: Date,
+    pub earliest: Date,
+    pub comparison: Option<(Date, Date)>,
+}
+
+impl ChartDates {
+    pub fn bounds(self, window: Window) -> (Date, Date) {
+        if let Window::Comparison { from, to } = window {
+            (from, to)
+        } else {
+            let from = window
+                .available(self.today, self.earliest)
+                .start(self.today, self.earliest);
+            (from, self.today)
+        }
+    }
+
+    /// Use an existing control if it already covers the comparison's observations.
+    fn comparison_control(self) -> Option<Window> {
+        let (from, to) = self.comparison?;
+        let regular = [Window::Month, Window::Week, Window::All]
+            .into_iter()
+            .find(|w| {
+                let (start, end) = self.bounds(*w);
+                w.available(self.today, self.earliest) == *w
+                    && start.max(self.earliest) == from
+                    && end == to
+            });
+        Some(regular.unwrap_or(Window::Comparison { from, to }))
     }
 }
 
@@ -80,25 +120,41 @@ pub fn chart(
     today: Date,
 ) -> AnyElement {
     let earliest = points.first().map_or(today, |p| p.0.min(today));
-    chart_from(title, points, unit, window, today, earliest, None)
+    chart_from(
+        title,
+        points,
+        unit,
+        window,
+        ChartDates {
+            today,
+            earliest,
+            comparison: None,
+        },
+        None,
+    )
 }
 
 /// Estimates can query only the requested days while still offering all available history.
-pub fn chart_from(
+pub(crate) fn chart_from(
     title: String,
-    mut points: Vec<Point>,
+    points: Vec<Point>,
     unit: Unit,
     window: Signal<Window>,
-    today: Date,
-    earliest: Date,
+    dates: ChartDates,
     selection: Option<Signal<Option<Date>>>,
 ) -> AnyElement {
-    points.truncate(points.partition_point(|p| p.0 <= today));
-    let span = Day(today).days_since(Day(earliest));
-    let active = move || window.get().available(today, earliest);
-    let has_history = !points.is_empty() || earliest < today;
-    let options = [Window::Week, Window::Month, Window::All]
+    let span = Day(dates.today).days_since(Day(dates.earliest));
+    let comparison = dates.comparison_control();
+    let active = move || match window.get() {
+        w @ Window::Comparison { .. } => comparison.unwrap_or(w),
+        w => w.available(dates.today, dates.earliest),
+    };
+    let has_history =
+        points.first().is_some_and(|p| p.0 <= dates.today) || dates.earliest < dates.today;
+    let extra = comparison.filter(|w| matches!(w, Window::Comparison { .. }));
+    let options = extra
         .into_iter()
+        .chain([Window::Week, Window::Month, Window::All])
         .filter(move |w| has_history && (*w != Window::All || span >= 30));
     let title = stored(title);
     let data = stored(points);
@@ -115,14 +171,18 @@ pub fn chart_from(
                     text(move || title.get())
                         .typo(Type::Headline)
                         .text_color(color::BODY)
-                        .flex_1(),
+                        .flex_1()
+                        .style_when(
+                            move || extra.is_some() || font_scale() > 1.2,
+                            |s| s.basis(relative(1.0)).flex_grow(0.0),
+                        ),
                 )
                 .children(options.map(move |w| {
                     chip(
                         move || w.label().into(),
                         move || active() == w,
                         move || {
-                            if window.get_untracked() != w {
+                            if active() != w {
                                 if let Some(date) = selection {
                                     date.set(None);
                                 }
@@ -135,8 +195,9 @@ pub fn chart_from(
                 })),
         )
         .child(dynamic(move || {
-            let from = active().start(today, earliest);
+            let (from, to) = dates.bounds(window.get());
             data.with(|points| {
+                let points = &points[..points.partition_point(|p| p.0 <= to)];
                 let visible = &points[points.partition_point(|p| p.0 < from)..];
                 untracked(|| {
                     if visible.is_empty() {
@@ -155,7 +216,7 @@ pub fn chart_from(
                         };
                         return empty(message);
                     }
-                    series(title.get(), visible, unit, from, today, selection)
+                    series(title.get(), visible, unit, from, to, selection)
                 })
             })
         }))

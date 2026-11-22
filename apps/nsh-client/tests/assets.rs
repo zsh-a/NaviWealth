@@ -13,18 +13,17 @@ fn create(app: &mut Headless, name: &str, debt: bool) -> Result<(), String> {
     }
     app.type_text("label:Account name", name)?;
     app.press("Create account")?;
-    app.wait_for("Check balance")?;
+    app.wait_for("Set opening balance")?;
     app.wait_for_gone("task-sheet", GONE)?;
     Ok(())
 }
 fn verify(app: &mut Headless, value: &str, debt: bool) -> Result<(), String> {
-    // During the task's native exit the receipt is rendered both on the
-    // page and inside the retained sheet. Activate it only after that sheet
-    // leaves, so both fast local runs and slower CI target one action.
     app.wait_for_gone("task-sheet", GONE)?;
-    app.press("Check balance")?;
-    // Creation's receipt opens the balance editor directly; account details
-    // use their own Check balance action.
+    app.press(if app.shows("Set opening balance") {
+        "Set opening balance"
+    } else {
+        "Check balance"
+    })?;
     app.wait_for(if debt {
         "label:Actual debt"
     } else {
@@ -90,7 +89,7 @@ fn accounts_balances_rename_and_net_worth_survive_restart() -> Result<(), String
     app.wait_for("label:¥750.00")?;
     app.press("label:/^Asset changes/")?;
     app.press("Valuation basis")?;
-    app.wait_for("Includes backdated entries, balance adjustments and price changes.")?;
+    app.wait_for("Calculated from the ledger, dated prices and exchange rates.")?;
     app.press("label:Back")?;
     app.wait_for("label:¥750.00")?;
     let c = rusqlite::Connection::open(database_in(dir.path())).unwrap();
@@ -133,11 +132,40 @@ fn accounts_balances_rename_and_net_worth_survive_restart() -> Result<(), String
 }
 
 #[test]
+fn new_account_keeps_its_opening_action_until_a_balance_is_recorded() -> Result<(), String> {
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, storage) = start_in(Some(dir.path()), Vec::new(), None);
+    create(&mut app, "Wallet", false)?;
+    assert!(!app.shows("label:¥0.00"));
+    drop(app);
+    let (mut app, _) = start_in(
+        Some(dir.path()),
+        storage.entries().into_iter().collect(),
+        None,
+    );
+    app.press("label:Assets")?;
+    app.press("label:Wallet, Set opening balance")?;
+    app.wait_for("label:Actual balance")?;
+    app.press("Cancel")?;
+    app.wait_for_gone("task-sheet", GONE)?;
+    app.press("label:Back")?;
+    app.wait_for("label:Wallet, Set opening balance")?;
+    verify(&mut app, "0.00", false)?;
+    app.press("label:Back")?;
+    app.wait_for("label:/^Wallet, ¥0.00, Last checked/")?;
+    assert!(!app.shows("Set opening balance"));
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    assert_eq!(repository::balance_checks(&db).unwrap().len(), 1);
+    assert!(repository::transactions(&db).unwrap().is_empty());
+    Ok(())
+}
+
+#[test]
 fn failed_balance_confirmation_preserves_preview_and_can_retry_once() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
     create(&mut app, "Cash", false)?;
-    app.press("Check balance")?;
+    app.press("Set opening balance")?;
     app.set_viewport(Size::new(Points(360.0), Points(640.0)))?;
     app.set_environment("large text with IME", |e| {
         e.font_scale = 1.3;
@@ -208,7 +236,8 @@ fn balance_entry_revocation_and_undo_keep_the_check_and_journal_together() -> Re
 }
 
 #[test]
-fn manage_back_dirty_changes_and_account_receipt_share_one_sheet() -> Result<(), String> {
+fn manage_back_keeps_one_sheet_and_opening_balance_stays_on_the_account_row() -> Result<(), String>
+{
     use nsh_testing::DialogAnswer;
     let (mut app, _) = start(Vec::new(), None);
     app.press("label:Assets")?;
@@ -283,7 +312,7 @@ fn manage_back_dirty_changes_and_account_receipt_share_one_sheet() -> Result<(),
     app.wait_for("Account added")?;
     app.wait_for_gone("task-sheet", GONE)?;
     app.wait_for("label:Manage")?;
-    app.press("Check balance")?;
+    app.press("Set opening balance")?;
     app.wait_for("label:Actual balance")?;
     Ok(())
 }

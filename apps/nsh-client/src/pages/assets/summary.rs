@@ -16,21 +16,18 @@ pub(super) fn net_summary(
     };
     // A full 30-day comparison when the history reaches back that far, else
     // the change since the first complete valuation; never an invented one.
-    let footer = history
-        .change()
-        .map(|delta| (s().net_change_30d.to_owned(), delta))
-        .or_else(|| {
-            history
-                .since_first_dated()
-                .filter(|(_, delta)| *delta != 0)
-                .map(|(day, delta)| (s().net_change_since(day), delta))
-        })
-        .map(|(label, delta)| {
-            format!(
-                "{label} {}",
-                crate::ui::currency::signed(delta, navi_finance::currency::Currency::CNY)
-            )
-        });
+    let comparison = history.comparison();
+    let footer = comparison.map(|(from, to, delta)| {
+        let label = if to.days_since(from) == super::trend::TREND_DAYS {
+            s().net_change_30d.to_owned()
+        } else {
+            s().net_change_since(from)
+        };
+        format!(
+            "{label} {}",
+            crate::ui::currency::signed(delta, navi_finance::currency::Currency::CNY)
+        )
+    });
     let history_label = footer
         .as_ref()
         .map(|change| format!("{}, {change}", s().asset_history))
@@ -138,34 +135,38 @@ pub(super) fn net_summary(
         ))
         .child(hairline(0.0))
         .child(
-            row_button(|| nav::push(Route::AssetHistory))
-                .accessibility_label(move || Some(history_label.clone().into()))
-                .px_0()
-                .py_1()
-                .min_h(px(48.0))
-                .flex_col()
-                .items_stretch()
-                .gap_1()
-                .child(super::mini::sparkline(&history))
-                .child(
-                    view()
-                        .flex_row()
-                        .items_center()
-                        .gap_2()
-                        .child(
-                            text(footer.unwrap_or_else(|| basis.into()))
-                                .typo(Type::Caption)
-                                .tabular_nums()
-                                .text_color(color::MUTED)
-                                .flex_1(),
-                        )
-                        .child(
-                            text(|| s().asset_history)
-                                .typo(Type::Subhead)
-                                .text_color(color::INK),
-                        )
-                        .child(icon(Icon::ChevronRight, 16.0, color::MUTED)),
-                ),
+            row_button(move || {
+                nav::push(Route::AssetHistory {
+                    comparison: comparison.map(|(from, to, _)| (from, to)),
+                })
+            })
+            .accessibility_label(move || Some(history_label.clone().into()))
+            .px_0()
+            .py_1()
+            .min_h(px(48.0))
+            .flex_col()
+            .items_stretch()
+            .gap_1()
+            .child(super::mini::sparkline(&history))
+            .child(
+                view()
+                    .flex_row()
+                    .items_center()
+                    .gap_2()
+                    .child(
+                        text(footer.unwrap_or_else(|| basis.into()))
+                            .typo(Type::Caption)
+                            .tabular_nums()
+                            .text_color(color::MUTED)
+                            .flex_1(),
+                    )
+                    .child(
+                        text(|| s().asset_history)
+                            .typo(Type::Subhead)
+                            .text_color(color::INK),
+                    )
+                    .child(icon(Icon::ChevronRight, 16.0, color::MUTED)),
+            ),
         )
 }
 

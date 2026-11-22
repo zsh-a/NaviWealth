@@ -41,12 +41,20 @@ pub enum Route {
     BackupSettings,
     /// An own financial account.
     Account(String),
+    AccountCheck(String),
     Holding(String),
-    AssetHistory,
+    AssetHistory {
+        comparison: Option<(Day, Day)>,
+    },
     ClosedHoldings,
     StatementImport,
     PricesAndRates(Option<String>),
     ExchangeRate(navi_finance::currency::Currency),
+    HistoricalRate {
+        currency: navi_finance::currency::Currency,
+        from: Day,
+        to: Day,
+    },
     Spending {
         from: Day,
         to: Day,

@@ -114,7 +114,9 @@ Updated 2026-11-22.
   accounts, open holdings and debts. Cost/quantity and normal check dates are
   details; manual-price dates, cost fallback and unchecked status remain visible.
   Manage contains creation and closed-holding history; Asset changes opens the
-  dated trend and valuation basis. Closed positions reappear after buying again.
+  dated trend and valuation basis. Opening a change amount carries its actual
+  comparison dates into the breakdown. An unused account offers its opening
+  balance action until a posting or balance check exists. Closed positions reappear after buying again.
   A single icon-only plus beside the tab bar opens capture; its accessible
   name is New entry / 新记录. Account and holding creation stay in Manage.
 - Review leads with one sentence of what changed against the period before
@@ -200,7 +202,9 @@ Linking
 an existing holding requires confirmation and preserves its identity and trades.
 Initial supported markets are mainland China, Hong Kong and US stocks and
 ETFs, in CNY, HKD and USD. A holding’s currency is immutable; buy, sell and
-dividend cash accounts must match it. Costs and gains remain native amounts.
+dividend cash accounts must match it. The trade editor can create and select
+a matching account while keeping the draft. Unit prices and dividend amounts
+use separate inputs. Costs and gains remain native amounts.
 Tencent quotes update automatically for open linked holdings when the app is active.
 Unlinked holdings can be priced by hand. Existing manual prices win on the same or newer day. Failed updates retain the previous dated mark.
 
@@ -208,7 +212,8 @@ The asset overview converts to CNY using the latest rate dated on or before
 the valuation date. Missing rates exclude those currencies and visibly label
 the result as known value; history never presents a partial series as complete.
 HKD/CNY and USD/CNY reference rates update automatically. The rates view shows
-the saved value, date and source. Existing manual rates win same-day ties. Schema 14 preserves dated rates in local backups. Other
+the saved value, date, source and automatic retrieval state. A historical gap
+opens the pair for its affected dates. Existing manual rates win same-day ties. Schema 14 preserves dated rates in local backups. Other
 currencies and crypto remain unsupported. Android TLS and physical-device
 checks remain unverified.
 

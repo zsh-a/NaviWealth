@@ -25,7 +25,7 @@ use nsh_base::{alert_dialog, nav_page};
 use nsh_core::{element::Screen, prelude::*};
 pub(super) use receipt::trade_receipt;
 
-/// The chart already supplies the unit price; its source line identifies the observation.
+/// Identify the observation used for this holding's value.
 fn quote_caption(
     q: &holdings::Quote,
     sources: &crate::data::market::PriceSources,
@@ -170,56 +170,27 @@ pub(crate) fn holding_page_with_receipt(id: &str, initial_trade: Option<String>)
                                     );
                                     let quote =
                                         p.quote.as_ref().map(|q| quote_caption(q, &sources, true));
+                                    let prices = book.dated_prices(&sec, today.0);
+                                    let single_price =
+                                        p.quote.as_ref().filter(|_| prices.len() == 1).map(|q| {
+                                            crate::ui::currency::unit_price(q.price, currency)
+                                        });
                                     view()
                                         .gap_3()
                                         .pt_3()
-                                        .child(
-                                            view()
-                                                .gap_1()
-                                                .child(valuation_header(
-                                                    value,
-                                                    p.value.is_none() && p.quantity > 0,
-                                                    move || trade.set(Some(id.get())),
-                                                ))
-                                                .child(listing_link(binding, picker))
-                                                .child(note(
-                                                    move || binding_error.get().map(Into::into),
-                                                    || true,
-                                                )),
-                                        )
-                                        .child(hairline(0.0))
-                                        .child(
-                                            view()
-                                                .gap_1()
-                                                .child(price_controls(
-                                                    quote,
-                                                    (binding.is_none() && p.quantity > 0)
-                                                        .then_some(price),
-                                                    move || {
-                                                        nav::push(Route::PricesAndRates(Some(
-                                                            id.get(),
-                                                        )))
-                                                    },
-                                                ))
-                                                .child(crate::ui::trend::chart(
-                                                    crate::i18n::catalog::copy(
-                                                        "Unit price",
-                                                        "单位价格",
-                                                    )
-                                                    .into(),
-                                                    book.dated_prices(&sec, today.0)
-                                                        .into_iter()
-                                                        .map(|(day, price)| (day, Some(price)))
-                                                        .collect(),
-                                                    crate::ui::trend::Unit::Price(currency),
-                                                    chart_window,
-                                                    today.0,
-                                                )),
-                                        )
+                                        .child(valuation_header(
+                                            value,
+                                            p.value.is_none() && p.quantity > 0,
+                                            move || trade.set(Some(id.get())),
+                                        ))
                                         .child(
                                             view()
                                                 .gap_2()
                                                 .py_2()
+                                                .child(pair(
+                                                    s().unrealized,
+                                                    unrealized_display(&p, currency),
+                                                ))
                                                 .child(pair(
                                                     s().quantity,
                                                     holdings::format_units(p.quantity),
@@ -238,10 +209,6 @@ pub(crate) fn holding_page_with_receipt(id: &str, initial_trade: Option<String>)
                                                     s().holding_cost,
                                                     crate::ui::currency::format(p.cost, currency),
                                                 ))
-                                                .child(pair(
-                                                    s().unrealized,
-                                                    unrealized_display(&p, currency),
-                                                ))
                                                 .child((p.realized != 0).then(|| {
                                                     pair(
                                                         s().realized,
@@ -257,6 +224,43 @@ pub(crate) fn holding_page_with_receipt(id: &str, initial_trade: Option<String>)
                                                             p.dividends,
                                                             currency,
                                                         ),
+                                                    )
+                                                })),
+                                        )
+                                        .child(hairline(0.0))
+                                        .child(
+                                            view()
+                                                .gap_1()
+                                                .child(listing_link(binding, picker))
+                                                .child(note(
+                                                    move || binding_error.get().map(Into::into),
+                                                    || true,
+                                                ))
+                                                .child(price_controls(
+                                                    single_price,
+                                                    quote,
+                                                    (binding.is_none() && p.quantity > 0)
+                                                        .then_some(price),
+                                                    move || {
+                                                        nav::push(Route::PricesAndRates(Some(
+                                                            id.get(),
+                                                        )))
+                                                    },
+                                                ))
+                                                .child((prices.len() > 1).then(|| {
+                                                    crate::ui::trend::chart(
+                                                        crate::i18n::catalog::copy(
+                                                            "Unit price",
+                                                            "单位价格",
+                                                        )
+                                                        .into(),
+                                                        prices
+                                                            .into_iter()
+                                                            .map(|(day, price)| (day, Some(price)))
+                                                            .collect(),
+                                                        crate::ui::trend::Unit::Price(currency),
+                                                        chart_window,
+                                                        today.0,
                                                     )
                                                 })),
                                         )
@@ -463,29 +467,38 @@ fn valuation_header(
 }
 
 fn price_controls(
+    single_price: Option<String>,
     quote: Option<String>,
     editor: Option<Signal<bool>>,
     history: impl Fn() + 'static,
 ) -> impl IntoElement {
     view()
-        .flex_row()
-        .items_center()
-        .gap_2()
-        .style_when(|| font_scale() > 1.2, |s| s.flex_col().items_start())
+        .gap_1()
         .child(
-            view()
-                .flex_1()
-                .min_w(px(0.0))
-                .style_when(|| font_scale() > 1.2, |s| s.flex_grow(0.0).basis(auto()))
-                .child(price_line(quote, editor)),
+            single_price
+                .map(|value| pair(crate::i18n::catalog::copy("Unit price", "单位价格"), value)),
         )
         .child(
-            Btn::ghost()
-                .size(crate::ui::Size::Small)
-                .label(|| s().holding_prices_action.into())
-                .on_press(history)
-                .min_h(px(48.0))
-                .accessibility_label(|| Some(s().price_history.into())),
+            view()
+                .flex_row()
+                .items_center()
+                .gap_2()
+                .style_when(|| font_scale() > 1.2, |s| s.flex_col().items_start())
+                .child(
+                    view()
+                        .flex_1()
+                        .min_w(px(0.0))
+                        .style_when(|| font_scale() > 1.2, |s| s.flex_grow(0.0).basis(auto()))
+                        .child(price_line(quote, editor)),
+                )
+                .child(
+                    Btn::ghost()
+                        .size(crate::ui::Size::Small)
+                        .label(|| s().holding_prices_action.into())
+                        .on_press(history)
+                        .min_h(px(48.0))
+                        .accessibility_label(|| Some(s().price_history.into())),
+                ),
         )
 }
 

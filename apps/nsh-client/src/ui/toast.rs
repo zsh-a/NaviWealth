@@ -49,12 +49,6 @@ pub fn show_toast(text: impl Into<SharedString>, action: Option<(SharedString, R
     show(text, action, None, true);
 }
 
-/// A saved receipt's View action is relevant until the next capture begins.
-/// Unlike Undo, it must not navigate behind a new unsaved draft.
-pub fn show_receipt(text: impl Into<SharedString>, action: (SharedString, Rc<dyn Fn()>)) {
-    show(text, Some(action), None, false);
-}
-
 type Action = (SharedString, Rc<dyn Fn()>);
 
 /// Capture offers Undo and a shortcut to the saved records. Starting another

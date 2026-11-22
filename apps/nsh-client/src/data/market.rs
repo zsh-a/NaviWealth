@@ -5,7 +5,7 @@ use market_data_rs::{
 };
 use navi_finance::{
     catalog,
-    currency::{Currency, FxRate},
+    currency::Currency,
     holdings,
     market::{self, MarketQuote},
 };
@@ -19,8 +19,12 @@ use std::{
 };
 
 mod automatic;
+mod fx;
 pub(super) use automatic::generation;
 pub use automatic::start;
+pub(super) use fx::set_rate_status;
+use fx::{FetchRates, fetch_fx};
+pub(crate) use fx::{RateStatus, rate_status};
 
 #[derive(Clone, Default, PartialEq, Eq)]
 struct Quotes(std::rc::Rc<Vec<MarketQuote>>);
@@ -95,6 +99,7 @@ pub fn load() -> Result<(), String> {
         .ok_or("database unavailable")?
         .map_err(|e| e.to_string())?;
     publish_quotes(quotes);
+    fx::reset();
     automatic::invalidate();
     Ok(())
 }
@@ -299,27 +304,6 @@ fn fetch(bindings: Vec<catalog::SecurityBinding>) -> Result<Vec<QuoteResult>, St
         Ok(out)
     })
 }
-type FxResult = (Currency, Result<FxRate, String>);
-fn fetch_fx(currencies: Vec<Currency>, today: jiff::civil::Date) -> Result<Vec<FxResult>, String> {
-    let client = client()?;
-    client.runtime.block_on(async {
-        let mut rows = Vec::new();
-        for currency in currencies {
-            let result = async {
-                let response = client.http.get(format!("https://api.frankfurter.dev/v2/providers/ecb/rates?base={currency}&quotes=CNY"))
-                    .timeout(Duration::from_secs(12)).send().await.map_err(|_| "FX request failed")?
-                    .error_for_status().map_err(|_| "FX request rejected")?;
-                let bytes = response.bytes().await.map_err(|_| "FX response failed")?;
-                if bytes.len() > 16384 { return Err("FX response too large".into()); }
-                market::parse_fx(std::str::from_utf8(&bytes).map_err(|_| "invalid FX response")?, currency, today).map_err(|_| "invalid FX response".into())
-            }.await;
-            rows.push((currency, result));
-        }
-        Ok(rows)
-    })
-}
-type FetchRates = fn(Vec<Currency>, jiff::civil::Date) -> Result<Vec<FxResult>, String>;
-
 /// Keep successful observations even when a different provider is unavailable.
 async fn update(
     fetch_rates: FetchRates,
@@ -350,19 +334,11 @@ async fn update(
         }
     }
     if !currencies.is_empty() && generation() == epoch {
-        match blocking(move || fetch_rates(currencies, day)).await {
-            Ok(Ok(rows)) if generation() == epoch => {
-                for (currency, result) in rows {
-                    match result.and_then(|r| finance::store_rates(&[r])) {
-                        Ok(n) => changed |= n > 0,
-                        Err(e) => log::warn!("FX {currency}: {e}"),
-                    }
-                }
-            }
-            _ => log::debug!("FX update unavailable or superseded"),
-        }
-    }
-    if changed && let Err(e) = reload_prices() {
+        fx::refresh(fetch_rates, currencies, day, epoch, changed).await;
+    } else if changed
+        && generation() == epoch
+        && let Err(e) = reload_prices()
+    {
         log::warn!("market: cannot publish prices: {e}");
     }
 }
@@ -397,7 +373,7 @@ mod tests {
         )
         .unwrap()
         {
-            assert!(rate.expect("dated ECB rate").rate > 0);
+            assert!(rate.unwrap().expect("dated ECB rate").rate > 0);
         }
     }
     #[test]

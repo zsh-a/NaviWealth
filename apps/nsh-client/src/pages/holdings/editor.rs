@@ -54,6 +54,7 @@ enum Panel {
     Main,
     Date,
     Cash,
+    NewCash,
     Security,
 }
 #[derive(Clone, PartialEq)]
@@ -63,6 +64,7 @@ struct Values {
     name: String,
     quantity: String,
     price: String,
+    dividend: String,
     fee: String,
     cash: Option<Account>,
     day: String,
@@ -76,23 +78,24 @@ struct TradeAmounts {
 }
 
 impl TradeAmounts {
-    fn parse(kind: Kind, quantity: &str, price: &str, fee: &str) -> Result<Self, &'static str> {
+    fn parse(
+        kind: Kind,
+        quantity: &str,
+        price: &str,
+        dividend: &str,
+        fee: &str,
+    ) -> Result<Self, &'static str> {
         let (quantity, price, amount) = if kind == Kind::Dividend {
-            let amount = money::parse(price, false)
+            let amount = money::parse(dividend, false)
                 .filter(|v| *v > 0)
-                .ok_or_else(|| {
-                    copy(
-                        "Enter a dividend amount to see the cash received.",
-                        "填写分红金额，即可查看到账金额。",
-                    )
-                })?;
+                .ok_or_else(|| copy("Enter a positive dividend amount.", "分红金额须大于零。"))?;
             (0, 0, amount)
         } else {
             let units = |s: &str| holdings::parse_units(s).filter(|v| *v > 0);
             let (Some(quantity), Some(price)) = (units(quantity), units(price)) else {
                 return Err(copy(
-                    "Enter quantity and price per unit to see the cash amount.",
-                    "填写数量和成交单价，即可查看现金变动。",
+                    "Enter a positive quantity and price per unit.",
+                    "数量和单价须大于零，最多保留六位小数。",
                 ));
             };
             (quantity, price, 0)
@@ -121,45 +124,61 @@ fn cash_preview(
     currency: Signal<Currency>,
     quantity: Signal<String>,
     price: Signal<String>,
+    dividend: Signal<String>,
     fee: Signal<String>,
     cash: Signal<Option<Account>>,
 ) -> impl IntoElement {
     dynamic(move || {
         let kind = kind.get();
         let currency = currency.get();
-        let preview = TradeAmounts::parse(kind, &quantity.get(), &price.get(), &fee.get())
-            .and_then(|v| {
-                kind.settlement(v.quantity, v.price, v.amount, v.fee)
-                    .map(|total| (total, v.fee))
-                    .map_err(|error| match (error, kind) {
-                        (holdings::Error::Invalid, Kind::Dividend) => copy(
-                            "The dividend must exceed the fee.",
-                            "分红金额须大于手续费。",
-                        ),
-                        (holdings::Error::Invalid, Kind::Sell) => copy(
-                            "The fee exceeds the sale proceeds.",
-                            "手续费已超过卖出金额。",
-                        ),
-                        _ => copy(
-                            "Check the quantity, price and fee.",
-                            "请检查数量、单价和手续费。",
-                        ),
-                    })
-            });
+        let direction = if kind == Kind::Buy {
+            copy("Cash out", "将扣款")
+        } else {
+            copy("Cash in", "将入账")
+        };
+        let amount_pending = if kind == Kind::Dividend {
+            dividend.get().trim().is_empty()
+        } else {
+            quantity.get().trim().is_empty() || price.get().trim().is_empty()
+        };
+        if amount_pending {
+            return pair(direction, "—").into_element();
+        }
+        let preview = TradeAmounts::parse(
+            kind,
+            &quantity.get(),
+            &price.get(),
+            &dividend.get(),
+            &fee.get(),
+        )
+        .and_then(|v| {
+            kind.settlement(v.quantity, v.price, v.amount, v.fee)
+                .map(|total| (total, v.fee))
+                .map_err(|error| match (error, kind) {
+                    (holdings::Error::Invalid, Kind::Dividend) => copy(
+                        "The dividend must exceed the fee.",
+                        "分红金额须大于手续费。",
+                    ),
+                    (holdings::Error::Invalid, Kind::Sell) => copy(
+                        "The fee exceeds the sale proceeds.",
+                        "手续费已超过卖出金额。",
+                    ),
+                    _ => copy(
+                        "Check the quantity, price and fee.",
+                        "请检查数量、单价和手续费。",
+                    ),
+                })
+        });
         match preview {
             Err(hint) => text(hint)
                 .typo(Type::Subhead)
                 .text_color(color::MUTED)
                 .into_element(),
             Ok((total, fee)) => {
-                let (label, signed) = if kind == Kind::Buy {
-                    (copy("Cash out", "将扣款"), -total)
-                } else {
-                    (copy("Cash in", "将入账"), total)
-                };
+                let signed = if kind == Kind::Buy { -total } else { total };
                 let label = cash.get().map_or_else(
                     || copy("Choose a cash account", "请选择现金账户").to_owned(),
-                    |account| format!("{} · {label}", account.name()),
+                    |account| format!("{} · {direction}", account.name()),
                 );
                 let mut row = view().gap_1().child(
                     view()
@@ -202,6 +221,43 @@ fn cash_preview(
             }
         }
     })
+}
+
+fn cash_accounts(currency: Currency) -> Vec<Account> {
+    finance::accounts()
+        .into_iter()
+        .filter(|a| a.is_cash() && a.kind() == AccountKind::Assets && a.currency() == currency)
+        .collect()
+}
+
+fn only_cash_account(currency: Currency) -> Option<Account> {
+    match cash_accounts(currency).as_slice() {
+        [only] => Some(only.clone()),
+        _ => None,
+    }
+}
+
+fn new_cash_label(currency: Currency) -> &'static str {
+    match currency {
+        Currency::CNY => copy("New CNY cash account", "新建人民币现金账户"),
+        Currency::HKD => copy("New HKD cash account", "新建港元现金账户"),
+        Currency::USD => copy("New USD cash account", "新建美元现金账户"),
+    }
+}
+
+fn create_cash_account(name: &str, currency: Currency) -> Result<Account, &'static str> {
+    let account = Account::new_in(AccountKind::Assets, name, currency)
+        .ok()
+        .filter(Account::is_cash)
+        .ok_or_else(|| s().error_account)?;
+    finance::create_account(account.clone()).map_err(|error| {
+        log::debug!("holdings: creating cash account: {error}");
+        match error {
+            navi_finance::repository::Error::AccountExists => s().account_exists,
+            _ => s().error_transaction_storage,
+        }
+    })?;
+    Ok(account)
 }
 
 pub fn trade_editor(open: Signal<Option<String>>) -> impl IntoElement {
@@ -253,33 +309,48 @@ pub fn trade_task(
                 let manual = signal(false);
                 let quantity = signal(String::new());
                 let price = signal(String::new());
+                let dividend = signal(String::new());
                 let fee = signal(String::new());
-                let accounts: Vec<_> = finance::accounts()
-                    .into_iter()
-                    .filter(|a| {
-                        a.is_cash()
-                            && a.kind() == AccountKind::Assets
-                            && a.currency() == currency.get_untracked()
-                    })
-                    .collect();
-                let cash = signal((accounts.len() == 1).then(|| accounts[0].clone()));
+                let cash = signal(only_cash_account(currency.get_untracked()));
+                let new_cash_name = signal(String::new());
+                let set_currency = move |c| {
+                    if currency.get_untracked() != c {
+                        currency.set(c);
+                        cash.set(only_cash_account(c));
+                        new_cash_name.set(String::new());
+                    }
+                };
                 let day = signal(clock::today().to_string());
                 let details = signal(false);
                 let panel = signal(if new { Panel::Security } else { Panel::Main });
-                crate::ui::sheet::reserve_keyboard_when(move || panel.get() == Panel::Security);
+                crate::ui::sheet::reserve_keyboard_when(move || {
+                    matches!(panel.get(), Panel::Security | Panel::NewCash)
+                });
                 let error = signal(None::<String>);
+                let open_cash = move || {
+                    error.set(None);
+                    dismiss_keyboard();
+                    panel.set(if cash_accounts(currency.get_untracked()).is_empty() {
+                        Panel::NewCash
+                    } else {
+                        Panel::Cash
+                    });
+                };
                 let values = move || Values {
                     kind: kind.get_untracked(),
                     currency: currency.get_untracked(),
                     name: name.get_untracked(),
                     quantity: quantity.get_untracked(),
                     price: price.get_untracked(),
+                    dividend: dividend.get_untracked(),
                     fee: fee.get_untracked(),
                     cash: cash.get_untracked(),
                     day: day.get_untracked(),
                 };
                 let initial = stored(values());
-                let dirty = move || initial.with(|v| v != &values());
+                let dirty = move || {
+                    initial.with(|v| v != &values()) || !new_cash_name.get_untracked().is_empty()
+                };
                 let discard = guarded(dirty, move || open.set(None));
                 // Swipe or backdrop leaves the whole task, not just this panel.
                 crate::ui::sheet::task_dismiss(guarded(dirty, move || {
@@ -295,7 +366,15 @@ pub fn trade_task(
                     {
                         discard();
                     } else if panel.get_untracked() != Panel::Main {
-                        panel.set(Panel::Main);
+                        let back = if panel.get_untracked() == Panel::NewCash
+                            && !cash_accounts(currency.get_untracked()).is_empty()
+                        {
+                            Panel::Cash
+                        } else {
+                            Panel::Main
+                        };
+                        error.set(None);
+                        panel.set(back);
                         dismiss_keyboard();
                     } else {
                         discard();
@@ -306,10 +385,11 @@ pub fn trade_task(
                     .items_center()
                     .gap_2()
                     .child(
-                        text(if new {
-                            s().add_holding
-                        } else {
-                            s().record_trade
+                        text(move || match panel.get() {
+                            Panel::Cash => s().cash_account,
+                            Panel::NewCash => new_cash_label(currency.get()),
+                            _ if new => s().add_holding,
+                            _ => s().record_trade,
                         })
                         .typo(Type::Title)
                         .text_color(color::INK)
@@ -339,8 +419,7 @@ pub fn trade_task(
                             return search
                                 .results(move |entry| {
                                     if let Some(c) = Currency::parse(&entry.currency) {
-                                        currency.set(c);
-                                        cash.set(None);
+                                        set_currency(c);
                                     }
                                     name.set(entry.name().to_owned());
                                     listing.set(Some(entry));
@@ -357,30 +436,46 @@ pub fn trade_task(
                             .into_element();
                         }
                         if current_panel == Panel::Cash {
-                            let accounts: Vec<_> = finance::accounts()
-                                .into_iter()
-                                .filter(|a| {
-                                    a.is_cash()
-                                        && a.kind() == AccountKind::Assets
-                                        && a.currency() == currency.get_untracked()
-                                })
-                                .collect();
-                            if accounts.is_empty() {
-                                return text(|| s().holding_cash_error)
-                                    .typo(Type::Body)
-                                    .text_color(color::MUTED)
-                                    .into_element();
-                            }
                             return view()
-                                .children(accounts.into_iter().map(move |a| {
-                                    let label = a.name().to_owned();
-                                    row_button(move || {
-                                        cash.set(Some(a.clone()));
-                                        panel.set(Panel::Main);
-                                    })
-                                    .px_0()
-                                    .child(text(label).typo(Type::Body).text_color(color::INK))
-                                }))
+                                .children(cash_accounts(current_currency).into_iter().map(
+                                    move |a| {
+                                        let selected = cash.get_untracked().as_ref() == Some(&a);
+                                        let label = a.name().to_owned();
+                                        row_button(move || {
+                                            cash.set(Some(a.clone()));
+                                            panel.set(Panel::Main);
+                                        })
+                                        .px_0()
+                                        .selected(move || selected)
+                                        .child(
+                                            text(label)
+                                                .typo(Type::Body)
+                                                .text_color(color::INK)
+                                                .flex_1(),
+                                        )
+                                        .child(
+                                            selected.then(|| {
+                                                crate::ui::icon(Icon::Check, 18.0, color::INK)
+                                            }),
+                                        )
+                                    },
+                                ))
+                                .into_element();
+                        }
+                        if current_panel == Panel::NewCash {
+                            return view()
+                                .gap_2()
+                                .child(field(
+                                    || s().account_name,
+                                    text_input(new_cash_name)
+                                        .label(|| s().account_name)
+                                        .on_change(move |value: &str| {
+                                            new_cash_name.set(value.to_owned());
+                                            error.set(None);
+                                        })
+                                        .element_ref(&initial_focus()),
+                                ))
+                                .child(note(move || error.get().map(Into::into), || true))
                                 .into_element();
                         }
                         let options = if empty_history {
@@ -483,9 +578,8 @@ pub fn trade_task(
                                                         .collect(),
                                                     move || currency.get(),
                                                     move |c| {
-                                                        currency.set(c);
+                                                        set_currency(c);
                                                         listing.set(None);
-                                                        cash.set(None);
                                                     },
                                                 ))
                                         },
@@ -510,7 +604,7 @@ pub fn trade_task(
                                     .into_element()
                             })
                             .child(if current_kind == Kind::Dividend {
-                                decimal(price, || s().dividend_amount).into_element()
+                                decimal(dividend, || s().dividend_amount).into_element()
                             } else {
                                 view()
                                     .flex_row()
@@ -534,28 +628,25 @@ pub fn trade_task(
                                     .into_element()
                             })
                             .child((current_kind != Kind::Opening).then(|| {
-                                row_button(move || {
-                                    dismiss_keyboard();
-                                    panel.set(Panel::Cash);
-                                })
-                                .accessibility_label(|| Some(s().cash_account.into()))
-                                .px_0()
-                                .min_h(px(48.0))
-                                .child(
-                                    text(|| s().cash_account)
+                                row_button(open_cash)
+                                    .accessibility_label(|| Some(s().cash_account.into()))
+                                    .px_0()
+                                    .min_h(px(48.0))
+                                    .child(
+                                        text(|| s().cash_account)
+                                            .typo(Type::Body)
+                                            .text_color(color::MUTED)
+                                            .flex_1(),
+                                    )
+                                    .child(
+                                        text(move || {
+                                            cash.get()
+                                                .map(|a| a.name().to_owned())
+                                                .unwrap_or_else(|| s().choose_account.into())
+                                        })
                                         .typo(Type::Body)
-                                        .text_color(color::MUTED)
-                                        .flex_1(),
-                                )
-                                .child(
-                                    text(move || {
-                                        cash.get()
-                                            .map(|a| a.name().to_owned())
-                                            .unwrap_or_else(|| s().choose_account.into())
-                                    })
-                                    .typo(Type::Body)
-                                    .text_color(color::INK),
-                                )
+                                        .text_color(color::INK),
+                                    )
                             }))
                             .child((current_kind == Kind::Opening).then(|| {
                                 text(s().opening_hint)
@@ -603,113 +694,146 @@ pub fn trade_task(
                             .into_element()
                     })
                 });
-                let trade_action = view()
-                    .gap_2()
-                    .child(note(move || error.get().map(Into::into), || true))
-                    .child(when(
-                        move || panel.get() == Panel::Main && kind.get() != Kind::Opening,
-                        move || cash_preview(kind, currency, quantity, price, fee, cash),
-                    ))
-                    .child(
-                        Btn::primary()
-                            .label(move || {
-                                if panel.get() != Panel::Main {
-                                    s().done.into()
-                                } else if new {
-                                    s().save_holding.into()
-                                } else {
-                                    s().save_trade.into()
-                                }
-                            })
-                            .on_press(move || {
-                                if panel.get_untracked() != Panel::Main {
-                                    panel.set(Panel::Main);
-                                    return;
-                                }
-                                let form = values();
-                                let build = || -> Result<(Security, Trade), holdings::Error> {
-                                    let security = Security::new_in(
-                                        &security_id.with(|v| v.clone()),
-                                        &form.name,
-                                        form.currency,
-                                    )?;
-                                    let day = form
-                                        .day
-                                        .parse::<Day>()
-                                        .map_err(|_| holdings::Error::Invalid)?;
-                                    let v = TradeAmounts::parse(
-                                        form.kind,
-                                        &form.quantity,
-                                        &form.price,
-                                        &form.fee,
-                                    )
-                                    .map_err(|_| holdings::Error::Invalid)?;
-                                    Ok((
-                                        security,
-                                        Trade {
-                                            id: trade_id.with(|v| v.clone()),
-                                            security: security_id.with(|v| v.clone()),
-                                            at: day.0.to_datetime(
-                                                clock::zoned(clock::now_ms()).datetime().time(),
-                                            ),
-                                            kind: form.kind,
-                                            quantity: v.quantity,
-                                            price: v.price,
-                                            amount: v.amount,
-                                            fee: v.fee,
-                                            cash: if form.kind == Kind::Opening {
-                                                None
+                let trade_action = move || {
+                    view()
+                        .gap_2()
+                        .child(note(move || error.get().map(Into::into), || true))
+                        .child(when(
+                            move || panel.get() == Panel::Main && kind.get() != Kind::Opening,
+                            move || {
+                                cash_preview(kind, currency, quantity, price, dividend, fee, cash)
+                            },
+                        ))
+                        .child(
+                            Btn::primary()
+                                .label(move || {
+                                    if panel.get() != Panel::Main {
+                                        s().done.into()
+                                    } else if new {
+                                        s().save_holding.into()
+                                    } else {
+                                        s().save_trade.into()
+                                    }
+                                })
+                                .disabled(move || {
+                                    panel.get() == Panel::Main
+                                        && (name.get().trim().is_empty()
+                                            || if kind.get() == Kind::Dividend {
+                                                dividend.get().trim().is_empty()
                                             } else {
-                                                form.cash.clone()
+                                                quantity.get().trim().is_empty()
+                                                    || price.get().trim().is_empty()
+                                            })
+                                })
+                                .on_press(move || {
+                                    if panel.get_untracked() != Panel::Main {
+                                        panel.set(Panel::Main);
+                                        return;
+                                    }
+                                    let form = values();
+                                    let build = || -> Result<(Security, Trade), holdings::Error> {
+                                        let security = Security::new_in(
+                                            &security_id.with(|v| v.clone()),
+                                            &form.name,
+                                            form.currency,
+                                        )?;
+                                        let day = form
+                                            .day
+                                            .parse::<Day>()
+                                            .map_err(|_| holdings::Error::Invalid)?;
+                                        let v = TradeAmounts::parse(
+                                            form.kind,
+                                            &form.quantity,
+                                            &form.price,
+                                            &form.dividend,
+                                            &form.fee,
+                                        )
+                                        .map_err(|_| holdings::Error::Invalid)?;
+                                        Ok((
+                                            security,
+                                            Trade {
+                                                id: trade_id.with(|v| v.clone()),
+                                                security: security_id.with(|v| v.clone()),
+                                                at: day.0.to_datetime(
+                                                    clock::zoned(clock::now_ms()).datetime().time(),
+                                                ),
+                                                kind: form.kind,
+                                                quantity: v.quantity,
+                                                price: v.price,
+                                                amount: v.amount,
+                                                fee: v.fee,
+                                                cash: if form.kind == Kind::Opening {
+                                                    None
+                                                } else {
+                                                    form.cash.clone()
+                                                },
                                             },
-                                        },
-                                    ))
-                                };
-                                match build().and_then(|(sec, t)| {
-                                    let binding =
-                                        listing.get_untracked().map(|e| e.binding(&sec.id));
-                                    finance::add_trade_bound(
-                                        new.then_some(&sec),
-                                        &t,
-                                        binding.as_ref(),
-                                    )?;
-                                    Ok(sec)
-                                }) {
-                                    Ok(sec) => {
-                                        dismiss_keyboard();
-                                        // Close the host first so the menu is
-                                        // never swapped in during the exit.
-                                        saved();
-                                        open.set(None);
-                                        show_toast(s().trade_saved, None);
-                                        if new {
-                                            nav::push(Route::Holding(sec.id));
+                                        ))
+                                    };
+                                    match build().and_then(|(sec, t)| {
+                                        let binding =
+                                            listing.get_untracked().map(|e| e.binding(&sec.id));
+                                        finance::add_trade_bound(
+                                            new.then_some(&sec),
+                                            &t,
+                                            binding.as_ref(),
+                                        )?;
+                                        Ok(sec)
+                                    }) {
+                                        Ok(sec) => {
+                                            dismiss_keyboard();
+                                            // Close the host first so the menu is
+                                            // never swapped in during the exit.
+                                            saved();
+                                            open.set(None);
+                                            show_toast(s().trade_saved, None);
+                                            if new {
+                                                nav::push(Route::Holding(sec.id));
+                                            }
+                                        }
+                                        Err(holdings::Error::Cash) => open_cash(),
+                                        Err(cause) => {
+                                            log::error!("holdings: save failed: {cause}");
+                                            error.set(Some(failure(&cause).into()));
                                         }
                                     }
-                                    Err(cause) => {
-                                        log::error!("holdings: save failed: {cause}");
-                                        error.set(Some(failure(&cause).into()));
-                                    }
+                                }),
+                        )
+                };
+                let action = dynamic(move || match panel.get() {
+                    Panel::Security => crate::pages::security_picker::search_actions(move || {
+                        manual.set(true);
+                        listing.set(None);
+                        dismiss_keyboard();
+                        panel.set(Panel::Main);
+                    })
+                    .into_element(),
+                    Panel::Cash => Btn::secondary()
+                        .icon(Icon::Plus)
+                        .label(move || new_cash_label(currency.get()).into())
+                        .on_press(move || panel.set(Panel::NewCash))
+                        .into_element(),
+                    Panel::NewCash => Btn::primary()
+                        .label(|| s().create_account.into())
+                        .disabled(move || new_cash_name.get().trim().is_empty())
+                        .on_press(move || {
+                            match create_cash_account(
+                                &new_cash_name.get_untracked(),
+                                currency.get_untracked(),
+                            ) {
+                                Ok(account) => {
+                                    cash.set(Some(account));
+                                    new_cash_name.set(String::new());
+                                    error.set(None);
+                                    dismiss_keyboard();
+                                    panel.set(Panel::Main);
                                 }
-                            }),
-                    );
-                let action = view()
-                    .child(when(
-                        move || panel.get() == Panel::Security,
-                        move || {
-                            crate::pages::security_picker::search_actions(move || {
-                                manual.set(true);
-                                listing.set(None);
-                                dismiss_keyboard();
-                                panel.set(Panel::Main);
-                            })
-                        },
-                    ))
-                    .child(
-                        view()
-                            .style_when(move || panel.get() == Panel::Security, |s| s.hidden())
-                            .child(trade_action),
-                    );
+                                Err(message) => error.set(Some(message.to_owned())),
+                            }
+                        })
+                        .into_element(),
+                    Panel::Main | Panel::Date => trade_action().into_element(),
+                });
                 task_sheet(move || open.get().is_some(), close, header, body, action).into_element()
             })
         },

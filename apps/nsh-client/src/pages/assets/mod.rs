@@ -125,9 +125,23 @@ pub(super) fn asset_row(
         .child(icon(Icon::ChevronRight, 16.0, color::MUTED))
 }
 
-pub fn account_page(name: &str) -> Screen {
+fn opening_action() -> &'static str {
+    crate::i18n::catalog::copy("Set opening balance", "填写起始余额")
+}
+
+pub fn account_page(name: &str, check_on_open: bool) -> Screen {
     let own = signal(Account::parse(name).expect("account route created from a valid account"));
-    let balance = signal(editor::take_created_check(name));
+    let balance = signal(check_on_open);
+    let needs_opening = computed(move || {
+        let account = own.get();
+        let today = clock::today().0;
+        !finance::checks_snapshot()
+            .iter()
+            .any(|c| c.account == account)
+            && !finance::transactions_snapshot()
+                .iter()
+                .any(|t| t.at.date() <= today && t.postings.iter().any(|p| p.account == account))
+    });
     let rename = signal(false);
     let transaction = signal(None::<String>);
     let shown = signal(50usize);
@@ -179,16 +193,33 @@ pub fn account_page(name: &str) -> Screen {
                                                 .typo(Type::Headline)
                                                 .text_color(color::BODY),
                                             )
-                                            .child(amount_in(
-                                                assets::displayed(&a, book),
-                                                Type::Display,
-                                                a.currency(),
-                                            ))
+                                            .child(if needs_opening.get() {
+                                                text("—")
+                                                    .typo(Type::Display)
+                                                    .text_color(color::MUTED)
+                                                    .into_element()
+                                            } else {
+                                                amount_in(
+                                                    assets::displayed(&a, book),
+                                                    Type::Display,
+                                                    a.currency(),
+                                                )
+                                                .into_element()
+                                            })
                                     }))
-                                    .child(check_history(own, transaction))
+                                    .child(when(
+                                        move || !needs_opening.get(),
+                                        move || check_history(own, transaction),
+                                    ))
                                     .child(
                                         Btn::tonal()
-                                            .label(|| s().check_balance.into())
+                                            .label(move || {
+                                                if needs_opening.get() {
+                                                    opening_action().into()
+                                                } else {
+                                                    s().check_balance.into()
+                                                }
+                                            })
                                             .on_press(move || balance.set(true)),
                                     ),
                             )
@@ -290,7 +321,7 @@ pub fn account_page(name: &str) -> Screen {
                         .child(toast_view(|| 24.0)),
                 )
                 .child(editor::account_editor(rename, Some(own)))
-                .child(editor::balance_editor(balance, own))
+                .child(editor::balance_editor(balance, own, needs_opening))
                 .child(super::finance::finance_editor(transaction)),
         )
 }

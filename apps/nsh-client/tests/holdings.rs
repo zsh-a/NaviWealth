@@ -96,17 +96,22 @@ fn detail_prioritizes_trade_and_keeps_price_and_listing_actions_readable() -> Re
                 assert!(trade.origin.y.0 + trade.size.height.0 < 180.0);
                 assert!(trade.origin.y.0 + trade.size.height.0 <= link.origin.y.0);
                 assert!(link.origin.y.0 + link.size.height.0 <= history.origin.y.0);
-                let plot = nodes
+                assert!(
+                    !app.shows("id:trend-inspector"),
+                    "one quote has no price trend"
+                );
+                let gain = nodes
                     .iter()
-                    .find(|n| n.test_id.as_deref() == Some("trend-inspector"))
-                    .unwrap();
-                assert!(history.origin.y.0 + history.size.height.0 <= plot.bounds.origin.y.0);
-                if scale == 1.0 {
-                    assert!(
-                        plot.bounds.origin.y.0 + plot.bounds.size.height.0 <= 640.0,
-                        "trade and price plot should fit the first screen at {tag}/{width}"
-                    );
-                }
+                    .find(|n| {
+                        n.text
+                            .as_ref()
+                            .is_some_and(|t| t.text.text == "+¥2,125.00 · +51.5%")
+                    })
+                    .expect("position result");
+                assert!(
+                    gain.bounds.origin.y.0 < link.origin.y.0,
+                    "position result precedes price controls"
+                );
             }
         }
     }
@@ -206,11 +211,15 @@ fn trade_cash_preview_matches_each_saved_posting_including_fees() -> Result<(), 
             );
         }
         if side == "Dividend" {
-            app.wait_for("Enter a dividend amount to see the cash received.")?;
+            app.wait_for("text:Cash in")?;
             app.type_text("label:Dividend amount", "2.33")?;
             app.wait_for("text:+¥2.33")?;
         } else {
-            app.wait_for("Enter quantity and price per unit to see the cash amount.")?;
+            app.wait_for(if side == "Buy" {
+                "text:Cash out"
+            } else {
+                "text:Cash in"
+            })?;
             app.type_text("label:Quantity", "1.5")?;
             app.type_text("label:Price per unit", "4.13")?;
             app.wait_for(if side == "Buy" {
@@ -434,15 +443,75 @@ fn manual_hkd_holding_keeps_currency_when_recording_later_trades() -> Result<(),
     app.wait_for("Hong Kong fund · HKD")?;
     app.type_text("label:Quantity", "1")?;
     app.type_text("label:Price per unit", "13")?;
+    app.press("task-sheet >> text:Dividend")?;
+    assert_eq!(app.screen().input_text("label:Dividend amount")?, Some(""));
+    app.type_text("label:Dividend amount", "2.17")?;
+    app.wait_for("text:+HKD 2.17")?;
+    app.press("task-sheet >> text:Buy")?;
+    assert_eq!(app.screen().input_text("label:Price per unit")?, Some("13"));
+    assert_eq!(app.screen().input_text("label:Quantity")?, Some("1"));
+    app.wait_for("text:−HKD 13.00")?;
+    app.press("Date and fee")?;
+    app.type_text("label:Fee (optional)", "0.10")?;
     app.press("Save trade")?;
-    app.wait_for("Choose a cash account. Add one in Assets if needed.")?;
+    app.wait_for("New HKD cash account")?;
     let c = rusqlite::Connection::open(database_in(dir.path())).unwrap();
-    let book = store::load(&c).unwrap();
+    let updates = || store::load(&c).unwrap().trades.len();
+    assert_eq!(updates(), 1);
+    app.type_text("label:Account name", "Broker")?;
+    app.press("task-sheet >> text:Back")?;
+    app.wait_for("task-sheet >> Save trade")?;
     assert_eq!(
-        book.securities[0].currency(),
-        navi_finance::currency::Currency::HKD
+        app.screen().input_text("label:Fee (optional)")?,
+        Some("0.10")
     );
-    assert_eq!(book.trades.len(), 1);
+    app.wait_for("text:−HKD 13.10")?;
+    app.press("label:Cash account")?;
+    assert_eq!(
+        app.screen().input_text("label:Account name")?,
+        Some("Broker")
+    );
+    app.press("Create account")?;
+    app.wait_for("Broker · Cash out")?;
+    let account = Account::parse("资产/HKD:Broker").unwrap();
+    assert!(repository::accounts(&c).unwrap().contains(&account));
+    assert_eq!(updates(), 1);
+    app.press("label:Cash account")?;
+    app.press("New HKD cash account")?;
+    app.type_text("label:Account name", "Broker")?;
+    app.press("Create account")?;
+    app.wait_for("An account with this name already exists.")?;
+    app.press("task-sheet >> text:Back")?;
+    app.press("text:Broker")?;
+    app.press("task-sheet >> text:Dividend")?;
+    assert_eq!(
+        app.screen().input_text("label:Dividend amount")?,
+        Some("2.17")
+    );
+    app.press("task-sheet >> text:Buy")?;
+    app.press("Save trade")?;
+    app.wait_for("Trade saved")?;
+    let book = store::load(&c).unwrap();
+    assert_eq!(book.trades.len(), 2);
+    assert_eq!(book.trades.last().unwrap().cash.as_ref(), Some(&account));
+    assert_eq!(
+        journal::balance_on(&repository::transactions(&c).unwrap(), &account, today().0),
+        -1310
+    );
+    app.press("Record trade")?;
+    app.wait_for("text:Broker")?;
+    // An amount on the inactive tab still belongs to the unsaved draft.
+    app.press("task-sheet >> text:Dividend")?;
+    app.type_text("label:Dividend amount", "6.50")?;
+    app.press("task-sheet >> text:Buy")?;
+    app.on_dialog(|_| DialogAnswer::Press("Keep editing".into()));
+    app.press("task-sheet >> text:Cancel")?;
+    app.wait_for("Save trade")?;
+    app.press("task-sheet >> text:Dividend")?;
+    assert_eq!(
+        app.screen().input_text("label:Dividend amount")?,
+        Some("6.50")
+    );
     Ok(())
 }
 

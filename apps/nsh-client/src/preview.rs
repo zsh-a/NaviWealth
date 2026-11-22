@@ -527,7 +527,7 @@ pub fn apply() {
         Some("assets" | "assets-empty" | "assets-manage") => nav::select(nav::Tab::Assets),
         Some("asset-history") => {
             nav::select(nav::Tab::Assets);
-            nav::push(Route::AssetHistory);
+            nav::push(Route::AssetHistory { comparison: None });
         }
         Some("closed-holdings") => {
             nav::select(nav::Tab::Assets);

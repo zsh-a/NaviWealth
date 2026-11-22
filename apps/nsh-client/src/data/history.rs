@@ -247,6 +247,7 @@ pub(super) async fn backfill(from: Date, to: Date, epoch: u64, currencies: &[Cur
     }
     // Warm-up supplies the last published rate before a weekend start; never forward-fill backwards.
     let warm = from.checked_sub(jiff::Span::new().days(10)).unwrap_or(from);
+    let mut fx_results = Vec::new();
     for &currency in currencies {
         let key = format!("fx:{currency}");
         if !fetch_due(&key, warm, to) {
@@ -255,30 +256,39 @@ pub(super) async fn backfill(from: Date, to: Date, epoch: u64, currencies: &[Cur
         if lifecycle() != nsh_core::platform::Lifecycle::Active {
             break;
         }
+        let period = Some((warm, to));
+        market::set_rate_status(currency, period, market::RateStatus::Loading);
         let result = blocking(move || fetch_fx(currency, warm, to, today)).await;
         if market::generation() != epoch {
             return;
         }
-        let mut count = 0;
-        let mut bad = true;
-        if let Ok(Ok(rows)) = result
-            && !rows.is_empty()
-            && let Ok(changed) = finance::store_rates(&rows)
-        {
-            updated += changed;
-            count = rows.len();
-            bad = false;
-        }
-        if bad {
-            failed += 1
-        }
-        record_fetch(&key, warm, to, count, bad);
+        let (count, status) = match result {
+            Ok(Ok(rows)) if rows.is_empty() => (0, market::RateStatus::Empty),
+            Ok(Ok(rows)) => match finance::store_rates(&rows) {
+                Ok(changed) => {
+                    updated += changed;
+                    (rows.len(), market::RateStatus::Ready)
+                }
+                Err(_) => (0, market::RateStatus::Failed(super::clock::now_ms())),
+            },
+            _ => (0, market::RateStatus::Failed(super::clock::now_ms())),
+        };
+        failed += usize::from(matches!(status, market::RateStatus::Failed(_)));
+        record_fetch(&key, warm, to, count, count == 0);
+        fx_results.push((currency, status));
     }
+    let published = updated == 0 || super::market::reload_prices().is_ok();
     if updated > 0 {
-        if super::market::reload_prices().is_err() {
-            failed += 1;
-        }
+        failed += usize::from(!published);
         invalidate();
+    }
+    for (currency, result) in fx_results {
+        let status = if !published && result == market::RateStatus::Ready {
+            market::RateStatus::Failed(super::clock::now_ms())
+        } else {
+            result
+        };
+        market::set_rate_status(currency, Some((warm, to)), status);
     }
     if failed > 0 {
         log::warn!("history: {failed} updates failed");

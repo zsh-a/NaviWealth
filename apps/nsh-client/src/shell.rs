@@ -29,7 +29,8 @@ pub fn shell() -> impl IntoElement {
                     Route::BodyProfile => body_profile_page(),
                     Route::ModelSettings => model_page(),
                     Route::BackupSettings => crate::pages::settings_backup::backup_page(),
-                    Route::Account(name) => crate::pages::assets::account_page(&name),
+                    Route::Account(name) => crate::pages::assets::account_page(&name, false),
+                    Route::AccountCheck(name) => crate::pages::assets::account_page(&name, true),
                     Route::Holding(id) => crate::pages::holdings::holding_page(&id),
                     Route::SavedBatch { id, records } => {
                         crate::pages::receipt::batch_page(id, records)
@@ -40,7 +41,9 @@ pub fn shell() -> impl IntoElement {
                     Route::SavedTrade { security, trade } => {
                         crate::pages::holdings::holding_page_with_receipt(&security, Some(trade))
                     }
-                    Route::AssetHistory => crate::pages::assets::history_page(),
+                    Route::AssetHistory { comparison } => {
+                        crate::pages::assets::history_page(comparison)
+                    }
                     Route::ClosedHoldings => crate::pages::holdings::closed_page(),
                     Route::Spending {
                         from,
@@ -54,6 +57,9 @@ pub fn shell() -> impl IntoElement {
                     Route::PricesAndRates(id) => crate::pages::prices_and_rates::page(id, None),
                     Route::ExchangeRate(currency) => {
                         crate::pages::prices_and_rates::page(None, Some(currency))
+                    }
+                    Route::HistoricalRate { currency, from, to } => {
+                        crate::pages::prices_and_rates::historical_rate(currency, from, to)
                     }
                 };
                 // Back on iOS and Android is the system's: it pops the page

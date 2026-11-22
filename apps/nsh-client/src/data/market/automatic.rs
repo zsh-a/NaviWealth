@@ -183,12 +183,12 @@ mod tests {
                 .map(|currency| {
                     (
                         currency,
-                        Ok(FxRate {
+                        Ok(Some(FxRate {
                             currency,
                             day,
                             rate: 7_250_000,
                             source: "frankfurter:ecb".into(),
-                        }),
+                        })),
                     )
                 })
                 .collect())
