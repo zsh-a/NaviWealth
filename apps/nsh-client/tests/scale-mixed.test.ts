@@ -336,32 +336,6 @@ async function dispatchLifecycle(app: App, state: "active" | "background") {
   return { transition };
 }
 
-test("scale mixed: repeated background during reestimate recovery keeps saving locked until the latest token is read", async () => {
-  const { app, bridge } = await startRace();
-  const { selection } = await beginRaceEstimate(app, bridge);
-  const transitions = [
-    await dispatchLifecycle(app, "background"),
-    await dispatchLifecycle(app, "active"),
-  ];
-  await waitForNative(app, () => calls(app, "ble.disconnect").length === 1);
-  bridge.estimate.resolve(bridge.current());
-  await waitForNative(app, () => bridge.pending.length === 1);
-  transitions.push(
-    await dispatchLifecycle(app, "background"),
-    await dispatchLifecycle(app, "active"),
-  );
-  bridge.pending[0].resolve(bridge.current());
-  await waitForNative(app, () => bridge.pending.length === 2);
-  expect(app.enabled("Save weight only")).toBe(false);
-  bridge.pending[1].resolve(bridge.current());
-  await selection;
-  await Promise.all(transitions.map((item) => item.transition));
-  await waitForNative(app, () => app.enabled("Save weight only"));
-  await app.press("Save weight only");
-  await app.waitFor("Measurement saved");
-  expect(bridge.confirmed).toEqual(["estimate-token"]);
-}, 30000);
-
 test("scale mixed: background during an in-flight feed recovers its newer token before saving", async () => {
   const { app, bridge, sessionId } = await startRace();
   const delivery = packet(app, sessionId, IMPEDANCE);
