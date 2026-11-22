@@ -1,7 +1,7 @@
 [package]
 name = "naviwealth-app"
 description = "NaviWealth's local-first NSH finance and health client."
-version = "0.18.2"
+version = "0.18.3"
 edition = "2024"
 rust-version = "1.97"
 publish = false
