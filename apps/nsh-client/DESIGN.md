@@ -565,9 +565,12 @@ Asset changes carries the trend on a separate pushed page:
 a single ink line with a soft area fill and a dated value above it. Holding unit prices,
 FX pairs, estimated net worth and saved snapshots share that inspection surface.
 Touch or drag horizontally to inspect an observation. Mouse, keyboard and screen-reader
-stepping update the same readout. The seven- and thirty-day windows include
-today and the preceding six or twenty-nine calendar days. Older records unlock
-All. The plotted axis starts at the window's first observation, so a short
+stepping update the same readout. A single row offers 7D, 30D, 90D and More.
+More offers 1Y and All, plus YTD for net worth. Its label shows the selected
+period. The controls can wrap at larger text sizes. All is available from the
+first observation. Rolling periods include today. YTD uses the previous
+December 31 as its comparison date, or names the first complete valuation
+when history starts later. The plotted axis starts at the window's first observation, so a short
 history fills the plot; axis ends and dates read as local short dates
 (Oct 23 / 10月23日), adding the year only when the ends span years.
 An empty recent window shows the latest available observation date. History fills automatically while the app is active. A missing FX rate or valuation error breaks the line. Isolated valid days get a dot. The chart lists missing currencies and affected dates in the displayed window. Money keeps

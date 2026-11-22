@@ -452,8 +452,12 @@ closes supersede same-day intraday marks; same-day manual prices take priority.
 While the app is active, opening it, resuming, adding a required currency or binding,
 and a five-minute timer schedule the required quotes and rates. Opening Prices & rates
 also requests both supported foreign rates. A single worker coalesces requests and
-backfills the last 30 days independently of current quote success. Fetches are single-flight and bounded to
-one year plus a ten-day prior-price warm-up per request, with a six-hour success TTL and five-minute failure TTL;
+backfills the last 30 days independently of current quote success. Selecting a longer
+chart period requests history for that holding, currency pair or portfolio. All
+shows every local observation. For a holding or currency pair it requests up to a year
+of history, extending further when relevant local financial records start earlier.
+Portfolio history starts at the first relevant ledger date. The worker divides long
+intervals into requests of at most 365 days, with a six-hour success TTL and five-minute failure TTL;
 FX requests cover portfolio currencies and the pairs displayed in the rates view. A ten-day price/FX warm-up permits prior
 published rates across weekends without using future rates. Empty responses
 remain missing data, not a coverage guarantee. No minute/tick history or
@@ -466,8 +470,10 @@ in the trading currency below quantity, cost and unrealized gain. A single
 quote shows its value and provenance. Trades can create and select a cash
 account in their own currency. Dividend amounts and unit prices keep separate
 draft values. The full charts support dragging, keyboard inspection
-and switching date windows. Recent windows end today, including for a stale
-quote. All reaches the earliest available history. The overview independently
+and switching date windows. The chart offers 7D, 30D and 90D, with 1Y and All
+under More. All is available even with a single observation. Recent windows end
+today, including for a stale quote. Net worth also offers YTD and dates its change
+from the previous December 31, or the first complete valuation since then. The overview independently
 compares today's valuation with the valuation exactly 30 days ago. Expand a daily close for OHLC,
 source and revisions. Holding details open the same page filtered to the security.
 A changed binding clears only its active network marks: the old observations

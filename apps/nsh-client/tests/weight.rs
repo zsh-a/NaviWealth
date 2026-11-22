@@ -204,6 +204,7 @@ fn scale_context_shows_on_today_in_the_editor_in_review_and_records() -> Result<
     // Review: the longer window and the body-fat line.
     app.press("label:Review")?;
     app.wait_for("text:30 days")?;
+    assert!(!app.shows("id:trend-period-more"));
     app.press("90 days")?;
     // Axis ends read as local short dates, with the year only across years.
     let (start, end) = (today().plus_days(-89).0, today().0);

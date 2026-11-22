@@ -214,7 +214,10 @@ Started before the (now canceled) Flutter import by the owner's choice
   immutable raw OHLCV revisions and transactional price/FX audit; schema 16
   keeps immutable valuation observations. CN/HK/US daily history and HKD/USD
   reference rates backfill 30 days automatically, including when current quotes fail, with
-  per-market dates, bounded requests and durable throttling. Daily closes and
+  per-market dates, bounded requests and durable throttling. Longer chart periods
+  request relevant prices and rates on selection. Estimates and saved snapshots
+  offer 7D, 30D, 90D, YTD, 1Y and All. Holding prices and FX pairs offer
+  the same rolling periods and All. Daily closes and
   intraday marks retain distinct provenance; same-day manual values win.
   Rebinding preserves archived observations. Asset changes separates current
   recalculation from observations captured at an actual instant, with missing

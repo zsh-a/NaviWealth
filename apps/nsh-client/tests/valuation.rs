@@ -1,6 +1,166 @@
 //! Recalculated history and immutable observed revisions remain separate.
 mod common;
 use common::*;
+use jiff::civil::{Date, date};
+
+fn noon(day: Date) -> jiff::Timestamp {
+    day.at(12, 0, 0, 0)
+        .to_zoned(jiff::tz::TimeZone::UTC)
+        .unwrap()
+        .timestamp()
+}
+
+fn start_on(dir: &Path, day: Date) -> Headless {
+    let now = std::time::SystemTime::UNIX_EPOCH + Duration::from_secs(noon(day).as_second() as u64);
+    start_in_with_clock(Some(dir), vec![], None, nsh_core::time::Clock::manual(now)).0
+}
+
+fn opening(
+    db: &rusqlite::Connection,
+    account: &navi_finance::account::Account,
+    day: Date,
+    amount: i64,
+) {
+    use navi_finance::{
+        journal::{self, Entry, Source},
+        repository,
+    };
+    let entry = Entry {
+        id: day.to_string(),
+        at: day.at(9, 0, 0, 0),
+        payee: String::new(),
+        note: String::new(),
+        source: Source::Manual,
+    };
+    repository::save(db, &journal::opening(entry, account, amount).unwrap()).unwrap();
+}
+
+fn more_period(app: &mut Headless, option: &str) -> Result<(), String> {
+    app.press("id:trend-period-more")?;
+    app.press(&format!("role:option[{option}]"))
+}
+
+#[test]
+fn ytd_includes_january_first_with_the_previous_close_and_filters_real_snapshots()
+-> Result<(), String> {
+    use navi_finance::{account::Account, valuation};
+    let january = date(2026, 1, 1);
+    let march = date(2026, 3, 16);
+    let prior = date(2024, 12, 15);
+    let dir = tempfile::tempdir().unwrap();
+    drop(start_on(dir.path(), january));
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    let cash = Account::parse("资产:Cash").unwrap();
+    for (day, amount) in [
+        (prior, 10_000),
+        (date(2025, 12, 30), 1_000),
+        (date(2025, 12, 31), 2_000),
+        (january, 300),
+        (march, 700),
+    ] {
+        opening(&db, &cash, day, amount);
+        if day != date(2025, 12, 31) {
+            valuation::record_current(&db, day, noon(day)).unwrap();
+        }
+    }
+    // The estimate includes January 1's ¥3, even on the first day of the year.
+    let mut app = start_on(dir.path(), january);
+    app.press("label:Assets")?;
+    app.press("label:/^Asset changes/")?;
+    more_period(&mut app, "YTD")?;
+    app.wait_for("text:/Since Dec 31, 2025 \\+¥3.00$/")?;
+    app.wait_for("text:Dec 31, 2025 – Jan 1, 2026")?;
+    drop(app);
+
+    let mut app = start_on(dir.path(), march);
+    app.press("label:Assets")?;
+    app.press("label:/^Asset changes/")?;
+    more_period(&mut app, "YTD")?;
+    app.wait_for("text:/Since Dec 31, 2025 \\+¥10.00$/")?;
+    app.wait_for("text:Dec 31, 2025 – Mar 16, 2026")?;
+    app.press("Net worth snapshots")?;
+    more_period(&mut app, "YTD")?;
+    // No snapshot was taken on December 31. Start the recorded change on
+    // January 1; both the list and the chart exclude the actual Dec 30 capture.
+    app.wait_for("text:/Since Jan 1, 2026 \\+¥7.00$/")?;
+    app.wait_for("text:/^Recorded at 2026-01-01/")?;
+    assert!(!app.shows("text:/^Recorded at 2025-12-3/"));
+    more_period(&mut app, "1Y")?;
+    app.wait_for("text:/^Recorded at 2025-12-30/")?;
+    assert!(!app.shows("text:/^Recorded at 2024/"));
+    more_period(&mut app, "All")?;
+    app.wait_for("text:/^Recorded at 2024-12-15/")?;
+    app.press("Historical estimates")?;
+    app.wait_for("text:Dec 31, 2025 – Mar 16, 2026")?;
+    Ok(())
+}
+
+#[test]
+fn first_year_uses_the_first_ledger_day_even_when_the_value_is_unchanged() -> Result<(), String> {
+    let dir = tempfile::tempdir().unwrap();
+    let march = date(2026, 3, 16);
+    drop(start_on(dir.path(), march));
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    let wallet = navi_finance::account::Account::parse("资产:Wallet").unwrap();
+    opening(&db, &wallet, date(2026, 3, 12), 10_000);
+    let mut app = start_on(dir.path(), march);
+    app.press("label:Assets")?;
+    app.press("label:/^Asset changes/")?;
+    more_period(&mut app, "YTD")?;
+    app.wait_for("text:/Since Mar 12, 2026 ¥0.00$/")?;
+    app.press("Change breakdown")?;
+    app.wait_for("text:Mar 12 – Mar 16")?;
+    app.wait_for("Net worth did not change in this period.")?;
+    Ok(())
+}
+
+#[test]
+fn ytd_uses_the_first_complete_date_and_keeps_earlier_fx_gaps_inspectable() -> Result<(), String> {
+    use navi_finance::{
+        account::Account,
+        currency::{self, Currency, FxRate},
+    };
+    let dir = tempfile::tempdir().unwrap();
+    let march = date(2026, 3, 16);
+    drop(start_on(dir.path(), march));
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    let usd = Account::parse("资产/USD:Broker cash").unwrap();
+    let first_rate = date(2026, 3, 12);
+    opening(&db, &usd, date(2025, 12, 20), 10_000);
+    opening(&db, &usd, march, 200);
+    currency::save_rate(
+        &db,
+        &FxRate {
+            currency: Currency::USD,
+            day: first_rate,
+            rate: 7_000_000,
+            source: "manual".into(),
+        },
+    )
+    .unwrap();
+    let mut app = start_on(dir.path(), march);
+    app.press("label:Assets")?;
+    app.press("label:/^Asset changes/")?;
+    more_period(&mut app, "YTD")?;
+    app.wait_for("text:/Since Mar 12, 2026 \\+¥14.00$/")?;
+    app.wait_for("text:Mar 12 – Mar 16")?;
+    app.wait_for("text:+¥14.00")?;
+    let gap = "Missing USD rate · 2025-12-31 – 2026-03-11";
+    app.press(gap)?;
+    app.wait_for("2025-12-31 – 2026-03-11")?;
+    app.press("label:Back")?;
+    app.wait_for("text:Mar 12 – Mar 16")?;
+    app.drag_and_hold(
+        "id:trend-inspector",
+        nsh_core::geometry::point(nsh_core::geometry::px(-160.0), nsh_core::geometry::px(0.0)),
+    )?;
+    app.drop_held()?;
+    app.wait_for("text:—")?;
+    app.wait_for("text:/Valuation unavailable$/")?;
+    assert!(!app.shows("text:+¥14.00"));
+    Ok(())
+}
+
 #[test]
 fn first_balance_creates_one_daily_snapshot_and_history_pages_older_revisions() -> Result<(), String>
 {
@@ -154,8 +314,12 @@ fn price_history_exposes_daily_revisions_and_fx_audit() -> Result<(), String> {
     app.press("7D")?;
     app.wait_for("text:7.1")?;
     assert!(!app.shows("text:/7.200015/"));
+    more_period(&mut app, "All")?;
+    app.wait_for("id:trend-period-more >> text:All")?;
+    app.wait_for("text:/7.200015/")?;
     app.press("HKD → CNY")?;
     app.wait_for("text:0.912345")?;
+    app.wait_for("id:trend-period-more >> text:All")?;
     app.press("Daily closes")?;
     app.wait_for(&format!("510300.SH · {day}"))?;
     app.press(&format!("510300.SH · {day}"))?;
@@ -294,7 +458,7 @@ fn overview_opens_the_exact_comparison_and_calendar_windows_remain_available() -
     );
     app.press("30D")?;
     app.wait_for_gone("text:/¥100.00 – ¥195.00/", GONE)?;
-    app.press("All")?;
+    more_period(&mut app, "All")?;
     app.wait_for("text:+¥95.00")?;
 
     drop(app);
@@ -306,7 +470,7 @@ fn overview_opens_the_exact_comparison_and_calendar_windows_remain_available() -
     app.wait_for("text:/¥105.00 – ¥200.00/")?;
     app.press("7D")?;
     app.wait_for_gone("text:/¥105.00 – ¥200.00/", GONE)?;
-    app.press("Comparison")?;
+    more_period(&mut app, "Comparison")?;
     app.wait_for("text:/¥105.00 – ¥200.00/")?;
     app.press("Net worth snapshots")?;
     app.press("Historical estimates")?;

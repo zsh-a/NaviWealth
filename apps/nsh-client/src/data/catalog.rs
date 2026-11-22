@@ -92,6 +92,7 @@ pub fn bind(binding: &SecurityBinding) -> Result<(), String> {
     db::with(|c| catalog::bind(c, binding))
         .ok_or("database is not open")?
         .map_err(|e| e.to_string())?;
+    super::history::binding_changed(&binding.security);
     // A re-link removed obsolete provider marks in the same database savepoint.
     // Reload reactive mirrors before showing this holding under its new identity.
     super::market::reload_prices()?;

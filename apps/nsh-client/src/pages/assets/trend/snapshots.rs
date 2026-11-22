@@ -7,32 +7,29 @@ pub(super) fn recorded_panel(window: Signal<Window>) -> AnyElement {
         return panel.child(history_read_error()).into_element();
     };
     let today = crate::data::clock::today().0;
-    let Some(&(earliest, _)) = daily.first().filter(|p| p.0 <= today) else {
-        return panel
-            .child(
-                text(copy("No net worth snapshots yet.", "暂无净值快照。"))
-                    .typo(Type::Body)
-                    .text_color(color::MUTED),
-            )
-            .into_element();
+    let dates = ChartDates {
+        today,
+        earliest: daily.first().map_or(today, |p| p.0.min(today)),
+        comparison: None,
     };
     let gaps: Vec<_> = daily
         .iter()
         .filter(|p| p.1.is_none())
         .map(|p| p.0)
         .collect();
-    panel = panel.child(trend::chart(
+    panel = panel.child(trend::chart_from(
         copy("Recorded net worth", "留存净值").into(),
         daily,
         Unit::Money,
         window,
-        today,
+        dates,
+        None,
     ));
     panel
         .child(dynamic(move || {
-            let from = window.get().start(today, earliest);
+            let (from, to) = dates.bounds(window.get());
             let visible =
-                &gaps[gaps.partition_point(|d| *d < from)..gaps.partition_point(|d| *d <= today)];
+                &gaps[gaps.partition_point(|d| *d < from)..gaps.partition_point(|d| *d <= to)];
             untracked(|| {
                 view()
                     .gap_2()
@@ -43,7 +40,7 @@ pub(super) fn recorded_panel(window: Signal<Window>) -> AnyElement {
                             color::MUTED,
                         )
                     }))
-                    .child(snapshot_page(None, from, today))
+                    .child(snapshot_page(None, from, to))
                     .into_element()
             })
         }))

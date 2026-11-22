@@ -3,7 +3,7 @@ mod editor;
 mod list;
 mod receipt;
 use crate::{
-    data::{clock, finance},
+    data::{catalog, clock, finance, history},
     domain::meal::Day,
     i18n::s,
     nav::{self, Route},
@@ -12,6 +12,7 @@ use crate::{
         field::note,
         surface::{hairline, row_button},
         toast::{show_toast, toast_view},
+        trend::{self, ChartDates, Unit, Window},
     },
 };
 pub use editor::{trade_editor, trade_task};
@@ -100,6 +101,44 @@ pub(super) fn pair(
         )
 }
 
+fn watch_price_window(id: Stored<String>, window: Signal<Window>) {
+    let request = computed(move || {
+        let day = clock::today().0;
+        let period = window.get();
+        let mut from = period.backfill_start(day, day)?;
+        let id = id.get();
+        if lifecycle() != nsh_core::platform::Lifecycle::Active
+            || !matches!(nav::open().last(), Some(Route::Holding(security) | Route::SavedTrade {security, ..}) if security == &id)
+        {
+            return None;
+        }
+        let binding = catalog::bindings().into_iter().find(|b| b.security == id)?;
+        if period == Window::All {
+            let book = finance::holdings_snapshot();
+            from = book
+                .trades
+                .iter()
+                .filter(|t| t.security == id)
+                .map(|t| t.at.date())
+                .chain(
+                    book.quotes
+                        .iter()
+                        .filter(|q| q.security == id)
+                        .map(|q| q.day),
+                )
+                .fold(from, std::cmp::min);
+        }
+        Some((binding, from, day))
+    });
+    effect(move || {
+        if let Some((binding, from, to)) = request.get() {
+            untracked(|| {
+                history::request_range(history::HistoryScope::Security(binding.security), from, to)
+            });
+        }
+    });
+}
+
 pub fn holding_page(id: &str) -> Screen {
     holding_page_with_receipt(id, None)
 }
@@ -108,7 +147,8 @@ pub(crate) fn holding_page_with_receipt(id: &str, initial_trade: Option<String>)
     let id = stored(id.to_owned());
     let trade = signal(None::<String>);
     let price = signal(false);
-    let chart_window = signal(crate::ui::trend::Window::Month);
+    let chart_window = signal(Window::Month);
+    watch_price_window(id, chart_window);
     let picker = signal(false);
     let binding_error = signal(None::<String>);
     let from_receipt = initial_trade.is_some();
@@ -247,22 +287,18 @@ pub(crate) fn holding_page_with_receipt(id: &str, initial_trade: Option<String>)
                                                         )))
                                                     },
                                                 ))
-                                                .child((prices.len() > 1).then(|| {
-                                                    crate::ui::trend::chart(
-                                                        crate::i18n::catalog::copy(
-                                                            "Unit price",
-                                                            "单位价格",
-                                                        )
-                                                        .into(),
-                                                        prices
-                                                            .into_iter()
-                                                            .map(|(day, price)| (day, Some(price)))
-                                                            .collect(),
-                                                        crate::ui::trend::Unit::Price(currency),
-                                                        chart_window,
-                                                        today.0,
-                                                    )
-                                                })),
+                                                .child(
+                                                    (binding.is_some() || !prices.is_empty()).then(
+                                                        || {
+                                                            price_trend(
+                                                                prices,
+                                                                currency,
+                                                                chart_window,
+                                                                today,
+                                                            )
+                                                        },
+                                                    ),
+                                                ),
                                         )
                                         .into_element()
                                 })
@@ -464,6 +500,48 @@ fn valuation_header(
                 .typo(Type::Subhead)
                 .text_color(color::MUTED)
         }))
+}
+
+fn price_trend(
+    prices: std::collections::BTreeMap<jiff::civil::Date, i64>,
+    currency: Currency,
+    window: Signal<Window>,
+    today: Day,
+) -> AnyElement {
+    let unit = Unit::Price(currency);
+    if prices.len() > 1 {
+        return trend::chart(
+            crate::i18n::catalog::copy("Unit price", "单位价格").into(),
+            prices
+                .into_iter()
+                .map(|(day, price)| (day, Some(price)))
+                .collect(),
+            unit,
+            window,
+            today.0,
+        );
+    }
+    let last_quote = prices.first_key_value().map(|(&day, _)| day);
+    let dates = ChartDates {
+        today: today.0,
+        earliest: last_quote.unwrap_or(today.0),
+        comparison: None,
+    };
+    view()
+        .gap_1()
+        .child(trend::period_picker(unit, window, dates, None))
+        .child(when(
+            move || last_quote.is_some_and(|day| day < dates.bounds(window.get()).0),
+            || {
+                text(crate::i18n::catalog::copy(
+                    "No quotes in this period",
+                    "区间内暂无报价",
+                ))
+                .typo(Type::Caption)
+                .text_color(color::MUTED)
+            },
+        ))
+        .into_element()
 }
 
 fn price_controls(

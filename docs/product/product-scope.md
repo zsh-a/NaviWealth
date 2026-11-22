@@ -351,11 +351,16 @@ stored as truth.
 
 
 Historical prices remain a secondary Assets task: daily closes and corrections
-are inspectable beneath Manage or a holding detail. The last seven and thirty
-calendar days include today. Older observations remain accessible in All.
+are inspectable beneath Manage or a holding detail. Charts offer the last
+7, 30 or 90 calendar days, the past year and All. All includes every local
+observation and is selectable from the first day. Net worth also offers
+year to date, measured from the previous December 31 or the first complete
+valuation available since then. The change names its actual starting date.
 Asset changes distinguishes recalculated history from immutable observations
 captured at the shown time. Its chart, gap notices and snapshot list follow
 the selected dates. The overview compares today with exactly thirty days ago.
 Missing FX stays explicit; neither retroactive snapshots nor closing-net-worth
 claims are inferred from an ordinary foreground capture. Historical retrieval
-uses the existing public data providers and preserves native currencies.
+uses the existing public data providers and preserves native currencies. The
+automatic backfill covers 30 days. Selecting a longer period requests the
+relevant price or FX history for that chart.

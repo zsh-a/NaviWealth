@@ -45,6 +45,13 @@ fn detail_prioritizes_trade_and_keeps_price_and_listing_actions_readable() -> Re
     app.press("text:Update price")?;
     app.wait_for("Price updated")?;
     assert_eq!(app.screen().count("text:¥6.25")?, 1);
+    app.press("id:trend-period-more")?;
+    app.press("text:All")?;
+    app.wait_for("id:trend-period-more >> text:All")?;
+    app.wait_for("text:¥6.25")?;
+    assert!(!app.shows("id:trend-inspector"));
+    app.press("90D")?;
+    app.wait_for("id:trend-period-more >> text:More")?;
     app.press("Price history")?;
     app.wait_for("text:¥6.25")?;
     app.wait_for("text:/Manual/")?;

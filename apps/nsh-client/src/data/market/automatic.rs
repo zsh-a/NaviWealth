@@ -115,6 +115,7 @@ fn start_with(fetch_rates: super::FetchRates) {
         if lifecycle() != Lifecycle::Active {
             return;
         }
+        history::resume();
         pending.set(Some(plan.get()));
         if running.get_untracked() {
             return;
@@ -152,7 +153,7 @@ fn start_with(fetch_rates: super::FetchRates) {
                         .day
                         .checked_sub(jiff::Span::new().days(30))
                         .unwrap_or(work.day);
-                    history::backfill(from, work.day, work.epoch, &history_currencies).await;
+                    history::request_default(from, work.day, &history_currencies);
                 }
             }
             running.set(false);

@@ -278,7 +278,8 @@ fn short_history_names_the_first_convertible_day_in_its_change() -> Result<(), S
         "Missing USD rate · {start} – {}",
         first_complete.yesterday().unwrap()
     ))?;
-    app.press("Comparison")?;
+    app.press("id:trend-period-more")?;
+    app.press("role:option[Comparison]")?;
     app.wait_for("text:+¥7,000.00")?;
     Ok(())
 }

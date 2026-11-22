@@ -138,6 +138,10 @@ pub(super) struct Client {
 /// Whether quotes and exchange rates may come from the public providers.
 static LIVE: AtomicBool = AtomicBool::new(true);
 
+pub(super) fn live_enabled() -> bool {
+    LIVE.load(Ordering::Relaxed)
+}
+
 /// Turns the public providers off for this process. The market transport is
 /// its own HTTP client, outside the engine's network, so a headless test's
 /// stub network cannot answer it; without this a test's result would depend

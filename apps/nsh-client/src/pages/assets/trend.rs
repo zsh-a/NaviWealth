@@ -18,6 +18,7 @@ use nsh_core::{element::Rows, prelude::*};
 use std::collections::BTreeMap;
 
 pub fn history_page(comparison: Option<(Day, Day)>) -> nsh_core::element::Screen {
+    use crate::data::{clock, finance, history};
     use crate::nav;
     let recorded = signal(false);
     let basis = signal(false);
@@ -28,6 +29,31 @@ pub fn history_page(comparison: Option<(Day, Day)>) -> nsh_core::element::Screen
     let explain = signal(comparison.is_some());
     let selected = signal(None::<Date>);
     let edit = signal(None::<String>);
+    // Keep the long-range subscription outside the estimate content. A new
+    // batch of prices redraws the figures without resubmitting the same dates.
+    let earliest = computed(|| {
+        finance::transactions_snapshot()
+            .iter()
+            .map(|t| t.at.date())
+            .min()
+    });
+    let request = computed(move || {
+        if recorded.get()
+            || lifecycle() != nsh_core::platform::Lifecycle::Active
+            || !matches!(nav::open().last(), Some(nav::Route::AssetHistory { .. }))
+        {
+            return None;
+        }
+        let today = clock::today().0;
+        let first = earliest.get().filter(|d| *d <= today)?;
+        let from = estimates_window.get().backfill_start(today, first)?;
+        Some((from.max(first), today))
+    });
+    effect(move || {
+        if let Some((from, to)) = request.get() {
+            untracked(|| history::request_range(history::HistoryScope::Portfolio, from, to));
+        }
+    });
     nsh_base::nav_page()
         .title(|| s().asset_history)
         .header_visible(false)
@@ -66,6 +92,7 @@ pub fn history_page(comparison: Option<(Day, Day)>) -> nsh_core::element::Screen
                                 } else {
                                     estimate_panel(
                                         estimates_window,
+                                        earliest.get(),
                                         comparison,
                                         basis,
                                         explain,
@@ -144,6 +171,7 @@ impl NetWorthHistory {
 
 fn estimate_panel(
     window: Signal<Window>,
+    first_entry: Option<Date>,
     comparison: Option<(Date, Date)>,
     basis: Signal<bool>,
     explain: Signal<bool>,
@@ -157,12 +185,7 @@ fn estimate_panel(
     let today = clock::today().0;
     let has_holdings = !book.securities.is_empty();
     // Each confirmed trade has a journal entry on its effective date.
-    let earliest = entries
-        .iter()
-        .map(|entry| entry.at.date())
-        .min()
-        .unwrap_or(today)
-        .min(today);
+    let earliest = first_entry.unwrap_or(today).min(today);
     let dates = ChartDates {
         today,
         earliest,
@@ -171,7 +194,8 @@ fn estimate_panel(
     view()
         .gap_3()
         .child(dynamic(move || {
-            let (from, to) = dates.bounds(window.get());
+            let active = window.get();
+            let (from, to) = dates.bounds(active);
             let history = NetWorthHistory::between(&entries, &book, &rates, from, to);
             untracked(move || {
                 let title = if has_holdings {
@@ -179,7 +203,8 @@ fn estimate_panel(
                 } else {
                     copy("Book value", "账面净资产")
                 };
-                let breakdown = change_explanation(&history.points, selected, explain, edit);
+                let breakdown =
+                    change_explanation(&history.points, active, selected, explain, edit);
                 view()
                     .gap_2()
                     .child(trend::chart_from(
@@ -223,19 +248,21 @@ fn estimate_panel(
         .into_element()
 }
 
-/// The chart reads changes from its first visible sample, even when history
-/// began inside the selected window. Never move the baseline past a gap.
+/// Use the same dated comparison as the chart, including a partial year
+/// that begins at its first complete valuation.
 fn change_explanation(
     points: &[trend::Point],
+    window: Window,
     selected: Signal<Option<Date>>,
     open: Signal<bool>,
     edit: Signal<Option<String>>,
 ) -> AnyElement {
     use navi_finance::attribution::{self, Outcome};
-    let [first, .., last] = points else {
+    let [opening, .., last] = points else {
         return view().into_element();
     };
-    let (first, last) = (*first, *last);
+    let first = window.baseline(points).unwrap_or(*opening);
+    let last = *last;
     let points = stored(points.to_vec());
     view()
         .gap_2()
@@ -253,6 +280,17 @@ fn change_explanation(
                             .map(|i| p[i])
                             .unwrap_or(last)
                     });
+                    if last.0 < first.0 {
+                        return text(format!(
+                            "{} · {}",
+                            s().axis_date(Day(last.0), true),
+                            copy("Valuation unavailable", "缺少估值"),
+                        ))
+                        .typo(Type::Caption)
+                        .tabular_nums()
+                        .text_color(color::MUTED)
+                        .into_element();
+                    }
                     let date_span = format!(
                         "{} – {}",
                         s().axis_date(Day(first.0), first.0.year() != last.0.year()),

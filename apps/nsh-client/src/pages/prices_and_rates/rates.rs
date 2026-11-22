@@ -1,7 +1,7 @@
 //! Inspect one dated currency pair at a time.
 use crate::{
     data::{
-        clock, finance,
+        clock, finance, history,
         market::{RateStatus, rate_status},
     },
     domain::meal::Day,
@@ -10,7 +10,7 @@ use crate::{
     ui::{
         Btn, Type, Typo, color, space,
         surface::row_button,
-        trend::{self, Unit, Window},
+        trend::{self, ChartDates, Unit, Window},
     },
 };
 use navi_finance::{
@@ -37,6 +37,36 @@ pub(super) fn panel(choice: Signal<Option<Currency>>) -> impl IntoElement {
                 Currency::USD
             }
         })
+    });
+    let request = computed(move || {
+        let period = window.get();
+        let day = clock::today().0;
+        let mut from = period.backfill_start(day, day)?;
+        if lifecycle() != nsh_core::platform::Lifecycle::Active
+            || !matches!(
+                nav::open().last(),
+                Some(nav::Route::PricesAndRates(None) | nav::Route::ExchangeRate(_))
+            )
+        {
+            return None;
+        }
+        let c = selected.get();
+        if period == Window::All {
+            let ledger = finance::transactions_snapshot();
+            let rates = finance::rates_snapshot();
+            from = ledger
+                .iter()
+                .filter(|entry| entry.postings.iter().any(|p| p.account.currency() == c))
+                .map(|entry| entry.at.date())
+                .chain(rates.iter().filter(|r| r.currency == c).map(|r| r.day))
+                .fold(from, std::cmp::min);
+        }
+        Some((c, from, day))
+    });
+    effect(move || {
+        if let Some((currency, from, to)) = request.get() {
+            untracked(|| history::request_range(history::HistoryScope::Rate(currency), from, to));
+        }
     });
     view()
         .gap_3()
@@ -105,9 +135,15 @@ pub(super) fn panel(choice: Signal<Option<Currency>>) -> impl IntoElement {
                 copy("CNY per HK dollar", "1 港元兑人民币")
             };
             if points.is_empty() {
-                text(title)
-                    .typo(Type::Headline)
-                    .text_color(color::BODY)
+                let dates = ChartDates {
+                    today,
+                    earliest: today,
+                    comparison: None,
+                };
+                view()
+                    .gap_2()
+                    .child(text(title).typo(Type::Headline).text_color(color::BODY))
+                    .child(trend::period_picker(Unit::Rate, window, dates, None))
                     .into_element()
             } else {
                 untracked(|| trend::chart(title.into(), points, Unit::Rate, window, today))
@@ -115,7 +151,10 @@ pub(super) fn panel(choice: Signal<Option<Currency>>) -> impl IntoElement {
         }))
         .child(dynamic(move || {
             let c = selected.get();
-            let message = attempt_label(rate_status(c, None)).or_else(|| {
+            let period = request
+                .get()
+                .and_then(|(_, from, to)| to.yesterday().ok().map(|last_close| (from, last_close)));
+            let message = attempt_label(rate_status(c, period)).or_else(|| {
                 currency::rate_in(&finance::rates_snapshot(), c, clock::today().0)
                     .is_none()
                     .then(|| copy("No rate available", "暂无汇率").into())
@@ -178,6 +217,13 @@ fn attempt_label(status: Option<RateStatus>) -> Option<String> {
 }
 
 pub(crate) fn historical_rate(currency: Currency, from: Day, to: Day) -> nsh_core::element::Screen {
+    effect(move || {
+        if lifecycle() == nsh_core::platform::Lifecycle::Active
+            && nav::open().last() == Some(&nav::Route::HistoricalRate { currency, from, to })
+        {
+            history::request_gap(currency, from.0, to.0);
+        }
+    });
     let shown = signal(30usize);
     nsh_base::nav_page()
         .header_visible(false)

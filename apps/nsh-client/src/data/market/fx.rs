@@ -21,7 +21,7 @@ type Period = (Date, Date);
 #[derive(Clone, Default, PartialEq)]
 struct Requests {
     current: BTreeMap<Currency, RateStatus>,
-    history: BTreeMap<Currency, (Period, RateStatus)>,
+    history: BTreeMap<Currency, Vec<(Period, RateStatus)>>,
 }
 
 pub(super) fn reset() {
@@ -31,12 +31,62 @@ pub(super) fn reset() {
 pub(crate) fn rate_status(currency: Currency, period: Option<Period>) -> Option<RateStatus> {
     global::<Requests>().with(|requests| match period {
         None => requests.current.get(&currency).copied(),
-        Some((from, to)) => requests
-            .history
-            .get(&currency)
-            .filter(|((start, end), _)| *start <= from && to <= *end)
-            .map(|(_, state)| *state),
+        Some(period) => history_status(requests.history.get(&currency)?, period),
     })
+}
+
+/// Segments remain sorted and disjoint. A newer request supersedes only its dates.
+fn mark_period(records: &mut Vec<(Period, RateStatus)>, (from, to): Period, status: RateStatus) {
+    let mut next = Vec::new();
+    for &((start, end), previous) in records.iter() {
+        if end < from || start > to {
+            next.push(((start, end), previous));
+            continue;
+        }
+        if start < from {
+            next.push(((start, from.yesterday().unwrap()), previous));
+        }
+        if end > to {
+            next.push(((to.tomorrow().unwrap(), end), previous));
+        }
+    }
+    next.push(((from, to), status));
+    next.sort_unstable_by_key(|r| r.0);
+    records.clear();
+    for (period, state) in next {
+        if let Some(((.., end), previous)) = records.last_mut()
+            && *previous == state
+            && end.tomorrow().ok() == Some(period.0)
+        {
+            *end = period.1;
+        } else {
+            records.push((period, state));
+        }
+    }
+}
+
+fn history_status(records: &[(Period, RateStatus)], (from, to): Period) -> Option<RateStatus> {
+    let mut cursor = from;
+    let mut complete = false;
+    let mut gap = false;
+    let mut result = RateStatus::Empty;
+    for &((start, end), status) in records
+        .iter()
+        .filter(|((start, end), _)| *start <= to && from <= *end)
+    {
+        gap |= start > cursor;
+        complete = end >= to;
+        cursor = end.tomorrow().unwrap_or(end);
+        match (status, result) {
+            (RateStatus::Loading, _) => return Some(RateStatus::Loading),
+            (RateStatus::Failed(at), RateStatus::Failed(previous)) => {
+                result = RateStatus::Failed(at.max(previous))
+            }
+            (RateStatus::Failed(_), _) | (RateStatus::Ready, RateStatus::Empty) => result = status,
+            _ => {}
+        }
+    }
+    (matches!(result, RateStatus::Failed(_)) || (complete && !gap)).then_some(result)
 }
 
 pub(in crate::data) fn set_rate_status(
@@ -46,7 +96,7 @@ pub(in crate::data) fn set_rate_status(
 ) {
     global::<Requests>().update(|requests| match period {
         Some(period) => {
-            requests.history.insert(currency, (period, state));
+            mark_period(requests.history.entry(currency).or_default(), period, state);
         }
         None => {
             requests.current.insert(currency, state);
@@ -236,6 +286,34 @@ mod tests {
         app.wait_for("Completed 2").unwrap();
         app.wait_for("USD idle / HKD idle / history false").unwrap();
         app.wait_for("stored rates 2").unwrap();
+    }
+
+    #[test]
+    fn completed_and_pending_historical_chunks_only_change_their_own_dates() {
+        let day = |n| jiff::civil::date(2026, 1, n);
+        let mut history = Vec::new();
+        mark_period(&mut history, (day(1), day(12)), RateStatus::Failed(5));
+        mark_period(&mut history, (day(13), day(22)), RateStatus::Ready);
+        assert!(matches!(
+            history_status(&history, (day(1), day(22))),
+            Some(RateStatus::Failed(5))
+        ));
+        mark_period(&mut history, (day(5), day(8)), RateStatus::Loading);
+        assert!(matches!(
+            history_status(&history, (day(2), day(7))),
+            Some(RateStatus::Loading)
+        ));
+        assert!(matches!(
+            history_status(&history, (day(9), day(10))),
+            Some(RateStatus::Failed(5))
+        ));
+        assert!(history_status(&history, (day(18), day(23))).is_none());
+        mark_period(&mut history, (day(1), day(12)), RateStatus::Ready);
+        assert!(matches!(
+            history_status(&history, (day(1), day(22))),
+            Some(RateStatus::Ready)
+        ));
+        assert_eq!(history.len(), 1);
     }
 
     #[test]
