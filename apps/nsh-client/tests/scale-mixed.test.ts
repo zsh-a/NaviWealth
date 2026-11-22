@@ -172,6 +172,19 @@ function algorithmPreference(app: App): string {
   return JSON.parse(app.storage()["settings.v1"]).scale_algorithm ?? "segal";
 }
 
+// Brings content up by scrolling when the page still overflows. The Body
+// profile page fits the test viewport in the Instrument layout, so it can
+// have nothing to scroll; the harness' scroll fails hard in that case.
+async function reveal(app: App, selector: string, distance: number) {
+  try {
+    await app.scroll(selector, distance);
+  } catch (error) {
+    if (!String(error).includes("cannot scroll by")) {
+      throw error;
+    }
+  }
+}
+
 function deferred<T>() {
   let resolve: (value: T) => void = () => {
     throw new Error("Deferred response is not initialized");
@@ -481,7 +494,7 @@ test("scale mixed: retained draft keeps its chosen algorithm and frozen profile 
   await app.press("Body profile");
   await app.clear("label:Height");
   await app.type("label:Height", "180");
-  await app.scroll("Estimation algorithm", 1000);
+  await reveal(app, "Estimation algorithm", 1000);
   await app.press("label:Estimation algorithm, Sun 2003");
   expect(algorithmPreference(app)).toBe("sun2003");
   await app.press("label:Back");
