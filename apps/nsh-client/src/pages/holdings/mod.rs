@@ -16,6 +16,7 @@ use crate::{
     },
 };
 pub use editor::{trade_editor, trade_task};
+pub(crate) use list::closed_holdings;
 pub use list::{closed_page, section};
 use navi_finance::{
     currency::Currency,

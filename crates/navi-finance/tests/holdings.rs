@@ -46,6 +46,7 @@ fn fractional_average_cost_partial_sale_dividend_and_full_close_are_exact() {
         trade("c", Kind::Sell, "6", "2.1", 3, 3),
     ];
     let (p, _) = holdings::replay(&s, &trades, date(2026, 11, 3)).unwrap();
+    assert_eq!(p.closed_at, None);
     assert_eq!((p.quantity, p.cost, p.realized), (9_000_000, 1321, 377));
     trades.push(Trade {
         amount: 250,
@@ -55,6 +56,23 @@ fn fractional_average_cost_partial_sale_dividend_and_full_close_are_exact() {
     });
     trades.push(trade("e", Kind::Sell, "9", "2.1", 2, 5));
     let (p, entries) = holdings::replay(&s, &trades, date(2026, 11, 5)).unwrap();
+    assert_eq!(p.closed_at, Some(trades[4].at));
+    trades.push(trade("f", Kind::Buy, "1", "2", 0, 6));
+    trades.push(trade("g", Kind::Sell, "1", "2", 0, 8));
+    assert_eq!(
+        holdings::replay(&s, &trades, date(2026, 11, 7))
+            .unwrap()
+            .0
+            .closed_at,
+        None
+    );
+    assert_eq!(
+        holdings::replay(&s, &trades, date(2026, 11, 8))
+            .unwrap()
+            .0
+            .closed_at,
+        Some(trades[6].at)
+    );
     assert_eq!(
         (p.quantity, p.cost, p.realized, p.dividends),
         (0, 0, 944, 240)

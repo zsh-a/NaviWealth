@@ -66,7 +66,11 @@ impl Search {
             .placeholder(copy::search)
             .element_ref(&focus)
     }
-    pub fn results(self, choose: impl Fn(Entry) + Copy + 'static) -> impl IntoElement {
+    pub fn results(
+        self,
+        has_local_matches: impl Fn() -> bool + Copy + 'static,
+        choose: impl Fn(Entry) + Copy + 'static,
+    ) -> impl IntoElement {
         let entries = signal(Vec::<Entry>::new());
         effect(move || {
             let query = self.settled.get();
@@ -79,7 +83,7 @@ impl Search {
         view()
             .gap_2()
             .child(when(
-                move || self.settled.get().trim().is_empty(),
+                move || self.settled.get().trim().is_empty() && !has_local_matches(),
                 || {
                     text(copy::hint)
                         .typo(Type::Subhead)
@@ -87,7 +91,11 @@ impl Search {
                 },
             ))
             .child(when(
-                move || !self.settled.get().trim().is_empty() && entries.get().is_empty(),
+                move || {
+                    !self.settled.get().trim().is_empty()
+                        && entries.get().is_empty()
+                        && !has_local_matches()
+                },
                 || {
                     text(|| {
                         if catalog::available() {
@@ -214,10 +222,13 @@ pub fn selector(open: Signal<bool>, choose: impl Fn(Entry) + Copy + 'static) -> 
                             .child(Btn::ghost().label(|| s().cancel.into()).on_press(close)),
                     )
                     .child(search.input()),
-                search.results(move |entry| {
-                    choose(entry);
-                    close();
-                }),
+                search.results(
+                    || false,
+                    move |entry| {
+                        choose(entry);
+                        close();
+                    },
+                ),
                 search_actions(close),
             )
             .into_element()

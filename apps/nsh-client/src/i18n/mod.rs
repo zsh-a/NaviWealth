@@ -25,8 +25,6 @@ pub struct Strings {
     pub manage_assets: &'static str,
     pub asset_history: &'static str,
     pub closed_holdings: &'static str,
-    pub manage_group_create: &'static str,
-    pub manage_group_data: &'static str,
     pub manage_add_account_note: &'static str,
     pub manage_add_holding_note: &'static str,
     pub no_closed_holdings: &'static str,

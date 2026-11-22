@@ -113,7 +113,9 @@ Updated 2026-11-22.
 - Assets leads with net worth, compact totals and a continuous list of cash
   accounts, open holdings and debts. Cost/quantity and normal check dates are
   details; manual-price dates, cost fallback and unchecked status remain visible.
-  Manage contains creation and closed-holding history; Asset changes opens the
+  Manage offers creation and prices and rates. When positions are fully sold,
+  it also shows their count and history ordered by latest closing date.
+  Asset changes opens the
   dated trend and valuation basis. Opening a change amount carries its actual
   comparison dates into the breakdown. An unused account offers its opening
   balance action until a posting or balance check exists. Closed positions reappear after buying again.

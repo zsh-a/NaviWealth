@@ -16,8 +16,8 @@ use crate::{
     i18n::s,
     nav::{self, Route},
     ui::{
-        Btn, Icon, IconBtn, Type, Typo, Variant, color, icon, radius, space,
-        surface::{HAIRLINE, group_label, hairline, row_button},
+        Btn, Icon, IconBtn, Type, Typo, Variant, color, icon, space,
+        surface::{HAIRLINE, hairline, row_button},
         toast::toast_view,
     },
 };

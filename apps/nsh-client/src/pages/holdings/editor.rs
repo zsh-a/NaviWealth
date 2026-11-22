@@ -36,6 +36,64 @@ fn guarded(
         crate::ui::feedback::confirm_discard(asking, close);
     }
 }
+
+/// Deleting a holding's last trade keeps its security, quotes and listing.
+/// It can still be opened from the new-holding picker.
+fn saved_securities(query: Signal<String>) -> Vec<(Security, Option<String>)> {
+    let book = finance::holdings_snapshot();
+    let traded: std::collections::HashSet<_> = book.trades.iter().map(|t| &t.security).collect();
+    let mut unused = book
+        .securities
+        .iter()
+        .filter(|s| !traded.contains(&s.id))
+        .peekable();
+    if unused.peek().is_none() {
+        return Vec::new();
+    }
+    let bindings = catalog::bindings();
+    let q = query.get().trim().to_lowercase();
+    unused
+        .filter_map(|sec| {
+            let code = bindings
+                .iter()
+                .find(|b| b.security == sec.id)
+                .map(|b| &b.symbol);
+            (sec.name.to_lowercase().contains(&q)
+                || code.is_some_and(|s| s.to_lowercase().contains(&q)))
+            .then(|| (sec.clone(), code.cloned()))
+        })
+        .collect()
+}
+
+fn saved_security_rows(
+    matches: Vec<(Security, Option<String>)>,
+    dirty: impl Fn() -> bool + Copy + 'static,
+    visit: impl Fn(String) + Copy + 'static,
+) -> AnyElement {
+    if matches.is_empty() {
+        return view().into_element();
+    }
+    view()
+        .child(super::super::assets::asset_group_title(|| {
+            copy("Saved securities", "已保存的证券")
+        }))
+        .children(matches.into_iter().map(|(security, code)| {
+            let id = stored(security.id);
+            row_button(guarded(dirty, move || visit(id.get())))
+                .px_0()
+                .child(
+                    text(security.name)
+                        .typo(Type::Body)
+                        .text_color(color::INK)
+                        .min_w(px(0.0))
+                        .flex_1(),
+                )
+                .child(code.map(|code| text(code).typo(Type::Caption).text_color(color::MUTED)))
+                .child(crate::ui::icon(Icon::ChevronRight, 16.0, color::MUTED))
+        }))
+        .into_element()
+}
+
 fn decimal(
     value: Signal<String>,
     label: impl Fn() -> &'static str + Copy + 'static,
@@ -416,8 +474,10 @@ pub fn trade_task(
                     let current_currency = currency.get();
                     untracked(move || {
                         if current_panel == Panel::Security {
-                            return search
-                                .results(move |entry| {
+                            let local = computed(move || saved_securities(search.query));
+                            let catalog_results = search.results(
+                                move || !local.with(Vec::is_empty),
+                                move |entry| {
                                     if let Some(c) = Currency::parse(&entry.currency) {
                                         set_currency(c);
                                     }
@@ -426,7 +486,17 @@ pub fn trade_task(
                                     manual.set(false);
                                     dismiss_keyboard();
                                     panel.set(Panel::Main);
-                                })
+                                },
+                            );
+                            return view()
+                                .child(dynamic(move || {
+                                    saved_security_rows(local.get(), dirty, move |id| {
+                                        saved();
+                                        open.set(None);
+                                        nav::push(Route::Holding(id));
+                                    })
+                                }))
+                                .child(catalog_results)
                                 .into_element();
                         }
                         if current_panel == Panel::Date {

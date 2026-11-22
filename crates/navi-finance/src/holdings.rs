@@ -123,6 +123,8 @@ pub struct Book {
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Position {
     pub quantity: i64,
+    /// Effective time of the sale that closed the current position, until the next purchase.
+    pub closed_at: Option<DateTime>,
     pub cost: Minor,
     pub realized: Minor,
     pub dividends: Minor,
@@ -258,6 +260,7 @@ pub fn replay(
                 post(security.account.clone(), settlement);
                 post(from, -settlement);
                 p.quantity = p.quantity.checked_add(t.quantity).ok_or(Error::Overflow)?;
+                p.closed_at = None;
                 p.cost = p.cost.checked_add(settlement).ok_or(Error::Overflow)?;
             }
             Kind::Sell => {
@@ -280,6 +283,9 @@ pub fn replay(
                     -gain,
                 );
                 p.quantity -= t.quantity;
+                if p.quantity == 0 {
+                    p.closed_at = Some(t.at);
+                }
                 p.cost -= released;
                 p.realized = p.realized.checked_add(gain).ok_or(Error::Overflow)?;
             }

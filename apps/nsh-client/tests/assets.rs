@@ -236,6 +236,37 @@ fn balance_entry_revocation_and_undo_keep_the_check_and_journal_together() -> Re
 }
 
 #[test]
+fn direct_creation_returns_to_the_empty_overview() -> Result<(), String> {
+    use nsh_testing::DialogAnswer;
+    let (mut app, _) = start(Vec::new(), None);
+    app.press("label:Assets")?;
+    app.press("text:Add account")?;
+    app.type_text("label:Account name", "Wallet")?;
+    app.on_dialog(|_| DialogAnswer::Press("Keep editing".into()));
+    app.press("task-header >> Back")?;
+    assert_eq!(
+        app.screen().input_text("label:Account name")?,
+        Some("Wallet")
+    );
+    app.on_dialog(|_| DialogAnswer::Press("Discard".into()));
+    app.press("task-header >> Back")?;
+    app.wait_for_gone("task-sheet", GONE)?;
+    app.press("text:Add holding")?;
+    app.wait_for("security-search")?;
+    app.back()?;
+    app.wait_for_gone("task-sheet", GONE)?;
+    app.press("label:Manage")?;
+    app.wait_for("task-sheet >> Add account")?;
+    assert!(!app.shows("text:Closed holdings"));
+    app.press("task-sheet >> Prices & rates")?;
+    app.wait_for("CNY per US dollar")?;
+    app.wait_for_gone("task-sheet", GONE)?;
+    app.back()?;
+    app.wait_for("task-sheet >> Add account")?;
+    Ok(())
+}
+
+#[test]
 fn manage_back_keeps_one_sheet_and_opening_balance_stays_on_the_account_row() -> Result<(), String>
 {
     use nsh_testing::DialogAnswer;

@@ -374,8 +374,9 @@ fn opening_price_partial_sale_and_cash_survive_restart_without_double_counting()
     assert!(!app.shows("text:Index ETF"));
     app.wait_for("Book balances")?;
     app.press("label:Manage")?;
+    app.wait_for("task-sheet >> text:1")?;
     app.press("text:Closed holdings")?;
-    app.press("label:/^Index ETF, ¥0.00/")?;
+    app.press("label:/^Index ETF, .*Position closed$/")?;
     app.press("Record trade")?;
     app.type_text("label:Quantity", "10")?;
     app.type_text("label:Price per unit", "4")?;
@@ -384,9 +385,126 @@ fn opening_price_partial_sale_and_cash_survive_restart_without_double_counting()
     app.press("label:Back")?;
     app.wait_for("No closed holdings")?;
     app.press("label:Back")?;
+    app.wait_for("task-sheet >> Add holding")?;
+    assert!(!app.shows("text:Closed holdings"));
+    app.back()?;
+    app.wait_for_gone("task-sheet", GONE)?;
     app.wait_for("label:/^Index ETF, ¥50.00/")?;
     app.press("label:New entry")?;
     app.wait_for("What would you like to record?")?;
+    Ok(())
+}
+
+#[test]
+fn closed_history_orders_sales_and_a_security_without_trades_can_be_reused() -> Result<(), String> {
+    use holdings::{Kind, Security, Trade};
+    let dir = tempfile::tempdir().unwrap();
+    let (app, storage) = start_in(Some(dir.path()), Vec::new(), None);
+    drop(app);
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    let cash = Account::parse("资产:Broker").unwrap();
+    repository::create_account(&db, &cash).unwrap();
+    let day = today();
+    for (id, name, days_ago) in [
+        ("a", "Alpha", 8),
+        ("z", "Zeta", 2),
+        ("saved", "Saved fund", 0),
+    ] {
+        let sec = Security::new(id, name).unwrap();
+        let opening = Trade {
+            id: format!("open-{id}"),
+            security: sec.id.clone(),
+            at: day.plus_days(-12).0.at(12, 0, 0, 0),
+            kind: Kind::Opening,
+            quantity: 1_000_000,
+            price: 1_000_000,
+            amount: 0,
+            fee: 0,
+            cash: None,
+        };
+        store::add_trade(&db, Some(&sec), &opening, day.0).unwrap();
+        if name == "Saved fund" {
+            store::remove_trade(&db, &opening.id).unwrap();
+        } else {
+            store::add_trade(
+                &db,
+                None,
+                &Trade {
+                    id: format!("close-{id}"),
+                    at: day.plus_days(-days_ago).0.at(12, 0, 0, 0),
+                    kind: Kind::Sell,
+                    cash: Some(cash.clone()),
+                    ..opening
+                },
+                day.0,
+            )
+            .unwrap();
+        }
+    }
+    let (mut app, _) = start_in(
+        Some(dir.path()),
+        storage.entries().into_iter().collect(),
+        None,
+    );
+    app.press("label:Assets")?;
+    app.press("label:Manage")?;
+    app.wait_for("task-sheet >> text:2")?;
+    app.set_viewport(Size::new(Points(320.0), Points(690.0)))?;
+    app.set_environment("larger menu labels", |e| e.font_scale = 1.8)?;
+    let menu = app.screen().layout_nodes();
+    let mut first_x = None;
+    for title in [
+        "Add account",
+        "Add holding",
+        "Prices & rates",
+        "Closed holdings",
+    ] {
+        let bounds = menu
+            .iter()
+            .find(|node| node.text.as_ref().is_some_and(|t| t.text.text == title))
+            .expect("management row title")
+            .bounds;
+        let aligned_x = *first_x.get_or_insert(bounds.origin.x.0);
+        assert!((aligned_x - bounds.origin.x.0).abs() < 0.5, "{title}");
+        assert!(bounds.origin.x.0 + bounds.size.width.0 <= 320.0, "{title}");
+    }
+    app.set_environment("default text size", |e| e.font_scale = 1.0)?;
+    app.press("text:Closed holdings")?;
+    app.wait_for("label:/^Zeta, .*Position closed$/")?;
+    assert!(!app.shows("text:¥0.00"));
+    assert!(!app.shows("text:Saved fund"));
+    let nodes = app.screen().layout_nodes();
+    let top = |name| {
+        nodes
+            .iter()
+            .find(|node| node.text.as_ref().is_some_and(|t| t.text.text == name))
+            .unwrap()
+            .bounds
+            .origin
+            .y
+            .0
+    };
+    assert!(top("Zeta") < top("Alpha"));
+    app.press("label:Back")?;
+    app.wait_for("task-sheet >> text:2")?;
+    app.press("task-sheet >> Add holding")?;
+    app.type_text("label:Code, name or pinyin", "saved")?;
+    assert!(!app.shows("text:/No matching listings|Catalog unavailable|Loading listings/"));
+    app.press("text:Saved fund")?;
+    app.wait_for("Record trade")?;
+    app.press("Record trade")?;
+    app.type_text("label:Quantity", "3")?;
+    app.type_text("label:Cost per unit", "2")?;
+    app.press("Save trade")?;
+    app.wait_for("Trade saved")?;
+    let book = store::load(&db).unwrap();
+    assert_eq!(book.securities.len(), 3);
+    let fund = book
+        .securities
+        .iter()
+        .find(|s| s.name == "Saved fund")
+        .unwrap();
+    assert_eq!(book.position(fund, day.0).unwrap().quantity, 3_000_000);
     Ok(())
 }
 

@@ -106,7 +106,10 @@ AI only to turn text and images into drafts, using the owner's model account.
   entered draft before Back leaves the task. Closing retains the mounted
   scope until the native exit completes. Initial focus follows the native
   Open event and a committed frame, rather than racing the entrance.
-  Back (the button or the system back) steps back one panel; a swipe down
+  Back (the button or the system back) returns to the invoking surface. A form
+  opened directly from empty Assets returns there, and one opened through
+  Manage returns to its menu. Back from a lookup opened in Manage also restores
+  the menu. A swipe down
   or a backdrop press leaves the whole task, after the panel's discard
   guard. Saving closes the shared sheet before its panel resets, so the
   sheet leaves with the form rather than swapping the menu in.
@@ -215,13 +218,16 @@ AI only to turn text and images into drafts, using the owner's model account.
   accounts keep a visible label; ordinary last-check dates live in account
   details and remain in the row's accessible description. Internal holding
   cost accounts stay out of the account list. Manage opens one bottom sheet
-  with Add account, Add holding, Prices & rates and Closed holdings. No accounts or holdings
+  with aligned outline icons and a gap between creation and lookup.
+  Add account, Add holding and Prices & rates are always available. Closed
+  holdings shows its count when there are fully sold positions. No accounts or holdings
   shows a short empty state with Add account as the main action and Add holding
   as a quiet alternative. The global text/image capture button remains the
   main record entry.
 - **Holdings:** flat overview rows show name, value and price status; quantity
   and average unit cost live in details. Closed positions remain accessible
-  through Manage → Closed holdings, with their history and trade actions;
+  through Manage → Closed holdings, ordered by most recent closing sale with
+  the date alongside the security name. Their history and trade actions remain available;
   buying again returns a position to the overview automatically. A row opens
   a detail page with value, the price source, quantity, cost, unrealized
   gain, and newest-first activity. The valuation leads the page with Record trade and

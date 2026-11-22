@@ -356,10 +356,14 @@ accounts and manual-price/cost valuation status remain visible. Quantity,
 unit cost and normal balance-check dates live in details. Amounts use digit
 grouping for scanning. Without holdings, totals use book balances.
 
-Manage opens account/holding creation and closed-holding history. Fully closed
+Manage opens account/holding creation and Prices & rates. A closed-holdings
+entry appears with its count after a full sale. Its list shows the latest closing
+date for each currently closed security, newest first. Fully closed
 positions leave the overview automatically and return after another purchase.
 Account and holding creation replace the content of the same management sheet;
-security search stays inside the holding task. Back preserves the current
+security search stays inside the holding task. A saved security whose trades
+were all deleted is accessible from Add holding. Back from creation returns
+to the invoking overview or management menu. Back preserves the current
 draft when leaving a picker. A new account stays on Assets with a persistent
 Set opening balance action until it has a posting or balance check. An account
 with a confirmed zero displays its zero balance.
