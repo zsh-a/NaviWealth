@@ -14,7 +14,7 @@ pub(super) fn thread(
 ) -> impl IntoElement {
     if draft.transcript.is_empty() {
         arrived.replace(0);
-        return empty_composer(draft, signal_draft).into_element();
+        return empty_composer(draft, signal_draft, input, error).into_element();
     }
     let ready = capture::ready(draft);
     let latest = draft.transcript.len() - 1;
@@ -99,7 +99,13 @@ pub(super) fn thread(
             } => {
                 let column = view().gap_2().min_w(px(0.0));
                 let column = if *records > 0 && live == Some(index) && index >= exchange_start {
-                    column.child(summary::records(draft, choosing))
+                    column.child(summary::records(
+                        draft,
+                        choosing,
+                        signal_draft,
+                        input,
+                        error,
+                    ))
                 } else if *records > 0 {
                     column.child(
                         text(s().capture_thread_updated(*records))
@@ -126,6 +132,8 @@ pub(super) fn thread(
         });
     }
     if draft.status == Status::Analyzing {
+        let draft_id = draft.id.clone();
+        let seen = stored(0_usize);
         items.push(
             view()
                 .flex_row()
@@ -139,9 +147,20 @@ pub(super) fn thread(
                 )
                 .into_element(),
         );
+        items.push(
+            dynamic(move || {
+                let records = capture::streaming_records(&draft_id);
+                untracked(|| summary::provisional(&records, seen))
+            })
+            .into_element(),
+        );
     }
     if draft.status == Status::Failed {
         let failure = capture::failure(&draft.id);
+        let offline = matches!(
+            failure.as_ref(),
+            Some(crate::domain::VisionFailure::Offline(_))
+        );
         let copy = failure
             .map(|e| crate::pages::review::failure_copy(s(), &e).0)
             .unwrap_or(s().capture_failed);
@@ -155,6 +174,14 @@ pub(super) fn thread(
                         .gap_2()
                         .flex_1()
                         .child(text(copy).typo(Type::Headline).text_color(color::CAUTION))
+                        .child(offline.then(|| {
+                            text(crate::i18n::catalog::copy(
+                                "Your input is saved on this device. Retry when connected.",
+                                "输入已保存在本机，联网后可点重试。",
+                            ))
+                            .typo(Type::Subhead)
+                            .text_color(color::BODY)
+                        }))
                         .child(
                             view()
                                 .flex_row()
@@ -204,7 +231,54 @@ pub(super) fn thread(
         && live.is_none_or(|index| index < exchange_start)
         && draft.pending_ask_user().is_none()
     {
-        items.push(summary::records(draft, choosing));
+        items.push(summary::records(
+            draft,
+            choosing,
+            signal_draft,
+            input,
+            error,
+        ));
+    }
+    if let Some(destination) = draft.destination()
+        && draft.status == Status::Ready
+    {
+        use crate::domain::capture_evidence::CaptureDestination;
+        let (tab, title) = match destination {
+            CaptureDestination::Assets => (
+                nav::Tab::Assets,
+                crate::i18n::catalog::copy("Open Assets", "查看资产"),
+            ),
+            CaptureDestination::Review => (
+                nav::Tab::Review,
+                crate::i18n::catalog::copy("Open Review", "打开回顾"),
+            ),
+            CaptureDestination::Records => (
+                nav::Tab::Records,
+                crate::i18n::catalog::copy("Open Records", "查看流水"),
+            ),
+        };
+        items.push(
+            view()
+                .gap_2()
+                .child(
+                    text(crate::i18n::catalog::copy(
+                        "There’s no entry to save. You can explore this in the app.",
+                        "这句话没有要保存的记录，可以到这里查看。",
+                    ))
+                    .typo(Type::Body)
+                    .text_color(color::BODY),
+                )
+                .child(
+                    Btn::secondary()
+                        .label(move || title.into())
+                        .on_press(move || {
+                            dismiss_keyboard();
+                            Sheets::get().capture.set(false);
+                            nav::select(tab);
+                        }),
+                )
+                .into_element(),
+        );
     }
     let history = signal(false);
     view()
@@ -308,13 +382,18 @@ fn question_turn(
 /// The hints before the first message: the attached photo and, without a
 /// model account, where to connect one. Manual entry and favorites stay
 /// below the thread.
-fn empty_composer(draft: &Draft, signal_draft: Signal<Draft>) -> impl IntoElement {
+fn empty_composer(
+    draft: &Draft,
+    signal_draft: Signal<Draft>,
+    input: Signal<String>,
+    error: Signal<Option<String>>,
+) -> impl IntoElement {
     view()
         .gap_3()
         .child(
             draft
                 .has_staged_images()
-                .then(|| staged_images(draft, signal_draft)),
+                .then(|| staged_images(draft, signal_draft, input, error)),
         )
         .child(when(
             || settings::ready_account().is_none(),
@@ -327,7 +406,12 @@ fn empty_composer(draft: &Draft, signal_draft: Signal<Draft>) -> impl IntoElemen
 }
 
 /// Unsent evidence stays removable; sent evidence belongs to its thread turn.
-pub(super) fn staged_images(draft: &Draft, signal_draft: Signal<Draft>) -> impl IntoElement {
+pub(super) fn staged_images(
+    draft: &Draft,
+    signal_draft: Signal<Draft>,
+    input: Signal<String>,
+    error: Signal<Option<String>>,
+) -> impl IntoElement {
     let names = draft.staged_images();
     view()
         .gap_2()
@@ -357,12 +441,28 @@ pub(super) fn staged_images(draft: &Draft, signal_draft: Signal<Draft>) -> impl 
                     Btn::ghost()
                         .label(|| s().capture_remove_photo.into())
                         .on_press(move || {
-                            signal_draft.update(|d| {
-                                d.attachments.retain(|kept| kept != &name);
-                                if d.transcript.is_empty() && d.photo.as_ref() == Some(&name) {
-                                    d.photo = d.attachments.first().cloned();
-                                }
-                            })
+                            let mut next = signal_draft.get_untracked();
+                            if next.status == Status::Analyzing {
+                                return;
+                            }
+                            next.attachments.retain(|kept| kept != &name);
+                            if next.transcript.is_empty() && next.photo.as_ref() == Some(&name) {
+                                next.photo = next.attachments.first().cloned();
+                            }
+                            if next.transcript.is_empty() {
+                                next.input = input.get_untracked();
+                            } else {
+                                next.correction = input.get_untracked();
+                            }
+                            if capture::get(&next.id).is_some()
+                                && let Err(cause) = capture::put(next.clone())
+                            {
+                                log::error!("capture: could not remove staged image: {cause}");
+                                error.set(Some(s().error_transaction_storage.into()));
+                                return;
+                            }
+                            error.set(None);
+                            signal_draft.set(next);
                         }),
                 )
         }))

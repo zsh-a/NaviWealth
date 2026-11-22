@@ -113,7 +113,7 @@ pub fn set(day: Day, kg: f64) -> bool {
 
 /// The removed measurement is held only for the current Undo action.
 #[derive(Clone, PartialEq)]
-struct Removed {
+pub(super) struct Removed {
     weight: Weight,
     metric: Option<(String, i64)>,
     provenance: Option<(String, String)>,
@@ -144,7 +144,28 @@ pub fn remove(day: Day) -> Option<Weight> {
 
 fn remove_in(connection: &Connection, day: Day) -> rusqlite::Result<Option<Removed>> {
     let tx = connection.unchecked_transaction()?;
-    let weight = tx
+    let Some(mut removed) = snapshot_on(&tx, day)? else {
+        return Ok(None);
+    };
+    scale::reconcile_weight_in_transaction(&tx, &day.to_string(), None)?;
+    tx.execute("DELETE FROM weights WHERE day=?1", [day.to_string()])?;
+    removed.revision = weight_revision(&tx, day)?;
+    tx.commit()?;
+    Ok(Some(removed))
+}
+
+pub(super) fn weight_revision(c: &Connection, day: Day) -> rusqlite::Result<i64> {
+    Ok(c.query_row(
+        "SELECT revision FROM weight_revisions WHERE day=?1",
+        [day.to_string()],
+        |r| r.get(0),
+    )
+    .optional()?
+    .unwrap_or(0))
+}
+
+pub(super) fn snapshot_on(connection: &Connection, day: Day) -> rusqlite::Result<Option<Removed>> {
+    let weight = connection
         .query_row(
             "SELECT kg, logged_at_ms FROM weights WHERE day=?1",
             [day.to_string()],
@@ -160,33 +181,25 @@ fn remove_in(connection: &Connection, day: Day) -> rusqlite::Result<Option<Remov
     let Some(weight) = weight else {
         return Ok(None);
     };
-    let metric = tx
+    let metric = connection
         .query_row(
             "SELECT body, fetched_at_ms FROM body_metrics WHERE day=?1",
             [day.to_string()],
             |r| Ok((r.get(0)?, r.get(1)?)),
         )
         .optional()?;
-    let provenance = tx
+    let provenance = connection
         .query_row(
             "SELECT session_id, body FROM scale_measurements WHERE day=?1",
             [day.to_string()],
             |r| Ok((r.get(0)?, r.get(1)?)),
         )
         .optional()?;
-    scale::reconcile_weight_in_transaction(&tx, &day.to_string(), None)?;
-    tx.execute("DELETE FROM weights WHERE day=?1", [day.to_string()])?;
-    let revision = tx.query_row(
-        "SELECT revision FROM weight_revisions WHERE day=?1",
-        [day.to_string()],
-        |r| r.get(0),
-    )?;
-    tx.commit()?;
     Ok(Some(Removed {
         weight,
         metric,
         provenance,
-        revision,
+        revision: weight_revision(connection, day)?,
     }))
 }
 
@@ -224,24 +237,30 @@ fn restore_in(c: &Connection, removed: &Removed) -> rusqlite::Result<bool> {
     if existing.is_some() || revision != removed.revision {
         return Ok(false);
     }
-    tx.execute(
+    insert_snapshot(&tx, removed)?;
+    tx.commit()?;
+    Ok(true)
+}
+
+pub(super) fn insert_snapshot(c: &Connection, removed: &Removed) -> rusqlite::Result<()> {
+    let day = removed.weight.day.to_string();
+    c.execute(
         "INSERT INTO weights(day,kg,logged_at_ms) VALUES(?1,?2,?3)",
         params![day, removed.weight.kg, removed.weight.logged_at_ms],
     )?;
     if let Some((body, at)) = &removed.metric {
-        tx.execute(
+        c.execute(
             "INSERT INTO body_metrics(day,body,fetched_at_ms) VALUES(?1,?2,?3)",
             params![day, body, at],
         )?;
     }
     if let Some((id, body)) = &removed.provenance {
-        tx.execute(
+        c.execute(
             "INSERT INTO scale_measurements(day,session_id,body) VALUES(?1,?2,?3)",
             params![day, id, body],
         )?;
     }
-    tx.commit()?;
-    Ok(true)
+    Ok(())
 }
 
 #[cfg(test)]

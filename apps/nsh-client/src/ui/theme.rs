@@ -224,6 +224,11 @@ pub mod shadow {
         layer(1.0, 2.0, 0.0, 0x11111314),
         layer(8.0, 18.0, -6.0, 0x11111326),
     ];
+    /// Localized cobalt lift under the compact capture confirmation.
+    pub const CAPTURE_SAVE: [BoxShadow; 2] = [
+        layer(1.0, 2.0, 0.0, 0x11111312),
+        layer(5.0, 10.0, -4.0, 0x2F5BEA4D),
+    ];
     /// The floating dock: a soft, wide drop in the manner of iOS rather
     /// than a material elevation.
     pub const DOCK: [BoxShadow; 2] = [

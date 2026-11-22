@@ -216,7 +216,7 @@ pub fn apply() {
                 account: if missing {
                     None
                 } else {
-                    Some(Account::parse("资产:Wallet").unwrap())
+                    Some(Account::parse(t("资产:Wallet", "资产:钱包")).unwrap())
                 },
                 other_account: None,
                 category: Some(defaults::expense("餐饮")),
@@ -250,6 +250,29 @@ pub fn apply() {
                 questions,
             },
         ];
+        if route.as_deref() == Some("capture-ready") {
+            use crate::domain::capture_evidence::{EvidenceSource, FieldEvidence};
+            draft.evidence = vec![vec![
+                FieldEvidence {
+                    field: "amount".into(),
+                    source: EvidenceSource::Text,
+                    reason: t(
+                        "Your message gives the lunch amount as 32 yuan.",
+                        "你的描述里写了午餐花费 32 元。",
+                    )
+                    .into(),
+                },
+                FieldEvidence {
+                    field: "category".into(),
+                    source: EvidenceSource::Inferred,
+                    reason: t(
+                        "Lunch was categorized as dining.",
+                        "模型根据午餐推断分类为餐饮。",
+                    )
+                    .into(),
+                },
+            ]];
+        }
         if route.as_deref() == Some("capture-ask") {
             let input = serde_json::json!({"questions":[{
                 "id":"account", "text":t("Which account paid for lunch?", "这笔午餐从哪个账户支付？"),

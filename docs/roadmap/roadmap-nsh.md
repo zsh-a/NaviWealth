@@ -225,8 +225,7 @@ Started before the (now canceled) Flutter import by the owner's choice
   valuations, not minute/tick bars, adjusted returns or retroactive snapshots.
 - Remaining: Android TLS/physical-device, system Back, keyboard
   and migration verification. Android TLS and physical-device behavior remain
-  unverified. AI trade recognition is not included; the existing
-  capture rejects trades. This increment does not close the full phase.
+  unverified. The November 22 capture increment adds reviewable trade drafts. This increment does not close the full phase.
 - Scope: securities catalog, trades (buy, sell, dividend, fee), derived
   positions, average cost and gains, one quote provider, FX and
   net worth on Assets.
@@ -367,7 +366,10 @@ Recommended sequence; this is planning, not a claim these items are implemented.
    text-preserving PNG/JPEG preparation, per-turn replay and unresolved-question
    confirmation blocking are covered by headless tests. Decisions now use the
    single `ask_user` tool with editable options, explicit submission and durable
-   tool-result continuation; no automatic tool loop runs. Remaining:
+   tool-result continuation. The November 22 increment adds streamed provisional
+   cards, seven record types, per-field source explanations, account approval
+   and guarded batch Undo. Typing previews and saved examples have separate
+   profile-scoped settings. Remaining:
    real-model quality and Android keyboard/device verification.
 
 5. **Share into capture.** Implemented 2026-11-21: the Android host accepts

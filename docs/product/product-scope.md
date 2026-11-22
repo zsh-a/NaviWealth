@@ -29,7 +29,8 @@ whether the owner uses a feature every day or every week.
    confirms before anything is saved. Capture is a bounded conversation
    ([Capture Conversation](../architecture/capture-conversation.md)):
    clarifications and corrections are turns inside one capture draft's
-   thread, and the model only ever answers owner-initiated turns. There are
+   thread. The owner may separately enable previews of unsent text and the use of
+   local examples for submitted requests in a specific model profile. There are
    no free-form chats, named agents, or autonomous/background agents, and no
    memory across drafts.
 4. Anything derivable is derived, not entered: net worth, positions, monthly
@@ -50,15 +51,17 @@ whether the owner uses a feature every day or every week.
 
 ## Interaction Model
 
-Updated 2026-11-14: the owner chose text-or-image capture with fewer forms.
+Updated 2026-11-22.
 
 - A floating tab bar beside one capture button. Capture opens one composer:
   describe what happened or attach up to four images per draft, including
-  evidence added in later turns. Recognition routes to money,
-  meals or body weight; the owner need not choose a domain or entry method.
+  evidence added in later turns. One request can draft transactions, meals,
+  body weight, trades, actual balances, manual security prices and review notes.
+  Each reuses an existing record type and its normal validation.
   Explicitly requested multiple records are reviewed together, with their
   count on the confirmation action. A purchase description alone does not
-  also create a meal. Unsupported or ambiguous input asks for clarification.
+  also create a meal. A request for analysis, assets or history can open the
+  corresponding tab. Ambiguous entries prompt a question.
 - Capture is a bounded conversation
   ([Capture Conversation](../architecture/capture-conversation.md)): the
   description or photo is the thread's first message, results and
@@ -67,20 +70,28 @@ Updated 2026-11-14: the owner chose text-or-image capture with fewer forms.
   The owner can change selections, add text or images, then submit answers
   together; the matching tool result continues the draft. Questions that name
   an account or category offer tap-first options. The thread lives inside one capture draft and ends with it.
+  Cards appear as the provider completes them. Only the finished response is editable.
+  Fields can show an explanation and whether they came from text, a photo, an
+  estimate, a favorite, or history. Suggested funding accounts need the owner’s
+  approval. The owner may remove individual cards before saving.
   Missing money fields stay missing and prevent confirmation; a named new
   account is shown as new and created only when confirmed. AI never selects a funding
   account merely because a payment app appears in a screenshot.
 - Sharing to NaviWealth from another app (Android share sheet) is the same
   capture without the extra steps: shared screenshots or photos (up to four)
-  and text open as an unsent capture draft, and nothing is sent to a model
-  until the owner sends it with the usual consent. A shared Alipay CSV,
+  and text open as an unsent capture draft. Opening it makes no model request.
+  With typing preview enabled, editing the text can preview it. Images wait for Send. A shared Alipay CSV,
   WeChat XLSX or CMB text statement opens the statement review instead.
   Anything else is declined with a notice. (Owner direction 2026-11-21: no
   new record type, one more way into the existing composer.)
 - Recognition never blocks navigation. Input and results are local drafts,
   shared between Today and Records. Leaving while recognition runs keeps it
   running under the app root; a run interrupted by restart can be retried.
-  Confirmation writes the entire batch and removes its draft atomically.
+  Confirmation writes the entire batch and removes its draft atomically. The
+  receipt offers View and guarded Undo for the whole batch. Local recent-entry
+  shortcuts work without a model. Optional typing previews use only text. A
+  separate profile option includes a bounded set of recent records and favorite
+  meals, plus held security identities, on Send.
 - Manual meal, money and weight entry are secondary actions under "Enter
   manually"; favorites retain one-tap logging with Undo. Manual money uses
   one compact editor: amount, category/account, a calendar date and optional
@@ -181,7 +192,7 @@ cash balances come from confirmed trades. Prices are dated in each security’s
 CNY, HKD or USD trading currency;
 unpriced positions are explicitly valued at cost. Trade records are
 necessary to answer what is owned and how its cost changes; editable standalone
-position totals would conflict with the journal. AI trade capture is deferred.
+position totals would conflict with the journal. Capture can draft these same journal entries for explicit confirmation.
 
 The catalog and quote increment is implemented: code/name/pinyin/alias search
 uses the catalog downloaded from the rolling GitHub release, checked lazily.

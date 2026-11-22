@@ -1,4 +1,6 @@
-//! Thin NSH platform transport over the shared LLM client and meal core.
+//! On-device recognition through the shared protocol client and owner profiles.
+
+mod streaming;
 
 use std::{future::Future, pin::Pin, rc::Rc, sync::OnceLock, time::Duration};
 
@@ -63,9 +65,24 @@ impl Transport for NshTransport {
                     json!({}),
                 )
             })?;
+            let status = response.status();
+            let mut headers = response.head.headers;
+            // Simple test/host adapters may omit the media type of a whole JSON response.
+            if !headers
+                .iter()
+                .any(|(name, _)| name.eq_ignore_ascii_case("content-type"))
+                && response
+                    .body
+                    .iter()
+                    .copied()
+                    .find(|byte| !byte.is_ascii_whitespace())
+                    == Some(b'{')
+            {
+                headers.push(("content-type".into(), "application/json".into()));
+            }
             Ok(HttpResponse {
-                status: response.status(),
-                headers: response.head.headers,
+                status,
+                headers,
                 body: stream::iter(vec![Ok(Bytes::from(response.body))]),
             })
         })
@@ -183,7 +200,13 @@ fn llm_failure(error: LlmError) -> VisionFailure {
     if code.contains("refusal") || code.contains("content_filter") {
         return VisionFailure::Refused;
     }
-    if code.contains("network") || code.contains("transport") {
+    if code == "provider_stream_incomplete" {
+        return VisionFailure::Truncated;
+    }
+    if code.contains("network")
+        || code.contains("transport")
+        || matches!(code, "provider_connect_failed" | "provider_request_failed")
+    {
         return VisionFailure::Offline("Network request failed".into());
     }
     let problem = match status {
@@ -220,27 +243,7 @@ pub enum CaptureResponse {
     },
 }
 
-pub async fn recognize_record(
-    account: ModelAccount,
-    draft: crate::domain::capture::Draft,
-    images: Vec<(String, Vec<u8>)>,
-    lang: Lang,
-    consent: Consent,
-    context: serde_json::Value,
-) -> Result<CaptureResponse, VisionFailure> {
-    consent
-        .check(&upload_target(&account))
-        .map_err(|_| VisionFailure::Refused)?;
-    let request = capture_request(&account, &draft, &images, lang, &context)?;
-    let client = Client::new(endpoint(&account)?, NshTransport::new())
-        .with_capability_cache(CAPABILITIES.get_or_init(CapabilityCache::default).clone())
-        .with_timeouts(Timeouts {
-            total: RECOGNIZE_TIMEOUT,
-            ..Timeouts::default()
-        });
-    let response = client.complete(request).await.map_err(llm_failure)?;
-    capture_response(response)
-}
+pub use streaming::{recognize_record_stream, use_host_capture_transport};
 
 fn capture_request(
     account: &ModelAccount,
@@ -274,7 +277,10 @@ fn capture_request(
     })
 }
 
-fn capture_response(response: llm_protocol::LlmResponse) -> Result<CaptureResponse, VisionFailure> {
+fn capture_response(
+    response: llm_protocol::LlmResponse,
+    image_count: usize,
+) -> Result<CaptureResponse, VisionFailure> {
     use crate::domain::capture;
     use llm_protocol::{ContentBlock, LlmFinishReason};
     let model = response.model.chars().take(200).collect();
@@ -326,6 +332,9 @@ fn capture_response(response: llm_protocol::LlmResponse) -> Result<CaptureRespon
                 .unwrap_or(response.content);
             let (records, questions) =
                 capture::parse(&reply).map_err(|_| VisionFailure::Unreadable)?;
+            if !capture::valid_meal_image_numbers(&records, image_count) {
+                return Err(VisionFailure::Unreadable);
+            }
             Ok(CaptureResponse::Records {
                 records,
                 questions,
@@ -365,15 +374,27 @@ fn capture_messages(
         name: None,
         metadata: json!({}),
     });
+    let sent_images = draft.sent_images();
     let mut first_owner = true;
     for (index, turn) in draft.transcript.iter().enumerate() {
+        let turn_images = draft.turn_images(index);
+        let image_numbers = turn_images
+            .iter()
+            .map(|name| {
+                sent_images
+                    .iter()
+                    .position(|sent| sent == name)
+                    .map(|n| n + 1)
+                    .ok_or(VisionFailure::Photo)
+            })
+            .collect::<Result<Vec<_>, _>>()?;
         let message = match turn {
             Turn::Owner { text, .. } => {
                 let mut content = Vec::new();
-                for name in draft.turn_images(index) {
+                for name in &turn_images {
                     let bytes = images
                         .iter()
-                        .find(|(file, _)| file == &name)
+                        .find(|(file, _)| file == name)
                         .map(|(_, bytes)| bytes)
                         .ok_or(VisionFailure::Photo)?;
                     let mime = if bytes.starts_with(b"\x89PNG\r\n\x1a\n") {
@@ -383,12 +404,16 @@ fn capture_messages(
                     };
                     content.push(ContentBlock::image(mime, bytes.clone()));
                 }
-                let text = if first_owner {
+                let mut text = if first_owner {
                     json!({"input":text,"context":context})
                 } else {
                     json!({"message":text})
                 };
+                if !image_numbers.is_empty() {
+                    text["image_numbers"] = json!(image_numbers);
+                }
                 first_owner = false;
+                include_current_records(&mut text, &draft, index);
                 content.push(ContentBlock::Text {
                     text: text.to_string(),
                 });
@@ -417,11 +442,13 @@ fn capture_messages(
             } => {
                 // Keep result before supplemental images. The OpenAI adapter
                 // otherwise reorders mixed user content ahead of tool results.
+                let mut result = json!({"answers":answers,"message":text});
+                include_current_records(&mut result, &draft, index);
                 messages.push(LlmMessage {
                     role: LlmRole::User,
                     content: vec![ContentBlock::ToolResult {
                         tool_use_id: call_id.clone(),
-                        content: json!(json!({"answers":answers,"message":text}).to_string()),
+                        content: json!(result.to_string()),
                         is_error: None,
                     }]
                     .into(),
@@ -429,10 +456,10 @@ fn capture_messages(
                     metadata: json!({}),
                 });
                 let mut content = Vec::new();
-                for name in draft.turn_images(index) {
+                for name in &turn_images {
                     let bytes = images
                         .iter()
-                        .find(|(file, _)| file == &name)
+                        .find(|(file, _)| file == name)
                         .map(|(_, bytes)| bytes)
                         .ok_or(VisionFailure::Photo)?;
                     let mime = if bytes.starts_with(b"\x89PNG\r\n\x1a\n") {
@@ -446,7 +473,7 @@ fn capture_messages(
                     continue;
                 }
                 content.push(ContentBlock::Text {
-                    text: json!({"message":"Supporting images for the preceding ask_user answer."})
+                    text: json!({"message":"Supporting images for the preceding ask_user answer.","image_numbers":image_numbers})
                         .to_string(),
                 });
                 LlmMessage {
@@ -470,6 +497,44 @@ fn capture_messages(
         messages.push(message);
     }
     Ok(messages)
+}
+
+/// Keep provider-native history intact. A local edit or removal made since
+/// the preceding proposal belongs only to the latest owner continuation.
+fn include_current_records(
+    payload: &mut serde_json::Value,
+    draft: &crate::domain::capture::Draft,
+    index: usize,
+) {
+    use crate::domain::capture::{Record, Turn};
+    use navi_finance::{assets, holdings::format_units, money::format};
+    if index + 1 != draft.transcript.len()
+        || !draft.transcript[..index]
+            .iter()
+            .any(|turn| matches!(turn, Turn::Assistant { records, .. } if *records > 0))
+    {
+        return;
+    }
+    let records = draft.records.iter().map(|record| match record {
+        Record::Money { day, draft } => json!({"kind":"money","day":day,"money":draft}),
+        Record::Meal { day, slot, estimate,source_image } => {
+            let foods: Vec<_> = estimate.foods.iter().map(|food| json!({"name":food.name,"grams":food.grams})).collect();
+            json!({"kind":"meal","day":day,"slot":slot,"meal":{"title":estimate.title,"foods":foods,"source_image":source_image.number()}})
+        }
+        Record::Weight {day,kg} => json!({"kind":"weight","day":day,"weight_kg":kg}),
+        Record::Trade {day,security,currency,kind,quantity,price,amount,fee,cash} => {
+            let dividend = *kind == navi_finance::holdings::Kind::Dividend;
+            json!({"kind":"trade","day":day,"trade":{"security":security,"currency":currency,"kind":kind,
+                "quantity":(!dividend).then(|| format_units(*quantity)), "unit_price":(!dividend).then(|| format_units(*price)),
+                "amount":dividend.then(|| format(*amount)),"fee":format(*fee),"cash":cash}})
+        }
+        Record::Balance {day,account,actual} => json!({"kind":"balance","day":day,
+            "balance":{"account":account,"actual":format(assets::displayed(account,*actual))}}),
+        Record::Price {day,security,currency,price} => json!({"kind":"price","day":day,
+            "price":{"security":security,"currency":currency,"unit_price":format_units(*price)}}),
+        Record::Note {day,text} => json!({"kind":"note","day":day,"note":text}),
+    }).collect::<Vec<_>>();
+    payload["current_records"] = json!(records);
 }
 
 fn provider_metadata(output: &Option<serde_json::Value>) -> serde_json::Value {
@@ -537,12 +602,12 @@ mod capture_tests {
             &serde_json::to_vec(&body).unwrap(),
         )
         .unwrap();
-        capture_response(decoded)
+        capture_response(decoded, 0)
     }
 
     fn money_record() -> serde_json::Value {
         json!({"kind":"money","day":"2026-11-18","meal":null,
-        "slot":null,"weight_kg":null,"money":{
+        "slot":null,"weight_kg":null,"trade":null,"balance":null,"price":null,"note":null,"evidence":[],"money":{
             "kind":"expense","amount":"32.00","currency":"CNY",
             "account":"资产:现金","other_account":null,
             "category":"支出:餐饮","time":null,"payee":"","note":"午饭"
@@ -639,7 +704,7 @@ mod capture_tests {
             "ask-account"
         );
         let final_body = json!({"model":"test-model","stop_reason":"end_turn",
-            "content":[{"type":"text","text":json!({"records":[money_record()]}).to_string()}]});
+            "content":[{"type":"text","text":json!({"destination":null,"records":[money_record()]}).to_string()}]});
         let decoded = llm_protocol::decode(
             &ep,
             &request,
@@ -650,7 +715,7 @@ mod capture_tests {
         .unwrap();
         let CaptureResponse::Records {
             records, questions, ..
-        } = capture_response(decoded).unwrap()
+        } = capture_response(decoded, 0).unwrap()
         else {
             panic!("final reply must produce records");
         };
@@ -675,7 +740,7 @@ mod capture_tests {
             &json!({}),
         )
         .unwrap();
-        let valid = json!({"records":[money_record()]}).to_string();
+        let valid = json!({"destination":null,"records":[money_record()]}).to_string();
         let mut wrong_shape = money_record();
         wrong_shape["money"]["type"] = wrong_shape["money"]["kind"].take();
         let money = wrong_shape["money"].as_object_mut().unwrap();
@@ -688,7 +753,7 @@ mod capture_tests {
                 "structured_output_parse_failed",
             ),
             (
-                json!({"records":[wrong_shape]}).to_string(),
+                json!({"destination":null,"records":[wrong_shape]}).to_string(),
                 "structured_output_schema_validation_failed",
             ),
         ] {
@@ -720,6 +785,126 @@ mod capture_tests {
             assert_eq!(request.questions.len(), 1);
             assert_eq!(request.questions[0].options[0].label, "Half");
         }
+    }
+
+    #[test]
+    fn correction_replays_meal_image_number_and_rejects_a_staged_image_in_the_final_reply() {
+        let mut draft = super::super::capture::new();
+        let mut meal = money_record();
+        meal["kind"] = json!("meal");
+        meal["money"] = serde_json::Value::Null;
+        meal["slot"] = json!("lunch");
+        meal["meal"] = json!({"title":"Rice","source_image":2,"foods":[{"name":"rice","grams":100,"catalog_id":null,"confidence":"high","per_100g":{"kcal":100,"protein":2,"carbs":22,"fat":0,"fiber":null,"sugars":null,"sat_fat":null,"sodium_mg":null}}]});
+        let reply = json!({"records":[meal.clone()],"destination":null}).to_string();
+        draft.records = crate::domain::capture::parse(&reply).unwrap().0;
+        draft.transcript = vec![
+            Turn::Owner {
+                text: "Weight and lunch".into(),
+                photo: true,
+                images: vec!["scale.jpg".into(), "lunch.jpg".into()],
+            },
+            Turn::Assistant {
+                reply,
+                records: 1,
+                questions: vec![],
+                provider_output: None,
+            },
+            Turn::Owner {
+                text: "Only half that portion".into(),
+                photo: false,
+                images: vec![],
+            },
+        ];
+        draft.attachments.push("staged.jpg".into());
+        let account = test_account(Provider::Anthropic);
+        let images = vec![
+            ("scale.jpg".into(), vec![1]),
+            ("lunch.jpg".into(), vec![2]),
+            ("staged.jpg".into(), vec![3]),
+        ];
+        let request = capture_request(&account, &draft, &images, Lang::En, &json!({})).unwrap();
+        let correction = request.messages.last().unwrap().content.blocks().unwrap();
+        let ContentBlock::Text { text } = &correction[0] else {
+            panic!("owner continuation")
+        };
+        let current: serde_json::Value = serde_json::from_str(text).unwrap();
+        assert_eq!(current["current_records"][0]["meal"]["source_image"], 2);
+        let decode = |number: serde_json::Value| {
+            let mut proposed = meal.clone();
+            proposed["meal"]["source_image"] = number;
+            let final_body = json!({"model":"test-model","stop_reason":"end_turn","content":[{"type":"text","text":json!({"destination":null,"records":[proposed]}).to_string()}]});
+            let decoded = llm_protocol::decode(
+                &endpoint(&account).unwrap(),
+                &request,
+                200,
+                &[],
+                &serde_json::to_vec(&final_body).unwrap(),
+            )
+            .unwrap();
+            capture_response(decoded, draft.sent_images().len())
+        };
+        assert!(matches!(decode(json!(3)), Err(VisionFailure::Unreadable)));
+        for (number, expected) in [
+            (json!(2), Some("lunch.jpg")),
+            (serde_json::Value::Null, None),
+        ] {
+            let CaptureResponse::Records { records, .. } = decode(number).unwrap() else {
+                panic!("meal result")
+            };
+            let [crate::domain::capture::Record::Meal { source_image, .. }] = records.as_slice()
+            else {
+                panic!("meal")
+            };
+            assert_eq!(
+                draft.meal_photo(*source_image).unwrap().as_deref(),
+                expected
+            );
+        }
+    }
+
+    #[test]
+    fn only_latest_continuation_carries_the_owners_current_record_selection() {
+        let mut draft = super::super::capture::new();
+        let original = json!({"records":[money_record()],"destination":null}).to_string();
+        draft.records = crate::domain::capture::parse(&original).unwrap().0;
+        draft.transcript = vec![
+            Turn::Owner {
+                text: "lunch".into(),
+                photo: false,
+                images: vec![],
+            },
+            Turn::Assistant {
+                reply: original.clone(),
+                records: 1,
+                questions: vec![],
+                provider_output: None,
+            },
+            Turn::Owner {
+                text: "use cash".into(),
+                photo: false,
+                images: vec![],
+            },
+        ];
+        let crate::domain::capture::Record::Money { draft: changed, .. } = &mut draft.records[0]
+        else {
+            unreachable!()
+        };
+        changed.amount = Some("14.75".into());
+        let sent = |draft: &crate::domain::capture::Draft| {
+            let messages = capture_messages(draft, &[], Lang::En, &json!({})).unwrap();
+            assert_eq!(messages[2].content.to_value(), json!(original));
+            let content = messages.last().unwrap().content.blocks().unwrap();
+            let ContentBlock::Text { text } = &content[0] else {
+                unreachable!()
+            };
+            serde_json::from_str::<serde_json::Value>(text).unwrap()
+        };
+        assert_eq!(
+            sent(&draft)["current_records"][0]["money"]["amount"],
+            "14.75"
+        );
+        draft.records.clear();
+        assert_eq!(sent(&draft)["current_records"], json!([]));
     }
 
     #[test]
@@ -899,7 +1084,7 @@ mod capture_tests {
             &serde_json::to_vec(&response).unwrap(),
         )
         .unwrap();
-        let CaptureResponse::AskUser { request: ask, .. } = capture_response(decoded).unwrap()
+        let CaptureResponse::AskUser { request: ask, .. } = capture_response(decoded, 0).unwrap()
         else {
             panic!("Responses tool call must suspend capture");
         };
@@ -963,7 +1148,7 @@ mod capture_tests {
         let account = test_account(Provider::OpenAiResponses);
         let mut draft = super::super::capture::new();
         let request = capture_request(&account, &draft, &[], Lang::En, &json!({})).unwrap();
-        let reply = json!({"records":[money_record()]}).to_string();
+        let reply = json!({"destination":null,"records":[money_record()]}).to_string();
         let output = json!([
             {"type":"reasoning","id":"rs_final","summary":[],"encrypted_content":"opaque-final"},
             {"type":"message","id":"msg_final","role":"assistant","status":"completed",
@@ -983,7 +1168,7 @@ mod capture_tests {
             reply,
             provider_output,
             ..
-        } = capture_response(decoded).unwrap()
+        } = capture_response(decoded, 0).unwrap()
         else {
             panic!("final response must produce records");
         };

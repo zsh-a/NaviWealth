@@ -28,24 +28,49 @@ pub fn picker(
     destination: bool,
 ) -> impl IntoElement {
     let current = draft.get_untracked();
-    let (selected, other) = match current.records.get(index) {
-        Some(Record::Money { draft: money, .. }) if destination => {
-            (money.other_account.clone(), money.account.clone())
+    let (field, selected, other, currency) = match current.records.get(index) {
+        Some(Record::Money { draft: money, .. }) => (
+            if destination {
+                "other_account"
+            } else {
+                "account"
+            },
+            if destination {
+                money.other_account.clone()
+            } else {
+                money.account.clone()
+            },
+            if destination {
+                money.account.clone()
+            } else {
+                money.other_account.clone()
+            },
+            navi_finance::currency::Currency::parse(&money.currency),
+        ),
+        Some(Record::Trade { cash, currency, .. }) if !destination => {
+            ("cash", cash.clone(), None, Some(*currency))
         }
-        Some(Record::Money { draft: money, .. }) => {
-            (money.account.clone(), money.other_account.clone())
-        }
-        _ => (None, None),
+        Some(Record::Balance { account, .. }) if !destination => (
+            "account",
+            Some(account.clone()),
+            None,
+            Some(account.currency()),
+        ),
+        _ => return view().into_element(),
     };
-    let currency = match current.records.get(index) {
-        Some(Record::Money { draft: money, .. }) => {
-            navi_finance::currency::Currency::parse(&money.currency)
-        }
+    let balance_kind = match current.records.get(index) {
+        Some(Record::Balance { account, .. }) => Some(account.kind()),
         _ => None,
     };
+    let selected = selected.filter(|_| !current.account_needs_approval(index, field));
     let accounts: Vec<_> = finance::accounts()
         .into_iter()
-        .filter(|a| a.is_cash() && Some(a.currency()) == currency && Some(a) != other.as_ref())
+        .filter(|a| {
+            a.is_cash()
+                && Some(a.currency()) == currency
+                && Some(a) != other.as_ref()
+                && balance_kind.is_none_or(|kind| a.kind() == kind)
+        })
         .collect();
     view()
         .gap_2()
@@ -71,28 +96,39 @@ pub fn picker(
                 if next.status != Status::Ready {
                     return;
                 }
-                let Some(Record::Money { draft: money, .. }) = next.records.get_mut(index) else {
-                    return;
-                };
-                let other = if destination {
-                    &money.account
-                } else {
-                    &money.other_account
-                };
-                // Recheck against current state when the user taps, not just
-                // the list snapshot. A transfer cannot fund itself.
-                if other.as_ref() == Some(&account)
-                    || account.currency().code() != money.currency
-                    || !finance::accounts().contains(&account)
-                {
+                if !finance::accounts().contains(&account) || !account.is_cash() {
                     return;
                 }
-                let target: &mut Option<Account> = if destination {
-                    &mut money.other_account
-                } else {
-                    &mut money.account
-                };
-                *target = Some(account.clone());
+                match next.records.get_mut(index) {
+                    Some(Record::Money { draft: money, .. }) => {
+                        let (target, other) = if destination {
+                            (&mut money.other_account, &money.account)
+                        } else {
+                            (&mut money.account, &money.other_account)
+                        };
+                        if other.as_ref() == Some(&account)
+                            || account.currency().code() != money.currency
+                        {
+                            return;
+                        }
+                        *target = Some(account.clone());
+                    }
+                    Some(Record::Trade { cash, currency, .. })
+                        if !destination && *currency == account.currency() =>
+                    {
+                        *cash = Some(account.clone());
+                    }
+                    Some(Record::Balance {
+                        account: target, ..
+                    }) if !destination
+                        && target.currency() == account.currency()
+                        && target.kind() == account.kind() =>
+                    {
+                        *target = account.clone();
+                    }
+                    _ => return,
+                }
+                next.mark_owner_field(index, field);
                 next.correction = input.get_untracked();
                 match capture::put(next.clone()) {
                     Ok(()) => {
@@ -116,6 +152,7 @@ pub fn picker(
             )
             .child(checked.then(|| icon(Icon::Check, 20.0, color::INK)))
         }))
+        .into_element()
 }
 
 /// Chooses the category of a recognized spending or income record from the
@@ -158,6 +195,7 @@ pub fn category_picker(
                     return;
                 };
                 money.category = Some(category.clone());
+                next.mark_owner_field(index, "category");
                 next.correction = input.get_untracked();
                 match capture::put(next.clone()) {
                     Ok(()) => {

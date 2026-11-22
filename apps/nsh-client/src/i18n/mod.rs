@@ -4,6 +4,7 @@
 //! so a language change follows.
 
 pub(crate) mod backup_file;
+pub(crate) mod capture_options;
 pub(crate) mod catalog;
 mod en;
 pub(crate) mod incoming;

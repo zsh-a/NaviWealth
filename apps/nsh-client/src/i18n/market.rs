@@ -4,6 +4,7 @@ pub(crate) fn source_label(source: &str) -> &str {
     use super::catalog::copy;
     match source {
         "manual" => super::s().manual_source,
+        "manual_retracted" => copy("Manual price withdrawn", "已撤销手动价格"),
         "base" => copy("Base currency", "本位币"),
         "cost" => copy("Cost", "成本"),
         "tencent" => super::catalog::market_price(),

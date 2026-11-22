@@ -15,7 +15,7 @@ fn transfer_completion_excludes_its_source_and_view_reveals_a_multi_day_batch() 
     transfer["money"]["category"] = Value::Null;
     transfer["money"]["payee"] = json!("");
     let weight = json!({"kind":"weight","day":today().0.yesterday().unwrap().to_string(),
-        "weight_kg":74.2,"money":null,"meal":null,"slot":null});
+        "trade":null,"balance":null,"price":null,"note":null,"evidence":[],"weight_kg":74.2,"money":null,"meal":null,"slot":null});
     let stub = network(200, record_reply(vec![transfer, weight]));
     let (mut app, _) = start_in(Some(dir.path()), account(true), Some(stub.clone()));
     app.press("label:Assets")?;
@@ -165,7 +165,7 @@ fn natural_correction_then_batch_confirmation_is_atomic_and_survives_restart() -
                 money["money"]["account"] = Value::Null;
             }
             reply.send(response(200,record_reply(vec![money,meal_record(),
-            json!({"kind":"weight","day":today().to_string(),"weight_kg":74.2,"money":null,"meal":null,"slot":null})])));
+            json!({"kind":"weight","day":today().to_string(),"trade":null,"balance":null,"price":null,"note":null,"evidence":[],"weight_kg":74.2,"money":null,"meal":null,"slot":null})])));
         })),
     )]));
     let (mut app, storage) = start_in(Some(dir.path()), account(true), Some(stub.clone()));
@@ -308,6 +308,51 @@ fn interrupted_text_is_kept_and_malformed_model_money_cannot_be_saved() -> Resul
             .unwrap()
             .is_empty()
     );
+    Ok(())
+}
+
+#[test]
+fn review_footer_keeps_both_controls_reachable_across_width_and_text_size() -> Result<(), String> {
+    use nsh_core::geometry::{Points, Size};
+
+    let (mut app, _) = start(
+        account(true),
+        Some(network(200, record_reply(vec![meal_record()]))),
+    );
+    app.set_viewport(Size::new(Points(390.0), Points(844.0)))?;
+    app.press("label:New entry")?;
+    app.type_text("label:What would you like to record?", "Beef noodle soup")?;
+    app.press("label:Send")?;
+    app.wait_for("Confirm and save")?;
+
+    for (width, scale, inline) in [
+        (390.0, 1.0, true),
+        (320.0, 1.0, false),
+        (390.0, 1.35, false),
+    ] {
+        app.set_viewport(Size::new(Points(width), Points(844.0)))?;
+        app.set_environment("text size", |e| e.font_scale = scale)?;
+        let nodes = app.screen().layout_nodes();
+        let control = |label: &str| {
+            let text = nodes
+                .iter()
+                .find(|n| !n.hidden && n.text.as_ref().is_some_and(|t| t.text.text == label))
+                .unwrap_or_else(|| panic!("missing {label}"));
+            nodes.iter().find(|n| n.id == text.parent).unwrap().bounds
+        };
+        let reply = control("Add text or photos");
+        let save = control("Confirm and save");
+        assert!(reply.size.height.0 >= 48.0 && save.size.height.0 >= 48.0);
+        assert!(reply.origin.x.0 >= 0.0 && save.origin.x.0 + save.size.width.0 <= width);
+        if inline {
+            assert!((reply.origin.y.0 - save.origin.y.0).abs() <= 1.0);
+            assert!(reply.origin.x.0 + reply.size.width.0 < save.origin.x.0);
+        } else {
+            assert!(reply.origin.y.0 + reply.size.height.0 <= save.origin.y.0);
+        }
+    }
+    app.press("Confirm and save")?;
+    app.wait_for("Undo")?;
     Ok(())
 }
 
@@ -550,7 +595,9 @@ fn image_only_followup_replays_each_view_in_its_original_turn_after_restart() ->
     app.wait_for("Draft kept")?;
     drop(app);
 
-    let second = network(200, record_reply(vec![meal_record()]));
+    let mut meal = meal_record();
+    meal["meal"]["source_image"] = json!(2);
+    let second = network(200, record_reply(vec![meal]));
     let (mut app, _) = start_in(
         Some(dir.path()),
         storage.entries().into_iter().collect(),
@@ -607,6 +654,21 @@ fn image_only_followup_replays_each_view_in_its_original_turn_after_restart() ->
             .collect();
         assert_eq!(images.len(), 1, "each image belongs to its own owner turn");
         assert_eq!(images[0]["source"]["media_type"], "image/png");
+        let message: Value = serde_json::from_str(
+            messages[index]["content"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|b| b["type"] == "text")
+                .unwrap()["text"]
+                .as_str()
+                .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            message["image_numbers"],
+            json!([if index == 0 { 1 } else { 2 }])
+        );
     }
     let image_data = |message: &Value| {
         message["content"]
@@ -639,6 +701,10 @@ fn image_only_followup_replays_each_view_in_its_original_turn_after_restart() ->
         stored_meals(dir.path()).len(),
         1,
         "two views produce one confirmed meal"
+    );
+    assert_eq!(
+        stored_meals(dir.path())[0]["photo"],
+        json!(kept.sent_images()[1])
     );
     Ok(())
 }
@@ -899,5 +965,250 @@ fn an_image_that_cannot_be_kept_is_not_attached_or_sent() -> Result<(), String> 
         stub.requests().is_empty(),
         "successful attachment still needs an explicit send"
     );
+    Ok(())
+}
+
+#[test]
+fn inferred_funding_requires_a_tap_and_undo_reverts_the_whole_batch() -> Result<(), String> {
+    let dir = tempfile::tempdir().unwrap();
+    let mut money = money_record("32.00");
+    money["evidence"] = json!([{
+        "field":"account", "source":"inferred", "reason":"The payment method was not stated."
+    }]);
+    let response = record_reply(vec![money, meal_record()]);
+    let model = network(200, response);
+    let (mut app, _) = start_in(Some(dir.path()), account(true), Some(model.clone()));
+    app.press("label:New entry")?;
+    app.type_text(
+        "label:What would you like to record?",
+        "Lunch was 32 yuan. I ate noodles.",
+    )?;
+    app.press("label:Send")?;
+    app.wait_for("label:Account · Inferred")?;
+    assert!(!app.shows("text:/^Confirm and save/"));
+    app.press("label:Account · Inferred")?;
+    app.wait_for("The payment method was not stated.")?;
+    app.press("Use this account · Cash")?;
+    app.wait_for("Confirm and save (2)")?;
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    assert!(
+        navi_finance::repository::transactions(&db)
+            .unwrap()
+            .is_empty()
+    );
+    assert!(stored_meals(dir.path()).is_empty());
+    app.press("Confirm and save (2)")?;
+    app.wait_for("Saved 2 records")?;
+    assert_eq!(
+        navi_finance::repository::transactions(&db).unwrap().len(),
+        1
+    );
+    assert_eq!(stored_meals(dir.path()).len(), 1);
+    db.execute_batch("CREATE TRIGGER reject_undo BEFORE DELETE ON meals BEGIN SELECT RAISE(ABORT,'disk failure'); END;").unwrap();
+    app.press("Undo")?;
+    app.wait_for("Could not undo this save. The records must still match.")?;
+    assert_eq!(stored_meals(dir.path()).len(), 1);
+    assert_eq!(
+        navi_finance::repository::transactions(&db).unwrap().len(),
+        1
+    );
+    db.execute_batch("DROP TRIGGER reject_undo").unwrap();
+    app.press("Try again")?;
+    app.wait_for("Save undone")?;
+    assert!(
+        navi_finance::repository::transactions(&db)
+            .unwrap()
+            .is_empty()
+    );
+    assert!(stored_meals(dir.path()).is_empty());
+    assert_eq!(model.requests().len(), 1);
+    Ok(())
+}
+
+#[test]
+fn an_out_of_scope_question_opens_the_model_selected_tab_without_saving() -> Result<(), String> {
+    let dir = tempfile::tempdir().unwrap();
+    let mut body = record_reply(vec![]);
+    body["content"][0]["text"] = json!(json!({"records":[],"destination":"assets"}).to_string());
+    let model = network(200, body);
+    let (mut app, _) = start_in(Some(dir.path()), account(true), Some(model.clone()));
+    app.press("label:New entry")?;
+    app.type_text("label:What would you like to record?", "What do I own?")?;
+    app.press("label:Send")?;
+    app.wait_for("There’s no entry to save. You can explore this in the app.")?;
+    assert!(!app.shows("text:/^Confirm and save/"));
+    app.press("Open Assets")?;
+    app.wait_for("Add account")?;
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    assert!(
+        navi_finance::repository::transactions(&db)
+            .unwrap()
+            .is_empty()
+    );
+    assert_eq!(model.requests().len(), 1);
+    Ok(())
+}
+
+#[test]
+fn holding_balance_price_and_note_cards_share_one_review() -> Result<(), String> {
+    use navi_finance::{
+        account::Account,
+        holdings::{self, Kind, Security, Trade, store},
+        repository,
+    };
+    let dir = tempfile::tempdir().unwrap();
+    let (seed, _) = start_in(Some(dir.path()), account(true), None);
+    drop(seed);
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    let day = today();
+    let cash = Account::parse("资产:Cash").unwrap();
+    repository::create_account(&db, &cash).unwrap();
+    let security = Security::new("fund", "Fund A").unwrap();
+    let opening = Trade {
+        id: "opening-fund".into(),
+        security: security.id.clone(),
+        at: day.0.yesterday().unwrap().at(12, 0, 0, 0),
+        kind: Kind::Opening,
+        quantity: 10 * holdings::SCALE,
+        price: 4 * holdings::SCALE,
+        amount: 0,
+        fee: 0,
+        cash: None,
+    };
+    store::add_trade(&db, Some(&security), &opening, day.0).unwrap();
+    let row = |kind: &str, value: Value| {
+        let mut r = json!({"kind":kind, "day":day.to_string(), "weight_kg":null,"money":null,"meal":null,
+            "slot":null,"trade":null,"balance":null,"price":null,"note":null,"evidence":[]});
+        r[kind] = value;
+        r
+    };
+    let model = network(
+        200,
+        record_reply(vec![
+            row(
+                "trade",
+                json!({"security":"fund","currency":"CNY","kind":"buy","quantity":"2","unit_price":"4.25","amount":null,"fee":"0.10","cash":"资产:Cash"}),
+            ),
+            row("balance", json!({"account":"资产:Cash","actual":"91.40"})),
+            row(
+                "price",
+                json!({"security":"fund","currency":"CNY","unit_price":"4.125005"}),
+            ),
+            row("note", json!("Stayed on budget")),
+        ]),
+    );
+    let (mut app, _) = start_in(Some(dir.path()), account(true), Some(model.clone()));
+    app.press("label:New entry")?;
+    app.type_text("label:What would you like to record?", "Bought two Fund A with Cash, then checked Cash at 91.40. Closing price 4.125005. Note: Stayed on budget.")?;
+    app.press("label:Send")?;
+    app.wait_for("Confirm and save (4)")?;
+    for label in [
+        "text:Buy",
+        "text:Balance check",
+        "text:Manual price",
+        "text:Review note",
+        "text:¥4.125005",
+    ] {
+        app.wait_for(label)?;
+    }
+    assert_eq!(store::load(&db).unwrap().trades.len(), 1);
+    assert!(repository::balance_checks(&db).unwrap().is_empty());
+    app.scroll("label:Edit review note", nsh_core::geometry::Points(700.0))?;
+    app.press("label:Edit review note")?;
+    app.clear("label:One sentence")?;
+    app.type_text("label:One sentence", "Skipped an impulse purchase")?;
+    app.press("Done")?;
+    app.wait_for("text:Skipped an impulse purchase")?;
+    app.press("Confirm and save (4)")?;
+    app.wait_for("Saved 4 records")?;
+    let book = store::load(&db).unwrap();
+    assert_eq!(book.trades.len(), 2);
+    assert_eq!(book.quotes[0].price, 4_125_005);
+    assert_eq!(repository::balance_checks(&db).unwrap().len(), 1);
+    assert_eq!(
+        db.query_row::<String, _, _>("SELECT text FROM review_notes", [], |r| r.get(0))
+            .unwrap(),
+        "Skipped an impulse purchase"
+    );
+    app.press("Undo")?;
+    app.wait_for("Save undone")?;
+    assert_eq!(store::load(&db).unwrap().trades, vec![opening]);
+    assert!(store::load(&db).unwrap().quotes.is_empty());
+    assert!(repository::balance_checks(&db).unwrap().is_empty());
+    assert_eq!(
+        db.query_row::<i64, _, _>("SELECT COUNT(*) FROM review_notes", [], |r| r.get(0))
+            .unwrap(),
+        0
+    );
+    assert_eq!(model.requests().len(), 1);
+    Ok(())
+}
+
+#[test]
+fn only_a_committed_save_animates_and_reduced_motion_keeps_the_receipt() -> Result<(), String> {
+    use nsh_core::{Command, Haptic, HapticNotification};
+    for reduced in [false, true] {
+        let dir = tempfile::tempdir().unwrap();
+        let mut money = money_record("32.00");
+        money["evidence"] =
+            json!([{"field":"account","source":"inferred","reason":"Funding was not stated."}]);
+        let stub = network(200, record_reply(vec![money]));
+        let (mut app, _) = start_in(Some(dir.path()), account(true), Some(stub));
+        app.set_environment("motion preference", |e| e.reduce_motion = reduced)?;
+        app.press("label:New entry")?;
+        app.type_text("label:What would you like to record?", "Lunch 32 yuan")?;
+        app.clear_commands();
+        app.press("label:Send")?;
+        app.wait_for("Use this account · Cash")?;
+        let haptics = |app: &Headless| {
+            app.screen()
+                .commands()
+                .iter()
+                .filter_map(|(_, c)| match c {
+                    Command::Haptic(h) => Some(*h),
+                    _ => None,
+                })
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(
+            haptics(&app)
+                .iter()
+                .filter(|h| **h == Haptic::Selection)
+                .count(),
+            1
+        );
+        app.clear_commands();
+        app.press("Use this account · Cash")?;
+        app.wait_for("Confirm and save")?;
+        assert_eq!(haptics(&app), vec![Haptic::Selection]);
+        let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+        db.execute_batch("CREATE TRIGGER refuse_save BEFORE DELETE ON capture_drafts BEGIN SELECT RAISE(ABORT,'failure'); END;").unwrap();
+        app.clear_commands();
+        app.press("Confirm and save")?;
+        app.wait_for("Could not save changes. Check device storage and try again.")?;
+        assert!(haptics(&app).is_empty());
+        assert!(!app.shows("id:capture-save-flight"));
+        db.execute_batch("DROP TRIGGER refuse_save").unwrap();
+        app.press("Confirm and save")?;
+        app.wait_for("Saved Spending · ¥32.00")?;
+        assert_eq!(
+            haptics(&app),
+            vec![Haptic::Notification(HapticNotification::Success)]
+        );
+        if reduced {
+            app.wait_for_gone("label:Confirm and save", GONE)?;
+            assert!(!app.shows("id:capture-save-flight"));
+        } else {
+            app.wait_for("id:capture-save-flight")?;
+        }
+        // The decorative layer takes no hit: Undo is available immediately.
+        app.press("Undo")?;
+        app.wait_for("Save undone")?;
+        assert!(
+            navi_finance::repository::transactions(&db)
+                .unwrap()
+                .is_empty()
+        );
+    }
     Ok(())
 }

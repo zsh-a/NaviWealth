@@ -64,6 +64,9 @@ pub fn search_page(query: &str, offset: usize, limit: usize) -> Vec<Entry> {
             .unwrap_or_default()
     })
 }
+pub(super) fn installed() -> Option<Rc<Catalog>> {
+    state().with(|s| s.catalog.clone())
+}
 pub fn available() -> bool {
     state().with(|s| s.catalog.is_some())
 }
@@ -195,17 +198,17 @@ mod tests {
             .child(text(
                 move || if settled.get() { "settled" } else { "waiting" },
             ))
-            .child(text("refresh").on_press(|| {
-                spawn(refresh());
+            .child(text("refresh").on_press(move || {
+                settled.set(false);
+                spawn(async move {
+                    refresh().await;
+                    settled.set(true);
+                });
             }))
             .child(text("reload").on_press(move || {
                 let before = version();
                 load().unwrap();
                 assert_eq!(version(), before);
-                spawn(async move {
-                    timer(Duration::from_millis(250)).await;
-                    settled.set(true);
-                });
             }))
     }
 
@@ -219,18 +222,25 @@ mod tests {
         let mut response = StubResponse::default();
         response.status = 200;
         response.body = manifest.to_string().into_bytes();
-        response.delay = Duration::from_millis(100);
+        // Release the response only after reload, independent of renderer timing.
+        let (waiting, pending) = std::sync::mpsc::channel();
         let mut config = EngineConfig::new(Root::of::<RefreshProbe>());
         config.storage = Some(MemoryStorage::new(Vec::new()));
         config.network = Some(Arc::new(StubNetwork::new([(
             format!("GET {BASE}catalog-manifest.json"),
-            response,
+            nsh_testing::StubRoute::Handler(Arc::new(move |_, reply| {
+                waiting.send(reply).unwrap();
+            })),
         )])));
         let mut app = Headless::start(config).unwrap();
         app.wait_for("refresh").unwrap();
         app.press("refresh").unwrap();
         app.wait_for("text:/catalog Updating/").unwrap();
         app.press("reload").unwrap();
+        pending
+            .recv_timeout(Duration::from_secs(1))
+            .unwrap()
+            .send(response);
         app.wait_for("settled").unwrap();
         app.wait_for("text:/catalog Idle/").unwrap();
     }

@@ -180,15 +180,26 @@ pub fn confirm_balance(
     check: &BalanceCheck,
     expected: i64,
 ) -> Result<Option<Transaction>, Error> {
+    let tx = connection.unchecked_transaction()?;
+    let adjustment = confirm_balance_in_transaction(&tx, check, expected)?;
+    tx.commit()?;
+    Ok(adjustment)
+}
+
+/// Checks the ledger including preceding records in the same batch.
+pub fn confirm_balance_in_transaction(
+    tx: &sqlite::Transaction<'_>,
+    check: &BalanceCheck,
+    expected: i64,
+) -> Result<Option<Transaction>, Error> {
     if check.id.trim().is_empty() || !check.account.is_cash() || check.day > check.checked_at.date()
     {
         return Err(Error::Invalid("balance check"));
     }
-    let tx = connection.unchecked_transaction()?;
-    if !accounts(&tx)?.contains(&check.account) {
+    if !accounts(tx)?.contains(&check.account) {
         return Err(Error::Missing);
     }
-    let entries = transactions(&tx)?;
+    let entries = transactions(tx)?;
     let book = crate::journal::balance_on(&entries, &check.account, check.day);
     if book != expected {
         return Err(Error::BalanceChanged);
@@ -221,9 +232,8 @@ pub fn confirm_balance(
     // Insert first: replaying a confirmation cannot overwrite its posting.
     tx.execute("INSERT INTO finance_balance_checks(id,account,day,actual,checked_at) VALUES(?1,?2,?3,?4,?5)", params![check.id,check.account.as_str(),check.day.to_string(),check.actual,check.checked_at.to_string()])?;
     if let Some(t) = &adjustment {
-        save_in_transaction(&tx, t)?;
+        save_in_transaction(tx, t)?;
     }
-    tx.commit()?;
     Ok(adjustment)
 }
 

@@ -107,8 +107,7 @@ impl Steer {
     }
 }
 
-pub(super) fn dock(sheets: Sheets) -> impl IntoElement {
-    let targets: [ElementRef; 4] = std::array::from_fn(|_| element_ref());
+pub(super) fn dock(sheets: Sheets, targets: [ElementRef; 4]) -> impl IntoElement {
     // The tab a finger is on, while one is down on the bar.
     let pressed: Signal<Option<Tab>> = signal(None);
     let lens_tab = move || pressed.get().unwrap_or_else(nav::tab);

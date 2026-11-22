@@ -42,6 +42,7 @@ pub fn start_in(
     // Tests never depend on reaching the public quote and FX providers,
     // nor on the releases API the update check reads.
     naviwealth_app::disable_live_market_data();
+    naviwealth_app::use_host_capture_transport();
     naviwealth_app::set_live_updates(false);
     let storage = MemoryStorage::new(entries);
     let mut config = EngineConfig::new(Root::of::<App>());
@@ -258,17 +259,18 @@ pub fn garmin_cn_with_delay(delay: Duration) -> Arc<StubNetwork> {
 }
 
 pub fn record_reply(records: Vec<Value>) -> Value {
-    json!({"model":"test-model","stop_reason":"end_turn","content":[{"type":"text","text":json!({"records":records}).to_string()}]})
+    json!({"model":"test-model","stop_reason":"end_turn","content":[{"type":"text","text":json!({"destination":null,"records":records}).to_string()}]})
 }
 
 pub fn meal_record() -> Value {
-    let meal: Value =
+    let mut meal: Value =
         serde_json::from_str(estimate()["content"][0]["text"].as_str().unwrap()).unwrap();
-    json!({"kind":"meal","day":today().to_string(),"slot":"lunch","meal":meal,"money":null,"weight_kg":null})
+    meal["source_image"] = Value::Null;
+    json!({"kind":"meal","day":today().to_string(),"slot":"lunch","meal":meal,"money":null,"trade":null,"balance":null,"price":null,"note":null,"evidence":[],"weight_kg":null})
 }
 
 pub fn money_record(amount: &str) -> Value {
-    json!({"kind":"money","day":today().to_string(),"slot":null,"meal":null,"weight_kg":null,
+    json!({"kind":"money","day":today().to_string(),"slot":null,"meal":null,"trade":null,"balance":null,"price":null,"note":null,"evidence":[],"weight_kg":null,
         "money":{"kind":"expense","amount":amount,"currency":"CNY","account":"资产:Cash","other_account":null,
             "category":"支出:餐饮","time":null,"payee":"Lunch shop","note":""}})
 }

@@ -254,7 +254,13 @@ pub fn model_page() -> Screen {
                                 .pt_2()
                                 .pb(move || px(safe_area().bottom.0 + 32.0))
                                 .gap_3()
-                                .child(form),
+                                .child(form)
+                                .child(dynamic(move || {
+                                    let account = draft();
+                                    account
+                                        .is_ready()
+                                        .then(|| untracked(|| capture_preferences(account)))
+                                })),
                         ),
                 ),
         )
@@ -307,4 +313,81 @@ fn test_row(test: Signal<Test>, run: impl Fn() + 'static) -> impl IntoElement {
                 Test::Idle | Test::Testing => None,
             })
         }))
+}
+
+fn capture_preferences(account: ModelAccount) -> impl IntoElement {
+    use crate::i18n::capture_options::copy;
+    use crate::ui::toggle::bound_switch;
+    let account = stored(account);
+    let options = move || account.with(|a| settings::capture_options(a));
+    let typed = signal(options().preview_model);
+    let invalid = move || {
+        typed.with(|v| v.trim().chars().any(char::is_whitespace) || v.trim().chars().count() > 200)
+    };
+    card()
+        .p(px(space::CARD))
+        .gap_2()
+        .child(
+            text(|| copy().options)
+                .typo(Type::Headline)
+                .text_color(color::INK),
+        )
+        .child(bound_switch(
+            move || options().live_text,
+            move |on| account.with(|a| settings::save_capture_options(a, |o| o.live_text = on)),
+            || copy().live.into(),
+        ))
+        .child(
+            text(move || {
+                let model = options().preview_model;
+                account.with(|a| {
+                    format!(
+                        "{} · {} · {}",
+                        copy().live_note,
+                        a.host(),
+                        if model.is_empty() { &a.model } else { &model }
+                    )
+                })
+            })
+            .typo(Type::Caption)
+            .text_color(color::MUTED),
+        )
+        .child(field(
+            || copy().fast,
+            text_input(typed)
+                .auto_capitalize(AutoCapitalize::None)
+                .auto_correct(false)
+                .label(|| copy().fast)
+                .placeholder(|| copy().fast_default),
+        ))
+        .child(when(
+            move || typed.get().trim() != options().preview_model,
+            move || {
+                Btn::tonal()
+                    .size(Size::Small)
+                    .label(|| s().done.into())
+                    .disabled(invalid)
+                    .on_press(move || {
+                        let model = typed.get_untracked().trim().to_string();
+                        account.with(|a| {
+                            settings::save_capture_options(a, |o| {
+                                o.preview_model = model;
+                                o.live_text = false;
+                            })
+                        });
+                    })
+            },
+        ))
+        .child(bound_switch(
+            move || options().recent_context,
+            move |on| {
+                account.with(|a| settings::save_capture_options(a, |o| o.recent_context = on))
+            },
+            || copy().context.into(),
+        ))
+        .child(
+            text(|| copy().context_note)
+                .typo(Type::Caption)
+                .text_color(color::MUTED),
+        )
 }

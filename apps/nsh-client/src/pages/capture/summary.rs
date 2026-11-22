@@ -16,9 +16,7 @@ use navi_finance::{
 use nsh_core::prelude::*;
 
 pub fn common_day(draft: &Draft) -> Option<crate::domain::meal::Day> {
-    let day_of = |r: &Record| match r {
-        Record::Money { day, .. } | Record::Meal { day, .. } | Record::Weight { day, .. } => *day,
-    };
+    let day_of = super::details::day;
     let first = draft.records.first().map(day_of)?;
     draft
         .records
@@ -27,29 +25,58 @@ pub fn common_day(draft: &Draft) -> Option<crate::domain::meal::Day> {
         .then_some(first)
 }
 
+/// Open the owning surface of a saved batch. The Records tab can show
+/// mixed money, weight and meal batches together, including across days.
+pub(super) fn saved_view(draft: &Draft, sheets: super::Sheets) -> impl Fn() + use<> {
+    use crate::nav::{self, Route, Tab};
+    let day = common_day(draft);
+    let route = match draft.records.as_slice() {
+        [
+            record @ (Record::Price {
+                security, currency, ..
+            }
+            | Record::Trade {
+                security, currency, ..
+            }),
+        ] => {
+            let name = crate::data::capture::price_security_name(security, *currency);
+            finance::holdings_snapshot()
+                .securities
+                .iter()
+                .find(|item| {
+                    item.currency() == *currency
+                        && (item.id == *security || Some(&item.name) == name.as_ref())
+                })
+                .map(|item| match record {
+                    Record::Price { .. } => Route::PricesAndRates(Some(item.id.clone())),
+                    _ => Route::Holding(item.id.clone()),
+                })
+        }
+        [Record::Balance { account, .. }] => Some(Route::Account(account.to_string())),
+        _ => None,
+    };
+    let tab = match draft.records.first() {
+        Some(Record::Note { .. }) => Tab::Review,
+        Some(Record::Balance { .. } | Record::Price { .. } | Record::Trade { .. }) => Tab::Assets,
+        _ => Tab::Records,
+    };
+    move || {
+        if tab == Tab::Records {
+            sheets.jump_to.set(day);
+            sheets.records_all.set(day.is_none());
+        }
+        nav::select(tab);
+        if let Some(page) = route.clone() {
+            nav::push(page);
+        }
+    }
+}
+
 pub fn saved_message(draft: &Draft) -> String {
     let [record] = draft.records.as_slice() else {
         return s().capture_saved_count(draft.records.len());
     };
-    let (label, value) = match record {
-        Record::Money { draft, .. } => (
-            match draft.kind {
-                Kind::Expense => s().spending,
-                Kind::Income => s().income,
-                Kind::Transfer => s().transfer,
-            },
-            amount_text(&draft.currency, draft.amount.as_deref().unwrap_or("—")),
-        ),
-        Record::Meal { estimate, .. } => (
-            s().meals,
-            format!(
-                "{} {}",
-                format::kcal(crate::domain::nutrition::total(&estimate.foods).kcal),
-                s().kcal
-            ),
-        ),
-        Record::Weight { kg, .. } => (s().weight, format!("{kg:.1} kg")),
-    };
+    let (_, label, value) = super::details::headline(record);
     s().capture_saved_detail(label, &value)
 }
 
@@ -57,7 +84,23 @@ pub fn saved_message(draft: &Draft) -> String {
 #[derive(Clone, Copy)]
 struct Revisions(Signal<Vec<usize>>);
 
+#[derive(Clone, Copy)]
+struct Figures {
+    draft: Signal<Draft>,
+    shown: Stored<Vec<String>>,
+}
+
 pub(super) fn track_revisions(draft: Signal<Draft>) {
+    let initial = draft.with_untracked(|d| {
+        d.records
+            .iter()
+            .map(|r| super::details::headline(r).2)
+            .collect()
+    });
+    provide_context(Figures {
+        draft,
+        shown: stored(initial),
+    });
     let records = computed(move || draft.with(|d| d.records.clone()));
     let previous = stored(records.get_untracked());
     let changed = signal(Vec::new());
@@ -84,31 +127,112 @@ pub(super) fn track_revisions(draft: Signal<Draft>) {
     });
 }
 
-pub fn records(draft: &Draft, choosing: Signal<Option<super::accounts::Choice>>) -> AnyElement {
+pub fn records(
+    draft: &Draft,
+    choosing: Signal<Option<super::accounts::Choice>>,
+    live: Signal<Draft>,
+    input: Signal<String>,
+    error: Signal<Option<String>>,
+) -> AnyElement {
     let revisions = use_context::<Revisions>();
+    if !draft.records.is_empty() {
+        super::flight::first_card();
+    }
     view()
         .gap_4()
         .children(draft.records.iter().enumerate().map(|(index, record)| {
             let editable = draft.status == Status::Ready && draft.pending_ask_user().is_none();
-            view()
-                .bg(color::SURFACE_2)
-                .border(px(1.0))
+            crate::ui::surface::card()
+                .element_ref(&super::flight::origin(index))
+                .dark(|s| {
+                    s.bg(color::SURFACE_2)
+                        .border(px(1.0))
+                        .rounded(px(crate::ui::radius::WELL))
+                })
                 .border_color(move || {
                     if revisions.is_some_and(|r| r.0.with(|ids| ids.contains(&index))) {
-                        color::LINE_STRONG
-                    } else {
+                        if dark() {
+                            color::LINE_STRONG
+                        } else {
+                            color::ACCENT_INK.opacity(0.42)
+                        }
+                    } else if dark() {
                         AdaptiveColor::TRANSPARENT
+                    } else {
+                        color::INK.opacity(0.15)
                     }
                 })
-                .rounded(px(crate::ui::radius::WELL))
                 .p_4()
                 .gap_2()
-                .child(record_view(record, index, choosing, editable))
+                .child(record_view(draft, record, index, choosing, editable))
+                .child(super::details::issue(draft, index))
+                .child(
+                    (editable && draft.records.len() > 1)
+                        .then(|| remove_row(index, record, live, input, error)),
+                )
+                .child(
+                    editable
+                        .then(|| super::evidence::field_sources(draft, index, live, input, error)),
+                )
         }))
         .into_element()
 }
 
-fn line(label: impl IntoReactive<SharedString>, value: String, missing: bool) -> View {
+fn remove_row(
+    index: usize,
+    record: &Record,
+    draft: Signal<Draft>,
+    input: Signal<String>,
+    error: Signal<Option<String>>,
+) -> AnyElement {
+    use crate::i18n::catalog::copy;
+    let expected = record.clone();
+    let (_, kind, figure) = super::details::headline(record);
+    let label = format!(
+        "{} · {kind} · {figure}",
+        copy("Remove from draft", "从草稿中移除")
+    );
+    nsh_base::button()
+        .accessibility_label(Some(label.into()))
+        .self_end()
+        .flex_row()
+        .items_center()
+        .gap_1()
+        .min_h(px(44.0))
+        .px_2()
+        .focus_visible(|s| s.outline(px(2.0)).outline_color(color::INK))
+        .child(icon(Icon::Minus, 14.0, color::MUTED))
+        .child(
+            text(copy("Remove", "移除"))
+                .typo(Type::Caption)
+                .text_color(color::MUTED),
+        )
+        .on_press(move || {
+            let mut next = draft.get_untracked();
+            if next.status != Status::Ready
+                || next.pending_ask_user().is_some()
+                || next.records.len() < 2
+                || next.records.get(index) != Some(&expected)
+            {
+                return;
+            }
+            next.records.remove(index);
+            if index < next.evidence.len() {
+                next.evidence.remove(index);
+            }
+            next.correction = input.get_untracked();
+            if let Err(cause) = crate::data::capture::put(next.clone()) {
+                log::error!("capture: removing a draft row failed: {cause}");
+                error.set(Some(s().error_transaction_storage.into()));
+                return;
+            }
+            error.set(None);
+            draft.set(next);
+        })
+        .into_element()
+}
+
+pub(super) fn line(label: impl IntoReactive<SharedString>, value: String, missing: bool) -> View {
     view()
         .flex_row()
         .gap_3()
@@ -131,7 +255,7 @@ fn account(account: &Option<Account>) -> String {
     }
 }
 
-fn account_line(
+pub(super) fn account_line(
     label: &'static str,
     value: &Option<Account>,
     index: usize,
@@ -188,13 +312,41 @@ fn choice_line(
 
 /// A record's main figure; editable, it is the control that edits it, with
 /// a pencil so the affordance is visible.
-fn edit_figure(
+pub(super) fn edit_figure(
     figure: View,
     label: &'static str,
     index: usize,
     choosing: Signal<Option<super::accounts::Choice>>,
     editable: bool,
 ) -> AnyElement {
+    // Fade and lift the actual figure only when its value first arrives or
+    // changes. Returning from a picker or reopening a saved draft stays still.
+    let changed = use_context::<Figures>().is_some_and(|figures| {
+        let value = figures
+            .draft
+            .with_untracked(|d| d.records.get(index).map(|r| super::details::headline(r).2));
+        value.is_some_and(|value| {
+            figures.shown.with(|shown| {
+                if shown.get(index) == Some(&value) {
+                    return false;
+                }
+                if shown.len() <= index {
+                    shown.resize(index + 1, String::new());
+                }
+                shown[index] = value;
+                true
+            })
+        })
+    });
+    let figure = if changed && !reduce_motion() {
+        let reveal = animated_value(0.0);
+        reveal.timing(1.0, crate::ui::motion::FAST, Easing::EaseOut);
+        figure
+            .bind_opacity(&reveal)
+            .bind_translate_y(&reveal.interpolate(&[0.0, 1.0], &[4.0, 0.0]))
+    } else {
+        figure
+    };
     if !editable {
         return figure.into_element();
     }
@@ -217,6 +369,7 @@ fn edit_figure(
 }
 
 fn record_view(
+    batch: &Draft,
     record: &Record,
     index: usize,
     choosing: Signal<Option<super::accounts::Choice>>,
@@ -343,6 +496,7 @@ fn record_view(
             day,
             slot,
             estimate,
+            source_image,
         } => {
             let total = crate::domain::nutrition::total(&estimate.foods);
             view()
@@ -361,6 +515,29 @@ fn record_view(
                     .typo(Type::Subhead)
                     .text_color(color::MUTED),
                 )
+                .child(source_image.number().and_then(|number| {
+                    let photo = batch.meal_photo(*source_image).ok()??;
+                    Some(
+                        view()
+                            .flex_row()
+                            .gap_2()
+                            .items_center()
+                            .child(
+                                image(move || crate::data::photos::uri(&photo).unwrap_or_default())
+                                    .size(px(40.0))
+                                    .object_fit(ResizeMode::Cover)
+                                    .rounded(px(crate::ui::radius::BADGE)),
+                            )
+                            .child(
+                                text(format!(
+                                    "{} {number}",
+                                    crate::i18n::catalog::copy("Photo", "照片")
+                                ))
+                                .typo(Type::Caption)
+                                .text_color(color::MUTED),
+                            ),
+                    )
+                }))
                 .child(edit_figure(
                     view().child(
                         text(format!("{} {}", format::kcal(total.kcal), s().kcal))
@@ -433,6 +610,7 @@ fn record_view(
                     .text_color(color::CAUTION)
             }))
             .into_element(),
+        _ => super::details::extended(batch, index, choosing, editable),
     }
 }
 
@@ -447,10 +625,30 @@ pub(super) fn edit_value(
     let Some(record) = draft.with_untracked(|d| d.records.get(index).cloned()) else {
         return view().into_element();
     };
-    let (label, current) = match record {
-        Record::Money { draft, .. } => (s().money_amount, draft.amount.unwrap_or_default()),
-        Record::Meal { estimate, .. } => (s().name, estimate.title.unwrap_or_default()),
-        Record::Weight { kg, .. } => (s().weight, kg.to_string()),
+    use navi_finance::{assets, holdings, money};
+    let (label, field, current) = match record {
+        Record::Money { draft, .. } => {
+            (s().money_amount, "amount", draft.amount.unwrap_or_default())
+        }
+        Record::Meal { estimate, .. } => (s().name, "title", estimate.title.unwrap_or_default()),
+        Record::Weight { kg, .. } => (s().weight, "weight_kg", kg.to_string()),
+        Record::Trade {
+            kind: holdings::Kind::Dividend,
+            amount,
+            ..
+        } => (s().dividend_amount, "amount", money::format(amount)),
+        Record::Trade { quantity, .. } => {
+            (s().quantity, "quantity", holdings::format_units(quantity))
+        }
+        Record::Balance {
+            actual, account, ..
+        } => (
+            s().actual_balance,
+            "actual",
+            money::format(assets::displayed(&account, actual)),
+        ),
+        Record::Price { price, .. } => (s().holding_price, "price", holdings::format_units(price)),
+        Record::Note { text, .. } => (s().review_note, "text", text),
     };
     let value = signal(current);
     view()
@@ -490,6 +688,47 @@ pub(super) fn edit_value(
                                 return;
                             }
                         },
+                        Some(Record::Trade {
+                            kind: holdings::Kind::Dividend,
+                            amount,
+                            ..
+                        }) => {
+                            let Some(value) = money::parse(written, false).filter(|v| *v > 0)
+                            else {
+                                error.set(Some(s().error_transaction.into()));
+                                return;
+                            };
+                            *amount = value;
+                        }
+                        Some(Record::Trade { quantity, .. }) => {
+                            let Some(value) = holdings::parse_units(written).filter(|v| *v > 0)
+                            else {
+                                error.set(Some(s().holding_error.into()));
+                                return;
+                            };
+                            *quantity = value;
+                        }
+                        Some(Record::Price { price, .. }) => {
+                            let Some(value) = holdings::parse_units(written) else {
+                                error.set(Some(s().holding_error.into()));
+                                return;
+                            };
+                            *price = value;
+                        }
+                        Some(Record::Balance {
+                            actual, account, ..
+                        }) => {
+                            let Some(value) = money::parse(written, true)
+                                .and_then(|v| assets::book_value(account, v))
+                            else {
+                                error.set(Some(s().error_transaction.into()));
+                                return;
+                            };
+                            *actual = value;
+                        }
+                        Some(Record::Note { text, .. }) if crate::data::notes::valid(written) => {
+                            *text = written.into()
+                        }
                         Some(Record::Money { .. }) => {
                             error.set(Some(s().capture_need_amount.into()));
                             return;
@@ -499,6 +738,7 @@ pub(super) fn edit_value(
                             return;
                         }
                     }
+                    next.mark_owner_field(index, field);
                     next.correction = input.get_untracked();
                     if let Err(cause) = crate::data::capture::put(next.clone()) {
                         log::error!("capture: could not keep edited value: {cause}");
@@ -514,10 +754,47 @@ pub(super) fn edit_value(
         .into_element()
 }
 
-fn amount_text(currency: &str, amount: &str) -> String {
+pub(super) fn amount_text(currency: &str, amount: &str) -> String {
     use navi_finance::{currency::Currency, money};
     match (Currency::parse(currency), money::parse(amount, true)) {
         (Some(currency), Some(value)) => crate::ui::currency::format(value, currency),
         _ => format!("{currency} {amount}"),
     }
+}
+
+/// Live model snapshots never expose editable fields or confirmation actions.
+pub(super) fn provisional(records: &[Record], seen: Stored<usize>) -> AnyElement {
+    let before = seen.replace(records.len());
+    if !records.is_empty() {
+        super::flight::first_card();
+    }
+    view()
+        .gap_2()
+        .children(records.iter().enumerate().map(|(index, record)| {
+            let (glyph, label, figure) = super::details::headline(record);
+            let card = view()
+                .flex_row()
+                .gap_3()
+                .items_center()
+                .bg(color::SURFACE_2)
+                .rounded(px(crate::ui::radius::WELL))
+                .p_3()
+                .child(icon(glyph, 18.0, color::ACCENT_INK))
+                .child(text(label).typo(Type::Subhead).text_color(color::BODY))
+                .child(
+                    text(figure)
+                        .typo(Type::Headline)
+                        .tabular_nums()
+                        .text_color(color::INK)
+                        .flex_1()
+                        .text_right()
+                        .number_of_lines(2),
+                );
+            if index >= before {
+                crate::ui::feedback::appear((index - before) as u32, card)
+            } else {
+                card
+            }
+        }))
+        .into_element()
 }

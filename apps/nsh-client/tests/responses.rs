@@ -146,7 +146,9 @@ fn responses_choice_and_native_reasoning_survive_restart_and_image_followup() ->
                 if index == 0 {
                     output_response(first_output.clone())
                 } else {
-                    message_response(json!({"records":[meal_record()]}).to_string())
+                    message_response(
+                        json!({"destination":null,"records":[meal_record()]}).to_string(),
+                    )
                 },
             ));
         })),

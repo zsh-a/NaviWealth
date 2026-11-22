@@ -67,11 +67,12 @@ openapi/            agent-runtime-api.yaml — HTTP API contract for server-firs
   types and `llm-client` request policy; the NSH client supplies its platform
   fetch as the Host Transport. Recognition is a single-shot draft operation;
   there is no chat loop or proposal seam in the NSH client. Unified capture
-  uses the same protocol/client directly for `ask_user` tool calls, persisting
+  uses `llm-reqwest` to receive SSE events through the same protocol/client
+  contracts. Provisional cards remain in memory. Capture supports `ask_user`, persisting
   the suspended call and owner answers in its local draft. Continuation occurs
   only when the owner submits or retries; `agent-chat` is not adopted.
 - `llm-protocol` owns Anthropic Messages, OpenAI Chat Completions and OpenAI
-  Responses codecs. Responses whole-body requests keep `store: false`; native
+  Responses codecs. Responses requests keep `store: false`; native
   output items are returned as metadata for the host to persist and replay.
   The NSH host stores them only inside the draft and continues on owner input.
 - Domain truth in `crates/navi-finance` and `crates/navi-health` never imports

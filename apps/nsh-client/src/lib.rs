@@ -43,6 +43,12 @@ pub fn disable_live_market_data() {
     data::market::disable_live();
 }
 
+/// Route capture requests through the supplied NSH network (headless fixtures).
+#[doc(hidden)]
+pub fn use_host_capture_transport() {
+    data::vision::use_host_capture_transport();
+}
+
 /// For headless tests: whether update checks may reach the public
 /// releases API.
 #[doc(hidden)]
@@ -90,6 +96,7 @@ pub enum AppEvent {
 pub fn App(props: AppProps, cx: Scope<AppEvent>) -> impl IntoElement {
     if cfg!(debug_assertions) && props.test_mode.get() {
         disable_live_market_data();
+        use_host_capture_transport();
         set_live_updates(false);
     }
     scale::provide_launcher(props.scale_enabled.get(), move || {

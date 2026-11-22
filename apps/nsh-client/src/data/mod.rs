@@ -20,12 +20,14 @@ pub mod scale;
 pub mod settings;
 pub mod statement_import;
 pub mod tasks;
+mod tls;
 pub mod updates;
 pub mod vision;
 pub mod webdav;
 pub mod weights;
 
 pub mod capture;
+pub(crate) mod capture_context;
 
 pub mod valuation;
 

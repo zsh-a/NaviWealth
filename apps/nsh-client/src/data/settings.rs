@@ -55,6 +55,9 @@ pub struct Settings {
     pub ledger: LedgerDefaults,
     #[serde(default)]
     pub trusted_capture: Vec<String>,
+    /// Preview and saved-record consent are separate and scoped to the configured target.
+    #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+    pub capture_options: std::collections::BTreeMap<String, CaptureOptions>,
     /// The body profile: BMI now, scale estimates later. Never a secret.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub height_cm: Option<u16>,
@@ -353,4 +356,47 @@ pub fn set_all_recognition_trusted(account: &ModelAccount, trusted: bool) {
         }
         persist(s);
     });
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct CaptureOptions {
+    pub live_text: bool,
+    pub recent_context: bool,
+    /// Empty uses the main model on the same provider and endpoint.
+    pub preview_model: String,
+}
+
+pub fn capture_options(account: &ModelAccount) -> CaptureOptions {
+    settings().with(|s| {
+        s.capture_options
+            .get(&account.fingerprint())
+            .cloned()
+            .unwrap_or_default()
+    })
+}
+
+pub fn save_capture_options(account: &ModelAccount, update: impl FnOnce(&mut CaptureOptions)) {
+    let mut next = settings().get_untracked();
+    if next
+        .account
+        .as_ref()
+        .is_none_or(|a| a.fingerprint() != account.fingerprint())
+    {
+        return;
+    }
+    update(
+        next.capture_options
+            .entry(account.fingerprint())
+            .or_default(),
+    );
+    // These options authorize external requests: persist before enabling them.
+    if serde_json::to_string(&next)
+        .ok()
+        .is_some_and(|s| Storage::set_item(KEY, s).is_ok())
+    {
+        settings().set(next);
+    } else {
+        crate::ui::feedback::storage_error("Could not keep capture settings");
+    }
 }

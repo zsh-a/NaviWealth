@@ -259,7 +259,11 @@ impl AuditRevision {
                     },
                     quote["price"].as_i64().ok_or(Error::Invalid)?,
                     if manual {
-                        Some("manual")
+                        if body["retracted"].as_bool() == Some(true) {
+                            Some("manual_retracted")
+                        } else {
+                            Some("manual")
+                        }
                     } else {
                         quote["provider"].as_str()
                     },

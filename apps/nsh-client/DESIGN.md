@@ -32,7 +32,7 @@ AI only to turn text and images into drafts, using the owner's model account.
   while an answer is still wanted — the question's tap-first options as
   chips of known accounts and categories. A turn that revised records
   collapses, once superseded, to an "Updated n records" line. While the
-  model works the thread shows a small spinner and a single status line; a failure is a turn with Try again, Open settings and Keep
+  model works the thread shows progress and read-only cards as complete records arrive; a failure is a turn with Try again, Open settings and Keep
   previous result. No domain selection before input and no prefilled form
   as the main result. Missing values ask a concrete question; proposed new
   accounts are marked. Multiple records show their count on confirmation.
@@ -53,8 +53,11 @@ AI only to turn text and images into drafts, using the owner's model account.
   The first entry opens a compact writing surface under the title. After sending,
   the conversation uses the available height above the live keyboard. Earlier exchanges
   fold under Earlier messages. A composer-shaped pill (photo glyph and the muted
-  label Add text or photos / 补充文字或图片) sits above the footer action and
-  opens the reply surface on demand.
+  label Add text or photos / 补充文字或图片) opens the reply surface on demand.
+  In light appearance, a ready draft places the pill and a 48 pt high,
+  content-width cobalt save button on one row. At widths below 360 pt or
+  font scales above 1.2 the controls stack and the button uses a short contact
+  shadow. Dark appearance keeps the stacked footer.
   Both writing surfaces group a photo control, the input
   (labelled What would you like to record? / 想记下什么？) and, for ordinary messages, a round send
   button. Input starts at one line (48 pt), grows with its content up to
@@ -69,7 +72,12 @@ AI only to turn text and images into drafts, using the owner's model account.
   questions or unsent evidence withhold confirmation.
   Only a draft with no thread yet requests initial focus after the sheet
   opens; a ready result stays readable.
-  Each record supports a local edit to its amount, meal name or weight: the
+  In light appearance, review cards have a white surface, a 20 pt radius,
+  a 0.5 pt ink edge at 15% opacity and the `CARD` contact shadow. A recent
+  correction briefly tints the edge cobalt. Ready cards can show field
+  evidence and support individual removal in a batch.
+  Suggested cash accounts carry a separate approval action. Local editing includes
+  money amount, meal name and weight: the
   record's main figure is that control, marked with a muted pencil and named
   Edit amount / Edit meal / Edit weight. Edits persist in the draft and the
   final confirmation writes the batch.
@@ -82,7 +90,7 @@ AI only to turn text and images into drafts, using the owner's model account.
   proposed account through the composer. Back returns from the account
   picker or recognition consent; the cross closes the capture task.
   A successful confirmation reports the single record's kind and value, or
-  the batch count. Its View action opens the common day in Records, or the
+  the batch count. Undo reverses the saved batch if its records still match. View opens the common day in Records, or the
   unfiltered all-days timeline when the batch spans days.
   Content shared from another app opens this sheet with the shared images
   staged as unsent evidence and the text in the composer; the owner sends it
@@ -499,6 +507,7 @@ dark appearance.
 |---|---|---|
 | `CARD` | `(0, 1, 2, 0, #1111130A)` | Cards (objects: groups of rows, a pending draft) and secondary raised buttons |
 | `FLOAT` | `(0, 1, 2, 0, #11111314)`; `(0, 8, 18, -6, #11111326)` | Primary buttons |
+| `CAPTURE_SAVE` | `(0, 1, 2, 0, #11111312)` and `(0, 5, 10, -4, #2F5BEA4D)` | Compact light capture save button |
 | `DOCK` | `(0, 1, 3, 0, #0000000A)`; `(0, 8, 24, 0, #00000014)` | The floating tab bar and its capture button: a soft, wide drop |
 | `SEGMENT` | `(0, 1, 2, 0, #11111314)` | Selected segments and pressed primary buttons |
 | `LENS` | `(0, 6, 12, -4, #0000001F)` | The dock's lifted lens |
@@ -589,7 +598,7 @@ observations with their dates and sources. Manual rates take precedence over
 network rates on the same day; no rate is applied before its recorded date.
 Cross-currency transfers require separate sent and received amounts and preserve
 both native values. Schema 14 backs up rates with the ledger. Other currencies,
-crypto, allocation and AI trade entry remain outside this increment. Android
+crypto and allocation remain outside this increment. Android
 TLS and physical-device behavior remain unverified.
 Account, holding and price editors reuse `task_sheet` and the existing
 calendar picker, with actions fixed above the keyboard. Quantity and unit
@@ -658,10 +667,13 @@ still.
 | Meal page | Scrolling | Photo drifts at half speed; the top bar frosts in once the panel slides under it | Bar switches at once |
 | Meal page | Analyzing | A spinner accompanies the status caption | Static status caption |
 | Meal page | Results arrive | Rows rise in, staggered; the total eases up | Shown at once |
-| Capture | A turn arrives | It rises 14 pt and fades in, staggered | Shown at once |
+| Capture | Model output arrives | Newly parsed cards rise 14 pt. The reviewed figure lifts 4 pt and fades in on its first value and after a change. The actual amount is visible throughout. | Cards and figures appear at their final positions |
+| Capture | Batch saved | After the sheet exits, compact copies fly from the reviewed rows to the dock over 380 ms. Spending and income land on Records. Today’s meals and weights land on Today, earlier ones on Records. Transfers, trades, balance checks and manual prices land on Assets. Notes land on Review. The receipt and Undo are available immediately. | Only the actionable receipt appears |
 | Segmented | Choice | Raised pill slides to the segment (spring) | Jumps |
 | Sheets | Open / close | Slide from the bottom over a fading scrim; swipe down to close | Appear / disappear |
 | Toggles | Checkbox / switch | Fill `instant`; knob slides `fast` | Instant |
+
+Capture emits one selection haptic for the first model card in an open draft and one when the owner accepts a proposed funding account. A successful database commit emits one success haptic. The flight is decorative and lets all touches pass through to the receipt and dock.
 
 Numbers display their actual value on first appearance, including a delayed
 initial load. Subsequent changes between present values ease over 180 ms;

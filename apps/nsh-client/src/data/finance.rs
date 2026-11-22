@@ -230,12 +230,19 @@ pub fn rename_account(old: &Account, new: &Account) -> Result<(), repository::Er
     let mut drafts = super::capture::all();
     for d in &mut drafts {
         for r in &mut d.records {
-            if let Record::Money { draft, .. } = r {
-                for a in [&mut draft.account, &mut draft.other_account] {
-                    if a.as_ref() == Some(old) {
-                        *a = Some(new.clone());
+            match r {
+                Record::Money { draft, .. } => {
+                    for a in [&mut draft.account, &mut draft.other_account] {
+                        if a.as_ref() == Some(old) {
+                            *a = Some(new.clone())
+                        }
                     }
                 }
+                Record::Trade { cash, .. } if cash.as_ref() == Some(old) => {
+                    *cash = Some(new.clone())
+                }
+                Record::Balance { account, .. } if account == old => *account = new.clone(),
+                _ => {}
             }
         }
     }

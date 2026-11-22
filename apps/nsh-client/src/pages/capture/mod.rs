@@ -4,7 +4,12 @@
 mod accounts;
 mod attachments;
 mod decisions;
+mod details;
+mod evidence;
 mod favorites;
+pub(in crate::pages) mod flight;
+mod live_preview;
+mod recent;
 mod summary;
 mod thread;
 
@@ -23,7 +28,7 @@ use crate::{
         field::{note, text_input},
         icon, radius,
         sheet::{conversation_sheet, initial_focus, retained},
-        toast::{show_receipt, show_toast},
+        toast::{show_capture_receipt, show_toast},
         toggle::checkbox_row,
     },
 };
@@ -54,6 +59,7 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
             || initial.has_staged_images() && !initial.transcript.is_empty(),
     );
     let draft = signal(initial);
+    let flight = flight::opened(&draft.get_untracked());
     summary::track_revisions(draft);
     let error = signal(None::<String>);
     let manual = signal(false);
@@ -355,6 +361,12 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
     let header = view().gap_2().child(header);
     let body = view()
         .gap_4()
+        .child(live_preview::panel(
+            sheets.capture,
+            input,
+            draft,
+            consenting,
+        ))
         .child(dynamic(move || {
             let consent = consenting.get();
             let choice = choosing.get();
@@ -388,6 +400,12 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                                 .typo(Type::Body)
                                 .text_color(color::BODY),
                         )
+                        .child(settings::capture_options(&account).recent_context.then(|| {
+                            text(crate::i18n::catalog::copy(
+                                "You also enabled recent records, favorites and held securities for this model.",
+                                "你已允许这个模型参考最近记录、收藏餐食及所持证券。",
+                            )).typo(Type::Subhead).text_color(color::BODY)
+                        }))
                         .child(
                             text(account.host())
                                 .typo(Type::Headline)
@@ -415,7 +433,11 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                         ))
                         .child(
                             (!d.transcript.is_empty() && d.has_staged_images())
-                                .then(|| thread::staged_images(&d, draft)),
+                                .then(|| thread::staged_images(&d, draft, input, error)),
+                        )
+                        .child(
+                            (d.transcript.is_empty() && !d.has_staged_images())
+                                .then(|| recent::list(input)),
                         )
                         .child(offer_manual.then(|| {
                             view()
@@ -479,13 +501,31 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
             })
         }))
         .child(note(move || error.get().map(Into::into), || true));
-    let actions = view()
+    let ready_to_save = computed(move || {
+        let mut d = draft.get();
+        d.correction = input.get();
+        capture::ready(&d)
+    });
+    let compact_save_row = move || {
+        !dark()
+            && window().width.0 >= 360.0
+            && font_scale() <= 1.2
+            && editing()
+            && !first_turn()
+            && !replying.get()
+            && ready_to_save.get()
+    };
+    let review_actions = view()
         .gap_2()
-        .child(when(move || editing() && first_turn(), composer))
+        .style_when(compact_save_row, |s| {
+            s.flex_row().items_center().gap(px(10.0))
+        })
         .child(when(
             move || editing() && !first_turn() && draft.with(|d| d.status != Status::Analyzing),
             move || {
                 view()
+                    .min_w(px(0.0))
+                    .style_when(compact_save_row, |s| s.flex_1())
                     .child(when(
                         move || !replying.get(),
                         move || {
@@ -507,6 +547,10 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                                 .px(px(16.0))
                                 .bg(color::SURFACE_2)
                                 .rounded(px(radius::WELL))
+                                .style_when(
+                                    || !dark(),
+                                    |s| s.min_h(px(48.0)).rounded_full().bg(color::SUNKEN),
+                                )
                                 .transition_colors()
                                 .duration(crate::ui::motion::INSTANT)
                                 .active(|s| s.bg(color::SUNKEN))
@@ -528,11 +572,8 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
             let status = draft.with(|d| d.status);
             let consent = consenting.get();
             let picking_account = choosing.get().is_some();
-            let ready_now = {
-                let mut d = draft.get_untracked();
-                d.correction = input.get();
-                capture::ready(&d)
-            };
+            let ready_now = ready_to_save.get();
+            let light = !dark();
             let composing = replying.get();
             let pending_answers = awaiting_answers();
             let connected = settings::ready_account().is_some();
@@ -557,7 +598,7 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                         .on_press(close)
                         .into_element();
                 }
-                if !connected {
+                if !connected && !ready_now {
                     return Btn::primary()
                         .label(|| s().set_up.into())
                         .on_press(move || {
@@ -576,7 +617,13 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                         .into_element();
                 }
                 if ready_now && !composing {
-                    return Btn::primary()
+                    let variant = if light {
+                        Variant::CaptureSave
+                    } else {
+                        Variant::Primary
+                    };
+                    return Btn::new(variant)
+                        .haptic_on_press(false)
                         .label(move || {
                             let n = draft.with(|d| d.records.len());
                             if n == 1 {
@@ -586,25 +633,26 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                             }
                         })
                         .on_press(move || {
-                            let draft_id = id.with(|id| id.clone());
                             let confirmed = current();
-                            match capture::put(confirmed.clone())
-                                .and_then(|()| capture::confirm(&draft_id))
-                            {
-                                Ok(()) => {
+                            let still = reduce_motion();
+                            match capture::confirm_review(&confirmed) {
+                                Ok(undo) => {
+                                    haptic(nsh_core::Haptic::Notification(
+                                        nsh_core::HapticNotification::Success,
+                                    ));
+                                    if let Some(flight) = flight {
+                                        flight::saved(flight, &confirmed, still);
+                                    }
                                     dismiss_keyboard();
                                     sheets.capture.set(false);
-                                    let day = summary::common_day(&confirmed);
-                                    show_receipt(
+                                    let destination = summary::saved_view(&confirmed, sheets);
+                                    show_capture_receipt(
                                         summary::saved_message(&confirmed),
                                         (
-                                            s().view_records.into(),
-                                            Rc::new(move || {
-                                                sheets.jump_to.set(day);
-                                                sheets.records_all.set(day.is_none());
-                                                nav::select(crate::nav::Tab::Records);
-                                            }),
+                                            s().undo.into(),
+                                            Rc::new(move || undo_save(&undo, flight)),
                                         ),
+                                        (s().view_records.into(), Rc::new(destination)),
                                     );
                                 }
                                 Err(cause) => {
@@ -613,11 +661,20 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                                 }
                             }
                         })
+                        .style_when(move || light, |s| s.min_h(px(48.0)))
+                        .style_when(
+                            move || light && !compact_save_row(),
+                            |s| s.shadow(crate::ui::theme::shadow::CARD),
+                        )
                         .into_element();
                 }
                 view().into_element()
             })
         }));
+    let actions = view()
+        .gap_2()
+        .child(when(move || editing() && first_turn(), composer))
+        .child(review_actions);
     conversation_sheet(
         move || sheets.capture.get(),
         move || {
@@ -634,4 +691,28 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
         body,
         actions,
     )
+}
+
+fn undo_save(receipt: &capture::CaptureUndo, flight: Option<flight::CaptureFlight>) {
+    use crate::i18n::catalog::copy;
+    match capture::undo(receipt) {
+        Ok(()) => {
+            flight::cancel(flight);
+            show_toast(copy("Save undone", "已撤销本次保存"), None);
+        }
+        Err(cause) => {
+            log::warn!("capture: undo failed: {cause}");
+            let receipt = receipt.clone();
+            show_toast(
+                copy(
+                    "Could not undo this save. The records must still match.",
+                    "未能撤销，记录须保留保存时的内容。",
+                ),
+                Some((
+                    s().try_again.into(),
+                    Rc::new(move || undo_save(&receipt, flight)),
+                )),
+            );
+        }
+    }
 }

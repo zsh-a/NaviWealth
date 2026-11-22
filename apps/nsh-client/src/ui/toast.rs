@@ -23,6 +23,7 @@ struct Message {
     id: u64,
     text: SharedString,
     action: Option<SharedString>,
+    view_label: Option<SharedString>,
     keep_on_new_task: bool,
     /// Leaving: the bubble fades and sinks before the state removes it.
     leaving: bool,
@@ -35,6 +36,7 @@ struct State {
 }
 
 thread_local! {
+    static VIEW: RefCell<Option<Rc<dyn Fn()>>> = const { RefCell::new(None) };
     static ACTION: RefCell<Option<Rc<dyn Fn()>>> = const { RefCell::new(None) };
 }
 
@@ -44,18 +46,27 @@ fn state() -> Signal<State> {
 
 /// Shows `text`, with an action labelled `label` running `run` when given.
 pub fn show_toast(text: impl Into<SharedString>, action: Option<(SharedString, Rc<dyn Fn()>)>) {
-    show(text, action, true);
+    show(text, action, None, true);
 }
 
 /// A saved receipt's View action is relevant until the next capture begins.
 /// Unlike Undo, it must not navigate behind a new unsaved draft.
 pub fn show_receipt(text: impl Into<SharedString>, action: (SharedString, Rc<dyn Fn()>)) {
-    show(text, Some(action), false);
+    show(text, Some(action), None, false);
+}
+
+type Action = (SharedString, Rc<dyn Fn()>);
+
+/// Capture offers Undo and a shortcut to the saved records. Starting another
+/// draft retires the navigation shortcut while preserving the Undo action.
+pub fn show_capture_receipt(text: impl Into<SharedString>, undo: Action, view: Action) {
+    show(text, Some(undo), Some(view), true);
 }
 
 fn show(
     text: impl Into<SharedString>,
-    action: Option<(SharedString, Rc<dyn Fn()>)>,
+    action: Option<Action>,
+    view: Option<Action>,
     keep_on_new_task: bool,
 ) {
     let text = text.into();
@@ -64,6 +75,8 @@ fn show(
         None => (None, None),
     };
     ACTION.with(|slot| *slot.borrow_mut() = run);
+    let (view_label, view_action) = view.unzip();
+    VIEW.with(|slot| *slot.borrow_mut() = view_action);
     announce_for_accessibility(text.to_string());
     state().update(|state| {
         state.next += 1;
@@ -71,6 +84,7 @@ fn show(
             id: state.next,
             text,
             action: label,
+            view_label,
             keep_on_new_task,
             leaving: false,
         });
@@ -104,6 +118,7 @@ fn dismiss(id: u64) {
 fn remove(id: u64) {
     if state().with_untracked(|s| s.current.as_ref().is_some_and(|m| m.id == id)) {
         ACTION.with(|slot| slot.borrow_mut().take());
+        VIEW.with(|slot| slot.borrow_mut().take());
         state().update(|state| state.current = None);
     }
 }
@@ -113,6 +128,13 @@ fn remove(id: u64) {
 /// The removal is instant: the new surface takes over without a lingering
 /// bubble fading behind it.
 pub fn clear_notice() {
+    if VIEW.with(|slot| slot.borrow_mut().take()).is_some() {
+        state().update(|s| {
+            if let Some(message) = &mut s.current {
+                message.view_label = None;
+            }
+        });
+    }
     let id = state().with_untracked(|s| {
         s.current
             .as_ref()
@@ -129,8 +151,9 @@ pub fn clear_notice() {
 pub fn toast_host(bottom: impl Fn() -> f32 + 'static) -> impl IntoElement {
     // Each new message restarts the timer; the effect's rerun cancels the
     // last one.
+    let message_id = computed(|| state().with(|s| s.current.as_ref().map(|m| m.id)));
     effect(move || {
-        if let Some(id) = state().with(|s| s.current.as_ref().map(|m| m.id)) {
+        if let Some(id) = message_id.get() {
             spawn(async move {
                 timer(SHOWN_FOR).await;
                 dismiss(id);
@@ -198,27 +221,54 @@ fn bubble(message: Message) -> impl IntoElement {
                 .min_w(px(0.0))
                 .flex_shrink(1.0),
         )
-        .child(message.action.map(|label| {
-            button()
-                .flex_shrink_0()
-                .on_press(move || {
-                    let run = ACTION.with(|slot| slot.borrow_mut().take());
-                    dismiss(id);
-                    if let Some(run) = run {
-                        run();
-                    }
+        .child(when(
+            move || {
+                state().with(|s| {
+                    s.current
+                        .as_ref()
+                        .is_some_and(|m| m.id == id && m.view_label.is_some())
                 })
-                .px_3()
-                .min_h(px(36.0))
-                .justify_center()
-                .rounded_full()
-                .hit_slop(EdgeInsets::all(px(6.0)))
-                .active(|s| s.opacity(0.6))
-                .focus_visible(|s| s.outline(px(2.0)).outline_color(color::ON_ACTION))
-                .child(
-                    text(label)
-                        .typo(Type::Headline)
-                        .text_color(color::ON_ACTION),
-                )
-        }))
+            },
+            move || {
+                let label = state().with_untracked(|s| {
+                    s.current
+                        .as_ref()
+                        .and_then(|m| m.view_label.clone())
+                        .unwrap_or_default()
+                });
+                action_button(id, label, true)
+            },
+        ))
+        .child(message.action.map(|label| action_button(id, label, false)))
+}
+
+fn action_button(id: u64, label: SharedString, view: bool) -> impl IntoElement {
+    button()
+        .flex_shrink_0()
+        .on_press(move || {
+            if !state().with_untracked(|s| s.current.as_ref().is_some_and(|m| m.id == id)) {
+                return;
+            }
+            let run = if view {
+                VIEW.with(|slot| slot.borrow_mut().take())
+            } else {
+                ACTION.with(|slot| slot.borrow_mut().take())
+            };
+            remove(id);
+            if let Some(run) = run {
+                run();
+            }
+        })
+        .px_2()
+        .min_h(px(40.0))
+        .justify_center()
+        .rounded_full()
+        .hit_slop(EdgeInsets::all(px(4.0)))
+        .active(|s| s.opacity(0.6))
+        .focus_visible(|s| s.outline(px(2.0)).outline_color(color::ON_ACTION))
+        .child(
+            text(label)
+                .typo(Type::Headline)
+                .text_color(color::ON_ACTION),
+        )
 }

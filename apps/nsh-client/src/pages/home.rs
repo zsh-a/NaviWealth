@@ -138,6 +138,7 @@ pub fn home_page() -> Screen {
         records_all: signal(false),
     };
     provide_context(sheets);
+    let flights = super::capture::flight::provide();
     open_shared(sheets);
     // Keep the departing editor's budget until its native host unmounts;
     // setting weight=None alone must not expand it during the exit slide.
@@ -162,7 +163,8 @@ pub fn home_page() -> Screen {
                 .child(pane(Tab::Records, records_tab()))
                 .child(pane(Tab::Assets, super::assets::assets_tab()))
                 .child(pane(Tab::Review, review_tab()))
-                .child(dock::dock(sheets))
+                .child(dock::dock(sheets, flights.tabs))
+                .child(super::capture::flight::layer(flights))
                 .child(
                     view()
                         .absolute()

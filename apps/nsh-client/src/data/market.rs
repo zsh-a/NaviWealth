@@ -154,17 +154,8 @@ pub(super) fn client() -> Result<&'static Client, String> {
                 .build()
                 .map_err(|_| "market runtime unavailable".to_owned())?;
             let _guard = runtime.enter();
-            // NSH has no JNI JavaVM. Use bundled public roots, retaining hostname
-            // and certificate verification instead of Android's platform verifier.
-            let roots =
-                rustls::RootCertStore::from_iter(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());
-            let tls = rustls::ClientConfig::builder_with_provider(Arc::new(
-                rustls::crypto::ring::default_provider(),
-            ))
-            .with_safe_default_protocol_versions()
-            .map_err(|_| "TLS configuration unavailable".to_owned())?
-            .with_root_certificates(roots)
-            .with_no_client_auth();
+            let tls =
+                super::tls::config().map_err(|_| "TLS configuration unavailable".to_owned())?;
             let http = reqwest::Client::builder()
                 .tls_backend_preconfigured(tls)
                 .redirect(reqwest::redirect::Policy::none())

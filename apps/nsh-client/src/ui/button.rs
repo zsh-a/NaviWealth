@@ -24,6 +24,8 @@ pub enum Variant {
     /// The one commitment of a decision area: the accent.
     #[default]
     Primary,
+    /// The compact save action beside the capture reply field in light mode.
+    CaptureSave,
     /// A neutral well: secondary actions inside cards.
     Tonal,
     /// A raised surface: an action floating on the canvas.
@@ -42,7 +44,7 @@ pub enum Variant {
 impl Variant {
     fn fill(self) -> AdaptiveColor {
         match self {
-            Variant::Primary => color::ACTION,
+            Variant::Primary | Variant::CaptureSave => color::ACTION,
             Variant::Tonal => color::SURFACE_2,
             Variant::Secondary => color::SURFACE,
             Variant::Ghost => AdaptiveColor::TRANSPARENT,
@@ -54,7 +56,7 @@ impl Variant {
 
     fn pressed_fill(self) -> AdaptiveColor {
         match self {
-            Variant::Primary => color::ACTION_PRESSED,
+            Variant::Primary | Variant::CaptureSave => color::ACTION_PRESSED,
             Variant::Tonal | Variant::Ghost => color::SUNKEN,
             Variant::Secondary => color::SURFACE_2,
             Variant::Danger => color::DANGER_SOFT.map(|c| c.darken(0.05)),
@@ -65,7 +67,7 @@ impl Variant {
 
     fn ink(self) -> AdaptiveColor {
         match self {
-            Variant::Primary => color::ON_ACTION,
+            Variant::Primary | Variant::CaptureSave => color::ON_ACTION,
             Variant::Tonal | Variant::Secondary | Variant::Ghost => color::INK,
             Variant::Danger => color::DANGER,
             Variant::Glass => color::ON_MEDIA,
@@ -82,6 +84,7 @@ impl Variant {
                 .gradient_from(color::ACTION_SHEEN)
                 .gradient_to(color::ACTION)
                 .lift(&shadow::FLOAT),
+            Variant::CaptureSave => element.lift(&shadow::CAPTURE_SAVE),
             Variant::Secondary => element
                 .lift(&shadow::CARD)
                 .dark(|s| s.border_1().border_color(color::LINE)),
@@ -94,7 +97,9 @@ impl Variant {
     /// A pressed primary loses its sheen and settles closer to the surface.
     fn pressed_surface<E: Styled>(self, element: E) -> E {
         let element = element.bg(self.pressed_fill());
-        if self == Variant::Primary {
+        if self == Variant::CaptureSave {
+            element.shadow_none()
+        } else if self == Variant::Primary {
             element.bg_gradient_none().lift(&shadow::SEGMENT)
         } else {
             element
@@ -165,6 +170,7 @@ pub struct Btn {
     icon: Option<Icon>,
     label: Option<Label>,
     busy: Option<Flag>,
+    haptic_on_press: bool,
     disabled: Option<Flag>,
 }
 
@@ -177,6 +183,7 @@ impl Btn {
             icon: None,
             label: None,
             busy: None,
+            haptic_on_press: variant == Variant::Primary,
             disabled: None,
         }
     }
@@ -224,6 +231,12 @@ impl Btn {
         self
     }
 
+    /// Defer feedback to the outcome of an operation that can fail.
+    pub fn haptic_on_press(mut self, enabled: bool) -> Self {
+        self.haptic_on_press = enabled;
+        self
+    }
+
     /// The button, calling `press` when pressed.
     pub fn on_press(self, press: impl Fn() + 'static) -> ButtonElement {
         let Btn {
@@ -232,6 +245,7 @@ impl Btn {
             icon: glyph,
             label,
             busy,
+            haptic_on_press,
             disabled,
         } = self;
         let scale = animated_value(1.0);
@@ -264,7 +278,7 @@ impl Btn {
                 press_motion(scale, false, motion::PRESS_SCALE);
             })
             .on_press(move || {
-                if variant == Variant::Primary {
+                if haptic_on_press {
                     haptic(Haptic::Impact(HapticImpact::Light));
                 }
                 press();

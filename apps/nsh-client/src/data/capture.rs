@@ -1,12 +1,17 @@
 //! Durable multimodal drafts. Recognition never writes records; confirmation
 //! commits the entire batch and consumes its draft in one SQLite transaction.
+mod batch;
 use super::{clock, db, finance, meals, photos, tasks, vision, weights};
 use crate::domain::{
     account::ModelAccount,
     capture::{Draft, MAX_ATTACHMENTS, MAX_INPUT, PROMPT_VERSION, Record, Status, Turn},
-    meal::Meal,
     recognition::Lang,
 };
+pub use batch::{
+    CaptureIssue, CaptureUndo, book_balance, price_security_name, record_issue,
+    trade_security_name, undo,
+};
+use futures::future::{AbortHandle, Abortable};
 use navi_finance::journal::{Entry, Source};
 use navi_health::consent::Consent;
 use nsh_core::prelude::*;
@@ -19,11 +24,22 @@ use std::{
 
 #[derive(Clone, Default, PartialEq)]
 struct Drafts(Vec<Draft>);
+#[derive(Clone, Default, PartialEq)]
+struct Streams(HashMap<String, Vec<Record>>);
+pub fn streaming_records(id: &str) -> Vec<Record> {
+    global::<Streams>().with(|s| s.0.get(id).cloned().unwrap_or_default())
+}
+fn clear_stream(id: &str) {
+    global::<Streams>().update(|s| {
+        s.0.remove(id);
+    });
+}
+
 fn state() -> Signal<Drafts> {
     global::<Drafts>()
 }
 thread_local! {
-    static RUNS: RefCell<HashMap<String, u64>> = RefCell::new(HashMap::new());
+    static RUNS: RefCell<HashMap<String, (u64,AbortHandle)>> = RefCell::new(HashMap::new());
     static FAILURES: RefCell<HashMap<String, crate::domain::VisionFailure>> = RefCell::new(HashMap::new());
 }
 pub fn failure(id: &str) -> Option<crate::domain::VisionFailure> {
@@ -45,6 +61,7 @@ pub fn new() -> Draft {
         attachments: Vec::new(),
         answers: Vec::new(),
         records: Vec::new(),
+        evidence: Vec::new(),
         question: String::new(),
         transcript: Vec::new(),
         status: Status::Editing,
@@ -109,7 +126,11 @@ pub fn remove(id: &str) -> Result<(), String> {
     db::with(|c| c.execute("DELETE FROM capture_drafts WHERE id=?1", [id]))
         .ok_or("database unavailable")?
         .map_err(|e| e.to_string())?;
-    RUNS.with(|r| r.borrow_mut().remove(id));
+    clear_stream(id);
+    if let Some((_, handle)) = RUNS.with(|r| r.borrow_mut().remove(id)) {
+        handle.abort();
+    }
+    FAILURES.with(|f| f.borrow_mut().remove(id));
     state().update(|s| s.0.retain(|d| d.id != id));
     Ok(())
 }
@@ -156,20 +177,44 @@ pub fn recognize(
     draft.status = Status::Analyzing;
     put(draft.clone())?;
     let run = NEXT.fetch_add(1, Ordering::Relaxed);
-    RUNS.with(|r| r.borrow_mut().insert(id.clone(), run));
+    let (abort, registration) = AbortHandle::new_pair();
+    if let Some((_, older)) = RUNS.with(|r| r.borrow_mut().insert(id.clone(), (run, abort))) {
+        older.abort();
+    }
     FAILURES.with(|f| f.borrow_mut().remove(&id));
-    let now = clock::zoned(clock::now_ms()).datetime();
-    let context = serde_json::json!({"local_date":now.date().to_string(),"local_time":now.time().to_string(),
-        "known_accounts":finance::accounts().iter().filter(|a| a.is_cash()).map(ToString::to_string).collect::<Vec<_>>(),
-        "known_categories":navi_finance::currency::Currency::ALL.into_iter().flat_map(|currency| navi_finance::account::defaults::all().into_iter().filter(|a| matches!(a.kind(),navi_finance::account::AccountKind::Expenses|navi_finance::account::AccountKind::Income)).map(move |a|a.in_currency(currency).to_string())).collect::<Vec<_>>()});
+    clear_stream(&id);
+    let context = super::capture_context::for_request(&account);
     tasks::spawn_app(async move {
-        let response =
-            vision::recognize_record(account, draft.clone(), images, lang, consent, context).await;
-        if RUNS.with(|r| r.borrow().get(&id).copied()) != Some(run)
+        let request_id = id.clone();
+        let response = Abortable::new(
+            vision::recognize_record_stream(
+                account,
+                draft.clone(),
+                images,
+                lang,
+                consent,
+                context.clone(),
+                move |records| {
+                    if RUNS.with(|r| r.borrow().get(&request_id).map(|(token, _)| *token))
+                        == Some(run)
+                    {
+                        global::<Streams>().update(|s| {
+                            s.0.insert(request_id.clone(), records);
+                        });
+                    }
+                },
+            ),
+            registration,
+        )
+        .await;
+        let Ok(response) = response else { return };
+        if RUNS.with(|r| r.borrow().get(&id).map(|(token, _)| *token)) != Some(run)
             || untracked(|| get(&id)).is_none()
         {
             return;
         }
+        RUNS.with(|r| r.borrow_mut().remove(&id));
+        clear_stream(&id);
         match response {
             Ok(vision::CaptureResponse::Records {
                 records,
@@ -180,6 +225,7 @@ pub fn recognize(
             }) => {
                 let proposed = records.len();
                 draft.records = records;
+                crate::domain::capture_evidence::attach(&mut draft, &reply, &context);
                 draft.model = model;
                 // The whole reply is kept so the next request replays the
                 // conversation as it happened.
@@ -322,52 +368,42 @@ pub fn ready(draft: &Draft) -> bool {
         && draft.pending_ask_user().is_none()
         && !awaiting_tool_resolution(draft)
         && draft.pending_questions().is_empty()
+        && crate::domain::capture_evidence::accounts_approved(draft)
         && !draft.records.is_empty()
         && draft.records.iter().enumerate().all(|(i, r)| match r {
             Record::Money { day, draft: money } => {
                 money.valid() && money.transaction(entry(draft, i, *day), day.0).is_ok()
             }
-            Record::Meal { estimate, .. } => {
-                !estimate.foods.is_empty() && estimate.foods.iter().all(|f| f.validate().is_ok())
+            Record::Meal {
+                estimate,
+                source_image,
+                ..
+            } => {
+                draft.meal_photo(*source_image).is_ok()
+                    && !estimate.foods.is_empty()
+                    && estimate.foods.iter().all(|f| f.validate().is_ok())
             }
             Record::Weight { kg, .. } => crate::domain::weight::valid_kg(*kg),
+            Record::Price { price, .. } => *price >= 0 && record_issue(draft, i).is_none(),
+            Record::Note { text, .. } => {
+                super::notes::valid(text) && record_issue(draft, i).is_none()
+            }
+            _ => record_issue(draft, i).is_none(),
         })
 }
 
-pub fn confirm(id: &str) -> Result<(), String> {
-    let draft = untracked(|| get(id))
-        .filter(ready)
-        .ok_or("draft is not ready")?;
-    db::with(|c| -> Result<(), String> {
-        let tx = c.unchecked_transaction().map_err(|e| e.to_string())?;
-        // Consuming the draft is part of the same transaction, so a double tap,
-        // process restart or failed write cannot create a partial/duplicate batch.
-        let removed = tx.execute("DELETE FROM capture_drafts WHERE id=?1", [id]).map_err(|e| e.to_string())?;
-        if removed != 1 { return Err("draft no longer exists".into()); }
-        for (index, record) in draft.records.iter().enumerate() {
-            match record {
-                Record::Money { day, draft:money } => {
-                    let t = money.transaction(entry(&draft,index,*day),day.0).map_err(|e| e.to_string())?;
-                    navi_finance::repository::save_in_transaction(&tx,&t).map_err(|e| e.to_string())?;
-                }
-                Record::Meal { day, slot, estimate } => {
-                    let meal = Meal { id:format!("{}-{index}",draft.id), day:*day, logged_at_ms:draft.created_at_ms,
-                        slot:*slot, title:estimate.title.clone(), foods:estimate.foods.clone(), photo:draft.photo.clone(),
-                        model:Some(draft.model.clone()), prompt_version:Some(PROMPT_VERSION.into()) };
-                    if !meal.is_valid() { return Err("invalid meal".into()); }
-                    navi_health::store::insert_meal(&tx, &meal).map_err(|e| e.to_string())?;
-                }
-                Record::Weight { day, kg } => {
-                    super::scale::reconcile_weight_in_transaction(&tx, &day.to_string(), Some(crate::domain::weight::rounded(*kg))).map_err(|e| e.to_string())?;
-                    tx.execute("INSERT INTO weights(day,kg,logged_at_ms) VALUES(?1,?2,?3) ON CONFLICT(day) DO UPDATE SET kg=excluded.kg,logged_at_ms=excluded.logged_at_ms",
-                        params![day.to_string(),crate::domain::weight::rounded(*kg),draft.created_at_ms]).map_err(|e| e.to_string())?;
-                }
-            }
-        }
-        tx.commit().map_err(|e| e.to_string())
-    }).ok_or("database unavailable")??;
+pub fn confirm_review(draft: &Draft) -> Result<CaptureUndo, String> {
+    if !ready(draft) {
+        return Err("draft is not ready".into());
+    }
+    let id = draft.id.as_str();
+    let undo = db::with(|c| batch::commit(c, draft)).ok_or("database unavailable")??;
     state().update(|s| s.0.retain(|d| d.id != id));
-    RUNS.with(|r| r.borrow_mut().remove(id));
+    clear_stream(id);
+    if let Some((_, handle)) = RUNS.with(|r| r.borrow_mut().remove(id)) {
+        handle.abort();
+    }
+    FAILURES.with(|f| f.borrow_mut().remove(id));
     let mut preferences = super::settings::current().ledger;
     let mut has_money = false;
     for record in &draft.records {
@@ -390,6 +426,12 @@ pub fn confirm(id: &str) -> Result<(), String> {
     if has_money {
         super::settings::save_ledger_defaults(preferences);
     }
+    refresh_records();
+    Ok(undo)
+}
+
+fn refresh_records() {
+    super::notes::load();
     if let Err(error) = meals::load() {
         log::error!("capture: committed meals could not refresh: {error}");
     }
@@ -398,7 +440,6 @@ pub fn confirm(id: &str) -> Result<(), String> {
     if let Err(error) = finance::load() {
         log::error!("capture: ledger refresh failed: {error}");
     }
-    Ok(())
 }
 
 #[cfg(test)]

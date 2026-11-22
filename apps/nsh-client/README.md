@@ -1,8 +1,8 @@
 # NaviWealth native client (NSH)
 
 NaviWealth's native client, with Rust pages and a small TSX hardware entry on [NSH](https://github.com/longbridge/nsh)
-0.6.1. Capture turns a description or photos into reviewable money, meal or
-weight drafts using the owner's model. The home has four tabs: Today
+0.6.1. Capture turns a description or photos into reviewable transaction, meal,
+weight, trade, balance, security price or review note drafts using the owner's model. The home has four tabs: Today
 (spending, intake and vitals), Records (all history), Assets (accounts, book balances and net worth), and Review
 (the week or month, with recorded spending and the attributed net-worth
 change). The capture button accepts a description or image and
@@ -21,7 +21,7 @@ Completions, or OpenAI Responses); there is no NaviWealth relay.
 ```text
 src/
   domain/   host account/capture composition and shared health re-exports
-  data/     device storage, photos, local time, thin NSH fetch Transport
+  data/     device storage, photos, local time and device network adapters
   ui/       the app's styled components over nsh-base, and its tokens
   pages/    the home (Today, Records, Assets, Review tabs, capture sheet), meal
             editing, Settings
@@ -38,8 +38,8 @@ photo normalization and destination-bound consent live in `../../crates/navi-hea
 The client adapts those contracts to reactive signals and composes capture and
 scale transactions with device-local evidence. Provider wire
 formats live in `../../third_party/agent-runtime/crates/llm-protocol`; request
-policy lives in `llm-client`. NSH supplies its platform fetch transport rather
-than the reqwest adapter. Recognition reads the full response body from this transport. Each saved estimate records its model and prompt version.
+policy lives in `llm-client`. Unified capture uses the native `llm-reqwest` transport for streaming.
+Single-meal recognition and the connection test use NSH platform fetch. Each saved estimate records its model and prompt version.
 
 ## Commands
 
@@ -285,16 +285,16 @@ output items, including encrypted reasoning and function calls, stay with the
 draft and replay before the matching `function_call_output`. It does not rely
 on server-stored conversations or `previous_response_id`. Images are input
 image items, and the same draft/confirmation rules apply to all three APIs.
-The NSH adapter uses whole responses; Responses streaming is explicitly
-unsupported. Connection tests use the selected protocol's own endpoint.
+Unified capture supports Responses streaming and checks the terminal event before enabling review. Connection tests use the selected protocol's own endpoint.
 Desktop previews accept `NW_PREVIEW=account,responses,light` and
 `NW_PREVIEW_ROUTE=model` to inspect the selected protocol.
 
 ## Text and image capture
 
 The global capture button opens a single description/image composer. The
-owner's model returns money, meal or body-weight drafts; a short correction
-updates the complete draft within its bounded local thread. Manual entry is a
+owner's model can draft transactions, meals, weight, trades, actual balances,
+manual security prices and review notes. Corrections include the current edited
+records and can refine a mixed batch. Manual entry is a
 secondary disclosure. A purchase with a price does not imply food consumption.
 
 - `ask_user` is the only model tool: it suspends recognition for owner decisions,
@@ -302,7 +302,7 @@ secondary disclosure. A purchase with a price does not imply food consumption.
   Choices are durable, editable and submitted together. Text and supporting
   images can answer too. The call ID and original assistant blocks are kept
   for a matching tool-result continuation; no automatic tool loop runs. Final
-  model JSON contains records only. Legacy stored question turns remain readable.
+  model JSON contains records and a nullable navigation destination. Legacy stored question turns remain readable.
 - `domain/capture.rs` composes the envelope and delegates money, nutrition and
   weight validation to their owning domains. `finance::recognition`
   rejects unsupported currencies, imprecise money and wrong account kinds;
@@ -310,10 +310,18 @@ secondary disclosure. A purchase with a price does not imply food consumption.
 - `data/capture.rs` keeps input/results in SQLite `capture_drafts` (schema 8),
   runs recognition under the app root, and atomically consumes the draft while
   writing its whole batch. Neither recognition nor correction writes records.
-  Database failures retain the draft for retry, with no partial batch.
+  Database failures retain the draft for retry, with no partial batch. The receipt
+  offers View and an atomic Undo that checks for intervening edits.
 - Consent covers input text, attached images and ledger account names;
   old photo-only trust does not grant the broader consent. The model account
-  fingerprint scopes remembered consent. There is no backend or agent loop.
+  fingerprint scopes remembered consent. Typing previews have an independent
+  opt-in and optional model name at the same endpoint. Previews send text
+  after a typing pause. Photos accompany an explicitly submitted turn. A
+  separate option includes recent transactions, meals, weight, favorite
+  meals and held security identities. Both settings default off.
+- Provider events can expose provisional cards during a request. After the
+  terminal reply the owner can inspect field evidence, approve a suggested
+  account, edit a value or remove an individual card.
 - Today and Records expose the same drafts. Interrupted runs can be retried
   after restart. Capture accepts up to four images per draft, including image-only follow-up
   answers. Images stay with their original owner turn during history replay;

@@ -53,12 +53,21 @@ pub fn switch_row(
     on: Signal<bool>,
     label: impl Fn() -> SharedString + 'static,
 ) -> impl IntoElement {
+    bound_switch(move || on.get(), move |value| on.set(value), label)
+}
+
+/// A switch whose displayed state follows the persisted setting.
+pub fn bound_switch(
+    checked: impl Fn() -> bool + 'static,
+    change: impl Fn(bool) + 'static,
+    label: impl Fn() -> SharedString + 'static,
+) -> impl IntoElement {
     let travel = 20.0;
     switch()
-        .checked(on)
+        .checked(checked)
         .on_change(move |next: &bool| {
             haptic(Haptic::Selection);
-            on.set(*next);
+            change(*next);
         })
         .flex_row_reverse()
         .items_center()

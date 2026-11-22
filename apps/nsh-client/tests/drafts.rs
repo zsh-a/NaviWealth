@@ -12,7 +12,9 @@ const READY: &str = "label:Review records";
 
 /// A model that answers after `delay`.
 fn slow_network(delay: Duration) -> Arc<StubNetwork> {
-    let mut answer = response(200, record_reply(vec![meal_record()]));
+    let mut meal = meal_record();
+    meal["meal"]["source_image"] = json!(1);
+    let mut answer = response(200, record_reply(vec![meal]));
     answer.delay = delay;
     Arc::new(StubNetwork::new([(MESSAGES.to_owned(), answer)]))
 }

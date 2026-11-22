@@ -8,19 +8,13 @@ use rusqlite::params;
 use super::{clock, db};
 use crate::domain::meal::Day;
 
-/// The longest note, in characters.
-pub const MAX_CHARS: usize = 280;
+pub use crate::domain::review::{MAX_NOTE_CHARS as MAX_CHARS, valid_note as valid};
 
 #[derive(Clone, Default, PartialEq)]
 struct Notes(Vec<(Day, String)>);
 
 fn notes() -> Signal<Notes> {
     global::<Notes>()
-}
-
-/// Whether `text` can be kept: one line, not empty, not too long.
-pub fn valid(text: &str) -> bool {
-    !text.trim().is_empty() && text.chars().count() <= MAX_CHARS && !text.contains(['\n', '\r'])
 }
 
 /// Reads the kept notes; the root calls it once, after [`db::open`].

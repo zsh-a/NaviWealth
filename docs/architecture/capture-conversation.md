@@ -2,17 +2,15 @@
 
 Status: accepted.
 
-Date: 2026-11-15. Implementation is sequenced in the
-[roadmap](../roadmap/roadmap-nsh.md); the descriptive interaction text in
-[Product Scope](../product/product-scope.md) and
-`apps/nsh-client/DESIGN.md` updates when the increment lands.
+Accepted 2026-11-15. Updated 2026-11-22. See the [roadmap](../roadmap/roadmap-nsh.md)
+and [Product Scope](../product/product-scope.md) for scope and outstanding device checks.
 
 ## Context
 
 Capture turns one description or photo into record drafts through the
-owner's own model account. Today recognition is a single structured
-request; the draft carries at most one plain question string, and every
-correction re-sends the whole draft as a fresh one-shot request. The owner
+owner's own model account. The original implementation used a single structured
+request. A draft carried at most one plain question string, and every
+correction re-sent the whole draft as a fresh one-shot request. The owner
 reviewed this in daily use (2026-11-15): the question has no visual
 identity, the answer box does not echo the question, and re-parsing the
 whole draft after each sentence feels unstable. The owner chose a
@@ -20,9 +18,8 @@ chat-timeline capture experience.
 
 Constraints that still hold: [Personal Local Scope](personal-local-scope.md)
 removed AI chat and agents as features; recognition runs on device against
-user-owned profiles through `llm-protocol`/`llm-client`; NSH `fetch`
-returns a whole body (no streaming); nothing is saved without explicit
-confirmation; drafts live in SQLite and stay out of backups.
+user-owned profiles through `llm-protocol`/`llm-client`. Unified capture receives provider events
+through `llm-reqwest`. Records require explicit confirmation; drafts live in SQLite and stay out of backups.
 
 ## Decision
 
@@ -32,9 +29,10 @@ confirmation; drafts live in SQLite and stay out of backups.
    The separate "input recap" block and the dual-role correction box
    disappear.
 2. **A bounded conversation, not AI chat.** The thread exists only inside
-   one capture draft. The model only ever answers owner-initiated turns:
-   no autonomous turns, no background rounds, no named agents,
-   and no memory across drafts. The only tool is `ask_user`, which suspends
+   one capture draft. The owner controls submissions. A separate per-profile setting enables text-only
+   previews after a 700 ms typing pause. Edits, closing the composer, or sending
+   cancel a pending preview. Its output is ephemeral. A second setting allows
+   bounded recent records, favorites and held security identities on Send. The only tool is `ask_user`, which suspends
    the current request for an explicit owner response. It discusses nothing beyond turning the
    input into records. Confirming consumes the thread; discarding deletes
    it. Threads stay out of backups, like drafts today.
@@ -42,7 +40,8 @@ confirmation; drafts live in SQLite and stay out of backups.
    anything. The confirm action stays a single atomic batch write of all
    records, enabled only when every record is valid; missing money fields
    stay missing and block confirmation; estimates stay marked; a named new
-   account is created only on confirm; the consent gate is unchanged.
+   account is created only on confirm. A suggested funding account needs explicit
+   approval. The receipt offers a guarded atomic Undo that preserves later edits.
 4. **Decisions use one tool.** The model calls only `ask_user`, with one
    to three questions. Each has a stable ID, question text, a reason when useful, required
    flag and up to four choices with IDs, labels and descriptions. Nothing is
@@ -58,15 +57,17 @@ confirmation; drafts live in SQLite and stay out of backups.
    the app never automatically resumes or loops over tools. Only one
    `ask_user` call is accepted in a response. Unknown tools, malformed arguments
    and reused call IDs fail without writing records. A normal final answer
-   contains only the complete records array; questions do not have a second
-   live response channel. Existing stored plain questions and option chips
+   contains the complete records array and a nullable destination. A request to view
+   data can return an empty array and a link to Review, Assets or Records. Later
+   submissions carry the locally edited set, including removals. Existing stored plain questions and option chips
    remain readable for backward compatibility. Images replay with the owner
    turn or tool answer that supplied them.
-6. **No fake streaming.** NSH `fetch` returns a whole body, so text never
-   types out progressively. Presence while working is a typing indicator
-   in the thread; results arrive as whole turns with the existing appear
-   motion. A chunked transport is a separate future decision, not part of
-   this one.
+6. **Streamed record cards.** Anthropic Messages, OpenAI Chat and OpenAI Responses
+   use their native streaming formats. Complete, individually parsed cards can
+   appear while the provider is still working. Editing and confirmation wait
+   for a successful final response and domain validation. Stream interruption
+   clears provisional cards and exposes retry. Field evidence accompanies the
+   final records and local edits take precedence.
 7. **Same home for the thread.** Capture keeps its sheet entry beside the
    tab bar. The first entry field sits under the title. On later turns the
    panel expands to the available screen above the keyboard. The latest exchange
@@ -83,15 +84,14 @@ confirmation; drafts live in SQLite and stay out of backups.
 - **Thread only for clarification, composer before it.** Two interaction
   models in one sheet; the input recap and mode switch stay.
 - **Full-screen chat page with streaming.** Elevates capture into a
-  destination and needs a transport upgrade that does not exist; revisit
-  only with owner evidence after daily use.
+  destination outside the four-tab interaction model.
 
 ## Consequences
 
 - Product Scope Rule 3 changes from "not a chat timeline" to the bounded
   conversation above; the Removed entry for "AI chat" refers to free-form
   chat and agents, not to this thread.
-- Cost and latency scale with owner-initiated turns only; each photo belongs to its owner turn and is replayed with that turn in subsequent requests.
+- Each Send and each optional debounced typing preview is a separate request; each photo belongs to its owner turn and is replayed with that turn in subsequent requests.
   Multi-turn prompt quality becomes part of the existing "real-model
   quality" verification item.
 - `agent-chat` from the Agent Runtime is not adopted: its durable
@@ -107,6 +107,16 @@ accepts images on the first turn and on later owner-initiated turns, including
 an image-only answer. Unsent images can be removed; sent images remain with
 their original message. Closing/reopening and interrupted-request retries
 preserve these references. Older single-photo drafts remain readable.
+
+The device numbers distinct sent images from 1 to 4 by their first appearance.
+Each image-bearing message carries `image_numbers` in attachment order. A
+correction keeps those numbers when the thread is replayed. Each meal in a
+final reply requires `meal.source_image`, either a sent image number showing
+that meal or null. Only the cited photo is kept with the confirmed meal. A
+scale photo, receipt or unrelated image in the same capture can remain
+unlinked. References to unsent images fail local validation before confirmation.
+Older drafts with exactly one record (a meal) and one sent image retain that
+association. Ambiguous older batches keep their meals without an assigned photo.
 
 The model distinguishes multiple views or documents for one record from
 independent records. It reconciles the same serving or transaction once;

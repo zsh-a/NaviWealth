@@ -200,15 +200,28 @@ pub fn add_trade_bound(
     today: Date,
     binding: Option<&crate::catalog::SecurityBinding>,
 ) -> Result<Saved, Error> {
+    let tx = c.unchecked_transaction()?;
+    let result = add_trade_in_transaction(&tx, new, trade, today, binding)?;
+    tx.commit()?;
+    Ok(result)
+}
+
+/// Joins a host-owned mixed-record confirmation transaction.
+pub fn add_trade_in_transaction(
+    tx: &SqlTransaction<'_>,
+    new: Option<&Security>,
+    trade: &Trade,
+    today: Date,
+    binding: Option<&crate::catalog::SecurityBinding>,
+) -> Result<Saved, Error> {
     if trade.at.date() > today {
         return Err(Error::Invalid);
     }
-    let tx = c.unchecked_transaction()?;
     if let Some(s) = new {
         if Security::new_in(&s.id, &s.name, s.currency())? != *s || s.id != trade.security {
             return Err(Error::Invalid);
         }
-        let book = load(&tx)?;
+        let book = load(tx)?;
         if book
             .securities
             .iter()
@@ -216,7 +229,7 @@ pub fn add_trade_bound(
         {
             return Err(Error::Duplicate);
         }
-        if repository::accounts(&tx)?.contains(&s.account) {
+        if repository::accounts(tx)?.contains(&s.account) {
             return Err(Error::Duplicate);
         }
         tx.execute(
@@ -231,35 +244,38 @@ pub fn add_trade_bound(
     if trade
         .cash
         .as_ref()
-        .is_some_and(|a| !repository::accounts(&tx).is_ok_and(|known| known.contains(a)))
+        .is_some_and(|a| !repository::accounts(tx).is_ok_and(|known| known.contains(a)))
     {
         return Err(Error::Cash);
     }
     tx.execute("INSERT INTO finance_trades(id,security,at,kind,quantity,price,amount,fee,cash) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9)",params![trade.id,trade.security,trade.at.to_string(),serde_json::to_string(&trade.kind).map_err(|_|Error::Invalid)?,trade.quantity,trade.price,trade.amount,trade.fee,trade.cash.as_ref().map(Account::as_str)])?;
-    let book = load(&tx)?;
+    let book = load(tx)?;
     let s = book
         .securities
         .iter()
         .find(|s| s.id == trade.security)
         .ok_or(Error::Missing)?;
-    rebuild(&tx, s, &book)?;
+    rebuild(tx, s, &book)?;
     if let Some(binding) = binding {
         if binding.security != trade.security {
             return Err(Error::Invalid);
         }
-        crate::catalog::bind(&tx, binding).map_err(|e| match e {
+        crate::catalog::bind(tx, binding).map_err(|e| match e {
             crate::catalog::Error::Sql(e) => Error::Sql(e),
             _ => Error::Invalid,
         })?;
     }
-    let result = saved(&tx)?;
-    tx.commit()?;
-    Ok(result)
+    saved(tx)
 }
 
 pub fn remove_trade(c: &Connection, id: &str) -> Result<Saved, Error> {
     let tx = c.unchecked_transaction()?;
-    let before = load(&tx)?;
+    let result = remove_trade_in_transaction(&tx, id)?;
+    tx.commit()?;
+    Ok(result)
+}
+pub fn remove_trade_in_transaction(tx: &SqlTransaction<'_>, id: &str) -> Result<Saved, Error> {
+    let before = load(tx)?;
     let trade = before
         .trades
         .iter()
@@ -270,37 +286,65 @@ pub fn remove_trade(c: &Connection, id: &str) -> Result<Saved, Error> {
         "DELETE FROM finance_transactions WHERE id=?1",
         [format!("trade:{id}")],
     )?;
-    let book = load(&tx)?;
+    let book = load(tx)?;
     let s = book
         .securities
         .iter()
         .find(|s| s.id == trade.security)
         .ok_or(Error::Missing)?;
-    rebuild(&tx, s, &book)?;
-    let result = saved(&tx)?;
+    rebuild(tx, s, &book)?;
+    saved(tx)
+}
+
+pub fn set_quote(c: &Connection, quote: &Quote, today: Date) -> Result<Saved, Error> {
+    let tx = c.unchecked_transaction()?;
+    let result = set_quote_in_transaction(&tx, quote, today)?;
     tx.commit()?;
     Ok(result)
 }
 
-pub fn set_quote(c: &Connection, quote: &Quote, today: Date) -> Result<Saved, Error> {
+/// A manual mark and its audit revision share the host's confirmation transaction.
+pub fn set_quote_in_transaction(
+    tx: &SqlTransaction<'_>,
+    quote: &Quote,
+    today: Date,
+) -> Result<Saved, Error> {
     if quote.price < 0 || quote.day > today {
         return Err(Error::Invalid);
     }
-    let tx = c.unchecked_transaction()?;
-    if !load(&tx)?.securities.iter().any(|s| s.id == quote.security) {
+    if !load(tx)?.securities.iter().any(|s| s.id == quote.security) {
         return Err(Error::Missing);
     }
     tx.execute("INSERT INTO finance_quotes(security,day,price) VALUES(?1,?2,?3) ON CONFLICT(security,day) DO UPDATE SET price=excluded.price",params![quote.security,quote.day.to_string(),quote.price])?;
     crate::history::record(
-        &tx,
+        tx,
         "manual_quote",
         &quote.security,
         &quote.day.to_string(),
         &serde_json::json!({"security":quote.security,"day":quote.day.to_string(),"price":quote.price}),
     )?;
-    let result = saved(&tx)?;
+    let result = saved(tx)?;
     // Validate mark-to-market arithmetic before committing a price.
     result.book.overview(&result.entries, today)?;
-    tx.commit()?;
     Ok(result)
+}
+
+/// Withdraw the confirmed manual observation, retaining an explicit price audit entry.
+pub fn retract_quote(tx: &SqlTransaction<'_>, quote: &Quote) -> Result<(), Error> {
+    if tx.execute(
+        "DELETE FROM finance_quotes WHERE security=?1 AND day=?2 AND price=?3",
+        params![quote.security, quote.day.to_string(), quote.price],
+    )? != 1
+    {
+        return Err(Error::Missing);
+    }
+    crate::history::record(
+        tx,
+        "manual_quote",
+        &quote.security,
+        &quote.day.to_string(),
+        &serde_json::json!({"security":quote.security,"day":quote.day.to_string(),"price":quote.price,"retracted":true}),
+    )?;
+    saved(tx)?;
+    Ok(())
 }
