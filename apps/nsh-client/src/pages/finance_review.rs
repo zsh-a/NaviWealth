@@ -8,7 +8,7 @@ use crate::{
         Btn, Type, Typo, chip, color,
         figures::counted,
         space,
-        surface::{card, hairline, row_button},
+        surface::{hairline, row_button, section},
     },
 };
 use navi_finance::{account::Account, currency::Currency, review};
@@ -90,8 +90,7 @@ pub fn spending_section(
                     ));
                 }
                 untracked(move || {
-                    card()
-                        .p(px(space::CARD))
+                    section()
                         .gap_3()
                         .child(
                             view()
@@ -140,7 +139,7 @@ pub fn spending_section(
                                                 currency,
                                             )
                                         })
-                                        .typo(Type::LargeTitle)
+                                        .typo(Type::Lead)
                                         .tabular_nums()
                                         .text_color(color::INK),
                                     ),

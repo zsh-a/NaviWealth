@@ -9,10 +9,17 @@ AI only to turn text and images into drafts, using the owner's model account.
 
 - **Primary task:** describe or photograph a record, confirm the result, and
   see what today adds up to; each week, see what changed.
-- **Home:** four tabs (Today · Records · Assets · Review) in a floating glass bar
-  beside one round ink capture button with a plus icon. The primary `IconBtn`
-  is 56 pt, vertically centered beside the 64 pt dock. Its accessible name
-  is New entry / 新记录; it opens the shared text/image composer.
+- **Home:** four tabs (Today · Records · Assets · Review) in a floating 62 pt
+  liquid-glass bar (`src/pages/dock.rs`, after FlClash's prism_ui
+  `NavigationDock`) beside one round 62 pt capture button of the same glass,
+  its plus in the accent (`IconBtn`, `Variant::Dock`). Its accessible name
+  is New entry / 新记录; it opens the shared text/image composer. The chosen
+  tab rests on a soft accent platter with its filled glyph and label in the
+  accent. A finger on the bar lifts the platter into a clear lens that grows,
+  magnifies the glyph under it and follows the finger across the tabs;
+  lifting after a drag onto another tab chooses that tab, while a tap is
+  left to the tab's own press. Every tab stays a `Tab` of one `Tabs` list,
+  so keyboard focus and screen readers work as for any tab list.
   Settings is the corner action on Today.
   Pages pushed over the home cover the bar. Hidden tabs stay alive (their
   scroll position stays) and are hidden from screen readers. Each tab scrolls
@@ -124,14 +131,15 @@ AI only to turn text and images into drafts, using the owner's model account.
   account changes are explained instead of overwriting newer data.
 - **No hidden gestures.** Every action is a visible control; nothing
   depends on a long press.
-- **Today shows today:** the main card leads with intake as the one
-  Display figure, what is left of the goal, and a progress ring when a goal is set. The ring fills up to one
+- **Today shows today:** the page leads, flat on the canvas, with intake as
+  the one Display figure, what is left of the goal, and an accent progress
+  ring when a goal is set. The ring fills up to one
   turn and its center reports the actual percentage, including values above
   100%. Protein, carbohydrate and fat appear separately in grams. Once the
   ledger has any entry, a hairline separates Spent today / 今日支出 with the
   day's spending in each currency (a dash when nothing was spent). Before the
   first meal the figure is replaced by the sentence Nothing logged yet and a
-  hint to use +, never a figure-sized dash. Flat beneath it is a full-width Body metrics summary:
+  hint to use +, never a figure-sized dash. Flat beneath it, between hairlines, is a full-width Body metrics summary:
   three compact columns for weight, body fat and BMI. The seven-day trend
   stays beside the weight in its column (↓0.5 kg · 7天), wrapping locally on
   narrow screens, with a decorative 14-day line beneath it (latest point
@@ -153,7 +161,7 @@ AI only to turn text and images into drafts, using the owner's model account.
   device's 12/24-hour setting. Opening balances and
   adjustments remain in the timeline with quieter labels and amounts; they
   are not spending. Groups are 24 pt apart, the records 32 pt below the
-  vitals. Before any meals are logged, the card omits the empty ring and macro
+  vitals. Before any meals are logged, the glance omits the empty ring and macro
   legend. Model setup is a compact row below the daily content. Past days are
   in Records.
 - **Drafts:** text/image inputs and recognition results are kept on device,
@@ -176,11 +184,11 @@ AI only to turn text and images into drafts, using the owner's model account.
   income and transfers alone never create a zero-spending summary.
   A chosen day is shown alone, under a bar with its date, steps to adjacent
   days with records, and All days.
-- **Assets:** one overview card leads with net worth. Excluded currencies appear beneath the figure. Asset and debt totals sit together above
+- **Assets:** net worth leads, flat on the canvas. Excluded currencies appear beneath the figure. Asset and debt totals sit together above
   a tappable trend footer with the sparkline and Asset changes link. Cash accounts, open holdings and debt accounts
   follow as flat rows on the canvas.
   The sparkline reuses dated valuation history and keeps missing-rate gaps;
-  a soft ink wash fills beneath the line and the latest valuation is dotted.
+  the line is the accent with a soft accent wash beneath it, and the latest valuation is dotted.
   The caption shows the 30-day change when records reach back that far, else
   the nonzero change since the first complete valuation; without both
   complete endpoints it falls back to the valuation basis. Asset changes
@@ -242,15 +250,17 @@ AI only to turn text and images into drafts, using the owner's model account.
   The headline (Title, a step above section headers) shows one observed change, preferring the period’s weight change
   and falling back to intake per logged day when both periods have entries. Partial periods compare matching elapsed days;
   missing observations never imply a zero or an invented comparison.
-  Next comes the intake card: a bar per day for a week, every day on a faint
+  Next comes the intake section: a bar per day for a week, every day on a faint
   full-height track, with a labelled dashed goal line and labelled empty
   columns (track only) for days without meals, a calendar for a month
   (shaded by share of the goal, amber past it, a dot on weighed days, today
-  outlined; a day opens in Records). Coverage sits directly beneath intake per logged day. The monthly caption
+  outlined; a day opens in Records; today's bar is the accent). Coverage sits directly beneath intake per logged day. The monthly caption
   includes the goal, which the weekly chart labels on its reference line.
   Spending, the net-worth change and weight follow, then the
   one-line note and Garmin averages. A ledger-only period without weight or
-  intake comparisons leads with its net-worth change instead. An empty intake card shows a short message.
+  intake comparisons leads with its net-worth change instead. An empty intake section shows a short message.
+  Each Review part is a flat `section` (a hairline above, its title and
+  figures at the page gutter), not a card.
 - **Settings keep every change as it is made; there is no Save.** Recognition
   model / 识别模型 has its own page with one continuous form for API protocol,
   base URL, model and key. The protocol field shows the current choice;
@@ -320,49 +330,58 @@ AI only to turn text and images into drafts, using the owner's model account.
 Missing records never read as zero: an empty day shows "—" and "Nothing
 logged yet", never 0 kcal; a day without meals has no filled bar and no shade.
 
-## Visual language: 墨与日光 · Ink & Daylight
+## Visual language: 精密仪表 · Instrument
 
-A warm daylight canvas, white surfaces lifted by soft light, and ink for
-everything that acts. The interface is monochrome; the food's photos carry
-the color. Recognition uses neutral ink. Amber is reserved past a goal or for estimates to check, red for destructive
-actions, green for a passed connection. Data never gets decorative color:
-the macronutrients are three steps of one warm-stone ramp. Dark is a deep
-graphite with white ink, surfaces separated by tone and a hairline.
+One plane, one accent, numbers first. A quiet near-white canvas (near-black
+in dark), content grouped by space and hairlines rather than lifted cards,
+and a single cobalt accent reserved for the one action of a screen and for
+"now": the chosen tab, today's bar, the latest point of a trend and the
+progress toward today's goal. Data never takes decorative color; the
+macronutrients are three steps of the accent ramp. Amber is reserved past a
+goal or for estimates to check, red for destructive actions, green for a
+passed connection. Dark is a near-black canvas whose surfaces separate by
+tone and a hairline.
 
 | Role | Tokens |
 |---|---|
 | Surfaces | `CANVAS`, `SURFACE`, `SURFACE_2` (wells), `SUNKEN` (fields, tracks), `RAISED`, `LINE`, `LINE_STRONG` |
 | Text | `INK` (titles, figures), `BODY`, `MUTED` |
 | Decorative / inactive | `FAINT` (tertiary marks such as chevrons, disabled controls and unavailable dates) |
-| Action | `ACTION` (ink), `ACTION_PRESSED`, `ACTION_SHEEN`, `ON_ACTION` |
-| Floating material | `ON_GLASS_MUTED` (dock labels), `GLASS_EDGE` |
+| Accent | `ACCENT` (fills, chart lines, the goal ring), `ACCENT_INK` (accent text and glyphs, on the platter too), `ACCENT_SOFT` (the chosen tab's platter, selected chips) |
+| Action | `ACTION` (the accent), `ACTION_PRESSED`, `ACTION_SHEEN`, `ON_ACTION` |
+| Floating material | `GLASS` (the dock's tint), `ON_GLASS_MUTED` (dock labels), `GLASS_EDGE` |
 | Status | `DANGER(_SOFT)`, `CAUTION(_SOFT)` (past a goal, estimates to check), `POSITIVE` |
-| Data | `PROTEIN` / `CARBS` / `FAT` (dark / middle / light stone), `OTHER`, `TRACK`, `HEAT` (calendar shade) |
+| Data | `PROTEIN` / `CARBS` / `FAT` (the accent at 100 / ~55 / ~26%), `TRACK`, `HEAT` (calendar shade) |
 | Media | `ON_MEDIA`, `MEDIA_SCRIM`, `PHOTO_WELL` |
 
 Core palette from `src/ui/theme.rs`; each adaptive token switches with the
-system appearance. The warm neutral surfaces and ink actions retain the
-Ink & Daylight identity in both appearances.
+chosen or system appearance.
 
 | Token | Light | Dark |
 |---|---|---|
-| `CANVAS` | `#F4F3EF` | `#111211` |
-| `SURFACE` | `#FFFFFF` | `#1B1C1B` |
-| `SURFACE_2` | `#F3F2EE` | `#242522` |
-| `SUNKEN` / `TRACK` | `#ECEBE6` | `#20211F` |
-| `RAISED` | `#FFFFFF` | `#2D2E2B` |
-| `LINE` | `#E7E6E0` | `#30312E` |
-| `LINE_STRONG` | `#D0CFC8` | `#484944` |
-| `INK` / `ACTION` | `#1C1D1A` | `#EAEBE7` |
-| `BODY` | `#32332F` | `#D5D6D0` |
-| `MUTED` | `#696A66` | `#A1A29E` |
-| `FAINT` | `#A4A59E` | `#686A63` |
-| `ACTION_PRESSED` | `#383A34` | `#D0D2CA` |
-| `ACTION_SHEEN` | `#34362F` | `#F0F1ED` |
-| `ON_ACTION` | `#FFFFFF` | `#1C1D1A` |
-| `DANGER` / `DANGER_SOFT` | `#AE303B` / `#FDECEC` | `#FF6369` / `#3A1618` |
-| `CAUTION` / `CAUTION_SOFT` | `#8C5A14` / `#FFF3DA` | `#FFC046` / `#372809` |
-| `POSITIVE` | `#23754F` | `#4CC38A` |
+| `CANVAS` | `#FAFAF8` | `#0B0B0C` |
+| `SURFACE` | `#FFFFFF` | `#151517` |
+| `SURFACE_2` | `#F3F3F0` | `#1C1C1F` |
+| `SUNKEN` / `TRACK` | `#EDEDEA` | `#19191C` |
+| `RAISED` | `#FFFFFF` | `#2A2A2E` |
+| `LINE` | `#E6E6E2` | `#26262A` |
+| `LINE_STRONG` | `#D1D1CC` | `#3C3C41` |
+| `INK` | `#111113` | `#F2F2F0` |
+| `BODY` | `#2B2B2F` | `#D8D8D5` |
+| `MUTED` | `#6B6B70` | `#96969B` |
+| `FAINT` | `#A1A1A6` | `#5A5A5F` |
+| `ACCENT` / `ACTION` | `#2F5BEA` | `#7C9BFF` |
+| `ACCENT_INK` | `#2448C8` | `#9FB5FF` |
+| `ACCENT_SOFT` | `#E1E6FB` | `#1B2140` |
+| `ACTION_PRESSED` | `#2449C9` | `#6A88F0` |
+| `ACTION_SHEEN` | `#4A73F5` | `#93AEFF` |
+| `ON_ACTION` | `#FFFFFF` | `#0B0B0C` |
+| `GLASS` | `#F6F6F4` | `#222226` |
+| `ON_GLASS_MUTED` | `#45454A` | `#B8B8BD` |
+| `DANGER` / `DANGER_SOFT` | `#B0262F` / `#FCEBEB` | `#FF6369` / `#3A1618` |
+| `CAUTION` / `CAUTION_SOFT` | `#8A5810` / `#FFF3DA` | `#FFC046` / `#372809` |
+| `POSITIVE` | `#1F7350` | `#4CC38A` |
+| `CARBS` / `FAT` / `HEAT` | `#8AA3F0` / `#C5D1F4` / `#9FB3F2` | `#495A92` / `#2E375A` / `#3E4E85` |
 
 Use `MUTED` for readable secondary copy, labels, placeholders, missing-value
 dashes, macro percentages and past dates without records. Reserve `FAINT`
@@ -371,23 +390,31 @@ future dates without records; it is outside the text contrast checks below.
 Status color conveys meaning: `DANGER` for errors and destructive actions,
 `CAUTION` for estimates to check or a goal exceeded, and `POSITIVE` for a
 completed connection. Soft status fills hold their matching foreground.
-Financial values, including gains and losses, stay in neutral ink.
+Financial values, including gains and losses, stay in neutral ink; the accent
+never marks a gain.
 
-- **Type** (`Type`): Display 44/700, LargeTitle 34/700, Title 20/600
-  (sheet titles, empty states), Figure 20/24 600, Headline 17/600 (rows and
-  section headers), Body 16, Callout 15, Subhead 14, Caption 12.5; tabular
-  numerals everywhere numbers move. Headline is 600; Subhead and Caption
-  use 500 so supporting text does not compete with figures.
+- **Type** (`Type`): Display 52/58 300 (the page's one headline number),
+  Lead 34/40 300 (a section's or record's lead figure: spending, the
+  net-worth change, a record's amount, a chart readout, the amount being
+  entered), LargeTitle 30/36 600 (page titles), Title 20/600 (sheet titles,
+  empty states), Figure 22/28 400 (figures among others), Headline 16/22 600
+  (rows and section headers), Body 15.5, Callout 14.5, Subhead 13, Caption
+  12; tabular numerals everywhere numbers move. Large numbers are light and
+  small labels medium, so the figures lead without shouting.
 - **Numbers:** every standalone number is a `stat`: the whole part in ink,
   decimals one step quieter, the unit muted on the same baseline, a
   dash and no unit without a value. `Scale::Hero` (Display) is the one
-  headline number of a card; `Scale::Tile` (Figure) sits among others. Assets
-  uses its own exact money renderer: net worth follows the same baseline
-  hierarchy, while other financial amounts keep a single text style.
-- **Cards** hold the one main figure of a screen (Today's intake, Review's
-  intake, Assets' net worth), repeated rows, sheets and framed tools.
-  Secondary figures (vitals, Review's weight and Garmin averages) lie flat
-  on the canvas, grouped by hairlines and space. Cards never nest.
+  headline number of a page; `Scale::Section` (Lead) leads a section;
+  `Scale::Tile` (Figure) sits among others. Assets uses its own exact money
+  renderer: net worth follows the same baseline hierarchy, while other
+  financial amounts keep a single text style.
+- **Sections and cards:** headline figures and groups of figures lie flat on
+  the canvas. `section` divides a page's parts with a hairline above and
+  keeps the title and figures at the page gutter (Review's parts); Today's
+  body metrics sit between hairlines. Cards are objects: repeated rows
+  (records, accounts, holdings), sheets, a pending draft and framed tools,
+  drawn as a surface with a 0.5 pt hairline edge and only a contact shadow.
+  Cards never nest.
 - **Rows** for meals and money share a 28 pt icon column. A group with any meal
   photo reserves 52 pt for every leading cell. Transfers use the source and
   destination as the title, with the transfer label and time below. A meal without
@@ -400,18 +427,20 @@ Financial values, including gains and losses, stay in neutral ink.
   with a stacked layout for large text or long exact amounts. Asset rows use
   existing semantic icons: Wallet for cash accounts, CreditCard for debt accounts
   and Chart for holdings, without inferring account subtypes from names.
-- **Shape:** controls are pills; sheet 32 > card 24 > well 18 > field 16 >
-  thumbnail 16 > badge 8. Cards and sheet top corners use continuous curves.
-- **Depth:** matte content and task sheets, with local frosted navigation;
-  light appearance uses the shared shadow vocabulary below, dark uses tone
-  and edges without shadows.
-- **Spacing:** the 4 pt scale; page gutter 20, card inset 20.
+- **Shape:** controls are pills; sheet 28 > card 20 > well 14 > field 12 >
+  thumbnail 12 > badge 6, concentric where they nest. Cards and sheet top
+  corners use continuous curves.
+- **Depth:** only what floats casts a shadow (the dock, its capture button
+  and lifted lens, raised buttons); content separates by tone and hairlines.
+  Dark uses tone and edges without shadows.
+- **Spacing:** the 4 pt scale; page gutter 20, card inset 18, hairlines 0.5 pt.
 
 ## App mark: Folio · 页间
 
 The app mark is two turning pages with a parallel diagonal channel,
-drawn as two filled paths in [`brand/folio.svg`](brand/folio.svg). It uses
-the interface's ink `#1C1D1A` and warm canvas `#F4F3EF`. The open space
+drawn as two filled paths in [`brand/folio.svg`](brand/folio.svg). It keeps
+the Ink & Daylight ink `#1C1D1A` and warm canvas `#F4F3EF`; recoloring the
+mark for Instrument is a separate change that regenerates the icon. The open space
 between the pages is part of the mark; preserve it at small sizes. Inverse
 and launcher versions reuse the same paths, without gradients or textures.
 
@@ -435,20 +464,25 @@ existing meanings.
 
 | Material | Surface | Edge and light | Lift |
 |---|---|---|---|
-| Dock | `SURFACE` at 0.80 opacity, 20 pt backdrop blur | 0.75 pt `GLASS_EDGE` around the pill | `shadow::DOCK` |
+| Dock and its capture button | `GLASS` at 0.84 opacity, 24 pt backdrop blur | 0.75 pt `GLASS_EDGE` around the pill | `shadow::DOCK` |
+| Dock lens (while a finger is down) | `SURFACE` at 0.46 over the glass, replacing the `ACCENT_SOFT` platter | 0.75 pt `GLASS_EDGE` | `shadow::LENS` |
 | Sheet | Opaque `SURFACE`, no backdrop blur or highlight wash | Tone separates content from a 0.32 black scrim | None: a large blurred shadow is costly to redraw while the sheet moves with the keyboard |
 | Media controls and captions | `MEDIA_SCRIM` at 0.64 opacity, 18 pt backdrop blur; pressed buttons use 0.74 opacity | White `ON_MEDIA`; caption secondary text at 0.8 opacity | No additional shadow |
 
-The glass edge is white at `#B8` alpha in light appearance and `#20`
+The glass edge is white at `#C8` alpha in light appearance and `#1F`
 in dark. No canvas-colored fade covers the content beneath the dock;
 scroll clearance still lets the final row move fully above it.
-Inactive dock labels use `ON_GLASS_MUTED` (`#545550` light / `#BDBFB7` dark)
-for legibility through the tint. The chosen tab's indicator is `INK` at 7%,
-a tint that reads on glass in both appearances (an opaque well read as a
-grey patch). Media readability comes from the dark mask
+Inactive dock labels use `ON_GLASS_MUTED` (`#45454A` light / `#B8B8BD` dark)
+for legibility through the tint. The chosen tab rests on an opaque
+`ACCENT_SOFT` platter with its filled glyph and label in `ACCENT_INK`; the
+accent follows the lens, so whatever it covers while the finger moves takes
+the color. The refraction of FlClash's Liquid Glass (a backdrop shader) is
+deliberately absent: on Android a backdrop shader pictures the window before
+every frame, which a dock that is always visible cannot afford without
+device evidence. Media readability comes from the dark mask
 even when backdrop blur is unavailable.
 
-The dock falls back to fully opaque `SURFACE`, with no
+The dock falls back to fully opaque `GLASS`, with no
 backdrop filter, on Linux and Android below API 31. Android API 31 and above takes the blur
 path; its rendering and performance remain unverified on a real device.
 The home dock also becomes opaque while a home-owned sheet is open or a
@@ -463,37 +497,40 @@ dark appearance.
 
 | Token | Layers | Use |
 |---|---|---|
-| `CARD` | `(0, 1, 2, 0, #1A14080A)`; `(0, 6, 20, -5, #1A140814)` | Content cards and secondary raised buttons |
-| `FLOAT` | `(0, 2, 6, 0, #0A0A0B1F)`; `(0, 8, 20, -6, #0A0A0B30)` | Primary buttons, including the round capture action |
-| `DOCK` | `(0, 1, 3, 0, #1A14080A)`; `(0, 5, 18, -5, #1A14081F)` | Floating tab bar |
-| `SEGMENT` | `(0, 2, 6, 0, #1A140814)` | Selected segments and pressed primary buttons |
+| `CARD` | `(0, 1, 2, 0, #1111130A)` | Cards (objects: groups of rows, a pending draft) and secondary raised buttons |
+| `FLOAT` | `(0, 1, 2, 0, #11111314)`; `(0, 8, 18, -6, #11111326)` | Primary buttons |
+| `DOCK` | `(0, 1, 3, 0, #0000000A)`; `(0, 8, 24, 0, #00000014)` | The floating tab bar and its capture button: a soft, wide drop |
+| `SEGMENT` | `(0, 1, 2, 0, #11111314)` | Selected segments and pressed primary buttons |
+| `LENS` | `(0, 6, 12, -4, #0000001F)` | The dock's lifted lens |
 
 ## Components (`src/ui/`)
 
-`Btn` (primary ink with sheen / tonal / secondary raised / ghost / danger /
-glass; three pill sizes), `IconBtn` (circles of the same variants), `chip`,
-`card`, `row_button`, `hairline`, `section_header`, `group_label`,
+`Btn` (primary accent with sheen / tonal / secondary raised / ghost /
+danger / glass / dock; three pill sizes), `IconBtn` (circles of the same
+variants), `chip` (selected: `ACCENT_SOFT` with `ACCENT_INK`),
+`card`, `section`, `row_button`, `hairline`, `section_header`, `group_label`,
 `disclosure`, `segmented`, fields (visible labels and placeholders in
 `MUTED`, ink focus edge),
 `checkbox_row` / `switch_row`, `bottom_sheet`, toast (ink pill with one
 action, usually Undo), `spinner`, `shimmer` + `skeleton`, `badge`,
 `empty_state`, `appear`, `stat` with `counted` (a figure easing to its new
-value), `macro_tiles`, the energy `ring`, and one icon family (24 pt line
-glyphs). Pages share one top bar: a raised round Back and the title
+value), `macro_tiles`, the energy `ring` (an accent arc), and one icon
+family (24 pt line glyphs, plus four filled tab glyphs for the dock). Pages share one top bar: a raised round Back and the title
 centered. Screens: the month calendar (`pages/review_calendar.rs`) serves
 Review's month and Records' go-to-day sheet.
 
 Button feedback is restrained: buttons and chips press to 98%, icon buttons
 to 96%. Primary buttons lose their sheen and settle to `shadow::SEGMENT`
 while pressed. The shared primary button and primary icon button each emit
-one light impact on activation; the home capture action adds no second
-haptic. Reduced motion keeps scale at 1 without starting the press spring.
+one light impact on activation, as does the dock's capture button
+(`Variant::Dock`); the home capture action adds no second haptic. Reduced motion keeps scale at 1 without starting the press spring.
 Sheets retain `nsh_base`'s entrance, backdrop, back/Escape and swipe-down
 behavior; the material layer adds no custom transition.
 
-Assets reuses the existing `card` for its single overview panel. Net worth
-aligns an ink whole amount (`Type::Display`), muted currency (`Type::Figure`)
-and muted decimals (`Type::Title`) on one baseline, exposed as one accessible
+Assets leads with its overview flat on the canvas, not in a card. Net worth
+aligns an ink whole amount (`Type::Display`, light), muted currency
+(`Type::Figure`) and muted decimals (`Type::Figure`) on one baseline, exposed
+as one accessible
 element labelled with the full exact amount. The two subordinate totals use
 `Type::Body` values with muted caption labels. Holding and account rows stay
 flat, separated by space without hairlines, with muted 22 pt semantic icons
@@ -568,8 +605,8 @@ amount and have no positive share fill.
 A current partial week or month compares the same elapsed days in the preceding
 period; missing earlier records show no comparison rather than invented zeroes.
 
-The “Net worth change” card follows it: the signed CNY change as the card's
-figure (LargeTitle, neutral ink), then a caption naming the close it starts
+The “Net worth change” section follows it: the signed CNY change as the
+section's figure (Lead, neutral ink), then a caption naming the close it starts
 from with both values (`11月15日 周日收盘 ¥55,320.20 → ¥55,433.20`). Below are
 only the nonzero parts in a fixed order — income, spending, investments,
 opening balances, balance corrections, exchange rates — each a label with a
@@ -614,7 +651,8 @@ still.
 | Screen | Change | Motion | Reduced motion |
 |---|---|---|---|
 | All | Button press | Spring to 0.98 (cards and tiles 0.98, icon buttons 0.96), deeper fill; primary sheen clears and lift lowers | Fill and surface state only; no scale spring |
-| Home | Tab chosen | The bar's pill slides to the tab (native spring) | Jumps |
+| Home | Tab chosen | The platter travels to the tab (400 ms spring, ζ 0.85), stretching along its travel (9% per tab, at most 18%, flattening 1.4×) and wobbling back on an underdamped jelly spring (k 100, ζ 0.4) | Jumps; no stretch |
+| Home | Finger on the dock | The platter lifts into a lens (×1.14, a 250 ms critically damped spring), the glyph under it magnifies ×1.12, and the lens follows the finger | No lift or magnification; the tint still follows the finger |
 | Today | Day's energy changes | The goal arc moves to its new endpoint in 180 ms; the figure eases to its new value | Set at once |
 | All | Toast | Slides up and fades, `slow`; its action (Undo) restores | Shown at once |
 | Meal page | Scrolling | Photo drifts at half speed; the top bar frosts in once the panel slides under it | Bar switches at once |
@@ -638,7 +676,23 @@ row-icon and quieter-dock refinement is captured in
 `.impeccable/review/assets-polished/`. These are desktop development evidence
 only; Android device verification remains outstanding.
 
-The warm neutral palette refinement is captured in
+The Instrument palette (2026-11-22) replaces Ink & Daylight. Calculated from
+the source tokens in `src/ui/theme.rs` with the WCAG 2 formula, 90
+text/background pairs across both appearances are all at least 4.5:1: `INK`,
+`BODY`, `MUTED`, `ACCENT_INK` and the three status colors on `CANVAS`,
+`SURFACE`, `SURFACE_2`, `SUNKEN` and `RAISED`; `ON_ACTION` on `ACTION`;
+`ACCENT_INK` on `ACCENT_SOFT`; status colors on their soft fills; and dock
+text on 0.84 `GLASS` over black and white backdrops. The minimum is light
+`MUTED` on `SUNKEN` (4.52:1); light status minima are `POSITIVE` (4.94:1),
+`CAUTION` (5.14:1) and `DANGER` (5.66:1), all on `SUNKEN`; the dark minimum
+is `ACCENT_INK` on the dock glass over white (4.78:1). This covers those
+token pairs, not whole-app WCAG conformance. The four tabs in light and dark
+are captured in `.impeccable/review/instrument/`; they are GTK desktop
+development evidence only (the desktop dock is the opaque fallback);
+Android blur, the lens's touch tracking and frame timing still need device
+evidence.
+
+The earlier warm neutral palette refinement (Ink & Daylight) is captured in
 `.impeccable/review/palette/`: `assets-light.png`, `assets-dark.png`,
 `capture-missing-light.png` and `capture-missing-dark.png`, alongside the
 other reviewed states. These captures are also GTK desktop development
@@ -652,8 +706,10 @@ those checked token pairs, not a whole-app WCAG conformance claim.
 
 Material review captures in `.impeccable/review/materials/` are GTK desktop
 evidence of the opaque dock/sheet fallback, not proof of Android blur.
-The current 0.80-opacity dock and revised label colors have calculated
-text minima of 4.68:1 light / 4.83:1 dark over black and white backdrops.
+Those captures predate Instrument. The current 0.84-opacity `GLASS` dock has
+calculated text minima of 4.75:1 light (`ACCENT_INK`) / 4.78:1 dark
+(`ACCENT_INK`) over black and white backdrops; inactive labels reach 6.11:1
+light / 4.83:1 dark.
 Sheets now use the opaque surface text palette. Over a white photo, the media
 mask gives 4.79:1 for secondary caption text and 6.38:1 for white text.
 These calculations cover the specified material/text combinations only;
@@ -696,7 +752,7 @@ line family: Profile for body profile, Target for daily energy goal, Scale for
 goal weight and scale hardware, Watch for Garmin, Server for recognition and
 CloudLock for encrypted backups. Icons share the same round strokes. Financial signs never change ink color.
 
-Weight and body-fat plots use ink and the warm-stone ramp, with the latest
+Weight and body-fat plots use the accent and its 55% step, with the latest
 point marked by a dot. Their fixed readout above the line uses the same selection
 and accessible description as asset charts. Each chart expands in place, keeping
 the selected day. Weight retains its goal line in range and body-fat curves stay

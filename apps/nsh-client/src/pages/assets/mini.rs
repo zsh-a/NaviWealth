@@ -33,15 +33,15 @@ pub(super) fn sparkline(history: &super::trend::NetWorthHistory) -> Option<AnyEl
                     .flat_map(|run| {
                         let rows = super::trend::segment_rows(run, first);
                         [
-                            // A soft wash under the line gives the trend body
-                            // without adding a color.
+                            // A soft accent wash under the line gives the trend
+                            // its body.
                             area()
                                 .data(Some(rows.clone()))
                                 .x(Some(RowAccessor::from("day")))
                                 .y1(Some(RowAccessor::from("value")))
                                 .y0(Some((low - pad).into()))
                                 .curve(Curve::Linear)
-                                .fill_color(color::INK.opacity(0.05))
+                                .fill_color(color::ACCENT.opacity(0.12))
                                 .into_element(),
                             line()
                                 .data(Some(rows))
@@ -50,7 +50,7 @@ pub(super) fn sparkline(history: &super::trend::NetWorthHistory) -> Option<AnyEl
                                 .curve(Curve::Linear)
                                 .dot(run.len() == 1)
                                 .stroke_width(px(1.5))
-                                .text_color(color::INK.opacity(0.6))
+                                .text_color(color::ACCENT)
                                 .into_element(),
                         ]
                     }),
@@ -66,7 +66,7 @@ pub(super) fn sparkline(history: &super::trend::NetWorthHistory) -> Option<AnyEl
                     .y(Some(RowAccessor::from("value")))
                     .dot(true)
                     .stroke_width(px(1.5))
-                    .text_color(color::INK)
+                    .text_color(color::ACCENT)
             }))
             .into_element(),
     )

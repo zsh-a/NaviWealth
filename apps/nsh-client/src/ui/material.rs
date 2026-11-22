@@ -33,10 +33,10 @@ pub fn glass<E: Styled>(element: E, kind: Glass) -> E {
     }
     let element = if backdrop_available() {
         element
-            .bg(color::SURFACE.opacity(material::DOCK_OPACITY))
+            .bg(color::GLASS.opacity(material::DOCK_OPACITY))
             .backdrop_blur(px(material::DOCK_BLUR))
     } else {
-        element.bg(color::SURFACE).backdrop_filter_none()
+        element.bg(color::GLASS).backdrop_filter_none()
     };
     element
         .border(px(material::EDGE))

@@ -33,7 +33,6 @@ pub enum Icon {
     Chart,
     Bookmark,
     BookmarkFilled,
-    Sun,
     List,
     Scale,
     Moon,
@@ -42,6 +41,11 @@ pub enum Icon {
     ChevronDown,
     Close,
     Send,
+    /// The dock's filled glyphs: solid shapes read on glass at 24 pt.
+    TabToday,
+    TabRecords,
+    TabAssets,
+    TabReview,
 }
 
 impl Icon {
@@ -114,9 +118,6 @@ impl Icon {
             Icon::Bookmark => {
                 r#"<path d="M7 3.5h10a1.5 1.5 0 0 1 1.5 1.5v15.5L12 16.5l-6.5 4V5A1.5 1.5 0 0 1 7 3.5z"/>"#
             }
-            Icon::Sun => {
-                r#"<circle cx="12" cy="12" r="3.8"/><path d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"/>"#
-            }
             Icon::List => {
                 r#"<path d="M9 6.5h11M9 12h11M9 17.5h11"/><path d="M4.5 6.5h.01M4.5 12h.01M4.5 17.5h.01" stroke-width="2.6"/>"#
             }
@@ -132,6 +133,18 @@ impl Icon {
             }
             Icon::ChevronDown => r#"<path d="M6.5 9.5L12 15l5.5-5.5"/>"#,
             Icon::Send => r#"<path d="M12 19V5M5.5 11.5L12 5l6.5 6.5"/>"#,
+            Icon::TabToday => {
+                r#"<g fill="currentColor" stroke="none"><rect x="6.6" y="2.4" width="2.3" height="4.2" rx="1.15"/><rect x="15.1" y="2.4" width="2.3" height="4.2" rx="1.15"/><path fill-rule="evenodd" d="M6.6 4.6h10.8A3.6 3.6 0 0 1 21 8.2v9.2a3.6 3.6 0 0 1-3.6 3.6H6.6A3.6 3.6 0 0 1 3 17.4V8.2a3.6 3.6 0 0 1 3.6-3.6ZM3 9.3h18v1.3H3ZM12 17.3a2.1 2.1 0 1 0 0-4.2 2.1 2.1 0 0 0 0 4.2Z"/></g>"#
+            }
+            Icon::TabRecords => {
+                r#"<g fill="currentColor" stroke="none"><circle cx="4.7" cy="6.9" r="1.75"/><circle cx="4.7" cy="12" r="1.75"/><circle cx="4.7" cy="17.1" r="1.75"/><rect x="8.6" y="5.5" width="12.6" height="2.8" rx="1.4"/><rect x="8.6" y="10.6" width="12.6" height="2.8" rx="1.4"/><rect x="8.6" y="15.7" width="8.6" height="2.8" rx="1.4"/></g>"#
+            }
+            Icon::TabAssets => {
+                r#"<g fill="currentColor" stroke="none"><ellipse cx="12" cy="6.4" rx="7.6" ry="3.1"/><path d="M4.4 9.5v2.5c0 1.7 3.4 3.1 7.6 3.1s7.6-1.4 7.6-3.1V9.5c-1.5 1.3-4.4 2-7.6 2s-6.1-.7-7.6-2Z"/><path d="M4.4 14.7v2.5c0 1.7 3.4 3.1 7.6 3.1s7.6-1.4 7.6-3.1v-2.5c-1.5 1.3-4.4 2-7.6 2s-6.1-.7-7.6-2Z"/></g>"#
+            }
+            Icon::TabReview => {
+                r#"<g fill="currentColor" stroke="none"><rect x="3.3" y="12.6" width="3.3" height="8" rx="1.65"/><rect x="8.3" y="8.2" width="3.3" height="12.4" rx="1.65"/><rect x="13.3" y="14.6" width="3.3" height="6" rx="1.65"/><rect x="18.3" y="3.6" width="3.3" height="17" rx="1.65"/></g>"#
+            }
             Icon::BookmarkFilled => {
                 r#"<path fill="currentColor" d="M7 3.5h10a1.5 1.5 0 0 1 1.5 1.5v15.5L12 16.5l-6.5 4V5A1.5 1.5 0 0 1 7 3.5z"/>"#
             }

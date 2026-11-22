@@ -3,6 +3,7 @@
 
 pub(crate) mod assets;
 mod capture;
+mod dock;
 mod drafts;
 pub(crate) mod finance;
 pub(crate) mod finance_review;

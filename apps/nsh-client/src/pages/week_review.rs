@@ -31,7 +31,7 @@ use crate::{
         figures::{Scale, counted, macro_tiles, stat},
         segmented::{Segment, segmented},
         space,
-        surface::card,
+        surface::section,
     },
 };
 
@@ -218,8 +218,7 @@ fn intake_card(period: Signal<Period>, days: Memo<Vec<Day>>) -> impl IntoElement
     let intake = computed(move || intake_of(days.get()));
     let goal = computed(settings::goal);
     let average = move || intake.with(|i| i.average.map(|a| a.kcal));
-    card()
-        .p(px(space::CARD))
+    section()
         .gap_4()
         .child(
             view()
@@ -364,8 +363,7 @@ fn weight_card(days: Memo<Vec<Day>>) -> impl IntoElement {
     when(
         move || latest().is_some(),
         move || {
-            card()
-                .p(px(space::CARD))
+            section()
                 .gap_3()
                 .child(
                     text(|| s().weight_week)
@@ -430,7 +428,7 @@ fn weight_card(days: Memo<Vec<Day>>) -> impl IntoElement {
                             last,
                             points,
                             goal,
-                            color::INK,
+                            color::ACCENT,
                             |v| format!("{} kg", s().kg(v)),
                         ));
                         match fat.is_empty() {
@@ -453,7 +451,7 @@ fn weight_card(days: Memo<Vec<Day>>) -> impl IntoElement {
                                         last,
                                         points.into_iter().map(|(d, v)| (d, Some(v))).collect(),
                                         None,
-                                        color::INK.opacity(0.55),
+                                        color::ACCENT.opacity(0.55),
                                         |v| format!("{v:.1}%"),
                                     )
                                 }))
@@ -498,8 +496,7 @@ fn recovery_card(days: Memo<Vec<Day>>) -> impl IntoElement {
     when(
         move || averages.with(|a| a.days > 0),
         move || {
-            card()
-                .p(px(space::CARD))
+            section()
                 .gap_2()
                 .child(
                     text(|| s().recovery)

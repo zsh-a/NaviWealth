@@ -19,8 +19,7 @@ use crate::{
         Type, Typo, color,
         currency::{format, signed},
         figures::counted,
-        space,
-        surface::{card, disclosure_chevron, row_button},
+        surface::{disclosure_chevron, row_button, section},
     },
 };
 
@@ -81,7 +80,7 @@ pub fn net_worth_section(days: Memo<Vec<Day>>) -> impl IntoElement {
 }
 
 fn frame() -> View {
-    card().p(px(space::CARD)).gap_3().child(
+    section().gap_3().child(
         text(|| s().net_worth_change())
             .typo(Type::Headline)
             .text_color(color::INK),
@@ -104,7 +103,7 @@ fn complete(
     frame()
         .child(
             text(move || signed(shown.get().round() as i64, Currency::CNY))
-                .typo(Type::LargeTitle)
+                .typo(Type::Lead)
                 .tabular_nums()
                 .text_color(color::INK),
         )

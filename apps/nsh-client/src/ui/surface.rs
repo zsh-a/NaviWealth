@@ -1,5 +1,5 @@
-//! Surfaces: cards lifted off the canvas by soft light, their rows and
-//! hairlines, and section headers.
+//! Surfaces: cards as objects on the one plane (a white face and a
+//! hairline edge, no lift), their rows and hairlines, and section headers.
 
 use nsh_base::{ButtonElement, button};
 use nsh_core::prelude::*;
@@ -11,16 +11,29 @@ use super::{
 };
 
 /// A hairline's thickness.
-pub const HAIRLINE: f32 = 0.75;
+pub const HAIRLINE: f32 = 0.5;
 
-/// A card: a white surface lifted by soft light (a hairline edge in dark).
+/// A card: an object on the page, a surface with a hairline edge and only
+/// a contact shadow. Groups of figures do not take one; they lie on the
+/// canvas, divided by space and hairlines.
 pub fn card() -> View {
     view()
         .bg(color::SURFACE)
         .rounded(px(radius::CARD))
         .border_curve(BorderCurve::Continuous)
+        .border(px(HAIRLINE))
+        .border_color(color::LINE)
         .lift(&shadow::CARD)
-        .dark(|s| s.border_1().border_color(color::LINE))
+}
+
+/// A flat section of a page: a hairline above, then its title and figures
+/// at the page gutter. Groups of figures take one instead of a card.
+pub fn section() -> View {
+    view()
+        .pt(px(20.0))
+        .pb(px(4.0))
+        .border_t(px(HAIRLINE))
+        .border_color(color::LINE)
 }
 
 /// A hairline between rows, with the same inset at both edges.

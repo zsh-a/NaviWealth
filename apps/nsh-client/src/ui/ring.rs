@@ -31,7 +31,7 @@ pub fn goal_ring(
             return track;
         }
         track
-            .stroke_color(nsh_core::prelude::color(color::INK))
+            .stroke_color(nsh_core::prelude::color(color::ACCENT))
             .begin_path()
             .arc(center, center, radius, -FRAC_PI_2, &end)
             .stroke()

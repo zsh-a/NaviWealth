@@ -85,7 +85,7 @@ impl Scale {
     fn number(self) -> Type {
         match self {
             Scale::Hero => Type::Display,
-            Scale::Section => Type::LargeTitle,
+            Scale::Section => Type::Lead,
             Scale::Tile => Type::Figure,
         }
     }

@@ -3,7 +3,7 @@ use crate::{
     data::notes,
     domain::meal::Day,
     i18n::s,
-    ui::{Type, Typo, color, field::text_input, space, surface::card},
+    ui::{Type, Typo, color, field::text_input, surface::section},
 };
 use nsh_core::prelude::*;
 
@@ -16,8 +16,7 @@ pub fn note_editor(days: Memo<Vec<Day>>) -> impl IntoElement {
             let value = signal(initial);
             // The note closes the page in the cards' own language: a title,
             // the period's earlier notes, and one quiet well to write in.
-            card()
-                .p(px(space::CARD))
+            section()
                 .gap_3()
                 .child(
                     text(move || format!("{} · {}", s().review_note, s().long_date(day)))

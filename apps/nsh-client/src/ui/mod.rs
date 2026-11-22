@@ -32,7 +32,7 @@ pub trait Typo: Styled + Sized {
         // The figures speak in their own voice, once the app ships one;
         // everything else keeps the text face.
         let family = match role {
-            Type::Display | Type::Figure => theme::font::DISPLAY,
+            Type::Display | Type::Lead | Type::Figure => theme::font::DISPLAY,
             _ => theme::font::TEXT,
         };
         let styled = self

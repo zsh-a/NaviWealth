@@ -262,7 +262,7 @@ fn record_view(
                                     .map(|a| amount_text(&draft.currency, a))
                                     .unwrap_or_else(|| "—".into()),
                             )
-                            .typo(Type::LargeTitle)
+                            .typo(Type::Lead)
                             .tabular_nums()
                             .text_color(color::INK),
                         ),
@@ -364,7 +364,7 @@ fn record_view(
                 .child(edit_figure(
                     view().child(
                         text(format!("{} {}", format::kcal(total.kcal), s().kcal))
-                            .typo(Type::LargeTitle)
+                            .typo(Type::Lead)
                             .tabular_nums()
                             .text_color(color::INK),
                     ),
@@ -413,7 +413,7 @@ fn record_view(
             .child(edit_figure(
                 view().child(
                     text(format!("{kg:.1} kg"))
-                        .typo(Type::LargeTitle)
+                        .typo(Type::Lead)
                         .tabular_nums()
                         .text_color(color::INK),
                 ),

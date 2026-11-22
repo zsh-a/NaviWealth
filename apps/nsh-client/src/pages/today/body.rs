@@ -571,7 +571,7 @@ fn weight_spark(day: Day) -> Option<AnyElement> {
                 .y(Some(RowAccessor::from("kg")))
                 .curve(Curve::Linear)
                 .stroke_width(px(1.5))
-                .text_color(color::INK.opacity(0.45)),
+                .text_color(color::ACCENT.opacity(0.6)),
         )
         .child(
             line()
@@ -579,7 +579,7 @@ fn weight_spark(day: Day) -> Option<AnyElement> {
                 .x(Some(RowAccessor::from("day")))
                 .y(Some(RowAccessor::from("kg")))
                 .dot(true)
-                .text_color(color::INK),
+                .text_color(color::ACCENT),
         );
     Some(
         view()

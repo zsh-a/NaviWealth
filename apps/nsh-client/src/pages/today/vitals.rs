@@ -13,7 +13,7 @@ use crate::{
         Icon, Type, Typo, color,
         figures::{Scale, stat},
         icon, space,
-        surface::{HAIRLINE, card, hairline},
+        surface::{HAIRLINE, hairline},
         theme::{motion, radius},
     },
 };
@@ -30,8 +30,11 @@ pub fn vitals(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
             nav::push(Route::Settings);
         }
     };
-    card()
-        .overflow_hidden()
+    // Secondary figures lie flat: hairlines above and below, rows aligned
+    // with the page gutter (their own inset is the card's, pulled back).
+    view()
+        .mx(px(-space::CARD))
+        .child(hairline(space::CARD))
         .child(
             view()
                 .test_id("body-summary")
@@ -93,6 +96,7 @@ pub fn vitals(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                     )),
             )
         }))
+        .child(hairline(space::CARD))
 }
 
 /// A hairline between two vitals.

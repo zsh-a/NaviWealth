@@ -1,4 +1,5 @@
-//! The day at a glance: the energy so far as a large figure counting up,
+//! The day at a glance, flat on the canvas: the energy so far as a large
+//! light figure counting up,
 //! what is left of the goal, a compact goal progress ring, the macros in
 //! grams and, once the ledger is in use, the day's spending.
 
@@ -12,15 +13,14 @@ use crate::{
         Type, Typo, color,
         figures::{Scale, counted, stat},
         ring::goal_ring,
-        space,
-        surface::{card, hairline},
+        surface::hairline,
     },
 };
 
 const RING: f32 = 84.0;
 const STROKE: f32 = 9.0;
 
-/// The glance card of `day`: intake is the one headline number; the day's
+/// The glance of `day`: intake is the one headline number; the day's
 /// spending sits beneath it once the ledger has any entry.
 pub fn hero(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
     let summary = computed(move || meals::summary(day()));
@@ -28,10 +28,9 @@ pub fn hero(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
     let total = move || summary.with(|summary| summary.total);
     let logged = move || summary.with(|summary| summary.meals > 0);
     let progress = move || goal.get().filter(|g| *g > 0.0).map(|g| total().kcal / g);
-    card()
-        .px(px(space::CARD))
-        .pt(px(22.0))
-        .pb(px(space::CARD))
+    // The page's one headline figure lies on the canvas, not in a card.
+    view()
+        .pt(px(4.0))
         .gap(px(18.0))
         .child(
             view()

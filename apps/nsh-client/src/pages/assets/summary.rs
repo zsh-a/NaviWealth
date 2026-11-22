@@ -1,5 +1,4 @@
 use super::*;
-use crate::ui::surface::card;
 
 pub(super) fn net_summary(
     valued: navi_finance::holdings::ValuedOverview,
@@ -37,8 +36,9 @@ pub(super) fn net_summary(
         .unwrap_or_else(|| s().asset_history.to_owned());
     let expanded = signal(false);
     let count = at_cost.len();
-    card()
-        .p_5()
+    // Net worth is the page's headline figure: on the canvas, not in a card.
+    view()
+        .pt_1()
         .gap_3()
         .child(
             view()
@@ -195,7 +195,7 @@ fn net_figure(value: i64) -> impl IntoElement {
         )
         .child(
             text(format!(".{fraction}"))
-                .typo(Type::Title)
+                .typo(Type::Figure)
                 .tabular_nums()
                 .text_color(color::MUTED),
         )

@@ -357,7 +357,7 @@ pub(super) fn balance_entry(t: Transaction, open: Signal<Option<String>>) -> Any
                 )
                 .child(amount_in(
                     assets::displayed(&p.account, p.amount),
-                    Type::LargeTitle,
+                    Type::Lead,
                     p.account.currency(),
                 ))
         }))

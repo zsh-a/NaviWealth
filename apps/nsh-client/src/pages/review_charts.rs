@@ -38,7 +38,7 @@ pub fn chart(days: Vec<Day>, kcal: Vec<Option<f64>>, goal: Option<f64>) -> impl 
         .enumerate()
         .map(|(index, (day, kcal))| {
             let color = match (kcal, goal) {
-                _ if *day == today => color::INK,
+                _ if *day == today => color::ACCENT,
                 (Some(k), Some(g)) if *k > g => color::CAUTION,
                 // Ordinary days sit one ink step below today's full bar; a
                 // deeper fill would read as emphasis the number does not carry.

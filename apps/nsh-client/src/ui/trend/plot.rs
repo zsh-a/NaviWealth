@@ -64,7 +64,7 @@ impl InspectionPlot {
                         .y1(Some("v".into()))
                         .y0(Some(domain[0].into()))
                         .curve(Curve::Linear)
-                        .fill_color(tint.opacity(0.055))
+                        .fill_color(tint.opacity(0.1))
                         .into_element(),
                 );
             }
@@ -146,7 +146,7 @@ impl InspectionPlot {
             .child(
                 text(move || labels.with(|v| v[current()].1.clone()))
                     .test_id("trend-value")
-                    .typo(Type::LargeTitle)
+                    .typo(Type::Lead)
                     .tabular_nums()
                     .text_color(color::INK)
                     .number_of_lines(1)

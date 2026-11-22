@@ -13,7 +13,7 @@
 
 use std::env;
 
-use nsh_core::{platform::Appearance, prelude::*};
+use nsh_core::prelude::*;
 
 use crate::{
     data::{
@@ -38,10 +38,12 @@ pub fn apply() {
         return;
     }
     let has = |flag: &str| flags.split(',').any(|f| f.trim() == flag);
+    // Through the appearance setting: the root re-applies it on every
+    // change, which would undo a bare engine override.
     if has("dark") {
-        set_color_scheme(Appearance::Dark);
+        settings::save_appearance(settings::Appearance::Dark);
     } else if has("light") {
-        set_color_scheme(Appearance::Light);
+        settings::save_appearance(settings::Appearance::Light);
     }
     if has("account") {
         let mut account = ModelAccount::new(if has("responses") {

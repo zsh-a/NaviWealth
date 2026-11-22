@@ -3,15 +3,15 @@
 //! floating glass tab bar beside the one capture button, and the sheets any
 //! tab can open. Pages pushed over the home cover the bar.
 
-use nsh_base::{nav_page, tab, tabs};
+use nsh_base::nav_page;
 use nsh_core::{
-    Haptic,
     element::{Easing, Screen},
     prelude::*,
 };
 
 use super::{
     capture::capture_editor,
+    dock::{self, tab_index, tab_name},
     finance::finance_editor,
     parts::status_bar,
     records::records_tab,
@@ -28,19 +28,14 @@ use crate::{
     i18n::s,
     nav::{self, Route, Tab},
     ui::{
-        Icon, IconBtn, Type, Typo, Variant, color, icon,
-        material::{self, Glass},
-        motion,
+        color, motion,
         sheet::{bottom_sheet, retained, task_host_with_keyboard},
-        space,
         toast::{show_toast, toast_host},
     },
 };
 
-/// The bar's height.
-const DOCK: f32 = 64.0;
 /// The bar's gap above the safe area.
-const DOCK_GAP: f32 = 14.0;
+pub(super) const DOCK_GAP: f32 = 14.0;
 
 #[derive(Clone, PartialEq)]
 enum BodyPanel {
@@ -50,7 +45,7 @@ enum BodyPanel {
 
 /// Top edge of the dock, measured from the bottom of the home surface.
 pub(crate) fn dock_top_inset() -> f32 {
-    DOCK + DOCK_GAP + safe_area().bottom.0
+    dock::BAR + DOCK_GAP + safe_area().bottom.0
 }
 
 /// The sheets the home owns, for its tabs to open (context).
@@ -76,7 +71,7 @@ pub struct Sheets {
 
 impl Sheets {
     /// Whether a home sheet is showing (tracked); it may hold unsaved input.
-    fn any_open(&self) -> bool {
+    pub(super) fn any_open(&self) -> bool {
         self.capture.get()
             || self.setup.get()
             || self.weight.with(Option::is_some)
@@ -167,7 +162,7 @@ pub fn home_page() -> Screen {
                 .child(pane(Tab::Records, records_tab()))
                 .child(pane(Tab::Assets, super::assets::assets_tab()))
                 .child(pane(Tab::Review, review_tab()))
-                .child(dock(sheets))
+                .child(dock::dock(sheets))
                 .child(
                     view()
                         .absolute()
@@ -230,15 +225,6 @@ pub fn home_page() -> Screen {
         )
 }
 
-fn tab_name(tab: Tab) -> &'static str {
-    match tab {
-        Tab::Today => s().today,
-        Tab::Records => s().records,
-        Tab::Review => s().review,
-        Tab::Assets => s().assets,
-    }
-}
-
 /// A tab's content, laid out only while it is chosen. Content scrolls
 /// beneath the glass dock; the tab's tail keeps its own clearance. A chosen
 /// tab fades in over the previous one, quick enough to read as a state
@@ -277,131 +263,4 @@ fn pane(tab: Tab, content: impl IntoElement) -> impl IntoElement {
         .style_when(move || nav::tab() != tab, |s| s.hidden())
         .accessibility_elements_hidden(move || nav::tab() != tab)
         .child(content)
-}
-
-/// A tab's place in the dock, for the direction of its arrival.
-fn tab_index(tab: Tab) -> usize {
-    Tab::ALL
-        .iter()
-        .position(|known| *known == tab)
-        .unwrap_or_default()
-}
-
-fn dock(sheets: Sheets) -> impl IntoElement {
-    view()
-        .absolute()
-        .left(px(space::GUTTER))
-        .right(px(space::GUTTER))
-        .bottom(move || px(safe_area().bottom.0 + DOCK_GAP))
-        .flex_row()
-        .items_center()
-        .gap_3()
-        .child(
-            tabs()
-                .flex_1()
-                .flex_row()
-                .h(px(DOCK))
-                .p(px(6.0))
-                .gap(px(2.0))
-                .rounded_full()
-                .style_with(|s| material::glass(s, Glass::Dock))
-                .style_when(
-                    move || {
-                        sheets.capture.get()
-                            || sheets.setup.get()
-                            || sheets.finance.get().is_some()
-                            || sheets.weight.get().is_some()
-                            || sheets.garmin.get()
-                            || sheets.jump.get()
-                            || !nav::open().is_empty()
-                    },
-                    |s| s.bg(color::SURFACE).backdrop_filter_none(),
-                )
-                .indicator_style(|s| {
-                    s.top(px(6.0))
-                        .bottom(px(6.0))
-                        .rounded_full()
-                        // An ink tint reads on translucent glass in both
-                        // appearances; an opaque well read as a grey patch.
-                        .bg(color::INK.opacity(0.07))
-                })
-                .children(Tab::ALL.map(tab_item)),
-        )
-        .child(
-            // The plus dips toward the rising capture sheet and settles
-            // back, one motion shared with what it opened.
-            IconBtn::new(Icon::Plus, || s().new_entry.into())
-                .variant(Variant::Primary)
-                .side(56.0)
-                .on_press(move || {
-                    sheets.capture_draft.set(None);
-                    sheets.capture.set(true);
-                })
-                .bind_scale(&capture_lift(sheets.capture)),
-        )
-}
-
-/// Scales the plus down while the capture sheet it opened rises; reduced
-/// motion keeps it still.
-fn capture_lift(open: Signal<bool>) -> AnimatedValue {
-    let lift = animated_value(1.0);
-    effect(move || {
-        if open.get() && !reduce_motion() {
-            lift.set(0.92);
-            lift.timing(1.0, motion::FAST, motion::SETTLE);
-        }
-    });
-    lift
-}
-
-fn tab_item(tab_of: Tab) -> impl IntoElement {
-    let chosen = move || nav::tab() == tab_of;
-    let tint = move || {
-        if chosen() {
-            color::INK
-        } else {
-            color::ON_GLASS_MUTED
-        }
-    };
-    let glyph = match tab_of {
-        Tab::Today => Icon::Sun,
-        Tab::Records => Icon::List,
-        Tab::Review => Icon::Chart,
-        Tab::Assets => Icon::Wallet,
-    };
-    // The freshly chosen icon pops once, on the press spring, and the
-    // indicator keeps its native slide.
-    let pop = animated_value(1.0);
-    let was_chosen = stored(untracked(|| nav::tab() == tab_of));
-    effect(move || {
-        let chosen_now = chosen();
-        let was = was_chosen.replace(chosen_now);
-        if chosen_now && !was && !reduce_motion() {
-            pop.set(1.08);
-            pop.timing(1.0, motion::FAST, motion::SETTLE);
-        }
-    });
-    tab()
-        .selected(chosen)
-        .on_press(move |_: &()| {
-            if !chosen() {
-                haptic(Haptic::Selection);
-                nav::select(tab_of);
-            }
-        })
-        .accessibility_label(move || Some(tab_name(tab_of).into()))
-        .bind_scale(&pop)
-        .flex_1()
-        .h(px(DOCK - 12.0))
-        .items_center()
-        .justify_center()
-        .gap(px(2.0))
-        .rounded_full()
-        .child(icon(glyph, 22.0, tint))
-        .child(
-            text(move || tab_name(tab_of))
-                .typo(Type::Caption)
-                .font_weight(FontWeight::SEMIBOLD)
-                .text_color(tint),
-        )
 }

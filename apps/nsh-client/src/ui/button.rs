@@ -14,13 +14,14 @@ use super::{
     Lift, Typo,
     feedback::spinner,
     icons::{Icon, icon},
+    material::{Glass, glass},
     theme::{Type, color, material, motion, shadow, size},
 };
 
 /// What a button means.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Variant {
-    /// The one commitment of a decision area: ink.
+    /// The one commitment of a decision area: the accent.
     #[default]
     Primary,
     /// A neutral well: secondary actions inside cards.
@@ -33,6 +34,9 @@ pub enum Variant {
     Danger,
     /// Frosted glass over a photo.
     Glass,
+    /// The dock's own glass, its glyph in the accent: the home's capture
+    /// button beside the tab bar.
+    Dock,
 }
 
 impl Variant {
@@ -44,6 +48,7 @@ impl Variant {
             Variant::Ghost => AdaptiveColor::TRANSPARENT,
             Variant::Danger => color::DANGER_SOFT,
             Variant::Glass => color::MEDIA_SCRIM.opacity(material::MEDIA_OPACITY),
+            Variant::Dock => color::GLASS.opacity(material::DOCK_OPACITY),
         }
     }
 
@@ -54,6 +59,7 @@ impl Variant {
             Variant::Secondary => color::SURFACE_2,
             Variant::Danger => color::DANGER_SOFT.map(|c| c.darken(0.05)),
             Variant::Glass => color::MEDIA_SCRIM.opacity(material::MEDIA_PRESSED_OPACITY),
+            Variant::Dock => color::SUNKEN,
         }
     }
 
@@ -63,6 +69,7 @@ impl Variant {
             Variant::Tonal | Variant::Secondary | Variant::Ghost => color::INK,
             Variant::Danger => color::DANGER,
             Variant::Glass => color::ON_MEDIA,
+            Variant::Dock => color::ACCENT_INK,
         }
     }
 
@@ -79,6 +86,7 @@ impl Variant {
                 .lift(&shadow::CARD)
                 .dark(|s| s.border_1().border_color(color::LINE)),
             Variant::Glass => element.backdrop_blur(px(18.0)),
+            Variant::Dock => glass(element, Glass::Dock),
             _ => element,
         }
     }
@@ -369,7 +377,7 @@ impl IconBtn {
                 press_motion(scale, false, motion::PRESS_SCALE_ICON);
             })
             .on_press(move || {
-                if variant == Variant::Primary {
+                if matches!(variant, Variant::Primary | Variant::Dock) {
                     haptic(Haptic::Impact(HapticImpact::Light));
                 }
                 press();
@@ -395,7 +403,7 @@ impl IconBtn {
 }
 
 /// A compact choice or shortcut (a portion size): a neutral pill at rest,
-/// ink while `selected` reads true.
+/// the soft accent platter while `selected` reads true.
 pub fn chip(
     label: impl Fn() -> SharedString + 'static,
     selected: impl Fn() -> bool + Copy + 'static,
@@ -424,7 +432,7 @@ pub fn chip(
         .duration(motion::FAST)
         .hover(|s| s.bg(color::SUNKEN))
         .active(|s| s.bg(color::SUNKEN))
-        .selected_style(|s| s.bg(color::ACTION))
+        .selected_style(|s| s.bg(color::ACCENT_SOFT))
         .focus_visible(|s| s.outline(px(2.0)).outline_color(color::INK))
         .child(
             text(label)
@@ -433,7 +441,7 @@ pub fn chip(
                 .tabular_nums()
                 .text_color(move || {
                     if selected() {
-                        color::ON_ACTION
+                        color::ACCENT_INK
                     } else {
                         color::BODY
                     }

@@ -215,7 +215,7 @@ fn series(title: String, points: &[Point], unit: Unit, from: Date, end: Date) ->
                 end,
                 domain: [-pad, extent + pad],
                 samples,
-                color: color::INK,
+                color: color::ACCENT,
                 goal: None,
             }
             .draw(move || height),

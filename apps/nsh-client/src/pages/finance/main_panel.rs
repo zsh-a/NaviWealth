@@ -70,7 +70,7 @@ pub(super) fn main_panel(
                         .placeholder("0.00")
                         .element_ref(&focus)
                         .keyboard_type(nsh_core::element::KeyboardType::Decimal)
-                        .typo(Type::LargeTitle)
+                        .typo(Type::Lead)
                         .tabular_nums()
                         .h(px(68.0))
                         .flex_1()
