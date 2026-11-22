@@ -27,8 +27,8 @@ function MixedApp() {
         closeOnSwipe={!scaleBusy()}
         popupStyle={{
           backgroundColor: palette().surface,
-          borderTopLeftRadius: 32,
-          borderTopRightRadius: 32,
+          borderTopLeftRadius: palette().sheetRadius,
+          borderTopRightRadius: palette().sheetRadius,
         }}
         backdropStyle={{ backgroundColor: palette().scrim }}
       >

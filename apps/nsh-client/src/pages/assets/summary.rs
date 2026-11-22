@@ -1,14 +1,15 @@
+use super::current::{Excluded, Overview};
 use super::*;
+use crate::i18n::statement_import::copy;
+use navi_finance::currency::Currency;
+use std::rc::Rc;
 
 pub(super) fn net_summary(
-    valued: navi_finance::holdings::ValuedOverview,
-    includes_holdings: bool,
-    at_cost: Vec<(String, String)>,
+    overview: Rc<Overview>,
     history: super::trend::NetWorthHistory,
 ) -> impl IntoElement {
-    let net = valued.snapshot;
-    let partial = !valued.missing.is_empty();
-    let basis = if includes_holdings {
+    let partial = !overview.excluded.is_empty();
+    let basis = if overview.has_included_holdings {
         s().valuation_recorded
     } else {
         s().valuation_book
@@ -17,12 +18,12 @@ pub(super) fn net_summary(
     // the change since the first complete valuation; never an invented one.
     let footer = history
         .change()
-        .map(|delta| (s().net_change_30d, delta))
+        .map(|delta| (s().net_change_30d.to_owned(), delta))
         .or_else(|| {
             history
-                .since_first()
-                .filter(|delta| *delta != 0)
-                .map(|delta| (s().net_change_since_first, delta))
+                .since_first_dated()
+                .filter(|(_, delta)| *delta != 0)
+                .map(|(day, delta)| (s().net_change_since(day), delta))
         })
         .map(|(label, delta)| {
             format!(
@@ -35,7 +36,8 @@ pub(super) fn net_summary(
         .map(|change| format!("{}, {change}", s().asset_history))
         .unwrap_or_else(|| s().asset_history.to_owned());
     let expanded = signal(false);
-    let count = at_cost.len();
+    let count = overview.at_cost.len();
+    let net = &overview.net;
     // Net worth is the page's headline figure: on the canvas, not in a card.
     view()
         .pt_1()
@@ -88,18 +90,7 @@ pub(super) fn net_summary(
                                 }))
                         })),
                 )
-                .child(net_figure(net.net))
-                .child(partial.then(|| {
-                    let codes = valued
-                        .missing
-                        .iter()
-                        .map(|c| c.code())
-                        .collect::<Vec<_>>()
-                        .join(" / ");
-                    text(s().excluded_currencies(&codes))
-                        .typo(Type::Subhead)
-                        .text_color(color::CAUTION)
-                })),
+                .child(net_figure(net.net)),
         )
         .child(
             view()
@@ -110,15 +101,35 @@ pub(super) fn net_summary(
                     || font_scale() > 1.2 || window().width.0 < 350.0,
                     |s| s.flex_col(),
                 )
-                .child(total(s().total_assets, net.assets))
-                .child(total(s().total_debt, net.debt)),
+                .child(total(
+                    if partial {
+                        copy("Included assets", "已计入资产")
+                    } else {
+                        s().total_assets
+                    },
+                    net.assets,
+                ))
+                .child(total(
+                    if partial {
+                        copy("Included debt", "已计入负债")
+                    } else {
+                        s().total_debt
+                    },
+                    net.debt,
+                )),
+        )
+        .children(
+            overview
+                .excluded
+                .iter()
+                .map(|(&currency, group)| missing_pair(currency, group)),
         )
         .child(when(
             move || expanded.get(),
             move || {
                 view()
                     .test_id("cost-holdings")
-                    .children(at_cost.iter().cloned().map(|(id, name)| {
+                    .children(overview.at_cost.iter().cloned().map(|(id, name)| {
                         row_button(move || nav::push(Route::Holding(id.clone())))
                             .min_h(px(48.0))
                             .child(text(name).typo(Type::Body).text_color(color::INK))
@@ -156,6 +167,42 @@ pub(super) fn net_summary(
                         .child(icon(Icon::ChevronRight, 16.0, color::MUTED)),
                 ),
         )
+}
+
+fn missing_pair(currency: Currency, group: &Excluded) -> impl IntoElement + use<> {
+    let title = s().excluded_currencies(currency.code());
+    let count = group.count();
+    let details: Vec<_> = if count > 2 {
+        vec![s().excluded_count(count)]
+    } else {
+        group
+            .groups()
+            .map(|(label, names)| format!("{label} · {}", names.join(copy(", ", "、"))))
+            .collect()
+    };
+    let spoken = format!(
+        "{title}, {}, {}",
+        details.join(", "),
+        copy("View exchange rate", "查看汇率")
+    );
+    row_button(move || nav::push(Route::ExchangeRate(currency)))
+        .min_h(px(48.0))
+        .px_0()
+        .gap_2()
+        .accessibility_label(move || Some(spoken.clone().into()))
+        .child(
+            view()
+                .flex_1()
+                .min_w(px(0.0))
+                .gap_1()
+                .child(text(title).typo(Type::Subhead).text_color(color::CAUTION))
+                .children(
+                    details
+                        .into_iter()
+                        .map(|line| text(line).typo(Type::Caption).text_color(color::BODY)),
+                ),
+        )
+        .child(icon(Icon::ChevronRight, 16.0, color::MUTED))
 }
 
 fn total(label: &'static str, value: i64) -> impl IntoElement {

@@ -36,7 +36,10 @@ impl Plan {
         let book = finance::holdings_snapshot();
         let accounts = finance::accounts_snapshot();
         let bindings = catalog::bindings();
-        let show_rates = matches!(nav::open().last(), Some(nav::Route::PricesAndRates(None)));
+        let show_rates = matches!(
+            nav::open().last(),
+            Some(nav::Route::PricesAndRates(None) | nav::Route::ExchangeRate(_))
+        );
         let needs = |currency| {
             accounts
                 .iter()

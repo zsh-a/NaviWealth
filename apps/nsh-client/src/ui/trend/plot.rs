@@ -31,6 +31,14 @@ pub(crate) struct InspectionPlot {
 
 impl InspectionPlot {
     pub fn draw(self, height: impl Fn() -> f32 + Copy + 'static) -> AnyElement {
+        self.draw_with_selection(height, None)
+    }
+
+    pub(super) fn draw_with_selection(
+        self,
+        height: impl Fn() -> f32 + Copy + 'static,
+        selection: Option<Signal<Option<Date>>>,
+    ) -> AnyElement {
         let Self {
             title,
             from,
@@ -100,8 +108,26 @@ impl InspectionPlot {
             );
         }
         let last = samples.len() - 1;
-        let inspected = signal(None::<usize>);
-        let current = move || inspected.get().unwrap_or(last);
+        let retained = selection.is_some();
+        let inspected = selection.unwrap_or_else(|| signal(None::<Date>));
+        let dates = stored(samples.iter().map(|s| s.day).collect::<Vec<_>>());
+        let current = move || {
+            inspected
+                .get()
+                .and_then(|day| dates.with(|d| d.binary_search(&day).ok()))
+                .unwrap_or(last)
+        };
+        let inspect_index = move |index: Option<usize>| {
+            if let Some(index) = index {
+                if let Some(day) = dates.with(|d| d.get(index).copied())
+                    && inspected.get_untracked() != Some(day)
+                {
+                    inspected.set(Some(day));
+                }
+            } else if !retained && inspected.get_untracked().is_some() {
+                inspected.set(None);
+            }
+        };
         let width = signal(0.0_f32);
         let positions = stored(
             samples
@@ -128,7 +154,7 @@ impl InspectionPlot {
                     right
                 }
             });
-            inspected.set(Some(i));
+            inspect_index(Some(i));
         };
         let cursor_x = move || positions.with(|p| p[current()].0) * width.get();
         let rows = Rows::from_columns(
@@ -179,7 +205,7 @@ impl InspectionPlot {
                             })
                             .interactive(true)
                             .on_hover_change(move |i: &Option<u32>| {
-                                inspected.set(i.map(|v| v as usize))
+                                inspect_index(i.map(|v| v as usize))
                             })
                             .accessibility_label(move || Some(title.clone().into()))
                             .accessibility_value(move || {
@@ -243,13 +269,13 @@ impl InspectionPlot {
                             .test_id("trend-inspector")
                             .on_touch(move |e: &TouchEvent| {
                                 if e.phase == TouchPhase::Cancel {
-                                    inspected.set(None);
+                                    inspect_index(None);
                                 } else if let Some(p) = e.points.iter().find(|p| p.changed) {
                                     inspect(p.location.x.0);
                                 }
                             })
                             .on_mouse_move(move |e: &MouseEvent| inspect(e.position.x.0))
-                            .on_mouse_leave(move |_: &MouseEvent| inspected.set(None)),
+                            .on_mouse_leave(move |_: &MouseEvent| inspect_index(None)),
                     ),
             )
             .child((from != end).then(|| {

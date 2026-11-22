@@ -135,3 +135,154 @@ fn health_only_review_has_no_net_worth() -> Result<(), String> {
     assert!(!app.shows("Net worth change"));
     Ok(())
 }
+
+#[test]
+fn assets_explains_the_inspected_close_from_the_first_plotted_close() -> Result<(), String> {
+    use nsh_core::geometry::{point, px};
+    let cash = Account::parse("资产:Wallet").unwrap();
+    let (mut app, _) = seeded(|db| {
+        let day = today();
+        for t in [
+            journal::opening(
+                entry("Baseline", day.plus_days(-2).0, Source::Manual),
+                &cash,
+                10000,
+            ),
+            journal::spend(
+                entry("Bus", day.plus_days(-1).0, Source::Manual),
+                &cash,
+                &defaults::expense("交通"),
+                250,
+            ),
+            journal::adjustment(
+                entry("Correction", day.0, Source::BalanceCheck),
+                &cash,
+                -1000,
+            ),
+        ] {
+            repository::save(db, &t.unwrap()).unwrap();
+        }
+    });
+    app.press("label:Assets")?;
+    app.press("label:/^Asset changes/")?;
+    app.press("Change breakdown")?;
+    let baseline = today().plus_days(-2).0.strftime("%b %-d, %Y");
+    app.wait_for(&format!("text:/Since {baseline} −¥12.50$/"))?;
+    app.wait_for("text:−¥12.50")?;
+    app.wait_for("text:−¥2.50")?;
+    assert!(
+        !app.shows("text:Opening balances"),
+        "the chart starts after the opening transaction"
+    );
+    app.press("label:/^Balance corrections, −¥10.00, Show details/")?;
+    app.press("text:/^Correction · /")?;
+    app.wait_for("text:Balance adjustment")?;
+    app.press("text:Close")?;
+    app.wait_for_gone("task-sheet", GONE)?;
+    app.wait_for("text:/^Correction · /")?;
+    app.drag_and_hold("id:trend-inspector", point(px(0.0), px(0.0)))?;
+    app.drop_held()?;
+    app.wait_for("text:¥97.50")?;
+    assert!(!app.shows("text:−¥12.50"));
+    assert!(!app.shows("text:Balance corrections"));
+    app.press("Net worth snapshots")?;
+    app.press("Historical estimates")?;
+    app.wait_for("text:¥97.50")?;
+    app.wait_for("text:Spending")?;
+    app.press("7D")?;
+    app.wait_for("text:−¥12.50")?;
+    Ok(())
+}
+
+#[test]
+fn assets_does_not_shift_the_baseline_past_a_missing_dated_rate() -> Result<(), String> {
+    use navi_finance::currency::{self, FxRate};
+    let usd = Account::parse("资产/USD:Broker").unwrap();
+    let (mut app, _) = seeded(|db| {
+        repository::save(
+            db,
+            &journal::opening(
+                entry("Opening", today().plus_days(-4).0, Source::Manual),
+                &usd,
+                10_000,
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        currency::save_rates(
+            db,
+            &[FxRate {
+                currency: Currency::USD,
+                day: today().0,
+                rate: 7_000_000,
+                source: "manual".into(),
+            }],
+        )
+        .unwrap();
+    });
+    app.press("label:Assets")?;
+    app.press("label:/^Asset changes/")?;
+    app.press("Change breakdown")?;
+    app.wait_for("text:Missing USD rates — the change can't be fully explained yet.")?;
+    assert!(!app.shows("text:Exchange rates"));
+    Ok(())
+}
+
+#[test]
+fn account_history_keeps_matched_checks_and_original_adjustments_after_backfills()
+-> Result<(), String> {
+    let own = Account::parse("负债:Card").unwrap();
+    let (mut app, _) = seeded(|db| {
+        let day = today().plus_days(-2).0;
+        repository::create_account(db, &own).unwrap();
+        repository::save(
+            db,
+            &journal::opening(
+                entry("seed", day.yesterday().unwrap(), Source::Manual),
+                &own,
+                -10000,
+            )
+            .unwrap(),
+        )
+        .unwrap();
+        for (id, hour, actual) in [("matched", 11, -10000), ("corrected", 12, -12500)] {
+            repository::confirm_balance(
+                db,
+                &repository::BalanceCheck {
+                    id: id.into(),
+                    account: own.clone(),
+                    day,
+                    actual,
+                    checked_at: today().0.at(hour, 0, 0, 0),
+                },
+                -10000,
+            )
+            .unwrap();
+        }
+        repository::save(
+            db,
+            &journal::spend(
+                entry("Backdated", day, Source::Manual),
+                &own,
+                &defaults::expense("餐饮"),
+                2000,
+            )
+            .unwrap(),
+        )
+        .unwrap();
+    });
+    app.press("label:Assets")?;
+    let checked = format!("Last checked · {}", today().0.strftime("%a, %b %-d"));
+    app.press(&format!("label:Card, ¥145.00, {checked}"))?;
+    app.press(&format!("text:{checked}"))?;
+    app.wait_for("text:Matched at the time")?;
+    app.wait_for("text:¥100.00")?;
+    app.wait_for("text:¥125.00")?;
+    app.press("label:/Balance adjustment \\+¥25.00/")?;
+    app.wait_for("text:Balance adjustment")?;
+    app.wait_for("label:Revoke balance entry")?;
+    app.press("text:Close")?;
+    app.wait_for_gone("task-sheet", GONE)?;
+    app.wait_for("text:Matched at the time")?;
+    Ok(())
+}

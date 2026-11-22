@@ -5,16 +5,15 @@ use nsh_base::{ButtonElement, button};
 use nsh_core::prelude::*;
 
 use super::{
-    Lift, Typo,
+    Typo,
     icons::{Icon, icon},
-    theme::{Type, color, motion, radius, shadow, space},
+    theme::{Type, color, motion, radius, space},
 };
 
 /// A hairline's thickness.
 pub const HAIRLINE: f32 = 0.5;
 
-/// A card: an object on the page, a surface with a hairline edge and only
-/// a contact shadow. Groups of figures do not take one; they lie on the
+/// A card: an object on the page, a surface with a hairline edge. Groups of figures do not take one; they lie on the
 /// canvas, divided by space and hairlines.
 pub fn card() -> View {
     view()
@@ -23,7 +22,6 @@ pub fn card() -> View {
         .border_curve(BorderCurve::Continuous)
         .border(px(HAIRLINE))
         .border_color(color::LINE)
-        .lift(&shadow::CARD)
 }
 
 /// A flat section of a page: a hairline above, then its title and figures
@@ -38,7 +36,12 @@ pub fn section() -> View {
 
 /// A hairline between rows, with the same inset at both edges.
 pub fn hairline(inset: f32) -> View {
-    view().h(px(HAIRLINE)).mx(px(inset)).bg(color::LINE)
+    // Subpixel layout can round every other separator down to zero at 1×.
+    view()
+        .h(|| px(HAIRLINE.max(pixel_ratio().recip())))
+        .flex_shrink_0()
+        .mx(px(inset))
+        .bg(color::LINE)
 }
 
 /// A section's title, a header for screen readers, with an optional

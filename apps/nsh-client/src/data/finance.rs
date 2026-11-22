@@ -185,6 +185,7 @@ pub fn set_quote(
     Ok(())
 }
 
+#[cfg(test)]
 pub fn checks() -> Vec<repository::BalanceCheck> {
     (*checks_snapshot()).clone()
 }

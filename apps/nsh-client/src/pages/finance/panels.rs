@@ -106,15 +106,21 @@ pub(super) fn new_account(own: Own, panel: Signal<Panel>) -> impl IntoElement {
     let invalid = signal(false);
     view()
         .gap_4()
-        .child(segmented(
-            vec![
-                Segment::new(AccountKind::Assets, || s().asset_account.into()),
-                Segment::new(AccountKind::Liabilities, || s().liability_account.into()),
-            ],
-            move || kind.get(),
-            move |k| kind.set(k),
+        .child(field(
+            || s().account_type,
+            segmented(
+                vec![
+                    Segment::new(AccountKind::Assets, || s().asset_account.into()),
+                    Segment::new(AccountKind::Liabilities, || s().liability_account.into()),
+                ],
+                move || kind.get(),
+                move |k| kind.set(k),
+            ),
         ))
-        .child(crate::ui::currency::picker(currency))
+        .child(field(
+            || s().currency_label,
+            crate::ui::currency::picker(currency),
+        ))
         .child(
             text_input(name)
                 .auto_focus(true)

@@ -34,17 +34,29 @@ fn a_meal_added_by_hand_counts_toward_today() -> Result<(), String> {
     app.type_text("label:Energy", "130")?;
     app.press("Done")?;
     app.wait_for("text:Rice")?;
+    app.press("text:Breakfast")?;
     app.press("text:/^Save meal/")?;
     // Today's own count: the review page has closed and the meal is kept.
     app.wait_for("text:1 meal")?;
     app.wait_for("text:325")?;
     assert!(app.shows("Rice"));
+    app.wait_for("text:/^Breakfast ·/")?;
     let kept = stored_meals(dir.path());
     assert_eq!(kept.len(), 1);
     assert_eq!(
         kept[0]["foods"][0]["name"], "Rice",
         "the meal is kept: {kept:?}"
     );
+    app.set_viewport(nsh_core::Size::new(
+        nsh_core::Points(360.0),
+        nsh_core::Points(640.0),
+    ))?;
+    app.set_environment("large text", |e| e.font_scale = 1.3)?;
+    app.press("label:Rice, 325 kcal")?;
+    app.press("text:Dinner")?;
+    app.press("text:/^Save meal/")?;
+    app.wait_for("text:/^Dinner ·/")?;
+    assert_eq!(stored_meals(dir.path())[0]["slot"], "dinner");
     Ok(())
 }
 
@@ -315,6 +327,33 @@ fn more_nutrition_edits_save_and_persist() -> Result<(), String> {
     assert_eq!(extra["sugars"], 1.0);
     assert_eq!(extra["sodium"], 0.006, "the sodium was typed in mg");
     assert_eq!(extra["sat_fat"], 1.1);
+    Ok(())
+}
+
+#[test]
+fn portions_keep_one_selected_factor_when_grams_round_to_the_same_value() -> Result<(), String> {
+    let mut seed = pasta_today();
+    let mut meals = navi_health::meal::decode_meals(&seed[0].1);
+    meals[0].foods[0].grams = 2.0;
+    meals[0].foods[0].estimated_grams = Some(2.0);
+    seed[0].1 = encode_meals(&meals);
+    let (mut app, _) = start(seed, None);
+    app.set_viewport(nsh_core::Size::new(
+        nsh_core::Points(320.0),
+        nsh_core::Points(640.0),
+    ))?;
+    app.press("Tomato pasta")?;
+    app.press("text:Pasta")?;
+    app.wait_for("text:1×")?;
+    assert!(app.screen().selected("role:button[1×]")?);
+    app.press("text:¾×")?;
+    assert!(app.screen().selected("role:button[¾×]")?);
+    assert!(!app.screen().selected("role:button[1×]")?);
+    app.press("text:2×")?;
+    assert_eq!(app.screen().input_text("label:Amount eaten")?, Some("4"));
+    app.clear("label:Amount eaten")?;
+    app.type_text("label:Amount eaten", "7")?;
+    assert!(!app.screen().selected("role:button[2×]")?);
     Ok(())
 }
 

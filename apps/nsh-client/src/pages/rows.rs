@@ -1,6 +1,5 @@
 //! Rows shared by Today and Records: a meal led by its photo when it has
-//! one, and a weight entry, grouped in one card with hairlines between
-//! them. Without a photo, meals use the same leading footprint with the
+//! one, and a weight entry, separated by hairlines on the canvas. Without a photo, meals use the same leading footprint with the
 //! semantic meal icon.
 
 use nsh_core::prelude::*;
@@ -11,8 +10,8 @@ use crate::{
     i18n::s,
     nav::{self, Route},
     ui::{
-        Icon, Type, Typo, color, radius, space,
-        surface::{HAIRLINE, row_button},
+        Icon, Type, Typo, color, radius,
+        surface::{hairline, row_button},
     },
 };
 
@@ -20,14 +19,12 @@ use super::today::{meal_title, slot_name};
 
 /// A row's thumbnail side.
 pub const THUMB: f32 = 52.0;
-/// A row's leading padding without a leading footprint (weight rows).
-pub const INSET: f32 = space::CARD;
-/// A row's leading padding before its photo or icon.
-pub const LEAD: f32 = 12.0;
+/// Align timeline rows with the surrounding page content.
+pub const INSET: f32 = 4.0;
 /// Where the text of a row with a leading footprint starts; its divider
 /// starts here too, so hairlines underline text rather than icons.
 pub fn text_inset(leading: f32) -> f32 {
-    LEAD + leading + 14.0
+    INSET + leading + 14.0
 }
 
 pub const ICON_COLUMN: f32 = 28.0;
@@ -48,9 +45,9 @@ pub fn glyph(icon: Icon, width: f32, height: f32) -> View {
         .child(crate::ui::icon(icon, 20.0, color::MUTED))
 }
 
-/// The divider between rows of one card, from `leading` to the card's edge.
+/// The divider begins at the title of the following row.
 pub fn divider(leading: f32) -> View {
-    view().h(px(HAIRLINE)).ml(px(leading)).bg(color::LINE)
+    hairline(0.0).ml(px(leading))
 }
 
 /// A saved meal; pressing it opens it.
@@ -65,8 +62,7 @@ pub fn meal_row(meal: Meal, leading: f32) -> impl IntoElement {
     );
     let photo = meal.photo.clone();
     row_button(move || nav::push(Route::EditMeal(id.clone())))
-        .pl(px(LEAD))
-        .pr(px(18.0))
+        .px(px(INSET))
         .py(px(10.0))
         .gap(px(14.0))
         .accessibility_label(move || Some(label.clone().into()))
@@ -111,8 +107,7 @@ pub fn meal_row(meal: Meal, leading: f32) -> impl IntoElement {
 pub fn weight_row(entry: Weight, open: impl Fn() + 'static) -> impl IntoElement {
     let kg = s().kg(entry.kg);
     row_button(open)
-        .pl(px(INSET))
-        .pr(px(18.0))
+        .px(px(INSET))
         .py(px(10.0))
         .gap(px(14.0))
         .accessibility_label({

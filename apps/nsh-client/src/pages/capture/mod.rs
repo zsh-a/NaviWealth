@@ -24,7 +24,7 @@ use crate::{
     i18n::s,
     nav::{self, Route},
     ui::{
-        Btn, Icon, IconBtn, Type, Typo, Variant, chip, color,
+        Btn, Icon, IconBtn, Lift, Type, Typo, Variant, color,
         feedback::{appear, spinner},
         field::{note, text_input},
         icon, radius,
@@ -661,7 +661,7 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                         .min_h(px(48.0))
                         .style_when(
                             move || light && !compact_save_row(),
-                            |s| s.shadow(crate::ui::theme::shadow::CARD),
+                            |s| s.lift(&crate::ui::theme::shadow::CONTACT),
                         )
                         .into_element();
                 }

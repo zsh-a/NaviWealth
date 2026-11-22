@@ -137,6 +137,9 @@ fn price_history_exposes_daily_revisions_and_fx_audit() -> Result<(), String> {
     app.press("label:/^Index, ¥6.00, Tencent unadjusted close/")?;
     app.wait_for("id:trend-value")?;
     app.wait_for("text:¥6")?;
+    app.press("Price history")?;
+    app.wait_for(&format!("510300.SH · {day}"))?;
+    app.press("label:Back")?;
     app.press("label:Back")?;
     app.press("label:Manage")?;
     app.press("Prices & rates")?;

@@ -385,36 +385,33 @@ fn day_section(records: DayRecords) -> impl IntoElement {
                 }),
         )
         .child((!records.entries.is_empty()).then(|| {
-            card()
-                .overflow_hidden()
-                .children(
-                    records
-                        .entries
-                        .into_iter()
-                        .enumerate()
-                        .map(move |(i, entry)| {
-                            // Weight rows have no leading footprint.
-                            let inset = if matches!(entry, Entry::Weight(_)) {
-                                INSET
-                            } else {
-                                text_inset(leading)
-                            };
-                            let row = match entry {
-                                Entry::Meal(meal) => meal_row(meal, leading).into_element(),
-                                Entry::Transaction(transaction) => {
-                                    let id = transaction.id.clone();
-                                    transaction_row(transaction, leading, move || {
-                                        sheets.finance.set(Some(id.clone()))
-                                    })
-                                    .into_element()
-                                }
-                                Entry::Weight(w) => {
-                                    weight_row(w, move || sheets.weight.set(Some(w.day)))
-                                        .into_element()
-                                }
-                            };
-                            view().child((i > 0).then(|| divider(inset))).child(row)
-                        }),
-                )
+            view().children(
+                records
+                    .entries
+                    .into_iter()
+                    .enumerate()
+                    .map(move |(i, entry)| {
+                        // Weight rows have no leading footprint.
+                        let inset = if matches!(entry, Entry::Weight(_)) {
+                            INSET
+                        } else {
+                            text_inset(leading)
+                        };
+                        let row = match entry {
+                            Entry::Meal(meal) => meal_row(meal, leading).into_element(),
+                            Entry::Transaction(transaction) => {
+                                let id = transaction.id.clone();
+                                transaction_row(transaction, leading, move || {
+                                    sheets.finance.set(Some(id.clone()))
+                                })
+                                .into_element()
+                            }
+                            Entry::Weight(w) => {
+                                weight_row(w, move || sheets.weight.set(Some(w.day))).into_element()
+                            }
+                        };
+                        view().child((i > 0).then(|| divider(inset))).child(row)
+                    }),
+            )
         }))
 }

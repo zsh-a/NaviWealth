@@ -47,6 +47,7 @@ use crate::{
         segmented::{Segment, segmented},
         sheet::bottom_sheet,
         space,
+        theme::size,
         toast::show_toast,
     },
 };
@@ -115,7 +116,7 @@ fn page(draft: Draft) -> Screen {
     }
     let back = move || request_back(draft);
     let scroll_y = animated_value(0.0);
-    // Over the photo, the top bar frosts in (its buttons turning solid) once
+    // Over the photo, the top bar frosts in once
     // the panel slides under it, and clears when the photo comes back: two
     // settled states, never one half-faded over the photo.
     let edge =
@@ -163,7 +164,7 @@ fn page(draft: Draft) -> Screen {
                                 .child(
                                     when(immersive, move || photo::photo_header(draft, scroll_y))
                                         .otherwise(|| {
-                                            view().h(move || px(safe_area().top.0 + 60.0))
+                                            view().h(move || px(safe_area().top.0 + BAR))
                                         }),
                                 )
                                 .child(content(draft, immersive)),
@@ -224,11 +225,10 @@ fn content(draft: Draft, immersive: impl Fn() -> bool + Copy + 'static) -> impl 
 }
 
 /// The top bar's height under the status bar: its padding and buttons.
-const BAR: f32 = 6.0 + 44.0 + 8.0;
+const BAR: f32 = 6.0 + size::TOUCH + 8.0;
 
-/// The top bar: Back, the title, and for a saved meal Favorite and Delete. Over a photo its buttons are
-/// frosted glass and its background is clear; past the photo it is the
-/// frosted canvas with solid buttons, like the bar of a page without one.
+/// Glass keeps the controls legible over a photo. On the canvas they use
+/// the same ghost buttons as other pushed pages.
 fn chrome(
     draft: Draft,
     frost: AnimatedValue,
@@ -238,7 +238,7 @@ fn chrome(
 ) -> impl IntoElement {
     dynamic(move || {
         let over_photo = immersive();
-        let solid = !over_photo || past_photo.get();
+        let on_media = over_photo && !past_photo.get();
         let saved = draft.is_saved_meal();
         let is_draft = draft.pending.get().is_some();
         let favorite = saved
@@ -247,28 +247,29 @@ fn chrome(
                 .with(|id| id.as_deref().and_then(favorites::of_meal))
                 .is_some();
         untracked(move || {
-            let variant = if solid {
-                Variant::Secondary
-            } else {
+            let variant = if on_media {
                 Variant::Glass
+            } else {
+                Variant::Ghost
             };
             let background = view()
                 .absolute()
                 .inset_0()
-                // Opaque enough where there is no blur (Android before 12).
-                .bg(color::CANVAS.opacity(0.94))
-                .backdrop_blur(px(20.0))
-                .border_b(px(0.75))
-                .border_b_color(color::LINE);
+                .bg(color::CANVAS)
+                .pointer_events(PointerEvents::None);
             let heading = text(move || title(draft))
                 .typo(Type::Headline)
                 .text_color(color::INK)
                 .number_of_lines(1)
                 .text_center()
+                .role(AccessibilityRole::Header)
                 .flex_1();
             let (background, heading) = if over_photo {
                 (
-                    background.bind_opacity(&frost),
+                    background
+                        .bg(color::CANVAS.opacity(0.94))
+                        .backdrop_blur(px(20.0))
+                        .bind_opacity(&frost),
                     heading.bind_opacity(&frost),
                 )
             } else {
@@ -292,7 +293,7 @@ fn chrome(
                         .on_press(back),
                 )
                 // Balances the two buttons on the right, keeping the title centered.
-                .child(saved.then(|| view().size(px(44.0))))
+                .child(saved.then(|| view().size(px(size::TOUCH))))
                 .child(heading)
                 .child(if saved {
                     let (glyph, label): (Icon, fn() -> SharedString) = if favorite {
@@ -320,7 +321,7 @@ fn chrome(
                         .on_press(move || pending::discard(draft))
                         .into_element()
                 } else {
-                    view().size(px(44.0)).into_element()
+                    view().size(px(size::TOUCH)).into_element()
                 })
         })
     })

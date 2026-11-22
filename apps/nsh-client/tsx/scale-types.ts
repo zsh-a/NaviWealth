@@ -85,9 +85,12 @@ export interface Palette {
   line: string;
   well: string;
   danger: string;
+  action: string;
+  actionPressed: string;
   onAction: string;
   positive: string;
   scrim: string;
+  sheetRadius: number;
 }
 
 export interface Connection {

@@ -67,6 +67,7 @@ pub fn assets_tab() -> impl IntoElement {
                         let checks = finance::checks_snapshot();
                         let rates = finance::rates_snapshot();
                         let today = clock::today();
+                        let overview = super::current::get();
                         untracked(move || {
                             if accounts.is_empty() && portfolio.securities.is_empty() {
                                 return crate::ui::feedback::empty_state(Icon::Wallet, || {
@@ -96,8 +97,7 @@ pub fn assets_tab() -> impl IntoElement {
                                 )
                                 .into_element();
                             }
-                            let valued = portfolio.overview_with_rates(&entries, today.0, &rates);
-                            let Ok(valued) = valued else {
+                            let Some(overview) = overview else {
                                 return text(crate::i18n::statement_import::copy(
                                     "Cannot convert these amounts. Check exchange rates.",
                                     "无法折算这些金额，请检查汇率。",
@@ -106,33 +106,10 @@ pub fn assets_tab() -> impl IntoElement {
                                 .text_color(color::DANGER)
                                 .into_element();
                             };
-                            let mut has_open_holdings = false;
-                            let mut has_included_holdings = false;
-                            let mut at_cost = Vec::new();
-                            for sec in &portfolio.securities {
-                                let position = portfolio
-                                    .position(sec, today.0)
-                                    .expect("overview validated positions");
-                                if position.quantity == 0 {
-                                    continue;
-                                }
-                                has_open_holdings = true;
-                                if !valued.missing.contains(&sec.currency()) {
-                                    has_included_holdings = true;
-                                    if position.value.is_none() {
-                                        at_cost.push((sec.id.clone(), sec.name.clone()));
-                                    }
-                                }
-                            }
-                            let balances = journal::balances(
-                                entries.iter().filter(|t| t.at.date() <= today.0),
-                            );
                             view()
                                 .gap_5()
                                 .child(net_summary(
-                                    valued,
-                                    has_included_holdings,
-                                    at_cost,
+                                    overview.clone(),
                                     super::trend::NetWorthHistory::load(
                                         &entries, &portfolio, &rates, today,
                                     ),
@@ -140,17 +117,18 @@ pub fn assets_tab() -> impl IntoElement {
                                 .child(account_group(
                                     AccountKind::Assets,
                                     &accounts,
-                                    &balances,
+                                    &overview.balances,
                                     &checks,
                                 ))
                                 .child(
-                                    has_open_holdings
+                                    overview
+                                        .has_open_holdings
                                         .then(|| super::super::holdings::section(false)),
                                 )
                                 .child(account_group(
                                     AccountKind::Liabilities,
                                     &accounts,
-                                    &balances,
+                                    &overview.balances,
                                     &checks,
                                 ))
                                 .into_element()
@@ -161,7 +139,7 @@ pub fn assets_tab() -> impl IntoElement {
         .child(task_host_with_keyboard(
             move || manage.get(),
             move || manage.set(false),
-            move || task.get() != 0,
+            move || task.get() == 1,
             move || {
                 dynamic(move || {
                     let panel = task.get();

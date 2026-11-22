@@ -23,6 +23,9 @@ pub fn history_page() -> nsh_core::element::Screen {
     let basis = signal(false);
     let estimates_window = signal(Window::Month);
     let snapshots_window = signal(Window::Month);
+    let explain = signal(false);
+    let selected = signal(None::<Date>);
+    let edit = signal(None::<String>);
     nsh_base::nav_page()
         .title(|| s().asset_history)
         .header_visible(false)
@@ -59,11 +62,12 @@ pub fn history_page() -> nsh_core::element::Screen {
                                 if recorded.get() {
                                     snapshots::recorded_panel(snapshots_window)
                                 } else {
-                                    estimate_panel(estimates_window, basis)
+                                    estimate_panel(estimates_window, basis, explain, selected, edit)
                                 }
                             })),
                     ),
-                ),
+                )
+                .child(super::super::finance::finance_editor(edit)),
         )
 }
 
@@ -129,17 +133,23 @@ impl NetWorthHistory {
 
     /// The change from the earliest complete valuation to today's, when the
     /// history is too short for [`Self::change`] and both ends are known.
-    pub fn since_first(&self) -> Option<i64> {
+    pub fn since_first_dated(&self) -> Option<(Day, i64)> {
         let &(last, end) = self.points.last()?;
         let &(first, start) = self.points.iter().find(|p| p.1.is_some())?;
         if first == last {
             return None;
         }
-        end?.checked_sub(start?)
+        Some((Day(first), end?.checked_sub(start?)?))
     }
 }
 
-fn estimate_panel(window: Signal<Window>, basis: Signal<bool>) -> AnyElement {
+fn estimate_panel(
+    window: Signal<Window>,
+    basis: Signal<bool>,
+    explain: Signal<bool>,
+    selected: Signal<Option<Date>>,
+    edit: Signal<Option<String>>,
+) -> AnyElement {
     use crate::data::{clock, finance};
     let entries = finance::transactions_snapshot();
     let book = finance::holdings_snapshot();
@@ -156,7 +166,7 @@ fn estimate_panel(window: Signal<Window>, basis: Signal<bool>) -> AnyElement {
     view()
         .gap_3()
         .child(dynamic(move || {
-            let from = window.get().start(today, earliest);
+            let from = window.get().available(today, earliest).start(today, earliest);
             let history = NetWorthHistory::between(&entries, &book, &rates, from, today);
             untracked(move || {
                 let title = if has_holdings {
@@ -164,6 +174,7 @@ fn estimate_panel(window: Signal<Window>, basis: Signal<bool>) -> AnyElement {
                 } else {
                     copy("Book value", "账面净资产")
                 };
+                let breakdown = change_explanation(&history.points, selected, explain, edit);
                 view()
                     .gap_2()
                     .child(trend::chart_from(
@@ -173,7 +184,9 @@ fn estimate_panel(window: Signal<Window>, basis: Signal<bool>) -> AnyElement {
                         window,
                         today,
                         earliest,
+                        Some(selected),
                     ))
+                    .child(breakdown)
                     .children(history.missing.into_iter().map(|(currency, days)| {
                         gap_note(&days, &s().missing_rate(currency.code()), color::MUTED)
                     }))
@@ -202,6 +215,97 @@ fn estimate_panel(window: Signal<Window>, basis: Signal<bool>) -> AnyElement {
                     [calculation, basis, s().asset_history_note]
                         .map(|line| text(line).typo(Type::Subhead).text_color(color::MUTED)),
                 )
+            },
+        ))
+        .into_element()
+}
+
+/// The chart reads changes from its first visible sample, even when history
+/// began inside the selected window. Never move the baseline past a gap.
+fn change_explanation(
+    points: &[trend::Point],
+    selected: Signal<Option<Date>>,
+    open: Signal<bool>,
+    edit: Signal<Option<String>>,
+) -> AnyElement {
+    use navi_finance::attribution::{self, Outcome};
+    let [first, .., last] = points else {
+        return view().into_element();
+    };
+    let (first, last) = (*first, *last);
+    let points = stored(points.to_vec());
+    view()
+        .gap_2()
+        .child(crate::ui::surface::disclosure(open, || {
+            copy("Change breakdown", "变化来源").into()
+        }))
+        .child(when(
+            move || open.get(),
+            move || {
+                dynamic(move || {
+                    let selected = selected.get();
+                    let last = points.with(|p| {
+                        selected
+                            .and_then(|day| p.binary_search_by_key(&day, |p| p.0).ok())
+                            .map(|i| p[i])
+                            .unwrap_or(last)
+                    });
+                    let date_span = format!(
+                        "{} – {}",
+                        s().axis_date(Day(first.0), first.0.year() != last.0.year()),
+                        s().axis_date(Day(last.0), first.0.year() != last.0.year())
+                    );
+                    if first.0 == last.0 && first.1.is_some() {
+                        return text(format!(
+                            "{date_span} · {}",
+                            copy("Opening observation", "起始估值")
+                        ))
+                        .typo(Type::Caption)
+                        .tabular_nums()
+                        .text_color(color::MUTED)
+                        .into_element();
+                    }
+                    let outcome = attribution::attribute(
+                        &crate::data::finance::holdings_snapshot(),
+                        &crate::data::finance::transactions_snapshot(),
+                        &crate::data::finance::rates_snapshot(),
+                        first.0,
+                        last.0,
+                    );
+                    let mut body = view().gap_2().child(
+                        text(date_span)
+                            .typo(Type::Caption)
+                            .text_color(color::MUTED)
+                            .tabular_nums(),
+                    );
+                    body = match outcome {
+                        Ok(Outcome::Complete(a))
+                            if Some(a.start) == first.1 && Some(a.end) == last.1 =>
+                        {
+                            body.child(
+                                text(crate::ui::currency::signed(a.change(), Currency::CNY))
+                                    .typo(Type::Figure)
+                                    .text_color(color::INK)
+                                    .tabular_nums(),
+                            )
+                            .child(super::super::net_worth_review::breakdown(&a, edit))
+                        }
+                        Ok(Outcome::Missing(missing)) => body.child(
+                            text(s().net_worth_missing(&missing))
+                                .typo(Type::Subhead)
+                                .text_color(color::MUTED),
+                        ),
+                        _ => body.child(
+                            text(copy(
+                                "A complete change is unavailable for these dates.",
+                                "所选日期缺少完整估值，暂时无法拆解变化。",
+                            ))
+                            .typo(Type::Subhead)
+                            .text_color(color::MUTED),
+                        ),
+                    };
+                    body.into_element()
+                })
             },
         ))
         .into_element()

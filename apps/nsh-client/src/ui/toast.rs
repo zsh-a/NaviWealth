@@ -9,8 +9,8 @@ use nsh_base::button;
 use nsh_core::prelude::*;
 
 use super::{
-    Typo,
-    theme::{Type, color, motion},
+    Lift, Typo,
+    theme::{Type, color, motion, shadow},
 };
 
 /// How long a message stays.
@@ -213,7 +213,7 @@ fn bubble(message: Message) -> impl IntoElement {
         .min_h(px(52.0))
         .rounded_full()
         .bg(color::INK)
-        .shadow_lg()
+        .lift(&shadow::FLOAT)
         .child(
             text(message.text.clone())
                 .typo(Type::Callout)

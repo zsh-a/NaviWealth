@@ -16,6 +16,15 @@ pub(crate) fn source_label(source: &str) -> &str {
 }
 
 impl Strings {
+    pub fn net_change_since(&self, day: crate::domain::meal::Day) -> String {
+        let date = self.axis_date(day, true);
+        if self.zh() {
+            format!("较{date}")
+        } else {
+            format!("Since {date}")
+        }
+    }
+
     pub fn missing_rate(&self, currency: &str) -> String {
         if self.zh() {
             format!("缺少 {currency} 汇率")
@@ -23,6 +32,14 @@ impl Strings {
             format!("Missing {currency} rate")
         }
     }
+    pub fn excluded_count(&self, count: usize) -> String {
+        if self.zh() {
+            format!("共 {count} 项未计入")
+        } else {
+            format!("{count} items excluded")
+        }
+    }
+
     pub fn excluded_currencies(&self, codes: &str) -> String {
         if self.zh() {
             format!("{codes} 未计入 · 缺少汇率")

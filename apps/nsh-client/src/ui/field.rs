@@ -106,7 +106,7 @@ pub fn select_input(label: impl IntoReactive<SharedString>) -> SelectElement {
                 .dark(|s| s.border_1().border_color(color::LINE))
         })
         .list_style(|s| s.p_1())
-        .backdrop_style(|s| s.bg(color::SCRIM.opacity(0.32)))
+        .backdrop_style(|s| s.bg(color::SCRIM))
         .item_class("focus:outline-2")
         .item_style(|s| {
             s.min_h(px(52.0))

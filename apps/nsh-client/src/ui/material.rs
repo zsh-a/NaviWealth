@@ -41,5 +41,5 @@ pub fn glass<E: Styled>(element: E, kind: Glass) -> E {
     element
         .border(px(material::EDGE))
         .border_color(color::GLASS_EDGE)
-        .lift(&shadow::DOCK)
+        .lift(&shadow::FLOAT)
 }

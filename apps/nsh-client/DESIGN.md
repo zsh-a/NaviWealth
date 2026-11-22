@@ -72,7 +72,7 @@ AI only to turn text and images into drafts, using the owner's model account.
   Only a draft with no thread yet requests initial focus after the sheet
   opens; a ready result stays readable.
   In light appearance, review cards have a white surface, a 20 pt radius,
-  a 0.5 pt ink edge at 15% opacity and the `CARD` contact shadow. A recent
+  a 0.5 pt ink edge at 15% opacity and a short contact shadow when editable. A recent
   correction briefly tints the edge cobalt. Ready cards can show field
   evidence and support individual removal in a batch.
   Suggested cash accounts carry a separate approval action. Local editing includes
@@ -113,7 +113,9 @@ AI only to turn text and images into drafts, using the owner's model account.
   Capture uses a content-sized entry sheet, then expands to 92% of the window
   less the visible keyboard. Android Back dismisses the keyboard first. The management
   menu and compact account editor also fit their content. Other task
-  editors retain `task_sheet`'s filled height, capped at 540 pt. Both plan
+  editors retain `task_sheet`'s filled height, capped at 540 pt. The holding
+  trade form uses the space above the visible keyboard for its fields and
+  fixed cash preview. Its listing search and other text-first editors plan
   for the keyboard when they open (the last height it reached, else 38% of
   the window). The NSH sheet lifts the panel by the keyboard height above the
   bottom safe area. NSH 0.6.1 presents each sheet in a dialog window whose
@@ -176,9 +178,10 @@ AI only to turn text and images into drafts, using the owner's model account.
   Undo. Confirmation consumes the draft and writes all its records together.
   A draft never contributes to totals. Recognized food nutrition remains an
   estimate, and unknown payment accounts are never silently guessed.
-- **Records:** every day newest first, its header on one line (date, the
-  day's kcal, a weight chip that opens the weight editor), its meals as rows
-  of one card; all / meals / weight / money; 21 days at a time. The calendar button
+- **Records:** days appear newest first. The date and optional weight action
+  head each group, followed by its recorded totals. Meals and money use the same
+  flat timeline rows as Today. The filters cover all records, money, meals and
+  weight. The timeline loads 21 days at a time. The calendar button
   opens a month calendar and shares the header with the statement import action.
   In All days, consecutive weight-only entries collapse into one light
   summary with the date span as its title and logged-day count plus oldest → newest
@@ -190,23 +193,23 @@ AI only to turn text and images into drafts, using the owner's model account.
   income and transfers alone never create a zero-spending summary.
   A chosen day is shown alone, under a bar with its date, steps to adjacent
   days with records, and All days.
-- **Assets:** net worth leads, flat on the canvas. Excluded currencies appear beneath the figure. Asset and debt totals sit together above
+- **Assets:** net worth leads, flat on the canvas. Asset and debt totals sit together above
   a tappable trend footer with the sparkline and Asset changes link. Cash accounts, open holdings and debt accounts
-  follow as flat rows on the canvas.
+  follow as flat rows on the canvas with a half-point divider beneath each row.
   The sparkline reuses dated valuation history and keeps missing-rate gaps;
   the line is the accent with a soft accent wash beneath it, and the latest valuation is dotted.
   The caption shows the 30-day change when records reach back that far, else
-  the nonzero change since the first complete valuation; without both
-  complete endpoints it falls back to the valuation basis. Asset changes
-  remains a visible link.
+  the nonzero change from the first complete valuation, with its date.
+  When either endpoint is missing, the caption gives the valuation basis.
   With holdings, values use dated native-currency prices, falling back to cost
   when unpriced; without holdings, the basis is book balances. CNY, HKD and
   USD accounts and holdings retain their original amounts. The overview converts
-  to CNY using the latest rate on or before its date; missing rates label the
-  figure as known value and name the excluded currencies. A history with missing
-  dated rates shows an explicit message instead of an incomplete chart. The visible
-  trend footer opens Asset changes. Its valuation basis expands on demand, and
-  missing-rate notices name the affected dates in the selected window.
+  to CNY using the latest rate on or before its date. When rates are missing,
+  the headline and subtotals identify the included amounts. Tapping an excluded
+  currency opens its rate and identifies the affected accounts and holdings.
+  Asset changes marks the affected dates and gaps in the historical chart.
+  Its valuation basis expands on demand. The change breakdown uses Review’s
+  attribution over the interval from the chart’s first point to the inspected day.
   Each holding keeps its manual price date or cost-fallback label. Unchecked
   accounts keep a visible label; ordinary last-check dates live in account
   details and remain in the row's accessible description. Internal holding
@@ -229,7 +232,9 @@ AI only to turn text and images into drafts, using the owner's model account.
   amount and one-decimal percentage of cost when the cost is positive. Realized gain and dividends
   appear when nonzero; unpriced unrealized gain is a dash. Opening a holding
   needs name, quantity and unit cost. Buy/sell use quantity, price and a cash
-  account; dividends use amount and a cash account. Optional fees and date
+  account. Dividends use amount and a cash account. The fixed footer shows the
+  account’s net debit or credit including fees above Save. Price history opens
+  on the source of the displayed price. Optional fees and date
   sit under Details. Date and cash pickers replace the same sheet body;
   Back preserves the draft. Unsaved trade input has a discard guard. Prices
   have their own compact amount-and-date sheet. Activity opens a receipt
@@ -237,9 +242,10 @@ AI only to turn text and images into drafts, using the owner's model account.
 - **Own accounts:** creation leads with the name and compact type/currency
   choices; the balance can be checked later. Creation stays on Assets and
   offers Check balance in the confirmation notice. Account rows open the
-  book balance or debt, latest check status and
-  newest-first activity, with Show earlier for more history. Rename is a
-  visible pencil action; it edits the name, not the account type.
+  book balance or debt, latest check status and newest-first activity.
+  Expanding the last check shows dated observations, including matches.
+  Each adjustment opens its original posting. Show earlier pages through
+  history. The pencil action renames the account.
 - **Balance checks:** one compact task sheet asks for amount and date.
   The calendar and then the difference preview replace its body; Back
   preserves the input. The preview names the account and date, shows book
@@ -252,7 +258,7 @@ AI only to turn text and images into drafts, using the owner's model account.
   have a discard guard. Opening and adjustment entries open a readable
   summary linked to the account; corrections go through another balance check.
 - **Review:** a calendar week (Monday first in Chinese and ISO locales) or
-  month, with its segmented control above the labelled period stepper.
+  month. The compact period selector sits at the right of the title and wraps below it when large text needs the space. The dated stepper follows.
   The headline (Title, a step above section headers) shows one observed change, preferring the period’s weight change
   and falling back to intake per logged day when both periods have entries. Partial periods compare matching elapsed days;
   missing observations never imply a zero or an invented comparison.
@@ -354,7 +360,7 @@ tone and a hairline.
 
 | Role | Tokens |
 |---|---|
-| Surfaces | `CANVAS`, `SURFACE`, `SURFACE_2` (wells), `SUNKEN` (fields, tracks), `RAISED`, `LINE`, `LINE_STRONG` |
+| Surfaces | `CANVAS`, `SURFACE`, `SURFACE_2` (wells), `SUNKEN` (fields, tracks), `LINE`, `LINE_STRONG` |
 | Text | `INK` (titles, figures), `BODY`, `MUTED` |
 | Decorative / inactive | `FAINT` (tertiary marks such as chevrons, disabled controls and unavailable dates) |
 | Accent | `ACCENT` (fills, chart lines, the goal ring), `ACCENT_INK` (accent text and glyphs, on the platter too), `ACCENT_SOFT` (the chosen tab's platter, selected chips) |
@@ -373,7 +379,6 @@ chosen or system appearance.
 | `SURFACE` | `#FFFFFF` | `#151517` |
 | `SURFACE_2` | `#F3F3F0` | `#1C1C1F` |
 | `SUNKEN` / `TRACK` | `#EDEDEA` | `#19191C` |
-| `RAISED` | `#FFFFFF` | `#2A2A2E` |
 | `LINE` | `#E6E6E2` | `#26262A` |
 | `LINE_STRONG` | `#D1D1CC` | `#3C3C41` |
 | `INK` | `#111113` | `#F2F2F0` |
@@ -421,9 +426,9 @@ never marks a gain.
 - **Sections and cards:** headline figures and groups of figures lie flat on
   the canvas. `section` divides a page's parts with a hairline above and
   keeps the title and figures at the page gutter (Review's parts); Today's
-  body metrics sit between hairlines. Cards are objects: repeated rows
-  (records, accounts, holdings), sheets, a pending draft and framed tools,
-  drawn as a surface with a 0.5 pt hairline edge and only a contact shadow.
+  body metrics sit between hairlines. Assets, the Today and Records timelines,
+  and a meal's food list lie directly on the canvas. Grouped settings and framed
+  tools use an opaque surface with a 0.5 pt hairline edge. Pending drafts have a short contact shadow.
   Cards never nest.
 - **Rows** for meals and money share a 28 pt icon column. A group with any meal
   photo reserves 52 pt for every leading cell. Transfers use the source and
@@ -431,8 +436,8 @@ never marks a gain.
   a photo uses the semantic food icon; financial rows use their semantic
   icon (Check for opening balances and adjustments; Sliders stays Settings).
   Footprint icons are 20 pt and muted so the column aligns without reading
-  as a column of icons. Dividers start where row text starts and run to the
-  card's edge (weight rows, without a footprint, at the card inset). Amount
+  as a column of icons. Timeline dividers start at the following row's title
+  and run to the page gutter. Amount
   and currency share a baseline,
   with a stacked layout for large text or long exact amounts. Asset rows use
   existing semantic icons: Wallet for cash accounts, CreditCard for debt accounts
@@ -474,9 +479,9 @@ existing meanings.
 
 | Material | Surface | Edge and light | Lift |
 |---|---|---|---|
-| Dock and its capture button | `GLASS` at 0.84 opacity, 24 pt backdrop blur | 0.75 pt `GLASS_EDGE` around the pill | `shadow::DOCK` |
+| Dock and its capture button | `GLASS` at 0.84 opacity, 24 pt backdrop blur | 0.75 pt `GLASS_EDGE` around the pill | `shadow::FLOAT` |
 | Dock lens (while a finger is down) | `SURFACE` at 0.46 over the glass, replacing the `ACCENT_SOFT` platter | 0.75 pt `GLASS_EDGE` | `shadow::LENS` |
-| Sheet | Opaque `SURFACE`, no backdrop blur or highlight wash | Tone separates content from a 0.32 black scrim | None: a large blurred shadow is costly to redraw while the sheet moves with the keyboard |
+| Sheet | Opaque `SURFACE`, no backdrop blur or highlight wash | Shared modal scrim at 30% in light, 55% in dark | None: a large blurred shadow is costly to redraw while the sheet moves with the keyboard |
 | Media controls and captions | `MEDIA_SCRIM` at 0.64 opacity, 18 pt backdrop blur; pressed buttons use 0.74 opacity | White `ON_MEDIA`; caption secondary text at 0.8 opacity | No additional shadow |
 
 The glass edge is white at `#C8` alpha in light appearance and `#1F`
@@ -507,12 +512,10 @@ dark appearance.
 
 | Token | Layers | Use |
 |---|---|---|
-| `CARD` | `(0, 1, 2, 0, #1111130A)` | Cards (objects: groups of rows, a pending draft) and secondary raised buttons |
-| `FLOAT` | `(0, 1, 2, 0, #11111314)`; `(0, 8, 18, -6, #11111326)` | Primary buttons |
-| `CAPTURE_SAVE` | `(0, 1, 2, 0, #11111312)` and `(0, 5, 10, -4, #2F5BEA4D)` | Compact light capture save button |
-| `DOCK` | `(0, 1, 3, 0, #0000000A)`; `(0, 8, 24, 0, #00000014)` | The floating tab bar and its capture button: a soft, wide drop |
-| `SEGMENT` | `(0, 1, 2, 0, #11111314)` | Selected segments and pressed primary buttons |
-| `LENS` | `(0, 6, 12, -4, #0000001F)` | The dock's lifted lens |
+| `CONTACT` | `(0, 1, 2, 0, #1111130A)` | Pending drafts, small raised controls and pressed primary buttons |
+| `ACTION` | `CONTACT` and `(0, 5, 10, -4, #2F5BEA38)` | Cobalt actions and compact capture confirmation |
+| `FLOAT` | `CONTACT` and `(0, 8, 18, -6, #1111131A)` | Dock, floating capture button, pickers and transient notices |
+| `LENS` | `(0, 6, 16, -6, #1111131A)` | Dock lens while following a press |
 
 ## Components (`src/ui/`)
 
@@ -526,12 +529,18 @@ variants), `chip` (selected: `ACCENT_SOFT` with `ACCENT_INK`),
 action, usually Undo), `spinner`, `shimmer` + `skeleton`, `badge`,
 `empty_state`, `appear`, `stat` with `counted` (a figure easing to its new
 value), `macro_tiles`, the energy `ring` (an accent arc), and one icon
-family (24 pt line glyphs, plus four filled tab glyphs for the dock). Pages share one top bar: a raised round Back and the title
-centered. Screens: the month calendar (`pages/review_calendar.rs`) serves
-Review's month and Records' go-to-day sheet.
+family (24 pt line glyphs, plus four filled tab glyphs for the dock). Exclusive
+choices in page headers, filters and forms use accent text and a sliding 2 pt
+underline. Tabs keep 48 pt minimum touch heights and labels can wrap. New
+account forms label the account type and currency separately. Compact choices
+such as food portions and chart ranges use an accent fill on the current value.
+Portion shortcuts wrap in groups of three when space is tight. Pushed pages
+use ghost toolbar actions and a centered title. Meal controls use glass over a photo.
+The month calendar (`pages/review_calendar.rs`) serves Review's month and
+the go-to-day sheet in Records.
 
 Button feedback is restrained: buttons and chips press to 98%, icon buttons
-to 96%. Primary buttons lose their sheen and settle to `shadow::SEGMENT`
+to 96%. Primary buttons lose their sheen and settle to `shadow::CONTACT`
 while pressed. The shared primary button and primary icon button each emit
 one light impact on activation, as does the dock's capture button
 (`Variant::Dock`); the home capture action adds no second haptic. Reduced motion keeps scale at 1 without starting the press spring.
@@ -671,7 +680,7 @@ still.
 | Meal page | Results arrive | Rows rise in, staggered; the total eases up | Shown at once |
 | Capture | Model output arrives | Newly parsed cards rise 14 pt. The reviewed figure lifts 4 pt and fades in on its first value and after a change. The actual amount is visible throughout. | Cards and figures appear at their final positions |
 | Capture | Batch saved | After the sheet exits, compact copies fly from the reviewed rows to the dock over 380 ms. Spending and income land on Records. Today’s meals and weights land on Today, earlier ones on Records. Transfers, trades, balance checks and manual prices land on Assets. Notes land on Review. The receipt and Undo are available immediately. | Only the actionable receipt appears |
-| Segmented | Choice | Raised pill slides to the segment (spring) | Jumps |
+| Segmented | Choice | The short underline slides to the selected label | Jumps |
 | Sheets | Open / close | Slide from the bottom over a fading scrim; swipe down to close | Appear / disappear |
 | Toggles | Checkbox / switch | Fill `instant`; knob slides `fast` | Instant |
 
@@ -690,7 +699,8 @@ row-icon and quieter-dock refinement is captured in
 `.impeccable/review/assets-polished/`. These are desktop development evidence
 only; Android device verification remains outstanding.
 
-The Instrument palette (2026-11-22) replaces Ink & Daylight. Calculated from
+The November 22 Instrument palette audit included the since-retired raised
+segment surface. It replaced Ink & Daylight. Calculated from
 the source tokens in `src/ui/theme.rs` with the WCAG 2 formula, 90
 text/background pairs across both appearances are all at least 4.5:1: `INK`,
 `BODY`, `MUTED`, `ACCENT_INK` and the three status colors on `CANVAS`,

@@ -13,6 +13,7 @@ use crate::{
 };
 
 pub fn shell() -> impl IntoElement {
+    crate::pages::assets::current::provide();
     nav_stack()
         .flex_1()
         .child(home_page().key("home"))
@@ -50,7 +51,10 @@ pub fn shell() -> impl IntoElement {
                     Route::StatementImport => {
                         crate::pages::statement_import::statement_import_page()
                     }
-                    Route::PricesAndRates(id) => crate::pages::prices_and_rates::page(id),
+                    Route::PricesAndRates(id) => crate::pages::prices_and_rates::page(id, None),
+                    Route::ExchangeRate(currency) => {
+                        crate::pages::prices_and_rates::page(None, Some(currency))
+                    }
                 };
                 // Back on iOS and Android is the system's: it pops the page
                 // natively, and the routes follow.

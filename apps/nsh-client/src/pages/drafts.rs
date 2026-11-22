@@ -152,7 +152,7 @@ fn card(draft: PendingMeal) -> impl IntoElement {
         .p(px(1.5))
         .rounded(px(radius::CARD))
         .bg(color::LINE)
-        .lift(&shadow::CARD)
+        .lift(&shadow::CONTACT)
         .child(
             view()
                 .flex_row()

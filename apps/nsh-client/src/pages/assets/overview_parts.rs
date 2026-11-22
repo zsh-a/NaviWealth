@@ -65,51 +65,42 @@ pub(super) fn account_group(
     }
     Some(
         view()
-            .gap_2()
-            .child(
-                text(if kind == AccountKind::Assets {
-                    s().cash_accounts
-                } else {
-                    s().debt_accounts
-                })
-                .typo(Type::Subhead)
-                .font_weight(FontWeight::SEMIBOLD)
-                .text_color(color::MUTED)
-                .role(AccessibilityRole::Header),
-            )
-            .child(
-                card()
-                    .overflow_hidden()
-                    .children(own.into_iter().enumerate().map(|(index, a)| {
-                        let balance = balances.get(a).copied().unwrap_or(0);
-                        let checked = checks
-                            .iter()
-                            .filter(|c| c.account == *a)
-                            .max_by_key(|c| c.checked_at);
-                        let detail = checked
-                            .map(|c| {
-                                format!("{} · {}", s().account_checked, s().short_date(Day(c.day)))
-                            })
-                            .unwrap_or_else(|| s().account_unchecked.into());
-                        let name = crate::ui::currency::account_label(a);
-                        let route = a.to_string();
-                        let value = assets::displayed(a, balance);
-                        view()
-                            .child((index > 0).then(|| hairline(space::CARD)))
-                            .child(asset_row(
-                                name,
-                                crate::ui::currency::format(value, a.currency()),
-                                detail,
-                                checked.is_none(),
-                                if kind == AccountKind::Assets {
-                                    Icon::Wallet
-                                } else {
-                                    Icon::CreditCard
-                                },
-                                move || nav::push(Route::Account(route.clone())),
-                            ))
-                    })),
-            )
+            .child(asset_group_title(if kind == AccountKind::Assets {
+                s().cash_accounts
+            } else {
+                s().debt_accounts
+            }))
+            .children(own.into_iter().map(|a| {
+                let balance = balances.get(a).copied().unwrap_or(0);
+                let checked = checks
+                    .iter()
+                    .filter(|c| c.account == *a)
+                    .max_by_key(|c| c.checked_at);
+                let detail = checked
+                    .map(|c| {
+                        format!(
+                            "{} · {}",
+                            s().account_checked,
+                            s().short_date(Day(c.checked_at.date()))
+                        )
+                    })
+                    .unwrap_or_else(|| s().account_unchecked.into());
+                let name = crate::ui::currency::account_label(a);
+                let route = a.to_string();
+                let value = assets::displayed(a, balance);
+                asset_row(
+                    name,
+                    crate::ui::currency::format(value, a.currency()),
+                    detail,
+                    checked.is_none(),
+                    if kind == AccountKind::Assets {
+                        Icon::Wallet
+                    } else {
+                        Icon::CreditCard
+                    },
+                    move || nav::push(Route::Account(route.clone())),
+                )
+            }))
             .into_element(),
     )
 }

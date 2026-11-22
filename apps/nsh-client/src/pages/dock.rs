@@ -20,7 +20,7 @@ use crate::{
     i18n::s,
     nav::{self, Tab},
     ui::{
-        Icon, IconBtn, Type, Typo, Variant, color, icon,
+        Icon, IconBtn, Lift, Type, Typo, Variant, color, icon,
         material::{self, Glass},
         motion, space,
         theme::shadow,
@@ -241,8 +241,7 @@ fn lens(
         .style_when(lifted, |s| {
             s.bg(color::SURFACE.opacity(0.46))
                 .border_color(color::GLASS_EDGE)
-                .shadow(shadow::LENS.iter().copied())
-                .dark(|s| s.shadow(shadow::NONE))
+                .lift(&shadow::LENS)
         })
         .bind_transform(TransformKind::ScaleX, &lift.mul(&stretch_x))
         .bind_transform(TransformKind::ScaleY, &lift.mul(&stretch_y))

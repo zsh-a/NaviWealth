@@ -143,10 +143,12 @@ export function ScalePanel(props: { close: () => void; busy: Signal<boolean> }) 
           backgroundColor: action.primary
             ? action.disabled
               ? palette().well
-              : palette().ink
+              : palette().action
             : "transparent",
         }}
-        activeStyle={{ opacity: 0.76 }}
+        activeStyle={
+          action.primary ? { backgroundColor: palette().actionPressed } : { opacity: 0.76 }
+        }
       >
         <Text
           style={{

@@ -47,6 +47,13 @@ pub enum Window {
 }
 
 impl Window {
+    pub(crate) fn available(self, today: Date, earliest: Date) -> Self {
+        if self == Self::All && Day(today).days_since(Day(earliest)) < 30 {
+            Self::Month
+        } else {
+            self
+        }
+    }
     pub(crate) fn start(self, today: Date, earliest: Date) -> Date {
         match self {
             Self::Week => Day(today).plus_days(-6).0,
@@ -73,7 +80,7 @@ pub fn chart(
     today: Date,
 ) -> AnyElement {
     let earliest = points.first().map_or(today, |p| p.0.min(today));
-    chart_from(title, points, unit, window, today, earliest)
+    chart_from(title, points, unit, window, today, earliest, None)
 }
 
 /// Estimates can query only the requested days while still offering all available history.
@@ -84,13 +91,11 @@ pub fn chart_from(
     window: Signal<Window>,
     today: Date,
     earliest: Date,
+    selection: Option<Signal<Option<Date>>>,
 ) -> AnyElement {
     points.truncate(points.partition_point(|p| p.0 <= today));
     let span = Day(today).days_since(Day(earliest));
-    let active = move || match window.get() {
-        Window::All if span < 30 => Window::Month,
-        other => other,
-    };
+    let active = move || window.get().available(today, earliest);
     let has_history = !points.is_empty() || earliest < today;
     let options = [Window::Week, Window::Month, Window::All]
         .into_iter()
@@ -116,7 +121,14 @@ pub fn chart_from(
                     chip(
                         move || w.label().into(),
                         move || active() == w,
-                        move || window.set(w),
+                        move || {
+                            if window.get_untracked() != w {
+                                if let Some(date) = selection {
+                                    date.set(None);
+                                }
+                                window.set(w);
+                            }
+                        },
                     )
                     .min_w(px(42.0))
                     .px_2()
@@ -143,7 +155,7 @@ pub fn chart_from(
                         };
                         return empty(message);
                     }
-                    series(title.get(), visible, unit, from, today)
+                    series(title.get(), visible, unit, from, today, selection)
                 })
             })
         }))
@@ -158,7 +170,14 @@ fn empty(message: String) -> AnyElement {
         .into_element()
 }
 
-fn series(title: String, points: &[Point], unit: Unit, from: Date, end: Date) -> AnyElement {
+fn series(
+    title: String,
+    points: &[Point],
+    unit: Unit,
+    from: Date,
+    end: Date,
+    selection: Option<Signal<Option<Date>>>,
+) -> AnyElement {
     let Some(low) = points.iter().filter_map(|p| p.1).min() else {
         return empty(
             copy(
@@ -185,11 +204,7 @@ fn series(title: String, points: &[Point], unit: Unit, from: Date, end: Date) ->
             {
                 caption = format!(
                     "{caption}  ·  {} {}{}",
-                    if points[0].0 == from {
-                        copy("From start", "较期初")
-                    } else {
-                        copy("From first record", "较首条记录")
-                    },
+                    s().net_change_since(Day(points[0].0)),
                     if delta > 0 { "+" } else { "" },
                     unit.format(delta)
                 );
@@ -218,7 +233,7 @@ fn series(title: String, points: &[Point], unit: Unit, from: Date, end: Date) ->
                 color: color::ACCENT,
                 goal: None,
             }
-            .draw(move || height),
+            .draw_with_selection(move || height, selection),
         )
         .child((low != high).then(|| {
             text(format!(
@@ -262,6 +277,7 @@ mod tests {
             Unit::Money,
             day.plus_days(-2).0,
             day.0,
+            None,
         )
     }
 

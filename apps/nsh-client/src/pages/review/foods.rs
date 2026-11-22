@@ -19,6 +19,7 @@ use crate::{
     },
     i18n::{Strings, s},
     nav::{self, Route},
+    pages::rows::INSET,
     ui::{
         Btn, Icon, Size, Type, Typo, color,
         feedback::{Tone, appear, badge, shimmer, skeleton},
@@ -102,31 +103,23 @@ fn placeholders() -> impl IntoElement {
                     (0..3).map(move |_| view().flex_1().child(skeleton(None, 76.0, sweep))),
                 )),
         )
-        .child(
-            card()
-                .px(px(space::CARD))
-                .children((0..3).map(move |index| {
-                    view().child((index > 0).then(|| hairline(0.0))).child(
+        .child(view().px(px(INSET)).children((0..3).map(move |index| {
+            view().child((index > 0).then(|| hairline(0.0))).child(
+                view()
+                    .flex_row()
+                    .items_center()
+                    .gap_3()
+                    .py_5()
+                    .child(
                         view()
-                            .flex_row()
-                            .items_center()
-                            .gap_3()
-                            .py_5()
-                            .child(
-                                view()
-                                    .flex_1()
-                                    .gap_2()
-                                    .child(skeleton(
-                                        Some([150.0, 120.0, 170.0][index]),
-                                        16.0,
-                                        sweep,
-                                    ))
-                                    .child(skeleton(Some(90.0), 12.0, sweep)),
-                            )
-                            .child(skeleton(Some(44.0), 16.0, sweep)),
+                            .flex_1()
+                            .gap_2()
+                            .child(skeleton(Some([150.0, 120.0, 170.0][index]), 16.0, sweep))
+                            .child(skeleton(Some(90.0), 12.0, sweep)),
                     )
-                })),
-        )
+                    .child(skeleton(Some(44.0), 16.0, sweep)),
+            )
+        })))
 }
 
 fn food_list(draft: Draft) -> impl IntoElement {
@@ -143,11 +136,11 @@ fn food_list(draft: Draft) -> impl IntoElement {
                     .into_element(),
             ),
         ))
-        .child(card().overflow_hidden().child(each(
+        .child(each(
             draft.foods,
             |food: &Food| food.id,
             move |food, index| food_row(draft, food, index),
-        )))
+        ))
         .child(when(
             move || draft.skipped.get() > 0,
             move || {
@@ -161,68 +154,67 @@ fn food_list(draft: Draft) -> impl IntoElement {
 
 fn food_row(draft: Draft, food: ReadSignal<Food>, index: ReadSignal<usize>) -> impl IntoElement {
     let id = food.with_untracked(|food| food.id);
-    appear(
-        index.get_untracked() as u32,
-        view()
-            .child(when(move || index.get() > 0, || hairline(space::CARD)))
-            .child(
-                row_button(move || draft.editing.set(Some(Editing::Food(id))))
-                    .child(
-                        view()
-                            .flex_1()
-                            .min_w(px(0.0))
-                            .gap(px(6.0))
-                            .child(
-                                text(move || food.with(|f| f.name.clone()))
-                                    .typo(Type::Headline)
-                                    .text_color(color::INK)
-                                    .number_of_lines(2),
-                            )
-                            .child(
-                                view()
-                                    .flex_row()
-                                    .items_center()
-                                    .flex_wrap()
-                                    .gap_2()
-                                    .child(
-                                        text(move || {
-                                            food.with(|f| {
-                                                format!(
-                                                    "{} {}",
-                                                    format::grams(f.grams),
-                                                    s().grams_unit
-                                                )
-                                            })
+    let row = view()
+        .child(when(move || index.get() > 0, || hairline(INSET)))
+        .child(
+            row_button(move || draft.editing.set(Some(Editing::Food(id))))
+                .px(px(INSET))
+                .child(
+                    view()
+                        .flex_1()
+                        .min_w(px(0.0))
+                        .gap(px(6.0))
+                        .child(
+                            text(move || food.with(|f| f.name.clone()))
+                                .typo(Type::Headline)
+                                .text_color(color::INK)
+                                .number_of_lines(2),
+                        )
+                        .child(
+                            view()
+                                .flex_row()
+                                .items_center()
+                                .flex_wrap()
+                                .gap_2()
+                                .child(
+                                    text(move || {
+                                        food.with(|f| {
+                                            format!("{} {}", format::grams(f.grams), s().grams_unit)
                                         })
-                                        .typo(Type::Subhead)
-                                        .tabular_nums()
-                                        .text_color(color::MUTED),
-                                    )
-                                    .child(dynamic(move || {
-                                        let (source, check) =
-                                            food.with(|f| (f.source.clone(), f.needs_check()));
-                                        untracked(|| source_badge(&source, check))
-                                    })),
-                            ),
-                    )
-                    .child(
-                        view()
-                            .items_end()
-                            .child(
-                                text(move || food.with(|f| format::kcal(f.amount().kcal)))
-                                    .typo(Type::Headline)
+                                    })
+                                    .typo(Type::Subhead)
                                     .tabular_nums()
-                                    .text_color(color::INK),
-                            )
-                            .child(
-                                text(|| s().kcal)
-                                    .typo(Type::Caption)
                                     .text_color(color::MUTED),
-                            ),
-                    )
-                    .child(icon(Icon::ChevronRight, 16.0, color::FAINT)),
-            ),
-    )
+                                )
+                                .child(dynamic(move || {
+                                    let (source, check) =
+                                        food.with(|f| (f.source.clone(), f.needs_check()));
+                                    untracked(|| source_badge(&source, check))
+                                })),
+                        ),
+                )
+                .child(
+                    view()
+                        .items_end()
+                        .child(
+                            text(move || food.with(|f| format::kcal(f.amount().kcal)))
+                                .typo(Type::Headline)
+                                .tabular_nums()
+                                .text_color(color::INK),
+                        )
+                        .child(
+                            text(|| s().kcal)
+                                .typo(Type::Caption)
+                                .text_color(color::MUTED),
+                        ),
+                )
+                .child(icon(Icon::ChevronRight, 16.0, color::FAINT)),
+        );
+    if draft.is_saved_meal() {
+        row
+    } else {
+        appear(index.get_untracked() as u32, row)
+    }
 }
 
 fn source_badge(source: &FoodSource, check: bool) -> AnyElement {

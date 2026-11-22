@@ -1,5 +1,4 @@
-//! The day's meals, newest first, as rows of one card led by each meal's
-//! photo; a calm empty state when the day has none.
+//! Today's timeline, newest first, with photos and icons aligned across rows.
 
 use navi_finance::journal::Transaction;
 use nsh_core::prelude::*;
@@ -13,10 +12,7 @@ use crate::{
         home::Sheets,
         rows::{divider, leading_width, meal_row, text_inset},
     },
-    ui::{
-        Type, Typo, color,
-        surface::{card, section_header},
-    },
+    ui::{Type, Typo, color, surface::section_header},
 };
 
 #[derive(Clone, PartialEq)]
@@ -106,7 +102,7 @@ pub fn meal_list(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
             when(
                 move || count() > 0,
                 move || {
-                    card().overflow_hidden().child(each(
+                    each(
                         list,
                         |record: &Record| record.key(),
                         move |record, index| {
@@ -131,7 +127,7 @@ pub fn meal_list(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                                 })
                             })
                         },
-                    ))
+                    )
                 },
             )
             .otherwise(move || {

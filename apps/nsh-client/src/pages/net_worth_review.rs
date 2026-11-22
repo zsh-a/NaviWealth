@@ -94,12 +94,6 @@ fn complete(
     shown: Signal<f64>,
 ) -> View {
     let cny = |amount| format(amount, Currency::CNY);
-    let parts: Vec<_> = a
-        .parts()
-        .into_iter()
-        .filter(|(_, amount)| *amount != 0)
-        .map(|(part, amount)| (part, amount, details(&a, part)))
-        .collect();
     frame()
         .child(
             text(move || signed(shown.get().round() as i64, Currency::CNY))
@@ -113,6 +107,19 @@ fn complete(
                 .tabular_nums()
                 .text_color(color::MUTED),
         )
+        .child(breakdown(&a, edit))
+}
+
+/// Both Review and the dated Assets chart present the same six journal parts.
+pub(super) fn breakdown(a: &Attribution, edit: Signal<Option<String>>) -> View {
+    let parts: Vec<_> = a
+        .parts()
+        .into_iter()
+        .filter(|(_, amount)| *amount != 0)
+        .map(|(part, amount)| (part, amount, details(a, part)))
+        .collect();
+    view()
+        .gap_2()
         .child(if parts.is_empty() {
             text(|| s().net_worth_unchanged())
                 .typo(Type::Subhead)

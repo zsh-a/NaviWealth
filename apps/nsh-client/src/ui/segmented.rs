@@ -1,5 +1,4 @@
-//! A segmented control: a few exclusive choices in one track, with one
-//! selection that slides to the chosen segment (natively, on a spring).
+//! Exclusive choices with a native sliding underline.
 
 use std::rc::Rc;
 
@@ -7,8 +6,8 @@ use nsh_base::{tab, tabs};
 use nsh_core::{Haptic, prelude::*};
 
 use super::{
-    Lift, Typo,
-    theme::{Type, color, shadow},
+    Typo,
+    theme::{Type, color, size},
 };
 
 /// One choice: its value and its label (read in a binding).
@@ -33,17 +32,17 @@ pub fn segmented<T: Copy + PartialEq + 'static>(
     selected: impl Fn() -> T + Copy + 'static,
     select: impl Fn(T) + Copy + 'static,
 ) -> impl IntoElement {
+    // Margins resolve against the whole row. Inset by one third of a tab
+    // on either side so the mark scales from a header switch to a full row.
+    let inset = relative(1.0 / (3.0 * segments.len().max(1) as f32));
     tabs()
         .flex_row()
-        .p(px(4.0))
-        .rounded_full()
-        .bg(color::SUNKEN)
         .indicator_style(move |s| {
-            s.top(px(4.0))
-                .bottom(px(4.0))
+            s.bottom(px(5.0))
+                .h(px(2.0))
+                .mx(inset)
                 .rounded_full()
-                .bg(color::RAISED)
-                .lift(&shadow::SEGMENT)
+                .bg(color::ACCENT)
         })
         .children(segments.into_iter().map(move |segment| {
             let value = segment.value;
@@ -58,7 +57,9 @@ pub fn segmented<T: Copy + PartialEq + 'static>(
                     }
                 })
                 .flex_1()
-                .min_h(px(48.0))
+                .min_w(px(0.0))
+                .min_h(px(size::TOUCH))
+                .py(px(9.0))
                 .items_center()
                 .justify_center()
                 .rounded_full()
@@ -67,10 +68,11 @@ pub fn segmented<T: Copy + PartialEq + 'static>(
                     text(move || label())
                         .typo(Type::Subhead)
                         .font_weight(FontWeight::SEMIBOLD)
-                        .number_of_lines(1)
+                        .number_of_lines(2)
+                        .text_center()
                         .text_color(move || {
                             if is_selected() {
-                                color::INK
+                                color::ACCENT_INK
                             } else {
                                 color::MUTED
                             }

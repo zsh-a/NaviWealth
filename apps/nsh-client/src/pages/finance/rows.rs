@@ -211,8 +211,7 @@ pub fn transaction_row(
         crate::ui::Icon::Wallet
     };
     row_button(on_press)
-        .pl(px(crate::pages::rows::LEAD))
-        .pr(px(18.0))
+        .px(px(crate::pages::rows::INSET))
         .py(px(if system_record { 8.0 } else { 10.0 }))
         .min_h(px(if system_record { 60.0 } else { 72.0 }))
         .gap(px(14.0))

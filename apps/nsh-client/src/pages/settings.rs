@@ -90,7 +90,7 @@ fn settings_group(
 /// Light, dark, or the device's choice. Each press applies at once: the
 /// root's effect hands the choice to the engine, and it is kept.
 fn appearance_group() -> impl IntoElement {
-    card().overflow_hidden().p(px(space::CARD)).child(segmented(
+    segmented(
         vec![
             Segment::new(settings::Appearance::System, || {
                 s().appearance_system.into()
@@ -100,7 +100,7 @@ fn appearance_group() -> impl IntoElement {
         ],
         settings::appearance,
         settings::save_appearance,
-    ))
+    )
 }
 
 /// An icon in its well: the fixed anchor every settings row leads with.

@@ -166,13 +166,19 @@ const paletteKeys = {
   line: true,
   well: true,
   danger: true,
+  action: true,
+  actionPressed: true,
   onAction: true,
   positive: true,
   scrim: true,
-} satisfies Record<keyof Palette, true>;
+} satisfies Record<Exclude<keyof Palette, "sheetRadius">, true>;
 
 function isPalette(value: unknown): value is Palette {
-  return isRecord(value) && Object.keys(paletteKeys).every((key) => isString(value[key]));
+  return (
+    isRecord(value) &&
+    isNumber(value.sheetRadius) &&
+    Object.keys(paletteKeys).every((key) => isString(value[key]))
+  );
 }
 
 export const scaleNative = {

@@ -366,7 +366,7 @@ fn question_turn(
                 .gap_2()
                 .children(options.into_iter().map(move |option| {
                     let label = option.clone();
-                    chip(
+                    crate::ui::button::suggestion_chip(
                         move || label.clone().into(),
                         || false,
                         move || {

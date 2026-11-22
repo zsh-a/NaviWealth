@@ -55,7 +55,7 @@ pub trait Lift: Styled + Sized {
     /// Casts `layers` in light appearance; dark surfaces float by tone.
     fn lift(self, layers: &'static [BoxShadow]) -> Self {
         self.shadow(layers.iter().copied())
-            .dark(|s| s.shadow(theme::shadow::NONE))
+            .dark(|s| s.shadow_none())
     }
 }
 

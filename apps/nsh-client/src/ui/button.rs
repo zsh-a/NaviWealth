@@ -83,10 +83,10 @@ impl Variant {
                 .bg_linear_to_b()
                 .gradient_from(color::ACTION_SHEEN)
                 .gradient_to(color::ACTION)
-                .lift(&shadow::FLOAT),
-            Variant::CaptureSave => element.lift(&shadow::CAPTURE_SAVE),
+                .lift(&shadow::ACTION),
+            Variant::CaptureSave => element.lift(&shadow::ACTION),
             Variant::Secondary => element
-                .lift(&shadow::CARD)
+                .lift(&shadow::CONTACT)
                 .dark(|s| s.border_1().border_color(color::LINE)),
             Variant::Glass => element.backdrop_blur(px(18.0)),
             Variant::Dock => glass(element, Glass::Dock),
@@ -100,7 +100,7 @@ impl Variant {
         if self == Variant::CaptureSave {
             element.shadow_none()
         } else if self == Variant::Primary {
-            element.bg_gradient_none().lift(&shadow::SEGMENT)
+            element.bg_gradient_none().lift(&shadow::CONTACT)
         } else {
             element
         }
@@ -416,8 +416,7 @@ impl IconBtn {
     }
 }
 
-/// A compact choice or shortcut (a portion size): a neutral pill at rest,
-/// the soft accent platter while `selected` reads true.
+/// A compact choice. Only the selected value gets a persistent fill.
 pub fn chip(
     label: impl Fn() -> SharedString + 'static,
     selected: impl Fn() -> bool + Copy + 'static,
@@ -440,7 +439,6 @@ pub fn chip(
         .items_center()
         .justify_center()
         .rounded_full()
-        .bg(color::SURFACE_2)
         .hit_slop(EdgeInsets::all(px((size::TOUCH - size::SMALL) / 2.0)))
         .transition_colors()
         .duration(motion::FAST)
@@ -461,4 +459,13 @@ pub fn chip(
                     }
                 }),
         )
+}
+
+/// A standalone suggestion, with a visible surface before it is chosen.
+pub fn suggestion_chip(
+    label: impl Fn() -> SharedString + 'static,
+    selected: impl Fn() -> bool + Copy + 'static,
+    press: impl Fn() + 'static,
+) -> ButtonElement {
+    chip(label, selected, press).bg(color::SURFACE_2)
 }

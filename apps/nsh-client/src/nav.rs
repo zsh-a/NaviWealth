@@ -46,6 +46,7 @@ pub enum Route {
     ClosedHoldings,
     StatementImport,
     PricesAndRates(Option<String>),
+    ExchangeRate(navi_finance::currency::Currency),
     Spending {
         from: Day,
         to: Day,

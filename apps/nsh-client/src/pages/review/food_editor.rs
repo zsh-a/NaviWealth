@@ -16,10 +16,11 @@ use crate::{
     i18n::s,
     ui::{
         Btn, Icon, IconBtn, Size, Type, Typo, Variant,
-        button::chip,
+        button::{chip, suggestion_chip},
         color,
         field::{field, note, number_input, text_input},
         surface::disclosure,
+        theme::size,
     },
 };
 
@@ -274,7 +275,7 @@ pub fn FoodEditor() -> impl IntoElement {
                     .children(recent.into_iter().map(move |food| {
                         let label: SharedString = food.name.clone().into();
                         let chosen = stored(food.name.clone());
-                        chip(
+                        suggestion_chip(
                             move || label.clone(),
                             move || chosen.with(|c| name.with(|n| n == c)),
                             move || pick(&food),
@@ -320,22 +321,7 @@ pub fn FoodEditor() -> impl IntoElement {
                             .on_press(move || step(1.0)),
                     ),
             )
-            .child(estimate.map(|estimate| {
-                // One row of equal pills, however narrow the screen.
-                view().flex_row().gap(px(6.0)).children(PORTIONS.iter().map(
-                    move |(factor, label)| {
-                        let target = (estimate * factor).round();
-                        chip(
-                            move || (*label).into(),
-                            move || parsed_grams().is_some_and(|g| (g - target).abs() < 0.5),
-                            move || grams.set(field_number(target)),
-                        )
-                        .flex_1()
-                        .min_w(px(0.0))
-                        .px_1()
-                    },
-                ))
-            }))
+            .child(estimate.map(|estimate| portion_choices(estimate, grams)))
             .child(note(
                 move || grams_error().then(|| s().error_grams.into()),
                 || true,
@@ -475,4 +461,52 @@ fn nutrient(
         .flex_1()
         .min_w(px(0.0))
         .child(field(label, number_input(value, unit, label)))
+}
+
+/// Equal rounded weights can represent multiple factors for a small portion.
+/// Keep the factor the owner chose, then match manual edits to the nearest estimate.
+fn portion_choices(estimate: f64, grams: Signal<String>) -> impl IntoElement {
+    let chosen = signal(1.0);
+    let active = computed(move || {
+        let grams = grams.with(|value| parse_number(value))?;
+        let matches = |factor: f64| (grams - (estimate * factor).round()).abs() < 0.5;
+        let preferred = chosen.get();
+        if matches(preferred) {
+            return Some(preferred);
+        }
+        PORTIONS
+            .iter()
+            .map(|&(factor, _)| factor)
+            .filter(|&factor| matches(factor))
+            .min_by(|a, b| {
+                (grams - estimate * a)
+                    .abs()
+                    .total_cmp(&(grams - estimate * b).abs())
+            })
+    });
+    // Two groups keep all six targets in order when a narrow sheet wraps.
+    view()
+        .flex_row()
+        .flex_wrap()
+        .gap_y(px(size::TOUCH - size::SMALL))
+        .children(PORTIONS.chunks(3).map(move |group| {
+            view()
+                .flex_row()
+                .flex_1()
+                .min_w(|| px(3.0 * size::TOUCH * font_scale().max(1.0)))
+                .max_w(relative(1.0))
+                .children(group.iter().map(move |&(factor, label)| {
+                    chip(
+                        move || label.into(),
+                        move || active.get() == Some(factor),
+                        move || {
+                            chosen.set(factor);
+                            grams.set(field_number((estimate * factor).round()));
+                        },
+                    )
+                    .flex_1()
+                    .min_w(px(0.0))
+                    .px_1()
+                }))
+        }))
 }

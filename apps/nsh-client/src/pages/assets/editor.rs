@@ -159,15 +159,7 @@ pub fn account_task(
                                                     1
                                                 });
                                             })
-                                            .accessibility_label(|| {
-                                                Some(
-                                                    crate::i18n::catalog::copy(
-                                                        "Account type",
-                                                        "账户类型",
-                                                    )
-                                                    .into(),
-                                                )
-                                            })
+                                            .accessibility_label(|| Some(s().account_type.into()))
                                             .px_0()
                                             .min_h(px(44.0))
                                             .child(
@@ -201,12 +193,7 @@ pub fn account_task(
                                                     2
                                                 });
                                             })
-                                            .accessibility_label(|| {
-                                                Some(
-                                                    crate::i18n::catalog::copy("Currency", "币种")
-                                                        .into(),
-                                                )
-                                            })
+                                            .accessibility_label(|| Some(s().currency_label.into()))
                                             .px_0()
                                             .min_h(px(44.0))
                                             .child(

@@ -82,22 +82,36 @@ pub fn review_tab() -> impl IntoElement {
             // Sections breathe at 24: the page reads as chapters, not a stack.
             .gap(px(24.0))
             .child(
-                text(|| s().review)
-                    .typo(Type::LargeTitle)
-                    .text_color(color::INK)
-                    .role(AccessibilityRole::Header),
+                view()
+                    .flex_row()
+                    .flex_wrap()
+                    .items_center()
+                    .justify_between()
+                    .gap_2()
+                    .child(
+                        text(|| s().review)
+                            .typo(Type::LargeTitle)
+                            .text_color(color::INK)
+                            .role(AccessibilityRole::Header),
+                    )
+                    .child(
+                        view()
+                            .w(|| px(112.0 * font_scale().max(1.0)))
+                            .max_w(relative(1.0))
+                            .ml(auto())
+                            .child(segmented(
+                                vec![
+                                    Segment::new(Period::Week, || s().week_label.into()),
+                                    Segment::new(Period::Month, || s().month_label.into()),
+                                ],
+                                move || period.get(),
+                                move |p| {
+                                    period.set(p);
+                                    back.set(0);
+                                },
+                            )),
+                    ),
             )
-            .child(segmented(
-                vec![
-                    Segment::new(Period::Week, || s().week_label.into()),
-                    Segment::new(Period::Month, || s().month_label.into()),
-                ],
-                move || period.get(),
-                move |p| {
-                    period.set(p);
-                    back.set(0);
-                },
-            ))
             .child(header(period, back, days))
             .child(summary(period, days, before))
             .child(intake_card(period, days))

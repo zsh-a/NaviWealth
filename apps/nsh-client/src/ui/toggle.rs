@@ -6,9 +6,9 @@ use nsh_base::{checkbox, switch};
 use nsh_core::{Haptic, prelude::*};
 
 use super::{
-    Typo,
+    Lift, Typo,
     icons::{Icon, icon},
-    theme::{Type, color, motion, radius, size},
+    theme::{Type, color, motion, radius, shadow, size},
 };
 
 /// A checkbox row bound to `checked`.
@@ -89,7 +89,7 @@ pub fn bound_switch(
             s.size(px(24.0))
                 .rounded_full()
                 .bg(color::SURFACE)
-                .shadow_sm()
+                .lift(&shadow::CONTACT)
                 .transition_transform()
                 .duration(motion::FAST)
                 .checked(move |s| s.translate_x(px(travel)).bg(color::ON_ACTION))

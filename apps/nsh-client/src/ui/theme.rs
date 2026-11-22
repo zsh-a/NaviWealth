@@ -29,8 +29,6 @@ pub mod color {
     pub const SURFACE_2: AdaptiveColor = c(0xF3F3F0, 0x1C1C1F);
     /// Fields and tracks.
     pub const SUNKEN: AdaptiveColor = c(0xEDEDEA, 0x19191C);
-    /// What sits raised on a track: the selected segment.
-    pub const RAISED: AdaptiveColor = c(0xFFFFFF, 0x2A2A2E);
     /// Hairlines.
     pub const LINE: AdaptiveColor = c(0xE6E6E2, 0x26262A);
     /// Stronger edges: unchecked boxes, the grabber.
@@ -94,8 +92,11 @@ pub mod color {
     /// The ring's empty track.
     pub const TRACK: AdaptiveColor = SUNKEN;
 
-    /// The dim behind sheets.
-    pub const SCRIM: AdaptiveColor = c(0x0A0A0B, 0x000000);
+    /// Behind modal surfaces. The alpha is part of the material on both hosts.
+    pub const SCRIM: AdaptiveColor = AdaptiveColor {
+        light: super::rgba(0x0A0A0B4D).to_hsla(),
+        dark: super::rgba(0x0000008C).to_hsla(),
+    };
     /// Behind photos while they load.
     pub const PHOTO_WELL: AdaptiveColor = c(0xE6E6E2, 0x1C1C1F);
     /// Text and marks over a photo, on [`MEDIA_SCRIM`].
@@ -216,31 +217,14 @@ pub mod shadow {
         }
     }
 
-    /// An object on the page (a pending draft, a group of rows): barely a
-    /// contact shadow; its hairline edge does the separating.
-    pub const CARD: [BoxShadow; 1] = [layer(1.0, 2.0, 0.0, 0x1111130A)];
-    /// A floating control: raised round buttons, the primary action.
-    pub const FLOAT: [BoxShadow; 2] = [
-        layer(1.0, 2.0, 0.0, 0x11111314),
-        layer(8.0, 18.0, -6.0, 0x11111326),
-    ];
-    /// Localized cobalt lift under the compact capture confirmation.
-    pub const CAPTURE_SAVE: [BoxShadow; 2] = [
-        layer(1.0, 2.0, 0.0, 0x11111312),
-        layer(5.0, 10.0, -4.0, 0x2F5BEA4D),
-    ];
-    /// The floating dock: a soft, wide drop in the manner of iOS rather
-    /// than a material elevation.
-    pub const DOCK: [BoxShadow; 2] = [
-        layer(1.0, 3.0, 0.0, 0x0000000A),
-        layer(8.0, 24.0, 0.0, 0x00000014),
-    ];
-    /// The selected segment on its track.
-    pub const SEGMENT: [BoxShadow; 1] = [layer(1.0, 2.0, 0.0, 0x11111314)];
+    /// Just the contact at the foot of a raised control or pending draft.
+    pub const CONTACT: [BoxShadow; 1] = [layer(1.0, 2.0, 0.0, 0x1111130A)];
+    /// The accent reflecting under a primary action, localized to its base.
+    pub const ACTION: [BoxShadow; 2] = [CONTACT[0], layer(5.0, 10.0, -4.0, 0x2F5BEA38)];
+    /// A neutral overlay floats in one direction, clear of the reading surface.
+    pub const FLOAT: [BoxShadow; 2] = [CONTACT[0], layer(8.0, 18.0, -6.0, 0x1111131A)];
     /// The dock's lifted lens.
-    pub const LENS: [BoxShadow; 1] = [layer(6.0, 12.0, -4.0, 0x0000001F)];
-    /// Dark appearance: depth comes from the surfaces' tone, not shadows.
-    pub const NONE: [BoxShadow; 0] = [];
+    pub const LENS: [BoxShadow; 1] = [layer(6.0, 16.0, -6.0, 0x1111131A)];
 }
 
 /// Typefaces. The engine resolves a family from the app's registered font

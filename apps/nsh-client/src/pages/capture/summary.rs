@@ -6,7 +6,7 @@ use crate::{
         format,
     },
     i18n::s,
-    ui::{Icon, Type, Typo, color, icon},
+    ui::{Icon, Lift, Type, Typo, color, icon, theme::shadow},
 };
 use navi_finance::{
     account::Account,
@@ -87,6 +87,7 @@ pub fn records(
             let editable = draft.status == Status::Ready && draft.pending_ask_user().is_none();
             crate::ui::surface::card()
                 .element_ref(&super::flight::origin(index))
+                .style_when(move || editable, |s| s.lift(&shadow::CONTACT))
                 .dark(|s| {
                     s.bg(color::SURFACE_2)
                         .border(px(1.0))

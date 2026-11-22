@@ -1,5 +1,6 @@
 //! Assets answers what the recorded ledger says the owner owns. Account
 //! details and balance observations use the same journal as Today/Records.
+pub(crate) mod current;
 mod editor;
 mod mini;
 mod overview;
@@ -16,7 +17,7 @@ use crate::{
     nav::{self, Route},
     ui::{
         Btn, Icon, IconBtn, Type, Typo, Variant, color, icon, radius, space,
-        surface::{card, group_label, hairline, row_button},
+        surface::{HAIRLINE, group_label, hairline, row_button},
         toast::toast_view,
     },
 };
@@ -52,8 +53,17 @@ pub(super) fn amount_in(
         .text_color(color::INK)
 }
 
+pub(super) fn asset_group_title(label: impl IntoReactive<SharedString>) -> impl IntoElement {
+    text(label)
+        .typo(Type::Body)
+        .font_weight(FontWeight::SEMIBOLD)
+        .text_color(color::INK)
+        .role(AccessibilityRole::Header)
+        .pb_1()
+}
+
 /// One alignment grid for the account and holding sections, including their spoken status.
-/// It sits inside its group's card; the card clips its press wash.
+/// Each row runs from gutter to gutter on the page canvas.
 pub(super) fn asset_row(
     name: String,
     amount: String,
@@ -67,9 +77,11 @@ pub(super) fn asset_row(
     let stacked = move || font_scale() > 1.2 || window().width.0 < 350.0 || long_amount;
     row_button(press)
         .accessibility_label(move || Some(label.clone().into()))
-        .px(px(space::CARD))
+        .px_0()
         .py_2()
-        .min_h(px(56.0))
+        .min_h(px(64.0))
+        .border_b(px(HAIRLINE))
+        .border_color(color::LINE)
         .gap_3()
         .child(icon(glyph, 22.0, color::MUTED))
         .child(
@@ -86,7 +98,12 @@ pub(super) fn asset_row(
                         .min_w(px(0.0))
                         .gap_1()
                         .style_when(stacked, |s| s.w_full().flex_grow(0.0).basis(auto()))
-                        .child(text(name).typo(Type::Headline).text_color(color::INK))
+                        .child(
+                            text(name)
+                                .typo(Type::Body)
+                                .font_weight(FontWeight::MEDIUM)
+                                .text_color(color::INK),
+                        )
                         .child(
                             show_status
                                 .then(|| text(status).typo(Type::Caption).text_color(color::MUTED)),
@@ -96,7 +113,8 @@ pub(super) fn asset_row(
                     text(amount)
                         .test_id("asset-row-value")
                         .style_when(stacked, |s| s.w_full())
-                        .typo(Type::Headline)
+                        .typo(Type::Body)
+                        .font_weight(FontWeight::MEDIUM)
                         .text_color(color::INK)
                         .tabular_nums()
                         .number_of_lines(1)
@@ -139,56 +157,41 @@ pub fn account_page(name: &str) -> Screen {
                             .px(px(space::GUTTER))
                             .pb_safe_area_plus(px(90.0))
                             .gap_5()
-                            .child(dynamic(move || {
-                                let a = own.get();
-                                let entries = finance::transactions();
-                                let book = journal::balance_on(&entries, &a, clock::today().0);
-                                let checks = finance::checks();
-                                let checked = checks
-                                    .iter()
-                                    .filter(|c| c.account == a)
-                                    .max_by_key(|c| c.checked_at)
-                                    .map(|c| {
-                                        format!(
-                                            "{} · {}",
-                                            s().account_checked,
-                                            s().short_date(Day(c.day))
-                                        )
-                                    });
-                                untracked(move || {
-                                    view()
-                                        .gap_3()
-                                        .pt_4()
-                                        .child(
-                                            text(if a.kind() == AccountKind::Liabilities {
-                                                s().account_debt
-                                            } else {
-                                                s().account_balance
-                                            })
-                                            .typo(Type::Headline)
-                                            .text_color(color::BODY),
-                                        )
-                                        .child(amount_in(
-                                            assets::displayed(&a, book),
-                                            Type::Display,
-                                            a.currency(),
-                                        ))
-                                        .child(
-                                            text(
-                                                checked.unwrap_or_else(|| {
-                                                    s().account_unchecked.into()
-                                                }),
+                            .child(
+                                view()
+                                    .gap_3()
+                                    .pt_4()
+                                    .child(dynamic(move || {
+                                        let a = own.get();
+                                        let book = journal::balance_on(
+                                            finance::transactions_snapshot().iter(),
+                                            &a,
+                                            clock::today().0,
+                                        );
+                                        view()
+                                            .gap_3()
+                                            .child(
+                                                text(if a.kind() == AccountKind::Liabilities {
+                                                    s().account_debt
+                                                } else {
+                                                    s().account_balance
+                                                })
+                                                .typo(Type::Headline)
+                                                .text_color(color::BODY),
                                             )
-                                            .typo(Type::Subhead)
-                                            .text_color(color::MUTED),
-                                        )
-                                        .child(
-                                            Btn::tonal()
-                                                .label(|| s().check_balance.into())
-                                                .on_press(move || balance.set(true)),
-                                        )
-                                })
-                            }))
+                                            .child(amount_in(
+                                                assets::displayed(&a, book),
+                                                Type::Display,
+                                                a.currency(),
+                                            ))
+                                    }))
+                                    .child(check_history(own, transaction))
+                                    .child(
+                                        Btn::tonal()
+                                            .label(|| s().check_balance.into())
+                                            .on_press(move || balance.set(true)),
+                                    ),
+                            )
                             .child(
                                 text(|| s().account_activity)
                                     .typo(Type::Title)
@@ -290,6 +293,166 @@ pub fn account_page(name: &str) -> Screen {
                 .child(editor::balance_editor(balance, own))
                 .child(super::finance::finance_editor(transaction)),
         )
+}
+
+/// Each saved check has an observation, including matches that did not post
+/// anything. Its original difference lives in the linked posting; recomputing
+/// today's journal at the historical date would include subsequent backfills.
+fn check_history(own: Signal<Account>, entry: Signal<Option<String>>) -> AnyElement {
+    let open = signal(false);
+    let shown = signal(20usize);
+    dynamic(move || {
+        let account = own.get();
+        let checks = finance::checks_snapshot();
+        let Some(latest) = checks.iter().rev().find(|c| c.account == account) else {
+            return text(s().account_unchecked)
+                .typo(Type::Subhead)
+                .text_color(color::MUTED)
+                .into_element();
+        };
+        let latest = Day(latest.checked_at.date());
+        view()
+            .gap_2()
+            .child(
+                crate::ui::surface::disclosure(open, move || {
+                    format!("{} · {}", s().account_checked, s().short_date(latest)).into()
+                })
+                .accessibility_label(move || {
+                    let title = crate::i18n::catalog::copy("Balance check history", "余额核对历史");
+                    Some(
+                        format!(
+                            "{title}, {} · {}",
+                            s().account_checked,
+                            s().short_date(latest)
+                        )
+                        .into(),
+                    )
+                }),
+            )
+            .child(when(
+                move || open.get(),
+                move || {
+                    let account = account.clone();
+                    let checks = checks.clone();
+                    dynamic(move || {
+                        let txs = finance::transactions_snapshot();
+                        let linked = txs
+                            .iter()
+                            .map(|t| (t.id.as_str(), t))
+                            .collect::<std::collections::HashMap<_, _>>();
+                        let limit = shown.get();
+                        let mut rows = checks
+                            .iter()
+                            .rev()
+                            .filter(|c| c.account == account)
+                            .take(limit + 1)
+                            .collect::<Vec<_>>();
+                        let more = rows.len() > limit;
+                        rows.truncate(limit);
+                        view()
+                            .children(
+                                rows.into_iter().map(|c| {
+                                    check_row(c, linked.get(c.id.as_str()).copied(), entry)
+                                }),
+                            )
+                            .child(more.then(|| {
+                                Btn::secondary()
+                                    .label(|| s().show_earlier.into())
+                                    .on_press(move || shown.update(|n| *n += 20))
+                            }))
+                    })
+                },
+            ))
+            .into_element()
+    })
+    .into_element()
+}
+
+fn check_row(
+    check: &navi_finance::repository::BalanceCheck,
+    transaction: Option<&Transaction>,
+    entry: Signal<Option<String>>,
+) -> AnyElement {
+    use crate::i18n::catalog::copy;
+    let account = &check.account;
+    let observation =
+        crate::ui::currency::format(assets::displayed(account, check.actual), account.currency());
+    let effective = s().long_date(Day(check.day));
+    let time = clock::clock_time(
+        check.checked_at.hour() as u8,
+        check.checked_at.minute() as u8,
+    );
+    let stamp = if check.checked_at.date() == check.day {
+        format!("{effective} · {time}")
+    } else {
+        format!(
+            "{effective} · {} {} {time}",
+            copy("Checked", "核对于"),
+            s().axis_date(Day(check.checked_at.date()), true)
+        )
+    };
+    let linked = transaction.filter(|t| {
+        matches!(t.source, journal::Source::BalanceCheck)
+            && t.postings.iter().any(|p| &p.account == account)
+    });
+    let outcome = if let Some(t) = linked {
+        let delta = assets::displayed(account, t.amount_in(account));
+        format!(
+            "{} {}",
+            balance_title(t).unwrap_or(s().balance_adjustment),
+            crate::ui::currency::signed(delta, account.currency())
+        )
+    } else if transaction.is_some() {
+        copy("Original correction unavailable", "原核对凭证不可用").to_owned()
+    } else {
+        copy("Matched at the time", "核对时相符").to_owned()
+    };
+    let label = format!("{stamp}, {observation}, {outcome}");
+    let scaled = || font_scale() > 1.2 || window().width.0 < 350.0;
+    let summary = view()
+        .flex_1()
+        .min_w(px(0.0))
+        .gap_1()
+        .child(
+            text(stamp)
+                .typo(Type::Caption)
+                .text_color(color::MUTED)
+                .tabular_nums(),
+        )
+        .child(
+            view()
+                .flex_row()
+                .items_center()
+                .gap_2()
+                .style_when(scaled, |s| s.flex_col().items_start())
+                .child(
+                    text(observation)
+                        .typo(Type::Figure)
+                        .text_color(color::INK)
+                        .tabular_nums(),
+                )
+                .child(
+                    text(outcome)
+                        .typo(Type::Subhead)
+                        .text_color(color::BODY)
+                        .tabular_nums(),
+                ),
+        );
+    let row = if let Some(t) = linked {
+        let id = t.id.clone();
+        row_button(move || entry.set(Some(id.clone())))
+            .accessibility_label(Some(label.into()))
+            .min_h(px(48.0))
+            .px_0()
+            .py_2()
+            .gap_2()
+            .child(summary)
+            .child(icon(Icon::ChevronRight, 16.0, color::MUTED))
+            .into_element()
+    } else {
+        view().py_2().child(summary).into_element()
+    };
+    view().child(row).child(hairline(0.0)).into_element()
 }
 
 pub(super) fn balance_title(t: &Transaction) -> Option<&'static str> {

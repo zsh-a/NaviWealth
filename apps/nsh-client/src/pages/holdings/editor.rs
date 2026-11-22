@@ -1,4 +1,5 @@
 use super::*;
+use crate::i18n::catalog::copy;
 use crate::ui::{
     field::{field, text_input},
     segmented::{Segment, segmented},
@@ -67,6 +68,142 @@ struct Values {
     day: String,
 }
 
+struct TradeAmounts {
+    quantity: i64,
+    price: i64,
+    amount: i64,
+    fee: i64,
+}
+
+impl TradeAmounts {
+    fn parse(kind: Kind, quantity: &str, price: &str, fee: &str) -> Result<Self, &'static str> {
+        let (quantity, price, amount) = if kind == Kind::Dividend {
+            let amount = money::parse(price, false)
+                .filter(|v| *v > 0)
+                .ok_or_else(|| {
+                    copy(
+                        "Enter a dividend amount to see the cash received.",
+                        "填写分红金额，即可查看到账金额。",
+                    )
+                })?;
+            (0, 0, amount)
+        } else {
+            let units = |s: &str| holdings::parse_units(s).filter(|v| *v > 0);
+            let (Some(quantity), Some(price)) = (units(quantity), units(price)) else {
+                return Err(copy(
+                    "Enter quantity and price per unit to see the cash amount.",
+                    "填写数量和成交单价，即可查看现金变动。",
+                ));
+            };
+            (quantity, price, 0)
+        };
+        let fee = if kind == Kind::Opening || fee.trim().is_empty() {
+            0
+        } else {
+            money::parse(fee, false).ok_or_else(|| {
+                copy(
+                    "Enter a nonnegative fee with up to two decimal places.",
+                    "手续费须为非负数，最多保留两位小数。",
+                )
+            })?
+        };
+        Ok(Self {
+            quantity,
+            price,
+            amount,
+            fee,
+        })
+    }
+}
+
+fn cash_preview(
+    kind: Signal<Kind>,
+    currency: Signal<Currency>,
+    quantity: Signal<String>,
+    price: Signal<String>,
+    fee: Signal<String>,
+    cash: Signal<Option<Account>>,
+) -> impl IntoElement {
+    dynamic(move || {
+        let kind = kind.get();
+        let currency = currency.get();
+        let preview = TradeAmounts::parse(kind, &quantity.get(), &price.get(), &fee.get())
+            .and_then(|v| {
+                kind.settlement(v.quantity, v.price, v.amount, v.fee)
+                    .map(|total| (total, v.fee))
+                    .map_err(|error| match (error, kind) {
+                        (holdings::Error::Invalid, Kind::Dividend) => copy(
+                            "The dividend must exceed the fee.",
+                            "分红金额须大于手续费。",
+                        ),
+                        (holdings::Error::Invalid, Kind::Sell) => copy(
+                            "The fee exceeds the sale proceeds.",
+                            "手续费已超过卖出金额。",
+                        ),
+                        _ => copy(
+                            "Check the quantity, price and fee.",
+                            "请检查数量、单价和手续费。",
+                        ),
+                    })
+            });
+        match preview {
+            Err(hint) => text(hint)
+                .typo(Type::Subhead)
+                .text_color(color::MUTED)
+                .into_element(),
+            Ok((total, fee)) => {
+                let (label, signed) = if kind == Kind::Buy {
+                    (copy("Cash out", "将扣款"), -total)
+                } else {
+                    (copy("Cash in", "将入账"), total)
+                };
+                let label = cash.get().map_or_else(
+                    || copy("Choose a cash account", "请选择现金账户").to_owned(),
+                    |account| format!("{} · {label}", account.name()),
+                );
+                let mut row = view().gap_1().child(
+                    view()
+                        .w_full()
+                        .min_w(px(0.0))
+                        .flex_row()
+                        .flex_wrap()
+                        .items_baseline()
+                        .justify_between()
+                        .gap_x(px(12.0))
+                        .gap_y(px(2.0))
+                        .child(
+                            text(label)
+                                .min_w(px(0.0))
+                                .max_w(relative(1.0))
+                                .typo(Type::Body)
+                                .text_color(color::MUTED),
+                        )
+                        .child(
+                            text(crate::ui::currency::signed(signed, currency))
+                                .min_w(px(0.0))
+                                .max_w(relative(1.0))
+                                .typo(Type::Headline)
+                                .tabular_nums()
+                                .text_color(color::INK),
+                        ),
+                );
+                if fee > 0 {
+                    row = row.child(
+                        text(format!(
+                            "{} {}",
+                            copy("Includes fee of", "已计入手续费"),
+                            crate::ui::currency::format(fee, currency),
+                        ))
+                        .typo(Type::Caption)
+                        .text_color(color::MUTED),
+                    );
+                }
+                row.into_element()
+            }
+        }
+    })
+}
+
 pub fn trade_editor(open: Signal<Option<String>>) -> impl IntoElement {
     trade_task(open, || {})
 }
@@ -129,6 +266,7 @@ pub fn trade_task(
                 let day = signal(clock::today().to_string());
                 let details = signal(false);
                 let panel = signal(if new { Panel::Security } else { Panel::Main });
+                crate::ui::sheet::reserve_keyboard_when(move || panel.get() == Panel::Security);
                 let error = signal(None::<String>);
                 let values = move || Values {
                     kind: kind.get_untracked(),
@@ -419,15 +557,11 @@ pub fn trade_task(
                                     .text_color(color::INK),
                                 )
                             }))
-                            .child(
-                                text(if current_kind == Kind::Opening {
-                                    s().opening_hint
-                                } else {
-                                    s().holding_cash_effect
-                                })
-                                .typo(Type::Subhead)
-                                .text_color(color::MUTED),
-                            )
+                            .child((current_kind == Kind::Opening).then(|| {
+                                text(s().opening_hint)
+                                    .typo(Type::Subhead)
+                                    .text_color(color::MUTED)
+                            }))
                             .child(disclosure(details, || s().trade_details.into()))
                             .child(when(
                                 move || details.get(),
@@ -472,6 +606,10 @@ pub fn trade_task(
                 let trade_action = view()
                     .gap_2()
                     .child(note(move || error.get().map(Into::into), || true))
+                    .child(when(
+                        move || panel.get() == Panel::Main && kind.get() != Kind::Opening,
+                        move || cash_preview(kind, currency, quantity, price, fee, cash),
+                    ))
                     .child(
                         Btn::primary()
                             .label(move || {
@@ -499,35 +637,13 @@ pub fn trade_task(
                                         .day
                                         .parse::<Day>()
                                         .map_err(|_| holdings::Error::Invalid)?;
-                                    let fee = if form.kind == Kind::Opening
-                                        || form.fee.trim().is_empty()
-                                    {
-                                        0
-                                    } else {
-                                        money::parse(&form.fee, false)
-                                            .ok_or(holdings::Error::Invalid)?
-                                    };
-                                    let quantity = if form.kind == Kind::Dividend {
-                                        0
-                                    } else {
-                                        holdings::parse_units(&form.quantity)
-                                            .filter(|q| *q > 0)
-                                            .ok_or(holdings::Error::Invalid)?
-                                    };
-                                    let price = if form.kind == Kind::Dividend {
-                                        0
-                                    } else {
-                                        holdings::parse_units(&form.price)
-                                            .filter(|q| *q > 0)
-                                            .ok_or(holdings::Error::Invalid)?
-                                    };
-                                    let amount = if form.kind == Kind::Dividend {
-                                        money::parse(&form.price, false)
-                                            .filter(|v| *v > 0)
-                                            .ok_or(holdings::Error::Invalid)?
-                                    } else {
-                                        0
-                                    };
+                                    let v = TradeAmounts::parse(
+                                        form.kind,
+                                        &form.quantity,
+                                        &form.price,
+                                        &form.fee,
+                                    )
+                                    .map_err(|_| holdings::Error::Invalid)?;
                                     Ok((
                                         security,
                                         Trade {
@@ -537,10 +653,10 @@ pub fn trade_task(
                                                 clock::zoned(clock::now_ms()).datetime().time(),
                                             ),
                                             kind: form.kind,
-                                            quantity,
-                                            price,
-                                            amount,
-                                            fee,
+                                            quantity: v.quantity,
+                                            price: v.price,
+                                            amount: v.amount,
+                                            fee: v.fee,
                                             cash: if form.kind == Kind::Opening {
                                                 None
                                             } else {

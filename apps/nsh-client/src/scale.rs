@@ -89,9 +89,9 @@ impl Scale {
         if s().lang == Lang::Zh { "zh" } else { "en" }.into()
     }
 
-    /// Shared Ink and Daylight tokens for the TSX surface.
+    /// Shared Instrument tokens for the TSX surface.
     pub fn palette(dark: bool) -> Value {
-        use crate::ui::color;
+        use crate::ui::{color, radius};
         let hex = |role: nsh_core::element::AdaptiveColor| {
             let color = if dark { role.dark } else { role.light };
             format!("#{:08X}", u32::from(color.to_rgb()))
@@ -99,7 +99,9 @@ impl Scale {
         json!({"canvas":hex(color::CANVAS),"surface":hex(color::SURFACE),
             "ink":hex(color::INK),"muted":hex(color::MUTED),"line":hex(color::LINE),
             "well":hex(color::SUNKEN),"danger":hex(color::DANGER),
-            "onAction":hex(color::ON_ACTION),"positive":hex(color::POSITIVE),"scrim":hex(color::SCRIM.opacity(0.32))})
+            "action":hex(color::ACTION),"actionPressed":hex(color::ACTION_PRESSED),
+            "onAction":hex(color::ON_ACTION),"positive":hex(color::POSITIVE),
+            "scrim":hex(color::SCRIM),"sheetRadius":radius::SHEET})
     }
 
     /// Whether the explicit body profile is ready for a measurement.

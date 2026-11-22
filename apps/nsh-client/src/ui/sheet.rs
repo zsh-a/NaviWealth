@@ -111,6 +111,12 @@ pub fn is_task_panel() -> bool {
     use_context::<TaskHost>().is_some()
 }
 
+/// Reserve space in advance for text-first panels. Forms with a fixed receipt
+/// can use the space above the visible keyboard until entry actually starts.
+pub(crate) fn reserve_keyboard_when(reserve: impl Fn() -> bool + 'static) {
+    provide_context(KeyboardBudget(Rc::new(reserve)));
+}
+
 /// One native sheet for a menu and all of its task panels. Embedded task sheets
 /// contribute their layout and dismissal guard without making another overlay.
 /// A reading panel can use the full sheet. Switching to entry reserves the
@@ -124,7 +130,7 @@ pub fn task_host_with_keyboard(
     retained(
         move || open().then_some(()),
         move |_| {
-            provide_context(KeyboardBudget(Rc::new(editing)));
+            reserve_keyboard_when(editing);
             let host = TaskHost {
                 close: stored(None),
                 dismiss: stored(None),
@@ -371,7 +377,7 @@ fn shell(
             }
         })
         .close_on_swipe(true)
-        .backdrop_style(|s| s.bg(color::SCRIM.opacity(0.32)))
+        .backdrop_style(|s| s.bg(color::SCRIM))
         .popup_style(|s| {
             material::glass(s, Glass::Sheet)
                 .rounded_t(px(radius::SHEET))

@@ -2,7 +2,11 @@
 mod rates;
 
 use crate::{
-    data::{clock::observation_time, finance, history},
+    data::{
+        clock::{observation_time, today},
+        finance, history,
+        market::{PriceSource, PriceSources},
+    },
     i18n::{market::source_label, s, statement_import::copy},
     nav,
     ui::{
@@ -30,14 +34,28 @@ enum Section {
     Changes,
 }
 
-pub fn page(security: Option<String>) -> Screen {
+fn initial_section(security: Option<&str>) -> Section {
+    let Some(id) = security else {
+        return Section::Rates;
+    };
+    let book = finance::holdings_snapshot();
+    let source = book
+        .securities
+        .iter()
+        .find(|sec| sec.id == id)
+        .and_then(|sec| book.position(sec, today().0).ok()?.quote)
+        .and_then(|q| PriceSources::current().source(&q));
+    match source {
+        Some(PriceSource::Manual | PriceSource::Sampled { .. }) => Section::Changes,
+        Some(PriceSource::Close(_)) | None => Section::Closes,
+    }
+}
+
+pub fn page(security: Option<String>, initial_rate: Option<Currency>) -> Screen {
     let scoped = security.is_some();
+    let section = signal(untracked(|| initial_section(security.as_deref())));
+    let pair = signal(initial_rate);
     let security = stored(security);
-    let section = signal(if scoped {
-        Section::Closes
-    } else {
-        Section::Rates
-    });
     let mut segments = Vec::new();
     if !scoped {
         segments.push(Segment::new(Section::Rates, || {
@@ -72,7 +90,7 @@ pub fn page(security: Option<String>) -> Screen {
                     let tab = section.get();
                     untracked(move || {
                         let content = match tab {
-                            Section::Rates => rates::panel().into_element(),
+                            Section::Rates => rates::panel(pair).into_element(),
                             Section::Closes => archive(
                                 move |limit| history::daily_history(selected.as_deref(), limit),
                                 bar_row,

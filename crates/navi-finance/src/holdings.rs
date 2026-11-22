@@ -59,6 +59,41 @@ pub enum Kind {
     Sell,
     Dividend,
 }
+impl Kind {
+    /// Acquisition cost or net proceeds in native minor units, after fees.
+    /// Share trades round the gross to a minor unit before applying the fee.
+    pub fn settlement(
+        self,
+        quantity: i64,
+        price: i64,
+        amount: Minor,
+        fee: Minor,
+    ) -> Result<Minor, Error> {
+        if fee < 0 {
+            return Err(Error::Invalid);
+        }
+        if self == Self::Dividend {
+            return (quantity == 0 && price == 0 && amount > fee)
+                .then(|| amount - fee)
+                .ok_or(Error::Invalid);
+        }
+        if quantity <= 0 || price <= 0 || amount != 0 || (self == Self::Opening && fee != 0) {
+            return Err(Error::Invalid);
+        }
+        let gross = gross(quantity, price)?;
+        if self == Self::Sell {
+            gross
+                .checked_sub(fee)
+                .filter(|v| *v >= 0)
+                .ok_or(Error::Invalid)
+        } else {
+            gross
+                .checked_add(fee)
+                .filter(|v| *v > 0)
+                .ok_or(Error::Overflow)
+        }
+    }
+}
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Trade {
     pub id: String,
@@ -198,9 +233,10 @@ pub fn replay(
     let mut p = Position::default();
     let mut entries = Vec::new();
     for t in ordered {
-        if t.id.is_empty() || t.fee < 0 || t.amount < 0 {
+        if t.id.is_empty() {
             return Err(Error::Invalid);
         }
+        let settlement = t.kind.settlement(t.quantity, t.price, t.amount, t.fee)?;
         let mut postings = Vec::new();
         let mut post = |a: Account, amount: i64| {
             if amount != 0 {
@@ -209,39 +245,25 @@ pub fn replay(
         };
         match t.kind {
             Kind::Opening | Kind::Buy => {
-                if t.quantity <= 0 || t.price <= 0 || t.amount != 0 {
-                    return Err(Error::Invalid);
-                }
                 if t.kind == Kind::Opening
-                    && (p.quantity != 0 || !entries.is_empty() || t.cash.is_some() || t.fee != 0)
+                    && (p.quantity != 0 || !entries.is_empty() || t.cash.is_some())
                 {
                     return Err(Error::Invalid);
                 }
-                let total = gross(t.quantity, t.price)?
-                    .checked_add(t.fee)
-                    .filter(|v| *v > 0)
-                    .ok_or(Error::Overflow)?;
                 let from = if t.kind == Kind::Opening {
                     defaults::opening().in_currency(security.currency())
                 } else {
                     cash(t, security.currency())?
                 };
-                post(security.account.clone(), total);
-                post(from, -total);
+                post(security.account.clone(), settlement);
+                post(from, -settlement);
                 p.quantity = p.quantity.checked_add(t.quantity).ok_or(Error::Overflow)?;
-                p.cost = p.cost.checked_add(total).ok_or(Error::Overflow)?;
+                p.cost = p.cost.checked_add(settlement).ok_or(Error::Overflow)?;
             }
             Kind::Sell => {
-                if t.quantity <= 0 || t.price <= 0 || t.amount != 0 {
-                    return Err(Error::Invalid);
-                }
                 if t.quantity > p.quantity {
                     return Err(Error::Oversell);
                 }
-                let net = gross(t.quantity, t.price)?
-                    .checked_sub(t.fee)
-                    .filter(|v| *v >= 0)
-                    .ok_or(Error::Invalid)?;
                 let released = if t.quantity == p.quantity {
                     p.cost
                 } else {
@@ -250,8 +272,8 @@ pub fn replay(
                         i128::from(p.quantity),
                     )?
                 };
-                let gain = net.checked_sub(released).ok_or(Error::Overflow)?;
-                post(cash(t, security.currency())?, net);
+                let gain = settlement.checked_sub(released).ok_or(Error::Overflow)?;
+                post(cash(t, security.currency())?, settlement);
                 post(security.account.clone(), -released);
                 post(
                     defaults::other_income().in_currency(security.currency()),
@@ -262,16 +284,15 @@ pub fn replay(
                 p.realized = p.realized.checked_add(gain).ok_or(Error::Overflow)?;
             }
             Kind::Dividend => {
-                if t.quantity != 0 || t.price != 0 || t.amount <= t.fee || p.quantity == 0 {
+                if p.quantity == 0 {
                     return Err(Error::Invalid);
                 }
-                let net = t.amount - t.fee;
-                post(cash(t, security.currency())?, net);
+                post(cash(t, security.currency())?, settlement);
                 post(
                     defaults::other_income().in_currency(security.currency()),
-                    -net,
+                    -settlement,
                 );
-                p.dividends = p.dividends.checked_add(net).ok_or(Error::Overflow)?;
+                p.dividends = p.dividends.checked_add(settlement).ok_or(Error::Overflow)?;
             }
         }
         let entry = Transaction {
