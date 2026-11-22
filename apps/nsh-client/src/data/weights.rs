@@ -205,20 +205,22 @@ pub(super) fn snapshot_on(connection: &Connection, day: Day) -> rusqlite::Result
 
 /// Restores exactly a removed weight, composition and provenance, unless another
 /// edit has happened since deletion. Never overwrites an intervening measurement.
-pub fn restore_removed(weight: Weight) -> bool {
+pub fn restore_removed(weight: Weight) -> Result<bool, String> {
     let Some(removed) =
         removals().with_untracked(|r| r.0.iter().find(|r| r.weight == weight).cloned())
     else {
-        return false;
+        return Ok(false);
     };
-    let restored = db::with(|c| restore_in(c, &removed));
-    if !matches!(restored, Some(Ok(true))) {
-        return false;
+    let restored = db::with(|c| restore_in(c, &removed))
+        .ok_or_else(|| "weight storage unavailable".to_owned())?
+        .map_err(|e| e.to_string())?;
+    if !restored {
+        return Ok(false);
     }
     removals().update(|r| r.0.retain(|r| r.weight != weight));
     load();
     body_metrics::load();
-    true
+    Ok(true)
 }
 fn restore_in(c: &Connection, removed: &Removed) -> rusqlite::Result<bool> {
     let tx = c.unchecked_transaction()?;

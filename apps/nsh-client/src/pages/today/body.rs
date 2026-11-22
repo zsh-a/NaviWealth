@@ -76,21 +76,11 @@ pub fn summary(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
     .gap_3()
     .min_w(px(0.0))
     .accessibility_label(move || {
-        Some(
-            format!(
-                "{}, {}{}",
-                s().body_metrics,
-                value()
-                    .map(|v| format!("{v} kg"))
-                    .unwrap_or_else(|| "—".to_owned()),
-                if data.with(Option::is_some) {
-                    format!(", {}", date())
-                } else {
-                    String::new()
-                }
-            )
-            .into(),
-        )
+        let detail = value().map_or_else(
+            || s().tap_to_log.to_owned(),
+            |kg| format!("{kg} kg, {}", date()),
+        );
+        Some(format!("{}, {detail}", s().body_metrics).into())
     })
     .child(
         view()
@@ -104,15 +94,21 @@ pub fn summary(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                     .flex_1()
                     .min_w(px(0.0)),
             )
-            .child(
-                text(|| s().body_overview)
-                    .typo(Type::Caption)
-                    .text_color(color::MUTED)
-                    .flex_shrink(1.0)
-                    .number_of_lines(2)
-                    .text_right(),
-            )
-            .child(icon(Icon::ChevronRight, 16.0, color::MUTED)),
+            .child(when(
+                move || data.with(Option::is_some),
+                || {
+                    view()
+                        .flex_row()
+                        .items_center()
+                        .gap_2()
+                        .child(
+                            text(|| s().body_overview)
+                                .typo(Type::Caption)
+                                .text_color(color::MUTED),
+                        )
+                        .child(icon(Icon::ChevronRight, 16.0, color::MUTED))
+                },
+            )),
     )
     .child(
         view()
@@ -159,8 +155,7 @@ pub fn summary(day: impl Fn() -> Day + Copy + 'static) -> impl IntoElement {
                                 .tabular_nums()
                                 .text_color(color::MUTED),
                             ),
-                    )
-                    .child(dynamic(move || weight_spark(day()))),
+                    ),
             )
             .child(fact(
                 || s().body_fat,
@@ -515,77 +510,4 @@ fn detail(
                 .tabular_nums()
                 .text_color(color::INK),
         )
-}
-
-/// The last two weeks of weight as a quiet line under the figure, latest
-/// point marked; absent with fewer than two readings. Decorative: the
-/// figure and its weekly change carry the values for screen readers.
-fn weight_spark(day: Day) -> Option<AnyElement> {
-    use nsh_base::plot::{Curve, Scale, line, plot};
-    use nsh_core::element::{RowAccessor, Rows};
-    const DAYS: i32 = 14;
-    let start = day.plus_days(-(DAYS - 1));
-    let points: Vec<_> = weights::window(day, DAYS)
-        .into_iter()
-        .filter(|w| w.day >= start && w.day <= day)
-        .collect();
-    if points.len() < 2 {
-        return None;
-    }
-    let low = points.iter().map(|w| w.kg).fold(f64::INFINITY, f64::min);
-    let high = points
-        .iter()
-        .map(|w| w.kg)
-        .fold(f64::NEG_INFINITY, f64::max);
-    let pad = ((high - low) * 0.15).max(0.2);
-    let rows = |list: &[Weight]| {
-        Rows::from_columns(
-            list.len(),
-            [
-                (
-                    "day".into(),
-                    list.iter()
-                        .map(|w| f64::from(w.day.days_since(start)))
-                        .collect(),
-                ),
-                ("kg".into(), list.iter().map(|w| w.kg).collect()),
-            ],
-        )
-    };
-    let last = &points[points.len() - 1..];
-    let chart = plot()
-        .h(px(22.0))
-        .interactive(false)
-        .x_scale(Scale::Linear {
-            domain: Some([0.0, f64::from(DAYS - 1)]),
-            reverse: false,
-        })
-        .y_scale(Scale::Linear {
-            domain: Some([low - pad, high + pad]),
-            reverse: false,
-        })
-        .child(
-            line()
-                .data(Some(rows(&points)))
-                .x(Some(RowAccessor::from("day")))
-                .y(Some(RowAccessor::from("kg")))
-                .curve(Curve::Linear)
-                .stroke_width(px(1.5))
-                .text_color(color::ACCENT.opacity(0.6)),
-        )
-        .child(
-            line()
-                .data(Some(rows(last)))
-                .x(Some(RowAccessor::from("day")))
-                .y(Some(RowAccessor::from("kg")))
-                .dot(true)
-                .text_color(color::ACCENT),
-        );
-    Some(
-        view()
-            .mt_1()
-            .accessibility_elements_hidden(true)
-            .child(chart)
-            .into_element(),
-    )
 }

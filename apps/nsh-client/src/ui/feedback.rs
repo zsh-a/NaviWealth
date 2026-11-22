@@ -202,6 +202,29 @@ pub fn appear(index: u32, child: impl IntoElement) -> View {
         .child(child)
 }
 
+/// All manual editors use the same exit choices after a change.
+pub fn confirm_discard(asking: Signal<bool>, leave: impl FnOnce() + 'static) {
+    if asking.get_untracked() {
+        return;
+    }
+    asking.set(true);
+    let s = crate::i18n::s();
+    let answer = nsh_base::alert_dialog()
+        .title(s.discard_changes)
+        .cancel("keep", s.keep_editing)
+        .destructive("discard", s.discard)
+        .show();
+    spawn(async move {
+        let discard = answer
+            .await
+            .is_ok_and(|a| a.action.as_deref() == Some("discard"));
+        asking.set(false);
+        if discard {
+            leave();
+        }
+    });
+}
+
 /// A failed local write leaves the editor and its inputs intact.
 pub fn storage_error(error: impl std::fmt::Display) {
     log::error!("local write failed: {error}");

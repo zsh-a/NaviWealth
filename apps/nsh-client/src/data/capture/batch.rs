@@ -174,6 +174,17 @@ pub fn trade_security_name(reference: &str, currency: Currency) -> Option<String
         None => security.name,
     })
 }
+pub(crate) fn saved_security_id(reference: &str, currency: Currency) -> Option<String> {
+    resolve_security(
+        reference,
+        currency,
+        &finance::holdings_snapshot(),
+        None,
+        &crate::data::catalog::bindings(),
+    )
+    .map(|(security, _)| security.id)
+}
+
 pub fn price_security_name(reference: &str, currency: Currency) -> Option<String> {
     resolve_security(
         reference,
@@ -424,7 +435,7 @@ fn commit_in(
         _ => (1, None),
     });
     for (i, record) in ordered {
-        let id = format!("{}-{i}", draft.id);
+        let id = super::record_id(&draft.id, i);
         match record {
             Record::Money { day, draft: money } => {
                 let t = money.transaction(entry(draft, i, *day), day.0)?;

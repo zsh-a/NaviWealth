@@ -35,6 +35,13 @@ use crate::{
     },
 };
 
+#[derive(Clone, Default, PartialEq)]
+struct RequestedWeek(Option<Day>);
+
+pub(super) fn locate(day: Day) {
+    global::<RequestedWeek>().set(RequestedWeek(Some(day)));
+}
+
 /// The Review tab's content.
 pub fn review_tab() -> impl IntoElement {
     let period = signal(Period::Week);
@@ -44,6 +51,18 @@ pub fn review_tab() -> impl IntoElement {
     }
     // Periods back from the current one.
     let back = signal(0_i32);
+    effect(move || {
+        if let Some(day) = global::<RequestedWeek>().get().0 {
+            untracked(|| {
+                let today = clock::today();
+                let start =
+                    review::period_days_starting(Period::Week, today, 0, s().week_start())[0];
+                back.set((start.days_since(day) + 6).div_euclid(7).max(0));
+                period.set(Period::Week);
+                global::<RequestedWeek>().set(RequestedWeek(None));
+            });
+        }
+    });
     let days = computed(move || {
         review::period_days_starting(period.get(), clock::today(), back.get(), s().week_start())
     });
@@ -70,8 +89,8 @@ pub fn review_tab() -> impl IntoElement {
             )
             .child(segmented(
                 vec![
-                    Segment::new(Period::Week, || s().this_week.into()),
-                    Segment::new(Period::Month, || s().this_month.into()),
+                    Segment::new(Period::Week, || s().week_label.into()),
+                    Segment::new(Period::Month, || s().month_label.into()),
                 ],
                 move || period.get(),
                 move |p| {

@@ -593,10 +593,10 @@ test("scale mixed: cancelling a reviewed measurement writes no weight and ignore
   await app.waitFor("id:scale-panel", { state: "gone" });
   await app.press("label:Back");
   await packet(app, sessionId, IMPEDANCE);
-  await app.waitFor("label:Body metrics, —");
+  await app.waitFor("label:Body metrics, Log weight");
   expect(calls(app, "ble.disconnect").length).toBe(1);
   // The same existing Rust entry remains usable after TSX cancellation.
-  await app.press("label:Body metrics, —");
+  await app.press("label:Body metrics, Log weight");
   await app.waitFor("Save weight");
 }, 30000);
 
@@ -621,7 +621,7 @@ test("scale mixed: unavailable hardware host gives a recoverable message without
     "This environment cannot connect to a Bluetooth scale. Use the Android build with scale support.",
   );
   await home(app);
-  await app.waitFor("label:Body metrics, —");
+  await app.waitFor("label:Body metrics, Log weight");
 }, 30000);
 
 test("scale mixed: a matching device name without verified manufacturer metadata cannot connect or write", async () => {
@@ -635,7 +635,7 @@ test("scale mixed: a matching device name without verified manufacturer metadata
   expect(calls(app, "ble.connect").length).toBe(0);
   expect(calls(app, "ble.write").length).toBe(0);
   await home(app);
-  await app.waitFor("label:Body metrics, —");
+  await app.waitFor("label:Body metrics, Log weight");
 }, 30000);
 
 test("scale mixed: unrelated service candidates cannot masquerade as AFU-WL scales", async () => {
@@ -662,7 +662,7 @@ test("scale mixed: closing keeps a local draft and reopening does not reconnect"
   await packet(app, sessionId, IMPEDANCE);
   await app.waitFor("Confirm and save");
   await home(app);
-  await app.waitFor("label:Body metrics, —");
+  await app.waitFor("label:Body metrics, Log weight");
   await app.press("label:Settings");
   await app.scroll("Connect scale", 250);
   await app.press("Connect scale");
@@ -719,7 +719,7 @@ test("scale mixed: first-use Android permission gate reaches native scan authori
   expect(app.shows("Try again")).toBe(false);
   await home(app);
   expect(calls(app, "ble.scan.stop").length).toBe(1);
-  await app.waitFor("label:Body metrics, —");
+  await app.waitFor("label:Body metrics, Log weight");
 }, 30000);
 
 test("scale mixed: dynamic weight invalidates the old preview until a new stable reading", async () => {
@@ -742,7 +742,7 @@ test("scale mixed: dynamic weight invalidates the old preview until a new stable
   await app.press("Discard measurement");
   await app.waitFor("id:scale-panel", { state: "gone" });
   await app.press("label:Back");
-  await app.waitFor("label:Body metrics, —");
+  await app.waitFor("label:Body metrics, Log weight");
 }, 30000);
 
 test("scale mixed: stable weight invites the owner to stay on for composition", async () => {
@@ -901,7 +901,7 @@ test("scale mixed: oversized malformed evidence removes the retained Rust previe
   expect(app.shows("id:scale-preview")).toBe(false);
   expect(app.shows("Confirm and save")).toBe(false);
   await home(app);
-  await app.waitFor("label:Body metrics, —");
+  await app.waitFor("label:Body metrics, Log weight");
   await app.press("label:Settings");
   await app.scroll("Connect scale", 250);
   await app.press("Connect scale");
@@ -943,7 +943,7 @@ test("scale mixed: notifications during profile initialization are replayed only
   await app.press("Discard measurement");
   await app.waitFor("id:scale-panel", { state: "gone" });
   await app.press("label:Back");
-  await app.waitFor("label:Body metrics, —");
+  await app.waitFor("label:Body metrics, Log weight");
 }, 30000);
 
 test("scale mixed: rejected profile after clock sync discards buffered readings and does not remember the scale", async () => {
@@ -976,7 +976,7 @@ test("scale mixed: rejected profile after clock sync discards buffered readings 
   expect(app.shows("id:scale-preview")).toBe(false);
   expect(app.storage()[REMEMBERED_SCALE_KEY]).toBe(undefined);
   await home(app);
-  await app.waitFor("label:Body metrics, —");
+  await app.waitFor("label:Body metrics, Log weight");
   await app.press("label:Settings");
   await app.scroll("Connect scale", 250);
   await app.press("Connect scale");

@@ -74,14 +74,14 @@ fn today_and_review_use_the_shared_average_at_large_text() -> Result<(), String>
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), Some(garmin_cn()));
     app.set_viewport(Size::new(Points(360.0), Points(800.0)))?;
     app.set_environment("larger text", |e| e.font_scale = 1.3)?;
-    app.wait_for("text:↓0.7 kg · 7d")?;
+    app.wait_for("text:−0.7 kg · 7d")?;
     let nodes = app.screen().layout_nodes();
     let caption = nodes
         .iter()
         .find(|node| {
             node.text
                 .as_ref()
-                .is_some_and(|t| t.text.text.as_str() == "↓0.7 kg · 7d")
+                .is_some_and(|t| t.text.text.as_str() == "−0.7 kg · 7d")
         })
         .expect("the caption is laid out");
     assert!(caption.bounds.origin.x.0 >= 20.0);
@@ -110,7 +110,7 @@ fn today_and_review_use_the_shared_average_at_large_text() -> Result<(), String>
     let content = nodes
         .iter()
         .filter_map(|n| n.text.as_ref())
-        .find(|t| t.text.text == "↓0.7 kg · 7d")
+        .find(|t| t.text.text == "−0.7 kg · 7d")
         .unwrap();
     let mut full_text = (*content.text).clone();
     full_text.max_lines = 0;
@@ -127,15 +127,15 @@ fn today_and_review_use_the_shared_average_at_large_text() -> Result<(), String>
     // The preceding complete calendar week spans six days between endpoints.
     app.press("label:Previous week")?;
     // Review leads with what changed.
-    app.wait_for("text:7-day average weight fell 0.6 kg over this period.")?;
+    app.wait_for("text:7-day average weight fell 0.6\u{a0}kg over this period.")?;
     app.wait_for("label:One sentence")?;
     app.press("label:Next week")?;
     assert!(!app.screen().enabled("label:Next week")?);
-    app.press("This month")?;
+    app.press("Month")?;
     let delta = -f64::from(today().0.day() - 1) * 0.1;
     if delta != 0.0 {
         app.wait_for(&format!(
-            "text:7-day average weight fell {:.1} kg over this period.",
+            "text:7-day average weight fell {:.1}\u{a0}kg over this period.",
             delta.abs()
         ))?;
     }
@@ -184,7 +184,7 @@ fn scale_context_shows_on_today_in_the_editor_in_review_and_records() -> Result<
     let (mut app, _) = start_in(Some(dir.path()), profile, None);
 
     // Today keeps three facts; goal context is disclosed in the overview.
-    app.wait_for("text:/↓0\\.5 kg · 7d/")?;
+    app.wait_for("text:/−0\\.5 kg · 7d/")?;
     app.wait_for("text:18.3%")?;
     app.wait_for("text:22.9")?;
 
@@ -470,5 +470,38 @@ fn body_overview_uses_the_confirmed_measurements_frozen_profile_and_mass() -> Re
     app.press("label:/^Body metrics, 70.0 kg, /")?;
     app.wait_for("text:Measure with your scale to add body composition.")?;
     assert!(!app.shows("Measurement details"));
+    Ok(())
+}
+
+#[test]
+fn first_weight_has_one_action_and_keeps_failed_edits_until_discard_or_save() -> Result<(), String>
+{
+    use nsh_testing::DialogAnswer;
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, _) = start_in(Some(dir.path()), vec![], None);
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    assert!(!app.shows("text:Overview"));
+    app.press("label:Body metrics, Log weight")?;
+    app.type_text("label:Weight", "70")?;
+    db.execute_batch("CREATE TRIGGER reject_weight BEFORE INSERT ON weights BEGIN SELECT RAISE(ABORT,'fixture refuses writes'); END;").unwrap();
+    app.press("Save weight")?;
+    app.wait_for("Could not save changes. Check device storage and try again.")?;
+    app.on_dialog(|dialog| {
+        assert_eq!(dialog.title.as_deref(), Some("Discard unsaved changes?"));
+        DialogAnswer::Press("Keep editing".into())
+    });
+    app.press("label:Back")?;
+    app.wait_for("Save weight")?;
+    db.execute("DROP TRIGGER reject_weight", []).unwrap();
+    app.press("Save weight")?;
+    app.wait_for("text:Overview")?;
+    assert_eq!(stored_weights(dir.path()), [(today().to_string(), 70.)]);
+    app.press("text:Overview")?;
+    app.press("Edit weight")?;
+    app.type_text("label:Weight", ".1")?;
+    app.on_dialog(|_| DialogAnswer::Press("Discard".into()));
+    app.press("label:Back")?;
+    app.wait_for("Edit weight")?;
+    assert_eq!(stored_weights(dir.path())[0].1, 70.);
     Ok(())
 }

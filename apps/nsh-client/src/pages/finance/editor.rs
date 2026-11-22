@@ -11,7 +11,6 @@ use navi_finance::{
     journal::Source,
     money,
 };
-use nsh_base::alert_dialog;
 use nsh_core::prelude::*;
 
 use super::{delete::*, form::*, main_panel::*, panels::*};
@@ -155,25 +154,7 @@ fn editor(id: String, open: Signal<Option<String>>) -> impl IntoElement {
             open.set(None);
             return;
         }
-        if asking.get() {
-            return;
-        }
-        asking.set(true);
-        let answer = alert_dialog()
-            .title(s().discard_title)
-            .description(s().finance_discard_body)
-            .cancel("keep", s().keep_editing)
-            .destructive("discard", s().discard)
-            .show();
-        spawn(async move {
-            let discard = answer
-                .await
-                .is_ok_and(|a| a.action.as_deref() == Some("discard"));
-            asking.set(false);
-            if discard {
-                open.set(None);
-            }
-        });
+        crate::ui::feedback::confirm_discard(asking, move || open.set(None));
     };
     let kept = stored(existing.clone());
     let delete = move || {

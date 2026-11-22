@@ -65,8 +65,6 @@ pub struct Sheets {
     pub jump: Signal<bool>,
     /// The day Records should scroll to, set by the calendar.
     pub jump_to: Signal<Option<Day>>,
-    /// A saved batch can span several days; show all records without old filters.
-    pub records_all: Signal<bool>,
 }
 
 impl Sheets {
@@ -135,7 +133,6 @@ pub fn home_page() -> Screen {
         garmin: signal(false),
         jump: signal(false),
         jump_to: signal(None),
-        records_all: signal(false),
     };
     provide_context(sheets);
     let flights = super::capture::flight::provide();
@@ -203,7 +200,7 @@ pub fn home_page() -> Screen {
                             move |panel| match panel {
                                 BodyPanel::Edit(_) => {
                                     body_editing.set(true);
-                                    weight_editor(sheets.weight).into_element()
+                                    weight_editor(sheets.weight, sheets.body).into_element()
                                 }
                                 BodyPanel::Overview(day) => {
                                     body_editing.set(false);

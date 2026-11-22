@@ -18,6 +18,19 @@ pub enum Route {
     EditMeal(String),
     /// The recognition draft with this id.
     Pending(String),
+    /// Snapshot of the records committed together, in their reviewed order.
+    SavedBatch {
+        id: String,
+        records: std::rc::Rc<[crate::domain::capture::Record]>,
+    },
+    SavedObservation {
+        id: String,
+        record: std::rc::Rc<crate::domain::capture::Record>,
+    },
+    SavedTrade {
+        security: String,
+        trade: String,
+    },
     /// Settings.
     Settings,
     /// Height, age and sex used for health calculations.
@@ -71,7 +84,11 @@ pub fn select(tab: Tab) {
 impl Route {
     /// Its identity in the stack.
     pub fn key(&self) -> String {
-        format!("{self:?}")
+        match self {
+            Self::SavedBatch { id, .. } => format!("saved-batch:{id}"),
+            Self::SavedObservation { id, .. } => format!("saved-observation:{id}"),
+            _ => format!("{self:?}"),
+        }
     }
 }
 

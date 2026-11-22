@@ -3,6 +3,7 @@
 
 pub(crate) mod assets;
 mod capture;
+pub(crate) use capture::receipt;
 mod dock;
 mod drafts;
 pub(crate) mod finance;

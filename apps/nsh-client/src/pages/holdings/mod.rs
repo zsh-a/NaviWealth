@@ -102,13 +102,18 @@ pub(super) fn pair(
 }
 
 pub fn holding_page(id: &str) -> Screen {
+    holding_page_with_receipt(id, None)
+}
+
+pub(crate) fn holding_page_with_receipt(id: &str, initial_trade: Option<String>) -> Screen {
     let id = stored(id.to_owned());
     let trade = signal(None::<String>);
     let price = signal(false);
     let chart_window = signal(crate::ui::trend::Window::Month);
     let picker = signal(false);
     let binding_error = signal(None::<String>);
-    let receipt = signal(None::<String>);
+    let from_receipt = initial_trade.is_some();
+    let receipt = signal(initial_trade);
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
     crate::preview::holding_detail_opened(trade, price);
     let security = move || {
@@ -383,7 +388,14 @@ pub fn holding_page(id: &str) -> Screen {
                 .child(editor::price_editor(price, security))
                 .child(crate::ui::sheet::retained(
                     move || receipt.get(),
-                    move |chosen| trade_receipt(&chosen, move || receipt.set(None)),
+                    move |chosen| {
+                        trade_receipt(&chosen, move || {
+                            receipt.set(None);
+                            if from_receipt {
+                                nav::pop();
+                            }
+                        })
+                    },
                 )),
         )
 }

@@ -54,10 +54,9 @@ AI only to turn text and images into drafts, using the owner's model account.
   the conversation uses the available height above the live keyboard. Earlier exchanges
   fold under Earlier messages. A composer-shaped pill (photo glyph and the muted
   label Add text or photos / 补充文字或图片) opens the reply surface on demand.
-  In light appearance, a ready draft places the pill and a 48 pt high,
+  In both appearances, a ready draft places the pill and a 48 pt high,
   content-width cobalt save button on one row. At widths below 360 pt or
-  font scales above 1.2 the controls stack and the button uses a short contact
-  shadow. Dark appearance keeps the stacked footer.
+  font scales above 1.2 the controls stack. The light button uses a short contact shadow when stacked.
   Both writing surfaces group a photo control, the input
   (labelled What would you like to record? / 想记下什么？) and, for ordinary messages, a round send
   button. Input starts at one line (48 pt), grows with its content up to
@@ -90,8 +89,7 @@ AI only to turn text and images into drafts, using the owner's model account.
   proposed account through the composer. Back returns from the account
   picker or recognition consent; the cross closes the capture task.
   A successful confirmation reports the single record's kind and value, or
-  the batch count. Undo reverses the saved batch if its records still match. View opens the common day in Records, or the
-  unfiltered all-days timeline when the batch spans days.
+  the batch count. Undo reverses the saved batch if its records still match. View opens the saved record directly. For multiple records it opens a dated, actionable list of just that batch. Back from any item returns to the list.
   Content shared from another app opens this sheet with the shared images
   staged as unsent evidence and the text in the composer; the owner sends it
   like any first message (consent included). It waits while a pushed page or
@@ -149,17 +147,17 @@ AI only to turn text and images into drafts, using the owner's model account.
   first meal the figure is replaced by the sentence Nothing logged yet and a
   hint to use +, never a figure-sized dash. Flat beneath it, between hairlines, is a full-width Body metrics summary:
   three compact columns for weight, body fat and BMI. The seven-day trend
-  stays beside the weight in its column (↓0.5 kg · 7天), wrapping locally on
-  narrow screens, with a decorative 14-day line beneath it (latest point
-  marked, hidden from screen readers) once two readings exist. Today’s measurement date is omitted visually; an older date
-  shares the trend caption, while the accessible label always includes the date. The header’s explicit
+  stays beside the weight as a muted signed value (−0.5 kg · 7天), wrapping locally
+  on narrow screens. The weight history chart lives in Review. Today’s
+  measurement date is omitted visually; an older date
+  shares the trend caption, while the accessible label always includes the date. For a saved measurement, the header’s
   Overview / 概览 control opens the same overview as the whole row. Large text
   stacks the columns.
   Missing facts use a dash. Composition belongs to that weight's day, never
   a newer or older reading. Extra composition, goal distance and original
   measurement details live in the overview; its manual editor shares one
   native sheet and returns to the overview. With no weight, the summary
-  opens entry directly and shows Log weight / 记录体重 with a plus in ink. A reading panel uses the sheet's space; entry reserves
+  opens entry directly and shows only Log weight / 记录体重 as its action. Its accessible name includes that action. The editor confirms before discarding changes and keeps input available when a write fails. A reading panel uses the sheet's space; entry reserves
   the keyboard. Sleep and Body Battery occupy a separate equal-width row
   once Garmin is connected, stacking at large text (a Garmin vital opens all
   of the day's Garmin data). Then today's records, newest first, whose header carries the count
@@ -265,7 +263,11 @@ AI only to turn text and images into drafts, using the owner's model account.
   outlined; a day opens in Records; today's bar is the accent). Coverage sits directly beneath intake per logged day. The monthly caption
   includes the goal, which the weekly chart labels on its reference line.
   Spending, the net-worth change and weight follow, then the
-  one-line note and Garmin averages. A ledger-only period without weight or
+  Garmin averages and a one-line note. The Week / Month switch keeps the same
+  labels while browsing history. Same-month date spans share the month.
+  The note accepts up to 280 characters and shows a counter for the final 20.
+  A failed autosave keeps the input available with a retry action.
+  A ledger-only period without weight or
   intake comparisons leads with its net-worth change instead. An empty intake section shows a short message.
   Each Review part is a flat `section` (a hairline above, its title and
   figures at the page gutter), not a card.

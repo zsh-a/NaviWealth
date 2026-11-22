@@ -4,26 +4,25 @@ use super::Strings;
 use crate::domain::{format, meal::Day};
 
 impl Strings {
-    /// The seven days' span: `Nov 7 – Nov 13`.
+    /// Compact dates for the review header and a run of measurements.
     pub fn week_span(&self, first: Day, last: Day) -> String {
         let (a, b) = (first.0, last.0);
-        if self.zh() {
-            format!(
-                "{}月{}日 – {}月{}日",
-                a.month(),
-                a.day(),
-                b.month(),
-                b.day()
-            )
-        } else {
-            format!(
-                "{} {} – {} {}",
-                self.month_short(a.month()),
-                a.day(),
-                self.month_short(b.month()),
-                b.day()
-            )
+        if first == last {
+            return self.axis_date(first, false);
         }
+        if a.year() == b.year() && a.month() == b.month() {
+            return if self.zh() {
+                format!("{}月{}–{}日", a.month(), a.day(), b.day())
+            } else {
+                format!("{} {}–{}", self.month_short(a.month()), a.day(), b.day())
+            };
+        }
+        let separator = if self.zh() { "–" } else { " – " };
+        format!(
+            "{}{separator}{}",
+            self.axis_date(first, false),
+            self.axis_date(last, false)
+        )
     }
 
     /// A chart-axis day (`Oct 23`, `10月23日`), with its year when asked
@@ -201,14 +200,14 @@ impl Strings {
 
     /// The change over about a week, short enough for a vital's caption.
     pub fn week_change(&self, delta: f64) -> String {
-        let arrow = if delta < 0.0 {
-            "↓"
+        let sign = if delta < 0.0 {
+            "−"
         } else if delta > 0.0 {
-            "↑"
+            "+"
         } else {
             ""
         };
-        format!("{arrow}{} kg · {}", self.kg(delta.abs()), self.seven_days)
+        format!("{sign}{} kg · {}", self.kg(delta.abs()), self.seven_days)
     }
 
     /// A newer release found, by its version.
@@ -298,7 +297,9 @@ mod tests {
 
     #[test]
     fn vital_captions_are_compact_in_both_languages() {
-        assert_eq!(strings(Lang::En).week_change(-0.1), "↓0.1 kg · 7d");
-        assert_eq!(strings(Lang::Zh).week_change(-0.1), "↓0.1 kg · 7天");
+        assert_eq!(strings(Lang::En).week_change(-0.1), "−0.1 kg · 7d");
+        assert_eq!(strings(Lang::Zh).week_change(-0.1), "−0.1 kg · 7天");
+        assert_eq!(strings(Lang::Zh).week_change(0.3), "+0.3 kg · 7天");
+        assert_eq!(strings(Lang::En).week_change(-0.0), "0.0 kg · 7d");
     }
 }

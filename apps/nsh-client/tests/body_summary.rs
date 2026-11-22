@@ -24,8 +24,8 @@ fn today_omits_its_date_and_older_readings_share_the_trend_caption() -> Result<(
         drop(db);
         let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
         for (tag, title, today_label, trend) in [
-            ("en", "Body metrics", "Today", "↓0.7 kg · 7d"),
-            ("zh-CN", "身体指标", "今天", "↓0.7 kg · 7天"),
+            ("en", "Body metrics", "Today", "−0.7 kg · 7d"),
+            ("zh-CN", "身体指标", "今天", "−0.7 kg · 7天"),
         ] {
             let locale = Locale::parse(tag).unwrap();
             app.set_environment("language", |e| {

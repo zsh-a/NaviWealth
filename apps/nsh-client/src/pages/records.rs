@@ -85,23 +85,6 @@ pub fn records_tab() -> impl IntoElement {
     let focus = signal(None::<Day>);
     let list = element_ref();
     effect(move || {
-        if sheets.records_all.get() {
-            untracked(|| {
-                sheets.records_all.set(false);
-                filter.set(Filter::All);
-                focus.set(None);
-                shown.set(PAGE);
-            });
-            list.scroll_to(
-                Point {
-                    x: px(0.0),
-                    y: px(0.0),
-                },
-                false,
-            );
-        }
-    });
-    effect(move || {
         let Some(day) = sheets.jump_to.get() else {
             return;
         };

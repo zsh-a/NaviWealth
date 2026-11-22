@@ -39,6 +39,15 @@ pub fn start_in(
     entries: Vec<(String, String)>,
     network: Option<Arc<StubNetwork>>,
 ) -> (Headless, Arc<MemoryStorage>) {
+    start_in_with_clock(dir, entries, network, nsh_core::time::Clock::system())
+}
+
+pub fn start_in_with_clock(
+    dir: Option<&Path>,
+    entries: Vec<(String, String)>,
+    network: Option<Arc<StubNetwork>>,
+    clock: nsh_core::time::Clock,
+) -> (Headless, Arc<MemoryStorage>) {
     // Tests never depend on reaching the public quote and FX providers,
     // nor on the releases API the update check reads.
     naviwealth_app::disable_live_market_data();
@@ -46,6 +55,7 @@ pub fn start_in(
     naviwealth_app::set_live_updates(false);
     let storage = MemoryStorage::new(entries);
     let mut config = EngineConfig::new(Root::of::<App>());
+    config.clock = clock;
     config.storage = Some(storage.clone());
     config.data_dir = dir.map(Path::to_path_buf);
     if let Some(network) = network {

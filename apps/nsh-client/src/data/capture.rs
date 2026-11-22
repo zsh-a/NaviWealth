@@ -7,6 +7,7 @@ use crate::domain::{
     capture::{Draft, MAX_ATTACHMENTS, MAX_INPUT, PROMPT_VERSION, Record, Status, Turn},
     recognition::Lang,
 };
+pub(crate) use batch::saved_security_id;
 pub use batch::{
     CaptureIssue, CaptureUndo, book_balance, price_security_name, record_issue,
     trade_security_name, undo,
@@ -329,9 +330,13 @@ fn prepare_turn(draft: &mut Draft) -> Result<(), String> {
     Ok(())
 }
 
+pub(crate) fn record_id(batch: &str, index: usize) -> String {
+    format!("{batch}-{index}")
+}
+
 fn entry(draft: &Draft, index: usize, day: crate::domain::meal::Day) -> Entry {
     Entry {
-        id: format!("{}-{index}", draft.id),
+        id: record_id(&draft.id, index),
         at: day
             .0
             .to_datetime(clock::zoned(draft.created_at_ms).datetime().time()),

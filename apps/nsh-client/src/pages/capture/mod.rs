@@ -9,6 +9,7 @@ mod evidence;
 mod favorites;
 pub(in crate::pages) mod flight;
 mod live_preview;
+pub(crate) mod receipt;
 mod recent;
 mod summary;
 mod thread;
@@ -507,8 +508,7 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
         capture::ready(&d)
     });
     let compact_save_row = move || {
-        !dark()
-            && window().width.0 >= 360.0
+        window().width.0 >= 360.0
             && font_scale() <= 1.2
             && editing()
             && !first_turn()
@@ -543,14 +543,11 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                                 .flex_row()
                                 .items_center()
                                 .gap(px(10.0))
-                                .min_h(px(52.0))
+                                .min_h(px(48.0))
                                 .px(px(16.0))
+                                .rounded_full()
                                 .bg(color::SURFACE_2)
-                                .rounded(px(radius::WELL))
-                                .style_when(
-                                    || !dark(),
-                                    |s| s.min_h(px(48.0)).rounded_full().bg(color::SUNKEN),
-                                )
+                                .style_when(|| !dark(), |s| s.bg(color::SUNKEN))
                                 .transition_colors()
                                 .duration(crate::ui::motion::INSTANT)
                                 .active(|s| s.bg(color::SUNKEN))
@@ -645,7 +642,7 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                                     }
                                     dismiss_keyboard();
                                     sheets.capture.set(false);
-                                    let destination = summary::saved_view(&confirmed, sheets);
+                                    let destination = receipt::view_saved(&confirmed, sheets);
                                     show_capture_receipt(
                                         summary::saved_message(&confirmed),
                                         (
@@ -661,7 +658,7 @@ fn editor(sheets: Sheets, initial: Draft) -> impl IntoElement {
                                 }
                             }
                         })
-                        .style_when(move || light, |s| s.min_h(px(48.0)))
+                        .min_h(px(48.0))
                         .style_when(
                             move || light && !compact_save_row(),
                             |s| s.shadow(crate::ui::theme::shadow::CARD),

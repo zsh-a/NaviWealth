@@ -86,7 +86,7 @@ fn current_month_compares_only_elapsed_days() -> Result<(), String> {
     drop(db);
     let (mut app, _) = start_in(Some(dir.path()), vec![], None);
     app.press("label:Review")?;
-    app.press("This month")?;
+    app.press("Month")?;
     app.wait_for("No spending recorded in the comparison period")?;
     Ok(())
 }

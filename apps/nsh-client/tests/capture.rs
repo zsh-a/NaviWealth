@@ -141,7 +141,8 @@ fn account_completion_is_local_durable_and_never_posts_before_confirmation() -> 
     app.press("Confirm and save")?;
     app.wait_for("Saved Spending · ¥35.05")?;
     app.press("View")?;
-    app.wait_for("label:/^Lunch shop, −¥35.05/")?;
+    app.wait_for("Save transaction")?;
+    app.wait_for("35.05")?;
     assert_eq!(
         navi_finance::repository::transactions(&db).unwrap().len(),
         1
@@ -325,30 +326,36 @@ fn review_footer_keeps_both_controls_reachable_across_width_and_text_size() -> R
     app.press("label:Send")?;
     app.wait_for("Confirm and save")?;
 
-    for (width, scale, inline) in [
-        (390.0, 1.0, true),
-        (320.0, 1.0, false),
-        (390.0, 1.35, false),
+    for theme in [
+        nsh_core::platform::ColorScheme::Light,
+        nsh_core::platform::ColorScheme::Dark,
     ] {
-        app.set_viewport(Size::new(Points(width), Points(844.0)))?;
-        app.set_environment("text size", |e| e.font_scale = scale)?;
-        let nodes = app.screen().layout_nodes();
-        let control = |label: &str| {
-            let text = nodes
-                .iter()
-                .find(|n| !n.hidden && n.text.as_ref().is_some_and(|t| t.text.text == label))
-                .unwrap_or_else(|| panic!("missing {label}"));
-            nodes.iter().find(|n| n.id == text.parent).unwrap().bounds
-        };
-        let reply = control("Add text or photos");
-        let save = control("Confirm and save");
-        assert!(reply.size.height.0 >= 48.0 && save.size.height.0 >= 48.0);
-        assert!(reply.origin.x.0 >= 0.0 && save.origin.x.0 + save.size.width.0 <= width);
-        if inline {
-            assert!((reply.origin.y.0 - save.origin.y.0).abs() <= 1.0);
-            assert!(reply.origin.x.0 + reply.size.width.0 < save.origin.x.0);
-        } else {
-            assert!(reply.origin.y.0 + reply.size.height.0 <= save.origin.y.0);
+        app.set_environment("appearance", |e| e.color_scheme = theme)?;
+        for (width, scale, inline) in [
+            (390.0, 1.0, true),
+            (320.0, 1.0, false),
+            (390.0, 1.35, false),
+        ] {
+            app.set_viewport(Size::new(Points(width), Points(844.0)))?;
+            app.set_environment("text size", |e| e.font_scale = scale)?;
+            let nodes = app.screen().layout_nodes();
+            let control = |label: &str| {
+                let text = nodes
+                    .iter()
+                    .find(|n| !n.hidden && n.text.as_ref().is_some_and(|t| t.text.text == label))
+                    .unwrap_or_else(|| panic!("missing {label}"));
+                nodes.iter().find(|n| n.id == text.parent).unwrap().bounds
+            };
+            let reply = control("Add text or photos");
+            let save = control("Confirm and save");
+            assert!(reply.size.height.0 >= 48.0 && save.size.height.0 >= 48.0);
+            assert!(reply.origin.x.0 >= 0.0 && save.origin.x.0 + save.size.width.0 <= width);
+            if inline {
+                assert!((reply.origin.y.0 - save.origin.y.0).abs() <= 1.0);
+                assert!(reply.origin.x.0 + reply.size.width.0 < save.origin.x.0);
+            } else {
+                assert!(reply.origin.y.0 + reply.size.height.0 <= save.origin.y.0);
+            }
         }
     }
     app.press("Confirm and save")?;
@@ -1141,6 +1148,33 @@ fn holding_balance_price_and_note_cards_share_one_review() -> Result<(), String>
         0
     );
     assert_eq!(model.requests().len(), 1);
+
+    // Record it again after Undo, then follow the batch's individual receipts.
+    app.press("label:New entry")?;
+    app.type_text(
+        "label:What would you like to record?",
+        "Buy Fund A with Cash, reconcile Cash to 91.40, log the price and note",
+    )?;
+    app.press("label:Send")?;
+    app.press("Confirm and save (4)")?;
+    app.press("View")?;
+    app.press("label:/^Buy · Fund A,/")?;
+    app.wait_for("Delete trade")?;
+    app.press("Close")?;
+    app.wait_for("text:Saved 4 records")?;
+    app.press("label:/^Balance check · Cash,/")?;
+    app.wait_for("text:¥91.40")?;
+    app.press("View account")?;
+    app.wait_for("Account activity")?;
+    app.press("label:Back")?;
+    app.press("label:Back")?;
+    app.press("label:/^Manual price · Fund A,/")?;
+    app.wait_for("text:¥4.125005")?;
+    app.press("Price history")?;
+    app.wait_for("Daily closes")?;
+    app.press("label:Back")?;
+    app.press("label:Back")?;
+    app.wait_for("text:Saved 4 records")?;
     Ok(())
 }
 
@@ -1153,9 +1187,22 @@ fn only_a_committed_save_animates_and_reduced_motion_keeps_the_receipt() -> Resu
         money["evidence"] =
             json!([{"field":"account","source":"inferred","reason":"Funding was not stated."}]);
         let stub = network(200, record_reply(vec![money]));
-        let (mut app, _) = start_in(Some(dir.path()), account(true), Some(stub));
+        // Observe the native mount during press(), which settles finite animations before returning.
+        let clock = nsh_core::time::Clock::manual(std::time::SystemTime::now());
+        let (mut app, _) = start_in_with_clock(Some(dir.path()), account(true), Some(stub), clock);
+        let flew = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let mounted = flew.clone();
+        app.observe(move |_, batch| {
+            if batch.items.iter().any(|op| {
+                matches!(op, nsh_core::MountItem::ViewProps { props, .. }
+                if props.test_id.as_deref() == Some("capture-save-flight"))
+            }) {
+                mounted.store(true, Ordering::SeqCst);
+            }
+        });
         app.set_environment("motion preference", |e| e.reduce_motion = reduced)?;
         app.press("label:New entry")?;
+        app.run_for(Duration::from_millis(500))?;
         app.type_text("label:What would you like to record?", "Lunch 32 yuan")?;
         app.clear_commands();
         app.press("label:Send")?;
@@ -1187,20 +1234,17 @@ fn only_a_committed_save_animates_and_reduced_motion_keeps_the_receipt() -> Resu
         app.press("Confirm and save")?;
         app.wait_for("Could not save changes. Check device storage and try again.")?;
         assert!(haptics(&app).is_empty());
-        assert!(!app.shows("id:capture-save-flight"));
+        assert!(!flew.load(Ordering::SeqCst));
         db.execute_batch("DROP TRIGGER refuse_save").unwrap();
         app.press("Confirm and save")?;
+        app.wait_for_gone("label:Confirm and save", GONE)?;
+        app.run_for(Duration::from_millis(500))?;
+        assert_eq!(flew.load(Ordering::SeqCst), !reduced);
         app.wait_for("Saved Spending · ¥32.00")?;
         assert_eq!(
             haptics(&app),
             vec![Haptic::Notification(HapticNotification::Success)]
         );
-        if reduced {
-            app.wait_for_gone("label:Confirm and save", GONE)?;
-            assert!(!app.shows("id:capture-save-flight"));
-        } else {
-            app.wait_for("id:capture-save-flight")?;
-        }
         // The decorative layer takes no hit: Undo is available immediately.
         app.press("Undo")?;
         app.wait_for("Save undone")?;
@@ -1209,6 +1253,37 @@ fn only_a_committed_save_animates_and_reduced_motion_keeps_the_receipt() -> Resu
                 .unwrap()
                 .is_empty()
         );
+    }
+    Ok(())
+}
+
+#[test]
+fn batch_view_returns_to_both_records_and_opens_a_note_on_its_own_day() -> Result<(), String> {
+    let day = today().plus_days(-7);
+    let note = json!({"kind":"note","day":day.to_string(),"trade":null,"balance":null,"price":null,"note":"Evening walk","evidence":[],"weight_kg":null,"money":null,"meal":null,"slot":null});
+    for records in [vec![note.clone(), meal_record()], vec![meal_record(), note]] {
+        let (mut app, _) = start(account(true), Some(network(200, record_reply(records))));
+        app.press("label:New entry")?;
+        app.type_text(
+            "label:What would you like to record?",
+            "Lunch today and last week's walk",
+        )?;
+        app.press("label:Send")?;
+        app.press("Confirm and save (2)")?;
+        app.press("View")?;
+        app.wait_for("text:Saved 2 records")?;
+        app.press("label:/^Review note, Evening walk/")?;
+        app.wait_for("Evening walk")?;
+        app.press("label:Back")?;
+        app.wait_for("text:Saved 2 records")?;
+        app.press("label:/^Meals · Beef noodle soup/")?;
+        app.wait_for("text:Edit meal")?;
+        app.press("label:Back")?;
+        app.wait_for("text:Saved 2 records")?;
+        app.press("label:Back")?;
+        app.press("label:Review")?;
+        assert!(app.screen().enabled("label:Next week")?);
+        app.wait_for("Evening walk")?;
     }
     Ok(())
 }

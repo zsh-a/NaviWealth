@@ -92,34 +92,49 @@ fn scale_details(day: Day, typed: impl Fn() -> Option<f64> + Copy + 'static) -> 
 }
 
 /// Logs or corrects `day`'s weight; deletes it with Undo.
-pub fn weight_editor(open: Signal<Option<Day>>) -> impl IntoElement {
+pub fn weight_editor(open: Signal<Option<Day>>, overview: Signal<Option<Day>>) -> impl IntoElement {
     retained(
         move || open.get(),
-        move |day| editor(day, open).into_element(),
+        move |day| editor(day, open, overview).into_element(),
     )
 }
 
-fn editor(day: Day, open: Signal<Option<Day>>) -> impl IntoElement {
-    let sheets = crate::pages::home::Sheets::get();
-    task_dismiss(move || {
-        open.set(None);
-        sheets.body.set(None);
-    });
+fn editor(day: Day, open: Signal<Option<Day>>, overview: Signal<Option<Day>>) -> impl IntoElement {
     let existing = weights::on(day);
     let start = existing
         .or_else(|| weights::latest_until(day))
         .map(|entry| field_number(entry.kg))
         .unwrap_or_default();
+    let initial = stored(start.clone());
     let value = signal(start);
+    let asking = signal(false);
+    let close = move |whole: bool| {
+        open.set(None);
+        if whole {
+            overview.set(None);
+        }
+    };
+    let dirty = move || value.with_untracked(|v| initial.with(|start| v != start));
+    let leave = move |whole: bool| {
+        if dirty() {
+            crate::ui::feedback::confirm_discard(asking, move || close(whole));
+        } else {
+            close(whole);
+        }
+    };
+    task_dismiss(move || leave(true));
+    let write_error = signal(None);
     let attempted = signal(false);
     let parsed = move || value.with(|v| parse_number(v));
     let error = move || attempted.get() && !parsed().is_some_and(valid_kg);
     let save = move || {
         attempted.set(true);
-        if let Some(kg) = untracked(parsed).filter(|kg| valid_kg(*kg))
-            && weights::set(day, kg)
-        {
-            open.set(None);
+        if let Some(kg) = untracked(parsed).filter(|kg| valid_kg(*kg)) {
+            if weights::set(day, kg) {
+                open.set(None);
+            } else {
+                write_error.set(Some(s().error_transaction_storage));
+            }
         }
     };
     let header = view()
@@ -145,7 +160,7 @@ fn editor(day: Day, open: Signal<Option<Day>>) -> impl IntoElement {
         )
         .child(
             IconBtn::new(
-                if sheets.body.get_untracked().is_some() {
+                if overview.get_untracked().is_some() {
                     Icon::ChevronLeft
                 } else {
                     Icon::Close
@@ -153,7 +168,7 @@ fn editor(day: Day, open: Signal<Option<Day>>) -> impl IntoElement {
                 || s().back.into(),
             )
             .side(48.0)
-            .on_press(move || open.set(None)),
+            .on_press(move || leave(false)),
         );
     let body = view()
         .gap_5()
@@ -164,14 +179,32 @@ fn editor(day: Day, open: Signal<Option<Day>>) -> impl IntoElement {
                     .style_when(error, |s| s.border_color(color::DANGER)),
             )
             .child(note(
-                move || error().then(|| s().error_weight.into()),
+                move || {
+                    if error() {
+                        Some(s().error_weight.into())
+                    } else {
+                        write_error.get().map(Into::into)
+                    }
+                },
                 || true,
             )),
         )
         .child(scale_details(day, move || value.with(|v| parse_number(v))))
-        .child(crate::scale::launch_button(move || {
-            open.set(None);
-            sheets.body.set(None);
+        .child(crate::scale::launch_action().map(|launch| {
+            let launch = stored(launch);
+            Btn::new(Variant::Tonal)
+                .label(|| crate::scale::launch_label().into())
+                .on_press(move || {
+                    let connect = move || {
+                        close(true);
+                        launch.with(|open| open());
+                    };
+                    if dirty() {
+                        crate::ui::feedback::confirm_discard(asking, connect);
+                    } else {
+                        connect();
+                    }
+                })
         }));
     let actions = view()
         .flex_row()
@@ -181,18 +214,19 @@ fn editor(day: Day, open: Signal<Option<Day>>) -> impl IntoElement {
             Btn::new(Variant::Danger)
                 .label(|| s().delete_weight.into())
                 .on_press(move || {
-                    open.set(None);
-                    sheets.body.set(None);
                     if let Some(removed) = weights::remove(day) {
+                        close(true);
                         show_toast(
                             s().weight_deleted,
                             Some((
                                 s().undo.into(),
                                 Rc::new(move || {
-                                    weights::restore_removed(removed);
+                                    undo_weight(removed);
                                 }),
                             )),
                         );
+                    } else {
+                        write_error.set(Some(s().error_transaction_delete));
                     }
                 })
                 .flex_1()
@@ -207,9 +241,29 @@ fn editor(day: Day, open: Signal<Option<Day>>) -> impl IntoElement {
         );
     task_sheet(
         move || open.get().is_some(),
-        move || open.set(None),
+        move || leave(false),
         header,
         body,
         actions,
     )
+}
+
+fn undo_weight(weight: crate::domain::weight::Weight) {
+    match weights::restore_removed(weight) {
+        Ok(true) => {}
+        Ok(false) => show_toast(
+            crate::i18n::catalog::copy(
+                "This weight has changed. Your newer measurement was kept.",
+                "体重记录已更改，已保留较新的测量。",
+            ),
+            None,
+        ),
+        Err(error) => {
+            log::error!("weight undo: {error}");
+            show_toast(
+                s().error_transaction_restore,
+                Some((s().try_again.into(), Rc::new(move || undo_weight(weight)))),
+            )
+        }
+    }
 }

@@ -15,63 +15,6 @@ use navi_finance::{
 };
 use nsh_core::prelude::*;
 
-pub fn common_day(draft: &Draft) -> Option<crate::domain::meal::Day> {
-    let day_of = super::details::day;
-    let first = draft.records.first().map(day_of)?;
-    draft
-        .records
-        .iter()
-        .all(|r| day_of(r) == first)
-        .then_some(first)
-}
-
-/// Open the owning surface of a saved batch. The Records tab can show
-/// mixed money, weight and meal batches together, including across days.
-pub(super) fn saved_view(draft: &Draft, sheets: super::Sheets) -> impl Fn() + use<> {
-    use crate::nav::{self, Route, Tab};
-    let day = common_day(draft);
-    let route = match draft.records.as_slice() {
-        [
-            record @ (Record::Price {
-                security, currency, ..
-            }
-            | Record::Trade {
-                security, currency, ..
-            }),
-        ] => {
-            let name = crate::data::capture::price_security_name(security, *currency);
-            finance::holdings_snapshot()
-                .securities
-                .iter()
-                .find(|item| {
-                    item.currency() == *currency
-                        && (item.id == *security || Some(&item.name) == name.as_ref())
-                })
-                .map(|item| match record {
-                    Record::Price { .. } => Route::PricesAndRates(Some(item.id.clone())),
-                    _ => Route::Holding(item.id.clone()),
-                })
-        }
-        [Record::Balance { account, .. }] => Some(Route::Account(account.to_string())),
-        _ => None,
-    };
-    let tab = match draft.records.first() {
-        Some(Record::Note { .. }) => Tab::Review,
-        Some(Record::Balance { .. } | Record::Price { .. } | Record::Trade { .. }) => Tab::Assets,
-        _ => Tab::Records,
-    };
-    move || {
-        if tab == Tab::Records {
-            sheets.jump_to.set(day);
-            sheets.records_all.set(day.is_none());
-        }
-        nav::select(tab);
-        if let Some(page) = route.clone() {
-            nav::push(page);
-        }
-    }
-}
-
 pub fn saved_message(draft: &Draft) -> String {
     let [record] = draft.records.as_slice() else {
         return s().capture_saved_count(draft.records.len());

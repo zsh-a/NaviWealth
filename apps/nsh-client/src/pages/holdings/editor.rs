@@ -32,25 +32,7 @@ fn guarded(
             close();
             return;
         }
-        if asking.get_untracked() {
-            return;
-        }
-        asking.set(true);
-        let answer = alert_dialog()
-            .title(s().discard_title)
-            .description(s().finance_discard_body)
-            .cancel("keep", s().keep_editing)
-            .destructive("discard", s().discard)
-            .show();
-        spawn(async move {
-            let discard = answer
-                .await
-                .is_ok_and(|r| r.action.as_deref() == Some("discard"));
-            asking.set(false);
-            if discard {
-                close();
-            }
-        });
+        crate::ui::feedback::confirm_discard(asking, close);
     }
 }
 fn decimal(

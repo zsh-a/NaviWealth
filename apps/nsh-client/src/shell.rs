@@ -30,6 +30,15 @@ pub fn shell() -> impl IntoElement {
                     Route::BackupSettings => crate::pages::settings_backup::backup_page(),
                     Route::Account(name) => crate::pages::assets::account_page(&name),
                     Route::Holding(id) => crate::pages::holdings::holding_page(&id),
+                    Route::SavedBatch { id, records } => {
+                        crate::pages::receipt::batch_page(id, records)
+                    }
+                    Route::SavedObservation { record, .. } => {
+                        crate::pages::receipt::observation_page(record)
+                    }
+                    Route::SavedTrade { security, trade } => {
+                        crate::pages::holdings::holding_page_with_receipt(&security, Some(trade))
+                    }
                     Route::AssetHistory => crate::pages::assets::history_page(),
                     Route::ClosedHoldings => crate::pages::holdings::closed_page(),
                     Route::Spending {

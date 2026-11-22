@@ -49,9 +49,11 @@ pub fn between(first: Day, last: Day) -> Vec<(Day, String)> {
 }
 
 /// Keeps `text` (trimmed) as `day`'s note; an empty one removes it.
-pub fn set(day: Day, text: &str) {
+pub fn set(day: Day, text: &str) -> bool {
     let text = text.trim().replace(['\n', '\r'], " ");
-    let text: String = text.chars().take(MAX_CHARS).collect();
+    if text.chars().count() > MAX_CHARS {
+        return false;
+    }
     let written = db::with(|connection| {
         if text.is_empty() {
             connection.execute(
@@ -71,7 +73,7 @@ pub fn set(day: Day, text: &str) {
         Some(Ok(_)) => {}
         other => {
             log::error!("notes: {day} was not kept: {other:?}");
-            return;
+            return false;
         }
     }
     notes().update(|n| {
@@ -81,6 +83,7 @@ pub fn set(day: Day, text: &str) {
             n.0.insert(at, (day, text));
         }
     });
+    true
 }
 
 #[cfg(test)]
