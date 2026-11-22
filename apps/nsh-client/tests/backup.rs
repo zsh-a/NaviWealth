@@ -233,6 +233,12 @@ fn restore_latest(app: &mut Headless, dav: &Dav) -> Result<(), String> {
     Ok(())
 }
 
+fn wait_for_restore(app: &mut Headless, outcome: &str) -> Result<(), String> {
+    // The result includes a WebDAV fetch, real Argon2 decryption and SQLite validation.
+    // Parallel restores on a CI runner can outlast the default five-second UI wait.
+    app.wait_for_within(outcome, Duration::from_secs(30))
+}
+
 #[test]
 fn encrypted_backup_creates_the_folder_and_restores_on_a_fresh_install() -> Result<(), String> {
     let dav = Dav::new();
@@ -240,7 +246,7 @@ fn encrypted_backup_creates_the_folder_and_restores_on_a_fresh_install() -> Resu
     let (mut app, _, dir) = fresh_with(&dav, "correct horse battery", false);
     assert!(app.shows("Nothing recorded today"));
     restore_latest(&mut app, &dav)?;
-    app.wait_for("text:Backup restored")?;
+    wait_for_restore(&mut app, "text:Backup restored")?;
     // Restore happened on the backup page, over Settings; both go.
     app.press("label:Back")?;
     app.press("label:Back")?;
@@ -284,7 +290,10 @@ fn a_wrong_passphrase_keeps_existing_records() -> Result<(), String> {
     let (mut app, _, dir) = fresh_with(&dav, "another passphrase", true);
     let before = stored_meals(dir.path());
     restore_latest(&mut app, &dav)?;
-    app.wait_for("text:Wrong passphrase, or the backup was changed.")?;
+    wait_for_restore(
+        &mut app,
+        "text:Wrong passphrase, or the backup was changed.",
+    )?;
     assert_eq!(stored_meals(dir.path()), before);
     Ok(())
 }
@@ -351,11 +360,14 @@ fn corrupted_and_newer_databases_leave_existing_records_untouched() -> Result<()
         let (mut app, _, dir) = fresh_with(&dav, "correct horse battery", true);
         let before = stored_meals(dir.path());
         restore_latest(&mut app, &dav)?;
-        app.wait_for(if newer {
-            "text:This backup is from a newer version of the app."
-        } else {
-            "text:Not a readable NaviWealth backup."
-        })?;
+        wait_for_restore(
+            &mut app,
+            if newer {
+                "text:This backup is from a newer version of the app."
+            } else {
+                "text:Not a readable NaviWealth backup."
+            },
+        )?;
         assert_eq!(stored_meals(dir.path()), before);
     }
     assert_eq!(
@@ -407,7 +419,7 @@ fn failure_while_copying_rows_rolls_back_the_whole_restore() -> Result<(), Strin
     let (mut app, _, dir) = fresh_with(&dav, "correct horse battery", true);
     let before = stored_meals(dir.path());
     restore_latest(&mut app, &dav)?;
-    app.wait_for("text:Not a readable NaviWealth backup.")?;
+    wait_for_restore(&mut app, "text:Not a readable NaviWealth backup.")?;
     assert_eq!(stored_meals(dir.path()), before);
     Ok(())
 }
@@ -489,7 +501,7 @@ fn a_backup_made_by_hand_carries_the_photos_back_to_a_fresh_install() -> Result<
     app.wait_for("text:With photos")?;
     app.on_dialog(|_| DialogAnswer::Press("Restore".into()));
     app.press(&format!("id:{name} >> text:/./"))?;
-    app.wait_for("text:Backup restored")?;
+    wait_for_restore(&mut app, "text:Backup restored")?;
     assert_eq!(
         std::fs::read(photo_dir(fresh.path()).join("m1.jpg")).unwrap(),
         photo()
@@ -603,7 +615,7 @@ fn failed_photo_preparation_preserves_database_and_existing_photos() -> Result<(
     std::fs::create_dir_all(photo_dir(dir.path()).join("blocked.jpg")).unwrap();
     std::fs::write(photo_dir(dir.path()).join("kept.jpg"), b"kept").unwrap();
     restore_latest(&mut app, &dav)?;
-    app.wait_for("text:The device could not write.")?;
+    wait_for_restore(&mut app, "text:The device could not write.")?;
     assert_eq!(stored_meals(dir.path()), before);
     assert_eq!(
         std::fs::read(photo_dir(dir.path()).join("kept.jpg")).unwrap(),
@@ -622,7 +634,7 @@ fn restore_uses_new_references_for_conflicting_photos_and_preserves_local_files(
     std::fs::create_dir_all(photo_dir(dir.path())).unwrap();
     std::fs::write(photo_dir(dir.path()).join("m1.jpg"), b"local photo").unwrap();
     restore_latest(&mut app, &dav)?;
-    app.wait_for("text:Backup restored")?;
+    wait_for_restore(&mut app, "text:Backup restored")?;
     let restored = stored_meals(dir.path());
     let name = restored[0]["photo"].as_str().unwrap();
     assert_ne!(name, "m1.jpg");
@@ -651,7 +663,7 @@ fn rejected_database_restore_removes_only_newly_prepared_photos() -> Result<(), 
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
     db.execute_batch("CREATE TRIGGER reject_restore BEFORE INSERT ON meals BEGIN SELECT RAISE(ABORT,'device cannot write'); END;").unwrap();
     restore_latest(&mut app, &dav)?;
-    app.wait_for("text:Not a readable NaviWealth backup.")?;
+    wait_for_restore(&mut app, "text:Not a readable NaviWealth backup.")?;
     assert_eq!(stored_meals(dir.path()), before);
     assert_eq!(
         std::fs::read(photo_dir(dir.path()).join("m1.jpg")).unwrap(),
