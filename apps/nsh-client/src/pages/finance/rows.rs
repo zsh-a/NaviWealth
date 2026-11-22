@@ -2,7 +2,7 @@
 //! capture: category names, transaction titles and the transaction row.
 
 use navi_finance::{
-    account::{Account, AccountKind},
+    account::{Account, AccountPurpose},
     currency::Currency,
     journal::{Source, Transaction},
 };
@@ -15,13 +15,62 @@ use crate::{
     ui::{Type, Typo, color, surface::row_button},
 };
 
-pub(super) fn account_label(account: &Account) -> String {
-    let kind = match account.kind() {
-        AccountKind::Assets => s().asset_account,
-        AccountKind::Liabilities => s().liability_account,
-        _ => return category_label(account),
-    };
-    format!("{} · {kind}", crate::ui::currency::account_label(account))
+fn account_type(account: &Account) -> &'static str {
+    crate::ui::account_purpose::description(account, finance::account_purpose(account))
+}
+
+/// Selected values stay compact, with their type added for names shared by a card and a wallet.
+pub(crate) fn selected_account_label(account: &Account) -> String {
+    let label = crate::ui::currency::account_label(account);
+    if finance::accounts_snapshot().iter().any(|other| {
+        other.is_cash()
+            && other.name() == account.name()
+            && other.currency() == account.currency()
+            && other.kind() != account.kind()
+    }) {
+        format!("{label} · {}", account_type(account))
+    } else {
+        label
+    }
+}
+
+pub(crate) fn account_option(
+    account: Account,
+    selected: bool,
+    choose: impl Fn(&Account) + 'static,
+) -> impl IntoElement {
+    let purpose = finance::account_purpose(&account);
+    account_option_with_purpose(account, purpose, selected, choose)
+}
+
+pub(crate) fn account_option_with_purpose(
+    account: Account,
+    purpose: Option<AccountPurpose>,
+    selected: bool,
+    choose: impl Fn(&Account) + 'static,
+) -> impl IntoElement {
+    let name = account.name().to_owned();
+    let detail = format!(
+        "{} · {}",
+        crate::ui::account_purpose::description(&account, purpose),
+        account.currency()
+    );
+    row_button(move || choose(&account))
+        .accessibility_label(Some(format!("{name}, {detail}").into()))
+        .selected(selected)
+        .px_0()
+        .min_h(px(56.0))
+        .py_2()
+        .gap_2()
+        .child(
+            view()
+                .flex_1()
+                .min_w(px(0.0))
+                .gap_1()
+                .child(text(name).typo(Type::Body).text_color(color::INK))
+                .child(text(detail).typo(Type::Subhead).text_color(color::MUTED)),
+        )
+        .child(selected.then(|| crate::ui::icon(crate::ui::Icon::Check, 18.0, color::INK)))
 }
 
 pub(crate) fn category_label(account: &Account) -> String {

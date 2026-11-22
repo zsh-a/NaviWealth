@@ -31,6 +31,7 @@ pub fn shell() -> impl IntoElement {
                     Route::BackupSettings => crate::pages::settings_backup::backup_page(),
                     Route::Account(name) => crate::pages::assets::account_page(&name, false),
                     Route::AccountCheck(name) => crate::pages::assets::account_page(&name, true),
+                    Route::ArchivedAccounts => crate::pages::assets::archived_accounts_page(),
                     Route::Holding(id) => crate::pages::holdings::holding_page(&id),
                     Route::SavedBatch { id, records } => {
                         crate::pages::receipt::batch_page(id, records)

@@ -1,6 +1,6 @@
 use jiff::civil::date;
 use navi_finance::{
-    account::Account,
+    account::{Account, AccountPurpose},
     assets,
     holdings::{self, Book, Error, Kind, Quote, Security, Trade, store},
     journal::{self, Entry, Source},
@@ -163,11 +163,48 @@ fn trades_and_cash_commit_together_and_unsafe_history_edits_roll_back() {
 trait Early {
     fn with_early_time(self) -> Self;
 }
+
 impl Early for Trade {
     fn with_early_time(mut self) -> Self {
         self.at = self.at.date().at(8, 0, 0, 0);
         self
     }
+}
+#[test]
+fn settlements_honor_current_purpose_and_archive_state_without_affecting_replay() {
+    let db = db();
+    db.execute_batch(repository::PURPOSE_SCHEMA).unwrap();
+    db.execute_batch(repository::ARCHIVE_SCHEMA).unwrap();
+    repository::set_account_purpose(&db, &cash(), Some(AccountPurpose::Bank)).unwrap();
+    let security = Security::new("etf", "ETF").unwrap();
+    let today = date(2026, 11, 15);
+    let buy = trade("buy", Kind::Buy, "10", "2", 0, 1);
+    store::add_trade(&db, Some(&security), &buy, today).unwrap();
+    let mut sell = trade("sell", Kind::Sell, "10", "3", 0, 2);
+    for purpose in [AccountPurpose::Cash, AccountPurpose::Wallet] {
+        repository::set_account_purpose(&db, &cash(), Some(purpose)).unwrap();
+        assert!(matches!(
+            store::add_trade(&db, None, &sell, today),
+            Err(Error::Cash)
+        ));
+        assert_eq!(
+            store::load(&db).unwrap().trades.as_slice(),
+            std::slice::from_ref(&buy)
+        );
+    }
+    repository::set_account_purpose(&db, &cash(), Some(AccountPurpose::Bank)).unwrap();
+    repository::set_account_archived(&db, &cash(), true).unwrap();
+    assert!(matches!(
+        store::add_trade(&db, None, &sell, today),
+        Err(Error::Cash)
+    ));
+    let broker = Account::parse("资产:证券资金账户").unwrap();
+    repository::create_account(&db, &broker).unwrap();
+    repository::set_account_purpose(&db, &broker, Some(AccountPurpose::Brokerage)).unwrap();
+    sell.cash = Some(broker);
+    store::add_trade(&db, None, &sell, today).unwrap();
+    repository::validate(&db).unwrap();
+    assert_eq!(store::load(&db).unwrap().trades, [buy, sell]);
 }
 #[test]
 fn dated_prices_replace_cost_in_net_worth_and_never_backfill_the_past() {

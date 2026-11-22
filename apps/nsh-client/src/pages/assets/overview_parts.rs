@@ -82,8 +82,16 @@ pub(super) fn account_group(
     accounts: &[Account],
     balances: &std::collections::BTreeMap<Account, i64>,
     checks: &[navi_finance::repository::BalanceCheck],
+    archived: &[Account],
 ) -> Option<AnyElement> {
-    let own: Vec<_> = accounts.iter().filter(|a| a.kind() == kind).collect();
+    let mut own: Vec<_> = accounts
+        .iter()
+        .filter(|a| {
+            a.kind() == kind
+                && (!archived.contains(a) || balances.get(a).copied().unwrap_or(0) != 0)
+        })
+        .collect();
+    own.sort_by_key(|a| archived.contains(a));
     if own.is_empty() {
         return None;
     }
@@ -96,10 +104,8 @@ pub(super) fn account_group(
             }))
             .children(own.into_iter().map(|a| {
                 let balance = balances.get(a).copied();
-                let checked = checks
-                    .iter()
-                    .filter(|c| c.account == *a)
-                    .max_by_key(|c| c.checked_at);
+                let checked = latest_checked_day(checks, a);
+                let inactive = archived.contains(a);
                 let glyph = if kind == AccountKind::Assets {
                     Icon::Wallet
                 } else {
@@ -108,15 +114,13 @@ pub(super) fn account_group(
                 if balance.is_none() && checked.is_none() {
                     return new_account_row(a, glyph);
                 }
-                let detail = checked
-                    .map(|c| {
-                        format!(
-                            "{} · {}",
-                            s().account_checked,
-                            s().short_date(Day(c.checked_at.date()))
-                        )
-                    })
-                    .unwrap_or_else(|| s().account_unchecked.into());
+                let detail = if inactive {
+                    lifecycle::archived_status().into()
+                } else {
+                    checked
+                        .map(checked_through)
+                        .unwrap_or_else(|| s().account_unchecked.into())
+                };
                 let name = crate::ui::currency::account_label(a);
                 let route = a.to_string();
                 let value = assets::displayed(a, balance.unwrap_or(0));
@@ -124,7 +128,7 @@ pub(super) fn account_group(
                     name,
                     crate::ui::currency::format(value, a.currency()),
                     detail,
-                    checked.is_none(),
+                    inactive || checked.is_none(),
                     glyph,
                     move || nav::push(Route::Account(route.clone())),
                 )

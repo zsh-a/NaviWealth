@@ -66,6 +66,17 @@ fn exercise() -> Result<(), String> {
     assert_eq!(book_balance(&draft, 0), Some(-204));
     capture::put(draft.clone())?;
     assert!(capture::ready(&draft));
+    finance::set_account_archived(&account, true).unwrap();
+    for index in [0, 3, 5] {
+        assert_eq!(
+            record_issue(&draft, index),
+            Some(CaptureIssue::UnknownAccount)
+        );
+    }
+    assert!(!capture::ready(&draft));
+    assert!(capture::confirm_review(&draft).is_err());
+    assert!(capture::get(&draft.id).is_some());
+    finance::set_account_archived(&account, false).unwrap();
     let receipt = capture::confirm_review(&draft)?;
     assert!(capture::get(&draft.id).is_none());
     assert_eq!(

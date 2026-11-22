@@ -4,6 +4,15 @@ use super::Strings;
 use crate::domain::{format, meal::Day};
 
 impl Strings {
+    pub fn checked_through(&self, day: Day, with_year: bool) -> String {
+        let date = self.axis_date(day, with_year);
+        if self.zh() {
+            format!("余额已核对至{date}")
+        } else {
+            format!("Balance checked through {date}")
+        }
+    }
+
     /// Compact dates for the review header and a run of measurements.
     pub fn week_span(&self, first: Day, last: Day) -> String {
         let (a, b) = (first.0, last.0);

@@ -15,10 +15,18 @@ pub fn clock_context() -> Value {
 
 pub fn for_request(account: &ModelAccount) -> Value {
     let mut context = clock_context();
+    let active = finance::active_accounts();
     context["known_accounts"] = json!(
-        finance::accounts_snapshot()
+        active
             .iter()
             .filter(|a| a.is_cash())
+            .map(ToString::to_string)
+            .collect::<Vec<_>>()
+    );
+    context["settlement_accounts"] = json!(
+        active
+            .iter()
+            .filter(|a| a.can_settle(a.currency(), finance::account_purpose(a)))
             .map(ToString::to_string)
             .collect::<Vec<_>>()
     );

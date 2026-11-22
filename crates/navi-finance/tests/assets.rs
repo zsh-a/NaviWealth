@@ -1,6 +1,6 @@
 use jiff::civil::date;
 use navi_finance::{
-    account::{Account, defaults},
+    account::{Account, AccountPurpose, defaults},
     assets,
     journal::{self, Entry, Source},
     repository::{self, BalanceCheck, Error},
@@ -33,6 +33,128 @@ fn entry(id: &str) -> Entry {
         note: String::new(),
         source: Source::Manual,
     }
+}
+
+#[test]
+fn backfilled_opening_rechecks_history_before_posting() {
+    let c = db();
+    let account = Account::parse("资产:购物卡").unwrap();
+    let spend = |id, at| {
+        let mut payment = entry(id);
+        payment.at = at;
+        journal::spend(payment, &account, &defaults::other_expense(), 950).unwrap()
+    };
+    repository::save(&c, &spend("first", date(2026, 11, 14).at(8, 0, 0, 0))).unwrap();
+    let mut opening = check("opening", &account, 5000);
+    opening.day = date(2026, 11, 13);
+    repository::save(&c, &spend("backfilled", opening.day.at(18, 0, 0, 0))).unwrap();
+    let tx = c.unchecked_transaction().unwrap();
+    assert!(matches!(
+        repository::opening::confirm(&tx, &opening),
+        Err(Error::BalanceChanged)
+    ));
+    assert!(repository::balance_checks(&tx).unwrap().is_empty());
+    opening.day = date(2026, 11, 12);
+    let adjusted = repository::opening::confirm(&tx, &opening)
+        .unwrap()
+        .unwrap();
+    assert_eq!(adjusted.amount_in(&defaults::opening()), -5000);
+    let entries = repository::transactions(&tx).unwrap();
+    assert_eq!(
+        journal::balance_on(&entries, &account, date(2026, 11, 14)),
+        3100
+    );
+    // Even a legacy posting with no separate observation establishes the opening.
+    assert_eq!(
+        repository::opening::latest_day(&account, &entries, &[], opening.day),
+        None
+    );
+    assert!(repository::opening::confirm(&tx, &opening).is_err());
+    tx.commit().unwrap();
+}
+
+#[test]
+fn archiving_preserves_balances_history_and_undo_and_blocks_new_use() {
+    let c = db();
+    c.execute_batch(repository::ARCHIVE_SCHEMA).unwrap();
+    let card = Account::parse("负债:信用卡").unwrap();
+    let spend = |id| journal::spend(entry(id), &card, &defaults::expense("餐饮"), 1250).unwrap();
+    let original = spend("coffee");
+    repository::save(&c, &original).unwrap();
+    repository::set_account_archived(&c, &card, true).unwrap();
+    assert_eq!(
+        repository::archived_accounts(&c).unwrap().as_slice(),
+        std::slice::from_ref(&card)
+    );
+    assert!(repository::accounts(&c).unwrap().contains(&card));
+    assert_eq!(
+        repository::transactions(&c).unwrap().as_slice(),
+        std::slice::from_ref(&original)
+    );
+    assert!(repository::save(&c, &spend("new")).is_err());
+    assert!(
+        repository::confirm_balance(&c, &check("archived-check", &card, -1250), -1250).is_err()
+    );
+    let mut edited = original;
+    edited.note = "receipt".into();
+    repository::save(&c, &edited).unwrap();
+    let removed = repository::remove_confirmed(&c, &edited).unwrap();
+    repository::restore_removed(&c, &removed).unwrap();
+    let new = Account::parse("负债:旧卡").unwrap();
+    let tx = c.unchecked_transaction().unwrap();
+    repository::rename_account(&tx, &card, &new).unwrap();
+    tx.commit().unwrap();
+    assert_eq!(
+        repository::archived_accounts(&c).unwrap().as_slice(),
+        std::slice::from_ref(&new)
+    );
+    assert_eq!(
+        repository::transactions(&c).unwrap()[0].amount_in(&new),
+        -1250
+    );
+    repository::set_account_archived(&c, &new, false).unwrap();
+    assert!(repository::archived_accounts(&c).unwrap().is_empty());
+    repository::confirm_balance(&c, &check("active-check", &new, -1250), -1250).unwrap();
+}
+
+#[test]
+fn purposes_are_optional_owned_metadata_and_follow_the_account_identity() {
+    let db = db();
+    db.execute_batch(repository::PURPOSE_SCHEMA).unwrap();
+    let old = Account::parse("资产:储蓄卡").unwrap();
+    repository::create_account(&db, &old).unwrap();
+    assert!(repository::account_purposes(&db).unwrap().is_empty());
+    assert!(repository::set_account_purpose(&db, &old, Some(AccountPurpose::Credit)).is_err());
+    assert!(
+        repository::set_account_purpose(
+            &db,
+            &defaults::other_expense(),
+            Some(AccountPurpose::Wallet)
+        )
+        .is_err()
+    );
+    repository::set_account_purpose(&db, &old, Some(AccountPurpose::Bank)).unwrap();
+    let renamed = Account::parse("资产:新名称").unwrap();
+    let tx = db.unchecked_transaction().unwrap();
+    repository::rename_account(&tx, &old, &renamed).unwrap();
+    assert!(
+        !repository::create_if_new_with_purpose(&tx, &renamed, AccountPurpose::Wallet).unwrap()
+    );
+    tx.commit().unwrap();
+    assert_eq!(
+        repository::account_purposes(&db)
+            .unwrap()
+            .into_iter()
+            .collect::<Vec<_>>(),
+        [(renamed.clone(), AccountPurpose::Bank)]
+    );
+    repository::set_account_purpose(&db, &renamed, Some(AccountPurpose::Brokerage)).unwrap();
+    assert_eq!(
+        repository::account_purposes(&db).unwrap()[&renamed],
+        AccountPurpose::Brokerage
+    );
+    repository::set_account_purpose(&db, &renamed, None).unwrap();
+    assert!(repository::account_purposes(&db).unwrap().is_empty());
 }
 
 #[test]

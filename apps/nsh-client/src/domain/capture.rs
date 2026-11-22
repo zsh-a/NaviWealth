@@ -9,7 +9,7 @@ use navi_finance::{account::Account, currency::Currency, holdings, recognition::
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
-pub const PROMPT_VERSION: &str = "record-capture-v7";
+pub const PROMPT_VERSION: &str = "record-capture-v8";
 pub const MAX_INPUT: usize = 2000;
 pub const MAX_ATTACHMENTS: usize = 4;
 
@@ -587,6 +587,7 @@ IMAGE EVIDENCE RULES: Each image-bearing owner message includes image_numbers in
 Determine whether images show the same event, different views, leftovers, a supporting label, or independent records. Never assume every image is a new serving or transaction, or that every image is the same event.
 If that relationship is unclear and changes the records, ask a short question with options (same event / separate records), preserve only unambiguous records, and wait for the answer.
 Reconcile an order screenshot and its payment screenshot as evidence of ONE transaction when supported; do not duplicate it. Never infer the funding account from the payment app.
+For a trade with a cash flow, offer only accounts in settlement_accounts in the security currency. List order does not identify the owner's account.
 For meals, ask about materially unclear consumed quantity or whether shown leftovers belong to this meal; a package size does not prove the owner ate the entire package. Offer a supporting photo when a label, portion or screenshot is unreadable. Do not invent exact hidden oil amounts; keep nutrition estimates explicit.
 MONEY RULES: {} MEAL RULES (apply separately to each established meal group and to descriptions without images): {}
 The SAME meal assumption in the meal rules applies ONLY within an established meal group, never to all attached images.

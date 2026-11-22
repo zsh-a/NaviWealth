@@ -150,9 +150,13 @@ pub(super) fn field_sources(
         Record::Balance { account, .. } => vec![("account", Some(account))],
         _ => vec![],
     } {
-        if let Some(account) = proposed.filter(|_| draft.account_needs_approval(index, field)) {
+        let destination = field == "other_account";
+        if let Some(account) = proposed.filter(|a| {
+            draft.account_needs_approval(index, field, &crate::data::finance::active_accounts())
+                && capture::accepts_account(record, destination, a)
+        }) {
             let proposed = account.clone();
-            let name = account.name().to_string();
+            let name = crate::pages::finance::selected_account_label(account);
             pane = pane.child(
                 Btn::secondary()
                     .label(move || {
@@ -161,7 +165,11 @@ pub(super) fn field_sources(
                     .on_press(move || {
                         let mut next = live.get_untracked();
                         if next.status != Status::Ready
-                            || !next.account_needs_approval(index, field)
+                            || !next.account_needs_approval(
+                                index,
+                                field,
+                                &crate::data::finance::active_accounts(),
+                            )
                         {
                             return;
                         }
@@ -176,7 +184,13 @@ pub(super) fn field_sources(
                             (Some(Record::Balance { account, .. }), "account") => Some(account),
                             _ => None,
                         };
-                        if current != Some(&proposed) {
+                        if current != Some(&proposed)
+                            || !capture::accepts_account(
+                                &next.records[index],
+                                destination,
+                                &proposed,
+                            )
+                        {
                             return;
                         }
                         next.mark_owner_field(index, field);

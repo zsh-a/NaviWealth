@@ -4,6 +4,7 @@ use crate::{
     data::{finance, statement_import as data, tasks},
     i18n::{s, statement_import as tr},
     nav,
+    pages::finance::{account_option_with_purpose, purpose_field, selected_account_label},
     ui::{
         Btn, Size, Type, Typo, color,
         field::{field, text_input},
@@ -12,7 +13,7 @@ use crate::{
     },
 };
 use navi_finance::{
-    account::{Account, AccountKind, defaults},
+    account::{Account, AccountKind, AccountPurpose, defaults},
     currency::Currency,
     import::{Status, store::Correction},
     statement::{self, Kind},
@@ -76,7 +77,7 @@ pub fn statement_import_page() -> Screen {
                 let methods:BTreeSet<_>=rows.iter().map(|c|c.method.clone()).collect();
                 for method in methods{
                     let account=draft.rules.methods.get(report.provider.key()).and_then(|m|m.get(&method));
-                    let label=format!("{} · {}",method,account.map(|a|a.name()).unwrap_or(tr::method()));
+                    let label=format!("{} · {}",method,account.map(selected_account_label).unwrap_or_else(||tr::method().to_owned()));
                     let m=method.clone();
                     body=body.child(row_button(move||panel.set(Some(Panel::Method(m.clone())))).child(text(label).typo(Type::Body).text_color(color::INK)));
                 }
@@ -132,6 +133,20 @@ fn edit_panel(
     };
     let provider = statement::review(&d.text, "CNY").provider;
     let mut body = view().gap_3();
+    let mut accounts: Vec<_> = crate::ui::account_purpose::daily_accounts()
+        .into_iter()
+        .map(|a| {
+            let purpose = finance::account_purpose(&a);
+            (a, purpose)
+        })
+        .collect();
+    let saved = finance::accounts_snapshot();
+    accounts.extend(
+        d.pending_purposes
+            .iter()
+            .filter(|(a, _)| !saved.contains(a))
+            .map(|(a, p)| (a.clone(), Some(*p))),
+    );
     match p {
         Panel::Method(method) => {
             let currencies: BTreeSet<_> = data::rows()
@@ -139,47 +154,54 @@ fn edit_panel(
                 .filter(|c| c.method == method)
                 .filter_map(|c| Currency::parse(&c.row.currency))
                 .collect();
-            let source_currency = currencies.iter().next().copied().unwrap_or_default();
             body = body.child(
                 text(method.clone())
                     .typo(Type::Title)
                     .text_color(color::INK),
             );
-            for account in finance::accounts()
+            for (account, purpose) in accounts
                 .into_iter()
-                .filter(|a| a.is_cash() && currencies.contains(&a.currency()))
+                .filter(|(a, _)| currencies.contains(&a.currency()))
             {
-                let label = format!(
-                    "{} · {}",
-                    account.name(),
-                    if account.kind() == AccountKind::Assets {
-                        s().asset_account
-                    } else {
-                        s().liability_account
-                    }
-                );
+                let selected = d
+                    .rules
+                    .methods
+                    .get(provider.key())
+                    .and_then(|rules| rules.get(&method))
+                    == Some(&account);
                 let method = method.clone();
-                body = body.child(
-                    row_button(move || {
+                body = body.child(account_option_with_purpose(
+                    account,
+                    purpose,
+                    selected,
+                    move |account| {
                         fail(
                             error,
                             data::update(|d| {
                                 d.rules.remember_method(provider, &method, account.clone())
                             }),
                         );
-                        panel.set(None)
-                    })
-                    .child(text(label).typo(Type::Body).text_color(color::INK)),
-                );
+                        panel.set(None);
+                    },
+                ));
             }
-            body = body.child(new_account(source_currency, move |account| {
-                let m = method.clone();
-                fail(
-                    error,
-                    data::update(|d| d.rules.remember_method(provider, &m, account)),
-                );
-                panel.set(None)
-            }));
+            body = body.child(new_account(
+                currencies.into_iter().collect(),
+                None,
+                move |account, purpose| {
+                    let m = method.clone();
+                    fail(
+                        error,
+                        data::update(|d| {
+                            if let Some(purpose) = purpose {
+                                d.pending_purposes.entry(account.clone()).or_insert(purpose);
+                            }
+                            d.rules.remember_method(provider, &m, account)
+                        }),
+                    );
+                    panel.set(None)
+                },
+            ));
         }
         Panel::Other(i) => {
             let Some(row) = data::rows().get(i).cloned() else {
@@ -193,12 +215,17 @@ fn edit_panel(
                 .and_then(|m| m.get(&row.method))
                 .cloned();
             body = body.child(text(tr::other()).typo(Type::Title).text_color(color::INK));
-            for account in finance::accounts().into_iter().filter(|a| {
-                a.is_cash() && a.currency() == source_currency && Some(a) != own.as_ref()
-            }) {
-                let label = account.to_string();
-                body = body.child(
-                    row_button(move || {
+            for (account, purpose) in accounts
+                .into_iter()
+                .filter(|(a, _)| a.currency() == source_currency && Some(a) != own.as_ref())
+            {
+                let selected =
+                    d.corrections.get(&i).and_then(|c| c.other.as_ref()) == Some(&account);
+                body = body.child(account_option_with_purpose(
+                    account,
+                    purpose,
+                    selected,
+                    move |account| {
                         fail(
                             error,
                             data::update(|d| {
@@ -207,22 +234,28 @@ fn edit_panel(
                                 }
                             }),
                         );
-                        panel.set(Some(Panel::Row(i)))
-                    })
-                    .child(text(label).typo(Type::Body).text_color(color::INK)),
-                );
+                        panel.set(Some(Panel::Row(i)));
+                    },
+                ));
             }
-            body = body.child(new_account(source_currency, move |account| {
-                fail(
-                    error,
-                    data::update(|d| {
-                        if let Some(c) = d.corrections.get_mut(&i) {
-                            c.other = Some(account)
-                        }
-                    }),
-                );
-                panel.set(Some(Panel::Row(i)))
-            }));
+            body = body.child(new_account(
+                vec![source_currency],
+                own,
+                move |account, purpose| {
+                    fail(
+                        error,
+                        data::update(|d| {
+                            if let Some(c) = d.corrections.get_mut(&i) {
+                                if let Some(purpose) = purpose {
+                                    d.pending_purposes.entry(account.clone()).or_insert(purpose);
+                                }
+                                c.other = Some(account)
+                            }
+                        }),
+                    );
+                    panel.set(Some(Panel::Row(i)))
+                },
+            ));
         }
         Panel::Row(i) => {
             let Some(c) = data::rows().get(i).cloned() else {
@@ -341,10 +374,27 @@ fn edit_panel(
     }
     body
 }
-fn new_account(source_currency: Currency, save: impl Fn(Account) + 'static) -> impl IntoElement {
+fn new_account(
+    currencies: Vec<Currency>,
+    excluded: Option<Account>,
+    save: impl Fn(Account, Option<AccountPurpose>) + 'static,
+) -> View {
+    use crate::ui::segmented::{Segment, segmented};
+    let Some(first) = currencies.first().copied() else {
+        return view();
+    };
     let name = signal(String::new());
-    let kind = signal(AccountKind::Assets);
-    let currency = signal(source_currency);
+    let purpose = signal(AccountPurpose::Bank);
+    let currency = signal(first);
+    let candidate = computed(move || {
+        Account::new_in(purpose.get().kind(), &name.get(), currency.get())
+            .ok()
+            .filter(|a| {
+                a.is_cash()
+                    && Some(a) != excluded.as_ref()
+                    && !finance::archived_accounts().contains(a)
+            })
+    });
     view()
         .gap_3()
         .pt_4()
@@ -353,48 +403,26 @@ fn new_account(source_currency: Currency, save: impl Fn(Account) + 'static) -> i
                 .typo(Type::Headline)
                 .text_color(color::INK),
         )
-        .child(
-            view()
-                .flex_row()
-                .gap_2()
-                .child(
-                    Btn::tonal()
-                        .label(|| s().asset_account.into())
-                        .on_press(move || kind.set(AccountKind::Assets)),
-                )
-                .child(
-                    Btn::tonal()
-                        .label(|| s().liability_account.into())
-                        .on_press(move || kind.set(AccountKind::Liabilities)),
+        .child(purpose_field(purpose))
+        .child(if currencies.len() == 1 {
+            text(format!("{} · {first}", s().currency_label))
+                .typo(Type::Subhead)
+                .text_color(color::MUTED)
+                .into_element()
+        } else {
+            field(
+                || s().currency_label,
+                segmented(
+                    currencies
+                        .into_iter()
+                        .map(|c| Segment::new(c, move || c.code().into()))
+                        .collect(),
+                    move || currency.get(),
+                    move |c| currency.set(c),
                 ),
-        )
-        .child(
-            text(move || {
-                if kind.get() == AccountKind::Assets {
-                    s().asset_account
-                } else {
-                    s().liability_account
-                }
-            })
-            .typo(Type::Caption)
-            .text_color(color::MUTED),
-        )
-        .child(
-            view()
-                .flex_row()
-                .gap_2()
-                .children(Currency::ALL.into_iter().map(move |c| {
-                    Btn::tonal()
-                        .label(move || {
-                            if currency.get() == c {
-                                format!("✓ {c}").into()
-                            } else {
-                                c.code().into()
-                            }
-                        })
-                        .on_press(move || currency.set(c))
-                })),
-        )
+            )
+            .into_element()
+        })
         .child(field(
             || tr::copy("Account name", "账户名称"),
             text_input(name).label(|| tr::copy("Account name", "账户名称")),
@@ -402,14 +430,12 @@ fn new_account(source_currency: Currency, save: impl Fn(Account) + 'static) -> i
         .child(
             Btn::secondary()
                 .label(|| tr::copy("Use account", "使用此账户").into())
-                .disabled(move || Account::new_in(kind.get(), &name.get(), currency.get()).is_err())
+                .disabled(move || candidate.get().is_none())
                 .on_press(move || {
-                    if let Ok(a) = Account::new_in(
-                        kind.get_untracked(),
-                        &name.get_untracked(),
-                        currency.get_untracked(),
-                    ) {
-                        save(a)
+                    if let Some(a) = candidate.get_untracked() {
+                        let new_purpose = (!finance::accounts_snapshot().contains(&a))
+                            .then(|| purpose.get_untracked());
+                        save(a, new_purpose);
                     }
                 }),
         )

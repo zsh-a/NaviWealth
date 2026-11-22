@@ -48,7 +48,7 @@ fn editor(id: String, open: Signal<Option<String>>) -> impl IntoElement {
     let parsed = existing.as_ref().and_then(parts);
     let editable = id.is_empty() || parsed.is_some();
     let preferences = settings::current().ledger;
-    let accounts = finance::accounts();
+    let accounts = finance::active_accounts();
     let valid = |value: &Option<String>| {
         value
             .as_ref()
@@ -180,7 +180,7 @@ fn editor(id: String, open: Signal<Option<String>>) -> impl IntoElement {
             .unwrap_or(Source::Manual);
         match untracked(|| form.build(id, source)) {
             Err(message) => error.set(Some(message.to_owned())),
-            Ok(t) => match finance::save(t) {
+            Ok(t) => match finance::save_with_purposes(t, &form.pending_purposes()) {
                 Ok(()) => {
                     let mut defaults = settings::current().ledger;
                     defaults.own = form.own.account().map(|a| a.to_string());
@@ -265,25 +265,12 @@ fn editor(id: String, open: Signal<Option<String>>) -> impl IntoElement {
                 };
                 main_panel(form, panel, (last_expense, last_income), focus, editable).into_element()
             }
-            Panel::Own | Panel::Other => accounts_panel(
-                if selected == Panel::Own {
-                    form.own
-                } else {
-                    form.other
-                },
-                panel,
-                selected == Panel::Other,
-            )
-            .into_element(),
-            Panel::NewOwn | Panel::NewOther => new_account(
-                if selected == Panel::NewOwn {
-                    form.own
-                } else {
-                    form.other
-                },
-                panel,
-            )
-            .into_element(),
+            Panel::Own | Panel::Other => {
+                accounts_panel(form, panel, selected == Panel::Other).into_element()
+            }
+            Panel::NewOwn | Panel::NewOther => {
+                new_account(form, panel, selected == Panel::NewOther).into_element()
+            }
             Panel::Category => category_panel(form, panel).into_element(),
             Panel::Date => date_picker(form.day, move || panel.set(Panel::Main)).into_element(),
             Panel::Details => {
@@ -318,7 +305,12 @@ fn editor(id: String, open: Signal<Option<String>>) -> impl IntoElement {
                         panel.set(Panel::Main);
                     })
                     .style_when(
-                        move || matches!(panel.get(), Panel::NewOwn | Panel::NewOther),
+                        move || {
+                            matches!(
+                                panel.get(),
+                                Panel::Own | Panel::Other | Panel::NewOwn | Panel::NewOther
+                            )
+                        },
                         |s| s.hidden(),
                     )
             }),

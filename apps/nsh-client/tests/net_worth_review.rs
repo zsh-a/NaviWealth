@@ -298,6 +298,19 @@ fn account_history_keeps_matched_checks_and_original_adjustments_after_backfills
             )
             .unwrap();
         }
+        // A later entry about an older date must not advance the summary.
+        repository::confirm_balance(
+            db,
+            &repository::BalanceCheck {
+                id: "older-check".into(),
+                account: own.clone(),
+                day: today().plus_days(-4).0,
+                actual: 0,
+                checked_at: today().0.at(15, 0, 0, 0),
+            },
+            0,
+        )
+        .unwrap();
         repository::save(
             db,
             &journal::spend(
@@ -311,7 +324,15 @@ fn account_history_keeps_matched_checks_and_original_adjustments_after_backfills
         .unwrap();
     });
     app.press("label:Assets")?;
-    let checked = format!("Last checked · {}", today().0.strftime("%a, %b %-d"));
+    let effective = today().plus_days(-2).0;
+    let checked = format!(
+        "Balance checked through {}",
+        effective.strftime(if effective.year() == today().0.year() {
+            "%b %-d"
+        } else {
+            "%b %-d, %Y"
+        })
+    );
     app.press(&format!("label:Card, ¥145.00, {checked}"))?;
     app.press(&format!("text:{checked}"))?;
     app.wait_for("text:Matched at the time")?;

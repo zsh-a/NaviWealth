@@ -1,13 +1,14 @@
 use super::*;
 use crate::i18n::catalog::copy;
 use crate::ui::{
+    account_purpose::{label as purpose_label, settlement_accounts},
     field::{field, text_input},
     segmented::{Segment, segmented},
     sheet::{initial_focus, retained, task_sheet},
     surface::disclosure,
 };
 use navi_finance::{
-    account::{Account, AccountKind},
+    account::{Account, AccountKind, AccountPurpose},
     currency::Currency,
     holdings::{Quote, Trade},
 };
@@ -235,7 +236,7 @@ fn cash_preview(
             Ok((total, fee)) => {
                 let signed = if kind == Kind::Buy { -total } else { total };
                 let label = cash.get().map_or_else(
-                    || copy("Choose a cash account", "请选择现金账户").to_owned(),
+                    || copy("Choose a settlement account", "选择结算账户").to_owned(),
                     |account| format!("{} · {direction}", account.name()),
                 );
                 let mut row = view().gap_1().child(
@@ -281,15 +282,8 @@ fn cash_preview(
     })
 }
 
-fn cash_accounts(currency: Currency) -> Vec<Account> {
-    finance::accounts()
-        .into_iter()
-        .filter(|a| a.is_cash() && a.kind() == AccountKind::Assets && a.currency() == currency)
-        .collect()
-}
-
 fn only_cash_account(currency: Currency) -> Option<Account> {
-    match cash_accounts(currency).as_slice() {
+    match settlement_accounts(currency).as_slice() {
         [only] => Some(only.clone()),
         _ => None,
     }
@@ -297,18 +291,22 @@ fn only_cash_account(currency: Currency) -> Option<Account> {
 
 fn new_cash_label(currency: Currency) -> &'static str {
     match currency {
-        Currency::CNY => copy("New CNY cash account", "新建人民币现金账户"),
-        Currency::HKD => copy("New HKD cash account", "新建港元现金账户"),
-        Currency::USD => copy("New USD cash account", "新建美元现金账户"),
+        Currency::CNY => copy("New CNY settlement account", "新建人民币结算账户"),
+        Currency::HKD => copy("New HKD settlement account", "新建港元结算账户"),
+        Currency::USD => copy("New USD settlement account", "新建美元结算账户"),
     }
 }
 
-fn create_cash_account(name: &str, currency: Currency) -> Result<Account, &'static str> {
+fn create_cash_account(
+    name: &str,
+    currency: Currency,
+    purpose: AccountPurpose,
+) -> Result<Account, &'static str> {
     let account = Account::new_in(AccountKind::Assets, name, currency)
         .ok()
         .filter(Account::is_cash)
         .ok_or_else(|| s().error_account)?;
-    finance::create_account(account.clone()).map_err(|error| {
+    finance::create_account_with_purpose(account.clone(), purpose).map_err(|error| {
         log::debug!("holdings: creating cash account: {error}");
         match error {
             navi_finance::repository::Error::AccountExists => s().account_exists,
@@ -371,11 +369,13 @@ pub fn trade_task(
                 let fee = signal(String::new());
                 let cash = signal(only_cash_account(currency.get_untracked()));
                 let new_cash_name = signal(String::new());
+                let new_cash_purpose = signal(AccountPurpose::Brokerage);
                 let set_currency = move |c| {
                     if currency.get_untracked() != c {
                         currency.set(c);
                         cash.set(only_cash_account(c));
                         new_cash_name.set(String::new());
+                        new_cash_purpose.set(AccountPurpose::Brokerage);
                     }
                 };
                 let day = signal(clock::today().to_string());
@@ -388,11 +388,13 @@ pub fn trade_task(
                 let open_cash = move || {
                     error.set(None);
                     dismiss_keyboard();
-                    panel.set(if cash_accounts(currency.get_untracked()).is_empty() {
-                        Panel::NewCash
-                    } else {
-                        Panel::Cash
-                    });
+                    panel.set(
+                        if settlement_accounts(currency.get_untracked()).is_empty() {
+                            Panel::NewCash
+                        } else {
+                            Panel::Cash
+                        },
+                    );
                 };
                 let values = move || Values {
                     kind: kind.get_untracked(),
@@ -407,7 +409,9 @@ pub fn trade_task(
                 };
                 let initial = stored(values());
                 let dirty = move || {
-                    initial.with(|v| v != &values()) || !new_cash_name.get_untracked().is_empty()
+                    initial.with(|v| v != &values())
+                        || !new_cash_name.get_untracked().is_empty()
+                        || new_cash_purpose.get_untracked() != AccountPurpose::Brokerage
                 };
                 let discard = guarded(dirty, move || open.set(None));
                 // Swipe or backdrop leaves the whole task, not just this panel.
@@ -425,7 +429,7 @@ pub fn trade_task(
                         discard();
                     } else if panel.get_untracked() != Panel::Main {
                         let back = if panel.get_untracked() == Panel::NewCash
-                            && !cash_accounts(currency.get_untracked()).is_empty()
+                            && !settlement_accounts(currency.get_untracked()).is_empty()
                         {
                             Panel::Cash
                         } else {
@@ -507,26 +511,16 @@ pub fn trade_task(
                         }
                         if current_panel == Panel::Cash {
                             return view()
-                                .children(cash_accounts(current_currency).into_iter().map(
+                                .children(settlement_accounts(current_currency).into_iter().map(
                                     move |a| {
                                         let selected = cash.get_untracked().as_ref() == Some(&a);
-                                        let label = a.name().to_owned();
-                                        row_button(move || {
-                                            cash.set(Some(a.clone()));
-                                            panel.set(Panel::Main);
-                                        })
-                                        .px_0()
-                                        .selected(move || selected)
-                                        .child(
-                                            text(label)
-                                                .typo(Type::Body)
-                                                .text_color(color::INK)
-                                                .flex_1(),
-                                        )
-                                        .child(
-                                            selected.then(|| {
-                                                crate::ui::icon(Icon::Check, 18.0, color::INK)
-                                            }),
+                                        crate::pages::finance::account_option(
+                                            a,
+                                            selected,
+                                            move |a| {
+                                                cash.set(Some(a.clone()));
+                                                panel.set(Panel::Main);
+                                            },
                                         )
                                     },
                                 ))
@@ -544,6 +538,21 @@ pub fn trade_task(
                                             error.set(None);
                                         })
                                         .element_ref(&initial_focus()),
+                                ))
+                                .child(field(
+                                    || s().account_type,
+                                    segmented(
+                                        [AccountPurpose::Brokerage, AccountPurpose::Bank]
+                                            .into_iter()
+                                            .map(|purpose| {
+                                                Segment::new(purpose, move || {
+                                                    purpose_label(purpose).into()
+                                                })
+                                            })
+                                            .collect(),
+                                        move || new_cash_purpose.get(),
+                                        move |purpose| new_cash_purpose.set(purpose),
+                                    ),
                                 ))
                                 .child(note(move || error.get().map(Into::into), || true))
                                 .into_element();
@@ -890,10 +899,12 @@ pub fn trade_task(
                             match create_cash_account(
                                 &new_cash_name.get_untracked(),
                                 currency.get_untracked(),
+                                new_cash_purpose.get_untracked(),
                             ) {
                                 Ok(account) => {
                                     cash.set(Some(account));
                                     new_cash_name.set(String::new());
+                                    new_cash_purpose.set(AccountPurpose::Brokerage);
                                     error.set(None);
                                     dismiss_keyboard();
                                     panel.set(Panel::Main);

@@ -110,6 +110,10 @@ const MIGRATIONS: &[&str] = &[
     END;",
     // 19: indexed daily lookup and chronological snapshot pagination.
     navi_finance::valuation::HISTORY_INDEXES,
+    // 20: disabled own accounts keep all of their historical postings.
+    navi_finance::repository::ARCHIVE_SCHEMA,
+    // 21: explicit purposes for own accounts. Existing accounts retain NULL.
+    navi_finance::repository::PURPOSE_SCHEMA,
 ];
 
 #[derive(Clone, Default)]
@@ -346,7 +350,7 @@ fn remap_photos(
 /// contracts as normal loading and confirmed writes.
 fn validate_restored(connection: &Connection) -> Result<(), String> {
     use crate::domain::weight::valid_kg;
-    for (table, _) in HEALTH_TABLES.iter().chain(navi_finance::repository::TABLES) {
+    for (table, columns) in HEALTH_TABLES.iter().chain(navi_finance::repository::TABLES) {
         let kind: String = connection
             .query_row(
                 "SELECT type FROM sqlite_schema WHERE name = ?1",
@@ -357,6 +361,9 @@ fn validate_restored(connection: &Connection) -> Result<(), String> {
         if kind != "table" {
             return Err("expected a table".into());
         }
+        connection
+            .prepare(&format!("SELECT {columns} FROM {table} LIMIT 0"))
+            .map_err(|e| e.to_string())?;
     }
     let read = || -> rusqlite::Result<()> {
         let mut statement = connection.prepare("SELECT day, kg, logged_at_ms FROM weights")?;
@@ -475,6 +482,99 @@ mod tests {
                 .unwrap(),
             70.0
         );
+    }
+
+    #[test]
+    fn schema20_keeps_archived_accounts_unclassified_on_upgrade() {
+        use navi_finance::repository;
+        let mut db = navi_storage::memory(&MIGRATIONS[..20]).unwrap();
+        let entry = spending("legacy", 100);
+        let own = &entry.own_postings().next().unwrap().account;
+        repository::save(&db, &entry).unwrap();
+        repository::set_account_archived(&db, own, true).unwrap();
+        migrate(&mut db).unwrap();
+        assert!(repository::account_purposes(&db).unwrap().is_empty());
+        assert_eq!(
+            repository::archived_accounts(&db).unwrap().as_slice(),
+            std::slice::from_ref(own)
+        );
+        assert_eq!(repository::transactions(&db).unwrap(), [entry]);
+    }
+
+    #[test]
+    fn legacy_accounts_and_explicit_purposes_roundtrip_with_archives_and_history() {
+        use navi_finance::{account::AccountPurpose, repository};
+        let dir = tempfile::tempdir().unwrap();
+        let old_source = dir.path().join("schema19.sqlite");
+        let entry = spending("old", 3150);
+        let own = entry.own_postings().next().unwrap().account.clone();
+        let old = navi_storage::open(&old_source, &MIGRATIONS[..19]).unwrap();
+        repository::save(&old, &entry).unwrap();
+        drop(old);
+        let current = navi_storage::memory(MIGRATIONS).unwrap();
+        restore_file(&current, &old_source).unwrap();
+        assert!(repository::archived_accounts(&current).unwrap().is_empty());
+        assert!(repository::account_purposes(&current).unwrap().is_empty());
+        repository::set_account_purpose(&current, &own, Some(AccountPurpose::Wallet)).unwrap();
+        repository::set_account_archived(&current, &own, true).unwrap();
+
+        let backup = dir.path().join("archive.sqlite");
+        snapshot_file(&current, &backup).unwrap();
+        repository::set_account_archived(&current, &own, false).unwrap();
+        repository::set_account_purpose(&current, &own, Some(AccountPurpose::Bank)).unwrap();
+        restore_file(&current, &backup).unwrap();
+        assert_eq!(
+            repository::account_purposes(&current).unwrap()[&own],
+            AccountPurpose::Wallet
+        );
+        assert_eq!(
+            repository::archived_accounts(&current).unwrap().as_slice(),
+            std::slice::from_ref(&own)
+        );
+        assert_eq!(
+            repository::transactions(&current).unwrap().as_slice(),
+            std::slice::from_ref(&entry)
+        );
+
+        let invalid = Connection::open(&backup).unwrap();
+        invalid
+            .execute(
+                "UPDATE finance_accounts SET purpose='loan' WHERE name=?1",
+                [own.as_str()],
+            )
+            .unwrap();
+        assert_eq!(
+            restore_file(&current, &backup),
+            Err(RestoreError::Unreadable)
+        );
+        assert_eq!(
+            repository::account_purposes(&current).unwrap()[&own],
+            AccountPurpose::Wallet
+        );
+        invalid
+            .execute(
+                "UPDATE finance_accounts SET purpose='wallet' WHERE name=?1",
+                [own.as_str()],
+            )
+            .unwrap();
+        let category = entry
+            .postings
+            .iter()
+            .find(|p| !p.account.is_cash())
+            .unwrap();
+        invalid
+            .execute(
+                "UPDATE finance_archived_accounts SET account=?1",
+                [category.account.as_str()],
+            )
+            .unwrap();
+        drop(invalid);
+        assert_eq!(
+            restore_file(&current, &backup),
+            Err(RestoreError::Unreadable)
+        );
+        assert_eq!(repository::archived_accounts(&current).unwrap(), [own]);
+        assert_eq!(repository::transactions(&current).unwrap(), [entry]);
     }
 
     #[test]

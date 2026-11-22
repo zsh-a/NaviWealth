@@ -171,13 +171,19 @@ fn trade_cash_preview_matches_each_saved_posting_including_fees() -> Result<(), 
     let dir = tempfile::tempdir().unwrap();
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
     let settlement = "Brokerage settlement account 1234";
-    for name in [settlement, "Wallet"] {
+    for (name, purpose) in [
+        (settlement, "Brokerage cash"),
+        ("Bank", "Bank account"),
+        ("Wallet", "Digital wallet"),
+    ] {
         app.press("label:Assets")?;
-        if name == "Wallet" {
+        if name != settlement {
             app.press("label:Manage")?;
         }
         app.press("text:Add account")?;
         app.type_text("label:Account name", name)?;
+        app.press("label:Account type, Bank account")?;
+        app.press(&format!("text:{purpose}"))?;
         app.press("Create account")?;
         app.wait_for("Account added")?;
         app.wait_for_gone("task-sheet", GONE)?;
@@ -203,7 +209,7 @@ fn trade_cash_preview_matches_each_saved_posting_including_fees() -> Result<(), 
                 .find(|n| {
                     n.text
                         .as_ref()
-                        .is_some_and(|t| t.text.text == "Cash account")
+                        .is_some_and(|t| t.text.text == "Settlement account")
                 })
                 .unwrap()
                 .bounds;
@@ -235,14 +241,30 @@ fn trade_cash_preview_matches_each_saved_posting_including_fees() -> Result<(), 
                 "text:+¥6.20"
             })?;
         }
-        app.wait_for("text:Choose a cash account")?;
+        app.wait_for("text:Choose a settlement account")?;
         let direction = if side == "Buy" { "Cash out" } else { "Cash in" };
         if side == "Buy" {
-            app.press("label:Cash account")?;
-            app.press("text:Wallet")?;
-            app.wait_for("Wallet · Cash out")?;
+            app.press("label:Settlement account")?;
+            assert!(!app.shows("label:Wallet, Digital wallet · CNY"));
+            let nodes = app.screen().layout_nodes();
+            let row_y = |name: &str| {
+                nodes
+                    .iter()
+                    .find(|n| n.text.as_ref().is_some_and(|v| v.text.text == name))
+                    .unwrap()
+                    .bounds
+                    .origin
+                    .y
+                    .0
+            };
+            assert!(
+                row_y(settlement) < row_y("Bank"),
+                "brokerage cash should precede bank settlement"
+            );
+            app.press("label:Bank, Bank account · CNY")?;
+            app.wait_for("Bank · Cash out")?;
         }
-        app.press("label:Cash account")?;
+        app.press("label:Settlement account")?;
         app.press(&format!("text:{settlement}"))?;
         let account_label = format!("{settlement} · {direction}");
         app.wait_for(&account_label)?;
@@ -579,7 +601,7 @@ fn manual_hkd_holding_keeps_currency_when_recording_later_trades() -> Result<(),
     app.press("Date and fee")?;
     app.type_text("label:Fee (optional)", "0.10")?;
     app.press("Save trade")?;
-    app.wait_for("New HKD cash account")?;
+    app.wait_for("New HKD settlement account")?;
     let c = rusqlite::Connection::open(database_in(dir.path())).unwrap();
     let updates = || store::load(&c).unwrap().trades.len();
     assert_eq!(updates(), 1);
@@ -591,7 +613,7 @@ fn manual_hkd_holding_keeps_currency_when_recording_later_trades() -> Result<(),
         Some("0.10")
     );
     app.wait_for("text:−HKD 13.10")?;
-    app.press("label:Cash account")?;
+    app.press("label:Settlement account")?;
     assert_eq!(
         app.screen().input_text("label:Account name")?,
         Some("Broker")
@@ -600,9 +622,13 @@ fn manual_hkd_holding_keeps_currency_when_recording_later_trades() -> Result<(),
     app.wait_for("Broker · Cash out")?;
     let account = Account::parse("资产/HKD:Broker").unwrap();
     assert!(repository::accounts(&c).unwrap().contains(&account));
+    assert_eq!(
+        repository::account_purposes(&c).unwrap().get(&account),
+        Some(&navi_finance::account::AccountPurpose::Brokerage)
+    );
     assert_eq!(updates(), 1);
-    app.press("label:Cash account")?;
-    app.press("New HKD cash account")?;
+    app.press("label:Settlement account")?;
+    app.press("New HKD settlement account")?;
     app.type_text("label:Account name", "Broker")?;
     app.press("Create account")?;
     app.wait_for("An account with this name already exists.")?;

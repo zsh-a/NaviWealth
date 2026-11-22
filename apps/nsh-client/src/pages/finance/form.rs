@@ -4,7 +4,7 @@
 
 use jiff::civil::{Date, Time};
 use navi_finance::{
-    account::{Account, AccountKind},
+    account::{Account, AccountKind, AccountPurpose},
     currency::Currency,
     journal::{self, Entry, Source, Transaction},
     money,
@@ -34,7 +34,7 @@ impl Kind {
 pub(super) struct Own {
     pub(super) selected: Signal<String>,
     pub(super) creating: Signal<bool>,
-    pub(super) kind: Signal<AccountKind>,
+    pub(super) purpose: Signal<AccountPurpose>,
     pub(super) name: Signal<String>,
     pub(super) currency: Signal<Currency>,
 }
@@ -46,14 +46,19 @@ impl Own {
             currency: signal(currency),
             selected: signal(account.map(|a| a.to_string()).unwrap_or_default()),
             creating: signal(false),
-            kind: signal(AccountKind::Assets),
+            purpose: signal(AccountPurpose::Bank),
             name: signal(String::new()),
         }
     }
 
     pub(super) fn account(self) -> Option<Account> {
         if self.creating.get() {
-            Account::new_in(self.kind.get(), &self.name.get(), self.currency.get()).ok()
+            Account::new_in(
+                self.purpose.get().kind(),
+                &self.name.get(),
+                self.currency.get(),
+            )
+            .ok()
         } else {
             Account::parse(&self.selected.get())
                 .ok()
@@ -61,11 +66,11 @@ impl Own {
         }
     }
 
-    fn snapshot(self) -> (String, bool, AccountKind, String, Currency) {
+    fn snapshot(self) -> (String, bool, AccountPurpose, String, Currency) {
         (
             self.selected.get(),
             self.creating.get(),
-            self.kind.get(),
+            self.purpose.get(),
             self.name.get(),
             self.currency.get(),
         )
@@ -93,14 +98,43 @@ pub(super) struct Values {
     received: String,
     day: String,
     time: String,
-    own: (String, bool, AccountKind, String, Currency),
-    other: (String, bool, AccountKind, String, Currency),
+    own: (String, bool, AccountPurpose, String, Currency),
+    other: (String, bool, AccountPurpose, String, Currency),
     category: String,
     payee: String,
     memo: String,
 }
 
 impl Form {
+    pub(super) fn swap_accounts(self) {
+        let Some((from, to)) = self.own.account().zip(self.other.account()) else {
+            return;
+        };
+        fn swap<T: Clone + 'static>(a: Signal<T>, b: Signal<T>) {
+            let previous = a.get_untracked();
+            a.set(b.get_untracked());
+            b.set(previous);
+        }
+        batch(|| {
+            swap(self.own.selected, self.other.selected);
+            swap(self.own.creating, self.other.creating);
+            swap(self.own.purpose, self.other.purpose);
+            swap(self.own.name, self.other.name);
+            swap(self.own.currency, self.other.currency);
+            if from.currency() != to.currency() {
+                swap(self.amount, self.received);
+            }
+        });
+    }
+
+    pub(super) fn pending_purposes(self) -> Vec<(Account, AccountPurpose)> {
+        std::iter::once(self.own)
+            .chain((self.kind.get() == Kind::Transfer).then_some(self.other))
+            .filter(|field| field.creating.get())
+            .filter_map(|field| Some((field.account()?, field.purpose.get())))
+            .collect()
+    }
+
     pub(super) fn values(self) -> Values {
         Values {
             kind: self.kind.get(),

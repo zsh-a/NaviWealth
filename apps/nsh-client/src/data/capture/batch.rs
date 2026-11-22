@@ -208,10 +208,52 @@ fn resolved_trade(draft: &Draft, i: usize, book: &Book) -> Option<(Security, Tra
     Some((security, t))
 }
 
+/// Money drafts may propose a new account; trades and balance checks refer to saved accounts.
+pub(crate) fn accepts_account(record: &Record, destination: bool, account: &Account) -> bool {
+    if !account.is_cash() || finance::archived_accounts().contains(account) {
+        return false;
+    }
+    match record {
+        Record::Money { draft, .. } => {
+            let opposite = if destination {
+                draft.account.as_ref()
+            } else {
+                draft.other_account.as_ref()
+            };
+            account.currency().code() == draft.currency && opposite != Some(account)
+        }
+        Record::Trade { currency, .. } => {
+            !destination
+                && account.can_settle(*currency, finance::account_purpose(account))
+                && finance::accounts_snapshot().contains(account)
+        }
+        Record::Balance {
+            account: target, ..
+        } => {
+            !destination
+                && target.currency() == account.currency()
+                && target.kind() == account.kind()
+                && finance::accounts_snapshot().contains(account)
+        }
+        _ => false,
+    }
+}
+
 pub fn record_issue(draft: &Draft, index: usize) -> Option<CaptureIssue> {
     use CaptureIssue::*;
     let record = draft.records.get(index)?;
     match record {
+        Record::Money { draft, .. } => {
+            let invalid = draft
+                .account
+                .as_ref()
+                .is_some_and(|a| !accepts_account(record, false, a))
+                || draft
+                    .other_account
+                    .as_ref()
+                    .is_some_and(|a| !accepts_account(record, true, a));
+            invalid.then_some(UnknownAccount)
+        }
         Record::Trade {
             day,
             security,
@@ -230,7 +272,7 @@ pub fn record_issue(draft: &Draft, index: usize) -> Option<CaptureIssue> {
             if *kind != holdings::Kind::Opening
                 && !cash
                     .as_ref()
-                    .is_some_and(|a| finance::accounts_snapshot().contains(a))
+                    .is_some_and(|a| accepts_account(record, false, a))
             {
                 return Some(UnknownAccount);
             }
@@ -252,7 +294,7 @@ pub fn record_issue(draft: &Draft, index: usize) -> Option<CaptureIssue> {
             if *day > clock::today() {
                 return Some(InvalidDate);
             }
-            if !finance::accounts_snapshot().contains(account) {
+            if !accepts_account(record, false, account) {
                 return Some(UnknownAccount);
             }
             if book_balance(draft, index)

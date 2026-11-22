@@ -102,7 +102,25 @@ impl Draft {
         });
     }
 
-    pub fn account_needs_approval(&self, index: usize, field: &str) -> bool {
+    /// Reverse a transfer while keeping each funding account's evidence and approval with it.
+    pub(crate) fn swap_transfer_accounts(&mut self, index: usize) {
+        if let Some(Record::Money { draft, .. }) = self.records.get_mut(index)
+            && draft.kind == navi_finance::recognition::Kind::Transfer
+        {
+            std::mem::swap(&mut draft.account, &mut draft.other_account);
+            if let Some(fields) = self.evidence.get_mut(index) {
+                for evidence in fields {
+                    match evidence.field.as_str() {
+                        "account" => evidence.field = "other_account".into(),
+                        "other_account" => evidence.field = "account".into(),
+                        _ => {}
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn account_needs_approval(&self, index: usize, field: &str, known: &[Account]) -> bool {
         let Some(selected) = self.records.get(index).and_then(|r| account(r, field)) else {
             return false;
         };
@@ -113,15 +131,29 @@ impl Draft {
             .map(|e| e.source)
         {
             Some(EvidenceSource::Owner) => false,
-            Some(EvidenceSource::Text) | None => !self.owner_named(selected),
+            Some(EvidenceSource::Text) | None => {
+                // A shared display name alone cannot identify the debit or credit account.
+                let ambiguous = matches!(self.records[index], Record::Money { .. })
+                    && known.iter().any(|a| {
+                        a.is_cash()
+                            && a.name().eq_ignore_ascii_case(selected.name())
+                            && a.currency() == selected.currency()
+                            && a.kind() != selected.kind()
+                    });
+                !self.owner_named(if ambiguous {
+                    selected.as_str()
+                } else {
+                    selected.name()
+                })
+            }
             _ => true,
         }
     }
 
-    fn owner_named(&self, selected: &Account) -> bool {
+    fn owner_named(&self, label: &str) -> bool {
         // Verify a *model-selected account* against owner evidence. This
         // check never classifies intent or selects an account itself.
-        let name = selected.name().to_lowercase();
+        let name = label.to_lowercase();
         let mentions = |s: &str| {
             let text = s.to_lowercase();
             text.match_indices(&name).any(|(i, _)| {
@@ -175,11 +207,11 @@ impl Draft {
     }
 }
 
-pub fn accounts_approved(draft: &Draft) -> bool {
+pub fn accounts_approved(draft: &Draft, known: &[Account]) -> bool {
     draft.records.iter().enumerate().all(|(i, _)| {
         ["account", "other_account", "cash"]
             .iter()
-            .all(|f| !draft.account_needs_approval(i, f))
+            .all(|f| !draft.account_needs_approval(i, f, known))
     })
 }
 
@@ -216,7 +248,7 @@ pub fn attach(draft: &mut Draft, reply: &str, context: &Value) {
                         .as_array()
                         .is_some_and(|rows| !rows.is_empty()),
                     EvidenceSource::Text => {
-                        account(record, &e.field).is_none_or(|a| draft.owner_named(a))
+                        account(record, &e.field).is_none_or(|a| draft.owner_named(a.name()))
                     }
                     EvidenceSource::Inferred => true,
                 };

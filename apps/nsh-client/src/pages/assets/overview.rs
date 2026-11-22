@@ -17,6 +17,7 @@ pub fn assets_tab() -> impl IntoElement {
     let create = signal(false);
     let holding = signal(None::<String>);
     let panel = signal(Panel::Menu);
+    let typing_account = signal(true);
     let sheet_open = move || {
         (menu.get() || create.get() || holding.with(Option::is_some))
             && nav::tab() == nav::Tab::Assets
@@ -79,11 +80,16 @@ pub fn assets_tab() -> impl IntoElement {
                         let entries = finance::transactions_snapshot();
                         let portfolio = finance::holdings_snapshot();
                         let checks = finance::checks_snapshot();
+                        let archived = finance::archived_accounts();
                         let rates = finance::rates_snapshot();
                         let today = clock::today();
                         let overview = super::current::get();
                         untracked(move || {
-                            if accounts.is_empty() && portfolio.securities.is_empty() {
+                            if accounts.iter().all(|a| archived.contains(a))
+                                && entries.is_empty()
+                                && checks.is_empty()
+                                && portfolio.securities.is_empty()
+                            {
                                 return crate::ui::feedback::empty_state(Icon::Wallet, || {
                                     s().assets_empty.into()
                                 })
@@ -137,6 +143,7 @@ pub fn assets_tab() -> impl IntoElement {
                                     &accounts,
                                     &overview.balances,
                                     &checks,
+                                    &archived,
                                 ))
                                 .child(
                                     overview
@@ -148,6 +155,7 @@ pub fn assets_tab() -> impl IntoElement {
                                     &accounts,
                                     &overview.balances,
                                     &checks,
+                                    &archived,
                                 ))
                                 .into_element()
                         })
@@ -157,12 +165,15 @@ pub fn assets_tab() -> impl IntoElement {
         .child(task_host_with_keyboard(
             sheet_open,
             finish,
-            move || panel.get() == Panel::Account,
+            move || panel.get() == Panel::Account && typing_account.get(),
             move || {
                 dynamic(move || {
                     let panel = panel.get();
                     untracked(move || match panel {
-                        Panel::Account => editor::account_task(create, None, finish).into_element(),
+                        Panel::Account => {
+                            editor::account_task(create, None, typing_account, finish)
+                                .into_element()
+                        }
                         Panel::Holding => {
                             super::super::holdings::trade_task(holding, finish).into_element()
                         }
@@ -210,6 +221,18 @@ pub fn assets_tab() -> impl IntoElement {
                                             Icon::Chart,
                                             || nav::push(Route::PricesAndRates(None)),
                                         ))
+                                        .child(dynamic(move || {
+                                            let count = finance::archived_accounts().len();
+                                            (count > 0).then(|| {
+                                                manage_row(
+                                                    lifecycle::archived_title,
+                                                    None,
+                                                    Some(count),
+                                                    Icon::Wallet,
+                                                    || nav::push(Route::ArchivedAccounts),
+                                                )
+                                            })
+                                        }))
                                         .child(dynamic(move || {
                                             let count =
                                                 super::super::holdings::closed_holdings().len();

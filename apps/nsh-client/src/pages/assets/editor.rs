@@ -1,9 +1,9 @@
 use crate::{
     data::{clock, finance},
     domain::meal::Day,
-    i18n::s,
+    i18n::{catalog::copy, s},
     ui::{
-        Btn, Type, Typo, color,
+        Btn, Type, Typo, account_purpose, color,
         field::{field, note, text_input},
         segmented::{Segment, segmented},
         sheet::{fitted_task_sheet, initial_focus, retained, task_sheet},
@@ -12,7 +12,7 @@ use crate::{
     },
 };
 use navi_finance::{
-    account::{Account, AccountKind},
+    account::{Account, AccountKind, AccountPurpose},
     assets,
     currency::Currency,
     journal, money,
@@ -22,6 +22,72 @@ use nsh_core::prelude::*;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 static NEXT: AtomicU64 = AtomicU64::new(0);
+
+fn balance_check(account: Account, day: Day, actual: i64) -> BalanceCheck {
+    let now = clock::now_ms();
+    BalanceCheck {
+        id: format!("balance:{now}:{}", NEXT.fetch_add(1, Ordering::Relaxed)),
+        account,
+        day: day.0,
+        actual,
+        checked_at: clock::zoned(now).datetime(),
+    }
+}
+
+pub(super) fn opening_date(account: &Account) -> Option<Day> {
+    navi_finance::repository::opening::latest_day(
+        account,
+        &finance::transactions_snapshot(),
+        &finance::checks_snapshot(),
+        clock::today().0,
+    )
+    .map(Day)
+}
+
+fn book_amount(account: &Account, value: &str) -> Option<i64> {
+    money::parse(value, true)
+        .and_then(|v| assets::book_value(account, v))
+        .filter(|&v| v != i64::MIN)
+}
+
+fn amount_error() -> &'static str {
+    copy(
+        "Enter a balance with up to two decimal places.",
+        "请输入余额，最多保留两位小数。",
+    )
+}
+
+fn date_row(
+    day: Signal<String>,
+    label: &'static str,
+    press: impl Fn() + 'static,
+) -> impl IntoElement {
+    let value = move || {
+        day.get()
+            .parse::<Day>()
+            .map(|d| s().axis_date(d, true))
+            .unwrap_or_default()
+    };
+    account_value_row(move || label, value, press)
+}
+
+fn account_value_row(
+    label: impl Fn() -> &'static str + Copy + 'static,
+    value: impl Fn() -> String + Copy + 'static,
+    press: impl Fn() + 'static,
+) -> impl IntoElement {
+    row_button(press)
+        .accessibility_label(move || Some(format!("{}, {}", label(), value()).into()))
+        .px_0()
+        .min_h(px(48.0))
+        .child(text(label).typo(Type::Body).text_color(color::INK).flex_1())
+        .child(text(value).typo(Type::Body).text_color(color::INK))
+        .child(crate::ui::icon(
+            crate::ui::Icon::ChevronRight,
+            16.0,
+            color::MUTED,
+        ))
+}
 
 fn message(error: &Error) -> &'static str {
     match error {
@@ -56,13 +122,29 @@ fn guarded(
     }
 }
 
+#[derive(Clone, Copy, PartialEq)]
+enum AccountPanel {
+    Details,
+    Purpose,
+    Currency,
+    Opening,
+    Date,
+}
+
+impl AccountPanel {
+    fn editing_opening(self) -> bool {
+        matches!(self, Self::Opening | Self::Date)
+    }
+}
+
 pub fn account_editor(open: Signal<bool>, own: Option<Signal<Account>>) -> impl IntoElement {
-    account_task(open, own, || {})
+    account_task(open, own, signal(true), || {})
 }
 
 pub fn account_task(
     open: Signal<bool>,
     own: Option<Signal<Account>>,
+    typing: Signal<bool>,
     saved: impl Fn() + Copy + 'static,
 ) -> impl IntoElement {
     retained(
@@ -77,28 +159,46 @@ pub fn account_task(
                         .map(|a| a.name().to_owned())
                         .unwrap_or_default(),
                 );
-                let original = stored((
-                    name.get(),
-                    initial.as_ref().map_or(AccountKind::Assets, Account::kind),
-                    initial.as_ref().map_or(Currency::CNY, Account::currency),
-                ));
+                let existing_kind = initial.as_ref().map(Account::kind);
+                let original_purpose = initial
+                    .as_ref()
+                    .map_or(Some(AccountPurpose::Bank), finance::account_purpose);
+                let purpose = signal(original_purpose);
+                let original_currency = initial.as_ref().map_or(Currency::CNY, Account::currency);
+                let original_name = stored(name.get());
+                let currency = signal(original_currency);
+                let kind = computed(move || {
+                    purpose
+                        .get()
+                        .map(AccountPurpose::kind)
+                        .or(existing_kind)
+                        .unwrap_or(AccountKind::Assets)
+                });
+                let purpose_label = move || match own {
+                    Some(own) => account_purpose::description(&own.get(), purpose.get()),
+                    None => account_purpose::label(purpose.get().unwrap_or(AccountPurpose::Bank)),
+                };
                 let focus = initial_focus();
                 let embedded = crate::ui::sheet::is_task_panel();
-                let kind = signal(
-                    initial
-                        .as_ref()
-                        .map(|a| a.kind())
-                        .unwrap_or(AccountKind::Assets),
-                );
-                let currency = signal(initial.as_ref().map_or(Currency::CNY, Account::currency));
+                let opening_amount = signal(String::new());
+                let day = signal(clock::today().to_string());
                 let error = signal(None::<String>);
-                let selector = signal(0u8);
+                use AccountPanel::{Currency as CurrencyPanel, Date, Details, Opening, Purpose};
+                let selector = signal(Details);
+                effect(move || typing.set(!matches!(selector.get(), Purpose | Date)));
+                crate::ui::sheet::reserve_keyboard_when(move || typing.get());
+                let opening_label = move || {
+                    if kind.get() == AccountKind::Liabilities {
+                        copy("Opening debt", "起始欠款")
+                    } else {
+                        copy("Opening balance", "起始余额")
+                    }
+                };
                 let dirty = move || {
-                    (
-                        name.get_untracked(),
-                        kind.get_untracked(),
-                        currency.get_untracked(),
-                    ) != original.with(|v| v.clone())
+                    original_name.with(|saved| saved != name.get_untracked().trim())
+                        || purpose.get_untracked() != original_purpose
+                        || currency.get_untracked() != original_currency
+                        || !opening_amount.get_untracked().trim().is_empty()
                 };
                 let discard = guarded_close(open, dirty);
                 // Swipe or backdrop leaves the whole task, not just this panel.
@@ -107,8 +207,14 @@ pub fn account_task(
                     open.set(false);
                 }));
                 let close = move || {
-                    if selector.get_untracked() != 0 {
-                        selector.set(0);
+                    if selector.get_untracked() != Details {
+                        let next = if selector.get_untracked() == Date {
+                            Opening
+                        } else {
+                            Details
+                        };
+                        selector.set(next);
+                        error.set(None);
                         dismiss_keyboard();
                     } else {
                         discard();
@@ -119,10 +225,12 @@ pub fn account_task(
                     .items_center()
                     .gap_2()
                     .child(
-                        text(if own.is_some() {
-                            s().rename_account
-                        } else {
-                            s().add_account
+                        text(move || match selector.get() {
+                            Purpose => s().account_type,
+                            Opening => opening_label(),
+                            Date => copy("As of date", "截至日期"),
+                            _ if own.is_some() => s().edit_account,
+                            _ => s().add_account,
                         })
                         .typo(Type::Title)
                         .text_color(color::INK)
@@ -130,108 +238,108 @@ pub fn account_task(
                     )
                     .child(
                         Btn::ghost()
-                            .label(move || if embedded { s().back } else { s().cancel }.into())
+                            .label(move || {
+                                if embedded || !matches!(selector.get(), Details | CurrencyPanel) {
+                                    s().back
+                                } else {
+                                    s().cancel
+                                }
+                                .into()
+                            })
                             .on_press(close),
                     );
+                let compact =
+                    move || own.is_none() && window().height.0 <= 700.0 && font_scale() <= 1.1;
                 let body = view()
                     .gap_3()
-                    .child(field(
-                        || s().account_name,
-                        text_input(name)
-                            .label(|| s().account_name)
-                            .element_ref(&focus),
-                    ))
-                    .child(own.is_none().then(|| {
+                    .style_when(compact, |s| s.gap_1())
+                    .child(
+                        field(
+                            || s().account_name,
+                            text_input(name)
+                                .label(|| s().account_name)
+                                .element_ref(&focus)
+                                .style_when(compact, |s| s.flex_1().min_w(px(0.0))),
+                        )
+                        .style_when(compact, |s| s.flex_row().items_center().gap_3()),
+                    )
+                    .child(
                         view()
-                            .gap_2()
+                            .gap_1()
                             .child(
                                 view()
                                     .flex_row()
+                                    .items_center()
                                     .gap_3()
                                     .child(
-                                        view().flex_1().min_w(px(0.0)).child(
-                                            row_button(move || {
-                                                dismiss_keyboard();
-                                                selector.set(if selector.get_untracked() == 1 {
-                                                    0
-                                                } else {
-                                                    1
-                                                });
-                                            })
-                                            .accessibility_label(|| Some(s().account_type.into()))
-                                            .px_0()
-                                            .min_h(px(44.0))
-                                            .child(
-                                                text(move || {
-                                                    if kind.get() == AccountKind::Liabilities {
-                                                        s().liability_account
-                                                    } else {
-                                                        s().asset_account
-                                                    }
-                                                })
-                                                .typo(Type::Subhead)
+                                        row_button(move || {
+                                            dismiss_keyboard();
+                                            error.set(None);
+                                            selector.set(Purpose);
+                                        })
+                                        .px_0()
+                                        .min_h(px(48.0))
+                                        .flex_1()
+                                        .min_w(px(0.0))
+                                        .accessibility_label(move || {
+                                            Some(
+                                                format!(
+                                                    "{}, {}",
+                                                    s().account_type,
+                                                    purpose_label()
+                                                )
+                                                .into(),
+                                            )
+                                        })
+                                        .child(
+                                            text(purpose_label)
+                                                .typo(Type::Body)
                                                 .text_color(color::INK)
                                                 .flex_1(),
-                                            )
-                                            .child(
-                                                crate::ui::icon(
-                                                    crate::ui::Icon::ChevronDown,
-                                                    16.0,
-                                                    color::MUTED,
-                                                ),
+                                        )
+                                        .child(
+                                            crate::ui::icon(
+                                                crate::ui::Icon::ChevronRight,
+                                                16.0,
+                                                color::MUTED,
                                             ),
                                         ),
                                     )
-                                    .child(
-                                        view().min_w(px(80.0)).child(
-                                            row_button(move || {
-                                                dismiss_keyboard();
-                                                selector.set(if selector.get_untracked() == 2 {
-                                                    0
+                                    .child(if own.is_none() {
+                                        row_button(move || {
+                                            dismiss_keyboard();
+                                            selector.set(
+                                                if selector.get_untracked() == CurrencyPanel {
+                                                    Details
                                                 } else {
-                                                    2
-                                                });
-                                            })
-                                            .accessibility_label(|| Some(s().currency_label.into()))
-                                            .px_0()
-                                            .min_h(px(44.0))
-                                            .child(
-                                                text(move || currency.get().code())
-                                                    .typo(Type::Subhead)
-                                                    .text_color(color::INK),
-                                            )
-                                            .child(
-                                                crate::ui::icon(
-                                                    crate::ui::Icon::ChevronDown,
-                                                    16.0,
-                                                    color::MUTED,
-                                                ),
-                                            ),
-                                        ),
-                                    ),
+                                                    CurrencyPanel
+                                                },
+                                            );
+                                        })
+                                        .accessibility_label(|| Some(s().currency_label.into()))
+                                        .px_0()
+                                        .min_h(px(48.0))
+                                        .min_w(px(80.0))
+                                        .child(
+                                            text(move || currency.get().code())
+                                                .typo(Type::Subhead)
+                                                .text_color(color::INK),
+                                        )
+                                        .child(crate::ui::icon(
+                                            crate::ui::Icon::ChevronDown,
+                                            16.0,
+                                            color::MUTED,
+                                        ))
+                                        .into_element()
+                                    } else {
+                                        text(original_currency.code())
+                                            .typo(Type::Subhead)
+                                            .text_color(color::MUTED)
+                                            .into_element()
+                                    }),
                             )
                             .child(when(
-                                move || selector.get() == 1,
-                                move || {
-                                    segmented(
-                                        vec![
-                                            Segment::new(AccountKind::Assets, || {
-                                                s().asset_account.into()
-                                            }),
-                                            Segment::new(AccountKind::Liabilities, || {
-                                                s().liability_account.into()
-                                            }),
-                                        ],
-                                        move || kind.get(),
-                                        move |k| {
-                                            kind.set(k);
-                                            selector.set(0);
-                                        },
-                                    )
-                                },
-                            ))
-                            .child(when(
-                                move || selector.get() == 2,
+                                move || selector.get() == CurrencyPanel,
                                 move || {
                                     segmented(
                                         Currency::ALL
@@ -241,26 +349,143 @@ pub fn account_task(
                                         move || currency.get(),
                                         move |c| {
                                             currency.set(c);
-                                            selector.set(0);
+                                            selector.set(Details);
                                         },
                                     )
                                 },
                             ))
-                    }));
+                            .child(own.is_none().then(|| {
+                                account_value_row(
+                                    opening_label,
+                                    move || {
+                                        let input = opening_amount.get();
+                                        if input.trim().is_empty() {
+                                            copy("Optional", "选填").into()
+                                        } else {
+                                            money::parse(&input, true)
+                                                .map(|v| {
+                                                    crate::ui::currency::format(v, currency.get())
+                                                })
+                                                .unwrap_or(input)
+                                        }
+                                    },
+                                    move || {
+                                        error.set(None);
+                                        dismiss_keyboard();
+                                        selector.set(Opening);
+                                    },
+                                )
+                            })),
+                    )
+                    .child(own.map(|own| {
+                        when(
+                            move || {
+                                name.get().trim() == own.get().name()
+                                    && purpose.get() == original_purpose
+                            },
+                            move || super::lifecycle::account_action(own, move || open.set(false)),
+                        )
+                    }))
+                    .style_when(
+                        move || !matches!(selector.get(), Details | CurrencyPanel),
+                        |s| s.hidden(),
+                    );
+                let body = view()
+                    .child(body)
+                    .child(when(
+                        move || selector.get() == Purpose,
+                        move || {
+                            account_purpose::picker(
+                                purpose.get_untracked(),
+                                existing_kind,
+                                move |selected| {
+                                    purpose.set(Some(selected));
+                                    selector.set(Details);
+                                },
+                            )
+                        },
+                    ))
+                    .child(when(
+                        move || selector.get().editing_opening(),
+                        move || {
+                            view()
+                                .style_when(move || selector.get() == Date, |s| s.hidden())
+                                .gap_3()
+                                .child(field(
+                                    move || {
+                                        format!("{} · {}", s().money_amount, currency.get().code())
+                                    },
+                                    text_input(opening_amount)
+                                        .label(opening_label)
+                                        .element_ref(&initial_focus())
+                                        .placeholder("0.00")
+                                        .tabular_nums(),
+                                ))
+                                .child(date_row(
+                                    day,
+                                    copy("As of date", "截至日期"),
+                                    move || {
+                                        dismiss_keyboard();
+                                        selector.set(Date);
+                                    },
+                                ))
+                        },
+                    ))
+                    .child(when(
+                        move || selector.get() == Date,
+                        move || {
+                            super::super::finance::date_picker_through(
+                                day,
+                                Some(clock::today()),
+                                move || selector.set(Opening),
+                            )
+                        },
+                    ));
                 let action = view()
+                    .style_when(move || selector.get() == Purpose, |s| s.hidden())
                     .gap_2()
                     .child(note(move || error.get().map(Into::into), || true))
                     .child(
                         Btn::primary()
                             .label(move || {
-                                if own.is_some() {
-                                    s().save_account_name.into()
+                                if selector.get().editing_opening() {
+                                    s().done.into()
+                                } else if own.is_some() {
+                                    s().save_account_changes.into()
                                 } else {
                                     s().create_account.into()
                                 }
                             })
-                            .disabled(move || name.get().trim().is_empty())
+                            .disabled(move || {
+                                let name = name.get();
+                                let name = name.trim();
+                                !selector.get().editing_opening()
+                                    && (name.is_empty()
+                                        || own.is_some_and(|a| {
+                                            a.get().name() == name
+                                                && purpose.get() == original_purpose
+                                        }))
+                            })
                             .on_press(move || {
+                                match selector.get_untracked() {
+                                    Date => {
+                                        selector.set(Opening);
+                                        return;
+                                    }
+                                    Opening => {
+                                        let input = opening_amount.get_untracked();
+                                        if !input.trim().is_empty()
+                                            && money::parse(&input, true)
+                                                .is_none_or(|v| v == i64::MIN)
+                                        {
+                                            error.set(Some(amount_error().into()));
+                                            return;
+                                        }
+                                        close();
+                                        return;
+                                    }
+                                    _ => {}
+                                }
                                 let Ok(account) = Account::new_in(
                                     kind.get_untracked(),
                                     &name.get_untracked(),
@@ -269,10 +494,31 @@ pub fn account_task(
                                     error.set(Some(s().error_account.into()));
                                     return;
                                 };
+                                let selected = purpose.get_untracked();
+                                let new_purpose = selected.unwrap_or(AccountPurpose::Bank);
                                 let result = if let Some(own) = own {
-                                    finance::rename_account(&own.get_untracked(), &account)
+                                    finance::edit_account(&own.get_untracked(), &account, selected)
+                                } else if !opening_amount.get_untracked().trim().is_empty() {
+                                    let Some(actual) =
+                                        book_amount(&account, &opening_amount.get_untracked())
+                                    else {
+                                        error.set(Some(amount_error().into()));
+                                        selector.set(Opening);
+                                        return;
+                                    };
+                                    let Ok(as_of) = day.get_untracked().parse::<Day>() else {
+                                        error.set(Some(s().error_transaction_date.into()));
+                                        return;
+                                    };
+                                    finance::create_account_with_opening_and_purpose(
+                                        balance_check(account.clone(), as_of, actual),
+                                        new_purpose,
+                                    )
                                 } else {
-                                    finance::create_account(account.clone())
+                                    finance::create_account_with_purpose(
+                                        account.clone(),
+                                        new_purpose,
+                                    )
                                 };
                                 match result {
                                     Err(cause) => {
@@ -290,7 +536,7 @@ pub fn account_task(
                                         saved();
                                         open.set(false);
                                         if own.is_some() {
-                                            show_toast(s().account_renamed, None);
+                                            show_toast(s().account_updated, None);
                                         } else {
                                             show_toast(s().account_created, None);
                                         }
@@ -314,7 +560,7 @@ struct Preview {
 pub fn balance_editor(
     open: Signal<bool>,
     own: Signal<Account>,
-    opening: Memo<bool>,
+    opening: Signal<bool>,
 ) -> impl IntoElement {
     retained(
         move || open.get().then_some(()),
@@ -322,7 +568,13 @@ pub fn balance_editor(
             untracked(move || {
                 let value = signal(String::new());
                 let focus = initial_focus();
-                let day = signal(clock::today().to_string());
+                let today = clock::today();
+                let latest = if opening.get_untracked() {
+                    opening_date(&own.get_untracked()).unwrap_or(today)
+                } else {
+                    today
+                };
+                let day = signal(latest.to_string());
                 let date_panel = signal(false);
                 let preview = signal(None::<Preview>);
                 #[cfg(not(any(target_os = "android", target_os = "ios")))]
@@ -330,8 +582,8 @@ pub fn balance_editor(
                     value.set(money::format(actual));
                     let a = own.get_untracked();
                     preview.set(Some(Preview {
-                        day: clock::today(),
-                        book: journal::balance_on(&finance::transactions(), &a, clock::today().0),
+                        day: latest,
+                        book: journal::balance_on(&finance::transactions(), &a, latest.0),
                         actual,
                     }));
                 }
@@ -379,9 +631,11 @@ pub fn balance_editor(
                     let a = own.get();
                     untracked(move || {
                         if selecting_date {
-                            return super::super::finance::date_picker(day, move || {
-                                date_panel.set(false)
-                            })
+                            return super::super::finance::date_picker_through(
+                                day,
+                                Some(latest),
+                                move || date_panel.set(false),
+                            )
                             .into_element();
                         }
                         let title = if a.kind() == AccountKind::Liabilities {
@@ -402,7 +656,7 @@ pub fn balance_editor(
                                         .text_color(color::INK),
                                 )
                                 .child(
-                                    text(s().long_date(p.day))
+                                    text(s().axis_date(p.day, true))
                                         .typo(Type::Subhead)
                                         .text_color(color::MUTED),
                                 )
@@ -453,34 +707,21 @@ pub fn balance_editor(
                                     .typo(Type::Subhead)
                                     .text_color(color::MUTED)
                             }))
+                            .child(date_row(day, s().transaction_date, move || {
+                                dismiss_keyboard();
+                                date_panel.set(true);
+                            }))
                             .child(
-                                row_button(move || {
-                                    dismiss_keyboard();
-                                    date_panel.set(true);
+                                text(if opening.get_untracked() && latest < today {
+                                    copy(
+                                        "Use the balance before the first transaction.",
+                                        "填写首笔流水之前的日终余额。",
+                                    )
+                                } else {
+                                    s().balance_date_hint
                                 })
-                                .accessibility_label(|| Some(s().transaction_date.into()))
-                                .py_2()
-                                .child(
-                                    text(|| s().transaction_date)
-                                        .typo(Type::Body)
-                                        .text_color(color::MUTED)
-                                        .flex_1(),
-                                )
-                                .child(
-                                    text(move || {
-                                        day.get()
-                                            .parse::<Day>()
-                                            .map(|d| s().long_date(d))
-                                            .unwrap_or_default()
-                                    })
-                                    .typo(Type::Body)
-                                    .text_color(color::INK),
-                                ),
-                            )
-                            .child(
-                                text(|| s().balance_date_hint)
-                                    .typo(Type::Subhead)
-                                    .text_color(color::MUTED),
+                                .typo(Type::Subhead)
+                                .text_color(color::MUTED),
                             )
                             .into_element()
                     })
@@ -507,18 +748,13 @@ pub fn balance_editor(
                                 error.set(None);
                                 let a = own.get_untracked();
                                 if let Some(p) = preview.get_untracked() {
-                                    let check = BalanceCheck {
-                                        id: format!(
-                                            "balance:{}:{}",
-                                            clock::now_ms(),
-                                            NEXT.fetch_add(1, Ordering::Relaxed)
-                                        ),
-                                        account: a,
-                                        day: p.day.0,
-                                        actual: p.actual,
-                                        checked_at: clock::zoned(clock::now_ms()).datetime(),
+                                    let check = balance_check(a, p.day, p.actual);
+                                    let result = if opening.get_untracked() {
+                                        finance::confirm_opening(check)
+                                    } else {
+                                        finance::confirm_balance(check, p.book)
                                     };
-                                    match finance::confirm_balance(check, p.book) {
+                                    match result {
                                         Ok(()) => {
                                             dismiss_keyboard();
                                             open.set(false);
@@ -534,24 +770,22 @@ pub fn balance_editor(
                                     }
                                     return;
                                 }
-                                let Some(actual) = money::parse(&value.get_untracked(), true)
-                                    .and_then(|v| assets::book_value(&a, v))
-                                else {
-                                    error.set(Some(s().error_money.into()));
+                                let Some(actual) = book_amount(&a, &value.get_untracked()) else {
+                                    error.set(Some(amount_error().into()));
                                     return;
                                 };
                                 let Ok(selected) = day.get_untracked().parse::<Day>() else {
                                     error.set(Some(s().error_transaction_date.into()));
                                     return;
                                 };
-                                if selected > clock::today() {
+                                if selected > latest {
                                     error.set(Some(s().error_transaction_date.into()));
                                     return;
                                 }
                                 let book =
                                     journal::balance_on(&finance::transactions(), &a, selected.0);
                                 if actual.checked_sub(book).is_none_or(|d| d == i64::MIN) {
-                                    error.set(Some(s().error_money.into()));
+                                    error.set(Some(amount_error().into()));
                                     return;
                                 }
                                 dismiss_keyboard();

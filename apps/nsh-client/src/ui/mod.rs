@@ -2,6 +2,7 @@
 //! components and the layout primitives, never restyling a control
 //! themselves. A look a feature needs becomes a variant here first.
 
+pub mod account_purpose;
 pub mod button;
 pub mod currency;
 pub mod feedback;

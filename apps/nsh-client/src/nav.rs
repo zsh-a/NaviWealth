@@ -42,6 +42,7 @@ pub enum Route {
     /// An own financial account.
     Account(String),
     AccountCheck(String),
+    ArchivedAccounts,
     Holding(String),
     AssetHistory {
         comparison: Option<(Day, Day)>,

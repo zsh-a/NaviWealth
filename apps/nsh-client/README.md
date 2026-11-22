@@ -239,7 +239,10 @@ rejected. Choose a category and an asset/liability account, or name a new own
 account within the draft. No account or posting is written until Save succeeds.
 The sheet edits the date/time, payee and note; dismissal asks before discarding
 changes. Existing rows open the editor; Delete offers Undo.
-Each own account has one currency. Cross-currency transfers record both sent
+Each own account has one currency. Schema 21 adds optional account purpose:
+cash, bank, digital wallet, brokerage cash, consumer credit or loan. Existing
+accounts retain their names and can be classified in Edit account.
+Cross-currency transfers record both sent
 and received amounts and balance each currency separately. Spending remains
 in its original currency in Today, Records and Review.
 
@@ -364,15 +367,20 @@ Account and holding creation replace the content of the same management sheet;
 security search stays inside the holding task. A saved security whose trades
 were all deleted is accessible from Add holding. Back from creation returns
 to the invoking overview or management menu. Back preserves the current
-draft when leaving a picker. A new account stays on Assets with a persistent
-Set opening balance action until it has a posting or balance check. An account
-with a confirmed zero displays its zero balance.
+draft when leaving a picker. Assets accepts an optional dated opening balance
+or debt at creation. An empty account keeps Set opening balance on its row.
+If a transaction was recorded first, the account detail offers to backfill
+an opening before it. A confirmed zero displays its zero balance.
 The global capture action is a 56-point ink circle with a line plus, centered
 beside the dock. Its accessible name remains New entry / 新记录.
 Opening a change amount carries the overview’s start and end dates into the
 chart and opens the breakdown. The ordinary 30-day window includes today. Valuation basis expands for details on how
 backdated entries, prices and balance adjustments change the estimates.
-Account details show dated entries, with older entries loaded in batches.
+Account details show the latest effective date checked and dated entries,
+with older entries loaded in batches. Edit account can deactivate an account.
+Manage → Inactive accounts lists these accounts and opens their details
+for reactivation. Their history and remaining balances still count toward
+net worth.
 The owner can create asset/liability accounts and rename them without merging
 accounts. Renaming updates postings, import mappings, balance observations and
 saved recognition references together; a running recognition must finish first.
@@ -415,8 +423,9 @@ later trades; a deletion or backdated sale that would oversell is rejected.
 The supported markets are mainland China, Hong Kong and the US, with CNY, HKD
 and USD accounts and holdings. Offline catalog search supports code, name,
 pinyin and aliases; verified catalog updates come from GitHub Releases.
-Manual holdings remain available. Trades settle through matching-currency cash
-accounts; a holding's currency stays fixed after creation.
+Manual holdings remain available. New trades settle through matching-currency
+brokerage cash, bank or unclassified asset accounts. A holding's currency
+stays fixed after creation.
 
 Tencent provides dated quotes. Unpriced positions explicitly use native cost;
 known prices replace cost and are never applied to earlier days. Assets converts

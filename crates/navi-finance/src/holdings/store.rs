@@ -241,10 +241,12 @@ pub fn add_trade_in_transaction(
             params![s.id, s.name, s.name.to_lowercase(), s.account.as_str()],
         )?;
     }
-    if trade
-        .cash
-        .as_ref()
-        .is_some_and(|a| !repository::accounts(tx).is_ok_and(|known| known.contains(a)))
+    if let Some(cash) = &trade.cash
+        && (!repository::accounts(tx)?.contains(cash)
+            || repository::archived_accounts(tx)?.contains(cash)
+            || repository::account_purposes(tx)?
+                .get(cash)
+                .is_some_and(|p| !p.usable_for_settlement()))
     {
         return Err(Error::Cash);
     }

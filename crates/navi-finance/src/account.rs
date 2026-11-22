@@ -50,6 +50,52 @@ impl AccountKind {
     }
 }
 
+/// The owner's use for a cash or liability account. Older accounts can stay
+/// unclassified, including accounts referenced by historical trades.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum AccountPurpose {
+    Cash,
+    Bank,
+    Wallet,
+    Brokerage,
+    Credit,
+    Loan,
+}
+
+impl AccountPurpose {
+    pub const ALL: [Self; 6] = [
+        Self::Cash,
+        Self::Bank,
+        Self::Wallet,
+        Self::Brokerage,
+        Self::Credit,
+        Self::Loan,
+    ];
+
+    pub fn kind(self) -> AccountKind {
+        match self {
+            Self::Cash | Self::Bank | Self::Wallet | Self::Brokerage => AccountKind::Assets,
+            Self::Credit | Self::Loan => AccountKind::Liabilities,
+        }
+    }
+
+    pub fn usable_for_settlement(self) -> bool {
+        matches!(self, Self::Bank | Self::Brokerage)
+    }
+
+    pub(crate) fn code(self) -> &'static str {
+        match self {
+            Self::Cash => "cash",
+            Self::Bank => "bank",
+            Self::Wallet => "wallet",
+            Self::Brokerage => "brokerage",
+            Self::Credit => "credit",
+            Self::Loan => "loan",
+        }
+    }
+}
+
 /// Why a name is not an account.
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum AccountError {
@@ -134,6 +180,18 @@ impl Account {
         self.kind() == AccountKind::Assets
             && self.name().starts_with(crate::holdings::ACCOUNT_PREFIX)
     }
+    /// Securities settle against an asset account in the instrument's currency.
+    pub fn is_settlement_cash(&self, currency: Currency) -> bool {
+        self.is_cash() && self.kind() == AccountKind::Assets && self.currency() == currency
+    }
+
+    /// New settlements honor current purpose. Replaying an existing trade
+    /// only needs its original native asset account and currency.
+    pub fn can_settle(&self, currency: Currency, purpose: Option<AccountPurpose>) -> bool {
+        self.is_settlement_cash(currency)
+            && purpose.is_none_or(AccountPurpose::usable_for_settlement)
+    }
+
     /// Accounts that can be picked for cash entry or balance reconciliation.
     pub fn is_cash(&self) -> bool {
         self.kind().is_own() && !self.is_holding()

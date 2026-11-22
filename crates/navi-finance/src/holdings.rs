@@ -319,7 +319,7 @@ pub fn replay(
 fn cash(t: &Trade, currency: Currency) -> Result<Account, Error> {
     t.cash
         .as_ref()
-        .filter(|a| a.is_cash() && a.kind() == AccountKind::Assets && a.currency() == currency)
+        .filter(|a| a.is_settlement_cash(currency))
         .cloned()
         .ok_or(Error::Cash)
 }

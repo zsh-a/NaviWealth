@@ -2,11 +2,13 @@
 //! details and balance observations use the same journal as Today/Records.
 pub(crate) mod current;
 mod editor;
+mod lifecycle;
 mod mini;
 mod overview;
 mod overview_parts;
 mod summary;
 mod trend;
+pub use lifecycle::archived_accounts_page;
 pub use overview::assets_tab;
 pub use trend::history_page;
 
@@ -129,9 +131,35 @@ fn opening_action() -> &'static str {
     crate::i18n::catalog::copy("Set opening balance", "填写起始余额")
 }
 
+fn backfill_row(open: impl Fn() + 'static) -> impl IntoElement {
+    let stacked = || font_scale() > 1.2 || window().width.0 < 350.0;
+    view()
+        .flex_row()
+        .items_center()
+        .gap_2()
+        .style_when(stacked, |s| s.flex_col().items_start().gap_1())
+        .child(
+            text(|| s().account_unchecked)
+                .flex_1()
+                .style_when(stacked, |s| s.flex_grow(0.0).basis(auto()))
+                .typo(Type::Subhead)
+                .text_color(color::MUTED),
+        )
+        .child(
+            row_button(open).min_h(px(48.0)).px_0().child(
+                text(opening_action())
+                    .typo(Type::Subhead)
+                    .text_color(color::ACCENT_INK),
+            ),
+        )
+}
+
 pub fn account_page(name: &str, check_on_open: bool) -> Screen {
     let own = signal(Account::parse(name).expect("account route created from a valid account"));
-    let balance = signal(check_on_open);
+    let archived = computed(move || finance::archived_accounts().contains(&own.get()));
+    let balance = signal(check_on_open && !archived.get_untracked());
+    let opening_mode =
+        signal(check_on_open && editor::opening_date(&own.get_untracked()).is_some());
     let needs_opening = computed(move || {
         let account = own.get();
         let today = clock::today().0;
@@ -159,7 +187,7 @@ pub fn account_page(name: &str, check_on_open: bool) -> Screen {
                     move || own.with(|a| a.name().to_owned().into()),
                     nav::pop,
                     Some(
-                        IconBtn::new(Icon::Pencil, || s().rename_account.into())
+                        IconBtn::new(Icon::Pencil, || s().edit_account.into())
                             .variant(Variant::Ghost)
                             .on_press(move || rename.set(true))
                             .into_element(),
@@ -185,13 +213,41 @@ pub fn account_page(name: &str, check_on_open: bool) -> Screen {
                                         view()
                                             .gap_3()
                                             .child(
-                                                text(if a.kind() == AccountKind::Liabilities {
-                                                    s().account_debt
-                                                } else {
-                                                    s().account_balance
-                                                })
-                                                .typo(Type::Headline)
-                                                .text_color(color::BODY),
+                                                view()
+                                                    .flex_row()
+                                                    .items_baseline()
+                                                    .gap_2()
+                                                    .style_when(
+                                                        || {
+                                                            font_scale() > 1.2
+                                                                || window().width.0 < 350.0
+                                                        },
+                                                        |s| s.flex_col().items_start().gap_1(),
+                                                    )
+                                                    .child(
+                                                        text(
+                                                            if a.kind() == AccountKind::Liabilities
+                                                            {
+                                                                s().account_debt
+                                                            } else {
+                                                                s().account_balance
+                                                            },
+                                                        )
+                                                        .typo(Type::Headline)
+                                                        .text_color(color::BODY),
+                                                    )
+                                                    .child(
+                                                        text(format!(
+                                                            "{} · {}",
+                                                            crate::ui::account_purpose::description(
+                                                                &a,
+                                                                finance::account_purpose(&a)
+                                                            ),
+                                                            a.currency()
+                                                        ))
+                                                        .typo(Type::Subhead)
+                                                        .text_color(color::MUTED),
+                                                    ),
                                             )
                                             .child(if needs_opening.get() {
                                                 text("—")
@@ -209,19 +265,42 @@ pub fn account_page(name: &str, check_on_open: bool) -> Screen {
                                     }))
                                     .child(when(
                                         move || !needs_opening.get(),
-                                        move || check_history(own, transaction),
-                                    ))
-                                    .child(
-                                        Btn::tonal()
-                                            .label(move || {
-                                                if needs_opening.get() {
-                                                    opening_action().into()
-                                                } else {
-                                                    s().check_balance.into()
+                                        move || {
+                                            dynamic(move || {
+                                                if archived.get()
+                                                    || editor::opening_date(&own.get()).is_none()
+                                                {
+                                                    return check_history(own, transaction);
                                                 }
+                                                backfill_row(move || {
+                                                    opening_mode.set(true);
+                                                    balance.set(true);
+                                                })
+                                                .into_element()
                                             })
-                                            .on_press(move || balance.set(true)),
-                                    ),
+                                        },
+                                    ))
+                                    .child(when(
+                                        move || !archived.get(),
+                                        move || {
+                                            Btn::tonal()
+                                                .label(move || {
+                                                    if needs_opening.get() {
+                                                        opening_action().into()
+                                                    } else {
+                                                        s().check_balance.into()
+                                                    }
+                                                })
+                                                .on_press(move || {
+                                                    opening_mode.set(needs_opening.get_untracked());
+                                                    balance.set(true);
+                                                })
+                                        },
+                                    ))
+                                    .child(when(
+                                        move || archived.get(),
+                                        move || lifecycle::account_action(own, || {}),
+                                    )),
                             )
                             .child(
                                 text(|| s().account_activity)
@@ -321,9 +400,24 @@ pub fn account_page(name: &str, check_on_open: bool) -> Screen {
                         .child(toast_view(|| 24.0)),
                 )
                 .child(editor::account_editor(rename, Some(own)))
-                .child(editor::balance_editor(balance, own, needs_opening))
+                .child(editor::balance_editor(balance, own, opening_mode))
                 .child(super::finance::finance_editor(transaction)),
         )
+}
+
+fn latest_checked_day(
+    checks: &[navi_finance::repository::BalanceCheck],
+    account: &Account,
+) -> Option<Day> {
+    checks
+        .iter()
+        .filter(|c| &c.account == account)
+        .map(|c| Day(c.day))
+        .max()
+}
+
+fn checked_through(day: Day) -> String {
+    s().checked_through(day, day.0.year() != clock::today().0.year())
 }
 
 /// Each saved check has an observation, including matches that did not post
@@ -335,30 +429,21 @@ fn check_history(own: Signal<Account>, entry: Signal<Option<String>>) -> AnyElem
     dynamic(move || {
         let account = own.get();
         let checks = finance::checks_snapshot();
-        let Some(latest) = checks.iter().rev().find(|c| c.account == account) else {
+        let Some(latest) = latest_checked_day(&checks, &account) else {
             return text(s().account_unchecked)
                 .typo(Type::Subhead)
                 .text_color(color::MUTED)
                 .into_element();
         };
-        let latest = Day(latest.checked_at.date());
         view()
             .gap_2()
             .child(
-                crate::ui::surface::disclosure(open, move || {
-                    format!("{} · {}", s().account_checked, s().short_date(latest)).into()
-                })
-                .accessibility_label(move || {
-                    let title = crate::i18n::catalog::copy("Balance check history", "余额核对历史");
-                    Some(
-                        format!(
-                            "{title}, {} · {}",
-                            s().account_checked,
-                            s().short_date(latest)
-                        )
-                        .into(),
-                    )
-                }),
+                crate::ui::surface::disclosure(open, move || checked_through(latest).into())
+                    .accessibility_label(move || {
+                        let title =
+                            crate::i18n::catalog::copy("Balance check history", "余额核对历史");
+                        Some(format!("{title}, {}", checked_through(latest)).into())
+                    }),
             )
             .child(when(
                 move || open.get(),
@@ -376,8 +461,8 @@ fn check_history(own: Signal<Account>, entry: Signal<Option<String>>) -> AnyElem
                             .iter()
                             .rev()
                             .filter(|c| c.account == account)
-                            .take(limit + 1)
                             .collect::<Vec<_>>();
+                        rows.sort_by_key(|c| std::cmp::Reverse((c.day, c.checked_at)));
                         let more = rows.len() > limit;
                         rows.truncate(limit);
                         view()

@@ -365,6 +365,8 @@ pub fn awaiting_tool_resolution(draft: &Draft) -> bool {
         .unwrap_or(false)
 }
 
+pub(crate) use batch::accepts_account;
+
 pub fn ready(draft: &Draft) -> bool {
     draft.status == Status::Ready
         && draft.correction.trim().is_empty()
@@ -373,11 +375,13 @@ pub fn ready(draft: &Draft) -> bool {
         && draft.pending_ask_user().is_none()
         && !awaiting_tool_resolution(draft)
         && draft.pending_questions().is_empty()
-        && crate::domain::capture_evidence::accounts_approved(draft)
+        && crate::domain::capture_evidence::accounts_approved(draft, &finance::active_accounts())
         && !draft.records.is_empty()
         && draft.records.iter().enumerate().all(|(i, r)| match r {
             Record::Money { day, draft: money } => {
-                money.valid() && money.transaction(entry(draft, i, *day), day.0).is_ok()
+                money.valid()
+                    && record_issue(draft, i).is_none()
+                    && money.transaction(entry(draft, i, *day), day.0).is_ok()
             }
             Record::Meal {
                 estimate,

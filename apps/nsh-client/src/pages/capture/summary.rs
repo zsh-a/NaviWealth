@@ -194,7 +194,12 @@ pub(super) fn line(label: impl IntoReactive<SharedString>, value: String, missin
 fn account(account: &Option<Account>) -> String {
     match account {
         None => s().capture_unspecified.to_owned(),
-        Some(a) if finance::accounts().contains(a) => a.name().to_owned(),
+        Some(a) if finance::archived_accounts().contains(a) => {
+            s().capture_choose_account.to_owned()
+        }
+        Some(a) if finance::accounts_snapshot().contains(a) => {
+            crate::pages::finance::selected_account_label(a)
+        }
         Some(a) => format!("{} · {}", a.name(), s().capture_new_account),
     }
 }

@@ -41,15 +41,19 @@ fn transfer_completion_excludes_its_source_and_view_reveals_a_multi_day_batch() 
     app.press("label:Send")?;
     app.wait_for("Which account was used?")?;
     app.press("label:From account, Choose account")?;
-    app.press("label:Cash")?;
+    app.press("label:Cash, Bank account · CNY")?;
     app.wait_for("label:From account, Cash")?;
     app.press("label:To account, Choose account")?;
     assert!(
-        !app.shows("label:Cash"),
+        !app.shows("label:Cash, Bank account · CNY"),
         "transfer destination excludes its source"
     );
-    app.press("label:Bank")?;
+    app.press("label:Bank, Bank account · CNY")?;
     app.wait_for("label:To account, Bank")?;
+    app.press("label:To account, Bank")?;
+    app.press("Swap accounts")?;
+    app.press("label:From account, Bank")?;
+    app.press("Swap accounts")?;
     app.press("Confirm and save (2)")?;
     app.wait_for("Saved 2 records")?;
     app.press("View")?;
@@ -90,7 +94,7 @@ fn account_completion_is_local_durable_and_never_posts_before_confirmation() -> 
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
     db.execute_batch("CREATE TRIGGER reject_draft BEFORE UPDATE ON capture_drafts BEGIN SELECT RAISE(ABORT,'disk failure'); END;").unwrap();
     app.press("label:Account, Choose account")?;
-    app.press("label:Cash")?;
+    app.press("label:Cash, Bank account · CNY")?;
     app.wait_for("Could not save changes. Check device storage and try again.")?;
     assert!(
         navi_finance::repository::transactions(&db)
@@ -109,7 +113,7 @@ fn account_completion_is_local_durable_and_never_posts_before_confirmation() -> 
         "failed selection did not change the stored draft"
     );
     db.execute_batch("DROP TRIGGER reject_draft").unwrap();
-    app.press("label:Cash")?;
+    app.press("label:Cash, Bank account · CNY")?;
     app.wait_for("label:Account, Cash")?;
     app.press("Edit amount")?;
     app.clear("label:Amount")?;
@@ -976,6 +980,71 @@ fn an_image_that_cannot_be_kept_is_not_attached_or_sent() -> Result<(), String> 
 }
 
 #[test]
+fn same_named_debit_and_credit_require_an_explicit_funding_choice() -> Result<(), String> {
+    use navi_finance::{
+        account::{Account, AccountPurpose},
+        repository,
+    };
+    let dir = tempfile::tempdir().unwrap();
+    let (seed, _) = start_in(Some(dir.path()), account(true), None);
+    drop(seed);
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    let credit = Account::parse("负债:Cash").unwrap();
+    for name in ["资产:Cash", "负债:Cash"] {
+        repository::create_account(&db, &Account::parse(name).unwrap()).unwrap();
+    }
+    for (name, purpose) in [
+        ("资产:A broker", AccountPurpose::Brokerage),
+        ("资产:Z wallet", AccountPurpose::Wallet),
+    ] {
+        let a = Account::parse(name).unwrap();
+        repository::create_account(&db, &a).unwrap();
+        repository::set_account_purpose(&db, &a, Some(purpose)).unwrap();
+    }
+    let model = network(200, record_reply(vec![money_record("32.00")]));
+    let (mut app, _) = start_in(Some(dir.path()), account(true), Some(model));
+    app.press("label:New entry")?;
+    app.type_text(
+        "label:What would you like to record?",
+        "Lunch 32 yuan from Cash",
+    )?;
+    app.press("label:Send")?;
+    app.wait_for("Use this account · Cash · Asset account")?;
+    assert!(!app.shows("text:/^Confirm and save/"));
+    app.press("label:Account, Cash · Asset account")?;
+    app.wait_for("label:Cash, Asset account · CNY")?;
+    app.wait_for("task-sheet >> label:Z wallet, Digital wallet · CNY")?;
+    app.wait_for("task-sheet >> label:A broker, Brokerage cash · CNY")?;
+    let options = app.screen().layout_nodes();
+    let option_top = |name: &str| {
+        options
+            .iter()
+            .find(|n| {
+                !n.hidden
+                    && n.bounds.size.height.0 > 0.0
+                    && n.text.as_ref().is_some_and(|v| v.text.text == name)
+            })
+            .unwrap()
+            .bounds
+            .origin
+            .y
+            .0
+    };
+    assert!(
+        option_top("Z wallet") < option_top("A broker"),
+        "expense options put daily spending accounts first"
+    );
+    app.press("label:Cash, Liability account · CNY")?;
+    app.press("Confirm and save")?;
+    app.wait_for("View")?;
+    assert_eq!(
+        repository::transactions(&db).unwrap()[0].amount_in(&credit),
+        -3200
+    );
+    Ok(())
+}
+
+#[test]
 fn inferred_funding_requires_a_tap_and_undo_reverts_the_whole_batch() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
     let mut money = money_record("32.00");
@@ -1070,6 +1139,18 @@ fn holding_balance_price_and_note_cards_share_one_review() -> Result<(), String>
     let day = today();
     let cash = Account::parse("资产:Cash").unwrap();
     repository::create_account(&db, &cash).unwrap();
+    for account in ["负债:Cash", "资产/USD:Foreign", "资产:Closed"] {
+        repository::create_account(&db, &Account::parse(account).unwrap()).unwrap();
+    }
+    let wallet = Account::parse("资产:Phone wallet").unwrap();
+    repository::create_account(&db, &wallet).unwrap();
+    repository::set_account_purpose(
+        &db,
+        &wallet,
+        Some(navi_finance::account::AccountPurpose::Wallet),
+    )
+    .unwrap();
+    repository::set_account_archived(&db, &Account::parse("资产:Closed").unwrap(), true).unwrap();
     let security = Security::new("fund", "Fund A").unwrap();
     let opening = Trade {
         id: "opening-fund".into(),
@@ -1109,6 +1190,16 @@ fn holding_balance_price_and_note_cards_share_one_review() -> Result<(), String>
     app.type_text("label:What would you like to record?", "Bought two Fund A with Cash, then checked Cash at 91.40. Closing price 4.125005. Note: Stayed on budget.")?;
     app.press("label:Send")?;
     app.wait_for("Confirm and save (4)")?;
+    app.press("label:Settlement account, Cash · Asset account")?;
+    for excluded in [
+        "Cash, Liability account · CNY",
+        "Foreign, Asset account · USD",
+        "Phone wallet, Digital wallet · CNY",
+        "Closed, Asset account · CNY",
+    ] {
+        assert!(!app.shows(&format!("label:{excluded}")));
+    }
+    app.press("label:Cash, Asset account · CNY")?;
     for label in [
         "text:Buy",
         "text:Balance check",

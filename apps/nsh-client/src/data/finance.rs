@@ -1,9 +1,13 @@
 //! Thin reactive adapter over finance's confirmed ledger repository.
 //! SQLite commits before a signal changes. Failure never looks like a save.
 
-use navi_finance::{account::Account, journal::Transaction, repository};
+use navi_finance::{
+    account::{Account, AccountPurpose},
+    journal::Transaction,
+    repository,
+};
 use nsh_core::prelude::*;
-use std::{rc::Rc, time::Instant};
+use std::{collections::BTreeMap, rc::Rc, time::Instant};
 
 use super::db;
 
@@ -13,6 +17,8 @@ use super::db;
 struct Ledger {
     transactions: Rc<Vec<Transaction>>,
     accounts: Rc<Vec<Account>>,
+    archived: Rc<Vec<Account>>,
+    purposes: Rc<BTreeMap<Account, AccountPurpose>>,
     checks: Rc<Vec<repository::BalanceCheck>>,
     holdings: Rc<navi_finance::holdings::Book>,
     rates: Rc<Vec<navi_finance::currency::FxRate>>,
@@ -28,6 +34,8 @@ macro_rules! slice {
 }
 slice!(Transactions, Vec<Transaction>, transactions_snapshot);
 slice!(Accounts, Vec<Account>, accounts_snapshot);
+slice!(ArchivedAccounts, Vec<Account>, archived_accounts);
+slice!(Purposes, BTreeMap<Account,AccountPurpose>, purposes_snapshot);
 slice!(Checks, Vec<repository::BalanceCheck>, checks_snapshot);
 slice!(Holdings, navi_finance::holdings::Book, holdings_snapshot);
 slice!(Rates, Vec<navi_finance::currency::FxRate>, rates_snapshot);
@@ -36,6 +44,8 @@ fn snapshot() -> Ledger {
     untracked(|| Ledger {
         transactions: transactions_snapshot(),
         accounts: accounts_snapshot(),
+        archived: archived_accounts(),
+        purposes: purposes_snapshot(),
         checks: checks_snapshot(),
         holdings: holdings_snapshot(),
         rates: rates_snapshot(),
@@ -57,6 +67,8 @@ fn publish(next: Ledger) {
     batch(|| {
         write!(Transactions, transactions);
         write!(Accounts, accounts);
+        write!(ArchivedAccounts, archived);
+        write!(Purposes, purposes);
         write!(Checks, checks);
         write!(Holdings, holdings);
         write!(Rates, rates);
@@ -80,6 +92,8 @@ pub fn load() -> Result<(), String> {
                 .into(),
             transactions: repository::transactions(c)?.into(),
             accounts: repository::accounts(c)?.into(),
+            archived: repository::archived_accounts(c)?.into(),
+            purposes: repository::account_purposes(c)?.into(),
             checks: repository::balance_checks(c)?.into(),
             holdings: navi_finance::market::valued_book(
                 c,
@@ -119,6 +133,40 @@ pub fn transactions() -> Vec<Transaction> {
 }
 pub fn accounts() -> Vec<Account> {
     (*accounts_snapshot()).clone()
+}
+
+pub fn account_purpose(own: &Account) -> Option<AccountPurpose> {
+    purposes_snapshot().get(own).copied()
+}
+
+pub fn active_accounts() -> Vec<Account> {
+    let archived = archived_accounts();
+    accounts_snapshot()
+        .iter()
+        .filter(|a| archived.binary_search(a).is_err())
+        .cloned()
+        .collect()
+}
+
+pub fn set_account_archived(own: &Account, archived: bool) -> Result<(), repository::Error> {
+    let changed_review = db::with(|c| repository::set_account_archived(c, own, archived))
+        .ok_or(repository::Error::Invalid("database unavailable"))??;
+    batch(|| {
+        update(|s| {
+            let accounts = Rc::make_mut(&mut s.archived);
+            match (accounts.binary_search(own), archived) {
+                (Err(i), true) => accounts.insert(i, own.clone()),
+                (Ok(i), false) => {
+                    accounts.remove(i);
+                }
+                _ => {}
+            }
+        });
+        if let Some(draft) = changed_review {
+            super::statement_import::publish_review(draft);
+        }
+    });
+    Ok(())
 }
 
 pub fn holdings() -> navi_finance::holdings::Book {
@@ -190,6 +238,7 @@ pub fn checks() -> Vec<repository::BalanceCheck> {
     (*checks_snapshot()).clone()
 }
 
+#[cfg(any(test, not(any(target_os = "android", target_os = "ios"))))]
 pub fn create_account(own: Account) -> Result<(), repository::Error> {
     db::with(|c| repository::create_account(c, &own))
         .ok_or(repository::Error::Invalid("database unavailable"))??;
@@ -200,26 +249,94 @@ pub fn create_account(own: Account) -> Result<(), repository::Error> {
     Ok(())
 }
 
+pub fn create_account_with_purpose(
+    own: Account,
+    purpose: AccountPurpose,
+) -> Result<(), repository::Error> {
+    create_typed(own, purpose, None)
+}
+
+pub fn create_account_with_opening_and_purpose(
+    check: repository::BalanceCheck,
+    purpose: AccountPurpose,
+) -> Result<(), repository::Error> {
+    create_typed(check.account.clone(), purpose, Some(check))
+}
+
+fn create_typed(
+    own: Account,
+    purpose: AccountPurpose,
+    opening: Option<repository::BalanceCheck>,
+) -> Result<(), repository::Error> {
+    let (accounts, entry) = db::with(|c| -> Result<_, repository::Error> {
+        let tx = c.unchecked_transaction()?;
+        if !repository::create_if_new_with_purpose(&tx, &own, purpose)? {
+            return Err(repository::Error::AccountExists);
+        }
+        let entry = match &opening {
+            Some(check) => repository::confirm_balance_in_transaction(&tx, check, 0)?,
+            None => None,
+        };
+        let accounts = repository::accounts(&tx)?;
+        tx.commit()?;
+        Ok((accounts, entry))
+    })
+    .ok_or(repository::Error::Invalid("database unavailable"))??;
+    update(|s| {
+        s.accounts = accounts.into();
+        Rc::make_mut(&mut s.purposes).insert(own, purpose);
+        if let Some(check) = opening {
+            publish_check(s, check, entry);
+        }
+    });
+    Ok(())
+}
+
+fn publish_check(ledger: &mut Ledger, check: repository::BalanceCheck, entry: Option<Transaction>) {
+    let checks = Rc::make_mut(&mut ledger.checks);
+    checks.push(check);
+    checks.sort_by(|a, b| a.checked_at.cmp(&b.checked_at).then(a.id.cmp(&b.id)));
+    if let Some(entry) = entry {
+        let entries = Rc::make_mut(&mut ledger.transactions);
+        entries.push(entry);
+        entries.sort_by(|a, b| a.at.cmp(&b.at).then(a.id.cmp(&b.id)));
+    }
+}
+
+pub fn confirm_opening(check: repository::BalanceCheck) -> Result<(), repository::Error> {
+    let entry = db::with(|c| -> Result<_, repository::Error> {
+        let tx = c.unchecked_transaction()?;
+        let entry = repository::opening::confirm(&tx, &check)?;
+        tx.commit()?;
+        Ok(entry)
+    })
+    .ok_or(repository::Error::Invalid("database unavailable"))??;
+    update(|s| publish_check(s, check, entry));
+    Ok(())
+}
+
 pub fn confirm_balance(
     check: repository::BalanceCheck,
     expected: i64,
 ) -> Result<(), repository::Error> {
     let entry = db::with(|c| repository::confirm_balance(c, &check, expected))
         .ok_or(repository::Error::Invalid("database unavailable"))??;
-    update(|s| {
-        Rc::make_mut(&mut s.checks).push(check);
-        Rc::make_mut(&mut s.checks)
-            .sort_by(|a, b| a.checked_at.cmp(&b.checked_at).then(a.id.cmp(&b.id)));
-        if let Some(entry) = entry {
-            Rc::make_mut(&mut s.transactions).push(entry);
-            Rc::make_mut(&mut s.transactions).sort_by(|a, b| a.at.cmp(&b.at).then(a.id.cmp(&b.id)));
-        }
-    });
+    update(|s| publish_check(s, check, entry));
     Ok(())
 }
 
-pub fn rename_account(old: &Account, new: &Account) -> Result<(), repository::Error> {
+pub fn edit_account(
+    old: &Account,
+    new: &Account,
+    purpose: Option<AccountPurpose>,
+) -> Result<(), repository::Error> {
     use crate::domain::capture::{Record, Status};
+    if old == new {
+        db::with(|c| repository::set_account_purpose(c, old, purpose))
+            .ok_or(repository::Error::Invalid("database unavailable"))??;
+        update(|s| replace_purpose(s, old, new, purpose));
+        return Ok(());
+    }
     // A running response holds its own account context. Keep that context
     // stable until it finishes rather than reviving the old name afterward.
     if super::capture::all()
@@ -250,6 +367,7 @@ pub fn rename_account(old: &Account, new: &Account) -> Result<(), repository::Er
     db::with(|c| -> Result<(), repository::Error> {
         let tx = c.unchecked_transaction()?;
         repository::rename_account(&tx, old, new)?;
+        repository::set_account_purpose(&tx, new, purpose)?;
         for d in &drafts {
             tx.execute(
                 "UPDATE capture_drafts SET body=?1 WHERE id=?2",
@@ -261,12 +379,18 @@ pub fn rename_account(old: &Account, new: &Account) -> Result<(), repository::Er
     })
     .ok_or(repository::Error::Invalid("database unavailable"))??;
     update(|s| {
+        replace_purpose(s, old, new, purpose);
         for a in Rc::make_mut(&mut s.accounts) {
             if a == old {
                 *a = new.clone();
             }
         }
         Rc::make_mut(&mut s.accounts).sort();
+        if let Ok(i) = s.archived.binary_search(old) {
+            let archived = Rc::make_mut(&mut s.archived);
+            archived[i] = new.clone();
+            archived.sort();
+        }
         for t in Rc::make_mut(&mut s.transactions) {
             for p in &mut t.postings {
                 if &p.account == old {
@@ -301,17 +425,54 @@ pub fn rename_account(old: &Account, new: &Account) -> Result<(), repository::Er
     Ok(())
 }
 
+fn replace_purpose(
+    ledger: &mut Ledger,
+    old: &Account,
+    new: &Account,
+    purpose: Option<AccountPurpose>,
+) {
+    let purposes = Rc::make_mut(&mut ledger.purposes);
+    purposes.remove(old);
+    if let Some(value) = purpose {
+        purposes.insert(new.clone(), value);
+    }
+}
+
+#[cfg(any(test, not(any(target_os = "android", target_os = "ios"))))]
 pub fn save(entry: Transaction) -> Result<(), String> {
+    save_with_purposes(entry, &[])
+}
+
+pub fn save_with_purposes(
+    entry: Transaction,
+    pending: &[(Account, AccountPurpose)],
+) -> Result<(), String> {
     let started = Instant::now();
-    db::with(|c| repository::save(c, &entry))
-        .ok_or("the database is not open")?
-        .map_err(|error| {
-            log::error!("finance: save failed: {error}");
-            error.to_string()
-        })?;
+    let purposes = db::with(|c| -> Result<_, repository::Error> {
+        let tx = c.unchecked_transaction()?;
+        for (own, purpose) in pending {
+            if entry.own_postings().any(|p| &p.account == own) {
+                repository::create_if_new_with_purpose(&tx, own, *purpose)?;
+            }
+        }
+        repository::save_in_transaction(&tx, &entry)?;
+        let purposes = (!pending.is_empty())
+            .then(|| repository::account_purposes(&tx))
+            .transpose()?;
+        tx.commit()?;
+        Ok(purposes)
+    })
+    .ok_or("the database is not open")?
+    .map_err(|error| {
+        log::error!("finance: save failed: {error}");
+        error.to_string()
+    })?;
     // Derive the mirror from the committed mutation; a second database read
     // cannot make a successful commit appear to have failed.
     update(|s| {
+        if let Some(purposes) = purposes {
+            s.purposes = purposes.into();
+        }
         let mut added = false;
         for p in &entry.postings {
             if !s.accounts.contains(&p.account) {
@@ -401,8 +562,65 @@ mod tests {
             assert_eq!(transactions(), repository::transactions(c).unwrap());
             assert_eq!(checks(), repository::balance_checks(c).unwrap());
             assert_eq!(accounts(), repository::accounts(c).unwrap());
+            assert_eq!(
+                *purposes_snapshot(),
+                repository::account_purposes(c).unwrap()
+            );
         })
         .unwrap();
+    }
+
+    #[component]
+    fn AccountPurposeProbe() -> impl IntoElement {
+        use navi_finance::{
+            account::defaults,
+            journal::{self, Entry, Source},
+        };
+        let done = signal(false);
+        view().child(text(move || if done.get() { "saved" } else { "ready" }))
+            .child(text("exercise account purposes").on_press(move || {
+                db::open().unwrap();
+                load().unwrap();
+                let own = Account::parse("资产:钱包").unwrap();
+                let day = jiff::civil::date(2026,11,14);
+                let check = repository::BalanceCheck { id: "opening".into(), account: own.clone(), actual: 900, day, checked_at: day.at(11,0,0,0) };
+                db::with(|c| c.execute_batch("CREATE TRIGGER fail_opening BEFORE INSERT ON finance_balance_checks BEGIN SELECT RAISE(ABORT,'full'); END;")).unwrap().unwrap();
+                assert!(create_account_with_opening_and_purpose(check.clone(), AccountPurpose::Wallet).is_err());
+                assert!(!accounts().contains(&own));
+                assert_mirrors_match_disk();
+                db::with(|c| c.execute_batch("DROP TRIGGER fail_opening")).unwrap().unwrap();
+                create_account_with_opening_and_purpose(check, AccountPurpose::Wallet).unwrap();
+                assert_eq!(account_purpose(&own), Some(AccountPurpose::Wallet));
+                let new = Account::parse("资产:储蓄卡").unwrap();
+                assert!(edit_account(&own, &new, Some(AccountPurpose::Loan)).is_err());
+                assert!(accounts().contains(&own));
+                assert_mirrors_match_disk();
+                edit_account(&own, &new, Some(AccountPurpose::Bank)).unwrap();
+                let card = Account::parse("负债:信用卡").unwrap();
+                let expense = journal::spend(Entry { id:"expense".into(), at:day.at(18,0,0,0), payee:String::new(), note:String::new(), source:Source::Manual }, &card, &defaults::other_expense(), 200).unwrap();
+                db::with(|c| c.execute_batch("CREATE TRIGGER fail_write BEFORE INSERT ON finance_postings BEGIN SELECT RAISE(ABORT,'full'); END;")).unwrap().unwrap();
+                let pending = [(card.clone(), AccountPurpose::Credit)];
+                assert!(save_with_purposes(expense.clone(), &pending).is_err());
+                assert!(!accounts().contains(&card));
+                assert_mirrors_match_disk();
+                db::with(|c| c.execute_batch("DROP TRIGGER fail_write")).unwrap().unwrap();
+                save_with_purposes(expense.clone(), &pending).unwrap();
+                save_with_purposes(expense, &[(card.clone(), AccountPurpose::Loan)]).unwrap();
+                assert_eq!(account_purpose(&card), Some(AccountPurpose::Credit));
+                load().unwrap();
+                assert_eq!(account_purpose(&new), Some(AccountPurpose::Bank));
+                assert_mirrors_match_disk();
+                done.set(true);
+            }))
+    }
+
+    #[test]
+    fn purposes_commit_atomically_with_opening_rename_and_inline_postings() {
+        let mut app =
+            Headless::start(EngineConfig::new(Root::of::<AccountPurposeProbe>())).unwrap();
+        app.wait_for("ready").unwrap();
+        app.press("exercise account purposes").unwrap();
+        app.wait_for("saved").unwrap();
     }
 
     #[test]

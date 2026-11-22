@@ -2,7 +2,7 @@
 //! and category choices, a new account, the calendar and details.
 
 use navi_finance::{
-    account::{Account, AccountKind},
+    account::{Account, AccountKind, AccountPurpose},
     currency::Currency,
 };
 use nsh_base::{CalendarEntry, CalendarItemKind, calendar};
@@ -16,7 +16,6 @@ use crate::{
         Btn, Icon, Type, Typo, Variant, color,
         field::{field, note, text_input},
         icon,
-        segmented::{Segment, segmented},
         surface::{hairline, row_button},
     },
 };
@@ -63,27 +62,51 @@ pub(super) fn choice(
         .child(hairline(0.0))
 }
 
-pub(super) fn accounts_panel(own: Own, panel: Signal<Panel>, other: bool) -> impl IntoElement {
+fn account_fields(form: Form, destination: bool) -> (Own, Option<Account>) {
+    if destination {
+        (form.other, form.own.account())
+    } else {
+        (
+            form.own,
+            (form.kind.get() == Kind::Transfer)
+                .then(|| form.other.account())
+                .flatten(),
+        )
+    }
+}
+
+pub(super) fn accounts_panel(form: Form, panel: Signal<Panel>, other: bool) -> impl IntoElement {
+    let (own, excluded) = account_fields(form, other);
     view()
         .gap_1()
         .children(
-            finance::accounts()
+            crate::ui::account_purpose::daily_accounts()
                 .into_iter()
-                .filter(|a| a.is_cash())
+                .filter(|a| a.is_cash() && Some(a) != excluded.as_ref())
                 .map(move |a| {
-                    let name = account_label(&a);
                     let chosen = own.account().as_ref() == Some(&a);
-                    row_button(move || {
+                    account_option(a, chosen, move |a| {
                         own.selected.set(a.to_string());
                         own.creating.set(false);
                         panel.set(Panel::Main);
                     })
-                    .min_h(px(48.0))
-                    .py_2()
-                    .px_2()
-                    .child(text(name).typo(Type::Body).text_color(color::INK).flex_1())
-                    .child(chosen.then(|| icon(Icon::Check, 18.0, color::INK)))
                 }),
+        )
+        .child(
+            (form.kind.get() == Kind::Transfer
+                && own.account().zip(excluded).is_some_and(|(a, b)| {
+                    a != b
+                        && !finance::archived_accounts().contains(&a)
+                        && !finance::archived_accounts().contains(&b)
+                }))
+            .then(|| {
+                Btn::ghost()
+                    .label(|| crate::i18n::catalog::copy("Swap accounts", "交换账户").into())
+                    .on_press(move || {
+                        form.swap_accounts();
+                        panel.set(Panel::Main);
+                    })
+            }),
         )
         .child(
             Btn::ghost()
@@ -99,24 +122,48 @@ pub(super) fn accounts_panel(own: Own, panel: Signal<Panel>, other: bool) -> imp
         )
 }
 
-pub(super) fn new_account(own: Own, panel: Signal<Panel>) -> impl IntoElement {
+/// Opens the six purpose choices in the running account draft, preserving its other fields.
+pub(crate) fn purpose_field(purpose: Signal<AccountPurpose>) -> View {
+    let expanded = signal(false);
+    let value = move || crate::ui::account_purpose::label(purpose.get());
+    view()
+        .child(
+            row_button(move || {
+                dismiss_keyboard();
+                expanded.update(|open| *open = !*open);
+            })
+            .accessibility_label(move || Some(format!("{}, {}", s().account_type, value()).into()))
+            .px_0()
+            .min_h(px(48.0))
+            .child(
+                text(|| s().account_type)
+                    .typo(Type::Body)
+                    .text_color(color::INK)
+                    .flex_1(),
+            )
+            .child(text(value).typo(Type::Body).text_color(color::INK))
+            .child(crate::ui::surface::disclosure_chevron(expanded)),
+        )
+        .child(when(
+            move || expanded.get(),
+            move || {
+                crate::ui::account_purpose::picker(Some(purpose.get_untracked()), None, move |p| {
+                    purpose.set(p);
+                    expanded.set(false);
+                })
+            },
+        ))
+}
+
+pub(super) fn new_account(form: Form, panel: Signal<Panel>, other: bool) -> impl IntoElement {
+    let (own, excluded) = account_fields(form, other);
     let name = signal(own.name.get_untracked());
-    let kind = signal(own.kind.get_untracked());
+    let purpose = signal(own.purpose.get_untracked());
     let currency = signal(own.currency.get_untracked());
     let invalid = signal(false);
     view()
         .gap_4()
-        .child(field(
-            || s().account_type,
-            segmented(
-                vec![
-                    Segment::new(AccountKind::Assets, || s().asset_account.into()),
-                    Segment::new(AccountKind::Liabilities, || s().liability_account.into()),
-                ],
-                move || kind.get(),
-                move |k| kind.set(k),
-            ),
-        ))
+        .child(purpose_field(purpose))
         .child(field(
             || s().currency_label,
             crate::ui::currency::picker(currency),
@@ -132,14 +179,26 @@ pub(super) fn new_account(own: Own, panel: Signal<Panel>) -> impl IntoElement {
             || true,
         ))
         .child(Btn::primary().label(|| s().done.into()).on_press(move || {
-            if Account::new_in(kind.get(), &name.get(), currency.get()).is_err() {
+            let account = Account::new_in(purpose.get().kind(), &name.get(), currency.get())
+                .ok()
+                .filter(|a| {
+                    a.is_cash()
+                        && Some(a) != excluded.as_ref()
+                        && !finance::archived_accounts().contains(a)
+                });
+            let Some(account) = account else {
                 invalid.set(true);
                 return;
+            };
+            if finance::accounts_snapshot().contains(&account) {
+                own.selected.set(account.to_string());
+                own.creating.set(false);
+            } else {
+                own.purpose.set(purpose.get());
+                own.currency.set(currency.get());
+                own.name.set(name.get());
+                own.creating.set(true);
             }
-            own.kind.set(kind.get());
-            own.currency.set(currency.get());
-            own.name.set(name.get());
-            own.creating.set(true);
             dismiss_keyboard();
             panel.set(Panel::Main);
         }))
@@ -149,6 +208,17 @@ pub(crate) fn date_picker(
     day: Signal<String>,
     selected: impl Fn() + Copy + 'static,
 ) -> impl IntoElement {
+    date_picker_through(day, None, selected)
+}
+
+pub(crate) fn date_picker_through(
+    day: Signal<String>,
+    latest: Option<crate::domain::meal::Day>,
+    selected: impl Fn() + Copy + 'static,
+) -> impl IntoElement {
+    let matcher = latest
+        .and_then(|last| last.to_string().parse().ok())
+        .map(|last| nsh_base::Matcher::interval(None, Some(last)));
     view()
         .gap_3()
         .child(
@@ -158,6 +228,7 @@ pub(crate) fn date_picker(
                 .child(
                     Btn::tonal()
                         .label(|| s().today.into())
+                        .disabled(move || latest.is_some_and(|last| clock::today() > last))
                         .on_press(move || {
                             day.set(clock::today().to_string());
                             selected();
@@ -167,6 +238,9 @@ pub(crate) fn date_picker(
                 .child(
                     Btn::tonal()
                         .label(|| s().yesterday.into())
+                        .disabled(move || {
+                            latest.is_some_and(|last| clock::today().plus_days(-1) > last)
+                        })
                         .on_press(move || {
                             day.set(clock::today().plus_days(-1).to_string());
                             selected();
@@ -177,6 +251,7 @@ pub(crate) fn date_picker(
         .child(
             calendar()
                 .default_value(nsh_base::Date::Single(day.get().parse().ok()))
+                .disabled_matcher(matcher)
                 .first_day_of_week(
                     if s().week_start() == crate::domain::review::WeekStart::Monday {
                         1

@@ -144,7 +144,22 @@ and screenshots fill gaps.
   `type:name` for CNY (`资产:招行储蓄卡`, `支出:餐饮`); foreign accounts
   include currency (`资产/USD:Broker cash`). A default set of expense and
   income accounts ships; the owner's own asset and liability accounts are
-  created as statements first mention them.
+  created as statements first mention them or from Assets. The owner can
+  enter a dated opening balance (or debt) at creation, or backfill it
+  before the first posting. A confirmed zero is distinct from an unknown
+  opening balance. Deactivating an account removes it from new entry choices
+  and releases its remembered statement payment methods for reassignment.
+  Its balance and historical records still contribute to valuations.
+  Manage → Inactive accounts provides access to its history and reactivation.
+  Personal accounts have six optional purposes. Cash, bank, digital wallet
+  and brokerage cash belong to assets. Consumer credit and loans belong to
+  liabilities. Explicit account creation selects a purpose once. Older
+  accounts and new names proposed by recognition can be classified later.
+  Changing purpose within the same side preserves currency, postings, totals
+  and statement payment methods. For example, a WeChat payment funded by
+  a bank card maps to that card, while a payment from WeChat Balance maps to
+  the wallet. Everyday spending lists bank, wallet, cash and consumer credit
+  accounts first.
 - **Transactions:** a date and time, payee, note, source (statement row,
   manual, screenshot) and two or more postings in native currency minor units
   whose sum is zero separately within each currency. Initial currencies are
@@ -168,7 +183,9 @@ and screenshots fill gaps.
   also appears on the card's statement). Possible duplicates start
   unselected.
 - **Balance checks:** the owner states an account's real balance on a date;
-  a difference is shown and can be posted to `权益:调整` with confirmation.
+  the account summary shows the latest effective date checked. The history
+  also shows when a backdated check was recorded.
+  A difference is shown and can be posted to `权益:调整` with confirmation.
   Opening balances are postings against `权益:期初`. A confirmed balance entry
   can be revoked from its receipt; its postings and associated observation are
   removed together and restored together by Undo.
@@ -204,8 +221,10 @@ Linking
 an existing holding requires confirmation and preserves its identity and trades.
 Initial supported markets are mainland China, Hong Kong and US stocks and
 ETFs, in CNY, HKD and USD. A holding’s currency is immutable; buy, sell and
-dividend cash accounts must match it. The trade editor can create and select
-a matching account while keeping the draft. Unit prices and dividend amounts
+dividend settlement accounts must match it. The picker lists brokerage cash
+first, then bank accounts, then unclassified asset accounts. The trade editor
+can create and select a matching account while keeping the draft. Completed
+trades retain their settlement history when an account is reclassified. Unit prices and dividend amounts
 use separate inputs. Costs and gains remain native amounts.
 Tencent quotes update automatically for open linked holdings when the app is active.
 Unlinked holdings can be priced by hand. Existing manual prices win on the same or newer day. Failed updates retain the previous dated mark.

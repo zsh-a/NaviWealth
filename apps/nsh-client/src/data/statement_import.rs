@@ -61,6 +61,10 @@ pub fn load() -> Result<(), String> {
     state().set(State::new(draft));
     Ok(())
 }
+
+pub(super) fn publish_review(draft: Draft) {
+    state().set(State::new(Some(draft)));
+}
 pub async fn open_file(name: String, bytes: Vec<u8>) -> Result<(), String> {
     let (rules, journal) = db::with(|c| -> Result<_, repository::Error> {
         Ok((repository::rules(c)?, repository::transactions(c)?))
@@ -72,10 +76,10 @@ pub async fn open_file(name: String, bytes: Vec<u8>) -> Result<(), String> {
         let _ =
             send.send(store::read_file(&name, &bytes, rules, journal).map_err(|e| e.to_string()));
     });
-    let prepared = receive
+    let mut prepared = receive
         .await
         .map_err(|_| "statement reader interrupted")??;
-    db::with(|c| store::keep_prepared(c, &prepared))
+    db::with(|c| store::keep_prepared(c, &mut prepared))
         .ok_or("database unavailable")?
         .map_err(|e| e.to_string())?;
     state().set(State {
@@ -88,6 +92,7 @@ pub async fn open_file(name: String, bytes: Vec<u8>) -> Result<(), String> {
 pub fn update(edit: impl FnOnce(&mut Draft)) -> Result<(), String> {
     let mut draft = untracked(current).ok_or("no import draft")?;
     edit(&mut draft);
+    draft.prune_pending_purposes();
     db::with(|c| store::save(c, &draft))
         .ok_or("database unavailable")?
         .map_err(|e| e.to_string())?;

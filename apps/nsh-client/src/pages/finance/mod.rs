@@ -15,6 +15,9 @@ mod rows;
 
 pub(super) use delete::confirm_delete;
 pub use editor::finance_editor;
-pub(super) use panels::date_picker;
+pub(super) use panels::{date_picker, date_picker_through, purpose_field};
 pub use rows::transaction_row;
-pub(super) use rows::{category_label, transaction_title};
+pub(super) use rows::{
+    account_option, account_option_with_purpose, category_label, selected_account_label,
+    transaction_title,
+};

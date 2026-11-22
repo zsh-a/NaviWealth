@@ -3,6 +3,12 @@
 
 use std::collections::{BTreeMap, HashSet};
 
+pub mod opening;
+mod purposes;
+pub use purposes::{
+    PURPOSE_SCHEMA, account_purposes, create_if_new_with_purpose, set_account_purpose,
+};
+
 use navi_storage::sqlite::{self, Connection, params};
 
 use crate::{
@@ -55,7 +61,8 @@ pub const TABLES: &[(&str, &str)] = &[
     ),
     ("finance_valuation_snapshots", "id,day,captured_at,body"),
     ("finance_fx_rates", "currency,day,rate,source"),
-    ("finance_accounts", "name"),
+    ("finance_accounts", "name,purpose"),
+    ("finance_archived_accounts", "account"),
     (
         "finance_transactions",
         "id, at, payee, note, source, source_provider, source_id",
@@ -93,6 +100,63 @@ pub const BALANCE_SCHEMA: &str = "CREATE TABLE finance_balance_checks (
     actual INTEGER NOT NULL CHECK(typeof(actual) = 'integer'),
     checked_at TEXT NOT NULL
 );";
+
+pub const ARCHIVE_SCHEMA: &str = "CREATE TABLE finance_archived_accounts (
+    account TEXT PRIMARY KEY NOT NULL REFERENCES finance_accounts(name)
+);";
+
+/// Archive membership only affects future selection. The account and all of
+/// its history remain available to balances, reports, replay and Undo.
+pub fn archived_accounts(connection: &Connection) -> Result<Vec<Account>, Error> {
+    // Standalone and pre-migration ledgers have no archived accounts.
+    if !connection.table_exists(None, "finance_archived_accounts")? {
+        return Ok(Vec::new());
+    }
+    let mut query = connection.prepare(
+        "SELECT x.account, a.name FROM finance_archived_accounts x
+         LEFT JOIN finance_accounts a ON a.name=x.account ORDER BY x.account",
+    )?;
+    let mut archived = Vec::new();
+    let mut rows = query.query([])?;
+    while let Some(row) = rows.next()? {
+        let value = account(&row.get::<_, String>(0)?)?;
+        if !value.is_cash()
+            || row.get::<_, Option<String>>(1)?.is_none()
+            || archived.last() == Some(&value)
+        {
+            return Err(Error::Invalid("archived account"));
+        }
+        archived.push(value);
+    }
+    Ok(archived)
+}
+
+pub fn set_account_archived(
+    connection: &Connection,
+    own: &Account,
+    archived: bool,
+) -> Result<Option<crate::import::store::Draft>, Error> {
+    let tx = connection.unchecked_transaction()?;
+    if !own.is_cash() || !accounts(&tx)?.contains(own) {
+        return Err(Error::Invalid("expected an existing own account"));
+    }
+    let changed_review = if archived {
+        tx.execute("INSERT INTO finance_archived_accounts(account) VALUES (?1) ON CONFLICT(account) DO NOTHING", [own.as_str()])?;
+        tx.execute(
+            "DELETE FROM finance_mapping_rules WHERE account=?1",
+            [own.as_str()],
+        )?;
+        crate::import::store::archive_account(&tx, own)?
+    } else {
+        tx.execute(
+            "DELETE FROM finance_archived_accounts WHERE account=?1",
+            [own.as_str()],
+        )?;
+        None
+    };
+    tx.commit()?;
+    Ok(changed_review)
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BalanceCheck {
@@ -192,6 +256,15 @@ pub fn confirm_balance_in_transaction(
     check: &BalanceCheck,
     expected: i64,
 ) -> Result<Option<Transaction>, Error> {
+    confirm_balance_against(tx, check, expected, &transactions(tx)?)
+}
+
+fn confirm_balance_against(
+    tx: &sqlite::Transaction<'_>,
+    check: &BalanceCheck,
+    expected: i64,
+    entries: &[Transaction],
+) -> Result<Option<Transaction>, Error> {
     if check.id.trim().is_empty() || !check.account.is_cash() || check.day > check.checked_at.date()
     {
         return Err(Error::Invalid("balance check"));
@@ -199,8 +272,10 @@ pub fn confirm_balance_in_transaction(
     if !accounts(tx)?.contains(&check.account) {
         return Err(Error::Missing);
     }
-    let entries = transactions(tx)?;
-    let book = crate::journal::balance_on(&entries, &check.account, check.day);
+    if archived_accounts(tx)?.contains(&check.account) {
+        return Err(Error::Invalid("archived account"));
+    }
+    let book = crate::journal::balance_on(entries, &check.account, check.day);
     if book != expected {
         return Err(Error::BalanceChanged);
     }
@@ -261,6 +336,15 @@ pub fn rename_account(
         return Err(Error::AccountExists);
     }
     keep_account(tx, new)?;
+    if tx.column_exists(None, "finance_accounts", "purpose")? {
+        tx.execute("UPDATE finance_accounts SET purpose=(SELECT purpose FROM finance_accounts WHERE name=?1) WHERE name=?2", params![old.as_str(), new.as_str()])?;
+    }
+    if tx.table_exists(None, "finance_archived_accounts")? {
+        tx.execute(
+            "UPDATE finance_archived_accounts SET account=?1 WHERE account=?2",
+            params![new.as_str(), old.as_str()],
+        )?;
+    }
     for (table, column) in [
         ("finance_postings", "account"),
         ("finance_mapping_rules", "account"),
@@ -341,6 +425,21 @@ pub fn save(connection: &Connection, entry: &Transaction) -> Result<(), Error> {
 /// removal of its draft either both happen or neither does.
 pub fn save_in_transaction(tx: &sqlite::Transaction<'_>, entry: &Transaction) -> Result<(), Error> {
     require_regular_entry(entry)?;
+    let archived = archived_accounts(tx)?;
+    for posting in entry
+        .own_postings()
+        .filter(|p| archived.contains(&p.account))
+    {
+        // Allow an existing entry to keep its original, now archived account.
+        let was_used: bool = tx.query_row(
+            "SELECT EXISTS(SELECT 1 FROM finance_postings WHERE transaction_id=?1 AND account=?2)",
+            params![entry.id, posting.account.as_str()],
+            |r| r.get(0),
+        )?;
+        if !was_used {
+            return Err(Error::Invalid("archived account"));
+        }
+    }
     write_entry(tx, entry)
 }
 
@@ -545,7 +644,8 @@ pub fn restore_removed(connection: &Connection, removed: &RemovedTransaction) ->
             return Err(Error::RecordChanged);
         }
     }
-    save_in_transaction(&tx, entry)?;
+    // Undo restores the exact original accounts even if they are now archived.
+    write_entry(&tx, entry)?;
     if let Some(check) = &removed.balance_check {
         tx.execute("INSERT INTO finance_balance_checks(id,account,day,actual,checked_at) VALUES(?1,?2,?3,?4,?5)", params![check.id,check.account.as_str(),check.day.to_string(),check.actual,check.checked_at.to_string()])?;
     }
@@ -555,6 +655,7 @@ pub fn restore_removed(connection: &Connection, removed: &RemovedTransaction) ->
 
 pub fn rules(connection: &Connection) -> Result<Rules, Error> {
     let known: HashSet<Account> = accounts(connection)?.into_iter().collect();
+    let archived = archived_accounts(connection)?;
     let mut result = Rules::default();
     let mut seen = HashSet::new();
     let mut query =
@@ -571,6 +672,7 @@ pub fn rules(connection: &Connection) -> Result<Rules, Error> {
         let (kind, provider, pattern, name) = row?;
         let account = account(&name)?;
         if !known.contains(&account)
+            || archived.contains(&account)
             || !seen.insert((kind.clone(), provider.clone(), pattern.clone()))
         {
             return Err(Error::Invalid("mapping account or duplicate"));
@@ -607,10 +709,11 @@ pub(crate) fn save_rules_in_transaction(
     tx: &sqlite::Transaction<'_>,
     rules: &Rules,
 ) -> Result<(), Error> {
+    let archived = archived_accounts(tx)?;
     tx.execute("DELETE FROM finance_mapping_rules", [])?;
     for (provider, methods) in &rules.methods {
         for (pattern, account) in methods {
-            if provider.is_empty() || !account.is_cash() {
+            if provider.is_empty() || !account.is_cash() || archived.contains(account) {
                 return Err(Error::Invalid("payment method account"));
             }
             keep_account(tx, account)?;
@@ -636,6 +739,7 @@ pub(crate) fn save_rules_in_transaction(
 /// Validates imported databases independently of their declared constraints.
 pub fn validate(connection: &Connection) -> Result<(), Error> {
     transactions(connection)?;
+    account_purposes(connection)?;
     let has_fx: i64 = connection.query_row(
         "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='finance_fx_rates'",
         [],

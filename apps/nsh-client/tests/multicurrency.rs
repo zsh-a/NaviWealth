@@ -80,11 +80,21 @@ fn cross_currency_transfer_records_both_explicit_amounts() -> Result<(), String>
     open_manual(&mut app, "Log transaction")?;
     app.press("Transfer")?;
     app.press("From account")?;
-    app.press("Dollar bank · USD · Cash / debit")?;
+    app.press("label:Dollar bank, Asset account · USD")?;
     app.press("To account")?;
-    app.press("Yuan bank · Cash / debit")?;
+    assert!(!app.shows("label:Dollar bank, Asset account · USD"));
+    app.press("label:Yuan bank, Asset account · CNY")?;
     app.type_text("label:Amount", "100.00")?;
     app.type_text("label:Amount received", "700.00")?;
+    app.press("To account")?;
+    app.press("Swap accounts")?;
+    assert_eq!(app.screen().input_text("label:Amount")?, Some("700.00"));
+    assert_eq!(
+        app.screen().input_text("label:Amount received")?,
+        Some("100.00")
+    );
+    app.press("From account")?;
+    app.press("Swap accounts")?;
     app.press("Save transaction")?;
     app.wait_for_gone("Save transaction", GONE)?;
     app.wait_for("label:/^Dollar bank · USD → Yuan bank, USD 100.00, Transfer/")?;

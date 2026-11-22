@@ -220,7 +220,10 @@ AI only to turn text and images into drafts, using the owner's model account.
   cost accounts stay out of the account list. Manage opens one bottom sheet
   with aligned outline icons and a gap between creation and lookup.
   Add account, Add holding and Prices & rates are always available. Closed
-  holdings shows its count when there are fully sold positions. No accounts or holdings
+  holdings shows its count when there are fully sold positions. Inactive accounts
+  appears with its count when any accounts are deactivated. An inactive account
+  with a remaining balance also stays in its overview group, labelled Inactive.
+  No accounts or holdings
   shows a short empty state with Add account as the main action and Add holding
   as a quiet alternative. The global text/image capture button remains the
   main record entry.
@@ -250,14 +253,24 @@ AI only to turn text and images into drafts, using the owner's model account.
   have their own compact amount-and-date sheet. Activity opens a receipt
   with an explicit, confirmed remove action.
 - **Own accounts:** creation leads with the name and compact type/currency
-  choices. Creation stays on Assets. Accounts without activity or a balance
+  choices. The type selector groups Cash, Bank account, Digital wallet and
+  Brokerage cash under assets, and Consumer credit and Loan under debts.
+  Editing offers the types belonging to the existing side. Older accounts
+  display their broad accounting type until the owner chooses a purpose.
+  A dated opening balance or opening debt is optional. Creation stays on Assets.
+  Accounts without activity or a balance
   observation offer Set opening balance in their row. The account name opens
   its details. After a first check, a confirmed zero is displayed like any
-  other amount. Account details show the book balance or debt, latest check
-  status and newest-first activity.
+  other amount. If recording started with a transaction, the account detail
+  allows an opening balance dated before it. Account details show the book
+  balance or debt, latest effective check date and newest-first activity.
   Expanding the last check shows dated observations, including matches.
   Each adjustment opens its original posting. Show earlier pages through
-  history. The pencil action renames the account.
+  history. The pencil opens Edit account with name and status actions.
+  Inactive accounts offer reactivation in the detail. New entries select
+  active accounts. The secondary line shows purpose and currency. Daily
+  spending prioritizes payment accounts. Investment settlement lists brokerage
+  cash, bank accounts and unclassified assets in the trade currency.
 - **Balance checks:** one compact task sheet asks for amount and date.
   The calendar and then the difference preview replace its body; Back
   preserves the input. The preview names the account and date, shows book

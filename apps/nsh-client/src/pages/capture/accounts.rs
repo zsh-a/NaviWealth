@@ -28,49 +28,48 @@ pub fn picker(
     destination: bool,
 ) -> impl IntoElement {
     let current = draft.get_untracked();
-    let (field, selected, other, currency) = match current.records.get(index) {
-        Some(Record::Money { draft: money, .. }) => (
-            if destination {
-                "other_account"
-            } else {
-                "account"
-            },
-            if destination {
-                money.other_account.clone()
-            } else {
-                money.account.clone()
-            },
-            if destination {
-                money.account.clone()
-            } else {
-                money.other_account.clone()
-            },
-            navi_finance::currency::Currency::parse(&money.currency),
-        ),
-        Some(Record::Trade { cash, currency, .. }) if !destination => {
-            ("cash", cash.clone(), None, Some(*currency))
+    let Some(record) = current.records.get(index) else {
+        return view().into_element();
+    };
+    let (field, selected) = match record {
+        Record::Money { draft, .. } if destination => {
+            ("other_account", draft.other_account.as_ref())
         }
-        Some(Record::Balance { account, .. }) if !destination => (
-            "account",
-            Some(account.clone()),
-            None,
-            Some(account.currency()),
-        ),
+        Record::Money { draft, .. } => ("account", draft.account.as_ref()),
+        Record::Trade { cash, .. } if !destination => ("cash", cash.as_ref()),
+        Record::Balance { account, .. } if !destination => ("account", Some(account)),
         _ => return view().into_element(),
     };
-    let balance_kind = match current.records.get(index) {
-        Some(Record::Balance { account, .. }) => Some(account.kind()),
-        _ => None,
+    let active = match record {
+        Record::Trade { currency, .. } => {
+            crate::ui::account_purpose::settlement_accounts(*currency)
+        }
+        Record::Money { draft, .. } if draft.kind == Kind::Expense => {
+            crate::ui::account_purpose::daily_accounts()
+        }
+        _ => finance::active_accounts(),
     };
-    let selected = selected.filter(|_| !current.account_needs_approval(index, field));
-    let accounts: Vec<_> = finance::accounts()
+    let selected = selected
+        .filter(|_| !current.account_needs_approval(index, field, &active))
+        .cloned();
+    let swap = can_swap(record);
+    let save = move |mut next: Draft| {
+        next.correction = input.get_untracked();
+        match capture::put(next.clone()) {
+            Ok(()) => {
+                error.set(None);
+                draft.set(next);
+                choosing.set(None);
+            }
+            Err(cause) => {
+                log::error!("capture: account selection could not be kept: {cause}");
+                error.set(Some(s().error_transaction_storage.into()));
+            }
+        }
+    };
+    let accounts: Vec<_> = active
         .into_iter()
-        .filter(|a| {
-            a.is_cash()
-                && Some(a.currency()) == currency
-                && Some(a) != other.as_ref()
-                && balance_kind.is_none_or(|kind| a.kind() == kind)
-        })
+        .filter(|a| capture::accepts_account(record, destination, a))
         .collect();
     view()
         .gap_2()
@@ -89,70 +88,63 @@ pub fn picker(
                 .text_color(color::MUTED)
         }))
         .children(accounts.into_iter().map(move |account| {
-            let name = account.name().to_owned();
             let checked = selected.as_ref() == Some(&account);
-            row_button(move || {
+            crate::pages::finance::account_option(account, checked, move |account| {
                 let mut next = draft.get_untracked();
-                if next.status != Status::Ready {
+                if next.status != Status::Ready || !finance::active_accounts().contains(account) {
                     return;
                 }
-                if !finance::accounts().contains(&account) || !account.is_cash() {
+                let Some(record) = next.records.get_mut(index) else {
+                    return;
+                };
+                if !capture::accepts_account(record, destination, account) {
                     return;
                 }
-                match next.records.get_mut(index) {
-                    Some(Record::Money { draft: money, .. }) => {
-                        let (target, other) = if destination {
-                            (&mut money.other_account, &money.account)
-                        } else {
-                            (&mut money.account, &money.other_account)
-                        };
-                        if other.as_ref() == Some(&account)
-                            || account.currency().code() != money.currency
-                        {
-                            return;
-                        }
-                        *target = Some(account.clone());
+                match record {
+                    Record::Money { draft, .. } if destination => {
+                        draft.other_account = Some(account.clone())
                     }
-                    Some(Record::Trade { cash, currency, .. })
-                        if !destination && *currency == account.currency() =>
-                    {
-                        *cash = Some(account.clone());
-                    }
-                    Some(Record::Balance {
+                    Record::Money { draft, .. } => draft.account = Some(account.clone()),
+                    Record::Trade { cash, .. } => *cash = Some(account.clone()),
+                    Record::Balance {
                         account: target, ..
-                    }) if !destination
-                        && target.currency() == account.currency()
-                        && target.kind() == account.kind() =>
-                    {
-                        *target = account.clone();
-                    }
+                    } => *target = account.clone(),
                     _ => return,
                 }
                 next.mark_owner_field(index, field);
-                next.correction = input.get_untracked();
-                match capture::put(next.clone()) {
-                    Ok(()) => {
-                        error.set(None);
-                        draft.set(next);
-                        choosing.set(None);
-                    }
-                    Err(cause) => {
-                        log::error!("capture: account selection could not be kept: {cause}");
-                        error.set(Some(s().error_transaction_storage.into()));
-                    }
-                }
+                save(next);
             })
-            .px_0()
-            .accessibility_label(Some(name.clone().into()))
-            .child(
-                text(name)
-                    .typo(Type::Headline)
-                    .text_color(color::INK)
-                    .flex_1(),
-            )
-            .child(checked.then(|| icon(Icon::Check, 20.0, color::INK)))
+        }))
+        .child(swap.then(|| {
+            crate::ui::Btn::ghost()
+                .label(|| crate::i18n::catalog::copy("Swap accounts", "交换账户").into())
+                .on_press(move || {
+                    let mut next = draft.get_untracked();
+                    if next.status != Status::Ready
+                        || !next.records.get(index).is_some_and(can_swap)
+                    {
+                        return;
+                    }
+                    next.swap_transfer_accounts(index);
+                    save(next);
+                })
         }))
         .into_element()
+}
+
+fn can_swap(record: &Record) -> bool {
+    let Record::Money { draft, .. } = record else {
+        return false;
+    };
+    draft.kind == Kind::Transfer
+        && draft
+            .account
+            .as_ref()
+            .zip(draft.other_account.as_ref())
+            .is_some_and(|(from, to)| {
+                capture::accepts_account(record, false, from)
+                    && capture::accepts_account(record, true, to)
+            })
 }
 
 /// Chooses the category of a recognized spending or income record from the

@@ -1,7 +1,7 @@
 //! Durable, local statement review. Only confirmation writes the journal.
 use super::{Candidate, Rules, Status};
 use crate::{
-    account::Account,
+    account::{Account, AccountPurpose},
     journal::{self, Entry, Source, Transaction},
     repository::{self, Error},
     statement::{self, Kind},
@@ -26,12 +26,86 @@ pub struct Draft {
     pub rules: Rules,
     pub selected: BTreeMap<usize, bool>,
     pub corrections: BTreeMap<usize, Correction>,
+    /// Types selected while reviewing the statement. Older drafts leave new accounts unclassified.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub pending_purposes: BTreeMap<Account, AccountPurpose>,
     /// Exact state reviewed, for optimistic confirmation against fresh truth.
     pub journal: Vec<Transaction>,
     pub baseline_rules: Rules,
 }
 
 impl Draft {
+    pub fn prune_pending_purposes(&mut self) {
+        if self.pending_purposes.is_empty() {
+            return;
+        }
+        let used: std::collections::BTreeSet<_> = self
+            .rules
+            .methods
+            .values()
+            .flat_map(|m| m.values())
+            .chain(self.corrections.values().filter_map(|c| c.other.as_ref()))
+            .collect();
+        self.pending_purposes
+            .retain(|account, _| used.contains(account));
+    }
+
+    fn check_purposes(&self) -> Result<(), Error> {
+        if self
+            .pending_purposes
+            .iter()
+            .any(|(account, purpose)| !account.is_cash() || account.kind() != purpose.kind())
+        {
+            return Err(Error::Invalid("import account purpose"));
+        }
+        Ok(())
+    }
+
+    /// Forget future destinations only. The comparison journal retains its
+    /// original accounts so duplicate detection still sees historical rows.
+    fn forget_archived(&mut self, archived: &[Account]) -> bool {
+        let mut changed = false;
+        for rules in [&mut self.rules, &mut self.baseline_rules] {
+            rules.methods.retain(|_, methods| {
+                methods.retain(|_, account| {
+                    let keep = !archived.contains(account);
+                    changed |= !keep;
+                    keep
+                });
+                !methods.is_empty()
+            });
+        }
+        for edit in self.corrections.values_mut() {
+            if edit.other.as_ref().is_some_and(|a| archived.contains(a)) {
+                edit.other = None;
+                changed = true;
+            }
+        }
+        if changed {
+            self.prune_pending_purposes();
+        }
+        if changed && !self.selected.is_empty() {
+            let rows = self.review();
+            self.selected.retain(|i, selected| {
+                !*selected || rows.get(*i).is_some_and(|row| row.transaction.is_some())
+            });
+        }
+        changed
+    }
+
+    fn check_active_accounts(&self, connection: &Connection) -> Result<(), Error> {
+        let archived = repository::archived_accounts(connection)?;
+        let mapped = [&self.rules, &self.baseline_rules]
+            .into_iter()
+            .flat_map(|r| r.methods.values())
+            .flat_map(|m| m.values());
+        let corrected = self.corrections.values().filter_map(|c| c.other.as_ref());
+        if mapped.chain(corrected).any(|a| archived.contains(a)) {
+            return Err(Error::Invalid("archived import account"));
+        }
+        Ok(())
+    }
+
     pub fn review(&self) -> Vec<Candidate> {
         self.review_report(&statement::review(&self.text, "CNY"))
     }
@@ -136,6 +210,7 @@ impl Draft {
         }
         self.rules = merged;
         self.baseline_rules = latest;
+        self.prune_pending_purposes();
         // A refreshed possible duplicate always needs an explicit choice again.
         for (i, c) in self.review().iter().enumerate() {
             if c.status != Status::New {
@@ -174,6 +249,7 @@ pub fn read_file(
         rules: rules.clone(),
         selected: BTreeMap::new(),
         corrections: BTreeMap::new(),
+        pending_purposes: BTreeMap::new(),
         journal,
         baseline_rules: rules,
     };
@@ -184,24 +260,33 @@ pub fn read_file(
         rows,
     })
 }
-pub fn keep_prepared(connection: &Connection, prepared: &Prepared) -> Result<(), Error> {
-    if active(connection)?.is_some() {
+pub fn keep_prepared(connection: &Connection, prepared: &mut Prepared) -> Result<(), Error> {
+    let tx = connection.unchecked_transaction()?;
+    if active(&tx)?.is_some() {
         return Err(Error::Invalid("resume or discard the current import first"));
     }
-    connection.execute(
+    // The owner can disable an account while the file is parsed off-thread.
+    if prepared
+        .draft
+        .forget_archived(&repository::archived_accounts(&tx)?)
+    {
+        prepared.rows = prepared.draft.review_report(&prepared.report);
+    }
+    tx.execute(
         "INSERT INTO finance_import_drafts VALUES(1,?1)",
         [serde_json::to_string(&prepared.draft)?],
     )?;
+    tx.commit()?;
     Ok(())
 }
 pub fn create(connection: &Connection, name: &str, bytes: &[u8]) -> Result<Draft, Error> {
-    let prepared = read_file(
+    let mut prepared = read_file(
         name,
         bytes,
         repository::rules(connection)?,
         repository::transactions(connection)?,
     )?;
-    keep_prepared(connection, &prepared)?;
+    keep_prepared(connection, &mut prepared)?;
     Ok(prepared.draft)
 }
 pub fn active(connection: &Connection) -> Result<Option<Draft>, Error> {
@@ -221,6 +306,7 @@ pub fn active(connection: &Connection) -> Result<Option<Draft>, Error> {
     Ok(Some(draft))
 }
 fn check(draft: &Draft) -> Result<(), Error> {
+    draft.check_purposes()?;
     if draft.text.len() > statement::MAX_FILE_BYTES * 4 || draft.name.len() > 4096 {
         return Err(Error::Invalid("import draft size"));
     }
@@ -241,6 +327,8 @@ fn check(draft: &Draft) -> Result<(), Error> {
     Ok(())
 }
 pub fn save(connection: &Connection, draft: &Draft) -> Result<(), Error> {
+    draft.check_purposes()?;
+    draft.check_active_accounts(connection)?;
     let source: Option<String> = connection
         .query_row(
             "SELECT body FROM finance_import_drafts WHERE singleton=1",
@@ -274,6 +362,8 @@ pub(crate) fn rename_account(
     let Some(mut draft) = active(connection)? else {
         return Ok(());
     };
+    draft.pending_purposes.remove(old);
+    draft.pending_purposes.remove(new);
     for rules in [&mut draft.rules, &mut draft.baseline_rules] {
         for methods in rules.methods.values_mut() {
             for a in methods.values_mut() {
@@ -297,6 +387,20 @@ pub(crate) fn rename_account(
     }
     save(connection, &draft)
 }
+
+pub(crate) fn archive_account(
+    connection: &Connection,
+    account: &Account,
+) -> Result<Option<Draft>, Error> {
+    if connection.table_exists(None, "finance_import_drafts")?
+        && let Some(mut draft) = active(connection)?
+        && draft.forget_archived(std::slice::from_ref(account))
+    {
+        save(connection, &draft)?;
+        return Ok(Some(draft));
+    }
+    Ok(None)
+}
 pub fn discard(connection: &Connection) -> Result<(), Error> {
     connection.execute("DELETE FROM finance_import_drafts", [])?;
     Ok(())
@@ -308,8 +412,10 @@ pub fn validate(connection: &Connection) -> Result<(), Error> {
         [],
         |r| r.get(0),
     )?;
-    if exists != 0 {
-        active(connection)?;
+    if exists != 0
+        && let Some(draft) = active(connection)?
+    {
+        draft.check_active_accounts(connection)?;
     }
     Ok(())
 }
@@ -340,6 +446,26 @@ pub fn confirm(connection: &Connection, draft: &Draft) -> Result<Option<usize>, 
             && !matches!(c.status, Status::New | Status::PossibleDuplicate)
     }) {
         return Err(Error::Invalid("selected row needs review"));
+    }
+    // A remembered payment mapping is itself a confirmed reference. Counter-accounts
+    // belong only to their selected transfers. Unused corrections never create accounts.
+    if !draft.pending_purposes.is_empty() {
+        let used_accounts = draft
+            .rules
+            .methods
+            .values()
+            .flat_map(|methods| methods.values())
+            .chain(
+                selected
+                    .iter()
+                    .filter_map(|(_, c)| c.transaction.as_ref())
+                    .flat_map(|t| t.own_postings().map(|p| &p.account)),
+            );
+        for account in used_accounts.collect::<std::collections::BTreeSet<_>>() {
+            if let Some(&purpose) = draft.pending_purposes.get(account) {
+                repository::create_if_new_with_purpose(&tx, account, purpose)?;
+            }
+        }
     }
     for (_, c) in &selected {
         repository::save_in_transaction(
@@ -378,6 +504,90 @@ mod tests {
         );
         save(db, &d).unwrap();
         d
+    }
+    #[test]
+    fn import_purposes_follow_confirmation_and_preserve_independently_created_accounts() {
+        let db = db();
+        db.execute_batch(repository::PURPOSE_SCHEMA).unwrap();
+        let bank = Account::parse("资产:银行").unwrap();
+        let unused = Account::parse("资产:未选对方").unwrap();
+        let mut draft = mapped(&db);
+        draft
+            .pending_purposes
+            .insert(bank.clone(), AccountPurpose::Wallet);
+        draft
+            .pending_purposes
+            .insert(unused.clone(), AccountPurpose::Cash);
+        draft.selected.insert(1, false);
+        draft.corrections.insert(
+            1,
+            Correction {
+                kind: Kind::TransferOut,
+                category: defaults::other_expense(),
+                other: Some(unused.clone()),
+            },
+        );
+        save(&db, &draft).unwrap();
+        assert_eq!(active(&db).unwrap(), Some(draft.clone()));
+        assert!(!repository::accounts(&db).unwrap().contains(&bank));
+        db.execute_batch("CREATE TRIGGER reject_import BEFORE INSERT ON finance_mapping_rules BEGIN SELECT RAISE(ABORT,'full'); END;").unwrap();
+        assert!(confirm(&db, &draft).is_err());
+        assert!(!repository::accounts(&db).unwrap().contains(&bank));
+        assert_eq!(active(&db).unwrap(), Some(draft.clone()));
+        db.execute_batch("DROP TRIGGER reject_import").unwrap();
+        repository::create_account(&db, &bank).unwrap();
+        repository::set_account_purpose(&db, &bank, Some(AccountPurpose::Bank)).unwrap();
+        assert_eq!(confirm(&db, &draft).unwrap(), Some(1));
+        assert_eq!(
+            repository::account_purposes(&db).unwrap().get(&bank),
+            Some(&AccountPurpose::Bank)
+        );
+        assert!(!repository::accounts(&db).unwrap().contains(&unused));
+    }
+
+    #[test]
+    fn disabling_a_payment_method_reopens_the_choice_in_live_and_prepared_statements() {
+        let db = db();
+        db.execute_batch(repository::ARCHIVE_SCHEMA).unwrap();
+        let bank = Account::parse("资产:银行").unwrap();
+        let mut rules = Rules::default();
+        rules.remember_method(Provider::Alipay, "银行卡", bank.clone());
+        repository::save_rules(&db, &rules).unwrap();
+        let mut pending = read_file("pending.csv", TEXT.as_bytes(), rules, Vec::new()).unwrap();
+        let mut live = create(&db, "live.csv", TEXT.as_bytes()).unwrap();
+        live.selected.insert(0, true);
+        live.corrections.insert(
+            1,
+            Correction {
+                kind: Kind::TransferIn,
+                category: defaults::other_expense(),
+                other: Some(bank.clone()),
+            },
+        );
+        save(&db, &live).unwrap();
+        repository::set_account_archived(&db, &bank, true).unwrap();
+        assert!(repository::rules(&db).unwrap().methods.is_empty());
+        let retained = active(&db).unwrap().unwrap();
+        assert!(
+            retained
+                .review()
+                .iter()
+                .all(|r| r.status == Status::NeedsAccount)
+        );
+        assert!(retained.corrections[&1].other.is_none());
+        assert!(retained.selected.is_empty());
+        assert!(save(&db, &live).is_err());
+        assert!(confirm(&db, &live).is_err());
+        discard(&db).unwrap();
+        keep_prepared(&db, &mut pending).unwrap();
+        assert_eq!(active(&db).unwrap(), Some(pending.draft));
+        assert!(
+            pending
+                .rows
+                .iter()
+                .all(|r| r.status == Status::NeedsAccount)
+        );
+        assert!(repository::transactions(&db).unwrap().is_empty());
     }
     #[test]
     fn draft_resume_commit_and_reimport_keep_identity() {

@@ -8,8 +8,8 @@ fn create(app: &mut Headless, name: &str, debt: bool) -> Result<(), String> {
     app.press("label:Assets")?;
     app.press("text:Add account")?;
     if debt {
-        app.press("label:Account type")?;
-        app.press("Credit / debt")?;
+        app.press("label:/^Account type, /")?;
+        app.press("Consumer credit")?;
     }
     app.type_text("label:Account name", name)?;
     app.press("Create account")?;
@@ -68,20 +68,20 @@ fn accounts_balances_rename_and_net_worth_survive_restart() -> Result<(), String
     app.press("label:Send")?;
     app.wait_for("Confirm and save")?;
     app.press("label:Close")?;
-    assert!(!app.shows("text:/^Last checked/"));
-    app.press("label:/^Cash, ¥1,000.00, Last checked/")?;
-    app.press("label:Rename account")?;
+    assert!(!app.shows("text:/^Balance checked through/"));
+    app.press("label:/^Cash, ¥1,000.00, Balance checked through/")?;
+    app.press("label:Edit account")?;
     app.clear("label:Account name")?;
     app.type_text("label:Account name", "Wallet")?;
-    app.press("Save name")?;
-    app.wait_for("Account renamed")?;
+    app.press("Save changes")?;
+    app.wait_for("Account updated")?;
     app.press("label:Back")?;
     app.wait_for("label:/^Wallet, ¥1,000.00/")?;
     // Creation stays available from the overview management menu.
     app.press("label:Manage")?;
     app.press("text:Add account")?;
-    app.press("label:Account type")?;
-    app.press("Credit / debt")?;
+    app.press("label:/^Account type, /")?;
+    app.press("Consumer credit")?;
     app.type_text("label:Account name", "Card")?;
     app.press("Create account")?;
     verify(&mut app, "250.00", true)?;
@@ -132,6 +132,42 @@ fn accounts_balances_rename_and_net_worth_survive_restart() -> Result<(), String
 }
 
 #[test]
+fn deactivated_account_keeps_its_balance_and_can_be_restored_from_manage() -> Result<(), String> {
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, storage) = start_in(Some(dir.path()), Vec::new(), None);
+    create(&mut app, "Reserve", false)?;
+    verify(&mut app, "135.50", false)?;
+    app.press("label:Edit account")?;
+    app.press("Deactivate account")?;
+    app.wait_for_gone("task-sheet", GONE)?;
+    app.wait_for("Reactivate account")?;
+    app.wait_for("Opening balance")?;
+    app.press("label:Back")?;
+    app.wait_for("label:Reserve, ¥135.50, Inactive")?;
+    drop(app);
+    let (mut app, _) = start_in(
+        Some(dir.path()),
+        storage.entries().into_iter().collect(),
+        None,
+    );
+    app.press("label:Assets")?;
+    app.press("label:Manage")?;
+    app.press("task-sheet >> Inactive accounts")?;
+    app.press("label:/^Reserve, ¥135.50/")?;
+    app.press("Reactivate account")?;
+    app.wait_for("Check balance")?;
+    app.press("label:Back")?;
+    app.wait_for("No inactive accounts")?;
+    app.press("label:Back")?;
+    app.wait_for("task-sheet >> Add account")?;
+    assert!(!app.shows("text:Inactive accounts"));
+    app.press("label:Close")?;
+    app.wait_for_gone("task-sheet", GONE)?;
+    app.wait_for("label:/^Reserve, ¥135.50, Balance checked through/")?;
+    Ok(())
+}
+
+#[test]
 fn new_account_keeps_its_opening_action_until_a_balance_is_recorded() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
     let (mut app, storage) = start_in(Some(dir.path()), Vec::new(), None);
@@ -152,11 +188,20 @@ fn new_account_keeps_its_opening_action_until_a_balance_is_recorded() -> Result<
     app.wait_for("label:Wallet, Set opening balance")?;
     verify(&mut app, "0.00", false)?;
     app.press("label:Back")?;
-    app.wait_for("label:/^Wallet, ¥0.00, Last checked/")?;
+    app.wait_for("label:/^Wallet, ¥0.00, Balance checked through/")?;
     assert!(!app.shows("Set opening balance"));
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
     assert_eq!(repository::balance_checks(&db).unwrap().len(), 1);
     assert!(repository::transactions(&db).unwrap().is_empty());
+    app.press("label:/^Wallet, ¥0.00, Balance checked through/")?;
+    app.press("label:Edit account")?;
+    app.press("Deactivate account")?;
+    app.wait_for_gone("task-sheet", GONE)?;
+    app.press("label:Back")?;
+    assert!(!app.shows("text:Wallet"));
+    app.press("label:Manage")?;
+    app.press("task-sheet >> Inactive accounts")?;
+    app.wait_for("label:/^Wallet, ¥0.00,/")?;
     Ok(())
 }
 
@@ -290,8 +335,8 @@ fn manage_back_keeps_one_sheet_and_opening_balance_stays_on_the_account_row() ->
     // Currency and kind alone are meaningful draft changes.
     app.press("label:Currency")?;
     app.press("USD")?;
-    app.press("label:Account type")?;
-    app.press("Credit / debt")?;
+    app.press("label:/^Account type, /")?;
+    app.press("Consumer credit")?;
     app.on_dialog(|_| DialogAnswer::Press("Keep editing".into()));
     app.back()?;
     app.wait_for("Create account")?;

@@ -40,6 +40,13 @@ pub(super) fn main_panel(
                     _ => {}
                 }
                 form.kind.set(kind);
+                if kind == Kind::Transfer
+                    && form.own.account().is_some()
+                    && form.own.account() == form.other.account()
+                {
+                    form.other.selected.set(String::new());
+                    form.other.creating.set(false);
+                }
                 if kind != Kind::Transfer {
                     form.category.set(if kind == Kind::Expense {
                         last_expense.get_untracked()
@@ -93,7 +100,7 @@ pub(super) fn main_panel(
                         move || {
                             form.own
                                 .account()
-                                .map(|a| crate::ui::currency::account_label(&a))
+                                .map(|a| selected_account_label(&a))
                                 .unwrap_or_else(|| s().choose_account.into())
                         },
                         move || {
@@ -117,7 +124,7 @@ pub(super) fn main_panel(
                             if form.kind.get() == Kind::Transfer {
                                 form.other
                                     .account()
-                                    .map(|a| crate::ui::currency::account_label(&a))
+                                    .map(|a| selected_account_label(&a))
                                     .unwrap_or_else(|| s().choose_account.into())
                             } else {
                                 Account::parse(&form.category.get())

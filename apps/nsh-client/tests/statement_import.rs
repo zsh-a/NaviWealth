@@ -2,6 +2,7 @@
 mod common;
 use common::*;
 use navi_finance::{
+    account::{Account, AccountPurpose},
     import::{Rules, store},
     repository,
 };
@@ -38,13 +39,24 @@ fn picker_review_resumes_and_confirmation_remembers_mapping_only_once() -> Resul
     app.press("Choose statement file")?;
     app.wait_for("alipay.csv")?;
     app.press("text:/^余额 · /")?;
+    app.press("label:Account type, Bank account")?;
+    app.press("label:Digital wallet")?;
     app.type_text("label:Account name", "Import wallet")?;
     app.press("Use account")?;
     app.wait_for("Import 1")?;
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
     assert!(repository::transactions(&db).unwrap().is_empty());
     assert_eq!(repository::rules(&db).unwrap(), Rules::default());
-    assert!(store::active(&db).unwrap().is_some());
+    let wallet = Account::parse("资产:Import wallet").unwrap();
+    assert!(!repository::accounts(&db).unwrap().contains(&wallet));
+    assert_eq!(
+        store::active(&db)
+            .unwrap()
+            .unwrap()
+            .pending_purposes
+            .get(&wallet),
+        Some(&AccountPurpose::Wallet)
+    );
     drop(db);
     drop(app);
     let (mut app, _) = start_in(Some(dir.path()), Vec::new(), Some(network.clone()));
@@ -54,7 +66,14 @@ fn picker_review_resumes_and_confirmation_remembers_mapping_only_once() -> Resul
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
     assert_eq!(repository::transactions(&db).unwrap().len(), 1);
     assert!(store::active(&db).unwrap().is_none());
-    assert!(!repository::rules(&db).unwrap().methods.is_empty());
+    assert_eq!(
+        repository::rules(&db).unwrap().methods["alipay"]["余额"],
+        wallet
+    );
+    assert_eq!(
+        repository::account_purposes(&db).unwrap().get(&wallet),
+        Some(&AccountPurpose::Wallet)
+    );
     pick(&mut app, "alipay.csv", &text());
     app.press("Import statement")?;
     app.press("Choose statement file")?;

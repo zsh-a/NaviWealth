@@ -51,13 +51,20 @@ fn expense_income_and_transfer_share_one_balanced_persistent_journal() -> Result
     app.type_text("label:Amount", "20.00")?;
     app.press("To account")?;
     app.press("Add account")?;
-    app.press("Credit / debt")?;
+    app.press("label:Account type, Bank account")?;
+    app.press("label:Consumer credit")?;
     app.type_text("label:Account name", "Card")?;
     app.press("Done")?;
     app.press("Save transaction")?;
     app.wait_for_gone("Save transaction", GONE)?;
     let entries = stored(dir.path());
     assert_eq!(entries.len(), 3);
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    let types = repository::account_purposes(&db).unwrap();
+    assert_eq!(
+        types.get(&Account::parse("负债:Card").unwrap()),
+        Some(&navi_finance::account::AccountPurpose::Credit)
+    );
     assert!(entries.iter().all(|t| t.validate().is_ok()));
     assert_eq!(
         money::sum(journal::spending(&entries, today().0, today().0).into_values()),
