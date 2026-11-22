@@ -150,6 +150,10 @@ pub fn App(props: AppProps, cx: Scope<AppEvent>) -> impl IntoElement {
         }
     });
     settings::load();
+    // The appearance override, applied before the first frame and on every
+    // change; 跟随系统 hands the decision back to the device.
+    set_color_scheme(settings::appearance().scheme());
+    effect(move || set_color_scheme(settings::appearance().scheme()));
     for shared in STARTUP_SHARES
         .lock()
         .map(|mut queued| std::mem::take(&mut *queued))

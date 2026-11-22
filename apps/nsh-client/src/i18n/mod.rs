@@ -216,6 +216,11 @@ pub struct Strings {
     pub today: &'static str,
     pub yesterday: &'static str,
     pub settings: &'static str,
+    // Appearance
+    pub appearance: &'static str,
+    pub appearance_system: &'static str,
+    pub appearance_light: &'static str,
+    pub appearance_dark: &'static str,
     pub kcal: &'static str,
     pub kcal_today: &'static str,
     pub protein: &'static str,

@@ -14,6 +14,29 @@ const KEY_SECRET: &str = "secret.model-key.v1";
 /// The lowest and highest daily goal accepted, in kcal.
 pub const GOAL_RANGE: std::ops::RangeInclusive<f64> = 500.0..=10_000.0;
 
+/// The appearance the app asks for, whatever the device is set to.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub enum Appearance {
+    /// Follow the device (default).
+    #[default]
+    System,
+    /// Always light.
+    Light,
+    /// Always dark.
+    Dark,
+}
+
+impl Appearance {
+    /// The engine override this choice asks for.
+    pub fn scheme(self) -> nsh_core::platform::Appearance {
+        match self {
+            Self::System => nsh_core::platform::Appearance::System,
+            Self::Light => nsh_core::platform::Appearance::Light,
+            Self::Dark => nsh_core::platform::Appearance::Dark,
+        }
+    }
+}
+
 /// The plausible height range, in centimetres (the scale profiles agree).
 pub const HEIGHT_RANGE: std::ops::RangeInclusive<u16> = 80..=230;
 /// The plausible age range, in years (the scale profiles agree).
@@ -50,6 +73,9 @@ pub struct Settings {
     /// The goal weight, in kilograms (`None` clears it).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub goal_kg: Option<f64>,
+    /// Light, dark, or the device's choice.
+    #[serde(default)]
+    pub appearance: Appearance,
     /// The default for new scale sessions, never a historical recalculation.
     #[serde(default, deserialize_with = "read_scale_algorithm")]
     pub scale_algorithm: Algorithm,
@@ -263,6 +289,20 @@ pub fn save_goal_kg(goal_kg: Option<f64>) {
         s.goal_kg = goal_kg
             .filter(|goal| weight::valid_kg(*goal))
             .map(weight::rounded);
+        persist(s);
+    });
+}
+
+/// The appearance the app asks for (tracked); the root hands each change to
+/// the engine.
+pub fn appearance() -> Appearance {
+    settings().with(|s| s.appearance)
+}
+
+/// Keeps the appearance. Takes effect at once; there is no Save.
+pub fn save_appearance(appearance: Appearance) {
+    settings().update(|s| {
+        s.appearance = appearance;
         persist(s);
     });
 }

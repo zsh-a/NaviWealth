@@ -91,6 +91,8 @@ Updated 2026-11-14: the owner chose text-or-image capture with fewer forms.
   when requested. Model settings explicitly select Anthropic Messages, OpenAI
   Chat Completions or OpenAI Responses; Responses uses local history and
   disables server-side response storage.
+- Settings' appearance choice shows the app light or dark; matching the
+  device (the default) keeps following it. The change applies as it is made.
 - Today shows today. Past days are reached in Records; logging for another
   day changes the date on the review page.
 - Today keeps one layout from health-only to finance: the summary card shows

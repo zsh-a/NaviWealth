@@ -15,7 +15,9 @@ use crate::{
     ui::{
         Icon, Type, Typo, color,
         field::{note, number_input},
-        icon, space,
+        icon,
+        segmented::{Segment, segmented},
+        space,
         surface::{card, group_label, hairline, row_button},
         theme::motion,
         toggle::switch_row,
@@ -43,6 +45,7 @@ pub fn settings_page() -> Screen {
                                 .pt_2()
                                 .pb(move || px(safe_area().bottom.0 + 32.0))
                                 .gap_6()
+                                .child(settings_group(|| s().appearance, appearance_group()))
                                 .child(settings_group(
                                     || s().body_and_weight,
                                     card()
@@ -82,6 +85,22 @@ fn settings_group(
     content: impl IntoElement,
 ) -> impl IntoElement {
     view().gap_2().child(group_label(title)).child(content)
+}
+
+/// Light, dark, or the device's choice. Each press applies at once: the
+/// root's effect hands the choice to the engine, and it is kept.
+fn appearance_group() -> impl IntoElement {
+    card().overflow_hidden().p(px(space::CARD)).child(segmented(
+        vec![
+            Segment::new(settings::Appearance::System, || {
+                s().appearance_system.into()
+            }),
+            Segment::new(settings::Appearance::Light, || s().appearance_light.into()),
+            Segment::new(settings::Appearance::Dark, || s().appearance_dark.into()),
+        ],
+        settings::appearance,
+        settings::save_appearance,
+    ))
 }
 
 /// An icon in its well: the fixed anchor every settings row leads with.
