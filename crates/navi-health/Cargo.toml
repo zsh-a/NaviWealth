@@ -10,7 +10,7 @@ description = "Host-independent health models, calculations, recognition and val
 
 [dependencies]
 navi-storage = { path = "../navi-storage" }
-jiff = { version = "0.2", default-features = false, features = ["std", "serde"] }
+jiff = { version = "1.0", default-features = false, features = ["std", "serde"] }
 log = "0.4"
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp"] }
 llm-protocol = { path = "../../third_party/agent-runtime/crates/llm-protocol" }
