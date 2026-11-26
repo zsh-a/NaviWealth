@@ -313,14 +313,33 @@ async function beginRaceEstimate(app: App, bridge: ReturnType<typeof raceBridge>
 
 async function waitForNative(app: App, condition: () => boolean) {
   // Pump the headless transport without awaiting its idle acknowledgement:
-  // the held native response is intentionally keeping the engine non-idle.
-  void app.wait(0).catch(() => {});
+  // a pump can itself be serving the native response we deliberately hold.
+  // If it finishes before the next request arrives, start another; a single
+  // zero-duration pump can leave that later request with no server.
+  let pumping = false;
+  let failed = false;
+  let failure: unknown;
   const deadline = Date.now() + 5000;
   while (!condition()) {
+    if (failed) throw failure;
     if (Date.now() > deadline)
       throw new Error(`Native response ordering barrier timed out: ${condition}`);
+    if (!pumping) {
+      pumping = true;
+      void app.wait(0).then(
+        () => {
+          pumping = false;
+        },
+        (error: unknown) => {
+          failure = error;
+          failed = true;
+          pumping = false;
+        },
+      );
+    }
     await new Promise<void>((resolve) => setTimeout(resolve, 5));
   }
+  if (failed) throw failure;
 }
 
 async function dispatchLifecycle(app: App, state: "active" | "background") {
@@ -365,6 +384,9 @@ test("scale mixed: notifications arriving during an in-flight feed are retained 
   const first = packet(app, sessionId, STABLE);
   await waitForNative(app, () => bridge.feeds.length === 2);
   const second = packet(app, sessionId, IMPEDANCE);
+  // The host acknowledgement proves the notification reached the app while
+  // the first feed is held, rather than racing its delivery with the release.
+  await second;
   expect(bridge.feeds.length).toBe(2);
   expect(app.enabled("Save weight only")).toBe(false);
   bridge.feeds[1].resolve({ preview: bridge.current(), reading: null });
