@@ -91,7 +91,7 @@ pub(super) fn group(
 fn local_time(ms: i64, zone: &jiff::tz::TimeZone) -> jiff::civil::Time {
     jiff::Timestamp::from_millisecond(ms)
         .unwrap_or(jiff::Timestamp::UNIX_EPOCH)
-        .to_zoned(zone.clone())
+        .to_zoned_datetime(zone.clone())
         .time()
 }
 

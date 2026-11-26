@@ -98,7 +98,7 @@ fn backed_up(dav: &Dav) -> Result<Vec<u8>, String> {
     // Leave a full UTC day before now so the following day's 01:00 fetch
     // cannot lie in the future during early-morning test runs.
     let mut day = jiff::Timestamp::now()
-        .to_zoned(jiff::tz::TimeZone::UTC)
+        .to_zoned_datetime(jiff::tz::TimeZone::UTC)
         .date()
         .checked_sub(jiff::Span::new().days(2))
         .unwrap();

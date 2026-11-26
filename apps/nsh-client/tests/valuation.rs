@@ -5,7 +5,7 @@ use jiff::civil::{Date, date};
 
 fn noon(day: Date) -> jiff::Timestamp {
     day.at(12, 0, 0, 0)
-        .to_zoned(jiff::tz::TimeZone::UTC)
+        .to_zoned_datetime(jiff::tz::TimeZone::UTC)
         .unwrap()
         .timestamp()
 }
@@ -375,7 +375,7 @@ fn missing_historical_fx_keeps_known_values_and_cost_details_accessible() -> Res
     let missing_day = trade.at.date();
     let observed_at = trade
         .at
-        .to_zoned(jiff::tz::TimeZone::UTC)
+        .to_zoned_datetime(jiff::tz::TimeZone::UTC)
         .unwrap()
         .timestamp();
     navi_finance::valuation::record_current(&c, missing_day, observed_at).unwrap();

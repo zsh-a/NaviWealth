@@ -142,7 +142,7 @@ fn last_finished_day(binding: &catalog::SecurityBinding, now: Timestamp) -> Opti
     } else {
         "Asia/Shanghai"
     };
-    now.to_zoned(jiff::tz::TimeZone::get(zone).ok()?)
+    now.to_zoned_datetime(jiff::tz::TimeZone::get(zone).ok()?)
         .date()
         .yesterday()
         .ok()

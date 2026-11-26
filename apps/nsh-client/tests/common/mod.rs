@@ -164,7 +164,7 @@ pub fn stored_meals(dir: &Path) -> Vec<Value> {
 
 pub fn today() -> Day {
     Day(jiff::Timestamp::now()
-        .to_zoned(jiff::tz::TimeZone::UTC)
+        .to_zoned_datetime(jiff::tz::TimeZone::UTC)
         .date())
 }
 

@@ -142,7 +142,7 @@ fn validate_body(b: &Body) -> Result<(), Error> {
     if b.integrity != integrity(b)? {
         return Err(Error::Invalid);
     }
-    let utc = b.captured_at.to_zoned(jiff::tz::TimeZone::UTC);
+    let utc = b.captured_at.to_zoned_datetime(jiff::tz::TimeZone::UTC);
     let earliest = utc
         .checked_sub(jiff::Span::new().hours(14))
         .map_err(|_| Error::Invalid)?

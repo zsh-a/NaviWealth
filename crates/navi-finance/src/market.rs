@@ -31,7 +31,7 @@ pub struct MarketQuote {
 impl MarketQuote {
     pub fn day(&self) -> Date {
         self.observed_at
-            .to_zoned(if self.currency == "USD" {
+            .to_zoned_datetime(if self.currency == "USD" {
                 jiff::tz::TimeZone::get("America/New_York").expect("bundled US timezone")
             } else {
                 jiff::tz::TimeZone::fixed(jiff::tz::Offset::from_hours(8).expect("fixed offset"))
@@ -155,7 +155,7 @@ pub fn parse_tencent(
         .parse()
         .map_err(|_| Error::Invalid)?;
     let observed_at = local
-        .to_zoned(jiff::tz::TimeZone::get(zone).map_err(|_| Error::Invalid)?)
+        .to_zoned_datetime(jiff::tz::TimeZone::get(zone).map_err(|_| Error::Invalid)?)
         .map_err(|_| Error::Invalid)?
         .timestamp();
     let quote = MarketQuote {

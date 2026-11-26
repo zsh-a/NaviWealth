@@ -3,7 +3,7 @@
 //! them.
 
 use jiff::{
-    Timestamp, Zoned,
+    Timestamp, ZonedDateTime,
     tz::{Offset, TimeZone},
 };
 use nsh_core::prelude::*;
@@ -61,10 +61,10 @@ pub fn now_ms() -> i64 {
 }
 
 /// `ms` in the device's zone.
-pub fn zoned(ms: i64) -> Zoned {
+pub fn zoned(ms: i64) -> ZonedDateTime {
     Timestamp::from_millisecond(ms)
         .unwrap_or(Timestamp::UNIX_EPOCH)
-        .to_zoned(zone())
+        .to_zoned_datetime(zone())
 }
 
 /// The local day of `ms`.
@@ -93,7 +93,7 @@ pub fn clock_time(hour: u8, minute: u8) -> String {
 /// Device-local timestamp for dated market revisions and valuation snapshots.
 pub fn observation_time(instant: Timestamp) -> String {
     instant
-        .to_zoned(zone())
+        .to_zoned_datetime(zone())
         .strftime("%Y-%m-%d %H:%M:%S")
         .to_string()
 }
@@ -153,9 +153,9 @@ mod tests {
     fn named_zones_resolve() {
         let zone = parse_zone("Asia/Shanghai");
         let noon_utc = Timestamp::from_second(1_762_948_800).unwrap(); // 2025-11-12 12:00 UTC
-        assert_eq!(noon_utc.to_zoned(zone).hour(), 20);
+        assert_eq!(noon_utc.to_zoned_datetime(zone).hour(), 20);
         let fixed = parse_zone("GMT+08:00");
-        assert_eq!(noon_utc.to_zoned(fixed).hour(), 20);
+        assert_eq!(noon_utc.to_zoned_datetime(fixed).hour(), 20);
     }
 
     #[test]

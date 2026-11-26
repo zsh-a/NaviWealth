@@ -247,7 +247,7 @@ fn begin_session(
     let timestamp = jiff::Timestamp::now();
     let seconds = u32::try_from(timestamp.as_second()).map_err(|_| "invalid_time")?;
     let offset = timestamp
-        .to_zoned(jiff::tz::TimeZone::system())
+        .to_zoned_datetime(jiff::tz::TimeZone::system())
         .offset()
         .seconds();
     if offset % 900 != 0 {

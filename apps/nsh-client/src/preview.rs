@@ -675,7 +675,7 @@ pub fn wants_editor() -> bool {
 fn at(day: Day, hour: i8, minute: i8) -> i64 {
     day.0
         .at(hour, minute, 0, 0)
-        .to_zoned(clock::zone())
+        .to_zoned_datetime(clock::zone())
         .map(|time| time.timestamp().as_millisecond())
         .unwrap_or_else(|_| clock::now_ms())
 }

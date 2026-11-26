@@ -47,7 +47,7 @@ impl DailyBar {
             "Asia/Shanghai"
         };
         let today = now
-            .to_zoned(jiff::tz::TimeZone::get(zone).map_err(|_| Error::Invalid)?)
+            .to_zoned_datetime(jiff::tz::TimeZone::get(zone).map_err(|_| Error::Invalid)?)
             .date();
         if b.validate().is_err()
             || market::canonical_binding(b).as_ref() != Some(&self.symbol)
@@ -63,7 +63,7 @@ impl DailyBar {
             || self.day
                 >= self
                     .fetched_at
-                    .to_zoned(jiff::tz::TimeZone::get(zone).map_err(|_| Error::Invalid)?)
+                    .to_zoned_datetime(jiff::tz::TimeZone::get(zone).map_err(|_| Error::Invalid)?)
                     .date()
             || self.open <= 0
             || self.close <= 0

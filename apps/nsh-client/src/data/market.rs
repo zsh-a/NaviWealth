@@ -372,7 +372,7 @@ mod tests {
         for (_, rate) in fetch_fx(
             vec![Currency::HKD, Currency::USD],
             jiff::Timestamp::now()
-                .to_zoned(jiff::tz::TimeZone::UTC)
+                .to_zoned_datetime(jiff::tz::TimeZone::UTC)
                 .date(),
         )
         .unwrap()

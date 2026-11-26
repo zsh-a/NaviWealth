@@ -898,7 +898,7 @@ mod tests {
         bar.close = 5_200_000;
         bar.fetched_at = "2026-11-05T01:00:00Z".parse().unwrap();
         history::save_bars(&old, &binding, &[bar], now).unwrap();
-        let today = now.to_zoned(jiff::tz::TimeZone::UTC).date();
+        let today = now.to_zoned_datetime(jiff::tz::TimeZone::UTC).date();
         valuation::record_current(&old, today, now).unwrap();
         let expected = finance_rows(&old);
         let source = dir.path().join("snapshot16.sqlite");
@@ -940,7 +940,7 @@ mod tests {
         // on the following day, which must not be in the future before 01:00 UTC.
         // Quotes and bars only make sense on trading days.
         let mut day = jiff::Timestamp::now()
-            .to_zoned(jiff::tz::TimeZone::UTC)
+            .to_zoned_datetime(jiff::tz::TimeZone::UTC)
             .date()
             .checked_sub(jiff::Span::new().days(2))
             .unwrap();
