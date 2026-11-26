@@ -74,8 +74,8 @@ is always a prerelease with `--latest=false`, so it cannot replace that source.
 Existing historical Flutter release artifacts are not overwritten. Subsequent
 releases must retain the fixed key.
 
-The manifest protocol was added on 2026-11-27. Its first public manifest arrives
-with the next actual NSH release using this workflow; local code changes and
-branch builds do not publish it or backfill old releases. The GitHub manifest
+The manifest protocol was added on 2026-11-27. Version 0.21.0 is the first
+release configured to publish it; local code changes and branch builds do not
+publish a manifest or backfill old releases. The GitHub manifest
 source requires no additional signing secret. Android APKs continue to use the
 fixed release certificate.

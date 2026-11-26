@@ -157,9 +157,8 @@ styles and domain actions; the following additional behavior now uses official A
 
 The release workflow now generates `latest.json` with the official CLI and
 publishes it beside the APK. The app reads the manifest from GitHub's latest
-release; catalog releases remain prereleases that never become latest. This
-protocol becomes publicly available with the next actual NSH release; changing
-the workflow locally does not publish a manifest. See the
+release; catalog releases remain prereleases that never become latest. Version 0.21.0 is the first release configured to publish this protocol;
+branch builds do not publish a manifest or backfill historical releases. See the
 [release policy](../../docs/operations/branch-protection.md).
 
 Some adapters still cover behavior absent from these official APIs. Android's
