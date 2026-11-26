@@ -12,7 +12,7 @@ description = "Host-independent double-entry ledger and statement parsing for Na
 navi-storage = { path = "../navi-storage" }
 serde_json = { version = "1", features = ["arbitrary_precision"] }
 # Statement times and days, as written (civil, no time zone).
-jiff = { version = "0.2", default-features = false, features = ["std", "serde", "tzdb-bundle-always"] }
+jiff = { version = "1.0", default-features = false, features = ["std", "serde", "tzdb-bundle-always"] }
 serde = { version = "1", features = ["derive"] }
 thiserror = "2"
 regex = { version = "1", default-features = false, features = ["std", "unicode-perl", "unicode-case"] }
