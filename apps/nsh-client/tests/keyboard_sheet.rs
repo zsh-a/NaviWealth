@@ -1,4 +1,4 @@
-//! Sheets above the software keyboard on Android. NSH 0.6.1 presents every
+//! Sheets above the software keyboard on Android. NSH presents every
 //! sheet in a dialog window whose root Android lays out above the keyboard
 //! (`ModalHost` reports the shrunk root), while the activity still reports
 //! the keyboard height. The sheet must meet the keyboard, not float a

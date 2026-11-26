@@ -123,10 +123,11 @@ pub(super) fn accounts_panel(form: Form, panel: Signal<Panel>, other: bool) -> i
 }
 
 /// Opens the six purpose choices in the running account draft, preserving its other fields.
-pub(crate) fn purpose_field(purpose: Signal<AccountPurpose>) -> View {
+pub(crate) fn purpose_field(purpose: Signal<AccountPurpose>) -> impl IntoElement {
     let expanded = signal(false);
     let value = move || crate::ui::account_purpose::label(purpose.get());
-    view()
+    nsh_base::collapsible()
+        .open(expanded)
         .child(
             row_button(move || {
                 dismiss_keyboard();
@@ -144,15 +145,12 @@ pub(crate) fn purpose_field(purpose: Signal<AccountPurpose>) -> View {
             .child(text(value).typo(Type::Body).text_color(color::INK))
             .child(crate::ui::surface::disclosure_chevron(expanded)),
         )
-        .child(when(
-            move || expanded.get(),
-            move || {
-                crate::ui::account_purpose::picker(Some(purpose.get_untracked()), None, move |p| {
-                    purpose.set(p);
-                    expanded.set(false);
-                })
-            },
-        ))
+        .content(dynamic(move || {
+            crate::ui::account_purpose::picker(Some(purpose.get()), None, move |p| {
+                purpose.set(p);
+                expanded.set(false);
+            })
+        }))
 }
 
 pub(super) fn new_account(form: Form, panel: Signal<Panel>, other: bool) -> impl IntoElement {

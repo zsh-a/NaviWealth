@@ -264,7 +264,7 @@ pub(crate) fn period_picker(
             color::BODY
         }
     };
-    view()
+    nsh_base::toggle_group()
         .flex_row()
         .flex_wrap()
         .items_center()
@@ -741,6 +741,7 @@ mod tests {
         app.drag_and_hold(
             "id:trend-inspector",
             nsh_core::geometry::point(px(1.0), px(0.0)),
+            Default::default(),
         )
         .unwrap();
         app.wait_for("text:—").unwrap();

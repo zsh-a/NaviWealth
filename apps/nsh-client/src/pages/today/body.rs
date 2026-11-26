@@ -372,17 +372,13 @@ pub fn body_overview(day: Day) -> impl IntoElement {
         .child(when(
             move || data.with(|d| d.as_ref().is_some_and(|d| d.measurement.is_some())),
             move || {
-                view()
+                nsh_base::collapsible()
+                    .open(more)
                     .gap_3()
                     .child(disclosure(more, || s().body_more.into()))
-                    .child(when(
-                        move || more.get(),
-                        move || {
-                            provenance(move || {
-                                data.with(|d| d.as_ref().and_then(|d| d.measurement.clone()))
-                            })
-                        },
-                    ))
+                    .content(provenance(move || {
+                        data.with(|d| d.as_ref().and_then(|d| d.measurement.clone()))
+                    }))
             },
         ));
     let actions = view()

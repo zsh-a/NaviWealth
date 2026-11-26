@@ -40,5 +40,8 @@
         "${pluginDir}"
       ]
     }
+  },
+  "updater": {
+    "github": "zsh-a/NaviWealth"
   }
 }

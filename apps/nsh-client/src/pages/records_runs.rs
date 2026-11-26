@@ -56,8 +56,10 @@ pub(super) fn render(item: Item) -> AnyElement {
     );
     let summary = format!("{span} · {detail}");
     let expanded = signal(false);
-    view()
+    nsh_base::collapsible()
+        .open(expanded)
         .gap_3()
+        .content(view().gap_5().children(days.into_iter().map(day_section)))
         .child(
             row_button(move || expanded.update(|v| *v = !*v))
                 .px_1()
@@ -112,13 +114,5 @@ pub(super) fn render(item: Item) -> AnyElement {
                     .into_element()
                 })),
         )
-        .child(when(
-            move || expanded.get(),
-            move || {
-                view()
-                    .gap_5()
-                    .children(days.iter().cloned().map(day_section))
-            },
-        ))
         .into_element()
 }

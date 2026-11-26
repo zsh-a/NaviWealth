@@ -153,11 +153,27 @@ fn ytd_uses_the_first_complete_date_and_keeps_earlier_fx_gaps_inspectable() -> R
     app.drag_and_hold(
         "id:trend-inspector",
         nsh_core::geometry::point(nsh_core::geometry::px(-160.0), nsh_core::geometry::px(0.0)),
+        Default::default(),
     )?;
     app.drop_held()?;
     app.wait_for("text:—")?;
     app.wait_for("text:/Valuation unavailable$/")?;
     assert!(!app.shows("text:+¥14.00"));
+    // The retained disclosure keeps the inspected date across closing and
+    // reopening, then updates from the gap text back to a complete breakdown.
+    app.press("Change breakdown")?;
+    assert!(!app.shows("text:/Valuation unavailable$/"));
+    app.press("Change breakdown")?;
+    app.wait_for("text:/Valuation unavailable$/")?;
+    app.drag_and_hold(
+        "id:trend-inspector",
+        nsh_core::geometry::point(nsh_core::geometry::px(160.0), nsh_core::geometry::px(0.0)),
+        Default::default(),
+    )?;
+    app.drop_held()?;
+    app.wait_for("text:Mar 12 – Mar 16")?;
+    app.wait_for("text:+¥14.00")?;
+    assert!(!app.shows("text:/Valuation unavailable$/"));
     Ok(())
 }
 
@@ -308,6 +324,7 @@ fn price_history_exposes_daily_revisions_and_fx_audit() -> Result<(), String> {
     app.drag_and_hold(
         "id:trend-inspector",
         nsh_core::geometry::point(nsh_core::geometry::px(-140.0), nsh_core::geometry::px(0.0)),
+        Default::default(),
     )?;
     app.wait_for("text:7.200015")?;
     app.drop_held()?;

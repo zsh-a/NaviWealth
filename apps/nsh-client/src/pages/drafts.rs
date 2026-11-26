@@ -132,13 +132,13 @@ fn card(draft: PendingMeal) -> impl IntoElement {
     };
     let analyzing = draft.status == PendingStatus::Analyzing;
     let scale = animated_value(1.0);
+    let label = SharedString::from(match &detail {
+        Some(detail) => format!("{headline}, {detail}"),
+        None => headline.clone(),
+    });
     // The AI's light as a 1.5 pt edge: a gradient behind an inset surface.
-    view()
-        .role(AccessibilityRole::Button)
-        .label(SharedString::from(match &detail {
-            Some(detail) => format!("{headline}, {detail}"),
-            None => headline.clone(),
-        }))
+    nsh_base::button()
+        .accessibility_label(move || Some(label.clone()))
         .on_press_down(move || {
             if !reduce_motion() {
                 scale.spring(motion::PRESS_SCALE_CARD, motion::PRESS);

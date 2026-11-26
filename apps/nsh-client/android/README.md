@@ -6,7 +6,7 @@ estimates and confirmed database writes remain in Rust.
 
 ## Build
 
-Use NSH **0.6.1**, Android SDK/API 35, build tools 35.0.1, an Android NDK for
+Use NSH **0.7.1**, Android SDK/API 35, build tools 35.0.1, an Android NDK for
 NSH's native build, and JDK 17. The checked Gradle wrapper pins Gradle 8.13;
 AGP 8.9.2 and Kotlin 2.1.20 are pinned in the build files. Target API 35 stays
 aligned with the validated NSH host; newer SDKs preinstalled on CI runners do
@@ -27,7 +27,7 @@ building the mixed native library. `prepare` builds the mixed APK and extracts
 inputs without running Gradle. `NSH_BIN` selects the CLI; `NSH_MIXED_APK` can
 reuse a previously built mixed APK; `NSH_ANDROID_AAR` can select the matching
 SDK. The script installs the CLI-matched Android runtime when it is missing,
-before pinning the runtime path, and verifies the exact 0.6.1 Java SDK digest. The default embedding
+before pinning the runtime path, and verifies the exact 0.7.1 Java SDK digest. The default embedding
 SDK download also verifies its pinned official release archive checksum.
 
 The automatic `nsh checks` workflow runs the runtime-only preparation, release
@@ -39,7 +39,9 @@ Only **classes.jar** and the consumer rules are taken from the embedding AAR.
 Its prebuilt `libnsh.so` is never shipped: the application-linked library comes
 from the mixed app's own NSH package. Generated files live under `.nsh/` and
 `android/app/generated/`; both are ignored. The app id, version and build are
-read from `nsh.json`. The default NSH private storage path is retained.
+read from `nsh.json`. The default NSH private storage path is retained. Like the official standalone
+runner, `NaviStandalone` gives NSH ownership of system-bar appearance so its
+icons follow the app’s light/dark choice.
 
 The release APK is unsigned and non-debuggable:
 `app/build/outputs/apk/release/app-release-unsigned.apk`. Apply the existing
@@ -101,6 +103,13 @@ a statement file in its review (`src/data/incoming.rs`). No model call, record
 or upload happens without the owner. There is no host call to whitelist.
 
 ## Evidence boundary
+
+The NSH 0.7.1 upgrade passes verified runtime preparation, release Kotlin/Java
+compilation, both BLE session-gate JVM tests, strict release lint and complete
+arm64 unsigned release APK assembly (2026-11-26). The
+preparation script also rejects the previous CLI and Java SDK. System-bar
+appearance follows the official standalone setup; its appearance and
+configuration-change behavior still need device verification.
 
 Kotlin compilation, unit tests and Android lint check the host without a
 physical scale. Full measurement, GATT behavior, permission revocation,

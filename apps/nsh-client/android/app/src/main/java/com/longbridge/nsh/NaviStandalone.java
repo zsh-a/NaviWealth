@@ -8,8 +8,12 @@ public final class NaviStandalone extends NshView {
     public NaviStandalone(Context context) {
         super(context);
         useStandaloneLimits();
+        ownSystemBars();
     }
     public static void configure(Activity activity) { DevActivity.edgeToEdge(activity); }
-    public static void configurationChanged(Activity activity) { DevActivity.systemBars(activity); }
+    public void configurationChanged(Activity activity) {
+        DevActivity.systemBars(activity);
+        mounter().applySystemBars();
+    }
     public void loadNaviWealth() { loadAssetBundle("nsh", true); }
 }

@@ -33,7 +33,7 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
-  NSH_VERSION: v0.6.1
+  NSH_VERSION: v0.7.1
 
 jobs:
   client:
@@ -51,6 +51,13 @@ jobs:
         with:
           node-version: '24'
           package-manager-cache: false
+      - name: Cache Linux backend libraries
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          # Bump v1 when the package list below changes; image refreshes only
+          # re-download the few packages whose versions moved.
+          key: apt-gtk4-gstreamer-ubuntu24.04-v1
       - name: Install Linux backend libraries
         run: |
           sudo apt-get update
@@ -81,8 +88,9 @@ jobs:
       - name: Check mixed entry and scale flows
         run: |
           nsh check
-          nsh test tests/scale-mixed.test.ts --filter "scale mixed"
-          nsh test tests/share-mixed.test.ts --filter "share mixed"
+          # One run loads every test file but executes only the mixed ones; a
+          # second `nsh test` would redo its whole filtered cargo test pass.
+          nsh test --filter mixed
 
   android:
     name: Android host unit tests and lint
@@ -94,6 +102,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
       - name: Install Android SDK platform and build tools
         run: |
           sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"

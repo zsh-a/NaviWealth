@@ -37,7 +37,7 @@ class MainActivity : Activity() {
     }
     override fun onConfigurationChanged(config: Configuration) {
         super.onConfigurationChanged(config)
-        NaviStandalone.configurationChanged(this)
+        if (::nsh.isInitialized) nsh.configurationChanged(this)
     }
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)

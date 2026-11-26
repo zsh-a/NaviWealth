@@ -11,7 +11,7 @@ import {
   windowSize,
 } from "nsh";
 import type { Signal } from "nsh";
-import { Button } from "nsh/base";
+import { Button, Toggle, ToggleGroup } from "nsh/base";
 import { scaleNative } from "./scale-bridge";
 import { copy } from "./scale-copy";
 import { ScaleReading } from "./ScaleReading";
@@ -293,16 +293,17 @@ export function ScalePanel(props: { close: () => void; busy: Signal<boolean> }) 
                 />
               </Button>
               <If when={algorithmsOpen()}>
-                <View testID="scale-algorithm-options" style={{ gap: 4 }}>
+                <ToggleGroup testID="scale-algorithm-options" style={{ gap: 4 }}>
                   <Text style={noteStyle()}>
                     {preview() ? labels.draftAlgorithmHint : labels.defaultAlgorithmHint}
                   </Text>
                   <Each of={algorithms()} key={(option) => option.id}>
                     {(option) => (
-                      <Button
+                      <Toggle
                         accessibilityLabel={`${labels.chooseAlgorithm}: ${option().name}`}
-                        selected={currentAlgorithm()?.id === option().id}
-                        onPress={() => {
+                        pressed={currentAlgorithm()?.id === option().id}
+                        onChange={() => {
+                          // The controlled choice stays selected; pressing it again closes the picker.
                           void chooseAlgorithm(option().id).then(() => {
                             if (currentAlgorithm()?.id === option().id) algorithmsOpen.set(false);
                           });
@@ -360,10 +361,10 @@ export function ScalePanel(props: { close: () => void; busy: Signal<boolean> }) 
                             <Text style={noteStyle()}>{labels.selectedAlgorithm}</Text>
                           </If>
                         </View>
-                      </Button>
+                      </Toggle>
                     )}
                   </Each>
-                </View>
+                </ToggleGroup>
               </If>
               <If when={recalculating()}>
                 <Text android={{ accessibilityLiveRegion: "polite" }} style={noteStyle()}>

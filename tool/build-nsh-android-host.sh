@@ -6,7 +6,7 @@ repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 app_dir="$repo_dir/apps/nsh-client"
 host_dir="$app_dir/android"
 nsh_bin="${NSH_BIN:-$(command -v nsh)}"
-nsh_version=0.6.1
+nsh_version=0.7.1
 if [[ "$("$nsh_bin" --version)" != "nsh $nsh_version "* ]]; then
   echo "NSH $nsh_version is required; set NSH_BIN to the pinned CLI." >&2
   exit 1
@@ -43,7 +43,7 @@ if [[ -z "$nsh_aar" || ! -f "$nsh_aar" ]]; then
     curl -fsSL --retry 3 "https://github.com/longbridge/nsh/releases/download/v$nsh_version/nsh-embed-android.zip" -o "$archive.download"
     mv "$archive.download" "$archive"
   fi
-  printf '6da8dfd064e94c033935aed35b643e55581fadeb546000b2a5af18f6ec85701e  %s\n' "$archive" | sha256sum -c -
+  printf 'ab814f429362bdc0d82da004b704bb46526d763cefbcf4da81adc26e5f88be65  %s\n' "$archive" | sha256sum -c -
   python3 - "$archive" "$nsh_aar" <<'PYTHON'
 import pathlib, sys, zipfile
 with zipfile.ZipFile(sys.argv[1]) as archive:
@@ -55,8 +55,8 @@ import pathlib, hashlib, sys, zipfile
 out = pathlib.Path(sys.argv[2]); out.mkdir(parents=True, exist_ok=True)
 with zipfile.ZipFile(sys.argv[1]) as aar:
     classes = aar.read("classes.jar")
-    if hashlib.sha256(classes).hexdigest() != "4a777a761f8379c5b77d52ecd07c645d901158676de6624e309cedc50c58b1a4":
-        raise SystemExit("The NSH Java runtime must match the pinned 0.6.1 release")
+    if hashlib.sha256(classes).hexdigest() != "40920f012cf121e73afb413f42ae1d650d8de46de888d53c2d1935c2cc59ff53":
+        raise SystemExit("The NSH Java runtime must match the pinned 0.7.1 release")
     (out / "classes.jar").write_bytes(classes)
     (out / "proguard.txt").write_bytes(aar.read("proguard.txt"))
 icon = out.parent / "res/drawable-nodpi/naviwealth_icon.png"

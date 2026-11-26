@@ -732,44 +732,46 @@ pub fn trade_task(
                                     .typo(Type::Subhead)
                                     .text_color(color::MUTED)
                             }))
-                            .child(disclosure(details, || s().trade_details.into()))
-                            .child(when(
-                                move || details.get(),
-                                move || {
-                                    view()
-                                        .gap_3()
-                                        .child(
-                                            (current_kind != Kind::Opening)
-                                                .then(|| decimal(fee, || s().fee)),
-                                        )
-                                        .child(
-                                            row_button(move || {
-                                                dismiss_keyboard();
-                                                panel.set(Panel::Date);
-                                            })
-                                            .accessibility_label(|| {
-                                                Some(s().transaction_date.into())
-                                            })
-                                            .px_0()
+                            .child(
+                                nsh_base::collapsible()
+                                    .open(details)
+                                    .gap_3()
+                                    .child(disclosure(details, || s().trade_details.into()))
+                                    .content(dynamic(move || {
+                                        view()
+                                            .gap_3()
                                             .child(
-                                                text(|| s().transaction_date)
-                                                    .typo(Type::Body)
-                                                    .text_color(color::MUTED)
-                                                    .flex_1(),
+                                                (current_kind != Kind::Opening)
+                                                    .then(|| decimal(fee, || s().fee)),
                                             )
                                             .child(
-                                                text(move || {
-                                                    day.get()
-                                                        .parse::<Day>()
-                                                        .map(|d| s().short_date(d))
-                                                        .unwrap_or_default()
+                                                row_button(move || {
+                                                    dismiss_keyboard();
+                                                    panel.set(Panel::Date);
                                                 })
-                                                .typo(Type::Body)
-                                                .text_color(color::INK),
-                                            ),
-                                        )
-                                },
-                            ))
+                                                .accessibility_label(|| {
+                                                    Some(s().transaction_date.into())
+                                                })
+                                                .px_0()
+                                                .child(
+                                                    text(|| s().transaction_date)
+                                                        .typo(Type::Body)
+                                                        .text_color(color::MUTED)
+                                                        .flex_1(),
+                                                )
+                                                .child(
+                                                    text(move || {
+                                                        day.get()
+                                                            .parse::<Day>()
+                                                            .map(|d| s().short_date(d))
+                                                            .unwrap_or_default()
+                                                    })
+                                                    .typo(Type::Body)
+                                                    .text_color(color::INK),
+                                                ),
+                                            )
+                                    })),
+                            )
                             .into_element()
                     })
                 });

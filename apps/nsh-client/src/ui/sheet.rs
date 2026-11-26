@@ -324,7 +324,7 @@ fn sheet_height(planned: Option<f32>) -> f32 {
 }
 
 /// Where a sheet's panel stands above the bottom of its dialog's root, given
-/// the root's measured height. NSH 0.6.1 presents every sheet in a dialog;
+/// the root's measured height. NSH presents every sheet in a dialog;
 /// on Android that window lays its root out above the keyboard, yet
 /// `nsh_base` still lifts the panel by the keyboard the activity reports,
 /// so the sheet floated a keyboard's height above it. The intended place is

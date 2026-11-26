@@ -55,7 +55,7 @@ features. The migration became a reduced rewrite, not a port.
    ported. Endpoint changes or failures keep the last imported data visible.
 
 Also holds: Android only (no Web, no iOS), domain truth in Rust crates with
-UI only in `apps/nsh-client`, no backend AI relay, NSH 0.6.1 pinned behind
+UI only in `apps/nsh-client`, no backend AI relay, NSH 0.7.1 pinned behind
 local UI adapters.
 
 ## Consequences

@@ -424,7 +424,11 @@ fn saving_resets_the_task_and_a_swipe_leaves_the_whole_task() -> Result<(), Stri
     app.press("label:Manage")?;
     app.run_for(motion)?;
     app.press("task-sheet >> Add account")?;
-    app.drag("task-sheet", Point::new(Points(0.0), Points(500.0)))?;
+    app.drag(
+        "task-sheet",
+        Point::new(Points(0.0), Points(500.0)),
+        Default::default(),
+    )?;
     app.run_for(motion)?;
     assert_eq!(
         app.screen().count("task-sheet")?,
@@ -438,11 +442,19 @@ fn saving_resets_the_task_and_a_swipe_leaves_the_whole_task() -> Result<(), Stri
     app.press("task-sheet >> Add account")?;
     app.type_text("label:Account name", "Card")?;
     app.on_dialog(|_| DialogAnswer::Press("Keep editing".into()));
-    app.drag("task-sheet", Point::new(Points(0.0), Points(500.0)))?;
+    app.drag(
+        "task-sheet",
+        Point::new(Points(0.0), Points(500.0)),
+        Default::default(),
+    )?;
     app.run_for(motion)?;
     assert!(app.shows("Create account"), "the edit is kept");
     app.on_dialog(|_| DialogAnswer::Press("Discard".into()));
-    app.drag("task-sheet", Point::new(Points(0.0), Points(500.0)))?;
+    app.drag(
+        "task-sheet",
+        Point::new(Points(0.0), Points(500.0)),
+        Default::default(),
+    )?;
     app.run_for(motion)?;
     assert_eq!(
         app.screen().count("task-sheet")?,

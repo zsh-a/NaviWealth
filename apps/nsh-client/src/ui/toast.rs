@@ -1,165 +1,190 @@
-//! A transient message with an optional action (Undo) at the bottom of the
-//! page that hosts it. One at a time: a newer message replaces the older.
-//! [`show_toast`] works from any listener, even on a page that is closing;
-//! the host owns the timer that dismisses it.
+//! One transient message, shared by the page and its active modal surface.
+//! The long-lived host advances NSH's manager, so moving Undo into a sheet
+//! does not restart its lifetime.
 
-use std::{cell::RefCell, rc::Rc, time::Duration};
+use std::{rc::Rc, time::Duration};
 
-use nsh_base::button;
-use nsh_core::prelude::*;
+use nsh_base::{
+    Anchor, ToastManager, ToastMotion, ToastOptions, ToastTransitionStatus, button, toast,
+    toast_stack,
+};
+use nsh_core::{
+    prelude::*,
+    time::{Instant, now},
+};
 
 use super::{
     Lift, Typo,
     theme::{Type, color, motion, shadow},
 };
 
-/// How long a message stays.
+/// How long a message stays, including its entrance.
 pub const SHOWN_FOR: Duration = Duration::from_millis(4500);
-/// How long its exit takes before the state lets go of it.
 const EXIT_FOR: Duration = Duration::from_millis(220);
 
-#[derive(Clone, Default, PartialEq)]
+type Action = (SharedString, Rc<dyn Fn()>);
+
+#[derive(Clone)]
 struct Message {
-    id: u64,
     text: SharedString,
-    action: Option<SharedString>,
-    view_label: Option<SharedString>,
-    keep_on_new_task: bool,
-    /// Leaving: the bubble fades and sinks before the state removes it.
-    leaving: bool,
+    action: Option<Action>,
+    view: Option<Action>,
+    shown_at: Instant,
+    motion: ToastMotion,
 }
 
-#[derive(Clone, Default, PartialEq)]
+#[derive(Clone)]
 struct State {
-    current: Option<Message>,
+    manager: ToastManager<u64, Message>,
     next: u64,
+    hide_view: bool,
 }
 
-thread_local! {
-    static VIEW: RefCell<Option<Rc<dyn Fn()>>> = const { RefCell::new(None) };
-    static ACTION: RefCell<Option<Rc<dyn Fn()>>> = const { RefCell::new(None) };
+impl Default for State {
+    fn default() -> Self {
+        Self {
+            manager: ToastManager::new(toast_motion()),
+            next: 0,
+            hide_view: false,
+        }
+    }
+}
+
+fn toast_motion() -> ToastMotion {
+    ToastMotion {
+        duration: if reduce_motion() {
+            Duration::ZERO
+        } else {
+            Duration::from_millis(motion::SLOW as u64)
+        },
+        exit_duration: if reduce_motion() {
+            Duration::ZERO
+        } else {
+            EXIT_FOR
+        },
+        ..ToastMotion::default()
+    }
 }
 
 fn state() -> Signal<State> {
     global::<State>()
 }
 
-/// Shows `text`, with an action labelled `label` running `run` when given.
-pub fn show_toast(text: impl Into<SharedString>, action: Option<(SharedString, Rc<dyn Fn()>)>) {
-    show(text, action, None, true);
+/// Shows `text`, with an optional action.
+pub fn show_toast(text: impl Into<SharedString>, action: Option<Action>) {
+    show(text, action, None);
 }
-
-type Action = (SharedString, Rc<dyn Fn()>);
 
 /// Capture offers Undo and a shortcut to the saved records. Starting another
 /// draft retires the navigation shortcut while preserving the Undo action.
 pub fn show_capture_receipt(text: impl Into<SharedString>, undo: Action, view: Action) {
-    show(text, Some(undo), Some(view), true);
+    show(text, Some(undo), Some(view));
 }
 
-fn show(
-    text: impl Into<SharedString>,
-    action: Option<Action>,
-    view: Option<Action>,
-    keep_on_new_task: bool,
-) {
+fn show(text: impl Into<SharedString>, action: Option<Action>, view: Option<Action>) {
     let text = text.into();
-    let (label, run) = match action {
-        Some((label, run)) => (Some(label), Some(run)),
-        None => (None, None),
-    };
-    ACTION.with(|slot| *slot.borrow_mut() = run);
-    let (view_label, view_action) = view.unzip();
-    VIEW.with(|slot| *slot.borrow_mut() = view_action);
+    // The home surface remains mounted while a modal mirrors the toast. Announce
+    // on creation, rather than on each Toast mount, to read this message once.
     announce_for_accessibility(text.to_string());
-    state().update(|state| {
-        state.next += 1;
-        state.current = Some(Message {
-            id: state.next,
-            text,
-            action: label,
-            view_label,
-            keep_on_new_task,
-            leaving: false,
-        });
+    state().update(|s| {
+        let motion = toast_motion();
+        let shown_at = now();
+        s.next += 1;
+        s.hide_view = false;
+        s.manager = ToastManager::new(motion);
+        s.manager.push(
+            s.next,
+            Message {
+                text,
+                action,
+                view,
+                shown_at,
+                motion,
+            },
+            ToastOptions::timeout(Some(SHOWN_FOR.saturating_sub(motion.duration))),
+            shown_at,
+        );
+        // Reduced motion has no starting phase to wait for.
+        s.manager.advance(shown_at, false);
     });
 }
 
-/// Begins the exit: the bubble fades and sinks, then the state lets go.
-/// An action offered stays tappable until the removal lands.
-fn dismiss(id: u64) {
-    let leaving =
-        state().with_untracked(|s| s.current.as_ref().is_some_and(|m| m.id == id && !m.leaving));
-    if !leaving {
-        return;
-    }
-    if reduce_motion() {
-        remove(id);
-        return;
-    }
-    state().update(|state| {
-        if let Some(message) = state.current.as_mut().filter(|m| m.id == id) {
-            message.leaving = true;
+/// Opening a new task clears a notice and a receipt's View shortcut; Undo
+/// keeps the manager's existing deadline, including while drawn in a sheet.
+pub fn clear_notice() {
+    state().update(|s| {
+        s.hide_view = true;
+        if s.manager
+            .iter()
+            .next()
+            .is_some_and(|(_, m, _)| m.action.is_none())
+        {
+            s.manager = ToastManager::new(toast_motion());
         }
     });
-    spawn(async move {
-        timer(EXIT_FOR).await;
-        remove(id);
-    });
 }
 
-/// Removes the message at once: its action ran, or motion is reduced.
-fn remove(id: u64) {
-    if state().with_untracked(|s| s.current.as_ref().is_some_and(|m| m.id == id)) {
-        ACTION.with(|slot| slot.borrow_mut().take());
-        VIEW.with(|slot| slot.borrow_mut().take());
-        state().update(|state| state.current = None);
-    }
-}
-
-/// A new task retires informational notices and old receipts. An offered Undo action
-/// keeps its normal lifetime so opening a sheet cannot silently take it away.
-/// The removal is instant: the new surface takes over without a lingering
-/// bubble fading behind it.
-pub fn clear_notice() {
-    if VIEW.with(|slot| slot.borrow_mut().take()).is_some() {
-        state().update(|s| {
-            if let Some(message) = &mut s.current {
-                message.view_label = None;
-            }
-        });
-    }
-    let id = state().with_untracked(|s| {
-        s.current
-            .as_ref()
-            .filter(|m| m.action.is_none() || !m.keep_on_new_task)
-            .map(|m| m.id)
-    });
-    if let Some(id) = id {
-        remove(id);
-    }
-}
-
-/// The host: place it once over the bottom of a long-lived page, `bottom`
-/// points above that page's bottom edge.
+/// Place once on the long-lived page, above its bottom edge.
 pub fn toast_host(bottom: impl Fn() -> f32 + 'static) -> impl IntoElement {
-    // Each new message restarts the timer; the effect's rerun cancels the
-    // last one.
-    let message_id = computed(|| state().with(|s| s.current.as_ref().map(|m| m.id)));
+    let active = computed(|| state().with(|s| s.manager.iter().next().map(|(id, _, _)| *id)));
     effect(move || {
-        if let Some(id) = message_id.get() {
+        if let Some(id) = active.get() {
+            let message = state()
+                .with_untracked(|s| s.manager.get(&id).cloned())
+                .unwrap();
+            // Advance at the manager's phase boundaries, even after suspension.
+            // Polling at `now` would discard elapsed time beyond Starting in
+            // NSH 0.7.1 and extend Undo when the app resumes after its deadline.
+            // Only this host schedules work; modal mounts never restart it.
             spawn(async move {
-                timer(SHOWN_FOR).await;
-                dismiss(id);
+                for elapsed in [
+                    message.motion.duration,
+                    SHOWN_FOR,
+                    SHOWN_FOR + message.motion.exit_duration,
+                ] {
+                    let deadline = message.shown_at + elapsed;
+                    timer_until(deadline).await;
+                    state().update(|s| {
+                        if s.manager.get(&id).is_some() {
+                            s.manager.advance(deadline, false);
+                        }
+                    });
+                }
             });
         }
     });
     toast_view(bottom)
 }
 
-/// Renders the current toast in a modal surface; the long-lived host owns
-/// its timer so opening/closing a sheet cannot extend or cancel Undo.
+#[derive(Clone, PartialEq)]
+struct Visible {
+    id: u64,
+    text: SharedString,
+    action: Option<SharedString>,
+    view: Option<SharedString>,
+    status: ToastTransitionStatus,
+}
+
+/// Mirrors the manager into a modal; it never owns a lifetime timer.
 pub fn toast_view(bottom: impl Fn() -> f32 + 'static) -> impl IntoElement {
+    let shown = computed(|| {
+        state().with(|s| {
+            s.manager
+                .iter()
+                .map(|(id, m, status)| Visible {
+                    id: *id,
+                    text: m.text.clone(),
+                    action: m.action.as_ref().map(|(label, _)| label.clone()),
+                    view: if s.hide_view {
+                        None
+                    } else {
+                        m.view.as_ref().map(|(label, _)| label.clone())
+                    },
+                    status,
+                })
+                .collect::<Vec<_>>()
+        })
+    });
     view()
         .absolute()
         .left_0()
@@ -168,87 +193,87 @@ pub fn toast_view(bottom: impl Fn() -> f32 + 'static) -> impl IntoElement {
         .items_center()
         .px_4()
         .pointer_events(PointerEvents::BoxNone)
-        .child(each(
-            move || state().with(|s| s.current.clone().into_iter().collect::<Vec<_>>()),
-            |message: &Message| message.id,
-            |message, _| bubble(message.get_untracked()),
-        ))
+        .child(
+            toast_stack()
+                .placement(Anchor::BottomCenter)
+                .motion(toast_motion())
+                .close_on_escape(false)
+                .w_full()
+                .pointer_events(PointerEvents::BoxNone)
+                .child(each(
+                    shown,
+                    |message: &Visible| message.id,
+                    |message, _| {
+                        view()
+                            .items_center()
+                            .pointer_events(PointerEvents::BoxNone)
+                            .child(bubble(message))
+                    },
+                )),
+        )
 }
 
-fn bubble(message: Message) -> impl IntoElement {
-    let still = reduce_motion();
-    let shown = animated_value(if still { 1.0 } else { 0.0 });
-    if !still {
-        shown.timing(1.0, motion::SLOW, Easing::EaseOut);
-    }
-    let id = message.id;
-    // Leaving reverses the entrance on the same bound values: the bubble
-    // sinks the few points it rose and fades before the state removes it.
-    let leaving = stored(message.leaving);
-    effect(move || {
-        let leaving_now =
-            state().with(|s| s.current.as_ref().is_some_and(|m| m.id == id && m.leaving));
-        if leaving_now && !leaving.replace(true) && !still {
-            shown.timing(0.0, motion::FAST, Easing::EaseIn);
-        }
-    });
-    view()
-        .bind_opacity(&shown)
-        .bind_translate_y(&shown.interpolate(&[0.0, 1.0], &[16.0, 0.0]))
+fn bubble(message: ReadSignal<Visible>) -> impl IntoElement {
+    let initial = message.get_untracked();
+    let id = initial.id;
+    toast()
+        .transition_status(move || message.get().status)
+        .swipe_direction(None)
+        .transition_all()
+        .duration(move || {
+            if reduce_motion() {
+                0.0
+            } else if message.get().status == ToastTransitionStatus::Ending {
+                motion::FAST
+            } else {
+                motion::SLOW
+            }
+        })
+        .ease_out()
+        .starting_class("opacity-0 translate-y-4")
+        .ending_class("opacity-0 translate-y-4 ease-in")
         .flex_row()
         .items_center()
         .gap_3()
-        // The centered host does not stretch children. Bound the bubble so
-        // long error copy wraps instead of moving the action off-screen.
         .max_w(relative(1.0))
         .py_2()
         .pl_5()
-        .pr(px(if message.action.is_some() { 8.0 } else { 20.0 }))
+        .pr(px(if initial.action.is_some() { 8.0 } else { 20.0 }))
         .min_h(px(52.0))
         .rounded_full()
         .bg(color::INK)
         .lift(&shadow::FLOAT)
         .child(
-            text(message.text.clone())
+            text(initial.text)
                 .typo(Type::Callout)
                 .text_color(color::CANVAS)
                 .min_w(px(0.0))
                 .flex_shrink(1.0),
         )
         .child(when(
-            move || {
-                state().with(|s| {
-                    s.current
-                        .as_ref()
-                        .is_some_and(|m| m.id == id && m.view_label.is_some())
-                })
-            },
-            move || {
-                let label = state().with_untracked(|s| {
-                    s.current
-                        .as_ref()
-                        .and_then(|m| m.view_label.clone())
-                        .unwrap_or_default()
-                });
-                action_button(id, label, true)
-            },
+            move || message.get().view.is_some(),
+            move || action_button(id, message.get_untracked().view.unwrap_or_default(), true),
         ))
-        .child(message.action.map(|label| action_button(id, label, false)))
+        .child(initial.action.map(|label| action_button(id, label, false)))
 }
 
 fn action_button(id: u64, label: SharedString, view: bool) -> impl IntoElement {
     button()
         .flex_shrink_0()
         .on_press(move || {
-            if !state().with_untracked(|s| s.current.as_ref().is_some_and(|m| m.id == id)) {
-                return;
+            let run = state().with_untracked(|s| {
+                let message = s.manager.get(&id)?;
+                if view {
+                    (!s.hide_view).then_some(message.view.as_ref()).flatten()
+                } else {
+                    message.action.as_ref()
+                }
+                .map(|(_, run)| run.clone())
+            });
+            // Clear before calling: an action can show a new retry message.
+            if run.is_some() {
+                state().update(|s| s.manager = ToastManager::new(toast_motion()));
             }
-            let run = if view {
-                VIEW.with(|slot| slot.borrow_mut().take())
-            } else {
-                ACTION.with(|slot| slot.borrow_mut().take())
-            };
-            remove(id);
             if let Some(run) = run {
                 run();
             }
@@ -266,3 +291,6 @@ fn action_button(id: u64, label: SharedString, view: bool) -> impl IntoElement {
                 .text_color(color::ON_ACTION),
         )
 }
+
+#[cfg(test)]
+mod tests;

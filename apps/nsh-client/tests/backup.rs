@@ -442,13 +442,18 @@ fn dav_authentication_errors_and_redirects_are_visible_without_sending_credentia
             None,
         );
         app.press("label:Settings")?;
-        app.wait_for(if status == 401 {
-            "text:Automatic backup on · The WebDAV account or password is wrong."
-        } else if status == 503 {
-            "text:Automatic backup on · The WebDAV server answered 503."
-        } else {
-            "text:Automatic backup on · The WebDAV server answered 302."
-        })?;
+        // The automatic backup encrypts with real Argon2 before reaching
+        // this server; parallel backup flows can exceed the normal UI wait.
+        app.wait_for_within(
+            if status == 401 {
+                "text:Automatic backup on · The WebDAV account or password is wrong."
+            } else if status == 503 {
+                "text:Automatic backup on · The WebDAV server answered 503."
+            } else {
+                "text:Automatic backup on · The WebDAV server answered 302."
+            },
+            Duration::from_secs(30),
+        )?;
         assert!(destination.requests().is_empty());
     }
     Ok(())
@@ -630,9 +635,17 @@ fn restore_uses_new_references_for_conflicting_photos_and_preserves_local_files(
 -> Result<(), String> {
     let dav = Dav::new();
     backup_with_photo(&dav, vec![("m1.jpg".into(), photo())]);
-    let (mut app, _, dir) = fresh_with(&dav, "correct horse battery", false);
-    std::fs::create_dir_all(photo_dir(dir.path())).unwrap();
-    std::fs::write(photo_dir(dir.path()).join("m1.jpg"), b"local photo").unwrap();
+    let dir = tempfile::tempdir().unwrap();
+    let mut entries = backups(&dav, "correct horse battery", Some(today().to_string()));
+    let mut meals: Value = serde_json::from_str(&pasta_today()[0].1).unwrap();
+    meals["meals"][0]["photo"] = json!("m1.jpg");
+    entries.push(("meals.v1".into(), meals.to_string()));
+    // The colliding photo belongs to an existing record before startup.
+    // An unreferenced file added after startup races the orphan sweep.
+    let photos = dir.path().join("meal-photos");
+    std::fs::create_dir_all(&photos).unwrap();
+    std::fs::write(photos.join("m1.jpg"), b"local photo").unwrap();
+    let (mut app, _) = start_in(Some(dir.path()), entries, None);
     restore_latest(&mut app, &dav)?;
     wait_for_restore(&mut app, "text:Backup restored")?;
     let restored = stored_meals(dir.path());

@@ -409,7 +409,7 @@ fn weight_card(days: Memo<Vec<Day>>) -> impl IntoElement {
                     Scale::Section,
                 ))
                 .child(
-                    view()
+                    nsh_base::toggle_group()
                         .flex_row()
                         .gap_2()
                         .child(chip(

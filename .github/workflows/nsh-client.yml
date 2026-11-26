@@ -21,7 +21,7 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
-  NSH_VERSION: v0.6.1
+  NSH_VERSION: v0.7.1
   # What nsh-platform-linux links (as nsh's own CI installs them).
   LINUX_PACKAGES: clang libclang-dev libgtk-4-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
 
@@ -48,6 +48,13 @@ jobs:
         run: |
           npm ci --ignore-scripts --no-audit
           npm run format:check
+      - name: Cache Linux backend libraries
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/apt/archives
+          # Bump v1 when LINUX_PACKAGES changes; image refreshes only
+          # re-download the few packages whose versions moved.
+          key: apt-gtk4-gstreamer-ubuntu24.04-v1
       - name: Linux backend libraries (GTK 4, GStreamer)
         run: |
           sudo apt-get update
@@ -71,6 +78,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
       - name: Android SDK platform, build tools and NDK
         run: |
           sdkmanager="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
@@ -84,8 +92,9 @@ jobs:
       - name: Check the mixed TSX entry and scale flows
         run: |
           nsh check
-          nsh test tests/scale-mixed.test.ts --filter "scale mixed"
-          nsh test tests/share-mixed.test.ts --filter "share mixed"
+          # One run loads every test file but executes only the mixed ones; a
+          # second `nsh test` would redo its whole filtered cargo test pass.
+          nsh test --filter mixed
       - name: Package the mixed app in the Android BLE host
         env:
           DIAGNOSTICS: ${{ inputs.diagnostics }}
@@ -127,7 +136,7 @@ jobs:
           retention-days: 14
 
   publish:
-    name: Publish the tag's release (APK + SHA256SUMS)
+    name: Publish the tag's release (APK, manifest and SHA256SUMS)
     runs-on: ubuntu-24.04
     needs: release
     # Manual dispatches on a branch verify the crate without publishing;
@@ -171,15 +180,33 @@ jobs:
           title="$(git tag -l --format='%(contents:subject)' "$tag")"
           printf '%s' "$tag" > tag.txt
           printf '%s' "$title" > title.txt
-      - name: Create the release with the APK and SHA256SUMS
+      - name: Install pinned NSH CLI for its official update manifest
+        run: |
+          curl -fsSL "https://github.com/longbridge/nsh/releases/download/${NSH_VERSION}/install.sh" | sh
+          echo "$HOME/.nsh/bin" >> "$GITHUB_PATH"
+      - name: Write the Android update manifest
+        run: |
+          tag="$(cat tag.txt)"
+          python3 - "$tag" <<'PY'
+          import json, pathlib, sys, tomllib
+          app = pathlib.Path("apps/nsh-client")
+          metadata = json.loads((app / "nsh.json").read_text())
+          crate = tomllib.loads((app / "Cargo.toml").read_text())
+          if sys.argv[1] != "nsh-v" + metadata["version"] or metadata["version"] != crate["package"]["version"]:
+              raise SystemExit("The release tag, app metadata and Rust version must match")
+          PY
+          nsh update-manifest --entry apps/nsh-client --notes notes.md \
+            --link "android=https://github.com/${GITHUB_REPOSITORY}/releases/tag/$tag" --out artifact
+          (cd artifact && sha256sum NaviWealth.apk latest.json > SHA256SUMS)
+      - name: Create the release with the APK, manifest and SHA256SUMS
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           tag="$(cat tag.txt)"
           title="$(cat title.txt)"
           if gh release view "$tag" > /dev/null 2>&1; then
-            gh release upload "$tag" --clobber artifact/NaviWealth.apk artifact/SHA256SUMS
+            gh release upload "$tag" --clobber artifact/NaviWealth.apk artifact/latest.json artifact/SHA256SUMS
           else
             gh release create "$tag" --latest --title "$title" --notes-file notes.md \
-              artifact/NaviWealth.apk artifact/SHA256SUMS
+              artifact/NaviWealth.apk artifact/latest.json artifact/SHA256SUMS
           fi

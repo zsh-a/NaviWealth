@@ -1,10 +1,12 @@
-//! The update check in Settings, against a stubbed public releases API.
+//! The update check in Settings, against a stubbed official NSH update manifest.
 
 mod common;
 
 use common::*;
 use naviwealth_app::set_live_updates;
 use nsh_core::{Points, Size};
+use nsh_testing::StubRoute;
+use std::sync::Mutex;
 
 fn newer_version() -> String {
     let version = env!("CARGO_PKG_VERSION");
@@ -15,42 +17,35 @@ fn newer_version() -> String {
     format!("{major}.{minor}.{}", patch + 1)
 }
 
-fn releases() -> serde_json::Value {
-    serde_json::json!([
-        {
-            // The retired Flutter channel: not the app's releases.
-            "tag_name": "v0.9.34",
-            "prerelease": false,
-            "draft": false,
-            "published_at": "2026-11-14T00:00:00Z",
-            "body": "flutter"
-        },
-        {
-            // Always newer than the running build, including after release bumps.
-            "tag_name": format!("nsh-v{}", newer_version()),
-            "prerelease": false,
-            "draft": false,
-            "published_at": "2026-11-14T07:00:00Z",
-            "body": "A newer release, with notes worth reading."
-        },
-        {
-            "tag_name": "nsh-v0.9.0",
-            "prerelease": false,
-            "draft": false,
-            "published_at": "2026-11-13T13:00:00Z",
-            "body": "the running one"
-        }
-    ])
+const MANIFEST_URL: &str =
+    "https://github.com/zsh-a/NaviWealth/releases/latest/download/latest.json";
+
+fn manifest(version: &str) -> serde_json::Value {
+    serde_json::json!({
+        "id": "com.naviwealth.app",
+        "version": version,
+        "notes": "A newer release, with notes worth reading.",
+        "platforms": { "android": {
+            "url": format!("https://github.com/zsh-a/NaviWealth/releases/tag/nsh-v{version}")
+        }}
+    })
 }
 
 #[test]
 fn settings_offers_a_newer_release_with_its_page() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
+    let answer = Arc::new(Mutex::new(raw(
+        200,
+        &manifest(&newer_version()).to_string(),
+    )));
+    let reply = answer.clone();
     let network = Arc::new(StubNetwork::new([(
-        "GET https://api.github.com/repos/zsh-a/NaviWealth/releases*".to_owned(),
-        raw(200, &releases().to_string()),
+        format!("GET {MANIFEST_URL}"),
+        StubRoute::Handler(Arc::new(move |_, send| {
+            send.send(reply.lock().unwrap().clone());
+        })),
     )]));
-    let (mut app, _) = start_in(Some(dir.path()), Vec::new(), Some(network));
+    let (mut app, storage) = start_in(Some(dir.path()), Vec::new(), Some(network.clone()));
     // A tall viewport keeps the whole settings page laid out, so the
     // check button is pressable where it sits.
     app.set_viewport(Size::new(Points(360.0), Points(2400.0)))?;
@@ -68,5 +63,50 @@ fn settings_offers_a_newer_release_with_its_page() -> Result<(), String> {
     ))?;
     app.wait_for("text:A newer release, with notes worth reading.")?;
     app.wait_for("text:Open the release page")?;
+    let requests = network.requests();
+    assert_eq!(requests.len(), 1);
+    assert_eq!(requests[0].url, MANIFEST_URL);
+    assert!(
+        requests[0]
+            .headers
+            .iter()
+            .all(|(name, _)| !name.eq_ignore_ascii_case("authorization"))
+    );
+
+    // A failed refresh leaves the prior checked manifest available, including
+    // its release link and notes, and does not mark the failure as a new check.
+    let kept = storage.entries();
+    assert!(kept.contains_key("updates.v2"));
+    *answer.lock().unwrap() = raw(503, "temporarily unavailable");
+    app.press("Check for updates")?;
+    app.wait_for("text:The check failed. Showing the last answer.")?;
+    app.wait_for("text:Open the release page")?;
+    assert_eq!(storage.entries().get("updates.v2"), kept.get("updates.v2"));
+
+    // Restart offline: the last valid manifest still offers the release and
+    // no request is needed to read it from local preferences.
+    drop(app);
+    let before_restart = network.requests().len();
+    let (mut app, _) = start_in(
+        Some(dir.path()),
+        kept.into_iter().collect(),
+        Some(network.clone()),
+    );
+    app.set_viewport(Size::new(Points(360.0), Points(2400.0)))?;
+    set_live_updates(true);
+    app.press("label:Settings")?;
+    app.press(&format!(
+        "label:Update, v{current} · Update available · v{}",
+        newer_version()
+    ))?;
+    app.wait_for("text:Open the release page")?;
+    assert_eq!(network.requests().len(), before_restart);
+
+    // A successful current-version manifest clears an earlier update. It is
+    // still a completed check, not the initial Never checked state.
+    *answer.lock().unwrap() = raw(200, &manifest(current).to_string());
+    app.press("Check for updates")?;
+    app.wait_for(&format!("text:Up to date · v{current}"))?;
+    app.wait_for_gone("text:Open the release page", GONE)?;
     Ok(())
 }

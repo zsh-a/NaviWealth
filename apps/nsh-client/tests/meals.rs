@@ -345,15 +345,27 @@ fn portions_keep_one_selected_factor_when_grams_round_to_the_same_value() -> Res
     app.press("Tomato pasta")?;
     app.press("text:Pasta")?;
     app.wait_for("text:1×")?;
-    assert!(app.screen().selected("role:button[1×]")?);
+    assert!(
+        app.screen().accessibility_state("role:button[1×]")?.pressed
+            == Some(nsh_core::Checked::True)
+    );
     app.press("text:¾×")?;
-    assert!(app.screen().selected("role:button[¾×]")?);
-    assert!(!app.screen().selected("role:button[1×]")?);
+    assert!(
+        app.screen().accessibility_state("role:button[¾×]")?.pressed
+            == Some(nsh_core::Checked::True)
+    );
+    assert!(
+        app.screen().accessibility_state("role:button[1×]")?.pressed
+            == Some(nsh_core::Checked::False)
+    );
     app.press("text:2×")?;
     assert_eq!(app.screen().input_text("label:Amount eaten")?, Some("4"));
     app.clear("label:Amount eaten")?;
     app.type_text("label:Amount eaten", "7")?;
-    assert!(!app.screen().selected("role:button[2×]")?);
+    assert!(
+        app.screen().accessibility_state("role:button[2×]")?.pressed
+            == Some(nsh_core::Checked::False)
+    );
     Ok(())
 }
 

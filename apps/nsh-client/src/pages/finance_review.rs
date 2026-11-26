@@ -17,7 +17,7 @@ use nsh_core::{element::Screen, prelude::*};
 
 /// The currencies the ledger holds, as chips beside the card's title.
 fn currency_chips(selected: Signal<Currency>) -> impl IntoElement {
-    view()
+    nsh_base::toggle_group()
         .flex_row()
         .gap_2()
         .children(Currency::ALL.into_iter().map(move |c| {

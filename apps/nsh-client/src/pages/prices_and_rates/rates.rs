@@ -9,7 +9,6 @@ use crate::{
     nav,
     ui::{
         Btn, Type, Typo, color, space,
-        surface::row_button,
         trend::{self, ChartDates, Unit, Window},
     },
 };
@@ -17,6 +16,7 @@ use navi_finance::{
     currency::{self, Currency, FxRate},
     holdings::format_units,
 };
+use nsh_base::{tab, tabs};
 use nsh_core::prelude::*;
 
 pub(super) fn panel(choice: Signal<Option<Currency>>) -> impl IntoElement {
@@ -71,13 +71,24 @@ pub(super) fn panel(choice: Signal<Option<Currency>>) -> impl IntoElement {
     view()
         .gap_3()
         .child(
-            view()
+            tabs()
                 .flex_row()
                 .gap_3()
+                .accessibility_label(|| Some(copy("Currency pair", "货币对").into()))
                 .children([Currency::USD, Currency::HKD].map(move |c| {
                     let is_selected = move || selected.get() == c;
-                    row_button(move || choice.set(Some(c)))
+                    tab()
+                        .on_press(move || choice.set(Some(c)))
                         .selected(is_selected)
+                        .flex_row()
+                        .items_center()
+                        .gap_3()
+                        .min_h(px(68.0))
+                        .transition_colors()
+                        .duration(crate::ui::theme::motion::INSTANT)
+                        .hover(|s| s.bg(color::SURFACE_2))
+                        .active(|s| s.bg(color::SUNKEN))
+                        .focus_visible(|s| s.bg(color::SURFACE_2))
                         .px_0()
                         .py_2()
                         .flex_1()

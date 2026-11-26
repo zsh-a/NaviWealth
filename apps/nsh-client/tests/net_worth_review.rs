@@ -182,7 +182,11 @@ fn assets_explains_the_inspected_close_from_the_first_plotted_close() -> Result<
     app.press("text:Close")?;
     app.wait_for_gone("task-sheet", GONE)?;
     app.wait_for("text:/^Correction · /")?;
-    app.drag_and_hold("id:trend-inspector", point(px(0.0), px(0.0)))?;
+    app.drag_and_hold(
+        "id:trend-inspector",
+        point(px(0.0), px(0.0)),
+        Default::default(),
+    )?;
     app.drop_held()?;
     app.wait_for("text:¥97.50")?;
     assert!(!app.shows("text:−¥12.50"));

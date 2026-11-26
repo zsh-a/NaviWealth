@@ -3,9 +3,9 @@
 //! under a day with a weight, today outlined. It replaces the month's bars,
 //! where 31 thin columns were hard to read.
 
-use std::rc::Rc;
+use std::{collections::BTreeMap, rc::Rc};
 
-use nsh_base::button;
+use nsh_base::{CalendarEntry, CalendarItemKind, Date, Matcher};
 use nsh_core::prelude::*;
 
 use crate::{
@@ -35,30 +35,6 @@ pub fn shade(kcal: f64, goal: Option<f64>) -> f32 {
         Some(goal) if goal > 0.0 => (0.3 + 0.7 * (kcal / goal).clamp(0.0, 1.0)) as f32,
         _ => 1.0,
     }
-}
-
-/// The month of `days` (its first day onward) as weeks of seven cells
-/// starting on `start`; `None` pads before the first and after the last day.
-pub fn weeks(days: &[CalendarDay], start: WeekStart) -> Vec<[Option<CalendarDay>; 7]> {
-    let Some(first) = days.first() else {
-        return Vec::new();
-    };
-    let monday_offset = i32::from(first.day.0.weekday().to_monday_zero_offset());
-    let lead = match start {
-        WeekStart::Monday => monday_offset,
-        WeekStart::Sunday => (monday_offset + 1) % 7,
-    } as usize;
-    let cells: Vec<Option<CalendarDay>> = std::iter::repeat_n(None, lead)
-        .chain(days.iter().copied().map(Some))
-        .collect();
-    cells
-        .chunks(7)
-        .map(|chunk| {
-            let mut week = [None; 7];
-            week[..chunk.len()].copy_from_slice(chunk);
-            week
-        })
-        .collect()
 }
 
 /// The month's days through its last day: the reviewed `days` with their
@@ -99,54 +75,67 @@ pub fn calendar(
     goal: Option<f64>,
     start: WeekStart,
     pick: Option<Pick>,
-) -> impl IntoElement {
+) -> AnyElement {
+    let Some(first) = days.first() else {
+        return view().into_element();
+    };
+    let anchor = Date::Single(first.day.to_string().parse().ok());
     let today = untracked(clock::today);
-    let rows = weeks(&days, start);
-    let heads = rows
-        .first()
-        .map(|_| {
-            // Any seven consecutive days name the columns; take the week
-            // that starts on `start` around the month's first day.
-            let first = days[0].day;
-            let lead = rows[0].iter().take_while(|c| c.is_none()).count() as i32;
-            (0..7)
-                .map(|i| s().weekday_short(first.plus_days(i - lead)))
-                .collect::<Vec<_>>()
+    let cells: Rc<BTreeMap<String, CalendarDay>> = Rc::new(
+        days.into_iter()
+            .map(|cell| (cell.day.to_string(), cell))
+            .collect(),
+    );
+    let enabled = cells.clone();
+    let can_pick = pick.is_some();
+    nsh_base::calendar()
+        // The surrounding Review / Records task owns month navigation.
+        .value(anchor)
+        .header_style(|s| s.hidden())
+        .first_day_of_week(match start {
+            WeekStart::Sunday => 0u32,
+            WeekStart::Monday => 1u32,
         })
-        .unwrap_or_default();
-    view()
-        .gap(px(6.0))
-        .child(
-            view()
-                .flex_row()
-                .gap(px(4.0))
-                .children(heads.into_iter().map(|head| {
-                    text(head)
-                        .typo(Type::Caption)
-                        .text_color(color::MUTED)
-                        .text_center()
-                        .number_of_lines(1)
-                        .flex_1()
-                })),
-        )
-        .children(rows.into_iter().map(move |week| {
-            let pick = pick.clone();
-            view()
-                .flex_row()
-                .gap(px(4.0))
-                .children(week.map(move |cell| day_cell(cell, goal, today, pick.clone())))
+        .disabled_matcher(Matcher::custom(move |date| {
+            !can_pick
+                || enabled.get(&date.to_string()).is_none_or(|cell| {
+                    cell.day > today
+                        || (cell.kcal.is_none() && !cell.weighed && !cell.has_transactions)
+                })
         }))
+        .month_style(|s| s.gap(px(6.0)))
+        .row_style(|s| s.gap(px(4.0)))
+        .item_class("data-outside:invisible active:opacity-60 focus-visible:outline-2 focus-visible:outline-foreground")
+        .item_style(|s| s.rounded(px(radius::BADGE + 4.0)))
+        .render_item(move |item: &CalendarEntry| match item.kind {
+            CalendarItemKind::Weekday => {
+                text(s().weekday_short(Day(jiff::civil::date(2026, 11, 1)).plus_days(item.value)))
+                    .typo(Type::Caption)
+                    .text_color(color::MUTED)
+                    .text_center()
+                    .number_of_lines(1)
+                    .into_element()
+            }
+            CalendarItemKind::Day => item
+                .date
+                .as_ref()
+                .and_then(|date| cells.get(date.as_str()))
+                .filter(|_| !item.outside)
+                .map(|cell| day_face(*cell, goal, today, can_pick))
+                .unwrap_or_else(|| view().h(px(CELL)).into_element()),
+            _ => view().into_element(),
+        })
+        .on_change(move |date: &Date| {
+            if let Some(pick) = &pick
+                && let Some(day) = date.start().and_then(|date| date.to_string().parse().ok())
+            {
+                pick(day);
+            }
+        })
+        .into_element()
 }
 
-fn day_cell(
-    cell: Option<CalendarDay>,
-    goal: Option<f64>,
-    today: Day,
-    pick: Option<Pick>,
-) -> AnyElement {
-    let Some(cell) = cell else {
-        return view().flex_1().h(px(CELL)).into_element();
-    };
+fn day_face(cell: CalendarDay, goal: Option<f64>, today: Day, can_pick: bool) -> AnyElement {
     let over = matches!((cell.kcal, goal), (Some(k), Some(g)) if g > 0.0 && k > g);
     let future = cell.day > today;
     let (fill, ink) = match cell.kcal {
@@ -154,7 +143,7 @@ fn day_cell(
         Some(kcal) => (Some(color::HEAT.opacity(shade(kcal, goal))), color::INK),
         None if future => (None, color::FAINT.opacity(0.5)),
         // A weight alone makes a day a place to go when picking.
-        None if (cell.weighed || cell.has_transactions) && pick.is_some() => (None, color::BODY),
+        None if (cell.weighed || cell.has_transactions) && can_pick => (None, color::BODY),
         None => (None, color::MUTED),
     };
     let label = match cell.kcal {
@@ -166,52 +155,40 @@ fn day_cell(
         ),
         None => s().long_date(cell.day),
     };
-    let face =
-        view()
-            .flex_1()
-            .h(px(CELL))
-            .items_center()
-            .justify_center()
-            .gap(px(2.0))
-            .rounded(px(radius::BADGE + 4.0))
-            .style_when(
-                move || fill.is_some(),
-                move |s| s.bg(fill.unwrap_or(color::TRACK)),
-            )
-            .style_when(
-                move || cell.day == today,
-                |s| s.border(px(1.5)).border_color(color::INK),
-            )
-            .child(
-                text(cell.day.0.day().to_string())
-                    .typo(Type::Caption)
-                    .tabular_nums()
-                    .text_color(ink),
-            )
-            .child(view().size(px(4.0)).rounded_full().bg(
-                if cell.weighed || cell.has_transactions {
+    view()
+        .w_full()
+        .h(px(CELL))
+        .items_center()
+        .justify_center()
+        .gap(px(2.0))
+        .rounded(px(radius::BADGE + 4.0))
+        .style_when(
+            move || fill.is_some(),
+            move |s| s.bg(fill.unwrap_or(color::TRACK)),
+        )
+        .style_when(
+            move || cell.day == today,
+            |s| s.border(px(1.5)).border_color(color::INK),
+        )
+        .child(
+            text(cell.day.0.day().to_string())
+                .typo(Type::Caption)
+                .tabular_nums()
+                .text_color(ink),
+        )
+        .child(
+            view()
+                .size(px(4.0))
+                .rounded_full()
+                .bg(if cell.weighed || cell.has_transactions {
                     color::MUTED
                 } else {
                     AdaptiveColor::TRANSPARENT
-                },
-            ));
-    let recorded = cell.kcal.is_some() || cell.weighed || cell.has_transactions;
-    match pick.filter(|_| recorded) {
-        Some(pick) => button()
-            .on_press(move || pick(cell.day))
-            .flex_1()
-            .rounded(px(radius::BADGE + 4.0))
-            .active(|s| s.opacity(0.6))
-            .accessibility_label(move || Some(label.clone().into()))
-            .child(face)
-            .into_element(),
-        None => view()
-            .flex_1()
-            .accessible(true)
-            .label(SharedString::from(label))
-            .child(face)
-            .into_element(),
-    }
+                }),
+        )
+        .accessible(true)
+        .label(SharedString::from(label))
+        .into_element()
 }
 
 #[cfg(test)]
@@ -223,23 +200,113 @@ mod tests {
     }
 
     #[test]
-    fn weeks_pad_to_the_chosen_first_weekday() {
-        // November 2026 starts on a Sunday.
+    fn the_month_keeps_records_and_pads_future_days_without_inventing_them() {
         let days = month_days(
             &[day("2026-11-01"), day("2026-11-02")],
             &[None, Some(1800.0)],
             &[false, true],
         );
         assert_eq!(days.len(), 30);
-        let monday = weeks(&days, WeekStart::Monday);
-        assert_eq!(monday[0].iter().filter(|c| c.is_none()).count(), 6);
-        assert_eq!(monday[0][6].unwrap().day, day("2026-11-01"));
-        assert_eq!(monday.len(), 6);
-        let sunday = weeks(&days, WeekStart::Sunday);
-        assert_eq!(sunday[0][0].unwrap().day, day("2026-11-01"));
-        assert_eq!(sunday.len(), 5);
+        assert_eq!(days[0].day, day("2026-11-01"));
         assert!(days[1].weighed && days[1].kcal == Some(1800.0));
-        assert!(days[29].kcal.is_none());
+        assert!(
+            days[2..]
+                .iter()
+                .all(|day| day.kcal.is_none() && !day.weighed && !day.has_transactions)
+        );
+    }
+
+    #[component]
+    fn CalendarFixture() -> impl IntoElement {
+        let monday = signal(false);
+        let december = signal(false);
+        let picked = signal(String::new());
+        view()
+            .w(px(350.0))
+            .child(
+                nsh_base::button()
+                    .child(text("Monday first"))
+                    .on_press(move || monday.set(true)),
+            )
+            .child(
+                nsh_base::button()
+                    .child(text("December"))
+                    .on_press(move || december.set(true)),
+            )
+            .child(dynamic(move || {
+                let first = day(if december.get() {
+                    "2020-12-01"
+                } else {
+                    "2020-11-01"
+                });
+                let mut cells = month_days(
+                    &(0..4).map(|n| first.plus_days(n)).collect::<Vec<_>>(),
+                    &[None, Some(1800.0), None, None],
+                    &[false, false, true, false],
+                );
+                cells[3].has_transactions = true;
+                calendar(
+                    cells,
+                    Some(2000.0),
+                    if monday.get() {
+                        WeekStart::Monday
+                    } else {
+                        WeekStart::Sunday
+                    },
+                    Some(Rc::new(move |day| picked.set(day.to_string()))),
+                )
+            }))
+            .child(text(move || format!("Picked {}", picked.get())))
+    }
+
+    #[test]
+    fn official_calendar_keeps_local_week_alignment_and_record_only_picking() -> Result<(), String>
+    {
+        use nsh_engine::{EngineConfig, Root};
+        use nsh_testing::Headless;
+        let mut app = Headless::start(EngineConfig::new(Root::of::<CalendarFixture>())).unwrap();
+        app.wait_for("label:2020-11-01")?;
+        let first = app.screen().layout("label:2020-11-01")?.unwrap().bounds;
+        let second = app.screen().layout("label:2020-11-02")?.unwrap().bounds;
+        assert!(first.origin.x < second.origin.x);
+        assert_eq!(first.origin.y, second.origin.y);
+        assert!(!app.screen().enabled("label:2020-11-01")?);
+        assert!(app.screen().enabled("label:2020-11-02")?);
+        assert!(app.screen().enabled("label:2020-11-03")?);
+        assert!(app.screen().enabled("label:2020-11-04")?);
+        assert!(!app.screen().enabled("label:2020-11-05")?);
+        app.press("label:2020-11-03")?;
+        app.wait_for("Picked 2020-11-03")?;
+        app.press("Monday first")?;
+        let first = app.screen().layout("label:2020-11-01")?.unwrap().bounds;
+        let second = app.screen().layout("label:2020-11-02")?.unwrap().bounds;
+        assert!(first.origin.x > second.origin.x);
+        assert!(first.origin.y < second.origin.y);
+        app.press("December")?;
+        app.wait_for("label:2020-12-02")?;
+        assert!(!app.shows("label:2020-11-02"));
+        app.press("label:2020-12-04")?;
+        app.wait_for("Picked 2020-12-04")?;
+        Ok(())
+    }
+
+    #[test]
+    fn future_dates_stay_disabled_even_if_a_source_contains_a_future_record() -> Result<(), String>
+    {
+        use nsh_engine::{EngineConfig, Root};
+        use nsh_testing::Headless;
+        let mut config = EngineConfig::new(Root::of::<CalendarFixture>());
+        config.environment.locale_settings.time_zone =
+            nsh_core::platform::TimeZone::parse("UTC").unwrap();
+        let now: jiff::Timestamp = "2020-11-03T12:00:00Z".parse().unwrap();
+        config.clock = nsh_core::time::Clock::manual(
+            std::time::UNIX_EPOCH + std::time::Duration::from_millis(now.as_millisecond() as u64),
+        );
+        let mut app = Headless::start(config).unwrap();
+        app.wait_for("label:2020-11-03")?;
+        assert!(app.screen().enabled("label:2020-11-03")?);
+        assert!(!app.screen().enabled("label:2020-11-04")?);
+        Ok(())
     }
 
     #[test]

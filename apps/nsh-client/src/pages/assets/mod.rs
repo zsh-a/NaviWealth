@@ -435,7 +435,8 @@ fn check_history(own: Signal<Account>, entry: Signal<Option<String>>) -> AnyElem
                 .text_color(color::MUTED)
                 .into_element();
         };
-        view()
+        nsh_base::collapsible()
+            .open(open)
             .gap_2()
             .child(
                 crate::ui::surface::disclosure(open, move || checked_through(latest).into())
@@ -445,40 +446,36 @@ fn check_history(own: Signal<Account>, entry: Signal<Option<String>>) -> AnyElem
                         Some(format!("{title}, {}", checked_through(latest)).into())
                     }),
             )
-            .child(when(
-                move || open.get(),
-                move || {
-                    let account = account.clone();
-                    let checks = checks.clone();
-                    dynamic(move || {
-                        let txs = finance::transactions_snapshot();
-                        let linked = txs
-                            .iter()
-                            .map(|t| (t.id.as_str(), t))
-                            .collect::<std::collections::HashMap<_, _>>();
-                        let limit = shown.get();
-                        let mut rows = checks
-                            .iter()
-                            .rev()
-                            .filter(|c| c.account == account)
-                            .collect::<Vec<_>>();
-                        rows.sort_by_key(|c| std::cmp::Reverse((c.day, c.checked_at)));
-                        let more = rows.len() > limit;
-                        rows.truncate(limit);
-                        view()
-                            .children(
-                                rows.into_iter().map(|c| {
-                                    check_row(c, linked.get(c.id.as_str()).copied(), entry)
-                                }),
-                            )
-                            .child(more.then(|| {
-                                Btn::secondary()
-                                    .label(|| s().show_earlier.into())
-                                    .on_press(move || shown.update(|n| *n += 20))
-                            }))
-                    })
-                },
-            ))
+            .content(dynamic(move || {
+                let account = account.clone();
+                let checks = checks.clone();
+                dynamic(move || {
+                    let txs = finance::transactions_snapshot();
+                    let linked = txs
+                        .iter()
+                        .map(|t| (t.id.as_str(), t))
+                        .collect::<std::collections::HashMap<_, _>>();
+                    let limit = shown.get();
+                    let mut rows = checks
+                        .iter()
+                        .rev()
+                        .filter(|c| c.account == account)
+                        .collect::<Vec<_>>();
+                    rows.sort_by_key(|c| std::cmp::Reverse((c.day, c.checked_at)));
+                    let more = rows.len() > limit;
+                    rows.truncate(limit);
+                    view()
+                        .children(
+                            rows.into_iter()
+                                .map(|c| check_row(c, linked.get(c.id.as_str()).copied(), entry)),
+                        )
+                        .child(more.then(|| {
+                            Btn::secondary()
+                                .label(|| s().show_earlier.into())
+                                .on_press(move || shown.update(|n| *n += 20))
+                        }))
+                })
+            }))
             .into_element()
     })
     .into_element()

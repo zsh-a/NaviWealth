@@ -1,8 +1,8 @@
 //! Body profile and weight goals. Valid changes are kept as they are made.
 
 use nsh_base::{
-    CalendarEntry, CalendarItemKind, DateTime, PickedDate, date_picker, nav_page, radio,
-    radio_group,
+    CalendarEntry, CalendarItemKind, DateTime, PickedDate, collapsible, date_picker, nav_page,
+    radio, radio_group,
 };
 use nsh_core::{element::Screen, prelude::*};
 
@@ -120,69 +120,72 @@ fn algorithm_settings() -> impl IntoElement {
             s().algorithm_details.into()
         }))
         .child(
-            radio_group().children(Algorithm::ALL.into_iter().map(|algorithm| {
-                let chosen = move || settings::scale_algorithm() == algorithm;
-                radio()
-                    .checked(chosen)
-                    .on_change(move |checked: &bool| {
-                        if *checked && settings::save_scale_algorithm(algorithm).is_err() {
-                            crate::ui::toast::show_toast(s().algorithm_save_failed, None);
-                        }
-                    })
-                    .flex_row()
-                    .gap_3()
-                    .py_3()
-                    .min_h(px(52.0))
-                    .items_start()
-                    .accessibility_label(move || {
-                        Some(
-                            format!(
-                                "{}, {}",
-                                s().scale_algorithm,
-                                crate::scale::algorithm_name(algorithm)
+            radio_group()
+                .accessibility_label(|| Some(s().scale_algorithm.into()))
+                .children(Algorithm::ALL.into_iter().map(|algorithm| {
+                    let chosen = move || settings::scale_algorithm() == algorithm;
+                    radio()
+                        .checked(chosen)
+                        .on_change(move |checked: &bool| {
+                            if *checked && settings::save_scale_algorithm(algorithm).is_err() {
+                                crate::ui::toast::show_toast(s().algorithm_save_failed, None);
+                            }
+                        })
+                        .flex_row()
+                        .gap_3()
+                        .py_3()
+                        .min_h(px(52.0))
+                        .items_start()
+                        .accessibility_label(move || {
+                            Some(
+                                format!(
+                                    "{}, {}",
+                                    s().scale_algorithm,
+                                    crate::scale::algorithm_name(algorithm)
+                                )
+                                .into(),
                             )
-                            .into(),
-                        )
-                    })
-                    .active(|s| s.bg(color::SUNKEN))
-                    .focus_visible(|s| s.bg(color::SURFACE_2))
-                    .child(
-                        view()
-                            .flex_1()
-                            .min_w(px(0.0))
-                            .gap_1()
-                            .child(
-                                text(move || {
-                                    if algorithm.experimental() {
-                                        format!(
-                                            "{} · {}",
-                                            crate::scale::algorithm_name(algorithm),
-                                            s().algorithm_experimental
-                                        )
-                                    } else {
-                                        crate::scale::algorithm_name(algorithm).to_owned()
-                                    }
-                                })
-                                .typo(Type::Headline)
-                                .text_color(color::INK),
-                            )
-                            .child(when(
-                                move || details.get(),
-                                move || {
-                                    text(move || crate::scale::algorithm_description(algorithm))
+                        })
+                        .active(|s| s.bg(color::SUNKEN))
+                        .focus_visible(|s| s.bg(color::SURFACE_2))
+                        .child(
+                            view()
+                                .flex_1()
+                                .min_w(px(0.0))
+                                .gap_1()
+                                .child(
+                                    text(move || {
+                                        if algorithm.experimental() {
+                                            format!(
+                                                "{} · {}",
+                                                crate::scale::algorithm_name(algorithm),
+                                                s().algorithm_experimental
+                                            )
+                                        } else {
+                                            crate::scale::algorithm_name(algorithm).to_owned()
+                                        }
+                                    })
+                                    .typo(Type::Headline)
+                                    .text_color(color::INK),
+                                )
+                                .child(
+                                    collapsible().open(details).content(
+                                        text(move || {
+                                            crate::scale::algorithm_description(algorithm)
+                                        })
                                         .typo(Type::Subhead)
-                                        .text_color(color::MUTED)
-                                },
-                            )),
-                    )
-                    .child(
-                        view()
-                            .w(px(24.0))
-                            .pt_1()
-                            .child(when(chosen, || icon(Icon::Check, 20.0, color::INK))),
-                    )
-                    .into_element()
-            })),
+                                        .text_color(color::MUTED),
+                                    ),
+                                ),
+                        )
+                        .child(
+                            view()
+                                .w(px(24.0))
+                                .pt_1()
+                                .child(when(chosen, || icon(Icon::Check, 20.0, color::INK))),
+                        )
+                        .into_element()
+                })),
         )
 }
 

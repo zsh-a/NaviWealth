@@ -390,5 +390,7 @@ Recommended sequence; this is planning, not a claim these items are implemented.
   question and, for a new record type, a removal or written reason.
 - Keep domain truth in `navi-finance` / `navi-health`; the UI only presents
   and confirms. New crates need a current caller.
-- Pin NSH 0.6.1 behind local UI adapters; upgrade only with device evidence.
+- Pin NSH 0.7.1 behind local UI adapters (owner-requested upgrade, 2026-11-26).
+  Headless/build checks and physical-device acceptance remain separate; the
+  upgrade still needs keyboard/Back, BLE, TLS and signed data-retention evidence.
 - Record headless tests and Android device evidence separately.

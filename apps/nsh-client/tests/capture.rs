@@ -503,6 +503,16 @@ fn thread_questions_answer_by_tap_and_reopen_keeps_the_conversation() -> Result<
         "reply tools are collapsed while choosing"
     );
     app.press("label:Bank")?;
+    assert_eq!(
+        app.screen().accessibility_state("label:Bank")?.pressed,
+        Some(nsh_core::Checked::True),
+        "staged choices expose the official toggle state"
+    );
+    app.press("label:Bank")?;
+    assert!(
+        !app.screen().enabled("Continue")?,
+        "pressing a staged choice again clears it without submitting"
+    );
     app.press("label:Cash")?;
     assert_eq!(
         calls.load(Ordering::SeqCst),
@@ -914,7 +924,12 @@ fn unsent_views_can_be_removed_and_four_views_survive_reopen_without_recognition
             .collect()
     });
     app.press("Attach image")?;
-    app.wait_for("Remove image")?;
+    // Images are prepared one at a time. The first thumbnail and a
+    // disabled picker also occur while the other three are still loading.
+    app.wait_until("four prepared images", GONE, |screen| {
+        screen.count("Remove image").is_ok_and(|count| count == 4)
+            && screen.enabled("label:Send").unwrap_or(false)
+    })?;
     assert!(
         !app.screen().enabled("Attach image")?,
         "four views fill the draft's image allowance"

@@ -121,7 +121,7 @@ AI only to turn text and images into drafts, using the owner's model account.
   fixed cash preview. Its listing search and other text-first editors plan
   for the keyboard when they open (the last height it reached, else 38% of
   the window). The NSH sheet lifts the panel by the keyboard height above the
-  bottom safe area. NSH 0.6.1 presents each sheet in a dialog window whose
+  bottom safe area. NSH presents each sheet in a dialog window whose
   root Android already lays out above the keyboard, so the app measures that
   root and places the panel so its content meets the keyboard instead of
   floating a keyboard's height above it (`panel_bottom` in `src/ui/sheet.rs`,

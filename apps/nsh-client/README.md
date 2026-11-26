@@ -1,7 +1,7 @@
 # NaviWealth native client (NSH)
 
 NaviWealth's native client, with Rust pages and a small TSX hardware entry on [NSH](https://github.com/longbridge/nsh)
-0.6.1. Capture turns a description or photos into reviewable transaction, meal,
+0.7.1. Capture turns a description or photos into reviewable transaction, meal,
 weight, trade, balance, security price or review note drafts using the owner's model. The home has four tabs: Today
 (spending, intake and vitals), Records (all history), Assets (accounts, book balances and net worth), and Review
 (the week or month, with recorded spending and the attributed net-worth
@@ -131,12 +131,46 @@ These are display-only and do not change stored evidence or old algorithms.
 They are not guaranteed to match the manufacturer's proprietary composition
 model; unknown visceral-fat/body-age/protein scores are not fabricated.
 
-Use NSH CLI **0.6.1** for mixed checks and builds. The host build script pins the
+Use NSH CLI **0.7.1** for mixed checks and builds. The host build script pins the
 matching Java inputs and extracts the app-linked native library from the NSH
 mixed package. Plain `nsh run --target android` uses the generic development
 host and does not provide these BLE handlers. The production unsigned APK is
 `android/app/build/outputs/apk/release/app-release-unsigned.apk`; signing remains
 in CI. Physical scale and signed upgrade acceptance remain open in the roadmap.
+
+## Official package reuse
+
+Implemented against the released [NSH 0.7.1 source](https://github.com/longbridge/nsh/tree/v0.7.1)
+on 2026-11-27. Buttons, fields, selectors, switches, sheets, date pickers and
+plots already use `nsh-base`. The local `ui/` layer keeps the app's visual
+styles and domain actions; the following additional behavior now uses official APIs:
+
+| Area | Official API now used | App-specific behavior retained |
+|---|---|---|
+| Toasts (`src/ui/toast.rs`) | [`ToastManager`, `ToastStack` and `Toast`](https://github.com/longbridge/nsh/tree/v0.7.1/crates/nsh-base/src/toast) for lifecycle phases, toast semantics and layout | One message at a time, 4.5-second Undo across sheets without restarting its timer, and retiring only View when a new task opens |
+| Scale algorithm choices (`tsx/ScalePanel.tsx`, `src/pages/settings_body.rs`) | [`Radio` / `RadioGroup`](https://github.com/longbridge/nsh/blob/v0.7.1/crates/nsh-base/src/radio.rs) in Settings; controlled `Toggle` / `ToggleGroup` in the scale picker | Existing styles and persistence; the picker keeps its choice selected and closes when that choice is pressed again |
+| Choice chips (`src/ui/button.rs`, capture decisions and meal editing) | `Toggle` / `ToggleGroup` for pressed state and group interaction | Callers own selection, optional deselection and draft changes |
+| Review and Records month calendar (`src/pages/review_calendar.rs`) | [`Calendar`](https://github.com/longbridge/nsh/blob/v0.7.1/crates/nsh-base/src/calendar.rs) for the month grid, weekday alignment and date interaction | Heatmap cells, record markers, locale week start and disabled unrecorded/future days; the surrounding page controls the month |
+| Expandable details in Settings, Assets, Review, editors and grouped Records | `Collapsible` for disclosure content | The app owns each disclosure's state, label and contents |
+| Currency-pair choices (`src/pages/prices_and_rates/rates.rs`) | `Tabs` / `Tab`, also used by the existing segmented control | The selected pair and its rates remain app state |
+| Update checks (`src/data/updates.rs`) | [`nsh-updater`](https://github.com/longbridge/nsh/blob/v0.7.1/docs/dev/updater.md) for manifest validation, platform selection and version comparison | Daily/manual checks, cached answers on failure and the explicit Android release-page link; an additional app-id check rejects foreign manifests |
+
+The release workflow now generates `latest.json` with the official CLI and
+publishes it beside the APK. The app reads the manifest from GitHub's latest
+release; catalog releases remain prereleases that never become latest. This
+protocol becomes publicly available with the next actual NSH release; changing
+the workflow locally does not publish a manifest. See the
+[release policy](../../docs/operations/branch-protection.md).
+
+Some adapters still cover behavior absent from these official APIs. Android's
+`ShareReceiver` emits individual file URLs without shared text or batch identity;
+`IncomingShare.kt` keeps text and up to four images together as one unsent draft.
+NSH 0.7.1 has no equivalent BLE transport. Its public Rust `fetch` aggregates the
+response, so capture's SSE transport stays in `llm-reqwest`. Android's HTTP method
+handling does not cover WebDAV's `PROPFIND`/`MKCOL`, which continue through `ureq`.
+Money fields retain exact string decimals because the official `NumberInput`
+uses floating-point values. SQLite repositories retain accounting and health
+truth; NSH's bounded KV store remains a preferences store.
 
 ## Health review and backups
 

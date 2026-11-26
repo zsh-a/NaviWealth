@@ -204,7 +204,7 @@ fn the_calendar_goes_to_a_day_beyond_the_first_page() -> Result<(), String> {
     for _ in 0..months_back {
         app.press("label:Previous month")?;
     }
-    app.press(&format!("label:{}, 300 kcal", long_date(target)))?;
+    app.press(&format!("label:{target}"))?;
     app.wait_for_gone("text:Go to a day", GONE)?;
     // The day alone, not the list from today.
     app.wait_for(&format!("text:{}", long_date(target)))?;
@@ -225,7 +225,7 @@ fn a_day_in_reviews_month_opens_in_records() -> Result<(), String> {
     app.press("label:Review")?;
     app.press("Month")?;
     let day = today();
-    app.press(&format!("label:{}, 300 kcal", long_date(day)))?;
+    app.press(&format!("label:{day}"))?;
     app.wait_for("All days")?;
     // Today alone (it stays in this month on the 1st too).
     app.wait_for(&format!("text:{}", day.0.strftime("%a, %b %-d")))?;

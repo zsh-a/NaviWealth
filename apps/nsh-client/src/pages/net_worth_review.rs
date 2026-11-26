@@ -209,7 +209,12 @@ fn line(label: String, amount: i64, style: Type, tint: AdaptiveColor) -> View {
 }
 
 /// One part; a part with details is a visible disclosure.
-fn part_row(part: Part, amount: i64, details: Vec<Detail>, edit: Signal<Option<String>>) -> View {
+fn part_row(
+    part: Part,
+    amount: i64,
+    details: Vec<Detail>,
+    edit: Signal<Option<String>>,
+) -> AnyElement {
     let label = s().net_worth_part(part);
     if details.is_empty() {
         // The chevron's width keeps amounts in one column.
@@ -219,10 +224,12 @@ fn part_row(part: Part, amount: i64, details: Vec<Detail>, edit: Signal<Option<S
             .items_center()
             .gap_3()
             .child(line(label.to_owned(), amount, Type::Body, color::INK))
-            .child(view().w(px(CHEVRON)));
+            .child(view().w(px(CHEVRON)))
+            .into_element();
     }
     let open = signal(false);
-    view()
+    nsh_base::collapsible()
+        .open(open)
         .child(
             row_button(move || open.update(|o| *o = !*o))
                 .min_h(px(48.0))
@@ -241,26 +248,24 @@ fn part_row(part: Part, amount: i64, details: Vec<Detail>, edit: Signal<Option<S
                 .child(line(label.to_owned(), amount, Type::Body, color::INK))
                 .child(disclosure_chevron(open)),
         )
-        .child(when(
-            move || open.get(),
-            move || {
-                view().pl(px(12.0)).children(details.iter().map(|d| {
-                    let row = line(d.title.clone(), d.amount, Type::Subhead, color::BODY);
-                    match d.transaction.clone() {
-                        Some(id) => row_button(move || edit.set(Some(id.clone())))
-                            .min_h(px(48.0))
-                            .px(px(0.0))
-                            .py(px(4.0))
-                            .child(row)
-                            .into_element(),
-                        None => view()
-                            .min_h(px(44.0))
-                            .flex_row()
-                            .items_center()
-                            .child(row)
-                            .into_element(),
-                    }
-                }))
-            },
-        ))
+        .content(dynamic(move || {
+            view().pl(px(12.0)).children(details.iter().map(|d| {
+                let row = line(d.title.clone(), d.amount, Type::Subhead, color::BODY);
+                match d.transaction.clone() {
+                    Some(id) => row_button(move || edit.set(Some(id.clone())))
+                        .min_h(px(48.0))
+                        .px(px(0.0))
+                        .py(px(4.0))
+                        .child(row)
+                        .into_element(),
+                    None => view()
+                        .min_h(px(44.0))
+                        .flex_row()
+                        .items_center()
+                        .child(row)
+                        .into_element(),
+                }
+            }))
+        }))
+        .into_element()
 }

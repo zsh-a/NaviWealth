@@ -443,8 +443,21 @@ test("scale mixed: three Rust models recompute one live draft without reconnecti
 
 test("scale mixed: pre-connection selection persists as the default and survives app restart", async () => {
   const app = await start();
+  await app.press("id:scale-algorithms >> label:Choose estimation algorithm");
+  expect(app.accessibility("label:Choose estimation algorithm: Segal BIA")?.pressed).toBe("true");
+  expect(app.accessibility("label:Choose estimation algorithm: Wu 2015")?.pressed).toBe("false");
+  // Activating the selected choice still dismisses the picker without writing a preference.
+  await chooseAlgorithm(app, "Segal BIA");
+  expect(app.shows("id:scale-algorithm-options")).toBe(false);
+  expect(algorithmPreference(app)).toBe("segal");
   await chooseAlgorithm(app, "Wu 2015");
+  expect(app.shows("id:scale-algorithm-options")).toBe(false);
   expect(algorithmPreference(app)).toBe("wu2015");
+  await app.press("id:scale-algorithms >> label:Choose estimation algorithm");
+  expect(app.accessibility("label:Choose estimation algorithm: Segal BIA")?.pressed).toBe("false");
+  expect(app.accessibility("label:Choose estimation algorithm: Wu 2015")?.pressed).toBe("true");
+  await chooseAlgorithm(app, "Wu 2015");
+  expect(app.shows("id:scale-algorithm-options")).toBe(false);
   expect(app.host.calls()).toEqual([]);
   const preferences = app.storage();
   const relaunched = await start(true, true, undefined, {}, false, preferences);

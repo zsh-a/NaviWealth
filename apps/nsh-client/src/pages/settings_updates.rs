@@ -42,30 +42,28 @@ pub fn updates_section() -> impl IntoElement {
             ))
             .child(dynamic(move || {
                 let Some(release) = updates::latest() else {
-                    return view().into_element();
+                    return view()
+                        .child(when(
+                            || updates::checked_at_ms().is_some(),
+                            || {
+                                text(move || s().update_uptodate(updates::current()))
+                                    .typo(Type::Headline)
+                                    .text_color(color::MUTED)
+                            },
+                        ))
+                        .into_element();
                 };
-                let newer = release.is_newer_than(updates::current());
                 let (version, notes, url) = (
                     release.version.clone(),
-                    release.notes.clone(),
+                    release.notes.clone().unwrap_or_default(),
                     release.url.clone(),
                 );
                 view()
                     .gap_1()
                     .child(
-                        text(move || {
-                            if newer {
-                                s().update_found(&version)
-                            } else {
-                                s().update_uptodate(&version)
-                            }
-                        })
-                        .typo(Type::Headline)
-                        .text_color(if newer {
-                            color::CAUTION
-                        } else {
-                            color::MUTED
-                        }),
+                        text(move || s().update_found(&version))
+                            .typo(Type::Headline)
+                            .text_color(color::CAUTION),
                     )
                     .child(
                         text(move || notes.clone())
@@ -113,10 +111,10 @@ fn summary() -> String {
         return format!("v{current} · {}", s().update_failed);
     }
     match updates::latest() {
-        Some(release) if updates::update_available() => {
+        Some(release) => {
             format!("v{current} · {}", s().update_found(&release.version))
         }
-        Some(_) => s().update_uptodate(current),
+        None if updates::checked_at_ms().is_some() => s().update_uptodate(current),
         None => format!("v{current} · {}", s().update_never),
     }
 }
@@ -126,8 +124,8 @@ fn tint() -> AdaptiveColor {
         return color::DANGER;
     }
     match updates::latest() {
-        Some(_) if updates::update_available() => color::CAUTION,
-        Some(_) => color::POSITIVE,
+        Some(_) => color::CAUTION,
+        None if updates::checked_at_ms().is_some() => color::POSITIVE,
         None => color::MUTED,
     }
 }

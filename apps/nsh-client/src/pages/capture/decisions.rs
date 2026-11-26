@@ -5,7 +5,7 @@ use crate::{
     data::capture,
     domain::capture::{AskAnswer, AskUser, Draft},
     i18n::s,
-    ui::{Icon, Type, Typo, color, icon, radius, surface::row_button},
+    ui::{Icon, Type, Typo, color, icon, radius, theme::motion},
 };
 
 pub fn questions(
@@ -62,7 +62,7 @@ pub fn questions(
                         .text_color(color::MUTED)
                 }))
                 .child(open.then(|| {
-                    view()
+                    nsh_base::toggle_group()
                         .gap_2()
                         .children(question.options.iter().map(move |option| {
                             let call_id = call_id.clone();
@@ -70,56 +70,67 @@ pub fn questions(
                             let option_id = option.id.clone();
                             let checked = selected.as_ref() == Some(&option.id);
                             let label = option.label.clone();
-                            row_button(move || {
-                                let mut next = draft.get_untracked();
-                                if next
-                                    .pending_ask_user()
-                                    .is_none_or(|ask| ask.call_id != call_id)
-                                {
-                                    return;
-                                }
-                                next.answers
-                                    .retain(|answer| answer.question_id != question_id);
-                                if !checked {
-                                    next.answers.push(AskAnswer {
-                                        question_id: question_id.clone(),
-                                        option_id: Some(option_id.clone()),
-                                        text: String::new(),
-                                    });
-                                }
-                                next.correction = input.get_untracked();
-                                match capture::put(next.clone()) {
-                                    Ok(()) => {
-                                        error.set(None);
-                                        draft.set(next);
+                            nsh_base::toggle()
+                                .pressed(checked)
+                                .on_change(move |_: &bool| {
+                                    let mut next = draft.get_untracked();
+                                    if next
+                                        .pending_ask_user()
+                                        .is_none_or(|ask| ask.call_id != call_id)
+                                    {
+                                        return;
                                     }
-                                    Err(_) => error.set(Some(s().error_transaction_storage.into())),
-                                }
-                            })
-                            .min_h(px(56.0))
-                            .px_4()
-                            .py_3()
-                            .accessibility_label(Some(label.clone().into()))
-                            .selected(checked)
-                            .bg(if checked {
-                                color::SUNKEN
-                            } else {
-                                color::SURFACE_2
-                            })
-                            .rounded(px(radius::FIELD))
-                            .child(
-                                view()
-                                    .gap_1()
-                                    .flex_1()
-                                    .min_w(px(0.0))
-                                    .child(text(label).typo(Type::Body).text_color(color::INK))
-                                    .child((!option.description.is_empty()).then(|| {
-                                        text(option.description.clone())
-                                            .typo(Type::Subhead)
-                                            .text_color(color::MUTED)
-                                    })),
-                            )
-                            .child(checked.then(|| icon(Icon::Check, 20.0, color::INK)))
+                                    next.answers
+                                        .retain(|answer| answer.question_id != question_id);
+                                    if !checked {
+                                        next.answers.push(AskAnswer {
+                                            question_id: question_id.clone(),
+                                            option_id: Some(option_id.clone()),
+                                            text: String::new(),
+                                        });
+                                    }
+                                    next.correction = input.get_untracked();
+                                    match capture::put(next.clone()) {
+                                        Ok(()) => {
+                                            error.set(None);
+                                            draft.set(next);
+                                        }
+                                        Err(_) => {
+                                            error.set(Some(s().error_transaction_storage.into()))
+                                        }
+                                    }
+                                })
+                                .flex_row()
+                                .items_center()
+                                .gap_3()
+                                .transition_colors()
+                                .duration(motion::INSTANT)
+                                .hover(|s| s.bg(color::SURFACE_2))
+                                .active(|s| s.bg(color::SUNKEN))
+                                .focus_visible(|s| s.bg(color::SURFACE_2))
+                                .min_h(px(56.0))
+                                .px_4()
+                                .py_3()
+                                .accessibility_label(Some(label.clone().into()))
+                                .bg(if checked {
+                                    color::SUNKEN
+                                } else {
+                                    color::SURFACE_2
+                                })
+                                .rounded(px(radius::FIELD))
+                                .child(
+                                    view()
+                                        .gap_1()
+                                        .flex_1()
+                                        .min_w(px(0.0))
+                                        .child(text(label).typo(Type::Body).text_color(color::INK))
+                                        .child((!option.description.is_empty()).then(|| {
+                                            text(option.description.clone())
+                                                .typo(Type::Subhead)
+                                                .text_color(color::MUTED)
+                                        })),
+                                )
+                                .child(checked.then(|| icon(Icon::Check, 20.0, color::INK)))
                         }))
                 }))
         }))

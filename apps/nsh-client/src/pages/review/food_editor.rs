@@ -268,7 +268,7 @@ pub fn FoodEditor() -> impl IntoElement {
         .child((!recent.is_empty()).then(|| {
             field(
                 || s().recent_foods,
-                view()
+                nsh_base::toggle_group()
                     .flex_row()
                     .flex_wrap()
                     .gap(px(6.0))
@@ -375,10 +375,11 @@ pub fn FoodEditor() -> impl IntoElement {
             },
         ))
         .child(
-            view()
+            nsh_base::collapsible()
+                .open(details_open)
                 .gap_3()
                 .child(disclosure(details_open, || s().per_100g.into()))
-                .child(when(details_open, move || {
+                .content(dynamic(move || {
                     view()
                         .gap_3()
                         .child(
@@ -402,10 +403,11 @@ pub fn FoodEditor() -> impl IntoElement {
                 })),
         )
         .child(
-            view()
+            nsh_base::collapsible()
+                .open(extras_open)
                 .gap_3()
                 .child(disclosure(extras_open, || s().more_nutrition.into()))
-                .child(when(extras_open, move || {
+                .content(dynamic(move || {
                     view()
                         .gap_3()
                         .child(
@@ -484,8 +486,8 @@ fn portion_choices(estimate: f64, grams: Signal<String>) -> impl IntoElement {
                     .total_cmp(&(grams - estimate * b).abs())
             })
     });
-    // Two groups keep all six targets in order when a narrow sheet wraps.
-    view()
+    // Two rows keep all six targets in one keyboard group when the sheet wraps.
+    nsh_base::toggle_group()
         .flex_row()
         .flex_wrap()
         .gap_y(px(size::TOUCH - size::SMALL))

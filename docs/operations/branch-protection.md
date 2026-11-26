@@ -41,7 +41,7 @@ checks that are present for the changed paths.
 
 The `nsh client` manual workflow checks `apps/nsh-client` and its mixed flows,
 then runs `tool/build-nsh-android-host.sh release` (Gradle unit tests, lint and
-assembly). The app-owned host packages the app-linked NSH 0.6.1 native library
+assembly). The app-owned host packages the app-linked NSH 0.7.1 native library
 and TSX bundle; it preserves the package id and private storage location,
 and signs an arm64-v8a APK — `naviwealth-release-arm64-v8a` (the diagnostic
 build is `naviwealth-diagnostic-arm64-v8a`) — with the fixed repository
@@ -52,9 +52,14 @@ arguments and removes temporary key material. Do not replace this with
 freshly generated debug keys.
 
 A build of an `nsh-v*` tag publishes its own release: the verified APK as
-`NaviWealth.apk`, a `SHA256SUMS` of it, and notes taken from the release
-commit plus links to the build and changes since the previous published NSH
-release in the tag’s history. Releases are titled
+`NaviWealth.apk`, the official NSH update manifest `latest.json`, a
+`SHA256SUMS` covering both files, and notes taken from the release commit plus
+links to the build and changes since the previous published NSH release in the
+tag’s history. Before generating the manifest with the pinned CLI's
+`nsh update-manifest`, publication verifies that the `nsh-vX.Y.Z` tag,
+`apps/nsh-client/nsh.json` and the Rust package version all match. The manifest
+carries the app id, release notes and an Android link to that tag's release page;
+Android installation remains an explicit owner action. Releases are titled
 after the tag's subject, `NaviWealth NSH vX.Y.Z (build N)` — the earlier
 `NaviWealth Health NSH` wording is retired with v0.9.0. Dispatches on a
 branch verify without publishing.
@@ -62,7 +67,15 @@ branch verify without publishing.
 The package id is `com.naviwealth.app` (2026-11-15; the earlier
 `com.naviwealth.health.nsh` installs migrate by clean-install restore from a
 WebDAV backup). Releases use `nsh-vX.Y.Z` tags: build the exact tag with the
-manual workflow and publish the verified APK plus `SHA256SUMS`. A newly
-created NSH release is marked latest, matching the app's release lookup;
-existing historical Flutter release artifacts are not overwritten. Subsequent
+manual workflow and publish the verified APK, `latest.json` and `SHA256SUMS`.
+A newly created NSH release is marked latest, matching the official updater's
+`releases/latest/download/latest.json` source. The rolling securities catalog
+is always a prerelease with `--latest=false`, so it cannot replace that source.
+Existing historical Flutter release artifacts are not overwritten. Subsequent
 releases must retain the fixed key.
+
+The manifest protocol was added on 2026-11-27. Its first public manifest arrives
+with the next actual NSH release using this workflow; local code changes and
+branch builds do not publish it or backfill old releases. The GitHub manifest
+source requires no additional signing secret. Android APKs continue to use the
+fixed release certificate.

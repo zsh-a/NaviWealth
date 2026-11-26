@@ -232,19 +232,21 @@ fn estimate_panel(
                     .into_element()
             })
         }))
-        .child(crate::ui::surface::disclosure(basis, || {
-            copy("Valuation basis", "估值依据").into()
-        }))
-        .child(when(
-            move || basis.get(),
-            move || {
-                let line = |value| text(value).typo(Type::Subhead).text_color(color::MUTED);
-                view()
-                    .gap_2()
-                    .child(line(s().assets_basis))
-                    .child(has_holdings.then(|| line(s().portfolio_basis)))
-            },
-        ))
+        .child(
+            nsh_base::collapsible()
+                .open(basis)
+                .gap_2()
+                .child(crate::ui::surface::disclosure(basis, || {
+                    copy("Valuation basis", "估值依据").into()
+                }))
+                .content(dynamic(move || {
+                    let line = |value| text(value).typo(Type::Subhead).text_color(color::MUTED);
+                    view()
+                        .gap_2()
+                        .child(line(s().assets_basis))
+                        .child(has_holdings.then(|| line(s().portfolio_basis)))
+                })),
+        )
         .into_element()
 }
 
@@ -264,91 +266,87 @@ fn change_explanation(
     let first = window.baseline(points).unwrap_or(*opening);
     let last = *last;
     let points = stored(points.to_vec());
-    view()
+    nsh_base::collapsible()
+        .open(open)
         .gap_2()
         .child(crate::ui::surface::disclosure(open, || {
             copy("Change breakdown", "变化来源").into()
         }))
-        .child(when(
-            move || open.get(),
-            move || {
-                dynamic(move || {
-                    let selected = selected.get();
-                    let last = points.with(|p| {
-                        selected
-                            .and_then(|day| p.binary_search_by_key(&day, |p| p.0).ok())
-                            .map(|i| p[i])
-                            .unwrap_or(last)
-                    });
-                    if last.0 < first.0 {
-                        return text(format!(
-                            "{} · {}",
-                            s().axis_date(Day(last.0), true),
-                            copy("Valuation unavailable", "缺少估值"),
-                        ))
-                        .typo(Type::Caption)
-                        .tabular_nums()
-                        .text_color(color::MUTED)
-                        .into_element();
-                    }
-                    let date_span = format!(
-                        "{} – {}",
-                        s().axis_date(Day(first.0), first.0.year() != last.0.year()),
-                        s().axis_date(Day(last.0), first.0.year() != last.0.year())
-                    );
-                    if first.0 == last.0 && first.1.is_some() {
-                        return text(format!(
-                            "{date_span} · {}",
-                            copy("Opening observation", "起始估值")
-                        ))
-                        .typo(Type::Caption)
-                        .tabular_nums()
-                        .text_color(color::MUTED)
-                        .into_element();
-                    }
-                    let outcome = attribution::attribute(
-                        &crate::data::finance::holdings_snapshot(),
-                        &crate::data::finance::transactions_snapshot(),
-                        &crate::data::finance::rates_snapshot(),
-                        first.0,
-                        last.0,
-                    );
-                    let mut body = view().gap_2().child(
-                        text(date_span)
-                            .typo(Type::Caption)
-                            .text_color(color::MUTED)
+        // Keep the retained slot's root stable while inspection switches its
+        // contents between a breakdown view and a missing-valuation text node.
+        .content(view().child(dynamic(move || {
+            let selected = selected.get();
+            let last = points.with(|p| {
+                selected
+                    .and_then(|day| p.binary_search_by_key(&day, |p| p.0).ok())
+                    .map(|i| p[i])
+                    .unwrap_or(last)
+            });
+            if last.0 < first.0 {
+                return text(format!(
+                    "{} · {}",
+                    s().axis_date(Day(last.0), true),
+                    copy("Valuation unavailable", "缺少估值"),
+                ))
+                .typo(Type::Caption)
+                .tabular_nums()
+                .text_color(color::MUTED)
+                .into_element();
+            }
+            let date_span = format!(
+                "{} – {}",
+                s().axis_date(Day(first.0), first.0.year() != last.0.year()),
+                s().axis_date(Day(last.0), first.0.year() != last.0.year())
+            );
+            if first.0 == last.0 && first.1.is_some() {
+                return text(format!(
+                    "{date_span} · {}",
+                    copy("Opening observation", "起始估值")
+                ))
+                .typo(Type::Caption)
+                .tabular_nums()
+                .text_color(color::MUTED)
+                .into_element();
+            }
+            let outcome = attribution::attribute(
+                &crate::data::finance::holdings_snapshot(),
+                &crate::data::finance::transactions_snapshot(),
+                &crate::data::finance::rates_snapshot(),
+                first.0,
+                last.0,
+            );
+            let mut body = view().gap_2().child(
+                text(date_span)
+                    .typo(Type::Caption)
+                    .text_color(color::MUTED)
+                    .tabular_nums(),
+            );
+            body = match outcome {
+                Ok(Outcome::Complete(a)) if Some(a.start) == first.1 && Some(a.end) == last.1 => {
+                    body.child(
+                        text(crate::ui::currency::signed(a.change(), Currency::CNY))
+                            .typo(Type::Figure)
+                            .text_color(color::INK)
                             .tabular_nums(),
-                    );
-                    body = match outcome {
-                        Ok(Outcome::Complete(a))
-                            if Some(a.start) == first.1 && Some(a.end) == last.1 =>
-                        {
-                            body.child(
-                                text(crate::ui::currency::signed(a.change(), Currency::CNY))
-                                    .typo(Type::Figure)
-                                    .text_color(color::INK)
-                                    .tabular_nums(),
-                            )
-                            .child(super::super::net_worth_review::breakdown(&a, edit))
-                        }
-                        Ok(Outcome::Missing(missing)) => body.child(
-                            text(s().net_worth_missing(&missing))
-                                .typo(Type::Subhead)
-                                .text_color(color::MUTED),
-                        ),
-                        _ => body.child(
-                            text(copy(
-                                "Incomplete valuation for this period",
-                                "区间估值不完整",
-                            ))
-                            .typo(Type::Subhead)
-                            .text_color(color::MUTED),
-                        ),
-                    };
-                    body.into_element()
-                })
-            },
-        ))
+                    )
+                    .child(super::super::net_worth_review::breakdown(&a, edit))
+                }
+                Ok(Outcome::Missing(missing)) => body.child(
+                    text(s().net_worth_missing(&missing))
+                        .typo(Type::Subhead)
+                        .text_color(color::MUTED),
+                ),
+                _ => body.child(
+                    text(copy(
+                        "Incomplete valuation for this period",
+                        "区间估值不完整",
+                    ))
+                    .typo(Type::Subhead)
+                    .text_color(color::MUTED),
+                ),
+            };
+            body.into_element()
+        })))
         .into_element()
 }
 
@@ -436,11 +434,12 @@ fn gap_details(
         return content();
     }
     let open = signal(false);
-    view()
+    nsh_base::collapsible()
+        .open(open)
         .child(crate::ui::surface::disclosure(open, move || {
             label.clone().into()
         }))
-        .child(when(move || open.get(), content))
+        .content(dynamic(content))
         .into_element()
 }
 

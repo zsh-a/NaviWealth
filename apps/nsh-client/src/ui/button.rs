@@ -7,7 +7,7 @@
 
 use std::rc::Rc;
 
-use nsh_base::{ButtonElement, button};
+use nsh_base::{ButtonElement, ToggleElement, button, toggle};
 use nsh_core::{Haptic, HapticImpact, prelude::*};
 
 use super::{
@@ -421,17 +421,17 @@ pub fn chip(
     label: impl Fn() -> SharedString + 'static,
     selected: impl Fn() -> bool + Copy + 'static,
     press: impl Fn() + 'static,
-) -> ButtonElement {
+) -> ToggleElement {
     let scale = animated_value(1.0);
-    button()
-        .selected(selected)
+    toggle()
+        .pressed(selected)
         .on_press_down(move || {
             press_motion(scale, true, motion::PRESS_SCALE);
         })
         .on_press_up(move || {
             press_motion(scale, false, motion::PRESS_SCALE);
         })
-        .on_press(press)
+        .on_change(move |_: &bool| press())
         .bind_scale(&scale)
         .min_w(px(52.0))
         .min_h(px(size::SMALL))
@@ -444,7 +444,7 @@ pub fn chip(
         .duration(motion::FAST)
         .hover(|s| s.bg(color::SUNKEN))
         .active(|s| s.bg(color::SUNKEN))
-        .selected_style(|s| s.bg(color::ACCENT_SOFT))
+        .pressed_style(|s| s.bg(color::ACCENT_SOFT))
         .focus_visible(|s| s.outline(px(2.0)).outline_color(color::INK))
         .child(
             text(label)
@@ -466,6 +466,59 @@ pub fn suggestion_chip(
     label: impl Fn() -> SharedString + 'static,
     selected: impl Fn() -> bool + Copy + 'static,
     press: impl Fn() + 'static,
-) -> ButtonElement {
+) -> ToggleElement {
     chip(label, selected, press).bg(color::SURFACE_2)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use nsh_engine::{EngineConfig, Root};
+    use nsh_testing::Headless;
+
+    #[component]
+    fn Choices() -> impl IntoElement {
+        let choice = signal(Some(0));
+        view()
+            .child(
+                nsh_base::toggle_group().flex_row().children(
+                    ["First", "Unavailable", "Last"]
+                        .into_iter()
+                        .enumerate()
+                        .map(move |(index, label)| {
+                            chip(
+                                move || label.into(),
+                                move || choice.get() == Some(index),
+                                move || {
+                                    choice.update(|v| *v = (*v != Some(index)).then_some(index));
+                                },
+                            )
+                            .disabled(index == 1)
+                        }),
+                ),
+            )
+            .child(text(move || format!("choice: {:?}", choice.get())))
+    }
+
+    #[test]
+    fn choice_chips_use_group_navigation_and_allow_clearing_the_pressed_value() {
+        let mut app = Headless::start(EngineConfig::new(Root::of::<Choices>())).unwrap();
+        app.set_environment("keyboard", |env| env.os = nsh_core::platform::Os::Linux)
+            .unwrap();
+        app.wait_for("text:choice: Some(0)").unwrap();
+        app.press_key("tab").unwrap();
+        app.press_key("right").unwrap();
+        app.wait_for("text:choice: Some(0)").unwrap();
+        app.press_key("space").unwrap();
+        app.wait_for("text:choice: Some(2)").unwrap();
+        assert_eq!(
+            app.screen()
+                .accessibility_state("role:button[Last]")
+                .unwrap()
+                .pressed,
+            Some(nsh_core::Checked::True)
+        );
+        app.press("Last").unwrap();
+        app.wait_for("text:choice: None").unwrap();
+    }
 }
