@@ -4,16 +4,86 @@ Status: active native-runtime implementation reference.
 
 ## Document Contract
 
-Owns the layout, layering and consumption rules of the
-`third_party/agent-runtime` submodule. The submodule's own crates, schemas,
-fixtures and contract tests are authoritative for exact APIs.
+Owns the runtime boundaries used by NaviWealth: the pi-rust general assistant
+in `crates/navi-assistant` and recognition through the
+`third_party/agent-runtime` submodule. Their source and contract tests are
+authoritative for exact APIs.
+
+## General Assistant (2026-11-27)
+
+The owner authorized ongoing conversation, cross-task memory, web research and
+multi-step tasks. The embedded assistant uses `rpi-agent` and `rpi-ai` from
+[pi-rust v0.29.0](https://github.com/bigfish1913/pi-rust/tree/v0.29.0), pinned to
+`6d697126b4149fd1fd69d4c741c6103b37ddc615`. The app does not embed the CLI, TUI,
+dynamic extension loader, shell tools or a remote WebView/server architecture.
+`rpi-harness` is deliberately not required: host SQLite stores the conversations
+without pulling the harness's desktop-tool dependencies or its optional
+`rusqlite 0.31` backend into the app's `rusqlite 0.43` graph.
+
+| Layer | Authority |
+|---|---|
+| Provider adaptation and Agent loop | `crates/navi-assistant/` over pinned `rpi-agent` / `rpi-ai` |
+| Reactive state, consent, cancellation and proposals | `apps/nsh-client/src/data/assistant.rs` |
+| Read-only records, memory retrieval and proposals | `apps/nsh-client/src/data/assistant_tools.rs` |
+| Optional Brave Search and bounded public-page fetch | `apps/nsh-client/src/data/assistant_web.rs` |
+| Sessions, messages, native replay history and approved memories | `apps/nsh-client/src/data/assistant_store.rs`, database migration 22 |
+| Conversation, history and memory UI | `apps/nsh-client/src/pages/assistant.rs` |
+
+The model profile selects Anthropic Messages, OpenAI Chat Completions or OpenAI
+Responses. Separate destination-scoped consent covers conversation, recalled
+memories and requested records. The runtime preserves native message/tool-call
+identity for subsequent turns; the host binds saved history to the model
+destination. Complete-turn context selection bounds serialized model input to
+120,000 UTF-8 bytes while keeping the stored conversation. Older complete user
+turns can leave the request; this is not summary-based compaction or unlimited
+model context. Saved memories provide explicit cross-task recall separately.
+
+Each submitted run is cancellable and bounded to eight model turns and 150
+seconds. The host registers only its declared tools. Record reads are
+date-bounded and paged. Memory tools retrieve approved facts or create a
+pending proposal; they cannot save a memory directly. Record proposals become
+unsent capture drafts only after owner confirmation, and capture still owns
+the final atomic business write. Public web content is data, never a grant of
+tool permissions. Search needs a separate owner-provided Brave API key, kept
+in app-private preferences and excluded from backups. Fetch rejects non-public
+destinations and bounds redirects, DNS/network work and response bytes;
+JavaScript execution, authenticated browsing and PDF parsing are unsupported.
+
+SQLite holds display messages, serialized runtime history, pending proposals,
+model destination, confirmed/dismissed action outcomes and status. The latest
+host outcomes accompany later prompts so an old tool result is not mistaken
+for a still-pending proposal. Native replay history is structurally validated
+before loading or restoring it. Serialized conversations are capped at 4 MiB
+each and 32 MiB in aggregate while the host loads full histories; old chats can
+be deleted to free space. Startup marks `Running` sessions `Interrupted`
+without executing a request or tool. Deleted sessions cannot be resurrected by
+an old worker. Memory provenance can outlive its source conversation. The host
+invalidates active work before restoring a backup. Schema 22 snapshots include
+assistant tables; restore validates them before replacing anything, resets
+running state, and leaves proposals unapproved. Older backups preserve current
+assistant tables. Memory proposal confirmation and removal from the pending
+list are one transaction.
+
+The existing recognition path remains in place during this migration. Removing
+its old runtime dependencies requires separate image, structured-output,
+provider replay and capture regression parity; enabling the assistant alone
+does not satisfy that gate. Android target checks are compilation evidence,
+not evidence for physical-device TLS, lifecycle or background behavior.
+
+One pinned-provider limitation: keyless OpenAI Chat sends no Authorization
+header, while the v0.29.0 Responses adapter needs an explicitly empty header
+to suppress its environment-key fallback. A gateway rejecting empty headers
+needs an explicit configured key or a future upstream adapter fix. The app
+never silently borrows provider credentials from the process environment.
+
+## Recognition Runtime Submodule
 
 NaviWealth consumes the standalone runtime from
 `https://github.com/zsh-a/agent-runtime.git` through the Git submodule at
 `third_party/agent-runtime`. Paths below are relative to that submodule root
 unless prefixed with the submodule directory.
 
-## Scope
+### Submodule Scope
 
 The runtime provides:
 
@@ -28,7 +98,7 @@ stay in the host application. Rust agents consume domain-neutral contracts and
 request effects through host gateways; adding one does not transfer domain
 ownership into the standalone runtime.
 
-## Code Map
+### Submodule Code Map
 
 ```text
 crates/
@@ -47,7 +117,7 @@ fixtures/contracts/ Valid and invalid schema fixtures used by contract tests
 openapi/            agent-runtime-api.yaml — HTTP API contract for server-first clients
 ```
 
-## Runtime Layers
+### Submodule Runtime Layers
 
 1. `agent-core` defines protocol shapes and host-facing traits.
 2. `llm-protocol` owns typed LLM contracts, codecs and SSE parsing. `llm-client`
@@ -66,7 +136,7 @@ openapi/            agent-runtime-api.yaml — HTTP API contract for server-firs
 - `crates/navi-health` performs meal recognition through `llm-protocol` wire
   types and `llm-client` request policy; the NSH client supplies its platform
   fetch as the Host Transport. Recognition is a single-shot draft operation;
-  there is no chat loop or proposal seam in the NSH client. Unified capture
+  it does not use the general assistant loop. Unified capture
   uses `llm-reqwest` to receive SSE events through the same protocol/client
   contracts. Provisional cards remain in memory. Capture supports `ask_user`, persisting
   the suspended call and owner answers in its local draft. Continuation occurs
@@ -82,8 +152,9 @@ openapi/            agent-runtime-api.yaml — HTTP API contract for server-firs
 
 ## Invariants
 
-- All top-level runtime wire messages carry `protocol_version: "agent.v1"`.
-- Cross-language contracts are JSON-first. Keep envelopes stable and put
+- All top-level legacy runtime wire messages carry `protocol_version: "agent.v1"`;
+  this is not the pi-rust message format.
+- The submodule's cross-language contracts are JSON-first. Keep envelopes stable and put
   business-specific data in `input`, `output`, `payload`, or `metadata`.
 - Runtime crates must not import NSH, nsh-base, or NaviWealth domain code.
 - Business side effects are never executed by the runtime; hosts own
@@ -108,8 +179,10 @@ rtk cargo run -p agent-cli -- validate schemas/run-request.schema.json fixtures/
 | Change LLM provider behavior | submodule `third_party/agent-runtime/crates/llm-protocol/`, `third_party/agent-runtime/crates/llm-client/` | `rtk cargo test` in the submodule |
 | Change meal-recognition prompts or parsing | `crates/navi-health/` | health fixtures and adapter tests |
 | Change unified capture prompts, tools or history replay | `apps/nsh-client/src/domain/capture.rs`, `apps/nsh-client/src/data/vision.rs` | capture and Responses adapter/headless flows |
+| Change assistant providers, context or tool execution | `crates/navi-assistant/` | deterministic multi-step, continuation, cancellation and provider mapping tests |
+| Change assistant records, memory, proposals or backup behavior | `apps/nsh-client/src/data/assistant*.rs`, `apps/nsh-client/src/data/db.rs` | session recovery, stale-write, confirmation and atomic restore tests |
 
-## Current Limitations
+## Legacy Submodule Limitations
 
 - There is no standalone `bindings/dart` package; the pinned runtime ships
   `bindings/ts` only.

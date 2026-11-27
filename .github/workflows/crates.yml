@@ -32,7 +32,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        crate: [navi-storage, navi-finance, navi-health]
+        crate: [navi-storage, navi-finance, navi-health, navi-assistant]
     steps:
       - uses: actions/checkout@v7
         with:

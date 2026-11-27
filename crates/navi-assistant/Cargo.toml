@@ -1,0 +1,27 @@
+[package]
+name = "navi-assistant"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.97"
+publish = false
+description = "Bounded pi-rust agent execution with host-owned tools and persistence."
+
+[workspace]
+
+[dependencies]
+rpi-agent = { git = "https://github.com/bigfish1913/pi-rust", rev = "6d697126b4149fd1fd69d4c741c6103b37ddc615" }
+rpi-ai = { git = "https://github.com/bigfish1913/pi-rust", rev = "6d697126b4149fd1fd69d4c741c6103b37ddc615", features = ["providers"] }
+async-trait = "0.1"
+futures = "0.3"
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json", "stream"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time", "sync"] }
+tokio-util = "0.7"
+url = "2"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[profile.dev]
+debug = "line-tables-only"

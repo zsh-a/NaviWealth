@@ -26,12 +26,13 @@ NaviWealth 是一个本地优先的个人应用：复式记账、证券持仓、
 
 | 本地优先 | 设备端 AI | 为确认而设计 |
 |---|---|---|
-| 业务数据保存在应用私有目录的 SQLite 中；备份是本地口令加密文件。 | 用你自己的模型密钥直连 Anthropic 或 OpenAI 兼容接口，识别结果只是草稿。 | AI 与导入都只生成待确认记录；写入永远由你确认。 |
+| 业务数据、助手会话与记忆保存在应用私有目录的 SQLite 中；备份是本地口令加密文件。 | 用自己的模型密钥直连 Anthropic 或 OpenAI 接口；识别与助手编排在设备端运行。 | AI 与导入的业务变更都需确认；助手保存长期记忆也先征得确认。 |
 
 ## 功能
 
 - **记账**：复式分录（五类账户），支付宝 / 微信 / 招行账单导入，跨币种（CNY / HKD / USD）与余额核对；月度预算尚未实现。
 - **统一录入**：在「＋」描述或附图，可起草收支、餐食、体重、持仓交易、账户余额、手动价格和复盘笔记。可查看字段依据、逐条编辑或移除，一次确认并整批撤销。
+- **通用助手**：在 Today 打开持续对话，查询记录、保存经确认的跨任务记忆、执行可停止的多步任务。网页搜索可配置自己的 Brave Search 密钥；记录建议仍进入现有录入确认流程。
 - **持仓**：支持买卖 / 分红，移动平均成本与损益，证券目录搜索（A股 / 港股 / 美股 / ETF），腾讯行情，历史价格与净资产趋势。
 - **健康**：拍照识别记餐、体重记录、Garmin 官方 Personal API（睡眠 / HRV / 静息心率 / 步数等）。
 - **回顾**：周 / 月视图、分类支出对比、净资产变化、摄入与体重趋势。
@@ -43,7 +44,8 @@ apps/nsh-client/            NSH 客户端：Rust 页面与存储、TSX 体脂秤
 crates/navi-finance/        复式账本、持仓与证券目录的业务真相
 crates/navi-health/         餐食与收藏模型、持久化、营养、健康汇总与 Garmin 解析
 crates/navi-storage/        中性的 SQLite 迁移、快照与原子表替换
-third_party/agent-runtime/  模型协议与客户端（git submodule）
+crates/navi-assistant/      pi-rust 通用助手内核、模型适配与受限工具执行
+third_party/agent-runtime/  现有识别的模型协议与客户端（git submodule）
 third_party/market-data-rs/ 行情 SDK（腾讯源）
 tool/asset_catalog/         证券目录源数据与构建、校验、发布工具链
 ```
@@ -58,6 +60,7 @@ rustup toolchain install
 rtk cargo test --manifest-path apps/nsh-client/Cargo.toml --locked
 rtk cargo test --manifest-path crates/navi-finance/Cargo.toml --locked
 rtk cargo test --manifest-path crates/navi-health/Cargo.toml --locked
+rtk cargo test --manifest-path crates/navi-assistant/Cargo.toml --locked
 ```
 
 PR 和相关 push 自动运行领域、客户端、混合 TSX 与 Android 宿主检查，无需发布密钥。

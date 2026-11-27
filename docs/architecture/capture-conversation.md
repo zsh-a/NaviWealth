@@ -2,7 +2,7 @@
 
 Status: accepted.
 
-Accepted 2026-11-15. Updated 2026-11-22. See the [roadmap](../roadmap/roadmap-nsh.md)
+Accepted 2026-11-15. Updated 2026-11-27. See the [roadmap](../roadmap/roadmap-nsh.md)
 and [Product Scope](../product/product-scope.md) for scope and outstanding device checks.
 
 ## Context
@@ -16,10 +16,12 @@ identity, the answer box does not echo the question, and re-parsing the
 whole draft after each sentence feels unstable. The owner chose a
 chat-timeline capture experience.
 
-Constraints that still hold: [Personal Local Scope](personal-local-scope.md)
-removed AI chat and agents as features; recognition runs on device against
+Constraints that still hold: recognition runs on device against
 user-owned profiles through `llm-protocol`/`llm-client`. Unified capture receives provider events
 through `llm-reqwest`. Records require explicit confirmation; drafts live in SQLite and stay out of backups.
+The owner authorized a separate general assistant on 2026-11-27, recorded in
+[Personal Local Scope](personal-local-scope.md). Its persistent conversations
+and memories do not change this capture-specific lifecycle or confirmation boundary.
 
 ## Decision
 
@@ -88,9 +90,10 @@ through `llm-reqwest`. Records require explicit confirmation; drafts live in SQL
 
 ## Consequences
 
-- Product Scope Rule 3 changes from "not a chat timeline" to the bounded
-  conversation above; the Removed entry for "AI chat" refers to free-form
-  chat and agents, not to this thread.
+- Capture follows the bounded conversation above. The separately authorized
+  general assistant has its own persistent conversation page and runtime;
+  proposals from that assistant enter capture as unsent drafts, with no
+  automatic recognition or record confirmation.
 - Each Send and each optional debounced typing preview is a separate request; each photo belongs to its owner turn and is replayed with that turn in subsequent requests.
   Multi-turn prompt quality becomes part of the existing "real-model
   quality" verification item.

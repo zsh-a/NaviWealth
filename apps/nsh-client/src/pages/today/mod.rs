@@ -50,7 +50,7 @@ pub fn today_tab() -> impl IntoElement {
     )
 }
 
-/// Today's date and title, and Settings.
+/// Today's date and title, Assistant and Settings.
 fn header() -> impl IntoElement {
     let day = clock::today;
     view()
@@ -75,6 +75,12 @@ fn header() -> impl IntoElement {
                         .number_of_lines(1)
                         .role(AccessibilityRole::Header),
                 ),
+        )
+        .child(
+            Btn::ghost()
+                .size(Size::Small)
+                .label(|| super::assistant::title().into())
+                .on_press(|| nav::push(Route::Assistant)),
         )
         .child(
             IconBtn::new(Icon::Sliders, || s().settings.into())

@@ -3,7 +3,7 @@
 The NSH (Rust) client's design system and the decisions behind it. Tokens
 live in `src/ui/theme.rs`; every screen is composed from `src/ui/`. Product
 rules come from `docs/product/product-scope.md`: personal use, local-first,
-AI only to turn text and images into drafts, using the owner's model account.
+AI capture drafts and a general assistant using the owner's model account.
 
 ## The task
 
@@ -20,7 +20,7 @@ AI only to turn text and images into drafts, using the owner's model account.
   lifting after a drag onto another tab chooses that tab, while a tap is
   left to the tab's own press. Every tab stays a `Tab` of one `Tabs` list,
   so keyboard focus and screen readers work as for any tab list.
-  Settings is the corner action on Today.
+  Assistant is a visible text action beside the Settings corner action on Today.
   Pages pushed over the home cover the bar. Hidden tabs stay alive (their
   scroll position stays) and are hidden from screen readers. Each tab scrolls
   in a viewport that ends above the dock and system inset.
@@ -100,6 +100,31 @@ AI only to turn text and images into drafts, using the owner's model account.
   consumes it, discarding deletes it, and reopening a draft shows the whole
   conversation. An older single-question draft migrates into the thread as
   a plain question turn.
+- **Assistant:** a native pushed page, outside the four tabs, for ongoing
+  conversations. It inherits the canvas, typography, controls and safe-area
+  behavior. The header carries Back and a labelled New conversation action;
+  Conversations and Memory & search switch the body in place. The composer
+  stays below the scrolling thread and grows from 48 to 120 pt. Send is disabled
+  without a configured model or text; a running task exposes Stop. Navigation
+  away does not cancel a task. Switching or deleting conversations is disabled
+  during a run. Unsent conversation and memory input are retained while changing
+  the body's view; leaving the page guards unsent input.
+  Owner turns indent slightly; assistant replies use the content width. Quiet
+  speaker labels, selectable Markdown, explicit web links and tool activity
+  distinguish the thread without nested cards. Model-supplied images show their
+  alternative text and never fetch automatically. The thread follows streaming
+  output while the owner is near its end; scrolling upward keeps the reading
+  position. Earlier messages load in groups of 40. First use names the selected
+  model and the messages, recalled memories and requested records it may receive;
+  consent is separate from capture and scoped to that model account.
+  Proposed memories and records appear as reviewable text with explicit save or
+  open-draft actions. A record opens capture as an unsent draft and still needs
+  its normal confirmation. Memory & search lists saved facts with visible edit
+  and confirmed delete controls, a memory field and an explicit Save memory
+  action. The Brave Search key is masked and saved on leaving its field; the
+  copy distinguishes search from opening a link and explains where queries go.
+  Conversation deletion also asks for confirmation. An empty conversation
+  explains what the assistant can do and offers model setup when needed.
 - **Task sheets:** header and actions stay fixed; only the body scrolls.
   Manage, account creation and holding creation share one native sheet;
   changing panels does not replay its entrance. Nested pickers return to the

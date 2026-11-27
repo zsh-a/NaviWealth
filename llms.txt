@@ -3,8 +3,10 @@
 > Local-first personal finance and health app for one Android phone. The
 > client is NSH (Rust pages, TSX hardware UI, Kotlin Android host); business truth lives in the `navi-finance` and
 > `navi-health` crates. Local-only: no backend, no sync, no account system;
-> passphrase-encrypted local backups. AI recognition runs on device against
-> user-owned LLM profiles through the `third_party/agent-runtime` submodule.
+> passphrase-encrypted local backups. AI requests go directly to user-owned
+> model profiles. Capture uses `third_party/agent-runtime`; the general
+> assistant embeds pi-rust through `navi-assistant`, with local conversations,
+> confirmed cross-task memories, web research and bounded multi-step tools.
 
 ## Essential Docs
 
@@ -24,7 +26,8 @@
 - `crates/navi-finance/`: Double-entry ledger, holdings, securities catalog truth.
 - `crates/navi-health/`: Meals and favorites, validated repositories, nutrition, weight and health-review calculations, Garmin parsing.
 - `crates/navi-storage/`: Neutral SQLite migrations, snapshots and atomic table replacement.
-- `third_party/agent-runtime/`: Provider-neutral LLM protocol and client (submodule).
+- `crates/navi-assistant/`: Pinned pi-rust Agent loop, provider adaptation, bounded execution and continuation contracts.
+- `third_party/agent-runtime/`: Existing recognition's provider-neutral LLM protocol and client (submodule).
 - `third_party/market-data-rs/`: Market-data SDK (Tencent quotes).
 - `tool/asset_catalog/`: Securities catalog source CSVs and its bake/publish pipeline (the client downloads the bundle from the rolling release).
 

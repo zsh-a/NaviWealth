@@ -2,6 +2,7 @@
 //! share.
 
 pub(crate) mod assets;
+pub(crate) mod assistant;
 mod capture;
 pub(crate) use capture::receipt;
 mod dock;

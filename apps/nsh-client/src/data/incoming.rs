@@ -71,6 +71,11 @@ pub fn clear() {
     global::<Request>().set(Request(None));
 }
 
+/// Opens an already-persisted assistant proposal in the ordinary capture review.
+pub fn show_capture(id: String) {
+    global::<Request>().set(Request(Some(Opened::Capture(id))));
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Kind {
     Image,

@@ -1,0 +1,120 @@
+use rpi_agent::AgentMessage;
+use rpi_ai::types::{
+    Content, Context, Message, StopReason, ToolCall, ToolResultMessage, ToolResultRole,
+};
+use serde_json::Value;
+
+/// Interrupted calls are closed as errors, never executed again merely because
+/// a persisted session was loaded. A new user turn is always required.
+pub(crate) fn decode(values: Vec<Value>) -> Result<Vec<AgentMessage>, String> {
+    if values.len() > 4096
+        || serde_json::to_vec(&values)
+            .map_err(|_| "assistant_history")?
+            .len()
+            > 8_000_000
+    {
+        return Err("assistant_history_limit".into());
+    }
+    let mut messages = Vec::new();
+    let mut pending: Vec<ToolCall> = Vec::new();
+    for value in values {
+        let mut message: AgentMessage =
+            serde_json::from_value(value).map_err(|_| "assistant_history")?;
+        match &message {
+            AgentMessage::Custom(_) => return Err("assistant_history".into()),
+            AgentMessage::ToolResult(result) => {
+                let index = pending
+                    .iter()
+                    .position(|call| {
+                        call.id == result.tool_call_id && call.name == result.tool_name
+                    })
+                    .ok_or("assistant_history")?;
+                pending.remove(index);
+            }
+            _ => close_pending(&mut messages, &mut pending),
+        }
+        sanitize(&mut message);
+        if let AgentMessage::Assistant(assistant) = &message {
+            pending = assistant
+                .content
+                .iter()
+                .filter_map(|item| match item {
+                    Content::ToolCall(call) => Some(call.clone()),
+                    _ => None,
+                })
+                .collect();
+        }
+        messages.push(message);
+    }
+    close_pending(&mut messages, &mut pending);
+    Ok(messages)
+}
+
+fn close_pending(messages: &mut Vec<AgentMessage>, pending: &mut Vec<ToolCall>) {
+    for call in pending.drain(..) {
+        messages.push(AgentMessage::from(ToolResultMessage {
+            role: ToolResultRole,
+            tool_call_id: call.id,
+            tool_name: call.name,
+            content: vec![Content::text("Interrupted. The outcome is unknown. Check existing drafts and data before proposing the action again; do not automatically repeat a write.")],
+            details: None,
+            usage: None,
+            added_tool_names: Vec::new(),
+            is_error: true,
+            timestamp: 0,
+        }));
+    }
+}
+
+pub(crate) fn sanitize(message: &mut AgentMessage) {
+    if let AgentMessage::Assistant(assistant) = message
+        && matches!(
+            assistant.stop_reason,
+            StopReason::Error | StopReason::Aborted
+        )
+    {
+        // Upstream diagnostics can contain a provider response body. Store only
+        // a stable code, even if the caller logs serialized checkpoints.
+        assistant.error_message = Some("assistant_provider".into());
+        assistant.raw_stop_reason = None;
+        assistant.content.clear();
+    }
+}
+
+pub(crate) fn encode(messages: &[AgentMessage]) -> Vec<Value> {
+    messages
+        .iter()
+        .filter_map(|message| {
+            let mut message = message.clone();
+            sanitize(&mut message);
+            serde_json::to_value(message).ok()
+        })
+        .collect()
+}
+
+/// Shrink only the provider window. Never split a user turn, which would
+/// orphan tool calls or erase their results while retaining the instructions.
+pub(crate) fn bound_context(context: &mut Context, limit: usize) -> Result<usize, String> {
+    context.messages.retain(|message| !matches!(message,
+        Message::Assistant(assistant) if matches!(assistant.stop_reason, StopReason::Error | StopReason::Aborted)
+    ));
+    let mut removed = 0;
+    while serde_json::to_vec(context)
+        .map_err(|_| "assistant_context_limit")?
+        .len()
+        > limit
+    {
+        let next = context
+            .messages
+            .iter()
+            .enumerate()
+            .skip(1)
+            .find_map(|(i, message)| matches!(message, Message::User(_)).then_some(i));
+        let Some(next) = next else {
+            return Err("assistant_context_limit".into());
+        };
+        context.messages.drain(..next);
+        removed += next;
+    }
+    Ok(removed)
+}

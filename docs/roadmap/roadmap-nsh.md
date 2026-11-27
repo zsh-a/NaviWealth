@@ -2,7 +2,7 @@
 
 Status: active sequencing SSOT; replaces the previous Now/Next plans.
 
-Last reviewed: 2026-11-21.
+Last reviewed: 2026-11-27.
 
 ## Contract And Baseline
 
@@ -383,6 +383,56 @@ Recommended sequence; this is planning, not a claim these items are implemented.
    tests, Kotlin compilation and strict lint pass. Remaining: physical-device
    evidence for sharing from Alipay, WeChat, Gallery and Files, cold start
    versus running, and `singleTask` with notifications and Back.
+
+## General Assistant — Owner-Authorized Expansion (2026-11-27)
+
+The owner requested continuous conversation, cross-task memory, web research
+and multi-step tasks after evaluating pi-rust. This expands the former
+recognition-only scope; it does not restore the retired Flutter agent fleet.
+[Product Scope](../product/product-scope.md#general-assistant) owns the feature
+boundary; [runtime architecture](../architecture/agent-runtime-current.md)
+owns the implementation seams.
+
+Implementation uses a new `navi-assistant` crate over pinned pi-rust
+`rpi-agent`/`rpi-ai` v0.29.0. The app owns SQLite sessions and memory (schema 22),
+an Assistant entry on Today, model-scoped consent, read-only record tools,
+explicit memory/record proposals, optional Brave Search and bounded page fetch.
+The four tabs and ordinary capture remain. Complete-turn context trimming
+keeps requests bounded while retaining stored history; summary compaction and
+background scheduling are not included.
+
+Exit gates:
+
+- Deterministic multi-step tool execution, continuation and cancellation pass;
+  provider identity and tool-call results survive persistence without replaying
+  completed side effects.
+- Restart keeps chats and memory and marks interrupted work; proposal
+  confirmation is explicit. Deleted conversations cannot return from stale
+  worker callbacks.
+- Assistant tables roundtrip through encrypted backups. Older backups preserve
+  them, and malformed new backups change neither business records nor chats.
+- Headless flows cover entry, consent, sending/stopping, history and memory
+  management. Web requests have bounded response sizes, timeouts and checked
+  destinations; API keys are excluded from logs and backups.
+- Android ARM64 builds and physical-device TLS, keyboard/Back, cancellation,
+  process-death recovery and upgrade retention are recorded separately. The
+  upstream Android target check from the feasibility probe is compilation
+  evidence only; it does not close the physical-device gate.
+
+The old recognition dependencies remain until a separate parity migration
+passes image recognition, structured drafts, provider replay and capture
+regressions. A working general assistant alone does not authorize deleting
+those dependencies.
+
+Verification recorded 2026-11-27: the app's focused data suite passed 113 tests
+(three existing ignored cases), including assistant storage, recovery and
+atomic backup validation. Three real loopback HTTP/SSE headless flows passed:
+memory proposal/confirmation followed by cross-session recall after restart;
+cancellation with an unapproved proposal and no automatic replay; and record
+proposal confirmation opening an unsent capture with no ledger write. Strict
+clippy for the flow target and documentation checks passed. These scripted
+provider fixtures establish integration behavior, not real-model answer
+quality or physical-device acceptance; those gates remain open.
 
 ## Operating Rules
 

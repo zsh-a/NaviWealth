@@ -17,7 +17,8 @@ smallest authoritative context.
 | Finance (ledger, holdings, catalog) | `crates/navi-finance/` | Rust |
 | Health (meals, nutrition, Garmin) | `crates/navi-health/` | Rust |
 | Neutral SQLite infrastructure | `crates/navi-storage/` | Rust |
-| Agent Runtime | `third_party/agent-runtime/` | Rust submodule |
+| General assistant runtime | `crates/navi-assistant/` | Rust, pi-rust |
+| Recognition runtime | `third_party/agent-runtime/` | Rust submodule |
 | Market data SDK | `third_party/market-data-rs/` | Rust |
 | Catalog source CSVs | `tool/asset_catalog/sources/` | CSV |
 | Catalog build/publish pipeline | `tool/asset_catalog/` | Python |
@@ -32,7 +33,7 @@ apps/nsh-client/src/
   data/     device storage, photos, local time, thin NSH fetch Transport
   ui/       styled components over nsh-base and its tokens
   pages/    home (Today, Records, Assets, Review tabs, capture sheet), meal
-            editing, Settings
+            editing, Assistant, Settings
   i18n/     English and Chinese copy
 tests/      headless meal, weight, Garmin, review and backup flows
 ```
@@ -50,17 +51,24 @@ tests/      headless meal, weight, Garmin, review and backup flows
   NSH KV is a 5 MB preferences store. Only exported backups are
   passphrase-encrypted (Personal Local Scope).
 - Features follow `docs/product/product-scope.md`: personal use, four tabs,
-  AI for recognition drafts only. Do not port removed features or re-add the
-  retired Flutter features (Knowledge, Execution, AI chat/agents, FIRE,
+  recognition drafts and the owner-authorized general assistant (2026-11-27).
+  Do not port removed features or re-add the retired Flutter features
+  (Knowledge, Execution, the seven named agents and legacy Memory Runtime, FIRE,
   options, rebalance, Runway, allocation display, broker statement import).
 - AI is device-only against user-owned LLM profiles. There is no backend AI
   relay or cloud fallback. Provider protocols live in
   `third_party/agent-runtime/crates/llm-protocol`; request policy in
-  `llm-client`.
+  `llm-client` for capture. The general assistant uses pinned pi-rust
+  `rpi-agent`/`rpi-ai` through `navi-assistant`; app adapters own tool permissions,
+  SQLite sessions, explicit memory confirmation and business proposals.
 - Domain crates depend on neutral infrastructure, never on sibling domain
   business models. Keep deterministic calculations out of any model.
 - Recognition and imports produce drafts; every confirmed write goes through
   explicit user confirmation and is atomic.
+- Assistant model runs are bounded and cancellable. Restart or restore never
+  replays tools automatically. A record proposal opens unsent capture after
+  confirmation; the normal review owns the final business write. Saved memories
+  require confirmation and are included with conversations in encrypted backups.
 - Dated observations (prices, FX, valuations) keep provenance and never
   overwrite manual entries on the same or newer day.
 - NSH is Android-only for releases; desktop builds exist for development and
@@ -78,7 +86,7 @@ rtk cargo test --manifest-path <crate>/Cargo.toml --locked
 ```
 
 Run the three commands for `apps/nsh-client`, `crates/navi-finance`,
-`crates/navi-health` and `crates/navi-storage`; automatic CI runs fmt, clippy
+`crates/navi-health`, `crates/navi-storage` and `crates/navi-assistant`; automatic CI runs fmt, clippy
 (`-D warnings`) and `--locked` tests on relevant pushes and PRs. Signed
 Android packaging remains a separate manual workflow.
 

@@ -2,7 +2,7 @@
 
 Status: active product SSOT for the NSH client.
 
-Last reviewed: 2026-11-21.
+Last reviewed: 2026-11-27.
 
 ## Document Contract
 
@@ -25,14 +25,17 @@ whether the owner uses a feature every day or every week.
 1. It answers a question asked daily or weekly. Otherwise it is not built.
 2. Four tabs at most, no nested secondary navigation. Settings is a page
    reached from a corner action, not a tab.
-3. AI turns a short description and/or image into record drafts. The user
-   confirms before anything is saved. Capture is a bounded conversation
+3. AI capture turns a short description and/or image into record drafts. The user
+   confirms before business records are saved. Capture is a bounded conversation
    ([Capture Conversation](../architecture/capture-conversation.md)):
    clarifications and corrections are turns inside one capture draft's
    thread. The owner may separately enable previews of unsent text and the use of
-   local examples for submitted requests in a specific model profile. There are
-   no free-form chats, named agents, or autonomous/background agents, and no
-   memory across drafts.
+   local examples for submitted requests in a specific model profile. There is
+   also a general assistant, authorized by the owner on 2026-11-27, for ongoing
+   conversation, cross-task memories, web research and multi-step tasks. The
+   assistant has its own conversations; it does not turn capture drafts into
+   permanent chats. Memories and record proposals require explicit confirmation.
+   No named-agent fleet or autonomous background execution is included.
 4. Anything derivable is derived, not entered: net worth, positions, monthly
    balance, averages.
 5. Adding a new kind of record requires removing one or a written reason.
@@ -51,8 +54,13 @@ whether the owner uses a feature every day or every week.
 
 ## Interaction Model
 
-Updated 2026-11-22.
+Updated 2026-11-27.
 
+- Today has a visible Assistant action opening a conversation page; the four
+  tabs and the capture button remain. Conversations can be continued, created
+  and deleted. The owner can stop an active run, inspect saved memories and
+  delete them. Interrupted conversations wait for the next explicit message;
+  restart never resumes tool execution automatically.
 - A floating tab bar beside one capture button. Capture opens one composer:
   describe what happened or attach up to four images per draft, including
   evidence added in later turns. One request can draft transactions, meals,
@@ -130,6 +138,40 @@ Updated 2026-11-22.
   calendar; a chosen day is shown alone, stepping to neighbouring days.
 
 ## Kept Features
+
+### General Assistant
+
+The assistant answers broader questions over multiple turns, remembers facts
+the owner explicitly approves, researches public web sources and combines
+bounded tool calls to complete a submitted task. This is a new NSH feature,
+not a port of the retired Flutter agents or Knowledge/Execution domains.
+
+- The existing model profile supplies the provider, URL, model and key.
+  Consent is separate from capture and scoped to that model destination. It
+  covers submitted conversation, recalled memories and records requested by
+  tools; none is sent merely by opening the assistant.
+- Read-only record tools query date-bounded local data. Calculations and exact
+  money remain in their owning domain crates. The model receives only tool
+  results requested for the current task, not a full database dump.
+- Memory proposals are visible and unapproved until accepted. Cross-task
+  memories record their source conversation when available; deleting a chat
+  does not silently delete separately approved memories.
+- A record proposal opens an unsent capture draft after confirmation. Normal
+  capture review still owns validation and atomic business writes. There is no
+  arbitrary SQL, shell access, or direct model write to the ledger or health data.
+- Optional web search uses the owner's Brave Search API key. Search queries
+  leave the device for that service; fetched public pages are untrusted source
+  material, not instructions. Fetching has URL/network, time and size limits;
+  authenticated pages, JavaScript browsing and PDF parsing are not included.
+- Conversation history, unapproved proposals and saved memories stay in the
+  app's SQLite database and are included in encrypted backups. Credentials and
+  consent settings are not backed up. Restored runs remain interrupted and
+  proposals still need confirmation.
+- Execution is foreground, cancellable and bounded. Keeping a conversation
+  does not promise unlimited model context or unattended background jobs.
+
+Implementation and provider boundaries are defined in
+[Agent Runtime Current Architecture](../architecture/agent-runtime-current.md).
 
 ### Ledger (double-entry)
 
@@ -347,7 +389,7 @@ The full target is:
 | Recovery score/verdict, health check-ins, trend explorer, HealthKit, Health Connect | Garmin and manual data cover the owner's needs |
 | KnowledgeOS (notes, decisions, relations, BCR library) | Whole domain |
 | ExecutionOS (plans, actions, progress) | Whole domain |
-| AI chat, the seven named agents, Memory Runtime, proposals, voice | AI is recognition only; the capture thread is a bounded clarification surface inside recognition ([Capture Conversation](../architecture/capture-conversation.md)), not chat |
+| The seven Flutter named agents, legacy Memory Runtime, voice | The new local general assistant is a separate NSH implementation; retired agents and their data model are not ported |
 | Sync v3, accounts/login, backend dependency | Local backups only |
 | Domain opt-in, `DomainPack` registry, command palette, Life signals | Fixed composition of four tabs |
 | Web and iOS | Decided 2026-11-13 |

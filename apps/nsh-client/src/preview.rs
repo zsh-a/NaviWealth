@@ -500,6 +500,7 @@ pub fn apply() {
                 nav::push(Route::EditMeal(meal.id));
             }
         }
+        Some("assistant") => nav::push(Route::Assistant),
         Some("settings") => nav::push(Route::Settings),
         Some("model") => {
             nav::push(Route::Settings);

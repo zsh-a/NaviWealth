@@ -114,6 +114,8 @@ const MIGRATIONS: &[&str] = &[
     navi_finance::repository::ARCHIVE_SCHEMA,
     // 21: explicit purposes for own accounts. Existing accounts retain NULL.
     navi_finance::repository::PURPOSE_SCHEMA,
+    // 22: durable assistant conversations and owner-approved cross-task memories.
+    super::assistant_store::SCHEMA,
 ];
 
 #[derive(Clone, Default)]
@@ -291,11 +293,20 @@ fn restore_file_with_photos(
     restored
         .execute("DELETE FROM scale_drafts", [])
         .map_err(|_| RestoreError::Unreadable)?;
+    // A restored run is an interrupted conversation, never authorization to
+    // execute tools. Keep this normalization in the source copy so replacement
+    // remains atomic with all business records.
+    super::assistant_store::recover(&restored).map_err(|_| RestoreError::Unreadable)?;
     drop(restored);
     let mut tables = HEALTH_TABLES.to_vec();
     tables.push(("scale_drafts", "session_id, body"));
     if version >= 7 {
         tables.extend_from_slice(navi_finance::repository::TABLES);
+    }
+    // Backups made before the assistant existed preserve today's conversations
+    // and memories, like old health-only backups preserve the current ledger.
+    if version >= 22 {
+        tables.extend_from_slice(super::assistant_store::TABLES);
     }
     navi_storage::replace_tables(connection, path, &tables).map_err(|error| {
         log::error!("db: restore failed: {error}");
@@ -350,7 +361,11 @@ fn remap_photos(
 /// contracts as normal loading and confirmed writes.
 fn validate_restored(connection: &Connection) -> Result<(), String> {
     use crate::domain::weight::valid_kg;
-    for (table, columns) in HEALTH_TABLES.iter().chain(navi_finance::repository::TABLES) {
+    for (table, columns) in HEALTH_TABLES
+        .iter()
+        .chain(navi_finance::repository::TABLES)
+        .chain(super::assistant_store::TABLES)
+    {
         let kind: String = connection
             .query_row(
                 "SELECT type FROM sqlite_schema WHERE name = ?1",
@@ -425,6 +440,7 @@ fn validate_restored(connection: &Connection) -> Result<(), String> {
     read().map_err(|e| e.to_string())?;
     navi_health::store::validate(connection).map_err(|e| e.to_string())?;
     super::scale::validate_saved(connection)?;
+    super::assistant_store::validate(connection)?;
     navi_finance::repository::validate(connection).map_err(|e| e.to_string())
 }
 
@@ -437,6 +453,157 @@ pub fn with<R>(f: impl FnOnce(&Connection) -> R) -> Option<R> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn assistant_session(id: &str) -> super::super::assistant_store::Session {
+        use super::super::assistant_store::{
+            Message, PendingAction, PendingKind, Role, Session, Status,
+        };
+        Session {
+            id: id.into(),
+            title: "Weekly review".into(),
+            created_at_ms: 1,
+            updated_at_ms: 2,
+            messages: vec![Message {
+                id: "user-1".into(),
+                role: Role::User,
+                text: "Remember I prefer vegetarian meals".into(),
+            }],
+            history: vec![
+                serde_json::json!({"kind":"user","role":"user","content":"Review","timestamp":1}),
+            ],
+            status: Status::Running,
+            model_target: Some("openai|example.invalid|model".into()),
+            pending: vec![PendingAction {
+                id: "proposal-1".into(),
+                kind: PendingKind::Memory {
+                    text: "Prefers vegetarian meals".into(),
+                },
+            }],
+            action_outcomes: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn assistant_snapshot_restores_chats_and_memories_without_executing_proposals() {
+        use super::super::assistant_store as assistant;
+        let dir = tempfile::tempdir().unwrap();
+        let source = navi_storage::memory(MIGRATIONS).unwrap();
+        let chat = assistant_session("source-chat");
+        assistant::create_session(&source, &chat).unwrap();
+        let memory = assistant::Memory {
+            id: "memory-1".into(),
+            text: "Vegetarian".into(),
+            source_session: Some(chat.id.clone()),
+            updated_at_ms: 3,
+        };
+        assistant::save_memory(&source, &memory).unwrap();
+        source
+            .execute("INSERT INTO weights VALUES('2026-11-27',70.0,1)", [])
+            .unwrap();
+        let path = dir.path().join("snapshot.sqlite");
+        snapshot_file(&source, &path).unwrap();
+        assert_eq!(
+            assistant::session(&source, &chat.id)
+                .unwrap()
+                .unwrap()
+                .status,
+            assistant::Status::Running
+        );
+        let destination = navi_storage::memory(MIGRATIONS).unwrap();
+        assistant::create_session(&destination, &assistant_session("replaced-chat")).unwrap();
+        restore_file(&destination, &path).unwrap();
+        let mut expected = chat;
+        expected.status = assistant::Status::Interrupted;
+        assert_eq!(assistant::sessions(&destination).unwrap(), [expected]);
+        assert_eq!(assistant::memories(&destination).unwrap(), [memory]);
+        assert_eq!(
+            destination
+                .query_row("SELECT kg FROM weights", [], |r| r.get::<_, f64>(0))
+                .unwrap(),
+            70.0
+        );
+    }
+
+    #[test]
+    fn pre_assistant_backup_preserves_conversations_and_memories() {
+        use super::super::assistant_store as assistant;
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("schema21.sqlite");
+        let source = navi_storage::open(&path, &MIGRATIONS[..21]).unwrap();
+        source
+            .execute("INSERT INTO weights VALUES('2026-11-27',70.0,1)", [])
+            .unwrap();
+        drop(source);
+        let destination = navi_storage::memory(MIGRATIONS).unwrap();
+        let chat = assistant_session("kept-chat");
+        assistant::create_session(&destination, &chat).unwrap();
+        let memory = assistant::Memory {
+            id: "kept-memory".into(),
+            text: "Vegetarian".into(),
+            source_session: None,
+            updated_at_ms: 3,
+        };
+        assistant::save_memory(&destination, &memory).unwrap();
+        restore_file(&destination, &path).unwrap();
+        assert_eq!(assistant::sessions(&destination).unwrap(), [chat]);
+        assert_eq!(assistant::memories(&destination).unwrap(), [memory]);
+    }
+
+    #[test]
+    fn corrupt_assistant_backup_changes_neither_business_data_nor_chat() {
+        use super::super::assistant_store as assistant;
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("corrupt.sqlite");
+        let source = navi_storage::open(&path, MIGRATIONS).unwrap();
+        assistant::create_session(&source, &assistant_session("backup-chat")).unwrap();
+        source
+            .execute("INSERT INTO weights VALUES('2026-11-27',70.0,1)", [])
+            .unwrap();
+        source
+            .execute(
+                "UPDATE assistant_sessions SET body=json_set(body,'$.pending[0].kind.text','')",
+                [],
+            )
+            .unwrap();
+        let destination = navi_storage::memory(MIGRATIONS).unwrap();
+        let chat = assistant_session("kept-chat");
+        assistant::create_session(&destination, &chat).unwrap();
+        destination
+            .execute("INSERT INTO weights VALUES('2026-11-27',80.0,1)", [])
+            .unwrap();
+        assert_eq!(
+            restore_file(&destination, &path),
+            Err(RestoreError::Unreadable)
+        );
+        assert_eq!(assistant::sessions(&destination).unwrap(), [chat]);
+        assert_eq!(
+            destination
+                .query_row("SELECT kg FROM weights", [], |r| r.get::<_, f64>(0))
+                .unwrap(),
+            80.0
+        );
+        source
+            .execute(
+                "UPDATE assistant_sessions SET body=json_set(body,'$.pending[0].kind.text','Vegetarian','$.history[0].kind','invalid-message')",
+                [],
+            )
+            .unwrap();
+        assert_eq!(
+            restore_file(&destination, &path),
+            Err(RestoreError::Unreadable),
+            "malformed provider replay history is rejected before any replacement"
+        );
+        assert_eq!(
+            assistant::sessions(&destination).unwrap()[0].id,
+            "kept-chat"
+        );
+        assert_eq!(
+            destination
+                .query_row("SELECT kg FROM weights", [], |r| r.get::<_, f64>(0))
+                .unwrap(),
+            80.0
+        );
+    }
 
     fn spending(id: &str, amount: i64) -> navi_finance::journal::Transaction {
         use navi_finance::{

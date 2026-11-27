@@ -6,7 +6,9 @@ weight, trade, balance, security price or review note drafts using the owner's m
 (spending, intake and vitals), Records (all history), Assets (accounts, book balances and net worth), and Review
 (the week or month, with recorded spending and the attributed net-worth
 change). The capture button accepts a description or image and
-keeps a draft for confirmation. Settings keep each change as it is made;
+keeps a draft for confirmation. Today's Assistant action opens ongoing chats,
+explicitly saved memories, web research and bounded multi-step tasks.
+Settings keep each change as it is made;
 manual entry and account management work without a model account. Design
 standards and the motion inventory: `DESIGN.md`.
 
@@ -24,7 +26,7 @@ src/
   data/     device storage, photos, local time and device network adapters
   ui/       the app's styled components over nsh-base, and its tokens
   pages/    the home (Today, Records, Assets, Review tabs, capture sheet), meal
-            editing, Settings
+            editing, Assistant, Settings
   i18n/     English and Chinese copy
   preview.rs  desktop-only preview seeding for design review
 App.tsx     mixed entry mounting the retained Rust App and scale sheet
@@ -40,6 +42,47 @@ scale transactions with device-local evidence. Provider wire
 formats live in `../../third_party/agent-runtime/crates/llm-protocol`; request
 policy lives in `llm-client`. Unified capture uses the native `llm-reqwest` transport for streaming.
 Single-meal recognition and the connection test use NSH platform fetch. Each saved estimate records its model and prompt version.
+
+## General assistant
+
+The Assistant action on Today opens a persistent conversation, using the same
+configured model account as capture. Its consent is separate and bound to the
+provider, destination and model: sending can include chat history, recalled
+memories and local records requested by tools. Opening the page alone makes no
+model request. The owner can start a new chat, revisit or delete old chats,
+stop a run, and inspect or delete saved memories.
+
+`../../crates/navi-assistant` embeds pinned pi-rust `rpi-agent` and `rpi-ai`
+v0.29.0, with an eight-turn/150-second run budget. Complete-turn trimming bounds
+model input to 120,000 serialized UTF-8 bytes; complete stored history is kept,
+and there is no automatic summary compaction. Provider-native history is bound
+to its model destination. There is no CLI, shell/file tool set, dynamic plugin
+loader, application server or unattended background scheduler.
+
+App adapters live in `src/data/assistant*.rs`; the conversation UI lives in
+`src/pages/assistant.rs`. Read-only record queries are date-bounded and paged.
+Memory retrieval uses approved saved facts. A memory tool creates a proposal
+that must be accepted before it is saved. A record proposal opens an unsent
+capture draft after confirmation; existing capture review still owns the
+business write. A tool never receives unrestricted database or shell access.
+
+Web search optionally uses a Brave Search API key kept in app-private storage.
+Search queries are sent to Brave; public-page fetches are bounded to 1 MiB and
+check destinations, redirects and timeouts. Web content is untrusted evidence,
+not an instruction to use local tools. JavaScript browsing, logged-in pages and
+PDF parsing are not supported. Keys are excluded from backups.
+
+Schema 22 stores sessions, UI messages, runtime history, pending proposals and
+approved memories. Process restart marks running sessions interrupted; the
+next model request requires another explicit user message. Pending proposals
+remain unapproved. Delete and restore invalidate active work, and checkpoint
+updates cannot recreate a deleted conversation. Assistant tables are included
+in encrypted backups; pre-22 backups preserve the current assistant data.
+
+The existing recognition implementation remains on `third_party/agent-runtime`
+until its separate provider/image/capture parity migration is complete. See
+[runtime architecture](../../docs/architecture/agent-runtime-current.md) and
+[delivery gates](../../docs/roadmap/roadmap-nsh.md#general-assistant--owner-authorized-expansion-2026-11-27).
 
 ## Commands
 
@@ -194,7 +237,8 @@ PUT prevents replacing an existing file. No automatic remote deletion occurs.
 
 Backups contain confirmed meals, favorites, notes, weights, composition and
 scale provenance, imported Garmin days, the ledger, holdings, dated manual
-prices/FX, price audit and valuation observations. Recognition threads, meal
+prices/FX, price audit and valuation observations, plus assistant conversations,
+unapproved proposals and approved memories. Recognition threads, meal
 review drafts, scale drafts and local revision guards are excluded. Provider
 quotes and daily bars are excluded as re-fetchable caches. Statement-import
 reviews remain part of the finance backup contract. Save and back up
@@ -202,7 +246,7 @@ reviews remain part of the finance backup contract. Save and back up
 of meals and favorites, named `…-photos.nwbk` and marked "With photos" in the
 restore list; the daily automatic backup leaves photos out so it stays small.
 Restoring writes back the photos a backup carries and keeps photos already on
-the device. **Model/Garmin keys, settings, WebDAV credentials and the
+the device. **Model/Garmin/search keys, settings, WebDAV credentials and the
 passphrase are excluded.** The passphrase is kept in app-private storage and must also be
 saved elsewhere to restore on a fresh install. The `NWBK` format uses Argon2id
 (32 MiB, three passes) and XChaCha20-Poly1305 with an authenticated header.

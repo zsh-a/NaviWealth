@@ -31,6 +31,8 @@ pub enum Route {
         security: String,
         trade: String,
     },
+    /// Persistent general assistant conversations.
+    Assistant,
     /// Settings.
     Settings,
     /// Height, age and sex used for health calculations.

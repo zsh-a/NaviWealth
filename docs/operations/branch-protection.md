@@ -7,8 +7,8 @@ choose to use pull requests.
 
 ## CI checks
 
-- `Rust domain crates`: fmt, clippy and tests for `navi-storage`, `navi-finance`
-  and `navi-health`, plus fmt and tests for the `third_party/agent-runtime`
+- `Rust domain crates`: fmt, clippy and tests for `navi-storage`, `navi-finance`,
+  `navi-health` and `navi-assistant`, plus fmt and tests for the `third_party/agent-runtime`
   submodule
 - `nsh checks`: client fmt, clippy and headless tests, TypeScript formatting,
   mixed NSH type/flow checks, and Android host JVM tests and lint; no signing

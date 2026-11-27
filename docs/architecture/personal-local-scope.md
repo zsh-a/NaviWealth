@@ -2,7 +2,7 @@
 
 Status: accepted.
 
-Date: 2026-11-13. Updated 2026-11-19 to clarify current storage and domain ownership.
+Date: 2026-11-13. Updated 2026-11-27 for the owner-authorized local general assistant.
 
 ## Context
 
@@ -21,8 +21,10 @@ features. The migration became a reduced rewrite, not a port.
 
 1. **No parity target.** The Flutter client was retired (2026-11-15) with its
    source archived at the `flutter-final` tag. The NSH client implements only
-   Product Scope; KnowledgeOS, ExecutionOS, AI chat, agents, Memory Runtime,
-   proposals and the removed Finance tools are not ported.
+   Product Scope; KnowledgeOS, ExecutionOS, the Flutter named agents and Memory
+   Runtime, and the removed Finance tools are not ported. The owner authorized
+   a new general assistant on 2026-11-27 with persistent conversations,
+   cross-task memory, web research and multi-step tasks.
 2. **Local-only.** The NSH client has no Sync, account or login, and does not
    call a backend. `sync-wire` was never built; Sync v3 and the
    backend retired with Flutter.
@@ -36,11 +38,15 @@ features. The migration became a reduced rewrite, not a port.
    | `crates/navi-storage` | Neutral SQLite opening, migration execution, snapshots and atomic table replacement |
    | `crates/navi-finance` | Accounts, transactions, categories, budget, statement parsers, securities, trades, quotes, FX, derived positions and net worth |
    | `crates/navi-health` | Meal/favorite models and validated repositories, nutrition, weight and review calculations, Garmin request/parsing contracts |
+   | `crates/navi-assistant` | Embedded pi-rust Agent loop, provider adaptation, bounded execution and replay contracts |
    | `apps/nsh-client` | Four tabs, settings, reactive adapters, device clock/photos/network, encrypted backup orchestration and cross-domain capture/scale transactions |
 
    No `knowledge-core`, `execution-core` or domain registry. Recognition calls
    use `llm-protocol` / `llm-client` from the Agent Runtime submodule
-   directly; the Agent Runtime loop is not hosted.
+   directly; the old Agent Runtime loop is not hosted. The new assistant uses
+   pinned pi-rust `rpi-agent` / `rpi-ai` libraries. The app owns SQLite sessions,
+   memory, permissions and business tools; NSH remains the UI. The pi-rust CLI,
+   desktop shell/file tools, plugin loader and server are not part of the app.
 5. **No SQLCipher, no Keystore (2026-11-13; host clarification 2026-11-18).**
    The database is plain SQLite in the app's private directory, protected by
    the Android sandbox and file-based encryption; model and Garmin credentials
@@ -53,6 +59,15 @@ features. The migration became a reduced rewrite, not a port.
    its token flow, read-only. The key and tokens stay in app-private storage
    and never enter exported backups. The reverse-engineered client is not
    ported. Endpoint changes or failures keep the last imported data visible.
+7. **Assistant remains local-first.** Agent execution and durable state live on
+   the phone. Model requests go directly to the configured user-owned profile;
+   optional Brave Search queries and public-page fetches are explicit external
+   tool requests. There is no NaviWealth backend, AI relay or background daemon.
+   Before the first send to a model destination, separate consent covers chat,
+   retrieved memories and requested local records. Saving memory requires
+   owner confirmation; business changes use the existing capture review and
+   atomic commit. Conversation and memory tables enter encrypted backups;
+   model/search keys do not. Process death never authorizes tool replay.
 
 Also holds: Android only (no Web, no iOS), domain truth in Rust crates with
 UI only in `apps/nsh-client`, no backend AI relay, NSH 0.7.1 pinned behind

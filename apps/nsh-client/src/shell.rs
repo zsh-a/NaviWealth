@@ -25,6 +25,7 @@ pub fn shell() -> impl IntoElement {
                     Route::NewMeal { day, capture } => new_meal_page(day, capture),
                     Route::EditMeal(id) => edit_meal_page(&id),
                     Route::Pending(id) => pending_meal_page(&id),
+                    Route::Assistant => crate::pages::assistant::page(),
                     Route::Settings => settings_page(),
                     Route::BodyProfile => body_profile_page(),
                     Route::ModelSettings => model_page(),

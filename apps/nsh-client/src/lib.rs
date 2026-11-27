@@ -112,6 +112,7 @@ pub fn App(props: AppProps, cx: Scope<AppEvent>) -> impl IntoElement {
         .and_then(|()| meals::load())
         .and_then(|()| favorites::load())
         .and_then(|()| pending::load())
+        .and_then(|()| data::assistant::load())
     {
         log::error!("startup: local data unavailable: {error}");
         return view()
