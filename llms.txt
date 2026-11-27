@@ -8,6 +8,8 @@
 > assistant embeds pi-rust through `navi-assistant`, with local conversations,
 > confirmed cross-task memories, web research, complete-period domain summaries
 > and editable record proposals with explicit atomic confirmation.
+> Long chats preserve full native history and reuse source-bound conversation
+> summaries; summarization runs only with an explicitly submitted message.
 
 ## Essential Docs
 

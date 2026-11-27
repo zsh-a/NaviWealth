@@ -474,3 +474,207 @@ fn aggregate_tools_continue_the_real_provider_loop_and_preserve_missing_data() -
     assert!(health["current"]["weight"]["trend_change_kg"].is_null());
     Ok(())
 }
+
+/// Grow a real provider-native transcript while the app is stopped. Display
+/// messages stay short so this fixture measures context handling, not scrolling.
+fn seed_long_history(dir: &Path) -> Vec<Value> {
+    let mut session = records(dir, "assistant_sessions").remove(0);
+    let pair = session["history"].as_array().unwrap().clone();
+    assert_eq!(pair.len(), 2);
+    let mut history = Vec::new();
+    for index in 0..14 {
+        let mut user = pair[0].clone();
+        user["content"] = json!(format!(
+            "Earlier turn {index}: travel choice is a red bicycle. {}",
+            "past details ".repeat(800)
+        ));
+        history.push(user);
+        history.push(pair[1].clone());
+    }
+    session["history"] = json!(history);
+    session["context_summary"] = Value::Null;
+    let db = rusqlite::Connection::open(database_in(dir)).unwrap();
+    db.execute(
+        "UPDATE assistant_sessions SET body=?1 WHERE id=?2",
+        rusqlite::params![session.to_string(), session["id"].as_str().unwrap()],
+    )
+    .unwrap();
+    history
+}
+
+#[test]
+fn long_conversation_summary_survives_restart_without_replaying_or_resummarizing()
+-> Result<(), String> {
+    let provider = Provider::new(vec![
+        Reply::Text("Initial conversation saved."),
+        Reply::Text("The owner chose a red bicycle for travel. No record or memory was saved."),
+        Reply::Text("We can continue using your earlier travel choice."),
+        Reply::Text("Your earlier choice was a red bicycle."),
+    ]);
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, storage) = start_in(Some(dir.path()), provider.account(), None);
+    app.press("text:Assistant")?;
+    send(&mut app, "Start a conversation about travel.")?;
+    app.wait_for("Initial conversation saved.")?;
+    app.wait_for_gone("text:Stop", GONE)?;
+    let entries: Vec<_> = storage.entries().into_iter().collect();
+    drop(app);
+    let original = seed_long_history(dir.path());
+    let (mut app, _) = start_in(Some(dir.path()), entries.clone(), None);
+    app.press("text:Assistant")?;
+    send(&mut app, "Continue our travel plan.")?;
+    app.wait_for("We can continue using your earlier travel choice.")?;
+    app.wait_for_gone("text:Stop", GONE)?;
+    let session = records(dir.path(), "assistant_sessions").remove(0);
+    let summary = session["context_summary"].clone();
+    assert!(summary["covered_messages"].as_u64().unwrap() > 0);
+    assert!(summary["text"].as_str().unwrap().contains("red bicycle"));
+    assert_eq!(
+        &session["history"].as_array().unwrap()[..original.len()],
+        original.as_slice()
+    );
+    assert!(session["pending"].as_array().unwrap().is_empty());
+    assert!(records(dir.path(), "assistant_memories").is_empty());
+    assert!(records(dir.path(), "capture_drafts").is_empty());
+    let requests = provider.requests();
+    assert_eq!(
+        requests.len(),
+        3,
+        "one summary request followed by the actual answer"
+    );
+    assert!(
+        requests[1]
+            .get("tools")
+            .is_none_or(|tools| tools.as_array().is_some_and(Vec::is_empty)),
+        "summary calls cannot execute host tools"
+    );
+    assert!(requests[1]["messages"].to_string().contains("red bicycle"));
+    assert!(requests[2]["messages"].as_array().unwrap().iter().any(|m| {
+        m["role"] == "user"
+            && m["content"]
+                .to_string()
+                .contains("No record or memory was saved")
+    }));
+    assert!(
+        !requests[2]["messages"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|m| m["role"] == "system"
+                && m["content"]
+                    .to_string()
+                    .contains("No record or memory was saved")),
+        "summary text is not promoted to system instructions"
+    );
+    drop(app);
+    let (mut app, _) = start_in(Some(dir.path()), entries, None);
+    app.press("text:Assistant")?;
+    settle();
+    assert_eq!(
+        provider.requests().len(),
+        3,
+        "startup neither summarizes nor replays tools"
+    );
+    send(&mut app, "What transport did I choose earlier?")?;
+    app.wait_for("Your earlier choice was a red bicycle.")?;
+    app.wait_for_gone("text:Stop", GONE)?;
+    assert_eq!(
+        provider.requests().len(),
+        4,
+        "saved summary is reused while recent context still fits"
+    );
+    assert_eq!(
+        records(dir.path(), "assistant_sessions")[0]["context_summary"],
+        summary
+    );
+    assert!(records(dir.path(), "assistant_memories").is_empty());
+    Ok(())
+}
+
+#[test]
+fn stopping_during_summary_does_not_publish_it_or_resume_it_after_restart() -> Result<(), String> {
+    let provider = Provider::new(vec![
+        Reply::Text("Initial conversation saved."),
+        Reply::Wait,
+    ]);
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, storage) = start_in(Some(dir.path()), provider.account(), None);
+    app.press("text:Assistant")?;
+    send(&mut app, "Start a conversation about travel.")?;
+    app.wait_for("Initial conversation saved.")?;
+    app.wait_for_gone("text:Stop", GONE)?;
+    let entries: Vec<_> = storage.entries().into_iter().collect();
+    drop(app);
+    let original = seed_long_history(dir.path());
+    let (mut app, _) = start_in(Some(dir.path()), entries.clone(), None);
+    app.press("text:Assistant")?;
+    send(&mut app, "Continue our travel plan.")?;
+    app.wait_for("Summarizing earlier conversation…")?;
+    app.wait_until("summary request", GONE, |_| provider.requests().len() == 2)?;
+    app.press("text:Stop")?;
+    app.wait_for_gone("text:Stop", GONE)?;
+    let stopped = records(dir.path(), "assistant_sessions").remove(0);
+    assert_eq!(stopped["status"], "interrupted");
+    assert!(stopped["context_summary"].is_null());
+    assert_eq!(
+        &stopped["history"].as_array().unwrap()[..original.len()],
+        original.as_slice()
+    );
+    drop(app);
+    let (mut app, _) = start_in(Some(dir.path()), entries, None);
+    app.press("text:Assistant")?;
+    settle();
+    assert_eq!(provider.requests().len(), 2);
+    assert_eq!(
+        records(dir.path(), "assistant_sessions")[0]["status"],
+        "interrupted"
+    );
+    assert!(records(dir.path(), "assistant_memories").is_empty());
+    Ok(())
+}
+
+#[test]
+fn a_tool_call_in_a_summary_is_discarded_and_never_reaches_host_confirmation() -> Result<(), String>
+{
+    let provider = Provider::new(vec![
+        Reply::Text("Initial conversation saved."),
+        Reply::Tool(
+            "forbidden-summary-tool",
+            "propose_memory",
+            json!({"text":"This must never become a proposal."}),
+        ),
+        Reply::Text("Continuing with the recent conversation."),
+    ]);
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, storage) = start_in(Some(dir.path()), provider.account(), None);
+    app.press("text:Assistant")?;
+    send(&mut app, "Start a conversation about travel.")?;
+    app.wait_for("Initial conversation saved.")?;
+    app.wait_for_gone("text:Stop", GONE)?;
+    let entries = storage.entries().into_iter().collect();
+    drop(app);
+    let original = seed_long_history(dir.path());
+    let (mut app, _) = start_in(Some(dir.path()), entries, None);
+    app.press("text:Assistant")?;
+    send(&mut app, "Continue our travel plan.")?;
+    app.wait_for("Continuing with the recent conversation.")?;
+    app.wait_for_gone("text:Stop", GONE)?;
+    let kept = records(dir.path(), "assistant_sessions").remove(0);
+    assert_eq!(kept["status"], "idle");
+    assert!(kept["context_summary"].is_null());
+    assert!(kept["pending"].as_array().unwrap().is_empty());
+    assert!(!kept.to_string().contains("forbidden-summary-tool"));
+    assert!(kept["messages"].as_array().unwrap().iter().any(|m| {
+        m["text"]
+            .as_str()
+            .is_some_and(|text| text.contains("outside this request's context"))
+    }));
+    assert_eq!(
+        &kept["history"].as_array().unwrap()[..original.len()],
+        original.as_slice()
+    );
+    assert!(records(dir.path(), "assistant_memories").is_empty());
+    assert!(records(dir.path(), "capture_drafts").is_empty());
+    assert_eq!(provider.requests().len(), 3);
+    Ok(())
+}

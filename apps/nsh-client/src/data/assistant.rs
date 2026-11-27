@@ -520,6 +520,7 @@ pub fn send(text: String) -> Result<(), String> {
     local(|c| store::save_session(c, &session))?;
     let session_id = session.id.clone();
     let history = session.history.clone();
+    let context_summary = session.context_summary.clone();
     publish(session);
     let generation = IDS.fetch_add(1, Ordering::Relaxed);
     log::debug!(
@@ -583,6 +584,7 @@ pub fn send(text: String) -> Result<(), String> {
         model: account.model,
         system_prompt,
         limits: Limits::default(),
+        context_summary,
     };
     let worker_cancel = cancel.clone();
     runtime.spawn(async move {
@@ -616,6 +618,40 @@ async fn drive(
             break;
         }
         match event {
+            WorkerEvent::Model(Event::SummaryStarted) => {
+                if !cancel.is_cancelled() {
+                    state().update(|s| {
+                        s.activity = copy("Summarizing earlier conversation…", "正在整理早期对话…")
+                    });
+                }
+            }
+            WorkerEvent::Model(Event::SummaryUpdated { summary, history }) => {
+                if cancel.is_cancelled() {
+                    continue;
+                }
+                // The digest binds the summary to this exact native prefix.
+                // Keep both in one session update, including on recovery/backup.
+                mutate_session(&session_id, |s| {
+                    s.history = history;
+                    s.context_summary = Some(summary);
+                    s.messages.push(Message {
+                        id: id(),
+                        role: Role::Tool,
+                        text: copy(
+                            "Earlier conversation summarized; the original messages remain saved.",
+                            "已整理早期对话，原始消息仍保存在本地。",
+                        ),
+                    });
+                });
+                if save(&session_id).is_err() {
+                    cancel.cancel();
+                    state().update(|s| {
+                        s.error = Some(copy("Could not save the conversation", "对话保存失败"))
+                    });
+                } else {
+                    state().update(|s| s.activity = copy("Thinking…", "正在思考…"));
+                }
+            }
             WorkerEvent::Tool { name, args, reply } => {
                 let result = if cancel.is_cancelled() {
                     Err("assistant_cancelled".into())
@@ -662,16 +698,19 @@ async fn drive(
                     });
                 }
             }
-            WorkerEvent::Model(Event::ContextTrimmed { .. }) => mutate_session(&session_id, |s| {
-                s.messages.push(Message {
-                    id: id(),
-                    role: Role::Tool,
-                    text: copy(
-                        "Older messages remain saved; this request uses the recent context.",
-                        "较早消息仍已保存，本次请求使用最近的上下文。",
-                    ),
-                })
-            }),
+            WorkerEvent::Model(Event::ContextTrimmed { .. }) => {
+                state().update(|s| s.activity = copy("Thinking…", "正在思考…"));
+                mutate_session(&session_id, |s| {
+                    s.messages.push(Message {
+                        id: id(),
+                        role: Role::Tool,
+                        text: copy(
+                            "Some earlier messages are outside this request's context; the originals remain saved.",
+                            "部分早期消息未纳入本次上下文，原始消息仍已保存。",
+                        ),
+                    })
+                });
+            }
             WorkerEvent::Model(Event::Checkpoint(history)) => {
                 mutate_session(&session_id, |s| s.history = history);
                 if save(&session_id).is_err() {
@@ -698,6 +737,9 @@ async fn drive(
                     };
                     if let Ok(result) = result {
                         s.history = result.history;
+                        if !was_cancelled {
+                            s.context_summary = result.context_summary;
+                        }
                         if !result.text.is_empty() {
                             if let Some(last) =
                                 s.messages.last_mut().filter(|m| m.role == Role::Assistant)

@@ -18,12 +18,24 @@ receive error results indicating an unknown outcome, rather than being replayed.
 The host must still make proposed mutations idempotent and confirm them before
 writing business data; persisted conversation is not an exactly-once transaction.
 
-Defaults are eight provider turns, 150 seconds total, 4096 output tokens and a
-120,000-byte serialized context window. Oversized old user turns are removed
-only from model input, including their complete tool-call/result groups. Full
-history remains available to the host; `ContextTrimmed` tells the interface when
-this happens. This version does not summarize or automatically recall omitted
-conversation; cross-session memory is an explicit host tool.
+Defaults are eight provider requests, 150 seconds total, 4096 output tokens and
+a 120,000-byte serialized context window. When a submitted turn would exceed
+that window, the same configured model may summarize earlier complete turns.
+At most two summary requests, each with a bounded input, share the run's request
+budget, deadline and cancellation; no tools are supplied to these requests.
+Recent turns and their tool-call/result groups remain intact. A failed or
+impossible summary falls back to complete-turn trimming with `ContextTrimmed`;
+the original history remains available to the host in either case.
+
+Pass a saved `ContextSummary` in `Config.context_summary` to reuse it. Its
+message boundary and SHA-256 digest bind it to a complete native history prefix.
+`validate_context_summary` rejects stale or malformed pairs. `SummaryStarted`
+is a progress event; `SummaryUpdated` carries the summary and full history for
+one atomic host save. The result also carries the latest summary. Summaries are
+quoted untrusted conversation data in model input, never system instructions,
+owner approval or cross-session memory. Generating, restoring or replaying a
+summary never executes a historical tool call. Cross-session memory remains an
+explicit host tool.
 
 HTTP adapters use the owner's explicit credentials and never fall back to
 environment credentials or follow redirects. HTTP endpoints remain supported

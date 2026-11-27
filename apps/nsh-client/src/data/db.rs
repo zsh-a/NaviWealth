@@ -119,6 +119,9 @@ const MIGRATIONS: &[&str] = &[
     // 23: session JSON can contain structured record proposals. No table shape
     // changes; the version prevents older apps from opening incompatible bodies.
     "SELECT 1;",
+    // 24: sessions can carry a validated context summary bound to a transcript
+    // prefix. Older apps must reject these bodies before loading or restore.
+    "SELECT 1;",
 ];
 
 #[derive(Clone, Default)]
@@ -474,6 +477,7 @@ mod tests {
             history: vec![
                 serde_json::json!({"kind":"user","role":"user","content":"Review","timestamp":1}),
             ],
+            context_summary: None,
             status: Status::Running,
             model_target: Some("openai|example.invalid|model".into()),
             pending: vec![PendingAction {
@@ -486,12 +490,31 @@ mod tests {
         }
     }
 
+    fn summarize_chat(chat: &mut super::super::assistant_store::Session) {
+        chat.history.push(serde_json::json!({
+            "kind":"assistant","role":"assistant","content":[{"type":"text","text":"Review this proposal"}],
+            "api":"openai-completions","provider":"navi-owned","model":"fixture",
+            "usage":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"totalTokens":0,
+                "cost":{"input":0.0,"output":0.0,"cacheRead":0.0,"cacheWrite":0.0,"total":0.0}},
+            "stopReason":"stop","timestamp":2
+        }));
+        chat.context_summary = Some(
+            navi_assistant::ContextSummary::new(
+                &chat.history,
+                2,
+                "A vegetarian memory was proposed. The owner has not approved it.".into(),
+            )
+            .unwrap(),
+        );
+    }
+
     #[test]
     fn assistant_snapshot_restores_chats_and_memories_without_executing_proposals() {
         use super::super::assistant_store as assistant;
         let dir = tempfile::tempdir().unwrap();
         let source = navi_storage::memory(MIGRATIONS).unwrap();
         let mut chat = assistant_session("source-chat");
+        summarize_chat(&mut chat);
         chat.pending.push(assistant::PendingAction {
             id: "structured-proposal".into(),
             kind: assistant::PendingKind::Records {
@@ -534,6 +557,98 @@ mod tests {
                 .unwrap(),
             70.0
         );
+    }
+
+    #[test]
+    fn schema_23_backup_without_summary_preserves_native_history_and_pending_proposals() {
+        use super::super::assistant_store as assistant;
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("schema23.sqlite");
+        let source = navi_storage::open(&path, &MIGRATIONS[..23]).unwrap();
+        let chat = assistant_session("older-chat");
+        let mut old_body = serde_json::to_value(&chat).unwrap();
+        old_body.as_object_mut().unwrap().remove("context_summary");
+        source
+            .execute(
+                "INSERT INTO assistant_sessions(id,updated_at_ms,body) VALUES(?1,?2,?3)",
+                rusqlite::params![chat.id, chat.updated_at_ms, old_body.to_string()],
+            )
+            .unwrap();
+        drop(source);
+        let destination = navi_storage::memory(MIGRATIONS).unwrap();
+        assistant::create_session(&destination, &assistant_session("replaced-chat")).unwrap();
+        restore_file(&destination, &path).unwrap();
+        let mut expected = chat;
+        expected.status = assistant::Status::Interrupted;
+        assert_eq!(assistant::sessions(&destination).unwrap(), [expected]);
+        assert!(assistant::memories(&destination).unwrap().is_empty());
+        assert_eq!(
+            destination
+                .pragma_query_value::<u32, _>(None, "user_version", |r| r.get(0))
+                .unwrap(),
+            SCHEMA
+        );
+    }
+
+    #[test]
+    fn malformed_context_summary_backup_changes_neither_records_nor_conversations() {
+        use super::super::assistant_store as assistant;
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("invalid-summary.sqlite");
+        let source = navi_storage::open(&path, MIGRATIONS).unwrap();
+        let mut chat = assistant_session("summarized-chat");
+        summarize_chat(&mut chat);
+        assistant::create_session(&source, &chat).unwrap();
+        source
+            .execute("INSERT INTO weights VALUES('2026-11-27',70.0,1)", [])
+            .unwrap();
+        let destination = navi_storage::memory(MIGRATIONS).unwrap();
+        let kept = assistant_session("kept-chat");
+        assistant::create_session(&destination, &kept).unwrap();
+        destination
+            .execute("INSERT INTO weights VALUES('2026-11-27',80.0,1)", [])
+            .unwrap();
+
+        let original = serde_json::to_value(&chat).unwrap();
+        let mut bad_digest = original.clone();
+        bad_digest["context_summary"]["source_hash"] = serde_json::json!("0".repeat(64));
+        let mut changed_prefix = original.clone();
+        changed_prefix["history"][0]["content"] = serde_json::json!("Different request");
+        let mut invalid_boundary = original.clone();
+        invalid_boundary["context_summary"]["covered_messages"] = serde_json::json!(99);
+        let mut oversized_summary = original.clone();
+        oversized_summary["context_summary"]["text"] = serde_json::json!("界".repeat(4_001));
+        let mut unknown_authority = original;
+        unknown_authority["context_summary"]["approved"] = serde_json::json!(true);
+        for invalid in [
+            bad_digest,
+            changed_prefix,
+            invalid_boundary,
+            oversized_summary,
+            unknown_authority,
+        ] {
+            source
+                .execute(
+                    "UPDATE assistant_sessions SET body=?1",
+                    [invalid.to_string()],
+                )
+                .unwrap();
+            assert_eq!(
+                restore_file(&destination, &path),
+                Err(RestoreError::Unreadable)
+            );
+            assert_eq!(
+                assistant::sessions(&destination).unwrap(),
+                std::slice::from_ref(&kept)
+            );
+            assert_eq!(
+                destination
+                    .query_row("SELECT kg FROM weights", [], |r| r.get::<_, f64>(0))
+                    .unwrap(),
+                80.0
+            );
+            assert!(assistant::memories(&destination).unwrap().is_empty());
+        }
     }
 
     #[test]

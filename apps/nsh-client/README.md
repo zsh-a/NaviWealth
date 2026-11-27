@@ -53,10 +53,16 @@ model request. The owner can start a new chat, revisit or delete old chats,
 stop a run, and inspect or delete saved memories.
 
 `../../crates/navi-assistant` embeds pinned pi-rust `rpi-agent` and `rpi-ai`
-v0.29.0, with an eight-turn/150-second run budget. Complete-turn trimming bounds
-model input to 120,000 serialized UTF-8 bytes; complete stored history is kept,
-and there is no automatic summary compaction. Provider-native history is bound
-to its model destination. There is no CLI, shell/file tool set, dynamic plugin
+v0.29.0, with an eight-request/150-second run budget. Model input is bounded to
+120,000 serialized UTF-8 bytes. An explicit new message can trigger a summary
+of earlier complete turns using the same configured model; recent turns stay
+verbatim and complete stored history is kept. Summary requests share the run's
+budget and Stop action. If summarization fails or a turn cannot fit, the app
+reports that some earlier context was omitted; reaching the total deadline
+stops the task. Saved summaries belong to that
+conversation and are reused after restart, without automatically starting work.
+Provider-native history is bound to its model destination. There is no CLI,
+shell/file tool set, dynamic plugin
 loader, application server or unattended background scheduler.
 
 App adapters live in `src/data/assistant*.rs`; the conversation UI lives in
@@ -76,8 +82,11 @@ check destinations, redirects and timeouts. Web content is untrusted evidence,
 not an instruction to use local tools. JavaScript browsing, logged-in pages and
 PDF parsing are not supported. Keys are excluded from backups.
 
-Schema 22 introduced sessions, UI messages, runtime history, pending proposals and
-approved memories; schema 23 marks structured proposal bodies. Process restart marks running sessions interrupted; the
+Schema 22 introduced sessions, UI messages, runtime history, pending proposals
+and approved memories; schema 23 marks structured proposal bodies and schema 24
+adds source-bound conversation summaries. Summary and native history are saved
+together and validated before restore; they never approve a proposal or create
+a cross-task memory. Process restart marks running sessions interrupted; the
 next model request requires another explicit user message. Pending proposals
 remain unapproved. Delete and restore invalidate active work, and checkpoint
 updates cannot recreate a deleted conversation. Assistant tables are included

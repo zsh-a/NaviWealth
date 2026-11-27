@@ -23,24 +23,46 @@ without pulling the harness's desktop-tool dependencies or its optional
 | Layer | Authority |
 |---|---|
 | Provider adaptation and Agent loop | `crates/navi-assistant/` over pinned `rpi-agent` / `rpi-ai` |
+| Source-bound conversation summaries and provider context projection | `crates/navi-assistant/src/compaction.rs` |
 | Reactive state, consent, cancellation and proposals | `apps/nsh-client/src/data/assistant.rs` |
 | Read-only records, memory retrieval and proposals | `apps/nsh-client/src/data/assistant_tools.rs` |
 | Complete-period financial and health summaries | `apps/nsh-client/src/data/assistant_analysis.rs`, domain Review and attribution functions |
 | Structured proposal validation and capture handoff | `apps/nsh-client/src/domain/assistant_proposal.rs` |
 | Optional Brave Search and bounded public-page fetch | `apps/nsh-client/src/data/assistant_web.rs` |
-| Sessions, messages, native replay history and approved memories | `apps/nsh-client/src/data/assistant_store.rs`, migrations 22–23 |
+| Sessions, messages, native replay history and approved memories | `apps/nsh-client/src/data/assistant_store.rs`, migrations 22–24 |
 | Conversation, history and memory UI | `apps/nsh-client/src/pages/assistant.rs` |
 
 The model profile selects Anthropic Messages, OpenAI Chat Completions or OpenAI
 Responses. Separate destination-scoped consent covers conversation, recalled
 memories and requested records. The runtime preserves native message/tool-call
 identity for subsequent turns; the host binds saved history to the model
-destination. Complete-turn context selection bounds serialized model input to
-120,000 UTF-8 bytes while keeping the stored conversation. Older complete user
-turns can leave the request; this is not summary-based compaction or unlimited
-model context. Saved memories provide explicit cross-task recall separately.
+destination. Context selection bounds serialized model input to 120,000 UTF-8
+bytes while keeping the complete native conversation. On an explicit new turn,
+an over-limit context may summarize earlier complete turns using the same
+configured model, retaining the two most recent prior user turns when possible.
+At most two summary calls take input chunks of at most 64,000 serialized bytes
+(or the lower configured context limit). Summaries contain at most 12,000 UTF-8
+bytes and are quoted as untrusted user-context data, never system instructions
+or approval. They are reused while the resulting context fits. Failed or
+impossible compaction falls back to whole-turn trimming with a visible notice;
+exhausting the shared deadline stops the task. Saved memories provide explicit
+cross-task recall separately.
+An individual complete turn larger than the summary input limit is not split
+or skipped over to pretend it was summarized. That prefix keeps falling back
+to trimming; full-history search and multi-part oversized-turn summarization
+are separate future work.
 
-Each submitted run is cancellable and bounded to eight model turns and 150
+`ContextSummary` binds its covered native message prefix to a SHA-256 digest.
+The boundary cannot split a turn or leave an unresolved tool call. Prefix
+validation uses canonical native serialization; old summaries remain valid
+when later messages are appended. The host saves summary and full history
+together on `SummaryUpdated`, including the current submitted user message.
+Startup/restore validates the pair without requesting a summary or executing
+past tools. Neither a summary nor its generation writes approved memory or
+changes pending proposals. Summary streams have no tools, share cancellation
+and the task deadline, and reject tool calls, truncation and oversized output.
+
+Each submitted run is cancellable and bounded to eight model requests and 150
 seconds. The host registers only its declared tools. Record reads are
 date-bounded and paged; aggregate tools use complete snapshots and the domain
 Review calculations, with explicit period comparisons and missing data.
@@ -75,6 +97,8 @@ assistant tables. Memory proposal confirmation and removal from the pending
 list are one transaction.
 Schema 23 marks the new structured proposal JSON format without changing table
 columns, so older apps reject newer backups before interpreting those bodies.
+Schema 24 similarly marks source-bound summaries in session JSON. Existing
+sessions without a summary remain valid and old backups are still accepted.
 
 The existing recognition path remains in place during this migration. Removing
 its old runtime dependencies requires separate image, structured-output,

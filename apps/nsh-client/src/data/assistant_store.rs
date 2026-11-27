@@ -74,6 +74,10 @@ pub struct Session {
     /// Provider-native history, including tool results. It is never interpreted
     /// as a pending instruction when loading or restoring a session.
     pub history: Vec<Value>,
+    /// A model-generated context aid bound to an exact prefix of `history`.
+    /// It is never an approved memory, instruction, or action authorization.
+    #[serde(default)]
+    pub context_summary: Option<navi_assistant::ContextSummary>,
     pub status: Status,
     /// The configured model/protocol fingerprint. Never contains a secret.
     #[serde(default)]
@@ -188,7 +192,11 @@ fn validate_session(session: &Session) -> Result<(), String> {
     {
         return Err("Invalid assistant session".into());
     }
-    navi_assistant::validate_history(&session.history)
+    navi_assistant::validate_history(&session.history)?;
+    if let Some(summary) = &session.context_summary {
+        navi_assistant::validate_context_summary(summary, &session.history)?;
+    }
+    Ok(())
 }
 
 fn validate_memory(memory: &Memory) -> Result<(), String> {
@@ -442,6 +450,7 @@ mod tests {
             history: vec![
                 serde_json::json!({"kind":"user","role":"user","content":"Review this week","timestamp":1}),
             ],
+            context_summary: None,
             status: Status::Running,
             model_target: None,
             pending: Vec::new(),
@@ -477,6 +486,102 @@ mod tests {
         assert_eq!(memories(&second).unwrap(), [fact]);
         delete_memory(&second, "memory-1").unwrap();
         assert!(memories(&second).unwrap().is_empty());
+    }
+
+    fn summarized_chat() -> Session {
+        let mut chat = chat();
+        chat.history.push(serde_json::json!({
+            "kind":"assistant","role":"assistant","content":[{"type":"text","text":"Review is ready"}],
+            "api":"openai-completions","provider":"navi-owned","model":"fixture",
+            "usage":{"input":0,"output":0,"cacheRead":0,"cacheWrite":0,"totalTokens":0,
+                "cost":{"input":0.0,"output":0.0,"cacheRead":0.0,"cacheWrite":0.0,"total":0.0}},
+            "stopReason":"stop","timestamp":2
+        }));
+        chat.context_summary = Some(
+            navi_assistant::ContextSummary::new(
+                &chat.history,
+                2,
+                "The user requested a weekly review. No memory or record was confirmed.".into(),
+            )
+            .unwrap(),
+        );
+        chat
+    }
+
+    #[test]
+    fn context_summary_survives_restart_without_replacing_history_or_becoming_memory() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("assistant.sqlite");
+        let first = navi_storage::open(&path, &[SCHEMA]).unwrap();
+        let mut chat = summarized_chat();
+        chat.pending.push(PendingAction {
+            id: "unapproved-memory".into(),
+            kind: PendingKind::Memory {
+                text: "Prefers vegetarian meals".into(),
+            },
+        });
+        create_session(&first, &chat).unwrap();
+        drop(first);
+        let second = navi_storage::open(&path, &[SCHEMA]).unwrap();
+        recover(&second).unwrap();
+        let kept = session(&second, &chat.id).unwrap().unwrap();
+        assert_eq!(kept.status, Status::Interrupted);
+        assert_eq!(kept.context_summary, chat.context_summary);
+        assert_eq!(kept.history, chat.history);
+        assert_eq!(kept.pending, chat.pending);
+        assert!(memories(&second).unwrap().is_empty());
+        // A newly submitted turn preserves the verified prefix and its summary.
+        let mut continued = kept.clone();
+        continued.history.push(serde_json::json!({
+            "kind":"user","role":"user","content":"What about last month?","timestamp":3
+        }));
+        continued.updated_at_ms += 1;
+        save_session(&second, &continued).unwrap();
+        assert_eq!(session(&second, &chat.id).unwrap().unwrap(), continued);
+    }
+
+    #[test]
+    fn context_summary_validation_rejects_stale_prefix_bounds_and_malformed_bodies() {
+        let connection = navi_storage::memory(&[SCHEMA]).unwrap();
+        let original = summarized_chat();
+        create_session(&connection, &original).unwrap();
+        let mut changed_prefix = original.clone();
+        changed_prefix.history[0]["content"] = serde_json::json!("A different request");
+        let mut invalid_boundary = original.clone();
+        invalid_boundary
+            .context_summary
+            .as_mut()
+            .unwrap()
+            .covered_messages = 1;
+        let mut invalid_hash = original.clone();
+        invalid_hash.context_summary.as_mut().unwrap().source_hash = "0".repeat(64);
+        let mut invalid_text = original.clone();
+        invalid_text.context_summary.as_mut().unwrap().text = " ".into();
+        let mut oversized_text = original.clone();
+        oversized_text.context_summary.as_mut().unwrap().text = "界".repeat(4_001);
+        for invalid in [
+            changed_prefix,
+            invalid_boundary,
+            invalid_hash,
+            invalid_text,
+            oversized_text,
+        ] {
+            assert!(save_session(&connection, &invalid).is_err());
+            assert_eq!(
+                session(&connection, &original.id).unwrap().unwrap(),
+                original
+            );
+        }
+        let mut malformed = serde_json::to_value(&original).unwrap();
+        malformed["context_summary"]["approved"] = serde_json::json!(true);
+        connection
+            .execute(
+                "UPDATE assistant_sessions SET body=?1",
+                [malformed.to_string()],
+            )
+            .unwrap();
+        assert!(validate(&connection).is_err());
+        assert!(recover(&connection).is_err());
     }
 
     #[test]

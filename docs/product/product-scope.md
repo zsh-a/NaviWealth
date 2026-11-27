@@ -177,6 +177,15 @@ not a port of the retired Flutter agents or Knowledge/Execution domains.
   app's SQLite database and are included in encrypted backups. Credentials and
   consent settings are not backed up. Restored runs remain interrupted and
   proposals still need confirmation.
+- On an explicit new message, a long conversation may summarize earlier
+  complete turns using the same configured model while keeping recent turns
+  verbatim. The full original history remains saved. The summary stays with
+  this conversation, is reused after restart and travels in its encrypted
+  backup; it is not an approved cross-task memory or permission to write.
+  Summarization shares the current task's time/call budget and Stop action.
+  An unsummarizable turn falls back to recent context with a notice; reaching
+  the total deadline stops the task. No summary work starts merely by opening
+  a chat.
 - Execution is foreground, cancellable and bounded. Keeping a conversation
   does not promise unlimited model context or unattended background jobs.
 

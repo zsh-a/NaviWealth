@@ -82,6 +82,7 @@ fn reply(provider: Provider) -> String {
 
 fn config(provider: Provider, base_url: String) -> Config {
     Config {
+        context_summary: None,
         provider,
         base_url,
         api_key: "owner-key".into(),

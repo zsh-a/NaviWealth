@@ -394,12 +394,13 @@ boundary; [runtime architecture](../architecture/agent-runtime-current.md)
 owns the implementation seams.
 
 Implementation uses a new `navi-assistant` crate over pinned pi-rust
-`rpi-agent`/`rpi-ai` v0.29.0. The app owns SQLite sessions and memory (schema 22),
+`rpi-agent`/`rpi-ai` v0.29.0. The app owns SQLite sessions and memory (schema 24),
 an Assistant entry on Today, model-scoped consent, read-only record tools,
 explicit memory/record proposals, optional Brave Search and bounded page fetch.
-The four tabs and ordinary capture remain. Complete-turn context trimming
-keeps requests bounded while retaining stored history; summary compaction and
-background scheduling are not included.
+The four tabs and ordinary capture remain. Source-bound conversation summaries
+and complete-turn fallback trimming keep requests bounded while retaining
+stored history. Summary generation starts only with an explicit new message;
+background scheduling is not included.
 
 Exit gates:
 
@@ -453,7 +454,7 @@ Next increment implemented 2026-11-27:
 The app regression suite, domain suites and strict clippy pass. Focused
 contracts cover more than 50 financial records, period boundaries, missing
 health/FX data, proposal recovery and atomic malformed-backup rejection.
-Five loopback HTTP/SSE headless flows cover the runtime integration, including
+Five headless flows cover the runtime integration, including
 aggregate tools and structured proposal → restart → local edit → batch save →
 Undo without another recognition request. Android ARM64 library compilation
 passes with four existing unused-function warnings. GTK native previews of
@@ -462,6 +463,32 @@ are desktop interface checks, not phone evidence. Read-only ADB discovery
 returned no connected devices, so physical TLS, keyboard/Back, process-death
 and signed upgrade gates remain open. Real-model answer quality remains a
 separate gate from scripted provider fixtures.
+
+Long-conversation continuation implemented in the following increment:
+
+- When a new message exceeds the context window, earlier complete turns can be
+  summarized by the same configured model. Recent turns remain verbatim and
+  the original native history is retained. At most two summary requests share
+  the eight-request/150-second task budget and the owner's Stop action.
+- A summary is untrusted context for that conversation, not a cross-task memory
+  or approval. Summary requests have no tools, and tool calls in a summary
+  response are rejected. Source-prefix hashes and turn boundaries are checked
+  on persistence and restore; schema 24 marks the new optional cache.
+- Restart reuses a saved summary only after another explicit message. It never
+  starts summarization or replays prior tools. Oversized single turns that
+  cannot fit the summary request fall back to complete-turn trimming with a
+  notice; the full original messages remain local. Splitting such turns and
+  semantic memory retrieval are still future work.
+
+Validation for this increment: all 23 `navi-assistant` tests and strict clippy
+pass; the app suite passes 371 tests with four existing ignored cases, and
+app strict clippy passes. Eight assistant headless flows include seven real loopback HTTP/SSE
+scenarios and the legacy text-proposal fixture; the new cases cover summary
+reuse after restart, cancellation during summarization and rejection of a
+tool call returned by the summary request. Storage tests cover schema 23
+compatibility and atomic rejection of malformed summaries. Android ARM64
+library compilation passes with the same four unused-function warnings.
+These fixtures do not establish real-model summary quality or phone evidence.
 
 ## Operating Rules
 

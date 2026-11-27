@@ -1,6 +1,6 @@
 use std::sync::{
     Arc,
-    atomic::{AtomicUsize, Ordering},
+    atomic::{AtomicBool, AtomicUsize, Ordering},
 };
 
 use async_trait::async_trait;
@@ -16,8 +16,8 @@ use rpi_ai::{
 use serde_json::Value;
 
 use crate::{
-    CancellationToken, Config, Event, EventHandler, Limits, RunResult, ToolHandler, ToolSpec,
-    history, provider,
+    CancellationToken, Config, ContextSummary, Event, EventHandler, Limits, RunResult, ToolHandler,
+    ToolSpec, compaction, history, provider,
 };
 
 struct HostTool {
@@ -83,11 +83,12 @@ pub async fn run(
     cancel: CancellationToken,
 ) -> Result<RunResult, String> {
     let (model, provider) = provider::build(&config)?;
-    execute(
+    execute_with_summary(
         model,
         provider,
         config.system_prompt,
         config.limits,
+        config.context_summary,
         history,
         prompt,
         tools,
@@ -99,11 +100,12 @@ pub async fn run(
 }
 
 #[allow(clippy::too_many_arguments)]
-async fn execute(
+async fn execute_with_summary(
     model: Model,
     provider: Arc<dyn PiProvider>,
     system_prompt: String,
     limits: Limits,
+    context_summary: Option<ContextSummary>,
     values: Vec<Value>,
     prompt: String,
     tools: Vec<ToolSpec>,
@@ -127,8 +129,12 @@ async fn execute(
     {
         return Err("assistant_configuration".into());
     }
+    if let Some(summary) = &context_summary {
+        crate::validate_context_summary(summary, &values)?;
+    }
+    let deadline_at = tokio::time::Instant::now() + limits.timeout;
     let mut transcript = history::decode(values)?;
-    let tool_impls = tools
+    let tool_impls: Vec<Arc<dyn AgentTool>> = tools
         .into_iter()
         .map(|spec| {
             Arc::new(HostTool {
@@ -142,8 +148,45 @@ async fn execute(
             }) as Arc<dyn AgentTool>
         })
         .collect();
+    let schemas: Vec<_> = tool_impls
+        .iter()
+        .map(|tool| tool.schema().clone())
+        .collect();
+    // A cancelled preparation still records the newly submitted owner turn.
+    let mut initial = transcript.clone();
+    initial.push(rpi_ai::types::UserMessage::new(prompt.clone(), 0).into());
+    events(Event::Checkpoint(history::encode(&initial)));
+    let preparation_cancel = cancel.child_token();
+    let preparation = compaction::prepare(
+        &model,
+        provider.clone(),
+        &system_prompt,
+        &limits,
+        &transcript,
+        &prompt,
+        &schemas,
+        context_summary,
+        &events,
+        &preparation_cancel,
+    );
+    let (context_summary, summary_calls) = tokio::select! {
+        biased;
+        _ = cancel.cancelled() => return Err("assistant_cancelled".into()),
+        _ = tokio::time::sleep_until(deadline_at) => {
+            preparation_cancel.cancel();
+            return Err("assistant_timeout".into());
+        }
+        result = preparation => result?,
+    };
     let failure = Arc::new(AtomicUsize::new(0));
-    let stream = bounded_stream(provider, limits.clone(), events.clone(), failure.clone());
+    let stream = bounded_stream(
+        provider,
+        limits.clone(),
+        events.clone(),
+        failure.clone(),
+        context_summary.clone(),
+        summary_calls,
+    );
     let agent = AgentBuilder::new()
         .model(model)
         .system_prompt(system_prompt)
@@ -154,19 +197,36 @@ async fn execute(
         .build()
         .map_err(|_| "assistant_configuration")?;
     let mut receiver = agent.subscribe();
-    let prompt = agent.prompt(prompt);
+    // Abort is a no-op upstream until prompt's first poll installs its active
+    // run. A stop/deadline between preparation and that poll must return directly.
+    let started = AtomicBool::new(false);
+    let prompt = async {
+        // Check the actual clock as well as the timer: a synchronous host
+        // callback can pass the deadline before the timer driver next polls.
+        if cancel.is_cancelled() || tokio::time::Instant::now() >= deadline_at {
+            return Err(AgentError::Abort);
+        }
+        started.store(true, Ordering::Relaxed);
+        agent.prompt(prompt).await
+    };
     tokio::pin!(prompt);
-    let deadline = tokio::time::sleep(limits.timeout);
+    let deadline = tokio::time::sleep_until(deadline_at);
     tokio::pin!(deadline);
     let mut interrupted = None;
     let result = loop {
         tokio::select! {
             biased;
             _ = cancel.cancelled(), if interrupted.is_none() => {
+                if !started.load(Ordering::Relaxed) {
+                    return Err("assistant_cancelled".into());
+                }
                 interrupted = Some("assistant_cancelled");
                 agent.abort();
             }
             _ = &mut deadline, if interrupted.is_none() => {
+                if !started.load(Ordering::Relaxed) {
+                    return Err("assistant_timeout".into());
+                }
                 interrupted = Some("assistant_timeout");
                 agent.abort();
             }
@@ -181,6 +241,14 @@ async fn execute(
             }
         }
     };
+    if !started.load(Ordering::Relaxed) {
+        return Err(if cancel.is_cancelled() {
+            "assistant_cancelled"
+        } else {
+            "assistant_timeout"
+        }
+        .into());
+    }
     while let Ok(event) = receiver.try_recv() {
         observe(event, &mut transcript, &events);
     }
@@ -213,7 +281,11 @@ async fn execute(
         return Err("assistant_provider".into());
     }
     let text = Content::text_only(&last.content, "\n");
-    Ok(RunResult { history, text })
+    Ok(RunResult {
+        history,
+        text,
+        context_summary,
+    })
 }
 
 fn observe(event: AgentEvent, transcript: &mut Vec<AgentMessage>, events: &EventHandler) {
@@ -247,8 +319,10 @@ fn bounded_stream(
     limits: Limits,
     events: EventHandler,
     failure: Arc<AtomicUsize>,
+    context_summary: Option<ContextSummary>,
+    initial_calls: usize,
 ) -> rpi_agent::StreamFn {
-    let calls = Arc::new(AtomicUsize::new(0));
+    let calls = Arc::new(AtomicUsize::new(initial_calls));
     rpi_agent::stream_fn(move |model, context, options| {
         let model = model.clone();
         let mut context = context.clone();
@@ -263,7 +337,11 @@ fn bounded_stream(
             failure.store(1, Ordering::Relaxed);
             Some("assistant_step_limit")
         } else {
-            match history::bound_context(&mut context, limits.context_chars) {
+            match compaction::bound_context(
+                &mut context,
+                context_summary.as_ref(),
+                limits.context_chars,
+            ) {
                 Ok(0) => None,
                 Ok(messages) => {
                     events(Event::ContextTrimmed { messages });
@@ -325,6 +403,36 @@ fn error_event(model: &Model, reason: &str) -> AssistantMessageEvent {
             0,
         ),
     }
+}
+
+#[cfg(test)]
+#[allow(clippy::too_many_arguments)]
+async fn execute(
+    model: Model,
+    provider: Arc<dyn PiProvider>,
+    system_prompt: String,
+    limits: Limits,
+    values: Vec<Value>,
+    prompt: String,
+    tools: Vec<ToolSpec>,
+    handler: ToolHandler,
+    events: EventHandler,
+    cancel: CancellationToken,
+) -> Result<RunResult, String> {
+    execute_with_summary(
+        model,
+        provider,
+        system_prompt,
+        limits,
+        None,
+        values,
+        prompt,
+        tools,
+        handler,
+        events,
+        cancel,
+    )
+    .await
 }
 
 #[cfg(test)]

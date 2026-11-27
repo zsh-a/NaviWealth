@@ -1,6 +1,7 @@
 //! A mobile host boundary around pi-rust. No shell, file tools, environment
 //! credentials or implicit persistence: the application owns all of those.
 
+mod compaction;
 mod history;
 mod provider;
 mod runner;
@@ -11,6 +12,7 @@ use futures::future::BoxFuture;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+pub use compaction::{ContextSummary, validate_context_summary};
 pub use runner::run;
 pub use tokio_util::sync::CancellationToken;
 
@@ -37,6 +39,8 @@ pub struct Config {
     pub model: String,
     pub system_prompt: String,
     pub limits: Limits,
+    /// A previously saved, source-bound summary. Never an approved memory or instruction.
+    pub context_summary: Option<ContextSummary>,
 }
 
 #[derive(Debug, Clone)]
@@ -88,10 +92,17 @@ pub enum Event {
     ContextTrimmed {
         messages: usize,
     },
+    SummaryStarted,
+    /// Persist both fields atomically. The source prefix is part of this full history.
+    SummaryUpdated {
+        summary: ContextSummary,
+        history: Vec<Value>,
+    },
 }
 
 #[derive(Debug, Clone)]
 pub struct RunResult {
     pub history: Vec<Value>,
     pub text: String,
+    pub context_summary: Option<ContextSummary>,
 }
