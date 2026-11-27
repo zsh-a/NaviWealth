@@ -434,6 +434,35 @@ clippy for the flow target and documentation checks passed. These scripted
 provider fixtures establish integration behavior, not real-model answer
 quality or physical-device acceptance; those gates remain open.
 
+Next increment implemented 2026-11-27:
+
+- Read-only finance and health aggregate tools use complete local records and
+  the Review domain functions. They compare calendar weeks/months or explicit
+  ranges, separate currencies, and expose missing observations, FX and price
+  provenance rather than deriving totals from a page of records.
+- Structured record proposals open editable capture cards with no second
+  recognition request. Missing money fields can be completed locally, account
+  approval remains explicit, and the existing atomic batch save and Undo apply.
+  Schema 23 marks the new pending-proposal format; old text proposals remain
+  readable. Model descriptions never become owner-provided account evidence.
+- The release's intermittent automatic FX test now binds its worker to the app
+  root, matching production. A channel-gated regression reproduced cancellation
+  before the fix and passed 20 consecutive runs after it; increasing a timeout
+  was not the fix.
+
+The app regression suite, domain suites and strict clippy pass. Focused
+contracts cover more than 50 financial records, period boundaries, missing
+health/FX data, proposal recovery and atomic malformed-backup rejection.
+Five loopback HTTP/SSE headless flows cover the runtime integration, including
+aggregate tools and structured proposal → restart → local edit → batch save →
+Undo without another recognition request. Android ARM64 library compilation
+passes with four existing unused-function warnings. GTK native previews of
+the proposal and editable cards pass at 390×844 light and 360×640 dark; these
+are desktop interface checks, not phone evidence. Read-only ADB discovery
+returned no connected devices, so physical TLS, keyboard/Back, process-death
+and signed upgrade gates remain open. Real-model answer quality remains a
+separate gate from scripted provider fixtures.
+
 ## Operating Rules
 
 - Product Scope decides features; a new feature needs a daily or weekly

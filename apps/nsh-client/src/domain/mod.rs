@@ -3,6 +3,7 @@
 //! Everything here is plain Rust and can be tested without an NSH engine.
 
 pub mod account;
+pub mod assistant_proposal;
 pub mod backup;
 pub mod backup_bundle;
 pub mod favorite;

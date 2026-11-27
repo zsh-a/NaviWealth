@@ -61,10 +61,14 @@ loader, application server or unattended background scheduler.
 
 App adapters live in `src/data/assistant*.rs`; the conversation UI lives in
 `src/pages/assistant.rs`. Read-only record queries are date-bounded and paged.
-Memory retrieval uses approved saved facts. A memory tool creates a proposal
-that must be accepted before it is saved. A record proposal opens an unsent
-capture draft after confirmation; existing capture review still owns the
-business write. A tool never receives unrestricted database or shell access.
+Complete-period finance and health summaries reuse the domain Review
+calculations, with exact native-currency money, explicit comparison dates,
+missing observations and valuation provenance. Memory retrieval uses approved
+saved facts. A memory tool creates a proposal that must be accepted before it
+is saved. A structured record proposal opens editable capture cards after
+Review and edit; missing money fields and account approval are completed
+locally, then the normal atomic save and Undo apply. No second recognition
+request is needed. Older text proposals remain readable as unsent drafts. A tool never receives unrestricted database or shell access.
 
 Web search optionally uses a Brave Search API key kept in app-private storage.
 Search queries are sent to Brave; public-page fetches are bounded to 1 MiB and
@@ -72,8 +76,8 @@ check destinations, redirects and timeouts. Web content is untrusted evidence,
 not an instruction to use local tools. JavaScript browsing, logged-in pages and
 PDF parsing are not supported. Keys are excluded from backups.
 
-Schema 22 stores sessions, UI messages, runtime history, pending proposals and
-approved memories. Process restart marks running sessions interrupted; the
+Schema 22 introduced sessions, UI messages, runtime history, pending proposals and
+approved memories; schema 23 marks structured proposal bodies. Process restart marks running sessions interrupted; the
 next model request requires another explicit user message. Pending proposals
 remain unapproved. Delete and restore invalidate active work, and checkpoint
 updates cannot recreate a deleted conversation. Assistant tables are included
@@ -299,7 +303,7 @@ NW_PREVIEW_ROUTE=new:/path/to/meal.jpg cargo run
 
 `NW_PREVIEW` also takes `dark`/`light`, `drafts` (two recognition drafts) and `favorites` (the first seeded meals
 saved as favorites); `NW_PREVIEW_ROUTE` takes `manual`,
-`edit`, `settings`, `model`, `review`, `review-month`, `records`, `records-jump`, `records-day` and `capture`; `NW_PREVIEW_PHOTOS` lists photos for the seeded meals;
+`edit`, `settings`, `model`, `review`, `review-month`, `records`, `records-jump`, `records-day`, `assistant`, `assistant-proposal` and `capture`; `NW_PREVIEW_PHOTOS` lists photos for the seeded meals;
 `NW_PREVIEW_EDITOR=1` opens the first food's editor once results arrive.
 
 Review notes are single lines (up to 280 characters), saved automatically on

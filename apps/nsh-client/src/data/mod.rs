@@ -2,6 +2,7 @@
 //! transactions for capture, measuring evidence and encrypted backup/restore.
 
 pub mod assistant;
+mod assistant_analysis;
 pub mod assistant_store;
 mod assistant_tools;
 mod assistant_web;

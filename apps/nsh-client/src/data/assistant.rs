@@ -343,12 +343,29 @@ pub fn confirm_pending(expected: &str) -> Result<(), String> {
                     updated_at_ms: clock::now_ms(),
                 },
             )?,
-            PendingKind::Capture { text } => {
-                if text.chars().count() > crate::domain::capture::MAX_INPUT {
-                    return Err("proposal_too_large".into());
-                }
+            kind @ (PendingKind::Capture { .. } | PendingKind::Records { .. }) => {
                 let mut draft = super::capture::new();
-                draft.input = text;
+                match kind {
+                    PendingKind::Capture { text } => {
+                        if text.chars().count() > crate::domain::capture::MAX_INPUT {
+                            return Err("proposal_too_large".into());
+                        }
+                        draft.input = text;
+                    }
+                    PendingKind::Records { proposal } => {
+                        crate::domain::assistant_proposal::apply(&proposal, &mut draft)?;
+                        // A host label, never the model's description, is the
+                        // neutral entry into capture (including later corrections).
+                        draft.input =
+                            copy("Review assistant-proposed records", "核对助手提议的记录");
+                        if let Some(crate::domain::capture::Turn::Owner { text, .. }) =
+                            draft.transcript.first_mut()
+                        {
+                            *text = draft.input.clone();
+                        }
+                    }
+                    PendingKind::Memory { .. } => unreachable!(),
+                }
                 let body = serde_json::to_string(&draft).map_err(|_| "assistant_storage")?;
                 tx.execute(
                     "INSERT INTO capture_drafts(id,created_at_ms,body) VALUES(?1,?2,?3)",
@@ -553,7 +570,7 @@ pub fn send(text: String) -> Result<(), String> {
             .unwrap_or_default()
     });
     let mut system_prompt = assistant_tools::system_prompt();
-    system_prompt.push_str("\nTrusted app action outcomes, newer than prior tool results. Confirmed capture means only an unsent draft was opened, not that a business record was posted:\n");
+    system_prompt.push_str("\nTrusted app action outcomes, newer than prior tool results. Confirmed record proposal means only a capture draft was opened for review, not that a business record was posted. Query confirmed records to verify a later save:\n");
     system_prompt.push_str(&json!(outcomes).to_string());
     let config = Config {
         provider: match account.provider {

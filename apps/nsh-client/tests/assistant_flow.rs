@@ -295,45 +295,182 @@ fn cancelling_after_a_proposal_preserves_one_unapproved_action_across_restart() 
 }
 
 #[test]
-fn a_record_tool_only_opens_an_unsent_capture_after_confirmation() -> Result<(), String> {
-    let provider = Provider::new(vec![
-        Reply::Tool(
-            "call-record",
-            "propose_record",
-            json!({"text":"Lunch cost 20 CNY, paid in cash."}),
-        ),
-        Reply::Text("Review the proposed record."),
-    ]);
+fn legacy_text_proposal_still_opens_as_an_unsent_draft_after_upgrade() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
-    let (mut app, _) = start_in(Some(dir.path()), provider.account(), None);
+    let (app, storage) = start_in(Some(dir.path()), vec![], None);
+    drop(app);
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    let legacy = json!({"id":"legacy-chat","title":"Lunch","created_at_ms":1,"updated_at_ms":2,
+        "messages":[],"history":[],"status":"idle",
+        "pending":[{"id":"legacy-proposal","kind":{"kind":"capture","text":"Lunch cost 20 CNY, paid in cash."}}]});
+    db.execute(
+        "INSERT INTO assistant_sessions(id,updated_at_ms,body) VALUES('legacy-chat',2,?1)",
+        [legacy.to_string()],
+    )
+    .unwrap();
+    let (mut app, _) = start_in(
+        Some(dir.path()),
+        storage.entries().into_iter().collect(),
+        None,
+    );
     app.press("text:Assistant")?;
-    send(&mut app, "Record lunch for 20 CNY paid in cash.")?;
-    app.wait_for("Review the proposed record.")?;
-    app.wait_for_gone("text:Stop", GONE)?;
-    assert!(records(dir.path(), "capture_drafts").is_empty());
     app.press("text:Open record draft")?;
     settle();
     let drafts = records(dir.path(), "capture_drafts");
     assert_eq!(drafts.len(), 1);
+    assert_eq!(drafts[0]["input"], "Lunch cost 20 CNY, paid in cash.");
+    assert_eq!(drafts[0]["status"], "Editing");
     assert!(
-        drafts[0]
-            .to_string()
-            .contains("Lunch cost 20 CNY, paid in cash.")
+        navi_finance::repository::transactions(&db)
+            .unwrap()
+            .is_empty()
     );
-    let connection = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    Ok(())
+}
+
+#[test]
+fn structured_records_survive_restart_then_edit_save_and_undo_without_recognition()
+-> Result<(), String> {
+    let mut money = money_record("35.00");
+    money.as_object_mut().unwrap().remove("evidence");
+    money["money"]["account"] = Value::Null;
+    let mut meal = meal_record();
+    meal.as_object_mut().unwrap().remove("evidence");
+    let provider = Provider::new(vec![
+        Reply::Tool(
+            "call-structured",
+            "propose_record",
+            json!({
+                "text":"Lunch cost 35 CNY and I ate beef noodles with rice.",
+                "records":[money,meal]
+            }),
+        ),
+        Reply::Text("The records are ready to review."),
+    ]);
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, storage) = start_in(Some(dir.path()), provider.account(), None);
+    app.press("label:Assets")?;
+    app.press("Add account")?;
+    app.type_text("label:Account name", "Cash")?;
+    app.press("Create account")?;
+    app.wait_for("Account added")?;
+    app.press("label:Today")?;
+    app.press("text:Assistant")?;
+    send(
+        &mut app,
+        "Record lunch 35 CNY and the noodles and rice I ate.",
+    )?;
+    app.wait_for("The records are ready to review.")?;
+    app.wait_for_gone("text:Stop", GONE)?;
+    let pending = records(dir.path(), "assistant_sessions")[0]["pending"].clone();
+    assert_eq!(pending[0]["kind"]["kind"], "records");
+    assert!(records(dir.path(), "capture_drafts").is_empty());
+    assert!(stored_meals(dir.path()).is_empty());
+    let entries = storage.entries().into_iter().collect();
+    drop(app);
+    let (mut app, _) = start_in(Some(dir.path()), entries, None);
+    app.press("text:Assistant")?;
+    app.wait_for("text:Review and edit")?;
     assert_eq!(
-        connection
-            .query_row("SELECT count(*) FROM finance_transactions", [], |row| row
-                .get::<_, i64>(
-                0
-            ))
-            .unwrap(),
-        0
+        records(dir.path(), "assistant_sessions")[0]["pending"],
+        pending
     );
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    // Opening a draft and consuming its proposal are one SQLite transaction.
+    db.execute_batch("CREATE TRIGGER reject_confirmation BEFORE UPDATE ON assistant_sessions BEGIN SELECT RAISE(ABORT,'disk failure'); END;").unwrap();
+    app.press("text:Review and edit")?;
+    settle();
+    assert!(records(dir.path(), "capture_drafts").is_empty());
+    assert_eq!(
+        records(dir.path(), "assistant_sessions")[0]["pending"],
+        pending
+    );
+    db.execute_batch("DROP TRIGGER reject_confirmation")
+        .unwrap();
+    app.press("text:Review and edit")?;
+    app.wait_for("Which account was used?")?;
+    assert!(!app.shows("text:/^Confirm and save/"));
+    assert_eq!(records(dir.path(), "capture_drafts").len(), 1);
+    assert!(
+        navi_finance::repository::transactions(&db)
+            .unwrap()
+            .is_empty()
+    );
+    app.press("label:Account, Choose account")?;
+    app.press("label:Cash, Bank account · CNY")?;
+    app.wait_for("label:Account, Cash")?;
+    app.press("Edit amount")?;
+    app.clear("label:Amount")?;
+    app.type_text("label:Amount", "35.05")?;
+    app.press("Done")?;
+    app.wait_for("Confirm and save (2)")?;
+    app.press("Confirm and save (2)")?;
+    app.wait_for("Saved 2 records")?;
+    let saved = navi_finance::repository::transactions(&db).unwrap();
+    assert_eq!(saved.len(), 1);
+    assert_eq!(
+        saved[0].amount_in(&navi_finance::account::Account::parse("资产:Cash").unwrap()),
+        -3505
+    );
+    assert_eq!(stored_meals(dir.path()).len(), 1);
+    assert!(records(dir.path(), "capture_drafts").is_empty());
+    app.press("Undo")?;
+    app.wait_for("Save undone")?;
+    assert!(
+        navi_finance::repository::transactions(&db)
+            .unwrap()
+            .is_empty()
+    );
+    assert!(stored_meals(dir.path()).is_empty());
     assert_eq!(
         provider.requests().len(),
         2,
-        "opening capture does not send recognition"
+        "review, edit, save and Undo make no recognition request"
     );
+    Ok(())
+}
+
+#[test]
+fn aggregate_tools_continue_the_real_provider_loop_and_preserve_missing_data() -> Result<(), String>
+{
+    let provider = Provider::new(vec![
+        Reply::Tool(
+            "call-finance",
+            "summarize_finances",
+            json!({"period":"month"}),
+        ),
+        Reply::Tool("call-health", "summarize_health", json!({"period":"week"})),
+        Reply::Text("There are no logged observations for these periods."),
+    ]);
+    let (mut app, _) = start(provider.account(), None);
+    app.press("text:Assistant")?;
+    send(&mut app, "Review my finances and health.")?;
+    app.wait_for("There are no logged observations for these periods.")?;
+    app.wait_for_gone("text:Stop", GONE)?;
+    let requests = provider.requests();
+    assert_eq!(requests.len(), 3);
+    let tool_result = |id| -> Value {
+        let message = requests[2]["messages"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|m| m["role"] == "tool" && m["tool_call_id"] == id)
+            .unwrap();
+        serde_json::from_str(message["content"].as_str().unwrap()).unwrap()
+    };
+    let finance = tool_result("call-finance");
+    assert_eq!(finance["net_worth"]["status"], "no_records");
+    assert_eq!(
+        finance["currencies"][0]["spending"]["current_minor_units"],
+        "0"
+    );
+    assert_eq!(
+        finance["currencies"][0]["spending"]["comparison_available"],
+        false
+    );
+    let health = tool_result("call-health");
+    assert_eq!(health["current"]["nutrition"]["logged_days"], 0);
+    assert!(health["current"]["nutrition"]["average_per_logged_day"].is_null());
+    assert!(health["current"]["weight"]["trend_change_kg"].is_null());
     Ok(())
 }

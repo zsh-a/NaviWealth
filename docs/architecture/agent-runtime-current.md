@@ -25,8 +25,10 @@ without pulling the harness's desktop-tool dependencies or its optional
 | Provider adaptation and Agent loop | `crates/navi-assistant/` over pinned `rpi-agent` / `rpi-ai` |
 | Reactive state, consent, cancellation and proposals | `apps/nsh-client/src/data/assistant.rs` |
 | Read-only records, memory retrieval and proposals | `apps/nsh-client/src/data/assistant_tools.rs` |
+| Complete-period financial and health summaries | `apps/nsh-client/src/data/assistant_analysis.rs`, domain Review and attribution functions |
+| Structured proposal validation and capture handoff | `apps/nsh-client/src/domain/assistant_proposal.rs` |
 | Optional Brave Search and bounded public-page fetch | `apps/nsh-client/src/data/assistant_web.rs` |
-| Sessions, messages, native replay history and approved memories | `apps/nsh-client/src/data/assistant_store.rs`, database migration 22 |
+| Sessions, messages, native replay history and approved memories | `apps/nsh-client/src/data/assistant_store.rs`, migrations 22–23 |
 | Conversation, history and memory UI | `apps/nsh-client/src/pages/assistant.rs` |
 
 The model profile selects Anthropic Messages, OpenAI Chat Completions or OpenAI
@@ -40,10 +42,18 @@ model context. Saved memories provide explicit cross-task recall separately.
 
 Each submitted run is cancellable and bounded to eight model turns and 150
 seconds. The host registers only its declared tools. Record reads are
-date-bounded and paged. Memory tools retrieve approved facts or create a
-pending proposal; they cannot save a memory directly. Record proposals become
-unsent capture drafts only after owner confirmation, and capture still owns
-the final atomic business write. Public web content is data, never a grant of
+date-bounded and paged; aggregate tools use complete snapshots and the domain
+Review calculations, with explicit period comparisons and missing data.
+Memory tools retrieve approved facts or create a pending proposal; they cannot
+save a memory directly. Structured record proposals are bounded to ten cards
+and 80,000 serialized bytes, validated through the capture parser on storage,
+restore and opening. Model-supplied approval/evidence is rejected. Account
+evidence is host-marked inferred; neutral capture input prevents the model's
+description from masquerading as owner-provided account evidence in later
+corrections. Opening review atomically creates a ready capture draft and
+consumes the proposal. Capture owns local editing, final atomic business
+write and Undo; no further model request is required. Legacy text proposals
+remain readable as unsent drafts. Public web content is data, never a grant of
 tool permissions. Search needs a separate owner-provided Brave API key, kept
 in app-private preferences and excluded from backups. Fetch rejects non-public
 destinations and bounds redirects, DNS/network work and response bytes;
@@ -58,11 +68,13 @@ each and 32 MiB in aggregate while the host loads full histories; old chats can
 be deleted to free space. Startup marks `Running` sessions `Interrupted`
 without executing a request or tool. Deleted sessions cannot be resurrected by
 an old worker. Memory provenance can outlive its source conversation. The host
-invalidates active work before restoring a backup. Schema 22 snapshots include
+invalidates active work before restoring a backup. Schema 22+ snapshots include
 assistant tables; restore validates them before replacing anything, resets
 running state, and leaves proposals unapproved. Older backups preserve current
 assistant tables. Memory proposal confirmation and removal from the pending
 list are one transaction.
+Schema 23 marks the new structured proposal JSON format without changing table
+columns, so older apps reject newer backups before interpreting those bodies.
 
 The existing recognition path remains in place during this migration. Removing
 its old runtime dependencies requires separate image, structured-output,

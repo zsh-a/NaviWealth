@@ -501,6 +501,46 @@ pub fn apply() {
             }
         }
         Some("assistant") => nav::push(Route::Assistant),
+        Some("assistant-proposal") => {
+            use crate::data::{assistant, assistant_store as store, db};
+            let now = clock::now_ms();
+            let session = store::Session {
+                id: "preview-assistant-proposal".into(),
+                title: "Lunch".into(),
+                messages: vec![
+                    store::Message {
+                        id: "preview-user".into(),
+                        role: store::Role::User,
+                        text: "Record lunch for 35 CNY.".into(),
+                    },
+                    store::Message {
+                        id: "preview-assistant".into(),
+                        role: store::Role::Assistant,
+                        text: "Review the lunch record and choose its account.".into(),
+                    },
+                ],
+                created_at_ms: now,
+                updated_at_ms: now,
+                pending: vec![store::PendingAction {
+                    id: "preview-proposal".into(),
+                    kind: store::PendingKind::Records {
+                        proposal: serde_json::json!({
+                            "text":"Lunch cost 35 CNY. Review the account before saving.",
+                            "records":[{"kind":"money","day":clock::today().to_string(),
+                                "money":{"kind":"expense","amount":"35.00","currency":"CNY",
+                                    "account":null,"other_account":null,"category":"支出:餐饮",
+                                    "time":null,"payee":"Lunch","note":""}}]
+                        }),
+                    },
+                }],
+                ..Default::default()
+            };
+            db::with(|c| store::create_session(c, &session))
+                .unwrap()
+                .unwrap();
+            assistant::load().unwrap();
+            nav::push(Route::Assistant);
+        }
         Some("settings") => nav::push(Route::Settings),
         Some("model") => {
             nav::push(Route::Settings);

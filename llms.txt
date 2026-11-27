@@ -6,7 +6,8 @@
 > passphrase-encrypted local backups. AI requests go directly to user-owned
 > model profiles. Capture uses `third_party/agent-runtime`; the general
 > assistant embeds pi-rust through `navi-assistant`, with local conversations,
-> confirmed cross-task memories, web research and bounded multi-step tools.
+> confirmed cross-task memories, web research, complete-period domain summaries
+> and editable record proposals with explicit atomic confirmation.
 
 ## Essential Docs
 

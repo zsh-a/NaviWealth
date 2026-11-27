@@ -166,6 +166,14 @@ fn start_with(fetch_rates: super::FetchRates) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::{Mutex, mpsc};
+
+    struct FetchGate {
+        started: mpsc::Sender<Vec<Currency>>,
+        release: mpsc::Receiver<()>,
+    }
+    static FETCH_GATE: Mutex<Option<FetchGate>> = Mutex::new(None);
+
     #[component]
     fn ForeignAccountProbe() -> impl IntoElement {
         use crate::data::{db, market};
@@ -173,12 +181,19 @@ mod tests {
             account::{Account, AccountKind},
             currency::FxRate,
         };
+        // Match App: a plan change disposes the scheduling effect's children,
+        // so its worker must belong to the app root, including before first poll.
+        tasks::mark_root();
         db::open().unwrap();
         finance::load().unwrap();
         catalog::load().unwrap();
         market::load().unwrap();
         market::disable_live();
         start_with(|currencies, day| {
+            let gate = FETCH_GATE.lock().unwrap();
+            let gate = gate.as_ref().unwrap();
+            gate.started.send(currencies.clone()).unwrap();
+            gate.release.recv_timeout(Duration::from_secs(5)).unwrap();
             Ok(currencies
                 .into_iter()
                 .map(|currency| {
@@ -203,6 +218,13 @@ mod tests {
             }))
             .child(text("View rates").on_press(|| nav::push(nav::Route::PricesAndRates(None))))
             .child(text(|| {
+                if nav::open().is_empty() {
+                    "Home"
+                } else {
+                    "Showing rates"
+                }
+            }))
+            .child(text(|| {
                 let published = finance::rates_snapshot();
                 db::with(|c| {
                     let stored = navi_finance::currency::rates(c).unwrap();
@@ -223,13 +245,33 @@ mod tests {
     fn new_foreign_account_and_rates_page_fetch_and_publish_without_refresh() {
         use nsh_engine::{EngineConfig, Root};
         use nsh_testing::Headless;
+        let (started, requests) = mpsc::channel();
+        let (release, responses) = mpsc::channel();
+        *FETCH_GATE.lock().unwrap() = Some(FetchGate {
+            started,
+            release: responses,
+        });
         let mut app =
             Headless::start(EngineConfig::new(Root::of::<ForeignAccountProbe>())).unwrap();
         app.wait_for("0 rates · 0 changes").unwrap();
         app.press("Add dollar account").unwrap();
-        app.wait_for("1 rates · 1 changes").unwrap();
+        assert_eq!(
+            requests.recv_timeout(Duration::from_secs(5)).unwrap(),
+            [Currency::USD]
+        );
+        // Change the plan while USD is still in flight. The current fetch must
+        // finish, then the same worker must pick up HKD without refetching USD.
         app.press("View rates").unwrap();
+        app.wait_for("Showing rates").unwrap();
+        release.send(()).unwrap();
+        app.wait_for("1 rates · 1 changes").unwrap();
+        assert_eq!(
+            requests.recv_timeout(Duration::from_secs(5)).unwrap(),
+            [Currency::HKD]
+        );
+        release.send(()).unwrap();
         app.wait_for("2 rates · 2 changes").unwrap();
+        *FETCH_GATE.lock().unwrap() = None;
     }
 
     #[test]

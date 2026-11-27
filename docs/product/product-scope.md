@@ -153,11 +153,21 @@ not a port of the retired Flutter agents or Knowledge/Execution domains.
 - Read-only record tools query date-bounded local data. Calculations and exact
   money remain in their owning domain crates. The model receives only tool
   results requested for the current task, not a full database dump.
+  Finance and health summaries use complete local periods and the Review
+  calculations: income, spending and category changes by currency, net-worth
+  attribution, logged-day nutrition averages, weight trends and Garmin
+  averages. Comparisons name their dates; missing data, missing FX and cost
+  fallback remain explicit. Explanatory lists may be bounded; totals are not
+  calculated from a partial record page.
 - Memory proposals are visible and unapproved until accepted. Cross-task
   memories record their source conversation when available; deleting a chat
   does not silently delete separately approved memories.
-- A record proposal opens an unsent capture draft after confirmation. Normal
-  capture review still owns validation and atomic business writes. There is no
+- A structured record proposal opens editable capture cards after the owner
+  chooses Review and edit. Missing money fields can be completed locally;
+  proposed financial accounts require explicit review. No second recognition
+  request is needed to edit and save. Normal capture review owns validation,
+  atomic batch writes and guarded Undo. Older text-only proposals still open
+  as unsent drafts. There is no
   arbitrary SQL, shell access, or direct model write to the ledger or health data.
 - Optional web search uses the owner's Brave Search API key. Search queries
   leave the device for that service; fetched public pages are untrusted source

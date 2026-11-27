@@ -116,6 +116,9 @@ const MIGRATIONS: &[&str] = &[
     navi_finance::repository::PURPOSE_SCHEMA,
     // 22: durable assistant conversations and owner-approved cross-task memories.
     super::assistant_store::SCHEMA,
+    // 23: session JSON can contain structured record proposals. No table shape
+    // changes; the version prevents older apps from opening incompatible bodies.
+    "SELECT 1;",
 ];
 
 #[derive(Clone, Default)]
@@ -488,7 +491,16 @@ mod tests {
         use super::super::assistant_store as assistant;
         let dir = tempfile::tempdir().unwrap();
         let source = navi_storage::memory(MIGRATIONS).unwrap();
-        let chat = assistant_session("source-chat");
+        let mut chat = assistant_session("source-chat");
+        chat.pending.push(assistant::PendingAction {
+            id: "structured-proposal".into(),
+            kind: assistant::PendingKind::Records {
+                proposal: serde_json::json!({"text":"Record weight 71 kg", "records":[{
+                    "kind":"weight","day":"2026-11-27","weight_kg":71.0,
+                    "money":null,"meal":null,"slot":null,"trade":null,"balance":null,"price":null,"note":null
+                }]}),
+            },
+        });
         assistant::create_session(&source, &chat).unwrap();
         let memory = assistant::Memory {
             id: "memory-1".into(),
@@ -516,6 +528,37 @@ mod tests {
         expected.status = assistant::Status::Interrupted;
         assert_eq!(assistant::sessions(&destination).unwrap(), [expected]);
         assert_eq!(assistant::memories(&destination).unwrap(), [memory]);
+        assert_eq!(
+            destination
+                .query_row("SELECT kg FROM weights", [], |r| r.get::<_, f64>(0))
+                .unwrap(),
+            70.0
+        );
+    }
+
+    #[test]
+    fn malformed_structured_proposal_restore_is_atomic() {
+        use super::super::assistant_store as assistant;
+        let dir = tempfile::tempdir().unwrap();
+        let source = navi_storage::memory(MIGRATIONS).unwrap();
+        assistant::create_session(&source, &assistant_session("bad-chat")).unwrap();
+        source.execute("UPDATE assistant_sessions SET body=json_set(body, '$.pending[0].kind', json(?1))", [
+            r#"{"kind":"records","proposal":{"text":"Weight","records":[{"kind":"weight","day":"2026-11-27","weight_kg":-1}]}}"#
+        ]).unwrap();
+        let path = dir.path().join("bad.sqlite");
+        // Use SQLite's snapshot without app validation to represent a corrupt backup.
+        navi_storage::snapshot(&source, &path).unwrap();
+        let destination = navi_storage::memory(MIGRATIONS).unwrap();
+        let kept = assistant_session("kept-chat");
+        assistant::create_session(&destination, &kept).unwrap();
+        destination
+            .execute("INSERT INTO weights VALUES('2026-11-27',70.0,1)", [])
+            .unwrap();
+        assert!(matches!(
+            restore_file(&destination, &path),
+            Err(RestoreError::Unreadable)
+        ));
+        assert_eq!(assistant::sessions(&destination).unwrap(), [kept]);
         assert_eq!(
             destination
                 .query_row("SELECT kg FROM weights", [], |r| r.get::<_, f64>(0))

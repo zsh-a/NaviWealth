@@ -111,8 +111,16 @@ pub struct PendingAction {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum PendingKind {
-    Memory { text: String },
-    Capture { text: String },
+    Memory {
+        text: String,
+    },
+    /// Legacy text-only proposals remain readable in old chats and backups.
+    Capture {
+        text: String,
+    },
+    Records {
+        proposal: Value,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -160,12 +168,17 @@ fn validate_session(session: &Session) -> Result<(), String> {
                     .is_some_and(|id| !valid_id(id) || outcome.status != ActionStatus::Confirmed)
         })
         || session.pending.iter().any(|proposal| {
-            let (PendingKind::Memory { text } | PendingKind::Capture { text }) = &proposal.kind;
             !valid_id(&proposal.id)
                 || !ids.insert(&proposal.id)
                 || outcome_ids.contains(&proposal.id)
-                || text.trim().is_empty()
-                || text.len() > 4_000
+                || match &proposal.kind {
+                    PendingKind::Memory { text } | PendingKind::Capture { text } => {
+                        text.trim().is_empty() || text.len() > 4_000
+                    }
+                    PendingKind::Records { proposal } => {
+                        crate::domain::assistant_proposal::parse(proposal).is_err()
+                    }
+                }
         })
         || session.messages.iter().any(|message| {
             !valid_id(&message.id)

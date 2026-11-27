@@ -414,6 +414,41 @@ fn pending(error: Signal<Option<String>>) -> impl IntoElement {
                 text,
                 copy("Open record draft", "打开记录草稿"),
             ),
+            assistant::PendingKind::Records { proposal } => {
+                let Ok(proposal) = crate::domain::assistant_proposal::parse(&proposal) else {
+                    return text(copy(
+                        "This record proposal cannot be opened.",
+                        "无法打开这条记录提议。",
+                    ))
+                    .typo(Type::Body)
+                    .text_color(color::BODY)
+                    .into_element();
+                };
+                (
+                    copy("Review proposed records", "核对记录提议"),
+                    format!(
+                        "{}\n{}",
+                        proposal.text,
+                        if crate::i18n::s().lang == crate::domain::recognition::Lang::En {
+                            format!(
+                                "{} {}. Review the fields and accounts before saving.",
+                                proposal.records.len(),
+                                if proposal.records.len() == 1 {
+                                    "editable record"
+                                } else {
+                                    "editable records"
+                                }
+                            )
+                        } else {
+                            format!(
+                                "{} 条可编辑记录，请核对字段和账户后保存。",
+                                proposal.records.len()
+                            )
+                        }
+                    ),
+                    copy("Review and edit", "核对并编辑"),
+                )
+            }
         };
         view()
             .gap_3()

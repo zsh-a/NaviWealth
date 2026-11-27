@@ -117,9 +117,12 @@ AI capture drafts and a general assistant using the owner's model account.
   position. Earlier messages load in groups of 40. First use names the selected
   model and the messages, recalled memories and requested records it may receive;
   consent is separate from capture and scoped to that model account.
-  Proposed memories and records appear as reviewable text with explicit save or
-  open-draft actions. A record opens capture as an unsent draft and still needs
-  its normal confirmation. Memory & search lists saved facts with visible edit
+  Proposed memories appear as reviewable text with an explicit save action.
+  Structured record proposals show the request and record count, with Review
+  and edit opening the existing capture cards. Fields can be edited locally,
+  accounts require review, and Confirm and save retains the normal atomic
+  batch and Undo flow. Opening review makes no second recognition request.
+  Older text-only proposals retain their Open record draft action. Memory & search lists saved facts with visible edit
   and confirmed delete controls, a memory field and an explicit Save memory
   action. The Brave Search key is masked and saved on leaving its field; the
   copy distinguishes search from opening a link and explains where queries go.
