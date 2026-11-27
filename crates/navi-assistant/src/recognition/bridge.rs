@@ -343,16 +343,12 @@ pub(super) fn context(request: &LlmRequest, model: &Model) -> Result<Context, Ll
             spec.input_schema.clone(),
         ));
     }
-    if let Some(format) = &request.response_format {
-        let schema = match format {
-            LlmResponseFormat::JsonSchema { schema, .. } => schema.clone(),
-            LlmResponseFormat::JsonObject => json!({"type":"object"}),
-        };
+    if let Some(schema) = &request.response_schema {
         context.tools.push(tool(
             RESULT_TOOL,
             "Return the final structured estimate or capture draft for owner review. \
              This only returns data and never writes records.",
-            schema,
+            schema.clone(),
         ));
         context.system_prompt.get_or_insert_default().push_str(
             "\nReturn your final structured result using emit_result, or ask_user when \

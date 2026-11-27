@@ -1,9 +1,7 @@
-//! Host DTOs preserve the persisted capture format, not the retired wire protocol.
+//! Recognition inputs and results. Content blocks retain saved-draft compatibility.
 use base64::{Engine, engine::general_purpose::STANDARD};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
-
-pub const PROTOCOL_VERSION: &str = "agent.v1";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -143,45 +141,27 @@ pub struct LlmMessage {
     pub role: LlmRole,
     pub content: MessageContent,
     #[serde(default)]
-    pub name: Option<String>,
-    #[serde(default)]
     pub metadata: Value,
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LlmRequest {
-    pub protocol_version: String,
     pub provider: String,
     pub model: String,
     pub messages: Vec<LlmMessage>,
     #[serde(default)]
     pub temperature: Option<f32>,
     #[serde(default)]
-    pub effort: Option<Value>,
-    #[serde(default)]
     pub max_output_tokens: Option<u32>,
     #[serde(default)]
     pub tools: Vec<RecognitionTool>,
     #[serde(default)]
-    pub response_format: Option<LlmResponseFormat>,
-    #[serde(default)]
-    pub metadata: Value,
+    pub response_schema: Option<Value>,
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RecognitionTool {
     pub name: String,
     pub description: String,
     pub input_schema: Value,
-}
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "snake_case")]
-pub enum LlmResponseFormat {
-    JsonObject,
-    JsonSchema {
-        name: String,
-        schema: Value,
-        #[serde(default)]
-        strict: Option<bool>,
-    },
 }
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -200,7 +180,6 @@ pub struct LlmUsage {
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LlmResponse {
-    pub protocol_version: String,
     pub provider: String,
     pub model: String,
     pub content: String,

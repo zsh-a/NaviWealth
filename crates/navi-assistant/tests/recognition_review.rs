@@ -130,7 +130,7 @@ fn config(provider: Provider, base_url: String) -> Config {
     }
 }
 fn request() -> LlmRequest {
-    serde_json::from_value(json!({"protocol_version":"agent.v1","provider":"owner","model":"owner-model","messages":[{"role":"user","content":[{"type":"text","text":"Estimate"},{"type":"image","source":{"type":"base64","media_type":"image/png","data":"iVBORw0KGgo="}}]}],"max_output_tokens":1000,"tools":[{"name":"ask_user","description":"Ask owner","input_schema":{"type":"object","additionalProperties":false,"required":["question"],"properties":{"question":{"type":"string"}}}}],"response_format":{"type":"json_schema","name":"estimate","schema":{"type":"object","additionalProperties":false,"required":["value"],"properties":{"value":{"type":"integer"}}},"strict":true}})).unwrap()
+    serde_json::from_value(json!({"provider":"owner","model":"owner-model","messages":[{"role":"user","content":[{"type":"text","text":"Estimate"},{"type":"image","source":{"type":"base64","media_type":"image/png","data":"iVBORw0KGgo="}}]}],"max_output_tokens":1000,"tools":[{"name":"ask_user","description":"Ask owner","input_schema":{"type":"object","additionalProperties":false,"required":["question"],"properties":{"question":{"type":"string"}}}}],"response_schema":{"type":"object","additionalProperties":false,"required":["value"],"properties":{"value":{"type":"integer"}}}})).unwrap()
 }
 async fn call(config: &Config, request: LlmRequest) -> Result<LlmResponse, recognition::LlmError> {
     recognition::complete(config, request, CancellationToken::new(), |_| {}).await

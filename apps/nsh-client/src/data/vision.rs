@@ -56,7 +56,7 @@ pub async fn recognize(
     lang: Lang,
     consent: Consent,
 ) -> Result<MealEstimate, VisionFailure> {
-    use runtime::{ContentBlock, LlmMessage, LlmResponseFormat, LlmRole};
+    use runtime::{ContentBlock, LlmMessage, LlmRole};
     let photos = [MealPhoto::new((*jpeg).clone(), PhotoRole::Overview, None)];
     let prepared = recognition::prepare_meal(&upload_target(&account), &photos, &consent, lang, "")
         .map_err(recognition_failure)?;
@@ -71,33 +71,24 @@ pub async fn recognize(
         text: prepared.user_text,
     });
     let request = LlmRequest {
-        protocol_version: runtime::PROTOCOL_VERSION.into(),
         provider: upload_target(&account).provider,
         model: account.model.trim().to_owned(),
         messages: vec![
             LlmMessage {
                 role: LlmRole::System,
                 content: prepared.system_prompt.into(),
-                name: None,
                 metadata: json!({}),
             },
             LlmMessage {
                 role: LlmRole::User,
                 content: content.into(),
-                name: None,
                 metadata: json!({}),
             },
         ],
         temperature: None,
-        effort: None,
         max_output_tokens: Some(6000),
         tools: Vec::new(),
-        response_format: Some(LlmResponseFormat::JsonSchema {
-            name: "meal_estimate".into(),
-            schema: recognition::response_schema(),
-            strict: Some(true),
-        }),
-        metadata: json!({"prompt_version":recognition::PROMPT_VERSION}),
+        response_schema: Some(recognition::response_schema()),
     };
     let response = streaming::complete(account, request, RECOGNIZE_TIMEOUT, |_| {}).await?;
     match response.finish_reason {
@@ -120,7 +111,7 @@ pub async fn recognize(
 pub async fn ping(account: ModelAccount) -> Result<(String, f64), VisionFailure> {
     let started = nsh_core::time::now();
     let request: LlmRequest = serde_json::from_value(json!({
-        "protocol_version":runtime::PROTOCOL_VERSION, "provider":upload_target(&account).provider,
+        "provider":upload_target(&account).provider,
         "model":account.model.trim(),
         "messages":[{"role":"user","content":"Reply with OK."}], "max_output_tokens":32
     }))
@@ -214,27 +205,18 @@ fn capture_request(
     context: &serde_json::Value,
 ) -> Result<LlmRequest, VisionFailure> {
     use crate::domain::capture;
-    use runtime::{LlmResponseFormat, PROTOCOL_VERSION};
     Ok(LlmRequest {
-        protocol_version: PROTOCOL_VERSION.into(),
         provider: upload_target(account).provider,
         model: account.model.trim().to_owned(),
         messages: capture_messages(draft, images, lang, context)?,
         temperature: None,
-        effort: None,
         max_output_tokens: Some(8000),
-        tools: vec![serde_json::from_value(json!({
-            "name":"ask_user",
-            "description":"Ask the owner to resolve a capture decision. Pause until the owner submits answers; this tool never writes records.",
-            "input_schema":capture::ask_user_schema(),
-            "risk":"read_only"
-        })).map_err(|_| VisionFailure::Unreadable)?],
-        response_format: Some(LlmResponseFormat::JsonSchema {
-            name: "record_draft".into(),
-            schema: capture::result_schema(),
-            strict: Some(true),
-        }),
-        metadata: json!({"prompt_version":capture::PROMPT_VERSION}),
+        tools: vec![runtime::RecognitionTool {
+            name: "ask_user".into(),
+            description: "Ask the owner to resolve a capture decision. Pause until the owner submits answers; this tool never writes records.".into(),
+            input_schema: capture::ask_user_schema(),
+        }],
+        response_schema: Some(capture::result_schema()),
     })
 }
 
@@ -332,7 +314,6 @@ fn capture_messages(
     messages.push(LlmMessage {
         role: LlmRole::System,
         content: capture::instructions(lang).into(),
-        name: None,
         metadata: json!({}),
     });
     let sent_images = draft.sent_images();
@@ -381,7 +362,6 @@ fn capture_messages(
                 LlmMessage {
                     role: LlmRole::User,
                     content: content.into(),
-                    name: None,
                     metadata: json!({}),
                 }
             }
@@ -391,7 +371,6 @@ fn capture_messages(
                 LlmMessage {
                     role: LlmRole::Assistant,
                     content: blocks.into(),
-                    name: None,
                     metadata: provider_metadata(&request.provider_output),
                 }
             }
@@ -413,7 +392,6 @@ fn capture_messages(
                         is_error: None,
                     }]
                     .into(),
-                    name: None,
                     metadata: json!({}),
                 });
                 let mut content = Vec::new();
@@ -440,7 +418,6 @@ fn capture_messages(
                 LlmMessage {
                     role: LlmRole::User,
                     content: content.into(),
-                    name: None,
                     metadata: json!({}),
                 }
             }
@@ -451,7 +428,6 @@ fn capture_messages(
             } => LlmMessage {
                 role: LlmRole::Assistant,
                 content: reply.clone().into(),
-                name: None,
                 metadata: provider_metadata(provider_output),
             },
         };
@@ -533,7 +509,6 @@ mod capture_tests {
             metadata["responses_output"] = output;
         }
         runtime::LlmResponse {
-            protocol_version: runtime::PROTOCOL_VERSION.into(),
             provider: "test".into(),
             model: "test-model".into(),
             content,
@@ -568,11 +543,7 @@ mod capture_tests {
             &json!({}),
         )
         .unwrap();
-        let runtime::LlmResponseFormat::JsonSchema { schema, .. } =
-            request.response_format.unwrap()
-        else {
-            panic!("schema")
-        };
+        let schema = request.response_schema.unwrap();
         assert_eq!(schema, crate::domain::capture::result_schema());
         let prompt = request.messages[0].content.as_str().unwrap();
         let embedded = prompt
@@ -592,11 +563,7 @@ mod capture_tests {
     }
     #[test]
     fn final_schema_rejects_fences_and_incorrect_accounting_fields() {
-        let format = Some(runtime::LlmResponseFormat::JsonSchema {
-            name: "record_draft".into(),
-            schema: crate::domain::capture::result_schema(),
-            strict: Some(true),
-        });
+        let format = Some(crate::domain::capture::result_schema());
         let valid = json!({"destination":null,"records":[money_record()]}).to_string();
         assert!(runtime::structured_output_from_content(&format, &valid).is_ok());
         assert!(

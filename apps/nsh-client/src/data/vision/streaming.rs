@@ -3,7 +3,6 @@
 use super::*;
 use crate::domain::capture::{self, Draft, Record};
 use futures::{StreamExt, channel::mpsc};
-use runtime::LlmResponseFormat;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 mod host;
@@ -101,7 +100,7 @@ pub async fn recognize_record_stream(
     } else {
         draft.sent_images().len()
     };
-    let format = request.response_format.clone();
+    let format = request.response_schema.clone();
     let mut partial = RecordPrefix {
         image_count,
         ..RecordPrefix::default()
@@ -138,7 +137,7 @@ impl RecordPrefix {
     fn push(
         &mut self,
         text: &str,
-        format: &Option<LlmResponseFormat>,
+        format: &Option<serde_json::Value>,
         mut preview: impl FnMut(Vec<Record>),
     ) {
         if self.unsupported || self.text.len().saturating_add(text.len()) > 80_000 {
@@ -319,11 +318,7 @@ mod tests {
 
     #[test]
     fn fragmented_json_previews_only_complete_schema_valid_records() {
-        let format = Some(LlmResponseFormat::JsonSchema {
-            name: "capture".into(),
-            schema: capture::result_schema(),
-            strict: Some(true),
-        });
+        let format = Some(capture::result_schema());
         let first = json!({"kind":"note","day":"2026-11-21","weight_kg":null,
             "trade":null,"balance":null,"note":"转入 {旧} 账户 \"明天\"","price":null,
             "money":null,"meal":null,"slot":null,"evidence":[]});

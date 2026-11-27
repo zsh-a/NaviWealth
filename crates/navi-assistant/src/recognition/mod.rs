@@ -17,13 +17,13 @@ const MAX_REQUEST_BYTES: usize = 32_000_000;
 /// Schema validation is always local, including when a compatible server
 /// returns bare JSON instead of the requested result tool.
 pub fn structured_output_from_content(
-    format: &Option<LlmResponseFormat>,
+    schema: &Option<Value>,
     text: &str,
 ) -> Result<Option<Value>, LlmError> {
     if text.len() > MAX_RESPONSE_BYTES {
         return Err(LlmError::new("recognition_output_limit"));
     }
-    let Some(format) = format else {
+    let Some(schema) = schema else {
         return Ok(None);
     };
     let object: Value =
@@ -31,12 +31,10 @@ pub fn structured_output_from_content(
     if !object.is_object() {
         return Err(LlmError::new("recognition_invalid_json"));
     }
-    if let LlmResponseFormat::JsonSchema { schema, .. } = format {
-        let validator = jsonschema::JSONSchema::compile(schema)
-            .map_err(|_| LlmError::new("recognition_invalid_schema"))?;
-        if !validator.is_valid(&object) {
-            return Err(LlmError::new("recognition_schema_mismatch"));
-        }
+    let validator = jsonschema::JSONSchema::compile(schema)
+        .map_err(|_| LlmError::new("recognition_invalid_schema"))?;
+    if !validator.is_valid(&object) {
+        return Err(LlmError::new("recognition_schema_mismatch"));
     }
     Ok(Some(object))
 }
@@ -186,9 +184,9 @@ fn response(request: &LlmRequest, message: AssistantMessage) -> Result<LlmRespon
         if call.recorded.is_some() || call.namespace.is_some() || !call.arguments.is_object() {
             return Err(LlmError::new("recognition_invalid_response"));
         }
-        if call.name == RESULT_TOOL && request.response_format.is_some() {
+        if call.name == RESULT_TOOL && request.response_schema.is_some() {
             let content = call.arguments.to_string();
-            let object = structured_output_from_content(&request.response_format, &content)?;
+            let object = structured_output_from_content(&request.response_schema, &content)?;
             (content, LlmFinishReason::Stop, object)
         } else if let Some(spec) = request
             .tools
@@ -196,11 +194,7 @@ fn response(request: &LlmRequest, message: AssistantMessage) -> Result<LlmRespon
             .find(|t| t.name == call.name && t.name == "ask_user")
         {
             structured_output_from_content(
-                &Some(LlmResponseFormat::JsonSchema {
-                    name: spec.name.clone(),
-                    schema: spec.input_schema.clone(),
-                    strict: Some(true),
-                }),
+                &Some(spec.input_schema.clone()),
                 &call.arguments.to_string(),
             )?;
             (
@@ -213,7 +207,7 @@ fn response(request: &LlmRequest, message: AssistantMessage) -> Result<LlmRespon
         }
     } else {
         let content = Content::text_only(&message.content, "");
-        let object = structured_output_from_content(&request.response_format, &content)?;
+        let object = structured_output_from_content(&request.response_schema, &content)?;
         (content, LlmFinishReason::Stop, object)
     };
     let mut saved = bridge::saved_blocks(&message);
@@ -222,7 +216,6 @@ fn response(request: &LlmRequest, message: AssistantMessage) -> Result<LlmRespon
         saved = json!([{"type":"text","text":content}]);
     }
     Ok(LlmResponse {
-        protocol_version: PROTOCOL_VERSION.into(),
         provider: request.provider.clone(),
         model: message
             .response_model
@@ -286,11 +279,9 @@ mod tests {
 
     #[test]
     fn local_schema_rejects_extra_fields_wrong_types_and_trailing_content() {
-        let format = Some(LlmResponseFormat::JsonSchema {
-            name: "draft".into(),
-            strict: Some(true),
-            schema: json!({"type":"object","additionalProperties":false,"required":["grams"],"properties":{"grams":{"type":"number","exclusiveMinimum":0}}}),
-        });
+        let format = Some(
+            json!({"type":"object","additionalProperties":false,"required":["grams"],"properties":{"grams":{"type":"number","exclusiveMinimum":0}}}),
+        );
         assert!(structured_output_from_content(&format, r#"{"grams":100}"#).is_ok());
         for text in [
             r#"{"grams":"100"}"#,
@@ -353,7 +344,7 @@ mod tests {
             context_summary: None,
         };
         let request: LlmRequest = serde_json::from_value(json!({
-            "protocol_version":"agent.v1", "provider":"anthropic", "model":"model", "messages":[],
+            "provider":"anthropic", "model":"model", "messages":[],
         }))
         .unwrap();
         let cancel = CancellationToken::new();

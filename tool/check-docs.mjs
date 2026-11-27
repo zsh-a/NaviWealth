@@ -17,7 +17,7 @@ function walkMarkdown(directory) {
 }
 
 // Deliberately scoped to maintained first-party entry points and the docs tree.
-// Third-party README files describe their upstream projects, not this app.
+// The third-party index is ours; nested upstream READMEs remain excluded.
 export const entryPoints = [
   'README.md',
   'AGENTS.md',
@@ -27,6 +27,7 @@ export const entryPoints = [
   'apps/nsh-client/DESIGN.md',
   'apps/nsh-client/android/README.md',
   'tool/asset_catalog/README.md',
+  'third_party/README.md',
 ];
 
 export function checkDocs(repoRoot) {

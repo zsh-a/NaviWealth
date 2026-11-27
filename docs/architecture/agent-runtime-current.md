@@ -128,7 +128,10 @@ The pinned pi-rust API has no separate structured-response option. Recognition
 therefore declares an `emit_result` tool whose input schema is the result
 schema, alongside capture's `ask_user` tool. An `emit_result` call returns a
 draft; it executes no business operation. The host validates the complete
-result against its schema and domain contracts. Legacy JSON text responses
+result against its schema and domain contracts. Recognition requests carry
+the result schema directly; protocol-version, effort, response-format names
+and request metadata from the retired runtime are not part of this API.
+Only content blocks and provider replay metadata retain saved-draft compatibility. Legacy JSON text responses
 remain accepted only after the same validation. Multiple or mixed result and
 question calls are rejected. Streaming text or result arguments may produce
 provisional cards in memory; only a valid terminal response can produce a
