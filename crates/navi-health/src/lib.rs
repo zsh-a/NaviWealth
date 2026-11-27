@@ -20,4 +20,4 @@ pub mod weight;
 
 pub use consent::{Consent, ConsentError, UploadTarget};
 pub use photo::{MealPhoto, PhotoError, PhotoRole};
-pub use recognition::{MealEstimate, PROMPT_VERSION, recognize_meal};
+pub use recognition::{MealEstimate, PROMPT_VERSION, PreparedMeal, PreparedMealView, prepare_meal};

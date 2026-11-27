@@ -1,3 +1,0 @@
-[submodule "third_party/agent-runtime"]
-	path = third_party/agent-runtime
-	url = https://github.com/zsh-a/agent-runtime.git

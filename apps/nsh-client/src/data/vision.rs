@@ -1,18 +1,15 @@
-//! On-device recognition through the shared protocol client and owner profiles.
+//! Owner-authorized recognition through the shared pi-rust runtime.
 
 mod streaming;
 
-use std::{future::Future, pin::Pin, rc::Rc, sync::OnceLock, time::Duration};
+use std::{rc::Rc, sync::OnceLock, time::Duration};
 
-use futures::stream::{self, Iter};
-use llm_client::{Bytes, CapabilityCache, Client, HttpResponse, Timeouts, Transport};
-use llm_protocol::{Endpoint, HttpRequest, LlmError, LlmRequest, Protocol};
+use navi_assistant::recognition::{self as runtime, LlmError, LlmRequest};
 use navi_health::{
     consent::{Consent, UploadTarget},
     photo::{MealPhoto, PhotoRole},
-    recognition::{Lang, MealEstimate, RecognitionError, recognize_meal},
+    recognition::{self, Lang, MealEstimate, RecognitionError},
 };
-use nsh_core::prelude::{fetch, timer};
 use serde_json::json;
 
 use super::meals::new_food_id;
@@ -24,99 +21,24 @@ use crate::domain::{
 pub const RECOGNIZE_TIMEOUT: Duration = Duration::from_secs(150);
 pub const PING_TIMEOUT: Duration = Duration::from_secs(60);
 
-static CAPABILITIES: OnceLock<CapabilityCache> = OnceLock::new();
-
-type Body = Iter<std::vec::IntoIter<Result<Bytes, LlmError>>>;
-
-/// NSH fetch is local to its engine thread and currently returns a whole body.
-/// The client accepts that body as one chunk without requiring Tokio or TLS.
-struct NshTransport {
-    epoch: nsh_core::time::Instant,
-}
-
-impl NshTransport {
-    fn new() -> Self {
-        Self {
-            epoch: nsh_core::time::now(),
-        }
+fn configuration(account: &ModelAccount, timeout: Duration) -> navi_assistant::Config {
+    navi_assistant::Config {
+        provider: match account.provider {
+            Provider::Anthropic => navi_assistant::Provider::Anthropic,
+            Provider::OpenAiCompatible => navi_assistant::Provider::OpenAiCompatible,
+            Provider::OpenAiResponses => navi_assistant::Provider::OpenAiResponses,
+        },
+        base_url: account.normalized_base_url(),
+        api_key: account.api_key.clone(),
+        model: account.model.trim().to_owned(),
+        system_prompt: String::new(),
+        limits: navi_assistant::Limits {
+            timeout,
+            output_tokens: 8000,
+            ..Default::default()
+        },
+        context_summary: None,
     }
-}
-
-impl Transport for NshTransport {
-    type Body = Body;
-    type SendFuture<'a> = Pin<Box<dyn Future<Output = Result<HttpResponse<Body>, LlmError>> + 'a>>;
-    type SleepFuture<'a> = Pin<Box<dyn Future<Output = ()> + 'a>>;
-
-    fn send(&self, request: HttpRequest) -> Self::SendFuture<'_> {
-        Box::pin(async move {
-            let mut http = nsh_core::platform::HttpRequest::new("POST", request.url);
-            // Credentials must never follow a redirect to a different destination.
-            http.follow_redirects = false;
-            for (name, value) in request.headers {
-                http = http.header(name, value);
-            }
-            let response = fetch(http.body(request.body)).await.map_err(|_| {
-                LlmError::provider(
-                    "network_error",
-                    "The platform request failed",
-                    // Whole-body NSH fetch cannot tell whether the provider
-                    // already began replying. Leave replay to the user.
-                    false,
-                    json!({}),
-                )
-            })?;
-            let status = response.status();
-            let mut headers = response.head.headers;
-            // Simple test/host adapters may omit the media type of a whole JSON response.
-            if !headers
-                .iter()
-                .any(|(name, _)| name.eq_ignore_ascii_case("content-type"))
-                && response
-                    .body
-                    .iter()
-                    .copied()
-                    .find(|byte| !byte.is_ascii_whitespace())
-                    == Some(b'{')
-            {
-                headers.push(("content-type".into(), "application/json".into()));
-            }
-            Ok(HttpResponse {
-                status,
-                headers,
-                body: stream::iter(vec![Ok(Bytes::from(response.body))]),
-            })
-        })
-    }
-
-    fn sleep(&self, duration: Duration) -> Self::SleepFuture<'_> {
-        Box::pin(async move {
-            timer(duration).await;
-        })
-    }
-
-    fn now(&self) -> Duration {
-        self.epoch.elapsed()
-    }
-}
-
-fn endpoint(account: &ModelAccount) -> Result<Endpoint, VisionFailure> {
-    let protocol = match account.provider {
-        Provider::Anthropic => Protocol::Anthropic,
-        Provider::OpenAiCompatible => Protocol::OpenAiCompatible,
-        Provider::OpenAiResponses => Protocol::OpenAiResponses,
-    };
-    let provider = match account.provider {
-        Provider::Anthropic => "anthropic",
-        Provider::OpenAiCompatible => "openai",
-        Provider::OpenAiResponses => "openai_responses",
-    };
-    Endpoint::new(
-        protocol,
-        provider,
-        account.normalized_base_url(),
-        &account.api_key,
-    )
-    .map_err(llm_failure)
 }
 
 pub fn upload_target(account: &ModelAccount) -> UploadTarget {
@@ -134,36 +56,76 @@ pub async fn recognize(
     lang: Lang,
     consent: Consent,
 ) -> Result<MealEstimate, VisionFailure> {
-    let client = Client::new(endpoint(&account)?, NshTransport::new())
-        .with_capability_cache(CAPABILITIES.get_or_init(CapabilityCache::default).clone())
-        .with_timeouts(Timeouts {
-            total: RECOGNIZE_TIMEOUT,
-            ..Timeouts::default()
-        });
+    use runtime::{ContentBlock, LlmMessage, LlmResponseFormat, LlmRole};
     let photos = [MealPhoto::new((*jpeg).clone(), PhotoRole::Overview, None)];
-    let mut estimate = recognize_meal(&client, &account.model, &photos, &consent, lang, "")
-        .await
+    let prepared = recognition::prepare_meal(&upload_target(&account), &photos, &consent, lang, "")
         .map_err(recognition_failure)?;
-    for food in &mut estimate.recognition.foods {
-        food.id = new_food_id();
+    let mut content = Vec::new();
+    for view in prepared.views {
+        content.push(ContentBlock::Text {
+            text: view.description,
+        });
+        content.push(ContentBlock::image("image/jpeg", view.jpeg));
     }
-    Ok(estimate)
+    content.push(ContentBlock::Text {
+        text: prepared.user_text,
+    });
+    let request = LlmRequest {
+        protocol_version: runtime::PROTOCOL_VERSION.into(),
+        provider: upload_target(&account).provider,
+        model: account.model.trim().to_owned(),
+        messages: vec![
+            LlmMessage {
+                role: LlmRole::System,
+                content: prepared.system_prompt.into(),
+                name: None,
+                metadata: json!({}),
+            },
+            LlmMessage {
+                role: LlmRole::User,
+                content: content.into(),
+                name: None,
+                metadata: json!({}),
+            },
+        ],
+        temperature: None,
+        effort: None,
+        max_output_tokens: Some(6000),
+        tools: Vec::new(),
+        response_format: Some(LlmResponseFormat::JsonSchema {
+            name: "meal_estimate".into(),
+            schema: recognition::response_schema(),
+            strict: Some(true),
+        }),
+        metadata: json!({"prompt_version":recognition::PROMPT_VERSION}),
+    };
+    let response = streaming::complete(account, request, RECOGNIZE_TIMEOUT, |_| {}).await?;
+    match response.finish_reason {
+        runtime::LlmFinishReason::Stop => {}
+        runtime::LlmFinishReason::Length => return Err(VisionFailure::Truncated),
+        runtime::LlmFinishReason::ContentFilter => return Err(VisionFailure::Refused),
+        _ => return Err(VisionFailure::Unreadable),
+    }
+    let diagnostics = json!({"provider":response.provider,"usage":response.usage,"finish_reason":response.finish_reason});
+    let recognition = recognition::parse_recognition(&response.content, &mut new_food_id)
+        .map_err(recognition_failure)?;
+    Ok(MealEstimate {
+        recognition,
+        model: response.model.chars().take(200).collect(),
+        prompt_version: recognition::PROMPT_VERSION.into(),
+        diagnostics,
+    })
 }
 
 pub async fn ping(account: ModelAccount) -> Result<(String, f64), VisionFailure> {
     let started = nsh_core::time::now();
     let request: LlmRequest = serde_json::from_value(json!({
-        "protocol_version":"agent.v1", "provider": match account.provider {
-            Provider::Anthropic => "anthropic", Provider::OpenAiCompatible => "openai", Provider::OpenAiResponses => "openai_responses"
-        }, "model":account.model.trim(),
+        "protocol_version":runtime::PROTOCOL_VERSION, "provider":upload_target(&account).provider,
+        "model":account.model.trim(),
         "messages":[{"role":"user","content":"Reply with OK."}], "max_output_tokens":32
     }))
     .map_err(|_| VisionFailure::Unreadable)?;
-    let client = Client::new(endpoint(&account)?, NshTransport::new()).with_timeouts(Timeouts {
-        total: PING_TIMEOUT,
-        ..Timeouts::default()
-    });
-    let response = client.complete(request).await.map_err(llm_failure)?;
+    let response = streaming::complete(account, request, PING_TIMEOUT, |_| {}).await?;
     Ok((response.model, started.elapsed().as_secs_f64()))
 }
 
@@ -173,7 +135,6 @@ fn recognition_failure(error: RecognitionError) -> VisionFailure {
         RecognitionError::Refused => VisionFailure::Refused,
         RecognitionError::Photo(_) => VisionFailure::Photo,
         RecognitionError::Consent(_) => VisionFailure::Refused,
-        RecognitionError::Llm(error) => llm_failure(error),
         _ => VisionFailure::Unreadable,
     }
 }
@@ -253,11 +214,11 @@ fn capture_request(
     context: &serde_json::Value,
 ) -> Result<LlmRequest, VisionFailure> {
     use crate::domain::capture;
-    use llm_protocol::{LlmResponseFormat, PROTOCOL_VERSION};
+    use runtime::{LlmResponseFormat, PROTOCOL_VERSION};
     Ok(LlmRequest {
         protocol_version: PROTOCOL_VERSION.into(),
         provider: upload_target(account).provider,
-        model: account.model.clone(),
+        model: account.model.trim().to_owned(),
         messages: capture_messages(draft, images, lang, context)?,
         temperature: None,
         effort: None,
@@ -278,11 +239,11 @@ fn capture_request(
 }
 
 fn capture_response(
-    response: llm_protocol::LlmResponse,
+    response: runtime::LlmResponse,
     image_count: usize,
 ) -> Result<CaptureResponse, VisionFailure> {
     use crate::domain::capture;
-    use llm_protocol::{ContentBlock, LlmFinishReason};
+    use runtime::{ContentBlock, LlmFinishReason};
     let model = response.model.chars().take(200).collect();
     let provider_output = response.metadata.get("responses_output").cloned();
     match response.finish_reason {
@@ -356,9 +317,9 @@ fn capture_messages(
     images: &[(String, Vec<u8>)],
     lang: Lang,
     context: &serde_json::Value,
-) -> Result<Vec<llm_protocol::LlmMessage>, VisionFailure> {
+) -> Result<Vec<runtime::LlmMessage>, VisionFailure> {
     use crate::domain::capture::{self, Turn};
-    use llm_protocol::{ContentBlock, LlmMessage, LlmRole};
+    use runtime::{ContentBlock, LlmMessage, LlmRole};
     let mut draft = draft.clone();
     if draft.transcript.is_empty() {
         draft.transcript.push(Turn::Owner {
@@ -546,8 +507,8 @@ fn provider_metadata(output: &Option<serde_json::Value>) -> serde_json::Value {
 #[cfg(test)]
 mod capture_tests {
     use super::*;
-    use crate::domain::capture::Turn;
-    use llm_protocol::{ContentBlock, ImageSource};
+    use crate::domain::capture::{AskAnswer, Draft, Turn};
+    use runtime::{ContentBlock, ImageSource};
 
     fn ask_input() -> serde_json::Value {
         json!({"questions":[{"id":"portion","text":"How much did you eat?",
@@ -555,56 +516,40 @@ mod capture_tests {
             "options":[{"id":"half","label":"Half","description":"100 grams"},
                 {"id":"whole","label":"All","description":"200 grams"}]}]})
     }
-
     fn test_account(provider: Provider) -> ModelAccount {
         let mut account = ModelAccount::new(provider);
         account.api_key = "test-key".into();
         account.model = "test-model".into();
         account
     }
-
-    fn decoded_call(
-        provider: Provider,
-        calls: serde_json::Value,
-    ) -> Result<CaptureResponse, VisionFailure> {
-        let account = test_account(provider);
-        let draft = super::super::capture::new();
-        let request = capture_request(&account, &draft, &[], Lang::En, &json!({})).unwrap();
-        let body =
-            if provider == Provider::Anthropic {
-                json!({"model":"test-model","stop_reason":"tool_use","content":calls})
-            } else if provider == Provider::OpenAiResponses {
-                let calls: Vec<_> = calls.as_array().unwrap().iter().map(|call| json!({
-                "type":"function_call", "id":format!("fc_{}", call["id"].as_str().unwrap()),
-                "call_id":call["id"], "name":call["name"],
-                "arguments":call["input"].to_string(), "status":"completed"
-            })).collect();
-                json!({"id":"resp_test","model":"test-model","status":"completed","output":calls})
+    fn result(
+        content: String,
+        blocks: serde_json::Value,
+        tool: bool,
+        output: Option<serde_json::Value>,
+    ) -> runtime::LlmResponse {
+        let mut metadata = json!({"anthropic_content":blocks});
+        if let Some(output) = output {
+            metadata["responses_output"] = output;
+        }
+        runtime::LlmResponse {
+            protocol_version: runtime::PROTOCOL_VERSION.into(),
+            provider: "test".into(),
+            model: "test-model".into(),
+            content,
+            finish_reason: if tool {
+                runtime::LlmFinishReason::ToolCall
             } else {
-                let calls: Vec<_> = calls
-                    .as_array()
-                    .unwrap()
-                    .iter()
-                    .map(|call| {
-                        json!({
-                "id":call["id"],"type":"function","function":{
-                    "name":call["name"],"arguments":call["input"].to_string()}})
-                    })
-                    .collect();
-                json!({"model":"test-model","choices":[{"message":{"content":null,
-                "tool_calls":calls},"finish_reason":"tool_calls"}]})
-            };
-        let decoded = llm_protocol::decode(
-            &endpoint(&account).unwrap(),
-            &request,
-            200,
-            &[],
-            &serde_json::to_vec(&body).unwrap(),
-        )
-        .unwrap();
-        capture_response(decoded, 0)
+                runtime::LlmFinishReason::Stop
+            },
+            object: None,
+            usage: None,
+            metadata,
+        }
     }
-
+    fn suspend_blocks(blocks: serde_json::Value) -> Result<CaptureResponse, VisionFailure> {
+        capture_response(result(String::new(), blocks, true, None), 0)
+    }
     fn money_record() -> serde_json::Value {
         json!({"kind":"money","day":"2026-11-18","meal":null,
         "slot":null,"weight_kg":null,"trade":null,"balance":null,"price":null,"note":null,"evidence":[],"money":{
@@ -613,180 +558,61 @@ mod capture_tests {
             "category":"支出:餐饮","time":null,"payee":"","note":"午饭"
         }})
     }
-
     #[test]
-    fn native_anthropic_prompt_contains_the_exact_final_schema() {
-        let account = test_account(Provider::Anthropic);
+    fn capture_contract_carries_the_exact_schema_and_only_owner_question_tool() {
         let request = capture_request(
-            &account,
+            &test_account(Provider::Anthropic),
             &super::super::capture::new(),
             &[],
             Lang::Zh,
             &json!({}),
         )
         .unwrap();
-        let wire = llm_protocol::encode(
-            &endpoint(&account).unwrap(),
-            &request,
-            false,
-            llm_protocol::StructuredMode::Native,
-        )
-        .unwrap();
-        let body: serde_json::Value = serde_json::from_slice(&wire.body).unwrap();
-        assert!(body["output_config"]["format"]["schema"].is_object());
-        let schema = body["system"]
-            .as_str()
-            .unwrap()
+        let runtime::LlmResponseFormat::JsonSchema { schema, .. } =
+            request.response_format.unwrap()
+        else {
+            panic!("schema")
+        };
+        assert_eq!(schema, crate::domain::capture::result_schema());
+        let prompt = request.messages[0].content.as_str().unwrap();
+        let embedded = prompt
             .lines()
             .find_map(|line| line.strip_prefix("FINAL_RECORD_JSON_SCHEMA: "))
-            .expect(
-                "compatible providers may ignore output_config; the prompt must carry the schema",
-            );
-        let schema: serde_json::Value = serde_json::from_str(schema).unwrap();
-        assert_eq!(schema, crate::domain::capture::result_schema());
-        let money = &schema["properties"]["records"]["items"]["properties"]["money"]["anyOf"][0];
-        for field in ["kind", "other_account", "payee"] {
-            assert!(
-                money["properties"].get(field).is_some(),
-                "missing money.{field}"
-            );
-            assert!(
-                money["required"]
-                    .as_array()
-                    .unwrap()
-                    .contains(&json!(field))
-            );
-        }
-    }
-
-    #[test]
-    fn anthropic_tool_answer_continues_to_a_schema_valid_money_draft() {
-        use crate::domain::capture::AskAnswer;
-        let call = json!({"type":"tool_use","id":"ask-account",
-        "name":"ask_user","input":{"questions":[{
-            "id":"account","text":"使用哪个账户？","reason":"付款账户必须明确。",
-            "required":true,"options":[{
-                "id":"cash","label":"资产:现金","description":"使用现金支付"}]
-        }]}});
-        let CaptureResponse::AskUser { request: ask, .. } =
-            decoded_call(Provider::Anthropic, json!([call])).unwrap()
-        else {
-            panic!("ask_user must suspend");
-        };
-        let mut draft = super::super::capture::new();
-        draft.transcript = vec![
-            Turn::Owner {
-                text: "记录午饭支出32元".into(),
-                photo: false,
-                images: vec![],
-            },
-            Turn::AskUser { request: ask },
-            Turn::ToolAnswer {
-                call_id: "ask-account".into(),
-                answers: vec![AskAnswer {
-                    question_id: "account".into(),
-                    option_id: Some("cash".into()),
-                    text: String::new(),
-                }],
-                text: "使用现金，餐饮支出".into(),
-                images: vec![],
-            },
-        ];
-        let account = test_account(Provider::Anthropic);
-        let request = capture_request(&account, &draft, &[], Lang::Zh, &json!({})).unwrap();
-        let ep = endpoint(&account).unwrap();
-        let wire = llm_protocol::encode(&ep, &request, false, llm_protocol::StructuredMode::Native)
             .unwrap();
-        let body: serde_json::Value = serde_json::from_slice(&wire.body).unwrap();
-        assert_eq!(body["messages"][1]["content"][0]["id"], "ask-account");
         assert_eq!(
-            body["messages"][2]["content"][0]["tool_use_id"],
-            "ask-account"
+            serde_json::from_str::<serde_json::Value>(embedded).unwrap(),
+            schema
         );
-        let final_body = json!({"model":"test-model","stop_reason":"end_turn",
-            "content":[{"type":"text","text":json!({"destination":null,"records":[money_record()]}).to_string()}]});
-        let decoded = llm_protocol::decode(
-            &ep,
-            &request,
-            200,
-            &[],
-            &serde_json::to_vec(&final_body).unwrap(),
-        )
-        .unwrap();
-        let CaptureResponse::Records {
-            records, questions, ..
-        } = capture_response(decoded, 0).unwrap()
-        else {
-            panic!("final reply must produce records");
-        };
-        assert!(questions.is_empty());
-        let [crate::domain::capture::Record::Money { draft, .. }] = records.as_slice() else {
-            panic!("one money record expected");
-        };
-        assert_eq!(draft.amount.as_deref(), Some("32.00"));
-        assert!(draft.valid());
-        assert_eq!(draft.account.as_ref().unwrap().to_string(), "资产:现金");
-        assert_eq!(draft.category.as_ref().unwrap().to_string(), "支出:餐饮");
+        assert_eq!(request.tools.len(), 1);
+        assert_eq!(request.tools[0].name, "ask_user");
+        assert_eq!(
+            request.tools[0].input_schema,
+            crate::domain::capture::ask_user_schema()
+        );
     }
-
     #[test]
-    fn anthropic_final_rejects_fences_and_incorrect_accounting_field_names() {
-        let account = test_account(Provider::Anthropic);
-        let request = capture_request(
-            &account,
-            &super::super::capture::new(),
-            &[],
-            Lang::Zh,
-            &json!({}),
-        )
-        .unwrap();
+    fn final_schema_rejects_fences_and_incorrect_accounting_fields() {
+        let format = Some(runtime::LlmResponseFormat::JsonSchema {
+            name: "record_draft".into(),
+            schema: crate::domain::capture::result_schema(),
+            strict: Some(true),
+        });
         let valid = json!({"destination":null,"records":[money_record()]}).to_string();
-        let mut wrong_shape = money_record();
-        wrong_shape["money"]["type"] = wrong_shape["money"]["kind"].take();
-        let money = wrong_shape["money"].as_object_mut().unwrap();
-        for field in ["kind", "other_account", "payee"] {
-            money.remove(field);
-        }
-        for (text, expected_code) in [
-            (
-                format!("```json\n{valid}\n```"),
-                "structured_output_parse_failed",
-            ),
-            (
-                json!({"destination":null,"records":[wrong_shape]}).to_string(),
-                "structured_output_schema_validation_failed",
-            ),
-        ] {
-            let body = json!({"model":"test-model","stop_reason":"end_turn",
-                "content":[{"type":"text","text":text}]});
-            let error = llm_protocol::decode(
-                &endpoint(&account).unwrap(),
-                &request,
-                200,
-                &[],
-                &serde_json::to_vec(&body).unwrap(),
+        assert!(runtime::structured_output_from_content(&format, &valid).is_ok());
+        assert!(
+            runtime::structured_output_from_content(&format, &format!("```json\n{valid}\n```"))
+                .is_err()
+        );
+        let mut wrong = money_record();
+        wrong["money"].as_object_mut().unwrap().remove("kind");
+        assert!(
+            runtime::structured_output_from_content(
+                &format,
+                &json!({"destination":null,"records":[wrong]}).to_string()
             )
-            .unwrap_err();
-            assert_eq!(error.record.code, expected_code);
-        }
+            .is_err()
+        );
     }
-
-    #[test]
-    fn all_provider_wire_formats_suspend_on_a_pure_ask_user_call() {
-        for provider in Provider::ALL {
-            let call =
-                json!({"type":"tool_use","id":"ask-1","name":"ask_user","input":ask_input()});
-            let CaptureResponse::AskUser { request, .. } =
-                decoded_call(provider, json!([call])).unwrap()
-            else {
-                panic!("tool call must suspend capture");
-            };
-            assert_eq!(request.call_id, "ask-1");
-            assert_eq!(request.questions.len(), 1);
-            assert_eq!(request.questions[0].options[0].label, "Half");
-        }
-    }
-
     #[test]
     fn correction_replays_meal_image_number_and_rejects_a_staged_image_in_the_final_reply() {
         let mut draft = super::super::capture::new();
@@ -832,15 +658,12 @@ mod capture_tests {
         let decode = |number: serde_json::Value| {
             let mut proposed = meal.clone();
             proposed["meal"]["source_image"] = number;
-            let final_body = json!({"model":"test-model","stop_reason":"end_turn","content":[{"type":"text","text":json!({"destination":null,"records":[proposed]}).to_string()}]});
-            let decoded = llm_protocol::decode(
-                &endpoint(&account).unwrap(),
-                &request,
-                200,
-                &[],
-                &serde_json::to_vec(&final_body).unwrap(),
-            )
-            .unwrap();
+            let decoded = result(
+                json!({"destination":null,"records":[proposed]}).to_string(),
+                json!([]),
+                false,
+                None,
+            );
             capture_response(decoded, draft.sent_images().len())
         };
         assert!(matches!(decode(json!(3)), Err(VisionFailure::Unreadable)));
@@ -914,8 +737,7 @@ mod capture_tests {
             {"type":"text","text":"Please confirm the portion."},
             {"type":"tool_use","id":"ask-signed","name":"ask_user","input":ask_input()}
         ]);
-        let CaptureResponse::AskUser { request, .. } =
-            decoded_call(Provider::Anthropic, blocks.clone()).unwrap()
+        let CaptureResponse::AskUser { request, .. } = suspend_blocks(blocks.clone()).unwrap()
         else {
             panic!("ask_user");
         };
@@ -928,87 +750,14 @@ mod capture_tests {
 
     #[test]
     fn unsupported_or_multiple_tool_calls_are_never_executed() {
-        for provider in Provider::ALL {
-            let call =
-                json!({"type":"tool_use","id":"ask-1","name":"ask_user","input":ask_input()});
-            assert!(decoded_call(provider, json!([call.clone(), call.clone()])).is_err());
-            let mut unknown = call.clone();
-            unknown["name"] = json!("save_records");
-            assert!(decoded_call(provider, json!([unknown])).is_err());
-            let mut invalid = call;
-            invalid["input"]["questions"] = json!([]);
-            assert!(decoded_call(provider, json!([invalid])).is_err());
-        }
-    }
-
-    #[test]
-    fn answers_replay_as_tool_results_before_supporting_images_on_both_wires() {
-        use crate::domain::capture::AskAnswer;
         let call = json!({"type":"tool_use","id":"ask-1","name":"ask_user","input":ask_input()});
-        let CaptureResponse::AskUser { request: ask, .. } =
-            decoded_call(Provider::Anthropic, json!([call])).unwrap()
-        else {
-            panic!("ask_user");
-        };
-        let mut draft = super::super::capture::new();
-        draft.transcript = vec![
-            Turn::Owner {
-                text: "Lunch".into(),
-                photo: false,
-                images: Vec::new(),
-            },
-            Turn::AskUser { request: ask },
-            Turn::ToolAnswer {
-                call_id: "ask-1".into(),
-                answers: vec![AskAnswer {
-                    question_id: "portion".into(),
-                    option_id: Some("half".into()),
-                    text: String::new(),
-                }],
-                text: "Half the package".into(),
-                images: vec!["local-secret-filename.png".into()],
-            },
-        ];
-        let images = vec![(
-            "local-secret-filename.png".into(),
-            b"\x89PNG\r\n\x1a\n".to_vec(),
-        )];
-        for provider in [Provider::Anthropic, Provider::OpenAiCompatible] {
-            let account = test_account(provider);
-            let request = capture_request(&account, &draft, &images, Lang::En, &json!({})).unwrap();
-            assert_eq!(request.tools.len(), 1);
-            assert_eq!(request.tools[0].name, "ask_user");
-            let wire = llm_protocol::encode(
-                &endpoint(&account).unwrap(),
-                &request,
-                false,
-                llm_protocol::StructuredMode::Native,
-            )
-            .unwrap();
-            let body: serde_json::Value = serde_json::from_slice(&wire.body).unwrap();
-            assert!(!body.to_string().contains("local-secret-filename"));
-            let messages = body["messages"].as_array().unwrap();
-            if provider == Provider::Anthropic {
-                assert_eq!(messages[1]["content"][0]["type"], "tool_use");
-                assert_eq!(messages[2]["content"][0]["tool_use_id"], "ask-1");
-                let result: serde_json::Value =
-                    serde_json::from_str(messages[2]["content"][0]["content"].as_str().unwrap())
-                        .unwrap();
-                assert_eq!(result["answers"][0]["question_id"], "portion");
-                assert_eq!(result["answers"][0]["option_id"], "half");
-                assert_eq!(messages[3]["content"][0]["type"], "image");
-            } else {
-                assert_eq!(messages[2]["role"], "assistant");
-                assert_eq!(messages[2]["tool_calls"][0]["id"], "ask-1");
-                assert_eq!(messages[3]["role"], "tool");
-                assert_eq!(messages[3]["tool_call_id"], "ask-1");
-                let result: serde_json::Value =
-                    serde_json::from_str(messages[3]["content"].as_str().unwrap()).unwrap();
-                assert_eq!(result["answers"][0]["option_id"], "half");
-                assert_eq!(messages[4]["role"], "user");
-                assert_eq!(messages[4]["content"][0]["type"], "image_url");
-            }
-        }
+        assert!(suspend_blocks(json!([call.clone(), call.clone()])).is_err());
+        let mut unknown = call.clone();
+        unknown["name"] = json!("save_records");
+        assert!(suspend_blocks(json!([unknown])).is_err());
+        let mut invalid = call;
+        invalid["input"]["questions"] = json!([]);
+        assert!(suspend_blocks(json!([invalid])).is_err());
     }
 
     #[test]
@@ -1061,118 +810,96 @@ mod capture_tests {
             serde_json::to_value(&replay).unwrap()
         );
     }
+
     #[test]
-    fn responses_native_reasoning_and_call_id_survive_persisted_resume() {
-        use crate::domain::capture::{AskAnswer, Draft};
-        let account = test_account(Provider::OpenAiResponses);
-        let ep = endpoint(&account).unwrap();
-        assert_eq!(upload_target(&account).provider, "openai_responses");
-        let initial = super::super::capture::new();
-        let request = capture_request(&account, &initial, &[], Lang::En, &json!({})).unwrap();
-        let output = json!([
-            {"type":"reasoning","id":"rs_1","summary":[],"encrypted_content":"opaque-reasoning"},
-            {"type":"function_call","id":"fc_1","call_id":"call_portion","name":"ask_user",
-                "arguments":ask_input().to_string(),"status":"completed"}
-        ]);
-        let response =
-            json!({"id":"resp_1","model":"test-model","status":"completed","output":output});
-        let decoded = llm_protocol::decode(
-            &ep,
-            &request,
-            200,
-            &[],
-            &serde_json::to_vec(&response).unwrap(),
-        )
-        .unwrap();
-        let CaptureResponse::AskUser { request: ask, .. } = capture_response(decoded, 0).unwrap()
-        else {
-            panic!("Responses tool call must suspend capture");
-        };
-        assert_eq!(ask.call_id, "call_portion");
-        assert_eq!(ask.provider_output.as_ref(), Some(&output));
-        let mut draft = initial;
-        draft.transcript = vec![
-            Turn::Owner {
-                text: "Lunch".into(),
-                photo: false,
-                images: vec![],
-            },
-            Turn::AskUser { request: ask },
-            Turn::ToolAnswer {
-                call_id: "call_portion".into(),
-                answers: vec![AskAnswer {
-                    question_id: "portion".into(),
-                    option_id: Some("half".into()),
-                    text: String::new(),
-                }],
-                text: "Half".into(),
-                images: vec!["private-label.png".into()],
-            },
-        ];
-        let restored: Draft =
-            serde_json::from_str(&serde_json::to_string(&draft).unwrap()).unwrap();
-        let images = vec![("private-label.png".into(), b"\x89PNG\r\n\x1a\n".to_vec())];
-        let resumed = capture_request(&account, &restored, &images, Lang::En, &json!({})).unwrap();
-        let wire = llm_protocol::encode(&ep, &resumed, false, llm_protocol::StructuredMode::Native)
+    fn saved_native_history_and_explicit_answers_survive_restore() {
+        let call = json!({"type":"tool_use","id":"ask-1","name":"ask_user","input":ask_input()});
+        let output = json!([{"type":"reasoning","id":"rs_1","summary":[],"encrypted_content":"opaque"},
+            {"type":"function_call","id":"fc_1","call_id":"ask-1","name":"ask_user","arguments":ask_input().to_string(),"status":"completed"}]);
+        // Arrays were written by the retired runtime; objects contain the new
+        // native pi message. Both must remain intact in the saved draft.
+        for output in [
+            output,
+            json!({"pi_message":{"role":"assistant","content":[]}}),
+        ] {
+            let CaptureResponse::AskUser { request, .. } = capture_response(
+                result(String::new(), json!([call]), true, Some(output.clone())),
+                0,
+            )
+            .unwrap() else {
+                panic!("question")
+            };
+            let mut draft = super::super::capture::new();
+            draft.transcript = vec![
+                Turn::Owner {
+                    text: "Lunch".into(),
+                    photo: false,
+                    images: vec![],
+                },
+                Turn::AskUser { request },
+                Turn::ToolAnswer {
+                    call_id: "ask-1".into(),
+                    answers: vec![AskAnswer {
+                        question_id: "portion".into(),
+                        option_id: Some("half".into()),
+                        text: String::new(),
+                    }],
+                    text: "Half the package".into(),
+                    images: vec!["private-label.png".into()],
+                },
+            ];
+            let restored: Draft =
+                serde_json::from_str(&serde_json::to_string(&draft).unwrap()).unwrap();
+            let messages = capture_messages(
+                &restored,
+                &[("private-label.png".into(), b"\x89PNG\r\n\x1a\n".to_vec())],
+                Lang::En,
+                &json!({}),
+            )
             .unwrap();
-        assert_eq!(wire.url, "https://api.openai.com/v1/responses");
-        let body: serde_json::Value = serde_json::from_slice(&wire.body).unwrap();
-        assert_eq!(body["store"], false);
-        assert!(body.get("previous_response_id").is_none());
-        assert_eq!(body["tools"][0]["name"], "ask_user");
-        assert!(body["text"]["format"]["schema"].is_object());
-        let input = body["input"].as_array().unwrap();
-        let reasoning = input
-            .iter()
-            .position(|item| item["type"] == "reasoning")
-            .unwrap();
-        assert_eq!(input[reasoning], output[0]);
-        assert_eq!(input[reasoning + 1], output[1]);
-        assert_eq!(input[reasoning + 2]["type"], "function_call_output");
-        assert_eq!(input[reasoning + 2]["call_id"], "call_portion");
-        let answer: serde_json::Value =
-            serde_json::from_str(input[reasoning + 2]["output"].as_str().unwrap()).unwrap();
-        assert_eq!(answer["answers"][0]["option_id"], "half");
-        assert_eq!(input[reasoning + 3]["content"][0]["type"], "input_image");
-        assert!(
-            input[reasoning + 3]["content"][0]["image_url"]
-                .as_str()
-                .unwrap()
-                .starts_with("data:image/png;base64,")
-        );
-        assert!(!body.to_string().contains("private-label"));
+            assert_eq!(messages[2].metadata["responses_output"], output);
+            let blocks = messages[3].content.blocks().unwrap();
+            let [
+                ContentBlock::ToolResult {
+                    tool_use_id,
+                    content,
+                    ..
+                },
+            ] = blocks
+            else {
+                panic!("answer before images")
+            };
+            assert_eq!(tool_use_id, "ask-1");
+            let answer: serde_json::Value =
+                serde_json::from_str(content.as_str().unwrap()).unwrap();
+            assert_eq!(answer["answers"][0]["option_id"], "half");
+            assert!(matches!(
+                messages[4].content.blocks().unwrap()[0],
+                ContentBlock::Image { .. }
+            ));
+            assert!(
+                !serde_json::to_string(&messages)
+                    .unwrap()
+                    .contains("private-label")
+            );
+        }
     }
 
     #[test]
-    fn responses_final_native_output_is_retained_for_later_corrections() {
-        let account = test_account(Provider::OpenAiResponses);
-        let mut draft = super::super::capture::new();
-        let request = capture_request(&account, &draft, &[], Lang::En, &json!({})).unwrap();
+    fn final_records_retain_native_history_and_reject_unexpected_tools() {
+        let output = json!({"pi_message":{"role":"assistant","content":[]}});
         let reply = json!({"destination":null,"records":[money_record()]}).to_string();
-        let output = json!([
-            {"type":"reasoning","id":"rs_final","summary":[],"encrypted_content":"opaque-final"},
-            {"type":"message","id":"msg_final","role":"assistant","status":"completed",
-                "content":[{"type":"output_text","text":reply,"annotations":[]}]}
-        ]);
-        let response =
-            json!({"id":"resp_final","model":"test-model","status":"completed","output":output});
-        let decoded = llm_protocol::decode(
-            &endpoint(&account).unwrap(),
-            &request,
-            200,
-            &[],
-            &serde_json::to_vec(&response).unwrap(),
-        )
-        .unwrap();
         let CaptureResponse::Records {
             reply,
             provider_output,
+            records,
             ..
-        } = capture_response(decoded, 0).unwrap()
+        } = capture_response(result(reply, json!([]), false, Some(output.clone())), 0).unwrap()
         else {
-            panic!("final response must produce records");
+            panic!("records")
         };
-        assert_eq!(provider_output.as_ref(), Some(&output));
+        assert_eq!(records.len(), 1);
+        let mut draft = super::super::capture::new();
         draft.transcript.push(Turn::Assistant {
             reply,
             records: 1,
@@ -1180,7 +907,21 @@ mod capture_tests {
             provider_output,
         });
         let restored = serde_json::from_str(&serde_json::to_string(&draft).unwrap()).unwrap();
-        let messages = capture_messages(&restored, &[], Lang::En, &json!({})).unwrap();
-        assert_eq!(messages[1].metadata["responses_output"], output);
+        assert_eq!(
+            capture_messages(&restored, &[], Lang::En, &json!({})).unwrap()[1].metadata["responses_output"],
+            output
+        );
+        assert!(
+            capture_response(
+                result(
+                    String::new(),
+                    json!([{"type":"tool_use","id":"bad","name":"save_records","input":{}}]),
+                    false,
+                    None
+                ),
+                0
+            )
+            .is_err()
+        );
     }
 }

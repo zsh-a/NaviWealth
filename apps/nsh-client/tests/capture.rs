@@ -1120,7 +1120,7 @@ fn inferred_funding_requires_a_tap_and_undo_reverts_the_whole_batch() -> Result<
 fn an_out_of_scope_question_opens_the_model_selected_tab_without_saving() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
     let mut body = record_reply(vec![]);
-    body["content"][0]["text"] = json!(json!({"records":[],"destination":"assets"}).to_string());
+    body["content"][0]["input"] = json!({"records":[],"destination":"assets"});
     let model = network(200, body);
     let (mut app, _) = start_in(Some(dir.path()), account(true), Some(model.clone()));
     app.press("label:New entry")?;

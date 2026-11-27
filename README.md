@@ -44,8 +44,7 @@ apps/nsh-client/            NSH 客户端：Rust 页面与存储、TSX 体脂秤
 crates/navi-finance/        复式账本、持仓与证券目录的业务真相
 crates/navi-health/         餐食与收藏模型、持久化、营养、健康汇总与 Garmin 解析
 crates/navi-storage/        中性的 SQLite 迁移、快照与原子表替换
-crates/navi-assistant/      pi-rust 通用助手内核、模型适配与受限工具执行
-third_party/agent-runtime/  现有识别的模型协议与客户端（git submodule）
+crates/navi-assistant/      pi-rust 模型适配、识别与通用助手运行时
 third_party/market-data-rs/ 行情 SDK（腾讯源）
 tool/asset_catalog/         证券目录源数据与构建、校验、发布工具链
 ```

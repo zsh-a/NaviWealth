@@ -4,10 +4,10 @@ Status: active native-runtime implementation reference.
 
 ## Document Contract
 
-Owns the runtime boundaries used by NaviWealth: the pi-rust general assistant
-in `crates/navi-assistant` and recognition through the
-`third_party/agent-runtime` submodule. Their source and contract tests are
-authoritative for exact APIs.
+Owns the runtime boundaries used by NaviWealth: recognition and the general
+assistant share pinned pi-rust through `crates/navi-assistant`. Source and
+contract tests are authoritative for exact APIs. The former Agent Runtime
+submodule and its protocol/client crates have been retired.
 
 ## General Assistant (2026-11-27)
 
@@ -100,11 +100,9 @@ columns, so older apps reject newer backups before interpreting those bodies.
 Schema 24 similarly marks source-bound summaries in session JSON. Existing
 sessions without a summary remain valid and old backups are still accepted.
 
-The existing recognition path remains in place during this migration. Removing
-its old runtime dependencies requires separate image, structured-output,
-provider replay and capture regression parity; enabling the assistant alone
-does not satisfy that gate. Android target checks are compilation evidence,
-not evidence for physical-device TLS, lifecycle or background behavior.
+Recognition uses the same pinned provider libraries through a separate
+single-turn API described below. Android target checks are compilation
+evidence, not evidence for physical-device TLS, lifecycle or background behavior.
 
 One pinned-provider limitation: keyless OpenAI Chat sends no Authorization
 header, while the v0.29.0 Responses adapter needs an explicitly empty header
@@ -112,117 +110,70 @@ to suppress its environment-key fallback. A gateway rejecting empty headers
 needs an explicit configured key or a future upstream adapter fix. The app
 never silently borrows provider credentials from the process environment.
 
-## Recognition Runtime Submodule
+## Recognition and Capture
 
-NaviWealth consumes the standalone runtime from
-`https://github.com/zsh-a/agent-runtime.git` through the Git submodule at
-`third_party/agent-runtime`. Paths below are relative to that submodule root
-unless prefixed with the submodule directory.
+The former Agent Runtime submodule is removed. Both meal recognition and
+unified capture use pi-rust provider adapters in `crates/navi-assistant`;
+connection tests use the same provider path. Recognition does not run the
+assistant Agent loop and does not execute model-selected tools.
 
-### Submodule Scope
+`crates/navi-health/src/recognition.rs` owns pure meal preparation, prompts,
+JSON Schema, strict parsing and catalog validation. Preparation validates
+model-destination consent before decoding and re-encoding photos. The app
+assigns local food IDs and composes the result with its draft. Health has no
+model-client dependency. Unified capture prompts, evidence, editable records
+and atomic confirmation remain app-owned.
 
-The runtime provides:
+The pinned pi-rust API has no separate structured-response option. Recognition
+therefore declares an `emit_result` tool whose input schema is the result
+schema, alongside capture's `ask_user` tool. An `emit_result` call returns a
+draft; it executes no business operation. The host validates the complete
+result against its schema and domain contracts. Legacy JSON text responses
+remain accepted only after the same validation. Multiple or mixed result and
+question calls are rejected. Streaming text or result arguments may produce
+provisional cards in memory; only a valid terminal response can produce a
+persistable final result. A disconnected or truncated stream is not repaired
+into a successful draft.
 
-- reusable Rust contracts and runner crates;
-- schema / fixture / OpenAPI wire contracts;
-- local CLI, HTTP, stdio, eval, replay, debug bundle, and TUI surfaces;
-- a dependency-light TypeScript client under `bindings/ts`.
+`ask_user` stores a suspended call in the draft. Only explicit owner submission
+or retry continues it. Existing drafts retain their saved content blocks and
+provider output through a compatibility boundary; new native replay metadata
+preserves pi message identities. Anthropic signed thinking and Responses
+reasoning/output identity must survive continuation. Result-tool calls are
+acknowledged when constructing a later request so replay never contains an
+unanswered completed result call. Responses remains stateless (`store: false`).
+The pinned Responses adapter preserves composite tool identities in its
+`call_*|fc_*` form. Nonstandard gateway call/item pairs that it would rewrite
+are rejected before accepting or replaying a draft; safe standalone call IDs
+remain supported. Existing nonstandard pairs require upstream adapter support
+to continue, rather than sending an answer under a different call ID.
+Restart, reopening and backup restore never start a request or execute a tool.
+Capture drafts remain excluded from backups; assistant sessions and approved
+memories use their existing encrypted-backup contracts. Each recognition run
+makes one request without automatic retries or capability-fallback calls. A
+gateway that rejects constrained tools returns an error for owner review; the
+runtime does not silently replay uploaded images in a second request.
 
-The runtime must remain independent of NSH, nsh-base, and NaviWealth domain
-models. Business policy, permissions, repositories, and business side effects
-stay in the host application. Rust agents consume domain-neutral contracts and
-request effects through host gateways; adding one does not transfer domain
-ownership into the standalone runtime.
+Recognition bounds serialized request input to 32 MB and decoded response
+messages to 100 KB, with a total deadline and cancellation. These checks do
+not impose a hard pre-parser byte cap on a malformed SSE frame or an upstream
+HTTP error body; the pinned provider currently owns that buffering.
 
-### Submodule Code Map
-
-```text
-crates/
-  agent-core/       Stable DTOs, traits, IDs, errors, trace/session/proposal contracts
-  agent-runtime/    AgentRunner, scheduler, retry/timeout, lease locking, trace capture
-  agent-store/      In-memory and file-backed run/state/proposal/session stores
-  llm-protocol/     Typed LLM content, provider codecs, SSE and schema validation (no I/O)
-  llm-client/       Runtime-neutral transport, retry, deadline and capability policy
-  llm-reqwest/      Reqwest transport and native/browser provider adapters
-  agent-chat/       Shared ChatTurn request/event contract and provider/tool loop
-  agent-tools/      Reusable tool registry, policy, and tool-host helpers
-  agent-cli/        Local developer surfaces and host adapters
-
-schemas/            JSON Schema contracts for runtime wire types
-fixtures/contracts/ Valid and invalid schema fixtures used by contract tests
-openapi/            agent-runtime-api.yaml — HTTP API contract for server-first clients
-```
-
-### Submodule Runtime Layers
-
-1. `agent-core` defines protocol shapes and host-facing traits.
-2. `llm-protocol` owns typed LLM contracts, codecs and SSE parsing. `llm-client`
-   owns shared request policy over a Host Transport; `llm-reqwest` implements
-   that transport for native and browser hosts.
-3. `agent-chat` owns provider-neutral interactive ChatTurn request/event
-   contracts and the LLM/tool continuation loop over `AgentServices`.
-4. `agent-runtime` executes scheduled or explicit `Agent` instances through
-   `AgentRunner`.
-5. `agent-store` persists run/state/proposal/session records.
-6. Host adapters implement `AgentServices` and tool/proposal/state behavior.
-7. CLI/server/TUI are surfaces over these contracts.
-
-## How NaviWealth Uses It
-
-- `crates/navi-health` performs meal recognition through `llm-protocol` wire
-  types and `llm-client` request policy; the NSH client supplies its platform
-  fetch as the Host Transport. Recognition is a single-shot draft operation;
-  it does not use the general assistant loop. Unified capture
-  uses `llm-reqwest` to receive SSE events through the same protocol/client
-  contracts. Provisional cards remain in memory. Capture supports `ask_user`, persisting
-  the suspended call and owner answers in its local draft. Continuation occurs
-  only when the owner submits or retries; `agent-chat` is not adopted.
-- `llm-protocol` owns Anthropic Messages, OpenAI Chat Completions and OpenAI
-  Responses codecs. Responses requests keep `store: false`; native
-  output items are returned as metadata for the host to persist and replay.
-  The NSH host stores them only inside the draft and continues on owner input.
-- Domain truth in `crates/navi-finance` and `crates/navi-health` never imports
-  runtime crates; only recognition paths do.
-- CI runs `cargo fmt --check` and `cargo test --workspace --locked` inside the
-  submodule (`.github/workflows/crates.yml`).
-
-## Invariants
-
-- All top-level legacy runtime wire messages carry `protocol_version: "agent.v1"`;
-  this is not the pi-rust message format.
-- The submodule's cross-language contracts are JSON-first. Keep envelopes stable and put
-  business-specific data in `input`, `output`, `payload`, or `metadata`.
-- Runtime crates must not import NSH, nsh-base, or NaviWealth domain code.
-- Business side effects are never executed by the runtime; hosts own
-  confirmation and writes.
-
-## Interaction Entrypoints
-
-Use these entrypoints when debugging:
-
-```bash
-cd third_party/agent-runtime
-rtk cargo run -p agent-cli -- list
-rtk cargo run -p agent-cli -- tui
-rtk cargo run -p agent-cli -- validate schemas/run-request.schema.json fixtures/contracts/run-request.valid.json
-```
+All requests use owner-configured endpoints and credentials, bounded deadlines
+and cancellation. Credentials do not follow redirects and are never borrowed
+from process environment variables. The host's cancellation guard terminates
+an abandoned recognition worker. No backend relay or cloud fallback is added.
 
 ## Change Routing
 
 | Change | Start Here | Required Checks |
 |---|---|---|
-| Add or change a wire field | `schemas/`, submodule `third_party/agent-runtime/crates/agent-core/`, fixtures | schema validation tests |
-| Change LLM provider behavior | submodule `third_party/agent-runtime/crates/llm-protocol/`, `third_party/agent-runtime/crates/llm-client/` | `rtk cargo test` in the submodule |
-| Change meal-recognition prompts or parsing | `crates/navi-health/` | health fixtures and adapter tests |
-| Change unified capture prompts, tools or history replay | `apps/nsh-client/src/domain/capture.rs`, `apps/nsh-client/src/data/vision.rs` | capture and Responses adapter/headless flows |
-| Change assistant providers, context or tool execution | `crates/navi-assistant/` | deterministic multi-step, continuation, cancellation and provider mapping tests |
-| Change assistant records, memory, proposals or backup behavior | `apps/nsh-client/src/data/assistant*.rs`, `apps/nsh-client/src/data/db.rs` | session recovery, stale-write, confirmation and atomic restore tests |
+| Change model provider adaptation or recognition transport | `crates/navi-assistant/` | Real loopback HTTP/SSE fixtures for all three providers, images, structured results, replay and cancellation |
+| Change meal preparation, prompts or parsing | `crates/navi-health/src/recognition.rs` | Health consent/photo/schema/parser contracts |
+| Change unified capture prompts, tools or history replay | `apps/nsh-client/src/domain/capture.rs`, `apps/nsh-client/src/data/vision.rs` | Capture, streaming and headless continuation flows |
+| Change assistant context or tool execution | `crates/navi-assistant/` | Deterministic multi-step, continuation, cancellation and provider mapping tests |
+| Change assistant records, memory, proposals or backup behavior | `apps/nsh-client/src/data/assistant*.rs`, `apps/nsh-client/src/data/db.rs` | Session recovery, stale-write, confirmation and atomic restore tests |
 
-## Legacy Submodule Limitations
-
-- There is no standalone `bindings/dart` package; the pinned runtime ships
-  `bindings/ts` only.
-- Trace is event-first (`events`) and does not expose a separate `spans` array.
-- `ScheduleSpec` supports `manual` and `interval` only.
-
-Use this document and current tests as authority.
+CI checks the first-party runtime alongside the other independent Cargo
+workspaces with fmt, strict clippy and locked tests. Provider libraries are
+pinned by revision and lockfile; there is no separate runtime submodule job.

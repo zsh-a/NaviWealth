@@ -4,6 +4,7 @@
 mod compaction;
 mod history;
 mod provider;
+pub mod recognition;
 mod runner;
 
 use std::{sync::Arc, time::Duration};

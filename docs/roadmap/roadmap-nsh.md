@@ -18,7 +18,8 @@ gates, not dates.
 ## Phase 0 — Freeze And Decisions (done)
 
 Product Scope and Personal Local Scope record
-the scope reduction. The Agent Runtime submodule points at its `main`.
+the scope reduction. Runtime ownership is described in
+[the current architecture](../architecture/agent-runtime-current.md).
 
 ## Phase 1 — Health Experience On The Meal Client
 
@@ -420,10 +421,10 @@ Exit gates:
   upstream Android target check from the feasibility probe is compilation
   evidence only; it does not close the physical-device gate.
 
-The old recognition dependencies remain until a separate parity migration
-passes image recognition, structured drafts, provider replay and capture
-regressions. A working general assistant alone does not authorize deleting
-those dependencies.
+The owner subsequently authorized retiring the old recognition runtime. The
+parity migration uses the same pinned pi-rust providers for recognition, with
+a separate single-turn API; image, structured-draft, provider-replay and capture
+regressions remain its acceptance criteria.
 
 Verification recorded 2026-11-27: the app's focused data suite passed 113 tests
 (three existing ignored cases), including assistant storage, recovery and
@@ -500,3 +501,31 @@ These fixtures do not establish real-model summary quality or phone evidence.
   Headless/build checks and physical-device acceptance remain separate; the
   upgrade still needs keyboard/Back, BLE, TLS and signed data-retention evidence.
 - Record headless tests and Android device evidence separately.
+
+Recognition-runtime retirement implemented in the next increment:
+
+- Recognition, capture and connection tests now use pinned pi-rust providers
+  through `navi-assistant`; the old submodule, three LLM dependencies and CI
+  job are removed. No dependency versions changed in the lockfile cleanup.
+- Meal preparation, photo consent and parsing remain pure `navi-health`
+  contracts. The app retains capture review, evidence and atomic writes.
+- A schema-defined result tool carries structured drafts; its output is
+  validated locally and never executes a business write. Streaming previews,
+  explicit `ask_user` suspension, image turn ownership and supported legacy
+  draft replay remain covered by provider and headless tests.
+- The pinned Responses adapter only preserves canonical composite call/item
+  IDs; unsupported gateway pairs fail before replay rather than silently
+  changing identity. Raw malformed SSE frames and HTTP error bodies still
+  depend on upstream buffering, despite elapsed-time and decoded-output limits.
+  These limitations are detailed in the runtime architecture.
+
+Validation: the client passes 368 tests with four existing ignored cases;
+`navi-assistant` passes 35, `navi-health` 104, `navi-finance` 89 and
+`navi-storage` three. All five workspaces pass fmt and strict clippy. Nine
+runtime HTTP fixtures cover the three providers and replay boundaries; client
+streaming fixtures cover completion, disconnect and cancellation for both text
+and result arguments. The summary-cancellation fixture now waits on HTTP-arrival
+notification instead of UI frames, and passed 20 consecutive runs with its
+unchanged deadline. Android ARM64 library compilation and documentation checks
+pass. Physical-device TLS, lifecycle and signed-upgrade acceptance, and live-model
+output quality, remain separate open gates.

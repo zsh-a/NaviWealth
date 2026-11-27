@@ -8,7 +8,7 @@ use std::{
     io::{Read, Write},
     net::{TcpListener, TcpStream},
     sync::{
-        Mutex,
+        Condvar, Mutex,
         atomic::{AtomicBool, Ordering},
     },
     thread::JoinHandle,
@@ -24,6 +24,7 @@ enum Reply {
 struct Provider {
     base: String,
     requests: Arc<Mutex<Vec<Value>>>,
+    received: Arc<Condvar>,
     stopped: Arc<AtomicBool>,
     worker: Option<JoinHandle<()>>,
 }
@@ -35,6 +36,8 @@ impl Provider {
         let base = format!("http://{}/v1", listener.local_addr().unwrap());
         let requests = Arc::new(Mutex::new(Vec::new()));
         let seen = requests.clone();
+        let received = Arc::new(Condvar::new());
+        let notify = received.clone();
         let stopped = Arc::new(AtomicBool::new(false));
         let shutdown = stopped.clone();
         let worker = std::thread::spawn(move || {
@@ -54,6 +57,7 @@ impl Provider {
                     .unwrap();
                 let request = read_request(&mut stream);
                 seen.lock().unwrap().push(request);
+                notify.notify_all();
                 let reply = replies.pop_front().expect("no unexpected model requests");
                 if matches!(reply, Reply::Wait) {
                     // Keep accepting so an unexpected restart request is
@@ -73,6 +77,7 @@ impl Provider {
         Self {
             base,
             requests,
+            received,
             stopped,
             worker: Some(worker),
         }
@@ -91,6 +96,25 @@ impl Provider {
 
     fn requests(&self) -> Vec<Value> {
         self.requests.lock().unwrap().clone()
+    }
+
+    fn wait_for_requests(&self, count: usize) -> Result<(), String> {
+        // HTTP arrival does not schedule a UI frame. Wait on the fixture's own
+        // notification so a held response can reliably be stopped by the UI.
+        let (requests, _) = self
+            .received
+            .wait_timeout_while(self.requests.lock().unwrap(), GONE, |seen| {
+                seen.len() < count
+            })
+            .unwrap();
+        if requests.len() == count {
+            Ok(())
+        } else {
+            Err(format!(
+                "Expected {count} model requests, received {}",
+                requests.len()
+            ))
+        }
     }
 }
 
@@ -610,7 +634,7 @@ fn stopping_during_summary_does_not_publish_it_or_resume_it_after_restart() -> R
     app.press("text:Assistant")?;
     send(&mut app, "Continue our travel plan.")?;
     app.wait_for("Summarizing earlier conversation…")?;
-    app.wait_until("summary request", GONE, |_| provider.requests().len() == 2)?;
+    provider.wait_for_requests(2)?;
     app.press("text:Stop")?;
     app.wait_for_gone("text:Stop", GONE)?;
     let stopped = records(dir.path(), "assistant_sessions").remove(0);

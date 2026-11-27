@@ -15,21 +15,21 @@ keep the root and NSH channel settings aligned. For an exact compiler
 reproduction, record `rustc -Vv` and select the corresponding dated nightly
 with `cargo +nightly-YYYY-MM-DD`. `rust-version` in package manifests is a
 minimum supported version, not the selected development channel.
-Third-party submodules retain their own toolchain files.
+Pinned pi-rust sources are resolved by Cargo from the committed lockfiles.
 
 From the repository root:
 
 ```bash
 rtk rustup toolchain install
 rtk rustup show active-toolchain
-rtk git submodule update --init --recursive
 rtk cargo fmt --manifest-path crates/navi-finance/Cargo.toml --all -- --check
 rtk cargo clippy --manifest-path crates/navi-finance/Cargo.toml --all-targets --locked -- -D warnings
 rtk cargo test --manifest-path crates/navi-finance/Cargo.toml --locked
 ```
 
 Repeat the last three commands for `crates/navi-health/Cargo.toml`,
-`crates/navi-storage/Cargo.toml` and `apps/nsh-client/Cargo.toml`. These are
+`crates/navi-storage/Cargo.toml`, `crates/navi-assistant/Cargo.toml` and
+`apps/nsh-client/Cargo.toml`. These are
 independent Cargo workspaces; there is no root `Cargo.toml`. Relevant pushes
 and PRs run the domain checks plus `nsh checks` (client Rust, mixed TSX
 flows, Android JVM tests and lint). The signed APK workflow remains manually
@@ -109,7 +109,7 @@ remain owned by each application manifest.
 
 Cargo discovers configuration from the command's current directory, not the
 `--manifest-path` directory. Toolchain selection also follows the
-current directory; enter a third-party submodule to use its own pin.
+current directory; enter a crate workspace to use its own toolchain file.
 Avoid global target/linker flags or `target-cpu=native` in shared config;
 let NSH configure Android linking and Cargo select parallelism. Optional
 machine-specific caches can be enabled with `RUSTC_WRAPPER=sccache` after

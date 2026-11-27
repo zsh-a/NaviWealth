@@ -177,21 +177,21 @@ impl AskUser {
                 }
             }
         }
-        let content: Vec<llm_protocol::ContentBlock> =
+        let content: Vec<navi_assistant::recognition::ContentBlock> =
             serde_json::from_value(blocks.clone()).map_err(|_| InvalidCapture)?;
         let mut uses = 0;
         for block in content {
             match block {
-                llm_protocol::ContentBlock::ToolUse {
+                navi_assistant::recognition::ContentBlock::ToolUse {
                     id,
                     name,
                     input: actual,
                 } if id == call_id && name == "ask_user" && actual == *input => {
                     uses += 1;
                 }
-                llm_protocol::ContentBlock::Text { .. }
-                | llm_protocol::ContentBlock::Thinking { .. }
-                | llm_protocol::ContentBlock::RedactedThinking { .. } => {}
+                navi_assistant::recognition::ContentBlock::Text { .. }
+                | navi_assistant::recognition::ContentBlock::Thinking { .. }
+                | navi_assistant::recognition::ContentBlock::RedactedThinking { .. } => {}
                 _ => return Err(InvalidCapture),
             }
         }

@@ -5,14 +5,12 @@ on:
     branches: [main]
     paths:
       - 'crates/**'
-      - 'third_party/agent-runtime'
       - 'rust-toolchain.toml'
       - '.cargo/config.toml'
       - '.github/workflows/crates.yml'
   pull_request:
     paths:
       - 'crates/**'
-      - 'third_party/agent-runtime'
       - 'rust-toolchain.toml'
       - '.cargo/config.toml'
       - '.github/workflows/crates.yml'
@@ -35,8 +33,6 @@ jobs:
         crate: [navi-storage, navi-finance, navi-health, navi-assistant]
     steps:
       - uses: actions/checkout@v7
-        with:
-          submodules: recursive
       - name: Install configured Rust toolchain
         run: |
           rustup toolchain install
@@ -47,24 +43,3 @@ jobs:
       - run: cargo fmt --manifest-path crates/${{ matrix.crate }}/Cargo.toml --all -- --check
       - run: cargo clippy --manifest-path crates/${{ matrix.crate }}/Cargo.toml --all-targets --locked -- -D warnings
       - run: cargo test --manifest-path crates/${{ matrix.crate }}/Cargo.toml --locked
-
-  runtime:
-    name: agent-runtime submodule
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    defaults:
-      run:
-        working-directory: third_party/agent-runtime
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          submodules: recursive
-      - name: Install submodule-pinned Rust toolchain
-        run: |
-          rustup toolchain install
-          rustc -Vv
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: third_party/agent-runtime
-      - run: cargo fmt --all -- --check
-      - run: cargo test --workspace --locked

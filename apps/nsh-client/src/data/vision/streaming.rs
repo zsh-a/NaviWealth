@@ -3,50 +3,86 @@
 use super::*;
 use crate::domain::capture::{self, Draft, Record};
 use futures::{StreamExt, channel::mpsc};
-use llm_protocol::{LlmEventKind, LlmResponseFormat};
-use llm_reqwest::ReqwestTransport;
+use runtime::LlmResponseFormat;
 use std::sync::atomic::{AtomicBool, Ordering};
 
+mod host;
 static HOST_NETWORK: AtomicBool = AtomicBool::new(false);
 
+/// Headless development seam. Requests still pass through the actual pi-rust
+/// provider, with a loopback relay forwarding HTTP to the configured NSH host.
 pub fn use_host_capture_transport() {
     HOST_NETWORK.store(true, Ordering::Relaxed);
 }
 
-struct Network {
-    runtime: tokio::runtime::Runtime,
-    transport: ReqwestTransport,
-}
-
-fn network() -> Result<&'static Network, VisionFailure> {
-    static NETWORK: OnceLock<Result<Network, VisionFailure>> = OnceLock::new();
+fn network() -> Result<&'static tokio::runtime::Runtime, VisionFailure> {
+    static NETWORK: OnceLock<Result<tokio::runtime::Runtime, VisionFailure>> = OnceLock::new();
     NETWORK
         .get_or_init(|| {
-            let offline = || VisionFailure::Offline("Model transport unavailable".into());
-            let runtime = tokio::runtime::Builder::new_multi_thread()
+            tokio::runtime::Builder::new_multi_thread()
                 .worker_threads(1)
                 .enable_all()
                 .build()
-                .map_err(|_| offline())?;
-            let tls = crate::data::tls::config().map_err(|_| offline())?;
-            let client = reqwest::Client::builder()
-                .tls_backend_preconfigured(tls)
-                .redirect(reqwest::redirect::Policy::none())
-                .retry(reqwest::retry::never())
-                .connect_timeout(Duration::from_secs(15))
-                .build()
-                .map_err(|_| offline())?;
-            Ok(Network {
-                runtime,
-                transport: ReqwestTransport::with_client(client),
-            })
+                .map_err(|_| VisionFailure::Offline("Model transport unavailable".into()))
         })
         .as_ref()
         .map_err(Clone::clone)
 }
 
-/// The future owns both the stream and its Tokio worker. Dropping an obsolete
-/// typing preview also cancels connection setup, retries and outstanding reads.
+pub(super) enum Progress {
+    Text(String),
+    Http {
+        request: nsh_core::platform::HttpRequest,
+        reply: futures::channel::oneshot::Sender<Result<nsh_core::prelude::HttpResponse, ()>>,
+    },
+}
+
+pub(super) async fn complete(
+    account: ModelAccount,
+    request: LlmRequest,
+    timeout: Duration,
+    mut on_text: impl FnMut(String),
+) -> Result<runtime::LlmResponse, VisionFailure> {
+    let mut config = configuration(&account, timeout);
+    let use_host = HOST_NETWORK.load(Ordering::Relaxed);
+    let (send, mut receive) = mpsc::unbounded();
+    let worker = network()?.spawn(async move {
+        let _relay = if use_host {
+            Some(host::relay(&mut config, send.clone()).await?)
+        } else {
+            None
+        };
+        let cancel = navi_assistant::CancellationToken::new();
+        let _cancel = cancel.clone().drop_guard();
+        runtime::complete(&config, request, cancel, move |text| {
+            let _ = send.unbounded_send(Progress::Text(text));
+        })
+        .await
+        .map_err(llm_failure)
+    });
+    let _cancel = CancelOnDrop(worker.abort_handle());
+    while let Some(progress) = receive.next().await {
+        match progress {
+            Progress::Text(text) => on_text(text),
+            Progress::Http { request, reply } => {
+                let response = match futures::future::select(
+                    Box::pin(nsh_core::prelude::fetch(request)),
+                    Box::pin(nsh_core::prelude::timer(timeout)),
+                )
+                .await
+                {
+                    futures::future::Either::Left((response, _)) => response.map_err(|_| ()),
+                    futures::future::Either::Right(_) => return Err(VisionFailure::Timeout),
+                };
+                let _ = reply.send(response);
+            }
+        }
+    }
+    worker.await.map_err(|_| VisionFailure::Unreadable)?
+}
+
+/// The future owns the model worker and cancels its request when the owner
+/// leaves the draft or supersedes the pending recognition.
 pub async fn recognize_record_stream(
     account: ModelAccount,
     draft: Draft,
@@ -65,71 +101,23 @@ pub async fn recognize_record_stream(
     } else {
         draft.sent_images().len()
     };
-    let ep = endpoint(&account)?;
-    if HOST_NETWORK.load(Ordering::Relaxed) {
-        return consume(ep, NshTransport::new(), request, image_count, on_preview).await;
-    }
-    let network = network()?;
-    let transport = network.transport.clone();
-    let (send, mut receive) = mpsc::unbounded();
-    let worker = network.runtime.spawn(async move {
-        consume(ep, transport, request, image_count, move |records| {
-            let _ = send.unbounded_send(records);
-        })
-        .await
-    });
-    let _cancel = CancelOnDrop(worker.abort_handle());
-    while let Some(records) = receive.next().await {
-        on_preview(records);
-    }
-    worker.await.map_err(|_| VisionFailure::Unreadable)?
-}
-
-struct CancelOnDrop(tokio::task::AbortHandle);
-impl Drop for CancelOnDrop {
-    fn drop(&mut self) {
-        self.0.abort();
-    }
-}
-
-async fn consume<T: Transport>(
-    endpoint: Endpoint,
-    transport: T,
-    request: LlmRequest,
-    image_count: usize,
-    mut preview: impl FnMut(Vec<Record>),
-) -> Result<CaptureResponse, VisionFailure> {
     let format = request.response_format.clone();
-    let client = Client::new(endpoint, transport)
-        .with_capability_cache(CAPABILITIES.get_or_init(CapabilityCache::default).clone())
-        .with_timeouts(Timeouts {
-            total: RECOGNIZE_TIMEOUT,
-            ..Timeouts::default()
-        });
-    let stream = client.stream(request).await.map_err(llm_failure)?;
-    futures::pin_mut!(stream);
     let mut partial = RecordPrefix {
         image_count,
         ..RecordPrefix::default()
     };
-    while let Some(event) = stream.next().await {
-        let event = event.map_err(llm_failure)?;
-        match event.kind {
-            LlmEventKind::Delta => {
-                if let Some(text) = event.content {
-                    partial.push(&text, &format, &mut preview);
-                }
-            }
-            LlmEventKind::Finished => {
-                return capture_response(
-                    event.response.ok_or(VisionFailure::Unreadable)?,
-                    image_count,
-                );
-            }
-            _ => {}
-        }
+    let response = complete(account, request, RECOGNIZE_TIMEOUT, |text| {
+        partial.push(&text, &format, &mut on_preview);
+    })
+    .await?;
+    capture_response(response, image_count)
+}
+
+pub(super) struct CancelOnDrop(tokio::task::AbortHandle);
+impl Drop for CancelOnDrop {
+    fn drop(&mut self) {
+        self.0.abort();
     }
-    Err(VisionFailure::Truncated)
 }
 
 #[derive(Default)]
@@ -196,7 +184,7 @@ impl RecordPrefix {
                         if let Ok((records, _)) = capture::parse(&prefix)
                             && capture::valid_meal_image_numbers(&records, self.image_count)
                             && records.len() > self.shown
-                            && llm_protocol::structured_output_from_content(format, &prefix).is_ok()
+                            && runtime::structured_output_from_content(format, &prefix).is_ok()
                         {
                             self.shown = records.len();
                             preview(records);
@@ -228,7 +216,7 @@ mod tests {
 
     // The server withholds the terminal response until the UI thread receives
     // record one. This catches buffered HTTP adapters and detached HTTP tasks.
-    fn exchange(end: End) {
+    fn exchange(end: End, result_tool: bool) {
         let cancel = matches!(end, End::Cancel);
         let listener = TcpListener::bind("127.0.0.1:0").unwrap();
         let mut account = ModelAccount::new(Provider::OpenAiCompatible);
@@ -261,7 +249,11 @@ mod tests {
             let item = json!({"kind":"weight","day":"2026-11-21","weight_kg":74.2,"trade":null,"balance":null,
                 "note":null,"price":null,"money":null,"meal":null,"slot":null,"evidence":[]});
             let prefix = format!("{{\"records\":[{item}");
-            let delta = json!({"choices":[{"index":0,"delta":{"content":prefix}}]});
+            let delta = if result_tool {
+                json!({"choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"id":"result-1","type":"function","function":{"name":"emit_result","arguments":prefix}}]}}]})
+            } else {
+                json!({"choices":[{"index":0,"delta":{"content":prefix}}]})
+            };
             write!(socket, "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nConnection: close\r\n\r\ndata: {delta}\n\n").unwrap();
             socket.flush().unwrap();
             preview_rx
@@ -269,7 +261,11 @@ mod tests {
                 .expect("partial result while the response is still in flight");
             match end {
                 End::Complete => {
-                    let end = json!({"choices":[{"index":0,"delta":{"content":"],\"destination\":null}"},"finish_reason":"stop"}]});
+                    let end = if result_tool {
+                        json!({"choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"] ,\"destination\":null}"}}]},"finish_reason":"tool_calls"}]})
+                    } else {
+                        json!({"choices":[{"index":0,"delta":{"content":"],\"destination\":null}"},"finish_reason":"stop"}]})
+                    };
                     write!(socket, "data: {end}\n\ndata: [DONE]\n\n").unwrap();
                 }
                 End::Cancel => {
@@ -353,7 +349,9 @@ mod tests {
     #[test]
     fn real_transport_previews_before_terminal_and_cancels_on_drop() {
         for end in [End::Complete, End::Disconnect, End::Cancel] {
-            exchange(end);
+            for result_tool in [false, true] {
+                exchange(end, result_tool);
+            }
         }
     }
 }

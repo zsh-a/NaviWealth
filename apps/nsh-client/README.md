@@ -38,10 +38,11 @@ tests/      headless meal, weight, Garmin, review, backup and mixed scale flows
 Meals, favorites, validation, repositories, nutrition, health-review calculations,
 photo normalization and destination-bound consent live in `../../crates/navi-health`.
 The client adapts those contracts to reactive signals and composes capture and
-scale transactions with device-local evidence. Provider wire
-formats live in `../../third_party/agent-runtime/crates/llm-protocol`; request
-policy lives in `llm-client`. Unified capture uses the native `llm-reqwest` transport for streaming.
-Single-meal recognition and the connection test use NSH platform fetch. Each saved estimate records its model and prompt version.
+scale transactions with device-local evidence. Recognition, capture and connection tests use pinned pi-rust providers through
+`../../crates/navi-assistant`. Capture streams provisional cards and suspends
+`ask_user` until the owner answers. A schema-defined result tool returns a
+strictly validated draft without executing a business write. Each saved
+estimate records its model and prompt version.
 
 ## General assistant
 
@@ -92,8 +93,9 @@ remain unapproved. Delete and restore invalidate active work, and checkpoint
 updates cannot recreate a deleted conversation. Assistant tables are included
 in encrypted backups; pre-22 backups preserve the current assistant data.
 
-The existing recognition implementation remains on `third_party/agent-runtime`
-until its separate provider/image/capture parity migration is complete. See
+The former Agent Runtime dependency has been retired. Recognition and the
+assistant share provider libraries while retaining separate execution and
+confirmation boundaries. See
 [runtime architecture](../../docs/architecture/agent-runtime-current.md) and
 [delivery gates](../../docs/roadmap/roadmap-nsh.md#general-assistant--owner-authorized-expansion-2026-11-27).
 
@@ -221,7 +223,7 @@ Some adapters still cover behavior absent from these official APIs. Android's
 `ShareReceiver` emits individual file URLs without shared text or batch identity;
 `IncomingShare.kt` keeps text and up to four images together as one unsent draft.
 NSH 0.7.1 has no equivalent BLE transport. Its public Rust `fetch` aggregates the
-response, so capture's SSE transport stays in `llm-reqwest`. Android's HTTP method
+response, so model SSE streaming uses pi-rust's native HTTP transport. Android's HTTP method
 handling does not cover WebDAV's `PROPFIND`/`MKCOL`, which continue through `ureq`.
 Money fields retain exact string decimals because the official `NumberInput`
 uses floating-point values. SQLite repositories retain accounting and health

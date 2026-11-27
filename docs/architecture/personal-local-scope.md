@@ -41,10 +41,10 @@ features. The migration became a reduced rewrite, not a port.
    | `crates/navi-assistant` | Embedded pi-rust Agent loop, provider adaptation, bounded execution and replay contracts |
    | `apps/nsh-client` | Four tabs, settings, reactive adapters, device clock/photos/network, encrypted backup orchestration and cross-domain capture/scale transactions |
 
-   No `knowledge-core`, `execution-core` or domain registry. Recognition calls
-   use `llm-protocol` / `llm-client` from the Agent Runtime submodule
-   directly; the old Agent Runtime loop is not hosted. The new assistant uses
-   pinned pi-rust `rpi-agent` / `rpi-ai` libraries. The app owns SQLite sessions,
+   No `knowledge-core`, `execution-core` or domain registry. Recognition and
+   the general assistant use pinned pi-rust `rpi-agent` / `rpi-ai` through
+   `navi-assistant`. Recognition is a single-turn draft operation; only the
+   general assistant uses the multi-step Agent loop. The app owns SQLite sessions,
    memory, permissions and business tools; NSH remains the UI. The pi-rust CLI,
    desktop shell/file tools, plugin loader and server are not part of the app.
 5. **No SQLCipher, no Keystore (2026-11-13; host clarification 2026-11-18).**

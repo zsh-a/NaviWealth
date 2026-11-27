@@ -129,7 +129,7 @@ fn responses_choice_and_native_reasoning_survive_restart_and_image_followup() ->
     let dir = tempfile::tempdir().unwrap();
     let native_output = json!([
         {"id":"reasoning-1", "type":"reasoning", "summary":[], "encrypted_content":"opaque-reasoning"},
-        {"id":"fc-item", "type":"function_call", "call_id":"call-1", "name":"ask_user", "arguments":json!({"questions":[{
+        {"id":"fc_item", "type":"function_call", "call_id":"call_1", "name":"ask_user", "arguments":json!({"questions":[{
             "id":"decision", "text":"Does the label describe this meal?", "reason":"The serving size needs confirmation.", "required":true,
             "options":[{"id":"same", "label":"Same meal", "description":"The label belongs to the photographed meal"}]
         }]}).to_string()}
@@ -222,8 +222,8 @@ fn responses_choice_and_native_reasoning_survive_restart_and_image_followup() ->
     );
     assert_eq!(input[3]["type"], "function_call_output");
     assert_eq!(
-        input[3]["call_id"], "call-1",
-        "result references call_id, never fc-item"
+        input[3]["call_id"], "call_1",
+        "result references call_id, never fc_item"
     );
     let answer: Value = serde_json::from_str(input[3]["output"].as_str().unwrap()).unwrap();
     assert_eq!(answer["answers"][0]["option_id"], "same");

@@ -17,8 +17,7 @@ smallest authoritative context.
 | Finance (ledger, holdings, catalog) | `crates/navi-finance/` | Rust |
 | Health (meals, nutrition, Garmin) | `crates/navi-health/` | Rust |
 | Neutral SQLite infrastructure | `crates/navi-storage/` | Rust |
-| General assistant runtime | `crates/navi-assistant/` | Rust, pi-rust |
-| Recognition runtime | `third_party/agent-runtime/` | Rust submodule |
+| Assistant and recognition runtime | `crates/navi-assistant/` | Rust, pi-rust |
 | Market data SDK | `third_party/market-data-rs/` | Rust |
 | Catalog source CSVs | `tool/asset_catalog/sources/` | CSV |
 | Catalog build/publish pipeline | `tool/asset_catalog/` | Python |
@@ -57,9 +56,8 @@ tests/      headless meal, weight, Garmin, review and backup flows
   options, rebalance, Runway, allocation display, broker statement import).
 - AI is device-only against user-owned LLM profiles. There is no backend AI
   relay or cloud fallback. Provider protocols live in
-  `third_party/agent-runtime/crates/llm-protocol`; request policy in
-  `llm-client` for capture. The general assistant uses pinned pi-rust
-  `rpi-agent`/`rpi-ai` through `navi-assistant`; app adapters own tool permissions,
+  pinned pi-rust `rpi-ai` through `navi-assistant`; recognition makes a single
+  bounded call and the general assistant uses `rpi-agent`. App adapters own tool permissions,
   SQLite sessions, explicit memory confirmation and business proposals.
 - Domain crates depend on neutral infrastructure, never on sibling domain
   business models. Keep deterministic calculations out of any model.

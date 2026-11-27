@@ -2,8 +2,7 @@
 
 NaviWealth is a local-first personal finance and health app for one Android
 phone. The client is NSH (Rust); business truth lives in the `navi-finance`
-and `navi-health` crates. The `third_party/agent-runtime` submodule supplies
-recognition protocols; `navi-assistant` embeds pi-rust for persistent chat,
+and `navi-health` crates. `navi-assistant` embeds pi-rust for recognition and persistent chat,
 confirmed memory and bounded tools. There is no backend,
 no sync and no account system; local backups only.
 [Personal Local Scope](architecture/personal-local-scope.md) records the
@@ -39,8 +38,7 @@ apps/nsh-client/           NSH (Rust) client: UI, storage, pages, headless tests
 crates/navi-finance/       double-entry ledger, holdings, catalog truth
 crates/navi-health/        health models, repositories, nutrition, review and Garmin parsing
 crates/navi-storage/       neutral SQLite migrations, snapshots and table replacement
-crates/navi-assistant/     embedded pi-rust Agent loop and provider adaptation
-third_party/agent-runtime/ recognition llm-protocol, llm-client (submodule)
+crates/navi-assistant/     embedded pi-rust recognition, Agent loop and provider adaptation
 third_party/market-data-rs/ market-data SDK (Tencent quotes)
 tool/asset_catalog/        catalog sources, build, validation and publish pipeline
 ```

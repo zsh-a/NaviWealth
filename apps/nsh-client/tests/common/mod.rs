@@ -91,9 +91,87 @@ pub fn account(trusted: bool) -> Vec<(String, String)> {
 pub fn response(status: u16, body: Value) -> StubResponse {
     let mut response = StubResponse::default();
     response.status = status;
-    response.body = body.to_string().into_bytes();
+    // Feed fixtures through the real pi provider SSE parser. The headless
+    // network relay changes only the destination, never model wire content.
+    if status == 200 && (body.get("stop_reason").is_some() || body["object"] == "response") {
+        response
+            .headers
+            .push(("content-type".into(), "text/event-stream".into()));
+        response.body = model_events(&body).into_bytes();
+    } else {
+        response.body = body.to_string().into_bytes();
+    }
     response.delay = Duration::from_millis(40);
     response
+}
+
+fn model_events(body: &Value) -> String {
+    let mut events = String::new();
+    let mut emit = |kind: &str, mut value: Value| {
+        value["type"] = kind.into();
+        events.push_str(&format!("event: {kind}\ndata: {value}\n\n"));
+    };
+    if body["object"] == "response" {
+        for (index, item) in body["output"].as_array().unwrap().iter().enumerate() {
+            emit(
+                "response.output_item.added",
+                json!({"output_index":index,"item":item}),
+            );
+            emit(
+                "response.output_item.done",
+                json!({"output_index":index,"item":item}),
+            );
+        }
+        emit("response.completed", json!({"response":body}));
+        return events;
+    }
+    emit(
+        "message_start",
+        json!({"message":{"id":"msg-fixture","type":"message",
+        "role":"assistant","model":body["model"],"content":[],"stop_reason":null,
+        "usage":{"input_tokens":10,"output_tokens":0}}}),
+    );
+    for (index, block) in body["content"].as_array().unwrap().iter().enumerate() {
+        let mut start = block.clone();
+        let delta = match block["type"].as_str() {
+            Some("text") => {
+                start["text"] = "".into();
+                Some(json!({"type":"text_delta","text":block["text"]}))
+            }
+            Some("tool_use") => {
+                start["input"] = json!({});
+                Some(json!({"type":"input_json_delta","partial_json":block["input"].to_string()}))
+            }
+            Some("thinking") => {
+                start["thinking"] = "".into();
+                start["signature"] = "".into();
+                Some(json!({"type":"thinking_delta","thinking":block["thinking"]}))
+            }
+            _ => None,
+        };
+        emit(
+            "content_block_start",
+            json!({"index":index,"content_block":start}),
+        );
+        if let Some(delta) = delta {
+            emit("content_block_delta", json!({"index":index,"delta":delta}));
+        }
+        if block["type"] == "thinking" {
+            emit(
+                "content_block_delta",
+                json!({"index":index,"delta":{
+                "type":"signature_delta","signature":block["signature"]}}),
+            );
+        }
+        emit("content_block_stop", json!({"index":index}));
+    }
+    emit(
+        "message_delta",
+        json!({"delta":{"stop_reason":body["stop_reason"],"stop_sequence":null},
+        "usage":{"output_tokens":20}}),
+    );
+    emit("message_stop", json!({}));
+    events
 }
 
 pub fn estimate() -> Value {
@@ -269,7 +347,12 @@ pub fn garmin_cn_with_delay(delay: Duration) -> Arc<StubNetwork> {
 }
 
 pub fn record_reply(records: Vec<Value>) -> Value {
-    json!({"model":"test-model","stop_reason":"end_turn","content":[{"type":"text","text":json!({"destination":null,"records":records}).to_string()}]})
+    static NEXT_RESULT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(1);
+    let id = NEXT_RESULT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    json!({"model":"test-model","stop_reason":"tool_use","content":[{
+        "type":"tool_use","id":format!("result-{id}"),"name":"emit_result",
+        "input":{"destination":null,"records":records}
+    }]})
 }
 
 pub fn meal_record() -> Value {

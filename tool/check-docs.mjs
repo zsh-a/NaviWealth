@@ -58,7 +58,7 @@ export function checkDocs(repoRoot) {
   for (const file of markdownFiles.filter((file) => fs.existsSync(file))) {
     const source = fs.readFileSync(file, 'utf8');
     for (const match of source.matchAll(
-      /`((?:apps\/nsh-client|crates|tool|\.github\/workflows|third_party\/agent-runtime)\/[^`]+)`/g,
+      /`((?:apps\/nsh-client|crates|tool|\.github\/workflows|third_party)\/[^`]+)`/g,
     )) {
       const target = match[1];
       if (/[<*>\s]/.test(target)) continue;
