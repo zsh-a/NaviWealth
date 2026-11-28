@@ -1,13 +1,15 @@
-//! Records: everything logged, newest day first, each day with what its
-//! meals add up to; all, meals only or weights only. Older days come on
-//! request so a long history stays light.
+//! Records timeline, newest day first. Filters share one daily index; the
+//! scrolling window constructs headers and individual entries on demand.
 
 #[path = "records_data.rs"]
 mod data;
-#[path = "records_runs.rs"]
-mod runs;
+#[path = "records_timeline.rs"]
+mod timeline;
 use data::group;
-use std::collections::BTreeMap;
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    rc::Rc,
+};
 
 use navi_finance::{journal::Transaction, money};
 use nsh_base::button;
@@ -17,7 +19,7 @@ use super::{
     drafts::drafts_section,
     finance::transaction_row,
     home::Sheets,
-    rows::{INSET, divider, leading_width, meal_row, text_inset, weight_row},
+    rows::{divider, leading_width, meal_row, text_inset, weight_row},
 };
 use crate::{
     data::{clock, finance, meals, photos, weights},
@@ -51,9 +53,8 @@ enum Filter {
 /// One row of a day.
 #[derive(Clone, PartialEq)]
 enum Entry {
-    Meal(Meal),
-    Weight(Weight),
-    Transaction(Transaction),
+    Meal(Rc<Meal>),
+    Transaction(Rc<Transaction>),
 }
 
 /// A day with entries, newest entry first.
@@ -68,6 +69,34 @@ struct DayRecords {
     entries: Vec<Entry>,
 }
 
+/// Only the totals and actions visible in this filter.
+#[derive(Clone, PartialEq)]
+struct DayHeader {
+    day: Day,
+    kcal: Option<f64>,
+    weight: Option<Weight>,
+    spending: Option<money::Minor>,
+    foreign_spending: Vec<(navi_finance::currency::Currency, i64)>,
+}
+
+impl DayRecords {
+    fn header(&self, filter: Filter) -> DayHeader {
+        let money = matches!(filter, Filter::All | Filter::Transactions);
+        let meals = matches!(filter, Filter::All | Filter::Meals);
+        DayHeader {
+            day: self.day,
+            weight: self.weight.filter(|_| filter == Filter::All),
+            kcal: (meals && self.meals > 0).then_some(self.kcal),
+            spending: self.spending.filter(|_| money),
+            foreign_spending: if money {
+                self.foreign_spending.clone()
+            } else {
+                Vec::new()
+            },
+        }
+    }
+}
+
 pub fn records_tab() -> impl IntoElement {
     let filter = signal(Filter::All);
     let shown = signal(PAGE);
@@ -76,13 +105,13 @@ pub fn records_tab() -> impl IntoElement {
             meals::all(),
             weights::all(),
             finance::transactions(),
-            filter.get(),
             &clock::zone(),
         )
     });
     let sheets = Sheets::get();
     // The one day the calendar opened, shown alone until All days.
     let focus = signal(None::<Day>);
+    let expanded = signal(BTreeSet::<Day>::new());
     let list = element_ref();
     effect(move || {
         let Some(day) = sheets.jump_to.get() else {
@@ -90,6 +119,7 @@ pub fn records_tab() -> impl IntoElement {
         };
         untracked(|| {
             sheets.jump_to.set(None);
+            expanded.update(BTreeSet::clear);
             filter.set(Filter::All);
             focus.set(Some(day));
         });
@@ -109,24 +139,9 @@ pub fn records_tab() -> impl IntoElement {
             untracked(|| focus.set(None));
         }
     });
-    // The days the list shows: the focused day, or the filter's days.
-    let listed = computed(move || match focus.get() {
-        Some(day) => days.with(|d| d.iter().filter(|d| d.day == day).cloned().collect()),
-        None => days.with(|d| d.iter().take(shown.get()).cloned().collect::<Vec<_>>()),
-    });
-    effect(move || {
-        let names: Vec<String> = listed.with(|days| {
-            days.iter()
-                .flat_map(|d| d.entries.iter())
-                .filter_map(|e| match e {
-                    Entry::Meal(meal) => meal.photo.clone(),
-                    Entry::Weight(..) | Entry::Transaction(..) => None,
-                })
-                .collect()
-        });
-        if !names.is_empty() {
-            spawn(photos::load(names));
-        }
+    let timeline = computed(move || {
+        let (filter, focus, shown) = (filter.get(), focus.get(), shown.get());
+        days.with(|days| expanded.with(|open| timeline::project(days, filter, focus, shown, open)))
     });
     scroll().flex_1().element_ref(&list).child(
         view()
@@ -176,14 +191,17 @@ pub fn records_tab() -> impl IntoElement {
                             Segment::new(Filter::Weight, || s().weight.into()),
                         ],
                         move || filter.get(),
-                        move |f| filter.set(f),
+                        move |f| {
+                            expanded.update(BTreeSet::clear);
+                            filter.set(f);
+                        },
                     )
                 }),
             )
             .child(drafts_section(true))
             .child(
                 when(
-                    move || days.with(Vec::is_empty),
+                    move || timeline.with(|t| t.rows.is_empty()),
                     move || {
                         // The header's 导入账单 already names the import path;
                         // the empty state offers the one universal entry.
@@ -202,23 +220,9 @@ pub fn records_tab() -> impl IntoElement {
                 .otherwise(move || {
                     view()
                         .gap_5()
-                        .child(each(
-                            move || {
-                                runs::group(
-                                    listed.get(),
-                                    filter.get() == Filter::All && focus.get().is_none(),
-                                )
-                            },
-                            |d: &runs::Item| d.day(),
-                            |d, _| {
-                                dynamic(move || {
-                                    let d = d.get();
-                                    untracked(move || runs::render(d))
-                                })
-                            },
-                        ))
+                        .child(timeline::list(timeline, expanded))
                         .child(when(
-                            move || focus.get().is_none() && days.with(Vec::len) > shown.get(),
+                            move || timeline.with(|t| t.has_earlier),
                             move || {
                                 Btn::secondary()
                                     .label(|| s().show_earlier.into())
@@ -284,13 +288,7 @@ fn focus_bar(focus: Signal<Option<Day>>, days: Memo<Vec<DayRecords>>) -> impl In
         )
 }
 
-fn day_section(records: DayRecords) -> impl IntoElement {
-    let leading = leading_width(
-        records
-            .entries
-            .iter()
-            .any(|entry| matches!(entry, Entry::Meal(meal) if meal.photo.is_some())),
-    );
+fn day_header(records: &DayHeader) -> impl IntoElement + use<> {
     let sheets = Sheets::get();
     let today = untracked(clock::today);
     let title = match today.days_since(records.day) {
@@ -298,7 +296,9 @@ fn day_section(records: DayRecords) -> impl IntoElement {
         1 => s().yesterday.to_owned(),
         _ => s().long_date(records.day),
     };
-    let kcal = (records.meals > 0).then(|| format!("{} {}", format::kcal(records.kcal), s().kcal));
+    let kcal = records
+        .kcal
+        .map(|kcal| format!("{} {}", format::kcal(kcal), s().kcal));
     let weight = records.weight.map(|w| {
         button()
             .on_press(move || sheets.weight.set(Some(w.day)))
@@ -384,34 +384,4 @@ fn day_section(records: DayRecords) -> impl IntoElement {
                         }))
                 }),
         )
-        .child((!records.entries.is_empty()).then(|| {
-            view().children(
-                records
-                    .entries
-                    .into_iter()
-                    .enumerate()
-                    .map(move |(i, entry)| {
-                        // Weight rows have no leading footprint.
-                        let inset = if matches!(entry, Entry::Weight(_)) {
-                            INSET
-                        } else {
-                            text_inset(leading)
-                        };
-                        let row = match entry {
-                            Entry::Meal(meal) => meal_row(meal, leading).into_element(),
-                            Entry::Transaction(transaction) => {
-                                let id = transaction.id.clone();
-                                transaction_row(transaction, leading, move || {
-                                    sheets.finance.set(Some(id.clone()))
-                                })
-                                .into_element()
-                            }
-                            Entry::Weight(w) => {
-                                weight_row(w, move || sheets.weight.set(Some(w.day))).into_element()
-                            }
-                        };
-                        view().child((i > 0).then(|| divider(inset))).child(row)
-                    }),
-            )
-        }))
 }

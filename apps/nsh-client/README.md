@@ -350,7 +350,9 @@ in its original currency in Today, Records and Review.
 Today combines meals and transactions in time order and shows today's spending
 beside intake once the ledger has records. Income and transfers do not count as
 spending. Records groups both kinds by date, offers a Money filter, and
-its calendar includes days containing only transactions.
+its calendar includes days containing only transactions. All four filters reuse
+the same daily totals and sorted entries. The page adds 21 matching days at a
+time, and the native virtual list mounts headers and records near the viewport.
 
 `crates/navi-storage` provides neutral SQLite opening, versioned migrations,
 snapshots and atomic table replacement. `finance::repository` owns account,

@@ -264,3 +264,47 @@ fn weight_only_runs_expand_to_visible_daily_editors() -> Result<(), String> {
     assert!(!app.shows("label:/Show daily records$/"));
     Ok(())
 }
+
+#[test]
+fn dense_day_recycles_meal_rows_and_opens_the_scrolled_record() -> Result<(), String> {
+    use nsh_core::geometry::Points;
+    let template = decode_meals(&pasta_today()[0].1).remove(0);
+    let meals = (0..48)
+        .map(|i| {
+            let mut meal = template.clone();
+            meal.id = format!("meal-{i}");
+            meal.title = Some(format!("Lunch {i}"));
+            meal.foods[0].name = format!("Pasta {i}");
+            meal.logged_at_ms += i * 1000;
+            meal
+        })
+        .collect::<Vec<_>>();
+    let (mut app, _) = start(vec![("meals.v1".into(), encode_meals(&meals))], None);
+    app.press("label:Records")?;
+    app.press("text:Meals")?;
+    app.wait_for("label:Lunch 47, 300 kcal")?;
+    assert!(!app.shows("label:Lunch 0, 300 kcal"));
+    app.scroll("text:Meals", Points(5000.0))?;
+    app.wait_for("label:Lunch 0, 300 kcal")?;
+    assert!(!app.shows("label:Lunch 47, 300 kcal"));
+    app.press("label:Lunch 0, 300 kcal")?;
+    app.wait_for("Edit meal")?;
+    app.wait_for("text:Pasta 0")?;
+    Ok(())
+}
+
+#[test]
+fn showing_earlier_adds_days_to_the_filtered_timeline() -> Result<(), String> {
+    use nsh_core::geometry::Points;
+    let (mut app, _) = start(pasta_every_day(23), None);
+    app.press("label:Records")?;
+    app.press("text:Meals")?;
+    app.scroll("text:Meals", Points(5000.0))?;
+    let last = format!("text:{}", long_date(today().plus_days(-22)));
+    assert!(!app.shows(&last));
+    app.press("text:Show earlier")?;
+    app.scroll("text:Meals", Points(800.0))?;
+    app.wait_for(&last)?;
+    assert!(!app.shows("text:Show earlier"));
+    Ok(())
+}

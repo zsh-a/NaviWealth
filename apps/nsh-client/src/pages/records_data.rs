@@ -1,10 +1,10 @@
 use super::*;
+use navi_finance::currency::Currency;
 
 pub(super) fn group(
     meals: Vec<Meal>,
     weights: Vec<Weight>,
     transactions: Vec<Transaction>,
-    filter: Filter,
     zone: &jiff::tz::TimeZone,
 ) -> Vec<DayRecords> {
     let mut days: BTreeMap<Day, DayRecords> = BTreeMap::new();
@@ -19,64 +19,39 @@ pub(super) fn group(
             entries: Vec::new(),
         })
     }
-    if matches!(filter, Filter::All | Filter::Meals) {
-        for meal in meals {
-            let d = at(&mut days, meal.day);
-            d.kcal += meal.total().kcal;
-            d.meals += 1;
-            d.entries.push(Entry::Meal(meal));
-        }
+    for meal in meals {
+        let d = at(&mut days, meal.day);
+        d.kcal += meal.total().kcal;
+        d.meals += 1;
+        d.entries.push(Entry::Meal(Rc::new(meal)));
     }
-    if matches!(filter, Filter::All | Filter::Weight) {
-        for w in weights {
-            let day = at(&mut days, w.day);
-            if filter == Filter::All {
-                day.weight = Some(w);
-            } else {
-                day.entries.push(Entry::Weight(w));
+    for weight in weights {
+        at(&mut days, weight.day).weight = Some(weight);
+    }
+    let mut ledger_days = BTreeMap::<Day, Vec<Transaction>>::new();
+    for transaction in transactions {
+        ledger_days
+            .entry(Day(transaction.at.date()))
+            .or_default()
+            .push(transaction);
+    }
+    for (day, rows) in ledger_days {
+        let d = at(&mut days, day);
+        for currency in Currency::ALL {
+            let spend = navi_finance::review::spending_in(&rows, day.0, day.0, currency);
+            if spend.records > 0 {
+                if currency == Currency::CNY {
+                    d.spending = Some(spend.total);
+                } else {
+                    d.foreign_spending.push((currency, spend.total));
+                }
             }
         }
-    }
-    if matches!(filter, Filter::All | Filter::Transactions) {
-        for transaction in &transactions {
-            at(&mut days, Day(transaction.at.date()))
-                .entries
-                .push(Entry::Transaction(transaction.clone()));
-        }
-        for day in days.values_mut() {
-            if day
-                .entries
-                .iter()
-                .any(|e| matches!(e, Entry::Transaction(_)))
-            {
-                day.foreign_spending = [
-                    navi_finance::currency::Currency::HKD,
-                    navi_finance::currency::Currency::USD,
-                ]
-                .into_iter()
-                .filter_map(|currency| {
-                    let spending = navi_finance::review::spending_in(
-                        &transactions,
-                        day.day.0,
-                        day.day.0,
-                        currency,
-                    );
-                    (spending.records > 0).then_some((currency, spending.total))
-                })
-                .collect();
-                let cny = navi_finance::review::spending_in(
-                    &transactions,
-                    day.day.0,
-                    day.day.0,
-                    navi_finance::currency::Currency::CNY,
-                );
-                day.spending = (cny.records > 0).then_some(cny.total);
-            }
-        }
+        d.entries
+            .extend(rows.into_iter().map(Rc::new).map(Entry::Transaction));
     }
     let at_time = |e: &Entry| match e {
         Entry::Meal(m) => local_time(m.logged_at_ms, zone),
-        Entry::Weight(w) => local_time(w.logged_at_ms, zone),
         Entry::Transaction(t) => t.at.time(),
     };
     days.into_values()
@@ -146,13 +121,7 @@ mod tests {
             meal("c", "2026-11-13", 5, 200.0),
         ];
         let weights = vec![weight("2026-11-11", 68.9, 0), weight("2026-11-13", 68.4, 4)];
-        let days = group(
-            meals.clone(),
-            weights.clone(),
-            vec![],
-            Filter::All,
-            &jiff::tz::TimeZone::UTC,
-        );
+        let days = group(meals, weights, vec![], &jiff::tz::TimeZone::UTC);
         assert_eq!(
             days.iter().map(|d| d.day.to_string()).collect::<Vec<_>>(),
             ["2026-11-13", "2026-11-12", "2026-11-11"]
@@ -165,36 +134,14 @@ mod tests {
         assert!(days[2].entries.is_empty());
         assert_eq!(days[2].weight.unwrap().kg, 68.9);
 
-        assert_eq!(
-            group(
-                meals.clone(),
-                weights.clone(),
-                vec![],
-                Filter::Meals,
-                &jiff::tz::TimeZone::UTC
-            )
-            .len(),
-            2
+        let rows = |filter| timeline::project(&days, filter, None, PAGE, &BTreeSet::new()).rows;
+        assert_eq!(rows(Filter::Meals).len(), 5); // two dates and three meals
+        let weights = rows(Filter::Weight);
+        assert_eq!(weights.len(), 4);
+        assert!(
+            matches!(&weights[0], timeline::Row::Header(h) if h.weight.is_none() && h.kcal.is_none())
         );
-        let only_weights = group(
-            meals,
-            weights,
-            vec![],
-            Filter::Weight,
-            &jiff::tz::TimeZone::UTC,
-        );
-        assert_eq!(only_weights.len(), 2);
-        assert_eq!(only_weights[0].meals, 0);
-        assert!(only_weights[0].weight.is_none());
-        assert!(matches!(only_weights[0].entries[0], Entry::Weight(w) if w.kg == 68.4));
-        let only_meals = group(
-            vec![meal("a", "2026-11-13", 1, 300.0)],
-            vec![weight("2026-11-13", 72.0, 0)],
-            vec![],
-            Filter::Meals,
-            &jiff::tz::TimeZone::UTC,
-        );
-        assert!(only_meals[0].weight.is_none());
+        assert!(matches!(weights[1], timeline::Row::Weight(w) if w.kg == 68.4));
     }
     #[test]
     fn non_spending_days_keep_transactions_without_a_spending_summary() {
@@ -225,18 +172,15 @@ mod tests {
                 )
                 .unwrap(),
             ];
-            for filter in [Filter::All, Filter::Transactions] {
-                let days = group(
-                    vec![],
-                    vec![],
-                    transactions.clone(),
-                    filter,
-                    &jiff::tz::TimeZone::UTC,
-                );
-                assert_eq!(days[0].entries.len(), 4);
-                assert_eq!(days[0].spending, None);
-                assert!(days[0].foreign_spending.is_empty());
-            }
+            let days = group(
+                vec![],
+                vec![],
+                transactions.clone(),
+                &jiff::tz::TimeZone::UTC,
+            );
+            assert_eq!(days[0].entries.len(), 4);
+            assert_eq!(days[0].spending, None);
+            assert!(days[0].foreign_spending.is_empty());
             // Expense records retain their native currency, including on a
             // day whose only other entry is a transfer.
             let mut transactions = transactions;
@@ -249,13 +193,7 @@ mod tests {
                 )
                 .unwrap(),
             );
-            let days = group(
-                vec![],
-                vec![],
-                transactions,
-                Filter::All,
-                &jiff::tz::TimeZone::UTC,
-            );
+            let days = group(vec![], vec![], transactions, &jiff::tz::TimeZone::UTC);
             if currency == Currency::CNY {
                 assert_eq!(days[0].spending, Some(3150));
                 assert!(days[0].foreign_spending.is_empty());
@@ -310,30 +248,25 @@ mod tests {
         let meals = vec![meal("lunch", "2026-11-13", meal_at, 300.0)];
         let transactions = vec![expense, income, transfer];
         let zone = jiff::tz::TimeZone::fixed(jiff::tz::Offset::from_hours(8).unwrap());
-        let all = group(
-            meals.clone(),
-            vec![],
-            transactions.clone(),
-            Filter::All,
-            &zone,
-        );
+        let all = group(meals, vec![], transactions, &zone);
         assert_eq!(all.len(), 1);
         assert_eq!(all[0].spending, Some(3150));
         assert!(matches!(&all[0].entries[0], Entry::Transaction(t) if t.id == "transfer"));
         assert!(matches!(&all[0].entries[1], Entry::Meal(m) if m.id == "lunch"));
         assert!(matches!(&all[0].entries[2], Entry::Transaction(t) if t.id == "expense"));
-        let only = group(
-            meals.clone(),
-            vec![],
-            transactions.clone(),
-            Filter::Transactions,
-            &zone,
+        let project = |filter| timeline::project(&all, filter, None, PAGE, &BTreeSet::new()).rows;
+        let money = project(Filter::Transactions);
+        assert_eq!(money.len(), 4);
+        assert!(
+            matches!(&money[0], timeline::Row::Header(h) if h.spending == Some(3150) && h.kcal.is_none())
         );
-        assert_eq!(only[0].entries.len(), 3);
-        assert_eq!(only[0].meals, 0);
-        assert_eq!(only[0].spending, Some(3150));
-        let meals_only = group(meals, vec![], transactions, Filter::Meals, &zone);
-        assert_eq!(meals_only[0].spending, None);
-        assert_eq!(meals_only[0].entries.len(), 1);
+        assert_eq!(money[1].key(), "transaction:transfer");
+        assert_eq!(money[2].key(), "transaction:expense");
+        let meals = project(Filter::Meals);
+        assert_eq!(meals.len(), 2);
+        assert_eq!(meals[1].key(), "meal:lunch");
+        assert!(
+            matches!(&meals[0], timeline::Row::Header(h) if h.kcal == Some(300.0) && h.spending.is_none())
+        );
     }
 }
