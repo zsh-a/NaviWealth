@@ -17,8 +17,8 @@ fn an_empty_day_explains_what_to_do() -> Result<(), String> {
 #[test]
 fn logging_without_an_account_explains_the_setup() -> Result<(), String> {
     let (mut app, _) = start(Vec::new(), None);
-    app.press("label:New entry")?;
-    app.wait_for("Connect a model to recognize entries.")?;
+    app.press("label:Conversation")?;
+    app.wait_for("Set up model")?;
     assert!(app.picks().is_empty());
     Ok(())
 }
@@ -36,6 +36,7 @@ fn a_meal_added_by_hand_counts_toward_today() -> Result<(), String> {
     app.wait_for("text:Rice")?;
     app.press("text:Breakfast")?;
     app.press("text:/^Save meal/")?;
+    app.conversation_home()?;
     // Today's own count: the review page has closed and the meal is kept.
     app.wait_for("text:1 meal")?;
     app.wait_for("text:325")?;
@@ -55,6 +56,7 @@ fn a_meal_added_by_hand_counts_toward_today() -> Result<(), String> {
     app.press("label:Rice, 325 kcal")?;
     app.press("text:Dinner")?;
     app.press("text:/^Save meal/")?;
+    app.conversation_home()?;
     app.wait_for("text:/^Dinner ·/")?;
     assert_eq!(stored_meals(dir.path())[0]["slot"], "dinner");
     Ok(())
@@ -64,7 +66,7 @@ fn a_meal_added_by_hand_counts_toward_today() -> Result<(), String> {
 fn a_photo_is_sent_only_after_consent_and_becomes_editable_foods() -> Result<(), String> {
     let stub = network(200, record_reply(vec![meal_record()]));
     let dir = tempfile::tempdir().unwrap();
-    let (mut app, _) = start_in(Some(dir.path()), account(false), Some(stub.clone()));
+    let (mut app, _) = start_legacy_in(Some(dir.path()), account(false), Some(stub.clone()));
     attach_capture(&mut app)?;
     app.wait_for("Send to your model?")?;
     app.wait_for("text:/api.anthropic.com/")?;
@@ -116,7 +118,7 @@ fn a_photo_is_sent_only_after_consent_and_becomes_editable_foods() -> Result<(),
 #[test]
 fn declining_consent_sends_nothing() -> Result<(), String> {
     let stub = network(200, record_reply(vec![meal_record()]));
-    let (mut app, _) = start(account(false), Some(stub.clone()));
+    let (mut app, _) = start_legacy(account(false), Some(stub.clone()));
     attach_capture(&mut app)?;
     app.wait_for("Send to your model?")?;
     app.press("label:Back")?;
@@ -129,7 +131,7 @@ fn declining_consent_sends_nothing() -> Result<(), String> {
 #[test]
 fn a_rejected_key_points_to_settings() -> Result<(), String> {
     let stub = network(401, json!({ "error": { "message": "invalid x-api-key" } }));
-    let (mut app, _) = start(account(true), Some(stub));
+    let (mut app, _) = start_legacy(account(true), Some(stub));
     attach_capture(&mut app)?;
     app.wait_for("The API key was rejected")?;
     assert!(app.shows("Open settings…"));
@@ -142,7 +144,7 @@ fn a_failed_whole_body_fetch_is_not_automatically_replayed() -> Result<(), Strin
     let mut reply = StubResponse::default();
     reply.error = Some("Connection reset while receiving the reply".into());
     let stub = Arc::new(StubNetwork::new([(MESSAGES.to_owned(), reply)]));
-    let (mut app, _) = start(account(true), Some(stub.clone()));
+    let (mut app, _) = start_legacy(account(true), Some(stub.clone()));
     attach_capture(&mut app)?;
     app.wait_for("Can't reach the model")?;
     assert_eq!(stub.requests().len(), 1);
@@ -245,6 +247,7 @@ fn a_recent_food_fills_the_new_food() -> Result<(), String> {
     app.press("text:Pasta")?;
     app.press("Done")?;
     app.press("text:/^Save meal/")?;
+    app.conversation_home()?;
     app.wait_for("text:2 meals")?;
     app.wait_for("text:600")?;
     let kept = stored_meals(dir.path());
@@ -267,7 +270,7 @@ fn the_api_key_is_kept_apart_from_the_settings() -> Result<(), String> {
     app.press("label:Back")?;
     app.wait_for("label:/^Recognition model, Anthropic · /")?;
     app.press("label:Back")?;
-    app.wait_for("label:New entry")?;
+    app.wait_for("label:Conversation")?;
     app.wait_for_gone("Connect a recognition model", GONE)?;
     let entries = storage.entries();
     assert_eq!(
@@ -320,6 +323,7 @@ fn more_nutrition_edits_save_and_persist() -> Result<(), String> {
     app.press("Done")?;
     app.wait_for("text:Fiber 10 g · Sugars 1 g · Sodium 6 mg · Sat. fat 1.1 g")?;
     app.press("text:/^Save meal/")?;
+    app.conversation_home()?;
     app.wait_for("text:1 meal")?;
     let kept = stored_meals(dir.path());
     let extra = &kept[0]["foods"][0]["per_100g"]["extra"];
@@ -416,7 +420,7 @@ fn settings_keep_the_goal_as_typed_without_save() -> Result<(), String> {
     app.press("label:/^Daily calorie goal, /")?;
     app.type_text("label:Daily calorie goal", "1800")?;
     app.press("label:Back")?;
-    app.wait_for("label:New entry")?;
+    app.wait_for("label:Conversation")?;
     let settings = storage
         .entries()
         .get("settings.v1")
@@ -606,12 +610,14 @@ fn failed_manual_save_preserves_the_editor_and_can_be_retried() -> Result<(), St
     app.type_text("label:Energy", "130")?;
     app.press("Done")?;
     app.press("text:/^Save meal/")?;
+    app.conversation_home()?;
     assert_eq!(dialogs.load(std::sync::atomic::Ordering::Relaxed), 1);
     assert!(stored_meals(dir.path()).is_empty());
     app.wait_for("text:Rice")?;
     assert!(app.screen().enabled("text:/^Save meal/")?);
     db.execute_batch("DROP TRIGGER reject_meal").unwrap();
     app.press("text:/^Save meal/")?;
+    app.conversation_home()?;
     app.wait_for("text:1 meal")?;
     assert_eq!(stored_meals(dir.path()).len(), 1);
     Ok(())

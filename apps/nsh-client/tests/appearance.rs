@@ -66,7 +66,7 @@ fn the_app_shows_the_appearance_the_setting_asks_for() -> Result<(), String> {
         "the choice is kept"
     );
     let (mut app, _) = start_in(Some(dir.path()), entries, None);
-    app.wait_for("label:New entry")?;
+    app.wait_for("label:Conversation")?;
     assert!(
         app.screen().sent(&bar(StatusBarStyle::Light)),
         "the kept dark choice applies at start"

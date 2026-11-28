@@ -41,6 +41,7 @@ pub enum Icon {
     ChevronDown,
     Close,
     Send,
+    Conversation,
     /// The dock's filled glyphs: solid shapes read on glass at 24 pt.
     TabToday,
     TabRecords,
@@ -132,6 +133,9 @@ impl Icon {
                 r#"<rect x="4" y="5" width="16" height="15" rx="3.5"/><path d="M4 10h16M8.5 3.5v3M15.5 3.5v3"/>"#
             }
             Icon::ChevronDown => r#"<path d="M6.5 9.5L12 15l5.5-5.5"/>"#,
+            Icon::Conversation => {
+                r#"<path d="M6 4h12a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-7l-6 3v-3a3 3 0 0 1-2-3V7a3 3 0 0 1 3-3Z"/><path d="M7 9h10M7 13h6"/>"#
+            }
             Icon::Send => r#"<path d="M12 19V5M5.5 11.5L12 5l6.5 6.5"/>"#,
             Icon::TabToday => {
                 r#"<g fill="currentColor" stroke="none"><rect x="6.6" y="2.4" width="2.3" height="4.2" rx="1.15"/><rect x="15.1" y="2.4" width="2.3" height="4.2" rx="1.15"/><path fill-rule="evenodd" d="M6.6 4.6h10.8A3.6 3.6 0 0 1 21 8.2v9.2a3.6 3.6 0 0 1-3.6 3.6H6.6A3.6 3.6 0 0 1 3 17.4V8.2a3.6 3.6 0 0 1 3.6-3.6ZM3 9.3h18v1.3H3ZM12 17.3a2.1 2.1 0 1 0 0-4.2 2.1 2.1 0 0 0 0 4.2Z"/></g>"#

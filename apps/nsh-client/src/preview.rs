@@ -512,11 +512,13 @@ pub fn apply() {
                         id: "preview-user".into(),
                         role: store::Role::User,
                         text: "Record lunch for 35 CNY.".into(),
+                        ..Default::default()
                     },
                     store::Message {
                         id: "preview-assistant".into(),
                         role: store::Role::Assistant,
                         text: "Review the lunch record and choose its account.".into(),
+                        ..Default::default()
                     },
                 ],
                 created_at_ms: now,

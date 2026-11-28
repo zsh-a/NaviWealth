@@ -241,7 +241,7 @@ pub(super) static STRINGS: Strings = Strings {
     resting: "静息",
     todays_records: "今天的记录",
     spent_today: "今日支出",
-    intake_hint: "点 + 描述或拍下一餐",
+    intake_hint: "在对话里描述或拍下一餐",
     capture_choose_category: "选择分类",
     all_records: "全部",
     show_earlier: "显示更早",

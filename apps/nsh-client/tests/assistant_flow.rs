@@ -17,6 +17,9 @@ use std::{
 enum Reply {
     Tool(&'static str, &'static str, Value),
     Text(&'static str),
+    Revise(Value),
+    ReviseAndRead(Value),
+    Batch(Vec<(&'static str, &'static str, Value)>),
     /// Keep the model request outstanding while the user presses Stop.
     Wait,
 }
@@ -56,7 +59,7 @@ impl Provider {
                     .set_read_timeout(Some(Duration::from_secs(3)))
                     .unwrap();
                 let request = read_request(&mut stream);
-                seen.lock().unwrap().push(request);
+                seen.lock().unwrap().push(request.clone());
                 notify.notify_all();
                 let reply = replies.pop_front().expect("no unexpected model requests");
                 if matches!(reply, Reply::Wait) {
@@ -65,6 +68,27 @@ impl Provider {
                     held.push(stream);
                     continue;
                 }
+                let batch = matches!(&reply, Reply::ReviseAndRead(_));
+                let reply = match reply {
+                    Reply::Revise(proposal) | Reply::ReviseAndRead(proposal) => {
+                        let system = request["messages"][0]["content"].as_str().unwrap();
+                        let context = system
+                            .lines()
+                            .filter_map(|line| serde_json::from_str::<Value>(line).ok())
+                            .find(|value| value.get("pending_record_drafts").is_some())
+                            .unwrap();
+                        let args = json!({"capture_id":context["pending_record_drafts"][0]["capture_id"],"proposal":proposal});
+                        if batch {
+                            Reply::Batch(vec![
+                                ("call-revise", "revise_record", args),
+                                ("call-read", "read_records", json!({"kind":"weights"})),
+                            ])
+                        } else {
+                            Reply::Tool("call-revise", "revise_record", args)
+                        }
+                    }
+                    other => other,
+                };
                 let body = sse(reply);
                 let response = format!(
                     "HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
@@ -90,7 +114,7 @@ impl Provider {
                 "provider":"open_ai_compatible", "base_url":self.base, "model":"assistant-fixture"
             }}).to_string()),
             ("secret.model-key.v1".into(), "synthetic-owner-key".into()),
-            ("assistant.consent.v1".into(), json!([fingerprint]).to_string()),
+            ("assistant.consent.v2".into(), json!([fingerprint]).to_string()),
         ]
     }
 
@@ -162,7 +186,11 @@ fn sse(reply: Reply) -> String {
             "tool_calls",
         ),
         Reply::Text(text) => (json!({"role":"assistant","content":text}), "stop"),
-        Reply::Wait => unreachable!(),
+        Reply::Batch(calls) => (
+            json!({"role":"assistant","tool_calls":calls.into_iter().enumerate().map(|(index,(id,name,args))|json!({"index":index,"id":id,"type":"function","function":{"name":name,"arguments":args.to_string()}})).collect::<Vec<_>>()}),
+            "tool_calls",
+        ),
+        Reply::Wait | Reply::Revise(_) | Reply::ReviseAndRead(_) => unreachable!(),
     };
     let chunk = |delta: Value, reason: Option<&str>| {
         json!({
@@ -197,7 +225,7 @@ fn settle() {
 }
 
 fn send(app: &mut Headless, text: &str) -> Result<(), String> {
-    app.type_text("label:Message Assistant", text)?;
+    app.type_text("label:Message", text)?;
     app.press("label:Send message")
 }
 
@@ -219,7 +247,7 @@ fn confirmed_memory_is_recalled_by_a_new_conversation_after_restart() -> Result<
     ]);
     let dir = tempfile::tempdir().unwrap();
     let (mut app, storage) = start_in(Some(dir.path()), provider.account(), None);
-    app.press("text:Assistant")?;
+    app.press("label:Conversation")?;
     send(&mut app, "Remember that I prefer vegetarian lunches.")?;
     app.wait_for("Please review the memory suggestion.")?;
     app.wait_for_gone("text:Stop", GONE)?;
@@ -233,7 +261,7 @@ fn confirmed_memory_is_recalled_by_a_new_conversation_after_restart() -> Result<
         "tool loop continued through real HTTP"
     );
     app.press("text:Save memory")?;
-    app.wait_for("Proposal confirmed")?;
+    app.wait_for("Memory saved")?;
     let memories = records(dir.path(), "assistant_memories");
     assert_eq!(memories.len(), 1);
     assert_eq!(memories[0]["text"], "Prefer vegetarian lunches.");
@@ -245,7 +273,7 @@ fn confirmed_memory_is_recalled_by_a_new_conversation_after_restart() -> Result<
     let entries = storage.entries().into_iter().collect();
     drop(app);
     let (mut app, _) = start_in(Some(dir.path()), entries, None);
-    app.press("text:Assistant")?;
+    app.press("label:Conversation")?;
     app.wait_for("Please review the memory suggestion.")?;
     settle();
     assert_eq!(
@@ -253,7 +281,7 @@ fn confirmed_memory_is_recalled_by_a_new_conversation_after_restart() -> Result<
         2,
         "restart does not replay completed work"
     );
-    app.press("label:New conversation")?;
+    app.press("text:New conversation")?;
     send(&mut app, "What lunch preference did I save?")?;
     app.wait_for("Your saved preference is vegetarian lunches.")?;
     app.wait_for_gone("text:Stop", GONE)?;
@@ -284,11 +312,9 @@ fn cancelling_after_a_proposal_preserves_one_unapproved_action_across_restart() 
     ]);
     let dir = tempfile::tempdir().unwrap();
     let (mut app, storage) = start_in(Some(dir.path()), provider.account(), None);
-    app.press("text:Assistant")?;
+    app.press("label:Conversation")?;
     send(&mut app, "Remember to walk for short trips.")?;
-    app.wait_until("provider continuation", GONE, |_| {
-        provider.requests().len() == 2
-    })?;
+    provider.wait_for_requests(2)?;
     app.press("text:Stop")?;
     app.wait_for_gone("text:Stop", GONE)?;
     let before = records(dir.path(), "assistant_sessions");
@@ -298,7 +324,7 @@ fn cancelling_after_a_proposal_preserves_one_unapproved_action_across_restart() 
     let entries = storage.entries().into_iter().collect();
     drop(app);
     let (mut app, _) = start_in(Some(dir.path()), entries, None);
-    app.press("text:Assistant")?;
+    app.press("label:Conversation")?;
     app.wait_for("Walk for short trips.")?;
     settle();
     assert_eq!(provider.requests().len(), 2);
@@ -308,7 +334,7 @@ fn cancelling_after_a_proposal_preserves_one_unapproved_action_across_restart() 
     );
     assert!(records(dir.path(), "assistant_memories").is_empty());
     app.press("text:Save memory")?;
-    app.wait_for("Proposal confirmed")?;
+    app.wait_for("Memory saved")?;
     assert_eq!(records(dir.path(), "assistant_memories").len(), 1);
     assert_eq!(
         provider.requests().len(),
@@ -337,13 +363,14 @@ fn legacy_text_proposal_still_opens_as_an_unsent_draft_after_upgrade() -> Result
         storage.entries().into_iter().collect(),
         None,
     );
-    app.press("text:Assistant")?;
+    app.press("label:Conversation")?;
     app.press("text:Open record draft")?;
     settle();
-    let drafts = records(dir.path(), "capture_drafts");
-    assert_eq!(drafts.len(), 1);
-    assert_eq!(drafts[0]["input"], "Lunch cost 20 CNY, paid in cash.");
-    assert_eq!(drafts[0]["status"], "Editing");
+    assert!(records(dir.path(), "capture_drafts").is_empty());
+    assert_eq!(
+        records(dir.path(), "assistant_sessions")[0]["composer"],
+        "Lunch cost 20 CNY, paid in cash."
+    );
     assert!(
         navi_finance::repository::transactions(&db)
             .unwrap()
@@ -365,11 +392,11 @@ fn structured_records_survive_restart_then_edit_save_and_undo_without_recognitio
             "call-structured",
             "propose_record",
             json!({
-                "text":"Lunch cost 35 CNY and I ate beef noodles with rice.",
-                "records":[money,meal]
+                "text":"Lunch cost 35 CNY and I ate beef noodles with rice.","records":[money,meal]
             }),
         ),
-        Reply::Text("The records are ready to review."),
+        Reply::Text("This draft is still pending; we can keep talking."),
+        Reply::Text("The meal and payment were saved."),
     ]);
     let dir = tempfile::tempdir().unwrap();
     let (mut app, storage) = start_in(Some(dir.path()), provider.account(), None);
@@ -378,48 +405,31 @@ fn structured_records_survive_restart_then_edit_save_and_undo_without_recognitio
     app.type_text("label:Account name", "Cash")?;
     app.press("Create account")?;
     app.wait_for("Account added")?;
-    app.press("label:Today")?;
-    app.press("text:Assistant")?;
+    app.press("label:Conversation")?;
     send(
         &mut app,
         "Record lunch 35 CNY and the noodles and rice I ate.",
     )?;
-    app.wait_for("The records are ready to review.")?;
+    app.wait_for("Review before saving")?;
     app.wait_for_gone("text:Stop", GONE)?;
-    let pending = records(dir.path(), "assistant_sessions")[0]["pending"].clone();
-    assert_eq!(pending[0]["kind"]["kind"], "records");
-    assert!(records(dir.path(), "capture_drafts").is_empty());
+    assert_eq!(
+        provider.requests().len(),
+        1,
+        "record card ends this model turn"
+    );
+    let draft = records(dir.path(), "capture_drafts")[0].clone();
     assert!(stored_meals(dir.path()).is_empty());
+    send(&mut app, "Can we keep talking while I check this?")?;
+    app.wait_for("This draft is still pending; we can keep talking.")?;
+    app.wait_for_gone("text:Stop", GONE)?;
+    assert_eq!(records(dir.path(), "capture_drafts")[0], draft);
     let entries = storage.entries().into_iter().collect();
     drop(app);
     let (mut app, _) = start_in(Some(dir.path()), entries, None);
-    app.press("text:Assistant")?;
-    app.wait_for("text:Review and edit")?;
-    assert_eq!(
-        records(dir.path(), "assistant_sessions")[0]["pending"],
-        pending
-    );
-    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
-    // Opening a draft and consuming its proposal are one SQLite transaction.
-    db.execute_batch("CREATE TRIGGER reject_confirmation BEFORE UPDATE ON assistant_sessions BEGIN SELECT RAISE(ABORT,'disk failure'); END;").unwrap();
-    app.press("text:Review and edit")?;
-    settle();
-    assert!(records(dir.path(), "capture_drafts").is_empty());
-    assert_eq!(
-        records(dir.path(), "assistant_sessions")[0]["pending"],
-        pending
-    );
-    db.execute_batch("DROP TRIGGER reject_confirmation")
-        .unwrap();
-    app.press("text:Review and edit")?;
+    app.press("label:Conversation")?;
     app.wait_for("Which account was used?")?;
-    assert!(!app.shows("text:/^Confirm and save/"));
-    assert_eq!(records(dir.path(), "capture_drafts").len(), 1);
-    assert!(
-        navi_finance::repository::transactions(&db)
-            .unwrap()
-            .is_empty()
-    );
+    assert_eq!(provider.requests().len(), 2, "restart does not replay work");
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
     app.press("label:Account, Choose account")?;
     app.press("label:Cash, Bank account · CNY")?;
     app.wait_for("label:Account, Cash")?;
@@ -427,8 +437,20 @@ fn structured_records_survive_restart_then_edit_save_and_undo_without_recognitio
     app.clear("label:Amount")?;
     app.type_text("label:Amount", "35.05")?;
     app.press("Done")?;
-    app.wait_for("Confirm and save (2)")?;
-    app.press("Confirm and save (2)")?;
+    // The business write and conversation receipt must roll back together.
+    db.execute_batch("CREATE TRIGGER reject_confirmation BEFORE UPDATE ON assistant_sessions BEGIN SELECT RAISE(ABORT,'disk failure'); END;").unwrap();
+    app.press("text:Confirm and save")?;
+    settle();
+    assert!(stored_meals(dir.path()).is_empty());
+    assert!(
+        navi_finance::repository::transactions(&db)
+            .unwrap()
+            .is_empty()
+    );
+    assert_eq!(records(dir.path(), "capture_drafts").len(), 1);
+    db.execute_batch("DROP TRIGGER reject_confirmation")
+        .unwrap();
+    app.press("text:Confirm and save")?;
     app.wait_for("Saved 2 records")?;
     let saved = navi_finance::repository::transactions(&db).unwrap();
     assert_eq!(saved.len(), 1);
@@ -438,7 +460,20 @@ fn structured_records_survive_restart_then_edit_save_and_undo_without_recognitio
     );
     assert_eq!(stored_meals(dir.path()).len(), 1);
     assert!(records(dir.path(), "capture_drafts").is_empty());
-    app.press("Undo")?;
+    assert_eq!(
+        records(dir.path(), "assistant_sessions")[0]["record_actions"][0]["status"],
+        "saved"
+    );
+    send(&mut app, "Did I save these records?")?;
+    app.wait_for("The meal and payment were saved.")?;
+    app.wait_for_gone("text:Stop", GONE)?;
+    assert!(
+        provider.requests()[2]["messages"][0]["content"]
+            .as_str()
+            .unwrap()
+            .contains("record_actions")
+    );
+    app.press("text:Undo")?;
     app.wait_for("Save undone")?;
     assert!(
         navi_finance::repository::transactions(&db)
@@ -447,9 +482,13 @@ fn structured_records_survive_restart_then_edit_save_and_undo_without_recognitio
     );
     assert!(stored_meals(dir.path()).is_empty());
     assert_eq!(
+        records(dir.path(), "assistant_sessions")[0]["record_actions"][0]["status"],
+        "undone"
+    );
+    assert_eq!(
         provider.requests().len(),
-        2,
-        "review, edit, save and Undo make no recognition request"
+        3,
+        "review, edit, save and Undo make no model request"
     );
     Ok(())
 }
@@ -467,7 +506,7 @@ fn aggregate_tools_continue_the_real_provider_loop_and_preserve_missing_data() -
         Reply::Text("There are no logged observations for these periods."),
     ]);
     let (mut app, _) = start(provider.account(), None);
-    app.press("text:Assistant")?;
+    app.press("label:Conversation")?;
     send(&mut app, "Review my finances and health.")?;
     app.wait_for("There are no logged observations for these periods.")?;
     app.wait_for_gone("text:Stop", GONE)?;
@@ -506,11 +545,11 @@ fn seed_long_history(dir: &Path) -> Vec<Value> {
     let pair = session["history"].as_array().unwrap().clone();
     assert_eq!(pair.len(), 2);
     let mut history = Vec::new();
-    for index in 0..14 {
+    for index in 0..12 {
         let mut user = pair[0].clone();
         user["content"] = json!(format!(
             "Earlier turn {index}: travel choice is a red bicycle. {}",
-            "past details ".repeat(800)
+            "past details ".repeat(700)
         ));
         history.push(user);
         history.push(pair[1].clone());
@@ -537,7 +576,7 @@ fn long_conversation_summary_survives_restart_without_replaying_or_resummarizing
     ]);
     let dir = tempfile::tempdir().unwrap();
     let (mut app, storage) = start_in(Some(dir.path()), provider.account(), None);
-    app.press("text:Assistant")?;
+    app.press("label:Conversation")?;
     send(&mut app, "Start a conversation about travel.")?;
     app.wait_for("Initial conversation saved.")?;
     app.wait_for_gone("text:Stop", GONE)?;
@@ -545,7 +584,7 @@ fn long_conversation_summary_survives_restart_without_replaying_or_resummarizing
     drop(app);
     let original = seed_long_history(dir.path());
     let (mut app, _) = start_in(Some(dir.path()), entries.clone(), None);
-    app.press("text:Assistant")?;
+    app.press("label:Conversation")?;
     send(&mut app, "Continue our travel plan.")?;
     app.wait_for("We can continue using your earlier travel choice.")?;
     app.wait_for_gone("text:Stop", GONE)?;
@@ -592,7 +631,7 @@ fn long_conversation_summary_survives_restart_without_replaying_or_resummarizing
     );
     drop(app);
     let (mut app, _) = start_in(Some(dir.path()), entries, None);
-    app.press("text:Assistant")?;
+    app.press("label:Conversation")?;
     settle();
     assert_eq!(
         provider.requests().len(),
@@ -620,10 +659,12 @@ fn stopping_during_summary_does_not_publish_it_or_resume_it_after_restart() -> R
     let provider = Provider::new(vec![
         Reply::Text("Initial conversation saved."),
         Reply::Wait,
+        Reply::Text("Earlier travel plans kept intact."),
+        Reply::Text("Continued after your explicit retry."),
     ]);
     let dir = tempfile::tempdir().unwrap();
     let (mut app, storage) = start_in(Some(dir.path()), provider.account(), None);
-    app.press("text:Assistant")?;
+    app.press("label:Conversation")?;
     send(&mut app, "Start a conversation about travel.")?;
     app.wait_for("Initial conversation saved.")?;
     app.wait_for_gone("text:Stop", GONE)?;
@@ -631,7 +672,7 @@ fn stopping_during_summary_does_not_publish_it_or_resume_it_after_restart() -> R
     drop(app);
     let original = seed_long_history(dir.path());
     let (mut app, _) = start_in(Some(dir.path()), entries.clone(), None);
-    app.press("text:Assistant")?;
+    app.press("label:Conversation")?;
     send(&mut app, "Continue our travel plan.")?;
     app.wait_for("Summarizing earlier conversation…")?;
     provider.wait_for_requests(2)?;
@@ -646,7 +687,7 @@ fn stopping_during_summary_does_not_publish_it_or_resume_it_after_restart() -> R
     );
     drop(app);
     let (mut app, _) = start_in(Some(dir.path()), entries, None);
-    app.press("text:Assistant")?;
+    app.press("label:Conversation")?;
     settle();
     assert_eq!(provider.requests().len(), 2);
     assert_eq!(
@@ -654,6 +695,16 @@ fn stopping_during_summary_does_not_publish_it_or_resume_it_after_restart() -> R
         "interrupted"
     );
     assert!(records(dir.path(), "assistant_memories").is_empty());
+    app.press("text:Retry")?;
+    app.wait_for("Continued after your explicit retry.")?;
+    app.wait_for_gone("text:Stop", GONE)?;
+    let retried = records(dir.path(), "assistant_sessions").remove(0);
+    assert_eq!(
+        &retried["history"].as_array().unwrap()[..original.len()],
+        original.as_slice(),
+        "summary cancellation did not append a user turn, so retry must not truncate the last completed turn"
+    );
+    assert_eq!(provider.requests().len(), 4);
     Ok(())
 }
 
@@ -671,7 +722,7 @@ fn a_tool_call_in_a_summary_is_discarded_and_never_reaches_host_confirmation() -
     ]);
     let dir = tempfile::tempdir().unwrap();
     let (mut app, storage) = start_in(Some(dir.path()), provider.account(), None);
-    app.press("text:Assistant")?;
+    app.press("label:Conversation")?;
     send(&mut app, "Start a conversation about travel.")?;
     app.wait_for("Initial conversation saved.")?;
     app.wait_for_gone("text:Stop", GONE)?;
@@ -679,7 +730,7 @@ fn a_tool_call_in_a_summary_is_discarded_and_never_reaches_host_confirmation() -
     drop(app);
     let original = seed_long_history(dir.path());
     let (mut app, _) = start_in(Some(dir.path()), entries, None);
-    app.press("text:Assistant")?;
+    app.press("label:Conversation")?;
     send(&mut app, "Continue our travel plan.")?;
     app.wait_for("Continuing with the recent conversation.")?;
     app.wait_for_gone("text:Stop", GONE)?;
@@ -700,5 +751,195 @@ fn a_tool_call_in_a_summary_is_discarded_and_never_reaches_host_confirmation() -
     assert!(records(dir.path(), "assistant_memories").is_empty());
     assert!(records(dir.path(), "capture_drafts").is_empty());
     assert_eq!(provider.requests().len(), 3);
+    Ok(())
+}
+
+#[test]
+fn image_questions_restart_revision_and_receipt_share_one_conversation() -> Result<(), String> {
+    let mut meal = meal_record();
+    meal.as_object_mut().unwrap().remove("evidence");
+    meal["meal"]["source_image"] = json!(1);
+    let mut revised = meal.clone();
+    revised["meal"]["foods"][0]["name"] = json!("Half portion noodles");
+    let provider = Provider::new(vec![
+        Reply::Tool(
+            "call-question",
+            "ask_user",
+            json!({"questions":[{
+                "id":"portion","text":"Did you eat the whole portion?","reason":"This changes the estimated amount.","required":true,
+                "options":[{"id":"half","label":"Half the portion","description":"About half was eaten"},{"id":"all","label":"All of it","description":"The whole meal"}]
+            }]}),
+        ),
+        Reply::Tool(
+            "call-photo",
+            "propose_record",
+            json!({"text":"Meal estimated from your photo.","records":[meal]}),
+        ),
+        Reply::Revise(json!({"text":"Updated the portion in your draft.","records":[revised]})),
+        Reply::Text("You can continue this conversation after saving."),
+    ]);
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, storage) = start_in(Some(dir.path()), provider.account(), None);
+    picks_a_photo(&mut app);
+    app.press("label:Conversation")?;
+    app.press("label:Attach or add manually")?;
+    app.press("text:Add photos")?;
+    app.wait_for("label:Remove photo")?;
+    app.press("label:Send message")?;
+    app.wait_for("Did you eat the whole portion?")?;
+    app.wait_for_gone("text:Stop", GONE)?;
+    assert_eq!(provider.requests().len(), 1);
+    app.press("label:Half the portion")?;
+    let before = records(dir.path(), "assistant_sessions")[0].clone();
+    assert_eq!(
+        before["pending"][0]["kind"]["answers"][0]["option_id"],
+        "half"
+    );
+    assert!(
+        !before["history"].to_string().contains("base64"),
+        "provider history must not persist encoded images"
+    );
+    let entries = storage.entries().into_iter().collect();
+    drop(app);
+    let (mut app, _) = start_in(Some(dir.path()), entries, None);
+    app.press("label:Conversation")?;
+    app.wait_for("Did you eat the whole portion?")?;
+    app.press("text:Continue")?;
+    app.wait_for("Review before saving")?;
+    app.wait_for_gone("text:Stop", GONE)?;
+    assert_eq!(provider.requests().len(), 2);
+    let second = provider.requests()[1].clone();
+    assert!(
+        second["messages"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|message| message["role"] == "user"
+                && message["content"].to_string().contains("image_url"))
+    );
+    assert!(second["messages"].to_string().contains("Half the portion"));
+    let first_draft = records(dir.path(), "capture_drafts")[0].clone();
+    assert!(
+        !first_draft["transcript"][0]["Owner"]["images"]
+            .as_array()
+            .unwrap()
+            .is_empty()
+    );
+    send(
+        &mut app,
+        "Actually the noodles were half a portion; correct that card.",
+    )?;
+    app.wait_for("Half portion noodles")?;
+    app.wait_for_gone("text:Stop", GONE)?;
+    let updated = records(dir.path(), "capture_drafts");
+    assert_eq!(updated.len(), 1);
+    assert_eq!(updated[0]["id"], first_draft["id"]);
+    app.press("text:Confirm and save")?;
+    app.wait_for("Saved 1 record")?;
+    assert_eq!(stored_meals(dir.path()).len(), 1);
+    send(&mut app, "Thanks, can we continue?")?;
+    app.wait_for("You can continue this conversation after saving.")?;
+    app.wait_for_gone("text:Stop", GONE)?;
+    assert_eq!(records(dir.path(), "assistant_sessions").len(), 1);
+    assert_eq!(provider.requests().len(), 4);
+    assert!(
+        !provider.requests()[3]["messages"]
+            .to_string()
+            .contains("image_url"),
+        "automatically carried images do not turn every future message into another image upload"
+    );
+    Ok(())
+}
+
+#[test]
+fn image_only_interruption_retries_one_user_turn_and_creates_one_card() -> Result<(), String> {
+    let mut meal = meal_record();
+    meal.as_object_mut().unwrap().remove("evidence");
+    meal["meal"]["source_image"] = json!(1);
+    let provider = Provider::new(vec![
+        Reply::Wait,
+        Reply::Tool(
+            "call-retry",
+            "propose_record",
+            json!({"text":"Your meal draft is ready.","records":[meal]}),
+        ),
+    ]);
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, _) = start_in(Some(dir.path()), provider.account(), None);
+    picks_a_photo(&mut app);
+    app.press("label:Conversation")?;
+    app.press("label:Attach or add manually")?;
+    app.press("text:Add photos")?;
+    app.wait_for("label:Remove photo")?;
+    app.press("label:Send message")?;
+    provider.wait_for_requests(1)?;
+    app.press("text:Stop")?;
+    app.wait_for_gone("text:Stop", GONE)?;
+    app.press("text:Retry")?;
+    app.wait_for("Review before saving")?;
+    app.wait_for_gone("text:Stop", GONE)?;
+    let requests = provider.requests();
+    assert_eq!(requests.len(), 2);
+    let users = |request: &Value| {
+        request["messages"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|m| m["role"] == "user")
+            .cloned()
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(
+        users(&requests[0]),
+        users(&requests[1]),
+        "retry preserves the exact photo turn without duplicating it"
+    );
+    assert_eq!(records(dir.path(), "capture_drafts").len(), 1);
+    assert!(stored_meals(dir.path()).is_empty());
+    let session = records(dir.path(), "assistant_sessions").remove(0);
+    assert_eq!(
+        session["messages"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|m| m["role"] == "user")
+            .count(),
+        1
+    );
+    app.press("text:Confirm and save")?;
+    app.wait_for("Saved 1 record")?;
+    assert_eq!(stored_meals(dir.path()).len(), 1);
+    Ok(())
+}
+
+#[test]
+fn retry_after_applied_revision_does_not_apply_a_relative_correction_twice() -> Result<(), String> {
+    let proposal = |kg: f64| json!({"text":"Weight draft updated.","records":[{"kind":"weight","day":today().to_string(),"weight_kg":kg,"money":null,"meal":null,"slot":null,"trade":null,"balance":null,"price":null,"note":null}]});
+    let provider = Provider::new(vec![
+        Reply::Tool("call-create", "propose_record", proposal(80.0)),
+        Reply::ReviseAndRead(proposal(40.0)),
+        Reply::Wait,
+        Reply::Revise(proposal(20.0)),
+    ]);
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, _) = start_in(Some(dir.path()), provider.account(), None);
+    app.press("label:Conversation")?;
+    send(&mut app, "Record weight 80 kg")?;
+    app.wait_for("Review before saving")?;
+    app.wait_for_gone("text:Stop", GONE)?;
+    send(&mut app, "Actually halve that number")?;
+    provider.wait_for_requests(3)?;
+    app.press("text:Stop")?;
+    app.wait_for_gone("text:Stop", GONE)?;
+    let applied = records(dir.path(), "capture_drafts")[0].clone();
+    assert_eq!(applied["records"][0]["Weight"]["kg"], 40.0);
+    app.press("text:Retry")?;
+    app.wait_for_gone("text:Stop", GONE)?;
+    assert_eq!(
+        records(dir.path(), "capture_drafts"),
+        vec![applied],
+        "same owner message must never halve the draft a second time"
+    );
+    assert_eq!(provider.requests().len(), 4);
     Ok(())
 }

@@ -412,8 +412,8 @@ fn opening_price_partial_sale_and_cash_survive_restart_without_double_counting()
     app.back()?;
     app.wait_for_gone("task-sheet", GONE)?;
     app.wait_for("label:/^Index ETF, ¥50.00/")?;
-    app.press("label:New entry")?;
-    app.wait_for("What would you like to record?")?;
+    app.press("label:Conversation")?;
+    app.wait_for("label:Message")?;
     Ok(())
 }
 

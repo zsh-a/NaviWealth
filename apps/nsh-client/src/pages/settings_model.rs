@@ -318,6 +318,7 @@ fn test_row(test: Signal<Test>, run: impl Fn() + 'static) -> impl IntoElement {
 fn capture_preferences(account: ModelAccount) -> impl IntoElement {
     use crate::i18n::capture_options::copy;
     use crate::ui::toggle::bound_switch;
+    let legacy = use_context::<crate::LegacyCaptureMode>().is_some();
     let account = stored(account);
     let options = move || account.with(|a| settings::capture_options(a));
     let typed = signal(options().preview_model);
@@ -328,10 +329,11 @@ fn capture_preferences(account: ModelAccount) -> impl IntoElement {
         .p(px(space::CARD))
         .gap_2()
         .child(
-            text(|| copy().options)
+            text(move || if legacy { copy().options } else { crate::i18n::catalog::copy("Conversation", "对话") })
                 .typo(Type::Headline)
                 .text_color(color::INK),
         )
+        .child(legacy.then(|| view()
         .child(bound_switch(
             move || options().live_text,
             move |on| account.with(|a| settings::save_capture_options(a, |o| o.live_text = on)),
@@ -378,6 +380,11 @@ fn capture_preferences(account: ModelAccount) -> impl IntoElement {
                     })
             },
         ))
+))
+        .child((!legacy).then(|| text(|| crate::i18n::catalog::copy(
+            "Unsent messages and photos stay on this device. They are sent only when you press Send.",
+            "未发送的消息和照片保留在本机，只有点击发送才会发送给模型。"
+        )).typo(Type::Caption).text_color(color::MUTED)))
         .child(bound_switch(
             move || options().recent_context,
             move |on| {

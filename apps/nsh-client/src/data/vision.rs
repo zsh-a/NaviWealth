@@ -14,7 +14,7 @@ use serde_json::json;
 
 use super::meals::new_food_id;
 use crate::domain::{
-    ProviderError, VisionFailure,
+    ProviderError, ResponseFailure, VisionFailure,
     account::{ModelAccount, Provider},
 };
 
@@ -126,33 +126,52 @@ fn recognition_failure(error: RecognitionError) -> VisionFailure {
         RecognitionError::Refused => VisionFailure::Refused,
         RecognitionError::Photo(_) => VisionFailure::Photo,
         RecognitionError::Consent(_) => VisionFailure::Refused,
-        _ => VisionFailure::Unreadable,
+        RecognitionError::NoJson => VisionFailure::Response(ResponseFailure::Json),
+        RecognitionError::Context => VisionFailure::Response(ResponseFailure::Request),
+        _ => VisionFailure::Response(ResponseFailure::Records),
     }
 }
 
 fn llm_failure(error: LlmError) -> VisionFailure {
     let code = error.record.code.as_str();
-    // Runtime codes are bounded classifications, never response content. Keep
-    // enough detail to distinguish provider errors from structured-output failures.
-    let safe_code: String = code
-        .chars()
-        .filter(|c| c.is_ascii_alphanumeric() || *c == '_')
-        .take(80)
-        .collect();
-    log::warn!("vision: model request failed (code={safe_code})");
+    // Only allowlisted classifications and a validated HTTP status reach UI/logs.
     let status = error
         .record
         .details
         .get("status")
         .and_then(serde_json::Value::as_u64)
+        .filter(|status| (400..600).contains(status))
         .unwrap_or(0) as u16;
+    let detail = match code {
+        "recognition_invalid_json" => Some(ResponseFailure::Json),
+        "recognition_schema_mismatch" => Some(ResponseFailure::Schema),
+        "recognition_invalid_response" => Some(ResponseFailure::Protocol),
+        "recognition_invalid_tool" => Some(ResponseFailure::Tool),
+        "recognition_output_limit" => Some(ResponseFailure::OutputLimit),
+        "provider_stream_incomplete" => Some(ResponseFailure::Stream),
+        "recognition_configuration" | "recognition_invalid_schema" => {
+            Some(ResponseFailure::Configuration)
+        }
+        "recognition_invalid_request" | "recognition_invalid_content" => {
+            Some(ResponseFailure::Request)
+        }
+        "recognition_unsupported_call_id"
+        | "recognition_invalid_history"
+        | "recognition_unanswered_tool" => Some(ResponseFailure::History),
+        "recognition_cancelled" => Some(ResponseFailure::Cancelled),
+        _ => None,
+    };
+    if let Some(detail) = detail {
+        log::warn!("vision: model request failed (code={})", detail.code());
+        return VisionFailure::Response(detail);
+    }
     if code.contains("timeout") {
         return VisionFailure::Timeout;
     }
     if code.contains("refusal") || code.contains("content_filter") {
         return VisionFailure::Refused;
     }
-    if code == "provider_stream_incomplete" {
+    if code == "provider_output_truncated" {
         return VisionFailure::Truncated;
     }
     if code.contains("network")
@@ -166,14 +185,13 @@ fn llm_failure(error: LlmError) -> VisionFailure {
         403 => ProviderError::Forbidden,
         404 => ProviderError::NotFound,
         429 => ProviderError::RateLimited,
-        503 | 529 => ProviderError::Overloaded,
         500..=599 => ProviderError::Server(status),
         400..=499 => ProviderError::Rejected {
             status,
             message: "The model rejected the request. Check the account and image support.".into(),
         },
         _ if code.contains("rate_limit") => ProviderError::RateLimited,
-        _ => ProviderError::Decode,
+        _ => return VisionFailure::Response(ResponseFailure::Provider),
     };
     VisionFailure::Provider(problem)
 }
@@ -234,12 +252,14 @@ fn capture_response(
                 .metadata
                 .get("anthropic_content")
                 .cloned()
-                .ok_or(VisionFailure::Unreadable)?;
-            let blocks: Vec<ContentBlock> =
-                serde_json::from_value(original.clone()).map_err(|_| VisionFailure::Unreadable)?;
+                .ok_or(VisionFailure::Response(ResponseFailure::Protocol))?;
+            let blocks: Vec<ContentBlock> = serde_json::from_value(original.clone())
+                .map_err(|_| VisionFailure::Response(ResponseFailure::Protocol))?;
             let mut call = None;
             for block in &blocks {
-                block.validate().map_err(|_| VisionFailure::Unreadable)?;
+                block
+                    .validate()
+                    .map_err(|_| VisionFailure::Response(ResponseFailure::Protocol))?;
                 match block {
                     ContentBlock::ToolUse { id, name, input }
                         if name == "ask_user" && call.is_none() =>
@@ -249,12 +269,12 @@ fn capture_response(
                     ContentBlock::Text { .. }
                     | ContentBlock::Thinking { .. }
                     | ContentBlock::RedactedThinking { .. } => {}
-                    _ => return Err(VisionFailure::Unreadable),
+                    _ => return Err(VisionFailure::Response(ResponseFailure::Protocol)),
                 }
             }
-            let (id, input) = call.ok_or(VisionFailure::Unreadable)?;
+            let (id, input) = call.ok_or(VisionFailure::Response(ResponseFailure::Protocol))?;
             let mut request = capture::AskUser::parse(id, input, original)
-                .map_err(|_| VisionFailure::Unreadable)?;
+                .map_err(|_| VisionFailure::Response(ResponseFailure::Questions))?;
             request.provider_output = provider_output;
             Ok(CaptureResponse::AskUser { request, model })
         }
@@ -267,16 +287,16 @@ fn capture_response(
                 .and_then(serde_json::Value::as_array)
                 .is_some_and(|blocks| blocks.iter().any(|block| block["type"] == "tool_use"))
             {
-                return Err(VisionFailure::Unreadable);
+                return Err(VisionFailure::Response(ResponseFailure::Protocol));
             }
             let reply = response
                 .object
                 .map(|v| v.to_string())
                 .unwrap_or(response.content);
-            let (records, questions) =
-                capture::parse(&reply).map_err(|_| VisionFailure::Unreadable)?;
+            let (records, questions) = capture::parse(&reply)
+                .map_err(|_| VisionFailure::Response(ResponseFailure::Records))?;
             if !capture::valid_meal_image_numbers(&records, image_count) {
-                return Err(VisionFailure::Unreadable);
+                return Err(VisionFailure::Response(ResponseFailure::ImageReference));
             }
             Ok(CaptureResponse::Records {
                 records,
@@ -288,7 +308,7 @@ fn capture_response(
         }
         LlmFinishReason::Length => Err(VisionFailure::Truncated),
         LlmFinishReason::ContentFilter => Err(VisionFailure::Refused),
-        _ => Err(VisionFailure::Unreadable),
+        _ => Err(VisionFailure::Response(ResponseFailure::Protocol)),
     }
 }
 
@@ -443,8 +463,7 @@ fn include_current_records(
     draft: &crate::domain::capture::Draft,
     index: usize,
 ) {
-    use crate::domain::capture::{Record, Turn};
-    use navi_finance::{assets, holdings::format_units, money::format};
+    use crate::domain::capture::Turn;
     if index + 1 != draft.transcript.len()
         || !draft.transcript[..index]
             .iter()
@@ -452,6 +471,15 @@ fn include_current_records(
     {
         return;
     }
+    record_context(payload, draft);
+}
+
+pub(super) fn record_context(
+    payload: &mut serde_json::Value,
+    draft: &crate::domain::capture::Draft,
+) {
+    use crate::domain::capture::Record;
+    use navi_finance::{assets, holdings::format_units, money::format};
     let records = draft.records.iter().map(|record| match record {
         Record::Money { day, draft } => json!({"kind":"money","day":day,"money":draft}),
         Record::Meal { day, slot, estimate,source_image } => {
@@ -533,6 +561,47 @@ mod capture_tests {
             "category":"支出:餐饮","time":null,"payee":"","note":"午饭"
         }})
     }
+    #[test]
+    fn failures_keep_classification_and_reject_untrusted_diagnostics() {
+        for (code, expected) in [
+            (
+                "recognition_invalid_json",
+                VisionFailure::Response(ResponseFailure::Json),
+            ),
+            (
+                "recognition_schema_mismatch",
+                VisionFailure::Response(ResponseFailure::Schema),
+            ),
+            (
+                "provider_stream_incomplete",
+                VisionFailure::Response(ResponseFailure::Stream),
+            ),
+            ("provider_output_truncated", VisionFailure::Truncated),
+            (
+                "recognition_invalid_history",
+                VisionFailure::Response(ResponseFailure::History),
+            ),
+            (
+                "secret_response_contents",
+                VisionFailure::Response(ResponseFailure::Provider),
+            ),
+        ] {
+            let mut error = LlmError::new(code);
+            error.record.details =
+                json!({"body":"secret_response_contents", "status": 65536 + 401});
+            assert_eq!(llm_failure(error), expected);
+        }
+        for status in [400, 401, 413, 429, 503, 529] {
+            let mut error = LlmError::new("provider_http_error");
+            error.record.details = json!({"status":status,"body":"secret_response_contents"});
+            let failure = llm_failure(error);
+            let (_, body) =
+                crate::pages::review_failure_copy(crate::i18n::strings(Lang::Zh), &failure);
+            assert!(body.contains(&format!("HTTP {status}")));
+            assert!(!body.contains("secret_response_contents"));
+        }
+    }
+
     #[test]
     fn capture_contract_carries_the_exact_schema_and_only_owner_question_tool() {
         let request = capture_request(
@@ -633,7 +702,10 @@ mod capture_tests {
             );
             capture_response(decoded, draft.sent_images().len())
         };
-        assert!(matches!(decode(json!(3)), Err(VisionFailure::Unreadable)));
+        assert!(matches!(
+            decode(json!(3)),
+            Err(VisionFailure::Response(ResponseFailure::ImageReference))
+        ));
         for (number, expected) in [
             (json!(2), Some("lunch.jpg")),
             (serde_json::Value::Null, None),

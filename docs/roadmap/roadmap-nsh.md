@@ -385,6 +385,53 @@ Recommended sequence; this is planning, not a claim these items are implemented.
    evidence for sharing from Alipay, WeChat, Gallery and Files, cold start
    versus running, and `singleTask` with notifications and Back.
 
+## Unified Conversation Entry (2026-11-28)
+
+Owner-authorized consolidation of Assistant and the record button. The four
+home tabs remain; the single conversation action resumes the last selected
+session with visible New conversation and history controls.
+
+Implemented seams:
+
+- Durable text/image composer, structured questions with staged answers,
+  inline editable record cards, explicit revision targets and ordinary chat
+  while drafts remain pending.
+- Native multimodal pi-rust turns with bounded attachments; persisted provider
+  history omits image bytes. Local image references remain available for a
+  related follow-up and encrypted backup.
+- Capture confirmation and saved/undone/discarded receipts share the business
+  SQLite transaction. Restart and explicit retry do not automatically replay
+  tools or bypass confirmation. Saved records cannot be silently revised.
+- Schema 25 includes linked conversation drafts, receipts and photo references
+  in encrypted backups. Older proposals and standalone drafts migrate to the
+  conversation UI; the single-call recognition API remains for compatibility.
+- Model-free manual entries and favorites remain under the attachment menu.
+  Old typing previews do not send unsent conversation text.
+
+Acceptance: real loopback provider flows must cover image → question → restart
+→ answer → card revision → save → continued conversation, plus atomic failure,
+Undo and retry. Headless persistence and malformed-restore tests are separate
+from Android visual/keyboard evidence. Physical-device TLS, process death and
+signed upgrade retention remain device gates; scripted models do not establish
+real-model recognition accuracy.
+
+Validation recorded on 2026-11-28:
+
+- Client coverage: 395 passing tests, four intentionally ignored. The full
+  run exposed two outdated return-to-home assertions; both affected suites
+  passed after adapting them to return from Conversation (13 tests).
+- Eleven loopback-provider conversation flows cover image follow-up, staged
+  questions, restart, revision, atomic save/Undo and cancellation/retry.
+  Retrying a relative correction cannot apply it twice or duplicate a card.
+- The mixed Rust/TSX suite passes all 40 tests, including incoming shares;
+  all five Rust workspaces pass formatting and strict clippy checks, with
+  the runtime, finance, health and storage tests passing separately.
+- Android debug APK builds and installs on the Windows API 36.1 emulator.
+  Native checks cover the composer above the IME, unsent text after forced
+  process restart, and New conversation preserving the previous draft.
+  Android lint and debug JVM tests pass. This is emulator evidence, not a
+  physical-device or signed-release acceptance result.
+
 ## General Assistant — Owner-Authorized Expansion (2026-11-27)
 
 The owner requested continuous conversation, cross-task memory, web research
@@ -396,9 +443,11 @@ owns the implementation seams.
 
 Implementation uses a new `navi-assistant` crate over pinned pi-rust
 `rpi-agent`/`rpi-ai` v0.29.0. The app owns SQLite sessions and memory (schema 24),
-an Assistant entry on Today, model-scoped consent, read-only record tools,
+the initial Assistant entry on Today (superseded by the unified entry above),
+model-scoped consent, read-only record tools,
 explicit memory/record proposals, optional Brave Search and bounded page fetch.
-The four tabs and ordinary capture remain. Source-bound conversation summaries
+That increment retained the four tabs and ordinary capture; the unified entry
+above supersedes its navigation and proposal handoff. Source-bound conversation summaries
 and complete-turn fallback trimming keep requests bounded while retaining
 stored history. Summary generation starts only with an explicit new message;
 background scheduling is not included.

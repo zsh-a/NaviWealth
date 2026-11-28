@@ -41,7 +41,7 @@ fn leave_while_reading(app: &mut Headless) -> Result<(), String> {
 fn leaving_while_reading_keeps_a_draft_to_confirm_later() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
     let stub = slow_network(Duration::from_secs(4));
-    let (mut app, _) = start_in(Some(dir.path()), account(true), Some(stub.clone()));
+    let (mut app, _) = start_legacy_in(Some(dir.path()), account(true), Some(stub.clone()));
     leave_while_reading(&mut app)?;
     app.wait_for(READING)?;
     assert_eq!(stored_drafts(dir.path()), 1);
@@ -76,7 +76,7 @@ fn leaving_while_reading_keeps_a_draft_to_confirm_later() -> Result<(), String> 
 fn a_discarded_draft_can_be_brought_back() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
     let stub = slow_network(Duration::from_secs(1));
-    let (mut app, _) = start_in(Some(dir.path()), account(true), Some(stub));
+    let (mut app, _) = start_legacy_in(Some(dir.path()), account(true), Some(stub));
     leave_while_reading(&mut app)?;
     app.wait_for(READY)?;
     app.press(READY)?;
@@ -93,7 +93,7 @@ fn a_discarded_draft_can_be_brought_back() -> Result<(), String> {
 #[test]
 fn a_recognition_cut_short_by_a_restart_can_be_tried_again() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
-    let (mut app, storage) = start_in(
+    let (mut app, storage) = start_legacy_in(
         Some(dir.path()),
         account(true),
         Some(slow_network(Duration::from_secs(30))),
@@ -103,7 +103,7 @@ fn a_recognition_cut_short_by_a_restart_can_be_tried_again() -> Result<(), Strin
     drop(app);
 
     let stub = network(200, record_reply(vec![meal_record()]));
-    let (mut app, _) = start_in(
+    let (mut app, _) = start_legacy_in(
         Some(dir.path()),
         storage.entries().into_iter().collect(),
         Some(stub.clone()),
@@ -120,7 +120,7 @@ fn a_recognition_cut_short_by_a_restart_can_be_tried_again() -> Result<(), Strin
 
 #[test]
 fn a_result_that_comes_first_stays_on_the_page() -> Result<(), String> {
-    let (mut app, _) = start(
+    let (mut app, _) = start_legacy(
         account(true),
         Some(network(200, record_reply(vec![meal_record()]))),
     );

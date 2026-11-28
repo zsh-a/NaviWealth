@@ -1,6 +1,8 @@
 //! One bounded conversation: the owner's description or photo is the
 //! thread's first message, and results, questions and corrections are its
 //! turns. Forms are an explicit manual fallback.
+mod inline;
+pub(crate) use inline::inline_review;
 mod accounts;
 mod attachments;
 mod decisions;

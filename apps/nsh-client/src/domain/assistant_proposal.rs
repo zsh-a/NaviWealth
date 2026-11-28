@@ -20,13 +20,19 @@ pub struct Proposal {
 }
 
 pub fn schema() -> Value {
+    schema_with_images(false)
+}
+
+pub fn schema_with_images(images: bool) -> Value {
     let mut records = capture::schema()["properties"]["records"].clone();
     records["minItems"] = json!(1);
     records["maxItems"] = json!(MAX_RECORDS);
-    // Assistant conversations do not attach capture photos. Never let a model
-    // refer to an unrelated local image merely by supplying its ordinal.
-    records["items"]["properties"]["meal"]["anyOf"][0]["properties"]["source_image"] =
-        json!({"type":"null"});
+    // Legacy proposals have no image evidence. The unified conversation may
+    // reference only an ordinal in the current submitted image list.
+    if !images {
+        records["items"]["properties"]["meal"]["anyOf"][0]["properties"]["source_image"] =
+            json!({"type":"null"});
+    }
     let fields = &mut records["items"]["properties"];
     fields["money"]["anyOf"][0]["properties"]["amount"]["description"] = json!(
         "Exact major-currency decimal string, at most 2 decimal places: 35 CNY is \"35.00\", never minor units \"3500\". Use null when unknown."
@@ -84,7 +90,14 @@ fn known_fields(value: &Value, schema: &Value) -> bool {
 }
 
 pub fn parse(value: &Value) -> Result<Proposal, String> {
-    if value.to_string().len() > MAX_BYTES || !known_fields(value, &schema()) {
+    parse_with_images(value, 0)
+}
+
+pub fn parse_with_images(value: &Value, image_count: usize) -> Result<Proposal, String> {
+    if image_count > capture::MAX_ATTACHMENTS
+        || value.to_string().len() > MAX_BYTES
+        || !known_fields(value, &schema_with_images(image_count > 0))
+    {
         return Err(INVALID.into());
     }
     let text = value["text"]
@@ -103,7 +116,7 @@ pub fn parse(value: &Value) -> Result<Proposal, String> {
     if records.is_empty()
         || records.len() > MAX_RECORDS
         || !questions.is_empty()
-        || !capture::valid_meal_image_numbers(&records, 0)
+        || !capture::valid_meal_image_numbers(&records, image_count)
     {
         return Err(INVALID.into());
     }
@@ -138,7 +151,16 @@ fn account_evidence(record: &Record) -> Vec<FieldEvidence> {
 /// No network or storage is used here. Capture's normal editable review and
 /// atomic confirmation remain responsible for the final write and Undo.
 pub fn apply(value: &Value, draft: &mut Draft) -> Result<(), String> {
-    let proposal = parse(value)?;
+    apply_with_images(value, draft, &[], REVIEW_REQUEST)
+}
+
+pub fn apply_with_images(
+    value: &Value,
+    draft: &mut Draft,
+    images: &[String],
+    owner_text: &str,
+) -> Result<(), String> {
+    let proposal = parse_with_images(value, images.len())?;
     let evidence: Vec<_> = proposal.records.iter().map(account_evidence).collect();
     let mut reply = json!({"records":value["records"],"destination":null});
     for (record, evidence) in reply["records"]
@@ -151,7 +173,7 @@ pub fn apply(value: &Value, draft: &mut Draft) -> Result<(), String> {
     }
     // The tool description is model-authored. Never replay it as owner text:
     // a later capture correction verifies selected accounts against owner text.
-    draft.input = REVIEW_REQUEST.into();
+    draft.input = owner_text.into();
     draft.correction.clear();
     draft.photo = None;
     draft.attachments.clear();
@@ -159,9 +181,9 @@ pub fn apply(value: &Value, draft: &mut Draft) -> Result<(), String> {
     draft.question.clear();
     draft.transcript = vec![
         Turn::Owner {
-            text: REVIEW_REQUEST.into(),
-            photo: false,
-            images: Vec::new(),
+            text: owner_text.into(),
+            photo: !images.is_empty(),
+            images: images.to_vec(),
         },
         Turn::Assistant {
             reply: reply.to_string(),
@@ -289,6 +311,47 @@ mod tests {
         let before = untouched.clone();
         assert!(apply(&bad, &mut untouched).is_err());
         assert_eq!(untouched, before);
+    }
+
+    #[test]
+    fn photo_proposals_bind_only_current_images_and_keep_owner_input() {
+        let record = json!({"kind":"meal","day":"2026-11-27","slot":"lunch","meal":{
+            "source_image":2,"title":"rice","foods":[{"name":"rice","grams":100,
+                "catalog_id":null,"confidence":"high",
+                "per_100g":{"kcal":100,"protein":2,"carbs":22,"fat":0}}]}});
+        let value = proposal(record);
+        assert!(parse_with_images(&value, 1).is_err());
+        assert!(parse_with_images(&value, 5).is_err());
+        let mut result = draft();
+        apply_with_images(
+            &value,
+            &mut result,
+            &["first.jpg".into(), "second.jpg".into()],
+            "I ate this",
+        )
+        .unwrap();
+        assert_eq!(result.input, "I ate this");
+        assert_eq!(result.sent_images(), ["first.jpg", "second.jpg"]);
+        assert!(matches!(
+            &result.records[0],
+            Record::Meal {
+                source_image: capture::MealImage::Number(2),
+                ..
+            }
+        ));
+        let mut invalid = value;
+        invalid["records"][0]["meal"]["source_image"] = json!(3);
+        let before = result.clone();
+        assert!(
+            apply_with_images(
+                &invalid,
+                &mut result,
+                &["first.jpg".into(), "second.jpg".into()],
+                "new input"
+            )
+            .is_err()
+        );
+        assert_eq!(result, before);
     }
 
     #[test]

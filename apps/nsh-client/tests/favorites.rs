@@ -32,7 +32,7 @@ fn save_pasta(app: &mut Headless) -> Result<(), String> {
 #[test]
 fn a_favorite_outlives_its_meal_and_logs_with_one_tap() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
-    let (mut app, _) = start_in(Some(dir.path()), pasta_today(), None);
+    let (mut app, _) = start_legacy_in(Some(dir.path()), pasta_today(), None);
     save_pasta(&mut app)?;
     let kept = stored_favorites(dir.path());
     assert_eq!(kept.len(), 1);
@@ -64,7 +64,7 @@ fn a_favorite_outlives_its_meal_and_logs_with_one_tap() -> Result<(), String> {
     assert!(stored_meals(dir.path()).is_empty());
     drop(app);
 
-    let (mut app, _) = start_in(Some(dir.path()), Vec::new(), None);
+    let (mut app, _) = start_legacy_in(Some(dir.path()), Vec::new(), None);
     app.press(OPEN)?;
     app.wait_for(TILE)?;
     Ok(())
@@ -73,7 +73,7 @@ fn a_favorite_outlives_its_meal_and_logs_with_one_tap() -> Result<(), String> {
 #[test]
 fn edit_removes_a_favorite_with_undo_and_no_long_press() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
-    let (mut app, _) = start_in(Some(dir.path()), pasta_today(), None);
+    let (mut app, _) = start_legacy_in(Some(dir.path()), pasta_today(), None);
     save_pasta(&mut app)?;
     app.press("label:Back")?;
     app.wait_for(OPEN)?;
@@ -98,7 +98,7 @@ fn edit_removes_a_favorite_with_undo_and_no_long_press() -> Result<(), String> {
 #[test]
 fn a_favorite_can_be_removed_from_its_meal() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
-    let (mut app, _) = start_in(Some(dir.path()), pasta_today(), None);
+    let (mut app, _) = start_legacy_in(Some(dir.path()), pasta_today(), None);
     save_pasta(&mut app)?;
     app.press("label:Remove from favorites")?;
     app.wait_for("label:Save as favorite")?;
@@ -109,7 +109,7 @@ fn a_favorite_can_be_removed_from_its_meal() -> Result<(), String> {
 #[test]
 fn failed_favorite_writes_preserve_the_bookmark_and_allow_retry() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
-    let (mut app, _) = start_in(Some(dir.path()), pasta_today(), None);
+    let (mut app, _) = start_legacy_in(Some(dir.path()), pasta_today(), None);
     let dialogs = storage_dialogs(&mut app);
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
     db.execute_batch("CREATE TRIGGER reject_favorite BEFORE INSERT ON saved_meals BEGIN SELECT RAISE(ABORT,'full disk'); END;").unwrap();
@@ -136,7 +136,7 @@ fn failed_favorite_writes_preserve_the_bookmark_and_allow_retry() -> Result<(), 
 #[test]
 fn logging_a_favorite_rolls_back_the_meal_when_last_use_cannot_commit() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
-    let (mut app, _) = start_in(Some(dir.path()), pasta_today(), None);
+    let (mut app, _) = start_legacy_in(Some(dir.path()), pasta_today(), None);
     save_pasta(&mut app)?;
     let before = stored_favorites(dir.path());
     app.press("label:Back")?;

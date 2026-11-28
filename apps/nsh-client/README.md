@@ -5,9 +5,9 @@ NaviWealth's native client, with Rust pages and a small TSX hardware entry on [N
 weight, trade, balance, security price or review note drafts using the owner's model. The home has four tabs: Today
 (spending, intake and vitals), Records (all history), Assets (accounts, book balances and net worth), and Review
 (the week or month, with recorded spending and the attributed net-worth
-change). The capture button accepts a description or image and
-keeps a draft for confirmation. Today's Assistant action opens ongoing chats,
-explicitly saved memories, web research and bounded multi-step tasks.
+change). One Conversation action accepts text or images, resumes the last
+selected session and keeps editable record cards inline. Saving leaves a receipt
+so chat, research and bounded multi-step tasks can continue.
 Settings keep each change as it is made;
 manual entry and account management work without a model account. Design
 standards and the motion inventory: `DESIGN.md`.
@@ -25,8 +25,8 @@ src/
   domain/   host account/capture composition and shared health re-exports
   data/     device storage, photos, local time and device network adapters
   ui/       the app's styled components over nsh-base, and its tokens
-  pages/    the home (Today, Records, Assets, Review tabs, capture sheet), meal
-            editing, Assistant, Settings
+  pages/    the home (Today, Records, Assets, Review tabs), unified conversation,
+            meal editing, Settings and compatibility capture components
   i18n/     English and Chinese copy
   preview.rs  desktop-only preview seeding for design review
 App.tsx     mixed entry mounting the retained Rust App and scale sheet
@@ -46,16 +46,20 @@ estimate records its model and prompt version.
 
 ## General assistant
 
-The Assistant action on Today opens a persistent conversation, using the same
-configured model account as capture. Its consent is separate and bound to the
-provider, destination and model: sending can include chat history, recalled
-memories and local records requested by tools. Opening the page alone makes no
+The dock Conversation action opens the last selected persistent session with
+visible New conversation and history controls. Consent is bound to the provider,
+destination and model: sending can include messages, images, account context,
+recalled memories and local records requested by tools. Unsent input and image
+attachments are durable local state; older assistant consent requires renewal. Opening the page alone makes no
 model request. The owner can start a new chat, revisit or delete old chats,
 stop a run, and inspect or delete saved memories.
 
 `../../crates/navi-assistant` embeds pinned pi-rust `rpi-agent` and `rpi-ai`
 v0.29.0, with an eight-request/150-second run budget. Model input is bounded to
-120,000 serialized UTF-8 bytes. An explicit new message can trigger a summary
+120,000 serialized UTF-8 bytes for text context. Current-turn images have a
+separate bounded allowance (four images, 2 MiB each); persisted native history
+replaces encoded image bodies with omission markers while local file references
+remain in UI messages. Related follow-ups reattach only bounded recent images. An explicit new message can trigger a summary
 of earlier complete turns using the same configured model; recent turns stay
 verbatim and complete stored history is kept. Summary requests share the run's
 budget and Stop action. If summarization fails or a turn cannot fit, the app
@@ -72,10 +76,12 @@ Complete-period finance and health summaries reuse the domain Review
 calculations, with exact native-currency money, explicit comparison dates,
 missing observations and valuation provenance. Memory retrieval uses approved
 saved facts. A memory tool creates a proposal that must be accepted before it
-is saved. A structured record proposal opens editable capture cards after
-Review and edit; missing money fields and account approval are completed
-locally, then the normal atomic save and Undo apply. No second recognition
-request is needed. Older text proposals remain readable as unsent drafts. A tool never receives unrestricted database or shell access.
+is saved. Record proposals appear as inline editable cards; revise_record can
+change only a linked pending card and rejects stale edits. ask_user displays
+clarification choices without blocking other chat. Account approval remains
+local. Confirm and save writes the batch and receipt atomically; the conversation
+continues. No second recognition request is needed. Older structured proposals
+migrate into cards, and text proposals populate the unsent composer. A tool never receives unrestricted database or shell access.
 
 Web search optionally uses a Brave Search API key kept in app-private storage.
 Search queries are sent to Brave; public-page fetches are bounded to 1 MiB and
@@ -91,7 +97,10 @@ a cross-task memory. Process restart marks running sessions interrupted; the
 next model request requires another explicit user message. Pending proposals
 remain unapproved. Delete and restore invalidate active work, and checkpoint
 updates cannot recreate a deleted conversation. Assistant tables are included
-in encrypted backups; pre-22 backups preserve the current assistant data.
+in encrypted backups; schema 25 also includes linked record drafts, unsent
+attachments and receipts. Unlinked legacy drafts remain excluded. Restore
+validates draft references and never executes tools. Pre-22 backups preserve
+current assistant data.
 
 The former Agent Runtime dependency has been retired. Recognition and the
 assistant share provider libraries while retaining separate execution and
@@ -386,18 +395,17 @@ Desktop previews accept `NW_PREVIEW=account,responses,light` and
 
 ## Text and image capture
 
-The global capture button opens a single description/image composer. The
-owner's model can draft transactions, meals, weight, trades, actual balances,
-manual security prices and review notes. Corrections include the current edited
-records and can refine a mixed batch. Manual entry is a
-secondary disclosure. A purchase with a price does not imply food consumption.
+The global conversation button is the primary text/image entry. Its agent tools
+prepare transaction, meal, weight, trade, balance, security-price and review-note
+cards. The owner can continue chatting, revise a particular pending card, edit
+fields locally or save a batch with one explicit confirmation.
 
-- `ask_user` is the only model tool: it suspends recognition for owner decisions,
-  each with a reason, required flag and unselected choices with descriptions.
-  Choices are durable, editable and submitted together. Text and supporting
-  images can answer too. The call ID and original assistant blocks are kept
-  for a matching tool-result continuation; no automatic tool loop runs. Final
-  model JSON contains records and a nullable navigation destination. Legacy stored question turns remain readable.
+The former single-call capture sheet remains a compatibility component, covered
+by an explicit desktop-only `LegacyCaptureHarness`; it is not a second app entry.
+Its `ask_user`/`emit_result` protocol and typing-preview tests exercise that
+bounded recognition API. Production conversations send only submitted messages;
+legacy typing-preview controls are hidden. These shared contracts still apply:
+
 - `domain/capture.rs` composes the envelope and delegates money, nutrition and
   weight validation to their owning domains. `finance::recognition`
   rejects unsupported currencies, imprecise money and wrong account kinds;
@@ -407,13 +415,9 @@ secondary disclosure. A purchase with a price does not imply food consumption.
   writing its whole batch. Neither recognition nor correction writes records.
   Database failures retain the draft for retry, with no partial batch. The receipt
   offers View and an atomic Undo that checks for intervening edits.
-- Consent covers input text, attached images and ledger account names;
-  old photo-only trust does not grant the broader consent. The model account
-  fingerprint scopes remembered consent. Typing previews have an independent
-  opt-in and optional model name at the same endpoint. Previews send text
-  after a typing pause. Photos accompany an explicitly submitted turn. A
-  separate option includes recent transactions, meals, weight, favorite
-  meals and held security identities. Both settings default off.
+- Consent covers submitted text, images and account context. A separate profile
+  option includes bounded recent records, favorite meals and held securities.
+  The unified assistant's read tools may inspect records for an explicit task.
 - Provider events can expose provisional cards during a request. After the
   terminal reply the owner can inspect field evidence, approve a suggested
   account, edit a value or remove an individual card.
@@ -432,8 +436,10 @@ secondary disclosure. A purchase with a price does not imply food consumption.
 
 `tests/capture.rs` exercises natural-language correction, missing-account
 blocking, atomic multi-domain confirmation, a real SQLite failure and retry,
-restart, and invalid model output. The existing meal/draft flows now use the
-unified composer; finance tests retain exact posting/balance assertions.
+restart, and invalid model output. The legacy single-call fixtures explicitly mount the compatibility harness.
+`tests/assistant_flow.rs` exercises the production conversation using real
+loopback HTTP/SSE, including images, questions, restart, revision and receipts.
+Manual production flows and finance tests retain exact posting assertions.
 Desktop visual previews include `capture`, `capture-ready`, `capture-missing`,
 `capture-ask` (a pending tool decision),
 `transaction` and `transaction-new`. Set `NW_PREVIEW_CAPTURE_IMAGES` to colon-separated

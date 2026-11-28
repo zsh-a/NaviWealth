@@ -6,12 +6,13 @@
 mod consent;
 mod day;
 mod draft;
+mod failure;
 mod food_editor;
 mod foods;
 mod pending;
 mod photo;
 
-pub use foods::failure_copy;
+pub use failure::failure_copy;
 pub use pending::pending_meal_page;
 
 use std::{rc::Rc, time::Duration};

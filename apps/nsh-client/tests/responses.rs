@@ -153,7 +153,8 @@ fn responses_choice_and_native_reasoning_survive_restart_and_image_followup() ->
             ));
         })),
     )]));
-    let (mut app, storage) = start_in(Some(dir.path()), responses_account(), Some(stub.clone()));
+    let (mut app, storage) =
+        start_legacy_in(Some(dir.path()), responses_account(), Some(stub.clone()));
     attach_capture(&mut app)?;
     app.wait_for("Does the label describe this meal?")?;
     assert!(!app.screen().enabled("Continue")?);
@@ -176,7 +177,7 @@ fn responses_choice_and_native_reasoning_survive_restart_and_image_followup() ->
     assert_eq!(kept["answers"][0]["option_id"], "same");
     assert!(kept.to_string().contains("opaque-reasoning"));
     drop(app);
-    let (mut app, _) = start_in(
+    let (mut app, _) = start_legacy_in(
         Some(dir.path()),
         storage.entries().into_iter().collect(),
         Some(stub.clone()),

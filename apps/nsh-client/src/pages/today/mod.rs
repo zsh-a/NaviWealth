@@ -77,12 +77,6 @@ fn header() -> impl IntoElement {
                 ),
         )
         .child(
-            Btn::ghost()
-                .size(Size::Small)
-                .label(|| super::assistant::title().into())
-                .on_press(|| nav::push(Route::Assistant)),
-        )
-        .child(
             IconBtn::new(Icon::Sliders, || s().settings.into())
                 .side(48.0)
                 .on_press(|| nav::push(Route::Settings)),

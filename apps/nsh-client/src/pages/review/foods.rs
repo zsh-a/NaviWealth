@@ -10,14 +10,17 @@ use nsh_core::{
     prelude::*,
 };
 
-use super::draft::{Draft, Editing, Phase};
+use super::{
+    draft::{Draft, Editing, Phase},
+    failure_copy,
+};
 use crate::{
     data::photos,
     domain::{
-        ProviderError, VisionFailure, format,
+        VisionFailure, format,
         nutrition::{Food, FoodSource, extras_complete, total},
     },
-    i18n::{Strings, s},
+    i18n::s,
     nav::{self, Route},
     pages::rows::INSET,
     ui::{
@@ -227,39 +230,6 @@ fn source_badge(source: &FoodSource, check: bool) -> AnyElement {
         (FoodSource::Manual, false) => {
             badge(|| s().badge_edited, Tone::Neutral, Some(Icon::Pencil)).into_element()
         }
-    }
-}
-
-/// The title and copy that explain `failure`.
-pub fn failure_copy(strings: &'static Strings, failure: &VisionFailure) -> (&'static str, String) {
-    let pair = |(title, body): (&'static str, &'static str)| (title, body.to_owned());
-    match failure {
-        VisionFailure::Offline(_) => pair(strings.failure_offline),
-        VisionFailure::Timeout => pair(strings.failure_timeout),
-        VisionFailure::Truncated | VisionFailure::Unreadable => pair(strings.failure_unreadable),
-        VisionFailure::Refused => pair(strings.failure_refused),
-        VisionFailure::Photo => pair(strings.failure_photo),
-        VisionFailure::Storage => (
-            strings.storage_unavailable,
-            strings.error_transaction_storage.to_owned(),
-        ),
-        VisionFailure::Provider(error) => match error {
-            ProviderError::Unauthorized => pair(strings.failure_unauthorized),
-            ProviderError::Forbidden => pair(strings.failure_forbidden),
-            ProviderError::NotFound => pair(strings.failure_not_found),
-            ProviderError::RateLimited => pair(strings.failure_rate_limited),
-            ProviderError::Overloaded | ProviderError::Server(_) => pair(strings.failure_busy),
-            ProviderError::Decode => pair(strings.failure_unreadable),
-            ProviderError::Rejected { message, .. } => {
-                let (title, hint) = strings.failure_rejected;
-                let body = if message.is_empty() {
-                    hint.to_owned()
-                } else {
-                    format!("{hint} {message}")
-                };
-                (title, body)
-            }
-        },
     }
 }
 

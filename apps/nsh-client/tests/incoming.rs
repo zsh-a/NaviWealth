@@ -1,5 +1,5 @@
 //! Content shared from other apps, as the TSX entry forwards the Android
-//! host's copies: images and text become an unsent capture draft, a statement
+//! host's copies: images and text become an unsent conversation message, a statement
 //! file opens its review, anything else is declined, and nothing outside the
 //! share folder is read.
 mod common;
@@ -53,31 +53,63 @@ fn eventually_gone(path: &Path) {
 }
 
 #[test]
-fn shared_images_and_text_open_an_unsent_capture_draft() -> Result<(), String> {
+fn shared_images_and_text_open_an_unsent_conversation() -> Result<(), String> {
     let _one = ONE_AT_A_TIME.lock().unwrap_or_else(|e| e.into_inner());
     let source = tempfile::tempdir().unwrap();
     let first = copy(source.path(), "a1.png", &photo());
     let second = copy(source.path(), "a2.png", &photo());
-    let (_dir, mut app) = share(
+    let (dir, mut app) = share(
         "  Lunch receipt  ",
         vec![
             (&first, "IMG_1.png", "image/png"),
             (&second, "IMG_2.png", "image/png"),
         ],
     );
-    app.wait_for("label:What would you like to record?")?;
-    app.wait_for("text:Lunch receipt")?;
-    app.wait_for("Images · 2/4")?;
+    app.wait_for("label:Message")?;
+    app.wait_for("label:Remove photo")?;
     assert_eq!(
-        app.screen().count("Remove image")?,
+        app.screen().input_text("label:Message")?,
+        Some("Lunch receipt")
+    );
+    for hidden in [
+        "Review before saving",
+        "Confirm and save",
+        "Editing selected record",
+    ] {
+        assert!(
+            !app.shows(hidden),
+            "unsent share has no review control: {hidden}"
+        );
+    }
+    assert_eq!(
+        app.screen().count("label:Remove photo")?,
         2,
         "both images are staged, not sent"
     );
     eventually_gone(&first);
     eventually_gone(&second);
-    // Closing keeps the draft, as for any composed entry.
-    app.press("label:Close")?;
-    app.wait_for("text:/Lunch receipt/")?;
+    // Back and reopening preserve unsent text/photos in the same conversation.
+    app.press("label:Back")?;
+    app.press("label:Conversation")?;
+    assert_eq!(
+        app.screen().input_text("label:Message")?,
+        Some("Lunch receipt")
+    );
+    assert_eq!(app.screen().count("label:Remove photo")?, 2);
+    let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
+    let body: String = db
+        .query_row("SELECT body FROM assistant_sessions", [], |row| row.get(0))
+        .unwrap();
+    let session: Value = serde_json::from_str(&body).unwrap();
+    assert!(
+        session["messages"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|message| message["role"] != "user"),
+        "sharing does not submit a user turn"
+    );
+    assert!(stored_meals(dir.path()).is_empty());
     Ok(())
 }
 
@@ -127,6 +159,6 @@ fn nothing_outside_the_share_folder_is_read_or_removed() -> Result<(), String> {
     let (_dir, mut app) = share("", vec![(&outside, "private.png", "image/png")]);
     app.wait_for("text:/^Can't open what was shared/")?;
     assert!(outside.exists());
-    assert!(!app.shows("Remove image"));
+    assert_eq!(app.screen().count("label:Remove photo")?, 0);
     Ok(())
 }

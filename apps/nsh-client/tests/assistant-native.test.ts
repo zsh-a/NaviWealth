@@ -11,10 +11,11 @@ test("Assistant native visual", async () => {
       network: {},
       host: { params: { testMode: true } },
     });
-    await app.waitFor("label:New entry");
-    await app.press("text:Assistant");
-    await app.waitFor("What would you like to work on?");
+    await app.waitFor("label:Conversation");
+    await app.press("label:Conversation");
+    await app.waitFor("A place for your day");
     await app.screenshot(`.nsh/assistant-${colorScheme}-chat.png`);
+    await app.press("text:Conversations");
     await app.press("text:Memory & search");
     await app.type("label:Memory text", "Prefer walking for trips under 2 km.");
     await app.press("text:Save memory");

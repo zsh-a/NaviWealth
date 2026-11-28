@@ -241,8 +241,12 @@ pub fn recognize(
             Ok(vision::CaptureResponse::AskUser { request, model }) => {
                 if accept_ask_user(&mut draft, request, model).is_err() {
                     FAILURES.with(|f| {
-                        f.borrow_mut()
-                            .insert(id.clone(), crate::domain::VisionFailure::Unreadable)
+                        f.borrow_mut().insert(
+                            id.clone(),
+                            crate::domain::VisionFailure::Response(
+                                crate::domain::ResponseFailure::Questions,
+                            ),
+                        )
                     });
                     draft.status = Status::Failed;
                 }
@@ -255,6 +259,10 @@ pub fn recognize(
         }
         if let Err(error) = put(draft.clone()) {
             log::error!("capture: could not retain result: {error}");
+            FAILURES.with(|f| {
+                f.borrow_mut()
+                    .insert(id.clone(), crate::domain::VisionFailure::Storage)
+            });
             draft.status = Status::Failed;
             state().update(|s| {
                 if let Some(kept) = s.0.iter_mut().find(|d| d.id == id) {

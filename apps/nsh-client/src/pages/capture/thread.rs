@@ -157,13 +157,18 @@ pub(super) fn thread(
     }
     if draft.status == Status::Failed {
         let failure = capture::failure(&draft.id);
-        let offline = matches!(
-            failure.as_ref(),
-            Some(crate::domain::VisionFailure::Offline(_))
-        );
-        let copy = failure
-            .map(|e| crate::pages::review::failure_copy(s(), &e).0)
-            .unwrap_or(s().capture_failed);
+        let (title, mut body) = failure.as_ref()
+            .map(|e| crate::pages::review::failure_copy(s(), e))
+            .unwrap_or_else(|| (s().capture_failed, crate::i18n::catalog::copy(
+                "The previous attempt's details are unavailable after restart. Retry to get a new diagnostic. Your input is kept on this device.",
+                "重启后无法恢复上次失败的详细信息。请重试以获取新的诊断；输入仍保存在本机。",
+            ).to_owned()));
+        if failure.is_some() && !matches!(failure, Some(crate::domain::VisionFailure::Storage)) {
+            body.push_str(crate::i18n::catalog::copy(
+                "\nYour input is kept on this device; this attempt saved no records.",
+                "\n输入仍保存在本机，本次识别未保存正式记录。",
+            ));
+        }
         items.push(
             view()
                 .flex_row()
@@ -173,15 +178,8 @@ pub(super) fn thread(
                     view()
                         .gap_2()
                         .flex_1()
-                        .child(text(copy).typo(Type::Headline).text_color(color::CAUTION))
-                        .child(offline.then(|| {
-                            text(crate::i18n::catalog::copy(
-                                "Your input is saved on this device. Retry when connected.",
-                                "输入已保存在本机，联网后可点重试。",
-                            ))
-                            .typo(Type::Subhead)
-                            .text_color(color::BODY)
-                        }))
+                        .child(text(title).typo(Type::Headline).text_color(color::CAUTION))
+                        .child(text(body).typo(Type::Subhead).text_color(color::BODY))
                         .child(
                             view()
                                 .flex_row()

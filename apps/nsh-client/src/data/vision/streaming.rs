@@ -77,7 +77,9 @@ pub(super) async fn complete(
             }
         }
     }
-    worker.await.map_err(|_| VisionFailure::Unreadable)?
+    worker
+        .await
+        .map_err(|_| VisionFailure::Response(ResponseFailure::Worker))?
 }
 
 /// The future owns the model worker and cancels its request when the owner
@@ -308,7 +310,8 @@ mod tests {
             {
                 assert_eq!(records.len(), 1)
             }
-            Either::Left((Err(VisionFailure::Truncated), _)) if end == End::Disconnect => {}
+            Either::Left((Err(VisionFailure::Response(ResponseFailure::Stream)), _))
+                if end == End::Disconnect => {}
             Either::Right((Ok(()), task)) if cancel => drop(task),
             _ => panic!("unexpected capture outcome"),
         }

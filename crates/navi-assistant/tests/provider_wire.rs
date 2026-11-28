@@ -7,8 +7,11 @@ use std::{
     time::Duration,
 };
 
+use base64::{Engine, engine::general_purpose::STANDARD};
 use futures::FutureExt;
-use navi_assistant::{CancellationToken, Config, Event, Limits, Provider, run};
+use navi_assistant::{
+    CancellationToken, Config, Event, ImageInput, Limits, Provider, run, run_multimodal,
+};
 use serde_json::{Value, json};
 
 fn server(status: &str, extra_headers: &str, body: &str) -> (String, mpsc::Receiver<String>) {
@@ -163,7 +166,14 @@ async fn redirect_and_provider_error_bodies_do_not_escape_the_boundary() {
             CancellationToken::new(),
         )
         .await;
-        assert_eq!(result.unwrap_err(), "assistant_provider");
+        assert_eq!(
+            result.unwrap_err(),
+            if status.starts_with("401") {
+                "assistant_authentication"
+            } else {
+                "assistant_http_client"
+            }
+        );
         assert!(!format!("{:?}", observed.lock().unwrap()).contains("secret-owner-key"));
     }
 }
@@ -203,5 +213,274 @@ async fn keyless_profiles_send_no_bearer_secret() {
         );
         assert!(!headers.to_ascii_lowercase().contains("x-api-key:"));
         assert!(!headers.to_ascii_lowercase().contains("bearer"));
+    }
+}
+
+#[tokio::test]
+async fn image_only_turn_uses_native_wire_blocks_but_checkpoints_keep_no_image_bytes() {
+    for provider in [
+        Provider::Anthropic,
+        Provider::OpenAiCompatible,
+        Provider::OpenAiResponses,
+    ] {
+        let (base, request) = server("200 OK", "", &reply(provider));
+        // Exceeds the text-context budget, but fits the independent image budget.
+        let bytes = vec![0xAB; 128 * 1024];
+        let encoded = STANDARD.encode(&bytes);
+        let observed = Arc::new(std::sync::Mutex::new(Vec::<Event>::new()));
+        let copy = observed.clone();
+        let result = run_multimodal(
+            config(provider, base),
+            vec![],
+            String::new(),
+            vec![ImageInput {
+                mime_type: "image/png".into(),
+                data: bytes,
+            }],
+            vec![],
+            Arc::new(|_, _| async { Ok(json!({})) }.boxed()),
+            Arc::new(move |event| copy.lock().unwrap().push(event)),
+            CancellationToken::new(),
+        )
+        .await
+        .unwrap();
+        assert_eq!(result.text, "Hello");
+        let request = request.recv_timeout(Duration::from_secs(2)).unwrap();
+        let body: Value = serde_json::from_str(request.split_once("\r\n\r\n").unwrap().1).unwrap();
+        match provider {
+            Provider::Anthropic => {
+                let image = &body["messages"][0]["content"][0];
+                assert_eq!(image["type"], "image");
+                assert_eq!(image["source"]["media_type"], "image/png");
+                assert_eq!(image["source"]["data"], encoded);
+            }
+            Provider::OpenAiCompatible => {
+                let image = &body["messages"][1]["content"][0];
+                assert_eq!(image["type"], "image_url");
+                assert_eq!(
+                    image["image_url"]["url"],
+                    format!("data:image/png;base64,{encoded}")
+                );
+            }
+            Provider::OpenAiResponses => {
+                let input = body["input"].as_array().unwrap();
+                let user = input.iter().find(|item| item["role"] == "user").unwrap();
+                assert_eq!(user["content"][0]["type"], "input_image");
+                assert_eq!(
+                    user["content"][0]["image_url"],
+                    format!("data:image/png;base64,{encoded}")
+                );
+            }
+        }
+        assert!(serde_json::to_vec(&result.history).unwrap().len() < 4096);
+        for event in observed.lock().unwrap().iter() {
+            if let Event::Checkpoint(history) = event {
+                let text = serde_json::to_string(history).unwrap();
+                assert!(!text.contains(&encoded));
+                assert!(text.contains("omitted from saved model history"));
+            }
+        }
+        let (base, request) = server("200 OK", "", &reply(provider));
+        run_multimodal(
+            config(provider, base),
+            result.history,
+            "Continue".into(),
+            vec![],
+            vec![],
+            Arc::new(|_, _| async { Ok(json!({})) }.boxed()),
+            Arc::new(|_| {}),
+            CancellationToken::new(),
+        )
+        .await
+        .unwrap();
+        let request = request.recv_timeout(Duration::from_secs(2)).unwrap();
+        assert!(request.contains("Do not claim to inspect it"));
+        assert!(!request.contains("data:image"));
+        assert!(!request.contains(&encoded));
+    }
+}
+
+#[tokio::test]
+async fn malformed_or_excessive_images_are_rejected_before_network_io() {
+    let small = ImageInput {
+        mime_type: "image/jpeg".into(),
+        data: vec![1],
+    };
+    for images in [
+        vec![small.clone(); 5],
+        vec![ImageInput {
+            data: vec![1; 2 * 1024 * 1024 + 1],
+            ..small.clone()
+        }],
+        vec![ImageInput {
+            mime_type: "image/svg+xml".into(),
+            ..small.clone()
+        }],
+        vec![ImageInput {
+            data: vec![],
+            ..small.clone()
+        }],
+    ] {
+        let result = run_multimodal(
+            config(Provider::OpenAiCompatible, "http://127.0.0.1:1".into()),
+            vec![],
+            "Inspect".into(),
+            images,
+            vec![],
+            Arc::new(|_, _| async { Ok(json!({})) }.boxed()),
+            Arc::new(|_| {}),
+            CancellationToken::new(),
+        )
+        .await;
+        assert_eq!(result.unwrap_err(), "assistant_image_limit");
+    }
+    let cancel = CancellationToken::new();
+    cancel.cancel();
+    let result = run_multimodal(
+        config(Provider::OpenAiCompatible, "http://127.0.0.1:1".into()),
+        vec![],
+        String::new(),
+        vec![small],
+        vec![],
+        Arc::new(|_, _| async { Ok(json!({})) }.boxed()),
+        Arc::new(|_| {}),
+        cancel,
+    )
+    .await;
+    assert_eq!(result.unwrap_err(), "assistant_cancelled");
+}
+
+#[tokio::test]
+async fn http_diagnostics_are_specific_and_never_persist_upstream_bodies() {
+    for provider in [
+        Provider::Anthropic,
+        Provider::OpenAiCompatible,
+        Provider::OpenAiResponses,
+    ] {
+        for (status, body, expected) in [
+            (
+                "401 Unauthorized",
+                "secret-owner-key",
+                "assistant_authentication",
+            ),
+            ("403 Forbidden", "secret-owner-key", "assistant_permission"),
+            (
+                "429 Too Many Requests",
+                r#"{"error":{"code":"insufficient_quota","message":"secret-owner-key"}}"#,
+                "assistant_quota",
+            ),
+            (
+                "429 Too Many Requests",
+                "secret-owner-key",
+                "assistant_rate_limit",
+            ),
+            (
+                "400 Bad Request",
+                r#"{"error":{"message":"This model does not support image inputs secret-owner-key"}}"#,
+                "assistant_image_unsupported",
+            ),
+            (
+                "503 Unavailable",
+                "secret-owner-key",
+                "assistant_http_server",
+            ),
+        ] {
+            let (base, _) = server(status, "", body);
+            let observed = Arc::new(std::sync::Mutex::new(Vec::<Event>::new()));
+            let copy = observed.clone();
+            let result = run_multimodal(
+                config(provider, base),
+                vec![],
+                "Inspect".into(),
+                vec![],
+                vec![],
+                Arc::new(|_, _| async { Ok(json!({})) }.boxed()),
+                Arc::new(move |event| copy.lock().unwrap().push(event)),
+                CancellationToken::new(),
+            )
+            .await;
+            assert_eq!(result.unwrap_err(), expected, "{provider:?} {status}");
+            let events = format!("{:?}", observed.lock().unwrap());
+            assert!(!events.contains("secret-owner-key"));
+            assert!(events.contains(expected));
+        }
+    }
+}
+
+#[tokio::test]
+async fn empty_truncated_and_interrupted_responses_are_distinct() {
+    let good = reply(Provider::OpenAiCompatible);
+    for (body, expected) in [
+        (good.replace("Hello", ""), "assistant_empty_response"),
+        (
+            good.replace("\"finish_reason\":\"stop\"", "\"finish_reason\":\"length\""),
+            "assistant_output_truncated",
+        ),
+        (
+            good.split("\n\n").next().unwrap().to_owned() + "\n\n",
+            "assistant_stream_incomplete",
+        ),
+    ] {
+        let (base, _) = server("200 OK", "", &body);
+        let result = run(
+            config(Provider::OpenAiCompatible, base),
+            vec![],
+            "Hi".into(),
+            vec![],
+            Arc::new(|_, _| async { Ok(json!({})) }.boxed()),
+            Arc::new(|_| {}),
+            CancellationToken::new(),
+        )
+        .await;
+        assert_eq!(result.unwrap_err(), expected);
+    }
+}
+
+#[tokio::test]
+async fn cancelling_a_socket_without_response_headers_finishes_promptly() {
+    for provider in [
+        Provider::Anthropic,
+        Provider::OpenAiCompatible,
+        Provider::OpenAiResponses,
+    ] {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        let (received_tx, received_rx) = mpsc::channel();
+        let (release_tx, release_rx) = mpsc::channel();
+        let server = std::thread::spawn(move || {
+            let (mut socket, _) = listener.accept().unwrap();
+            socket
+                .set_read_timeout(Some(Duration::from_secs(5)))
+                .unwrap();
+            let mut bytes = [0; 4096];
+            assert!(socket.read(&mut bytes).unwrap() > 0);
+            received_tx.send(()).unwrap();
+            let _ = release_rx.recv_timeout(Duration::from_secs(5));
+        });
+        let cancel = CancellationToken::new();
+        let worker_cancel = cancel.clone();
+        let task = tokio::spawn(run_multimodal(
+            config(provider, format!("http://{address}/v1")),
+            vec![],
+            "Hi".into(),
+            vec![],
+            vec![],
+            Arc::new(|_, _| async { Ok(json!({})) }.boxed()),
+            Arc::new(|_| {}),
+            worker_cancel,
+        ));
+        tokio::task::spawn_blocking(move || {
+            received_rx.recv_timeout(Duration::from_secs(5)).unwrap()
+        })
+        .await
+        .unwrap();
+        cancel.cancel();
+        let result = tokio::time::timeout(Duration::from_secs(2), task)
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(result.unwrap_err(), "assistant_cancelled");
+        release_tx.send(()).unwrap();
+        server.join().unwrap();
     }
 }

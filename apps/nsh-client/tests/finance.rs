@@ -28,6 +28,7 @@ fn first_expense(app: &mut Headless) -> Result<(), String> {
     app.press("Done")?;
     app.press("Save transaction")?;
     app.wait_for_gone("Save transaction", GONE)?;
+    app.conversation_home()?;
     app.wait_for("label:/^Lunch shop, −¥31.50/")?;
     Ok(())
 }
@@ -45,6 +46,7 @@ fn expense_income_and_transfer_share_one_balanced_persistent_journal() -> Result
     app.press("Done")?;
     app.press("Save transaction")?;
     app.wait_for_gone("Save transaction", GONE)?;
+    app.conversation_home()?;
 
     open_new(&mut app)?;
     app.press("Transfer")?;
@@ -57,6 +59,7 @@ fn expense_income_and_transfer_share_one_balanced_persistent_journal() -> Result
     app.press("Done")?;
     app.press("Save transaction")?;
     app.wait_for_gone("Save transaction", GONE)?;
+    app.conversation_home()?;
     let entries = stored(dir.path());
     assert_eq!(entries.len(), 3);
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
@@ -106,6 +109,7 @@ fn invalid_money_does_not_write_and_cancel_discards_new_accounts() -> Result<(),
     app.on_dialog(|_| DialogAnswer::Press("Discard".into()));
     app.press("Cancel")?;
     app.wait_for_gone("Save transaction", GONE)?;
+    app.conversation_home()?;
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
     assert!(
         !repository::accounts(&db)
@@ -129,6 +133,7 @@ fn edited_date_is_reachable_from_calendar_and_delete_can_be_undone() -> Result<(
     app.type_text("label:Amount", "42.25")?;
     app.press("Save transaction")?;
     app.wait_for_gone("Save transaction", GONE)?;
+    app.conversation_home()?;
     assert!(!app.shows("label:/^Lunch shop, /"));
     assert_eq!(stored(dir.path())[0].at.date(), previous.0);
     app.press("label:Records")?;
@@ -190,6 +195,7 @@ fn delete_is_visible_above_the_keyboard_and_cancel_keeps_unsaved_changes() -> Re
     })?;
     app.press("Save transaction")?;
     app.wait_for_gone("Save transaction", GONE)?;
+    app.conversation_home()?;
     assert_eq!(stored(dir.path())[0].postings[0].amount.abs(), 4225);
     Ok(())
 }
@@ -256,7 +262,7 @@ fn unreadable_database_blocks_capture_instead_of_saving_to_memory() -> Result<()
     config.storage = Some(MemoryStorage::new(Vec::<(String, String)>::new()));
     let mut app = Headless::start(config).map_err(|e| e.to_string())?;
     app.wait_for("Local data unavailable")?;
-    assert!(!app.shows("label:New entry"));
+    assert!(!app.shows("Conversation"));
     assert_eq!(std::fs::read(&path).unwrap(), b"not a SQLite database");
     Ok(())
 }
@@ -291,6 +297,7 @@ fn failed_save_keeps_editor_open_and_retry_writes_exactly_once() -> Result<(), S
         .unwrap();
     app.press("Save transaction")?;
     app.wait_for_gone("Save transaction", GONE)?;
+    app.conversation_home()?;
     let entries = stored(dir.path());
     assert_eq!(entries.len(), 1);
     assert_eq!(entries[0].postings.len(), 2);

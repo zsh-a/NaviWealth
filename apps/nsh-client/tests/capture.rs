@@ -17,7 +17,7 @@ fn transfer_completion_excludes_its_source_and_view_reveals_a_multi_day_batch() 
     let weight = json!({"kind":"weight","day":today().0.yesterday().unwrap().to_string(),
         "trade":null,"balance":null,"price":null,"note":null,"evidence":[],"weight_kg":74.2,"money":null,"meal":null,"slot":null});
     let stub = network(200, record_reply(vec![transfer, weight]));
-    let (mut app, _) = start_in(Some(dir.path()), account(true), Some(stub.clone()));
+    let (mut app, _) = start_legacy_in(Some(dir.path()), account(true), Some(stub.clone()));
     app.press("label:Assets")?;
     for name in ["Cash", "Bank"] {
         if name == "Bank" {
@@ -81,7 +81,7 @@ fn account_completion_is_local_durable_and_never_posts_before_confirmation() -> 
     let mut money = money_record("32.00");
     money["money"]["account"] = Value::Null;
     let stub = network(200, record_reply(vec![money]));
-    let (mut app, storage) = start_in(Some(dir.path()), account(true), Some(stub.clone()));
+    let (mut app, storage) = start_legacy_in(Some(dir.path()), account(true), Some(stub.clone()));
     app.press("label:Assets")?;
     app.press("Add account")?;
     app.type_text("label:Account name", "Cash")?;
@@ -132,7 +132,7 @@ fn account_completion_is_local_durable_and_never_posts_before_confirmation() -> 
     drop(app);
 
     let quiet = Arc::new(StubNetwork::new([] as [(String, StubResponse); 0]));
-    let (mut app, _) = start_in(
+    let (mut app, _) = start_legacy_in(
         Some(dir.path()),
         storage.entries().into_iter().collect(),
         Some(quiet.clone()),
@@ -173,7 +173,7 @@ fn natural_correction_then_batch_confirmation_is_atomic_and_survives_restart() -
             json!({"kind":"weight","day":today().to_string(),"trade":null,"balance":null,"price":null,"note":null,"evidence":[],"weight_kg":74.2,"money":null,"meal":null,"slot":null})])));
         })),
     )]));
-    let (mut app, storage) = start_in(Some(dir.path()), account(true), Some(stub.clone()));
+    let (mut app, storage) = start_legacy_in(Some(dir.path()), account(true), Some(stub.clone()));
     app.press("label:New entry")?;
     app.type_text(
         "label:What would you like to record?",
@@ -270,7 +270,7 @@ fn natural_correction_then_batch_confirmation_is_atomic_and_survives_restart() -
         "the follow-up replays the thread: the earlier reply as an assistant turn and the new message"
     );
     drop(app);
-    let (mut app, _) = start_in(
+    let (mut app, _) = start_legacy_in(
         Some(dir.path()),
         storage.entries().into_iter().collect(),
         None,
@@ -288,7 +288,7 @@ fn interrupted_text_is_kept_and_malformed_model_money_cannot_be_saved() -> Resul
     let dir = tempfile::tempdir().unwrap();
     let mut bad = money_record("1.005");
     bad["money"]["currency"] = json!("USD");
-    let (mut app, storage) = start_in(
+    let (mut app, storage) = start_legacy_in(
         Some(dir.path()),
         account(true),
         Some(network(200, record_reply(vec![bad.clone()]))),
@@ -298,7 +298,7 @@ fn interrupted_text_is_kept_and_malformed_model_money_cannot_be_saved() -> Resul
     app.press("label:Close")?;
     app.wait_for("label:What would you like to record?")?;
     drop(app);
-    let (mut app, _) = start_in(
+    let (mut app, _) = start_legacy_in(
         Some(dir.path()),
         storage.entries().into_iter().collect(),
         Some(network(200, record_reply(vec![bad]))),
@@ -320,7 +320,7 @@ fn interrupted_text_is_kept_and_malformed_model_money_cannot_be_saved() -> Resul
 fn review_footer_keeps_both_controls_reachable_across_width_and_text_size() -> Result<(), String> {
     use nsh_core::geometry::{Points, Size};
 
-    let (mut app, _) = start(
+    let (mut app, _) = start_legacy(
         account(true),
         Some(network(200, record_reply(vec![meal_record()]))),
     );
@@ -372,7 +372,7 @@ fn compact_photo_and_text_composer_keeps_the_same_draft_across_back_and_reopen()
 -> Result<(), String> {
     use nsh_core::geometry::{Points, Size};
     let dir = tempfile::tempdir().unwrap();
-    let (mut app, _) = start_in(Some(dir.path()), account(true), None);
+    let (mut app, _) = start_legacy_in(Some(dir.path()), account(true), None);
     app.set_viewport(Size::new(Points(360.0), Points(640.0)))?;
     app.set_environment("small phone with IME", |e| {
         e.font_scale = 1.3;
@@ -473,7 +473,7 @@ fn thread_questions_answer_by_tap_and_reopen_keeps_the_conversation() -> Result<
             reply.send(response(200, body));
         })),
     )]));
-    let (mut app, storage) = start_in(Some(dir.path()), account(true), Some(stub.clone()));
+    let (mut app, storage) = start_legacy_in(Some(dir.path()), account(true), Some(stub.clone()));
     app.set_viewport(nsh_core::geometry::Size::new(
         nsh_core::geometry::Points(390.0),
         nsh_core::geometry::Points(844.0),
@@ -538,7 +538,7 @@ fn thread_questions_answer_by_tap_and_reopen_keeps_the_conversation() -> Result<
     );
     drop(app);
 
-    let (mut app, _) = start_in(
+    let (mut app, _) = start_legacy_in(
         Some(dir.path()),
         storage.entries().into_iter().collect(),
         Some(stub.clone()),
@@ -600,7 +600,7 @@ fn image_only_followup_replays_each_view_in_its_original_turn_after_restart() ->
     let dir = tempfile::tempdir().unwrap();
     let question = "Is this another view of the same meal?";
     let first = network(200, ask_reply("call-image", question, Vec::new()));
-    let (mut app, storage) = start_in(Some(dir.path()), account(true), Some(first.clone()));
+    let (mut app, storage) = start_legacy_in(Some(dir.path()), account(true), Some(first.clone()));
     app.press("label:New entry")?;
     picks_a_photo(&mut app);
     app.press("Attach image")?;
@@ -619,7 +619,7 @@ fn image_only_followup_replays_each_view_in_its_original_turn_after_restart() ->
     let mut meal = meal_record();
     meal["meal"]["source_image"] = json!(2);
     let second = network(200, record_reply(vec![meal]));
-    let (mut app, _) = start_in(
+    let (mut app, _) = start_legacy_in(
         Some(dir.path()),
         storage.entries().into_iter().collect(),
         Some(second.clone()),
@@ -748,7 +748,7 @@ fn failed_tool_continuation_retries_the_submitted_answer_without_duplicate_turns
             }
         })),
     )]));
-    let (mut app, _) = start_in(Some(dir.path()), account(true), Some(stub.clone()));
+    let (mut app, _) = start_legacy_in(Some(dir.path()), account(true), Some(stub.clone()));
     app.press("label:New entry")?;
     app.type_text("label:What would you like to record?", "Lunch 32 yuan")?;
     app.press("label:Send")?;
@@ -816,7 +816,7 @@ fn optional_refinement_can_be_skipped_without_fabricating_an_answer() -> Result<
             reply.send(response(200, body));
         })),
     )]));
-    let (mut app, _) = start_in(Some(dir.path()), account(true), Some(stub.clone()));
+    let (mut app, _) = start_legacy_in(Some(dir.path()), account(true), Some(stub.clone()));
     app.press("label:New entry")?;
     app.type_text(
         "label:What would you like to record?",
@@ -863,7 +863,8 @@ fn unknown_or_malformed_tool_calls_cannot_write_business_records() -> Result<(),
         } else {
             body["content"][0]["input"]["questions"][0]["text"] = json!("");
         }
-        let (mut app, _) = start_in(Some(dir.path()), account(true), Some(network(200, body)));
+        let (mut app, _) =
+            start_legacy_in(Some(dir.path()), account(true), Some(network(200, body)));
         app.press("label:New entry")?;
         app.type_text("label:What would you like to record?", "Lunch 32 yuan")?;
         app.press("label:Send")?;
@@ -894,7 +895,7 @@ fn unsent_views_can_be_removed_and_four_views_survive_reopen_without_recognition
 -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
     let quiet = Arc::new(StubNetwork::new([] as [(String, StubResponse); 0]));
-    let (mut app, _) = start_in(Some(dir.path()), account(true), Some(quiet.clone()));
+    let (mut app, _) = start_legacy_in(Some(dir.path()), account(true), Some(quiet.clone()));
     app.press("label:New entry")?;
     picks_a_photo(&mut app);
     app.press("Attach image")?;
@@ -959,7 +960,7 @@ fn unsent_views_can_be_removed_and_four_views_survive_reopen_without_recognition
 fn an_image_that_cannot_be_kept_is_not_attached_or_sent() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
     let stub = network(200, record_reply(vec![meal_record()]));
-    let (mut app, _) = start_in(Some(dir.path()), account(true), Some(stub.clone()));
+    let (mut app, _) = start_legacy_in(Some(dir.path()), account(true), Some(stub.clone()));
     let folder = database_in(dir.path())
         .parent()
         .unwrap()
@@ -1001,7 +1002,7 @@ fn same_named_debit_and_credit_require_an_explicit_funding_choice() -> Result<()
         repository,
     };
     let dir = tempfile::tempdir().unwrap();
-    let (seed, _) = start_in(Some(dir.path()), account(true), None);
+    let (seed, _) = start_legacy_in(Some(dir.path()), account(true), None);
     drop(seed);
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
     let credit = Account::parse("负债:Cash").unwrap();
@@ -1017,7 +1018,7 @@ fn same_named_debit_and_credit_require_an_explicit_funding_choice() -> Result<()
         repository::set_account_purpose(&db, &a, Some(purpose)).unwrap();
     }
     let model = network(200, record_reply(vec![money_record("32.00")]));
-    let (mut app, _) = start_in(Some(dir.path()), account(true), Some(model));
+    let (mut app, _) = start_legacy_in(Some(dir.path()), account(true), Some(model));
     app.press("label:New entry")?;
     app.type_text(
         "label:What would you like to record?",
@@ -1068,7 +1069,7 @@ fn inferred_funding_requires_a_tap_and_undo_reverts_the_whole_batch() -> Result<
     }]);
     let response = record_reply(vec![money, meal_record()]);
     let model = network(200, response);
-    let (mut app, _) = start_in(Some(dir.path()), account(true), Some(model.clone()));
+    let (mut app, _) = start_legacy_in(Some(dir.path()), account(true), Some(model.clone()));
     app.press("label:New entry")?;
     app.type_text(
         "label:What would you like to record?",
@@ -1122,7 +1123,7 @@ fn an_out_of_scope_question_opens_the_model_selected_tab_without_saving() -> Res
     let mut body = record_reply(vec![]);
     body["content"][0]["input"] = json!({"records":[],"destination":"assets"});
     let model = network(200, body);
-    let (mut app, _) = start_in(Some(dir.path()), account(true), Some(model.clone()));
+    let (mut app, _) = start_legacy_in(Some(dir.path()), account(true), Some(model.clone()));
     app.press("label:New entry")?;
     app.type_text("label:What would you like to record?", "What do I own?")?;
     app.press("label:Send")?;
@@ -1148,7 +1149,7 @@ fn holding_balance_price_and_note_cards_share_one_review() -> Result<(), String>
         repository,
     };
     let dir = tempfile::tempdir().unwrap();
-    let (seed, _) = start_in(Some(dir.path()), account(true), None);
+    let (seed, _) = start_legacy_in(Some(dir.path()), account(true), None);
     drop(seed);
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
     let day = today();
@@ -1200,7 +1201,7 @@ fn holding_balance_price_and_note_cards_share_one_review() -> Result<(), String>
             row("note", json!("Stayed on budget")),
         ]),
     );
-    let (mut app, _) = start_in(Some(dir.path()), account(true), Some(model.clone()));
+    let (mut app, _) = start_legacy_in(Some(dir.path()), account(true), Some(model.clone()));
     app.press("label:New entry")?;
     app.type_text("label:What would you like to record?", "Bought two Fund A with Cash, then checked Cash at 91.40. Closing price 4.125005. Note: Stayed on budget.")?;
     app.press("label:Send")?;
@@ -1295,7 +1296,8 @@ fn only_a_committed_save_animates_and_reduced_motion_keeps_the_receipt() -> Resu
         let stub = network(200, record_reply(vec![money]));
         // Observe the native mount during press(), which settles finite animations before returning.
         let clock = nsh_core::time::Clock::manual(std::time::SystemTime::now());
-        let (mut app, _) = start_in_with_clock(Some(dir.path()), account(true), Some(stub), clock);
+        let (mut app, _) =
+            start_legacy_in_with_clock(Some(dir.path()), account(true), Some(stub), clock);
         let flew = Arc::new(std::sync::atomic::AtomicBool::new(false));
         let mounted = flew.clone();
         app.observe(move |_, batch| {
@@ -1368,7 +1370,7 @@ fn batch_view_returns_to_both_records_and_opens_a_note_on_its_own_day() -> Resul
     let day = today().plus_days(-7);
     let note = json!({"kind":"note","day":day.to_string(),"trade":null,"balance":null,"price":null,"note":"Evening walk","evidence":[],"weight_kg":null,"money":null,"meal":null,"slot":null});
     for records in [vec![note.clone(), meal_record()], vec![meal_record(), note]] {
-        let (mut app, _) = start(account(true), Some(network(200, record_reply(records))));
+        let (mut app, _) = start_legacy(account(true), Some(network(200, record_reply(records))));
         app.press("label:New entry")?;
         app.type_text(
             "label:What would you like to record?",
@@ -1391,5 +1393,85 @@ fn batch_view_returns_to_both_records_and_opens_a_note_on_its_own_day() -> Resul
         assert!(app.screen().enabled("label:Next week")?);
         app.wait_for("Evening walk")?;
     }
+    Ok(())
+}
+
+#[test]
+fn invalid_model_output_shows_diagnostic_and_retry_keeps_the_draft() -> Result<(), String> {
+    let dir = tempfile::tempdir().unwrap();
+    let calls = Arc::new(AtomicUsize::new(0));
+    let incoming = calls.clone();
+    let stub = Arc::new(StubNetwork::new([(
+        MESSAGES.into(),
+        StubRoute::Handler(Arc::new(move |_, reply| {
+            let mut result = record_reply(vec![meal_record()]);
+            if incoming.fetch_add(1, Ordering::SeqCst) == 0 {
+                result["content"][0]["input"]["extra_private_field"] =
+                    json!("secret_from_provider");
+            }
+            reply.send(response(200, result));
+        })),
+    )]));
+    let (mut app, _) = start_legacy_in(Some(dir.path()), account(true), Some(stub.clone()));
+    app.press("label:New entry")?;
+    app.type_text("label:What would you like to record?", "Lunch noodles")?;
+    app.press("label:Send")?;
+    app.wait_for("The reply has missing or invalid fields")?;
+    app.wait_for("text:/recognition_schema_mismatch/")?;
+    app.wait_for("text:/Response validation failed/")?;
+    assert!(
+        !app.screen()
+            .texts()
+            .iter()
+            .any(|text| text.contains("secret_from_provider"))
+    );
+    assert!(!app.shows("text:/^Confirm and save/"));
+    assert!(stored_meals(dir.path()).is_empty());
+    app.press("label:Close")?;
+    app.press("label:Recognition failed. Your draft is kept.")?;
+    app.wait_for("text:/recognition_schema_mismatch/")?;
+    app.press("Try again")?;
+    app.wait_for("Confirm and save")?;
+    assert_eq!(stub.requests().len(), 2);
+    assert!(stored_meals(dir.path()).is_empty());
+    Ok(())
+}
+
+#[test]
+fn chinese_diagnostic_fits_a_small_phone_with_large_text() -> Result<(), String> {
+    use nsh_core::{
+        geometry::{Points, Size},
+        platform::{Locale, LocaleSettings},
+    };
+    let mut result = record_reply(vec![meal_record()]);
+    result["content"][0]["input"]["unexpected"] = json!(true);
+    let (mut app, _) = start_legacy(account(true), Some(network(200, result)));
+    app.set_viewport(Size::new(Points(360.0), Points(640.0)))?;
+    let locale = Locale::parse("zh-CN").unwrap();
+    app.set_environment("Chinese, large text", |e| {
+        e.locale = locale;
+        e.locale_settings = LocaleSettings::of(locale);
+        e.font_scale = 1.3;
+    })?;
+    app.press("label:新记录")?;
+    app.type_text("label:想记下什么？", "午餐面条")?;
+    app.press("label:发送")?;
+    app.wait_for("模型返回的字段不符合要求")?;
+    app.wait_for("text:/校验结果失败/")?;
+    let nodes = app.screen().layout_nodes();
+    let detail = nodes
+        .iter()
+        .find(|node| {
+            !node.hidden
+                && node
+                    .text
+                    .as_ref()
+                    .is_some_and(|text| text.text.text.contains("recognition_schema_mismatch"))
+        })
+        .expect("diagnostic body is rendered");
+    assert!(detail.bounds.origin.x.0 >= 0.0);
+    assert!(detail.bounds.origin.x.0 + detail.bounds.size.width.0 <= 360.0);
+    app.press("重新识别")?;
+    app.wait_for("模型返回的字段不符合要求")?;
     Ok(())
 }

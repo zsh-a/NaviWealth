@@ -102,6 +102,8 @@ fn a_meal_logged_late_lands_on_its_day_in_records() -> Result<(), String> {
     app.press(&format!("label:{}", long_date(yesterday)))?;
     app.wait_for("text:Yesterday")?;
     app.press("text:/^Save meal/")?;
+    app.wait_for_gone("text:/^Save meal/", GONE)?;
+    app.conversation_home()?;
 
     // Today keeps only today's meal.
     app.wait_for("text:1 meal")?;

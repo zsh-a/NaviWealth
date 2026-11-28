@@ -170,9 +170,7 @@ pub(super) fn dock(sheets: Sheets, targets: [ElementRef; 4]) -> impl IntoElement
                         ),
                 ),
         )
-        .child(
-            // The plus dips toward the rising capture sheet and settles
-            // back, one motion shared with what it opened.
+        .child(if use_context::<crate::LegacyCaptureMode>().is_some() {
             IconBtn::new(Icon::Plus, || s().new_entry.into())
                 .variant(Variant::Dock)
                 .side(BAR)
@@ -180,9 +178,15 @@ pub(super) fn dock(sheets: Sheets, targets: [ElementRef; 4]) -> impl IntoElement
                     sheets.capture_draft.set(None);
                     sheets.capture.set(true);
                 })
+                .into_element()
+        } else {
+            IconBtn::new(Icon::Conversation, || super::assistant::title().into())
+                .variant(Variant::Dock)
+                .side(BAR)
+                .on_press(|| nav::push(crate::nav::Route::Assistant))
                 .style_when(covered, |s| s.bg(color::GLASS).backdrop_filter_none())
-                .bind_scale(&capture_lift(sheets.capture)),
-        )
+                .into_element()
+        })
 }
 
 /// The platter under the chosen tab, which a press lifts into a lens that
@@ -306,19 +310,6 @@ fn tab_item(
                         .text_color(tint),
                 ),
         )
-}
-
-/// Scales the plus down while the capture sheet it opened rises; reduced
-/// motion keeps it still.
-fn capture_lift(open: Signal<bool>) -> AnimatedValue {
-    let lift = animated_value(1.0);
-    effect(move || {
-        if open.get() && !reduce_motion() {
-            lift.set(0.92);
-            lift.timing(1.0, motion::FAST, motion::SETTLE);
-        }
-    });
-    lift
 }
 
 #[cfg(test)]

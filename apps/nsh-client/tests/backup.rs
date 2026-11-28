@@ -314,7 +314,7 @@ fn resuming_on_a_new_day_backs_up_once_even_when_settings_closes() -> Result<(),
     config.storage = Some(storage.clone());
     config.data_dir = Some(dir.path().to_path_buf());
     let mut app = Headless::start(config).unwrap();
-    app.wait_for("label:New entry")?;
+    app.wait_for("label:Conversation")?;
     app.press("label:Settings")?;
     app.set_environment("background", |e| e.lifecycle = Lifecycle::Background)?;
     app.set_system_time(now + Duration::from_secs(24 * 3600))?;

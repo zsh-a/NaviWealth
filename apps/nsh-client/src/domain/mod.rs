@@ -2,6 +2,9 @@
 //! compatibility exports of health models and calculations from navi-health.
 //! Everything here is plain Rust and can be tested without an NSH engine.
 
+mod recognition_failure;
+pub use recognition_failure::ResponseFailure;
+
 pub mod account;
 pub mod assistant_proposal;
 pub mod backup;
@@ -51,6 +54,8 @@ pub enum VisionFailure {
     Refused,
     /// The answer was not the JSON the app asked for.
     Unreadable,
+    /// A safe, typed diagnostic from response validation or transport.
+    Response(ResponseFailure),
     /// The photo could not be prepared (an unsupported format).
     Photo,
     /// The device could not persist a recognition draft.
@@ -67,6 +72,12 @@ impl VisionFailure {
             | VisionFailure::Truncated
             | VisionFailure::Unreadable
             | VisionFailure::Storage => true,
+            VisionFailure::Response(error) => !matches!(
+                error,
+                ResponseFailure::Configuration
+                    | ResponseFailure::Request
+                    | ResponseFailure::History
+            ),
             VisionFailure::Provider(error) => matches!(
                 error,
                 ProviderError::RateLimited | ProviderError::Overloaded | ProviderError::Server(_)
@@ -79,12 +90,13 @@ impl VisionFailure {
     pub fn points_to_settings(&self) -> bool {
         matches!(
             self,
-            VisionFailure::Provider(
-                ProviderError::Unauthorized
-                    | ProviderError::Forbidden
-                    | ProviderError::NotFound
-                    | ProviderError::Rejected { .. }
-            )
+            VisionFailure::Response(ResponseFailure::Configuration | ResponseFailure::History)
+                | VisionFailure::Provider(
+                    ProviderError::Unauthorized
+                        | ProviderError::Forbidden
+                        | ProviderError::NotFound
+                        | ProviderError::Rejected { .. }
+                )
         )
     }
 }

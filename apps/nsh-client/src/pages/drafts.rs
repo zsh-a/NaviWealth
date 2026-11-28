@@ -57,6 +57,7 @@ pub fn drafts_section(heading: bool) -> impl IntoElement {
                     let drafts = capture::all();
                     untracked(move || {
                         view().gap_2().children(drafts.into_iter().map(|draft| {
+                            let legacy = use_context::<crate::LegacyCaptureMode>().is_some();
                             let sheets = super::home::Sheets::get();
                             let title = match draft.status {
                                 crate::domain::capture::Status::Analyzing => s().capture_reading,
@@ -70,8 +71,16 @@ pub fn drafts_section(heading: bool) -> impl IntoElement {
                                 draft.input.clone()
                             };
                             crate::ui::surface::row_button(move || {
-                                sheets.capture_draft.set(Some(draft.id.clone()));
-                                sheets.capture.set(true);
+                                if legacy {
+                                    sheets.capture_draft.set(Some(draft.id.clone()));
+                                    sheets.capture.set(true);
+                                    return;
+                                }
+                                if let Err(problem) =
+                                    crate::data::assistant::open_capture_session(&draft.id)
+                                {
+                                    crate::ui::toast::show_toast(problem, None);
+                                }
                             })
                             .accessibility_label(move || Some(title.into()))
                             .rounded(px(radius::CARD))

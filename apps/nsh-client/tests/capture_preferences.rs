@@ -34,7 +34,7 @@ fn payload(body: &Value) -> Value {
 fn defaults_and_permissions_for_another_model_keep_unsent_text_local() -> Result<(), String> {
     for settings in [account(true), preferences(true, true, "other-model")] {
         let stub = network(200, record_reply(vec![meal_record()]));
-        let (mut app, _) = start(settings, Some(stub.clone()));
+        let (mut app, _) = start_legacy(settings, Some(stub.clone()));
         app.press("label:New entry")?;
         app.type_text("label:What would you like to record?", "my lunch")?;
         app.wait(Duration::from_millis(850))?;
@@ -52,7 +52,7 @@ fn defaults_and_permissions_for_another_model_keep_unsent_text_local() -> Result
 #[test]
 fn typing_previews_only_the_latest_text_and_submit_sends_separately() -> Result<(), String> {
     let stub = network(200, record_reply(vec![meal_record()]));
-    let (mut app, _) = start(
+    let (mut app, _) = start_legacy(
         preferences(true, true, "claude-opus-5-5"),
         Some(stub.clone()),
     );
@@ -95,7 +95,7 @@ fn typing_previews_only_the_latest_text_and_submit_sends_separately() -> Result<
 #[test]
 fn model_settings_can_opt_in_independently_and_changing_the_preview_model_disarms_it()
 -> Result<(), String> {
-    let (mut app, storage) = start(account(true), None);
+    let (mut app, storage) = start_legacy(account(true), None);
     app.press("label:Settings")?;
     app.press("label:/^Recognition model, /")?;
     app.press("Preview as I type")?;
@@ -125,7 +125,7 @@ fn model_settings_can_opt_in_independently_and_changing_the_preview_model_disarm
 fn leaving_before_the_preview_and_reopening_untouched_text_makes_no_request() -> Result<(), String>
 {
     let stub = network(200, record_reply(vec![meal_record()]));
-    let (mut app, _) = start(
+    let (mut app, _) = start_legacy(
         preferences(true, true, "claude-opus-5-5"),
         Some(stub.clone()),
     );

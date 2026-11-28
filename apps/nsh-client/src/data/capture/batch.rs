@@ -415,6 +415,7 @@ enum Written {
 /// The receipt holds only this batch's records. Undo expires with the UI action.
 #[derive(Clone)]
 pub struct CaptureUndo {
+    capture_id: String,
     written: Vec<Written>,
     created_accounts: Vec<Account>,
     created_securities: Vec<(Security, SecurityBinding)>,
@@ -446,6 +447,7 @@ fn commit_in(
     let tx = c.unchecked_transaction()?;
     let prior_accounts = repository::accounts(&tx)?;
     let mut undo = CaptureUndo {
+        capture_id: draft.id.clone(),
         written: Vec::new(),
         created_accounts: Vec::new(),
         created_securities: Vec::new(),
@@ -660,6 +662,12 @@ fn commit_in(
         .into_iter()
         .filter(|a| !prior_accounts.contains(a))
         .collect();
+    crate::data::assistant_store::record_capture_outcome(
+        &tx,
+        &draft.id,
+        &draft.records,
+        crate::data::assistant_store::RecordStatus::Saved,
+    )?;
     tx.commit()?;
     Ok(undo)
 }
@@ -793,6 +801,12 @@ fn undo_in(c: &Connection, receipt: &CaptureUndo) -> BatchResult<()> {
             [account.as_str()],
         )?;
     }
+    crate::data::assistant_store::record_capture_outcome(
+        &tx,
+        &receipt.capture_id,
+        &[],
+        crate::data::assistant_store::RecordStatus::Undone,
+    )?;
     tx.commit()?;
     Ok(())
 }

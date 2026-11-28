@@ -241,7 +241,7 @@ pub(super) static STRINGS: Strings = Strings {
     resting: "Resting",
     todays_records: "Today's records",
     spent_today: "Spent today",
-    intake_hint: "Describe or photograph a meal with +",
+    intake_hint: "Describe or photograph a meal in Conversation",
     capture_choose_category: "Choose a category",
     all_records: "All",
     show_earlier: "Show earlier",

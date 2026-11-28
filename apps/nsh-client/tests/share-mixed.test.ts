@@ -14,16 +14,18 @@ async function start() {
     network: {},
     host: { params: { testMode: true }, handlers: {} },
   });
-  await app.waitFor("label:New entry");
+  await app.waitFor("label:Conversation");
   return app;
 }
 
-test("share mixed: shared text opens an unsent capture draft", async () => {
+test("share mixed: shared text opens an unsent conversation", async () => {
   const app = await start();
   await app.host.send("share.received", { text: "Taxi 18 yuan", files: [] });
-  await app.waitFor("label:What would you like to record?");
+  await app.waitFor("label:Message");
   await app.waitFor("text:Taxi 18 yuan");
-  expect(app.shows("Recognize")).toBe(false);
+  expect(app.shows("Review before saving")).toBe(false);
+  expect(app.shows("Confirm and save")).toBe(false);
+  expect(app.shows("Editing selected record")).toBe(false);
 });
 
 test("share mixed: an empty or malformed share opens nothing", async () => {
@@ -31,7 +33,7 @@ test("share mixed: an empty or malformed share opens nothing", async () => {
   await app.host.send("share.received", { files: "nope" });
   await app.host.send("share.received", { text: "", files: [] });
   await app.waitFor("text:/^Can't open what was shared/");
-  expect(app.shows("label:What would you like to record?")).toBe(false);
+  expect(app.shows("label:Message")).toBe(false);
 });
 
 test("share mixed: a share waits while a page covers the home, then opens", async () => {
@@ -40,8 +42,8 @@ test("share mixed: a share waits while a page covers the home, then opens", asyn
   await app.waitFor("Devices & connections");
   await app.host.send("share.received", { text: "Parking 6 yuan", files: [] });
   await app.waitFor("Devices & connections");
-  expect(app.shows("label:What would you like to record?")).toBe(false);
+  expect(app.shows("label:Message")).toBe(false);
   await app.press("label:Back");
-  await app.waitFor("label:What would you like to record?");
+  await app.waitFor("label:Message");
   await app.waitFor("text:Parking 6 yuan");
 });

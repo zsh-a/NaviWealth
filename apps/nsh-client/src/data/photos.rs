@@ -110,6 +110,9 @@ pub async fn read_for_backup() -> Vec<(String, Vec<u8>)> {
         .into_iter()
         .chain(super::favorites::photo_names())
         .collect();
+    if let Some(Ok(conversation_names)) = super::db::with(super::assistant_store::photo_names) {
+        names.extend(conversation_names);
+    }
     names.sort();
     names.dedup();
     let paths: Vec<(String, PathBuf)> = names
@@ -131,15 +134,16 @@ pub async fn read_for_backup() -> Vec<(String, Vec<u8>)> {
 /// Dropping an uncommitted preparation removes only files it created.
 #[derive(Default)]
 pub struct RestoredPhotos {
-    renamed: HashMap<String, String>,
+    restored: HashMap<String, String>,
     names: Vec<String>,
     created: Vec<PathBuf>,
     committed: bool,
 }
 
 impl RestoredPhotos {
-    pub fn renamed(&self) -> &HashMap<String, String> {
-        &self.renamed
+    /// Includes unchanged names so restore can distinguish present and missing images.
+    pub fn restored(&self) -> &HashMap<String, String> {
+        &self.restored
     }
 
     /// Called synchronously immediately after the database transaction commits.
@@ -201,9 +205,7 @@ impl RestoredPhotos {
                     Err(error) => return Err(error),
                 }
             }
-            if original != name {
-                prepared.renamed.insert(original, name.clone());
-            }
+            prepared.restored.insert(original, name.clone());
             prepared.names.push(name);
         }
         Ok(prepared)
@@ -262,6 +264,12 @@ pub async fn sweep_orphans() {
     referenced.extend(super::favorites::photo_names());
     referenced.extend(super::pending::photo_names());
     referenced.extend(super::capture::photo_names());
+    match super::db::with(super::assistant_store::photo_names) {
+        Some(Ok(names)) => referenced.extend(names),
+        // If any durable reference cannot be read, retaining files is safer
+        // than collecting a still-live conversation attachment.
+        _ => return,
+    }
     let Ok(candidates) = orphan_candidates(&dir, &referenced) else {
         return;
     };
@@ -423,7 +431,7 @@ mod tests {
             ],
         )
         .unwrap();
-        let renamed = prepared.renamed["m1.jpg"].clone();
+        let renamed = prepared.restored["m1.jpg"].clone();
         assert_ne!(renamed, "m1.jpg");
         assert_eq!(
             std::fs::read(dir.path().join("m1.jpg")).unwrap(),
@@ -434,7 +442,7 @@ mod tests {
             b"restored"
         );
         assert_eq!(prepared.created.len(), 1);
-        assert!(!prepared.renamed.contains_key("same.jpg"));
+        assert_eq!(prepared.restored["same.jpg"], "same.jpg");
         drop(prepared); // Database rejected the backup: only new files go away.
         assert!(!dir.path().join(renamed).exists());
         assert_eq!(std::fs::read(dir.path().join("same.jpg")).unwrap(), b"same");

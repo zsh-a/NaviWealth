@@ -1,6 +1,6 @@
 use rpi_agent::AgentMessage;
 use rpi_ai::types::{
-    Content, Context, Message, StopReason, ToolCall, ToolResultMessage, ToolResultRole,
+    Content, Context, Message, StopReason, ToolCall, ToolResultMessage, ToolResultRole, UserContent,
 };
 use serde_json::Value;
 
@@ -66,7 +66,28 @@ fn close_pending(messages: &mut Vec<AgentMessage>, pending: &mut Vec<ToolCall>) 
     }
 }
 
+pub(crate) const OMITTED_IMAGE: &str = "[Image attached to this turn is stored on the device and omitted from saved model history. Do not claim to inspect it unless the host reattaches it to the current request.]";
+
+fn redact_images(blocks: &mut [Content]) {
+    for block in blocks {
+        if matches!(block, Content::Image(_)) {
+            *block = Content::text(OMITTED_IMAGE);
+        }
+    }
+}
+
 pub(crate) fn sanitize(message: &mut AgentMessage) {
+    match message {
+        AgentMessage::User(user) => {
+            if let UserContent::Blocks(blocks) = &mut user.content {
+                redact_images(blocks);
+            }
+        }
+        AgentMessage::Assistant(assistant) => redact_images(&mut assistant.content),
+        AgentMessage::ToolResult(result) => redact_images(&mut result.content),
+        AgentMessage::Custom(_) => {}
+    }
+
     if let AgentMessage::Assistant(assistant) = message
         && matches!(
             assistant.stop_reason,
@@ -75,7 +96,8 @@ pub(crate) fn sanitize(message: &mut AgentMessage) {
     {
         // Upstream diagnostics can contain a provider response body. Store only
         // a stable code, even if the caller logs serialized checkpoints.
-        assistant.error_message = Some("assistant_provider".into());
+        assistant.error_message =
+            Some(crate::diagnostics::sanitize(assistant.error_message.as_deref()).into());
         assistant.raw_stop_reason = None;
         assistant.content.clear();
     }
@@ -92,6 +114,27 @@ pub(crate) fn encode(messages: &[AgentMessage]) -> Vec<Value> {
         .collect()
 }
 
+/// The text-context budget is independent of this turn's bounded image bytes.
+/// Images are checked separately at the request boundary, never silently dropped
+/// merely to make a text budget fit.
+pub(crate) fn context_size(context: &Context) -> Result<usize, String> {
+    let mut text = context.clone();
+    for message in &mut text.messages {
+        match message {
+            Message::User(user) => {
+                if let UserContent::Blocks(blocks) = &mut user.content {
+                    redact_images(blocks);
+                }
+            }
+            Message::Assistant(assistant) => redact_images(&mut assistant.content),
+            Message::ToolResult(result) => redact_images(&mut result.content),
+        }
+    }
+    Ok(serde_json::to_vec(&text)
+        .map_err(|_| "assistant_context_limit")?
+        .len())
+}
+
 /// Shrink only the provider window. Never split a user turn, which would
 /// orphan tool calls or erase their results while retaining the instructions.
 pub(crate) fn bound_context(context: &mut Context, limit: usize) -> Result<usize, String> {
@@ -99,11 +142,7 @@ pub(crate) fn bound_context(context: &mut Context, limit: usize) -> Result<usize
         Message::Assistant(assistant) if matches!(assistant.stop_reason, StopReason::Error | StopReason::Aborted)
     ));
     let mut removed = 0;
-    while serde_json::to_vec(context)
-        .map_err(|_| "assistant_context_limit")?
-        .len()
-        > limit
-    {
+    while context_size(context)? > limit {
         let next = context
             .messages
             .iter()

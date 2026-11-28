@@ -122,6 +122,9 @@ const MIGRATIONS: &[&str] = &[
     // 24: sessions can carry a validated context summary bound to a transcript
     // prefix. Older apps must reject these bodies before loading or restore.
     "SELECT 1;",
+    // 25: unified conversations own unsent content, image references, capture
+    // reviews and durable record receipts. Linked drafts now travel in backups.
+    "SELECT 1;",
 ];
 
 #[derive(Clone, Default)]
@@ -219,12 +222,7 @@ const MARKET_CACHES: &[&str] = &["finance_market_quotes", "finance_daily_bars"];
 
 /// Device-local recognition evidence and concurrency guards are not records.
 /// Statement import reviews keep their existing finance backup contract.
-const PRIVATE_TABLES: &[&str] = &[
-    "meal_drafts",
-    "capture_drafts",
-    "scale_drafts",
-    "weight_revisions",
-];
+const PRIVATE_TABLES: &[&str] = &["meal_drafts", "scale_drafts", "weight_revisions"];
 
 /// A consistent copy of the whole database, as file bytes, with the market
 /// caches emptied and their pages reclaimed.
@@ -243,6 +241,8 @@ fn snapshot_file(connection: &Connection, path: &Path) -> Result<Vec<u8>, String
         copy.execute(&format!("DELETE FROM {table}"), [])
             .map_err(|error| error.to_string())?;
     }
+    super::assistant_store::prune_unlinked_drafts(&copy)?;
+    super::assistant_store::validate_conversation_drafts(&copy)?;
     copy.execute("VACUUM", [])
         .map_err(|error| error.to_string())?;
     drop(copy);
@@ -292,9 +292,11 @@ fn restore_file_with_photos(
         return Err(RestoreError::Newer);
     }
     migrate(&mut restored).map_err(|_| RestoreError::Unreadable)?;
+    super::assistant_store::prune_unlinked_drafts(&restored)
+        .map_err(|_| RestoreError::Unreadable)?;
     validate_restored(&restored).map_err(|_| RestoreError::Unreadable)?;
     remap_photos(&restored, photos).map_err(|_| RestoreError::Unreadable)?;
-    // Review drafts are never imported. Clearing the source first lets the
+    // Scale review drafts are never imported. Clearing the source first lets the
     // normal table replacement invalidate current drafts in the same transaction.
     restored
         .execute("DELETE FROM scale_drafts", [])
@@ -313,6 +315,7 @@ fn restore_file_with_photos(
     // and memories, like old health-only backups preserve the current ledger.
     if version >= 22 {
         tables.extend_from_slice(super::assistant_store::TABLES);
+        tables.push(("capture_drafts", "id, created_at_ms, body"));
     }
     navi_storage::replace_tables(connection, path, &tables).map_err(|error| {
         log::error!("db: restore failed: {error}");
@@ -333,9 +336,21 @@ fn remap_photos(
     connection: &Connection,
     names: &std::collections::HashMap<String, String>,
 ) -> Result<(), String> {
-    if names.is_empty() {
-        return Ok(());
+    // An absent incoming image must not accidentally resolve to an unrelated
+    // file already on this device. Keep its slot but use a fresh unavailable ref.
+    let mut conversation_names = names.clone();
+    for name in super::assistant_store::photo_names(connection)? {
+        if let std::collections::hash_map::Entry::Vacant(entry) = conversation_names.entry(name) {
+            use base64::Engine as _;
+            let mut random = [0u8; 16];
+            getrandom::fill(&mut random).map_err(|e| e.to_string())?;
+            entry.insert(format!(
+                "unavailable-{}.jpg",
+                base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(random)
+            ));
+        }
     }
+    super::assistant_store::remap_photos(connection, &conversation_names)?;
     for table in ["meals", "saved_meals"] {
         let mut statement = connection
             .prepare(&format!("SELECT id, body FROM {table}"))
@@ -371,6 +386,7 @@ fn validate_restored(connection: &Connection) -> Result<(), String> {
         .iter()
         .chain(navi_finance::repository::TABLES)
         .chain(super::assistant_store::TABLES)
+        .chain(&[("capture_drafts", "id, created_at_ms, body")])
     {
         let kind: String = connection
             .query_row(
@@ -447,6 +463,7 @@ fn validate_restored(connection: &Connection) -> Result<(), String> {
     navi_health::store::validate(connection).map_err(|e| e.to_string())?;
     super::scale::validate_saved(connection)?;
     super::assistant_store::validate(connection)?;
+    super::assistant_store::validate_conversation_drafts(connection)?;
     navi_finance::repository::validate(connection).map_err(|e| e.to_string())
 }
 
@@ -473,6 +490,7 @@ mod tests {
                 id: "user-1".into(),
                 role: Role::User,
                 text: "Remember I prefer vegetarian meals".into(),
+                ..Message::default()
             }],
             history: vec![
                 serde_json::json!({"kind":"user","role":"user","content":"Review","timestamp":1}),
@@ -487,6 +505,7 @@ mod tests {
                 },
             }],
             action_outcomes: Vec::new(),
+            ..Session::default()
         }
     }
 
@@ -1511,5 +1530,183 @@ mod tests {
             validate_restored(&connection).is_err(),
             "a favorite without foods"
         );
+    }
+    fn seed_conversation_capture(connection: &Connection) {
+        use super::super::assistant_store as store;
+        use crate::domain::capture::{Draft, Status, Turn};
+        let mut chat = assistant_session("unified");
+        chat.composer = "Continue this meal".into();
+        chat.attachments = vec!["unsent.jpg".into()];
+        chat.editing_capture = Some("review-1".into());
+        chat.messages[0].capture_id = Some("review-1".into());
+        chat.messages[0].images = vec!["meal.jpg".into()];
+        chat.messages[0].request_images = vec!["meal.jpg".into(), "carried.jpg".into()];
+        store::create_session(connection, &chat).unwrap();
+        let draft = Draft {
+            id: "review-1".into(),
+            created_at_ms: 1,
+            input: "Lunch".into(),
+            correction: "A little less rice".into(),
+            photo: None,
+            attachments: vec!["unsent.jpg".into()],
+            answers: Vec::new(),
+            records: vec![crate::domain::capture::Record::Weight {
+                day: "2026-11-28".parse().unwrap(),
+                kg: 65.0,
+            }],
+            evidence: Vec::new(),
+            question: String::new(),
+            transcript: vec![Turn::Owner {
+                text: "Lunch".into(),
+                photo: false,
+                images: vec!["meal.jpg".into()],
+            }],
+            status: Status::Analyzing,
+            model: "fixture".into(),
+        };
+        connection
+            .execute(
+                "INSERT INTO capture_drafts VALUES(?1,?2,?3)",
+                rusqlite::params![
+                    draft.id,
+                    draft.created_at_ms,
+                    serde_json::to_string(&draft).unwrap()
+                ],
+            )
+            .unwrap();
+    }
+
+    #[test]
+    fn unified_backup_keeps_linked_reviews_and_remaps_every_image_reference() {
+        use super::super::assistant_store as store;
+        let source = navi_storage::memory(MIGRATIONS).unwrap();
+        seed_conversation_capture(&source);
+        // Old unlinked transient data stays private even when malformed.
+        source
+            .execute(
+                "INSERT INTO capture_drafts VALUES('private',1,'not-json')",
+                [],
+            )
+            .unwrap();
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("unified.sqlite");
+        snapshot_file(&source, &path).unwrap();
+        let copy = Connection::open(&path).unwrap();
+        assert_eq!(
+            copy.query_row("SELECT count(*) FROM capture_drafts", [], |row| row
+                .get::<_, i64>(0))
+                .unwrap(),
+            1
+        );
+        assert_eq!(
+            source
+                .query_row("SELECT count(*) FROM capture_drafts", [], |row| row
+                    .get::<_, i64>(0))
+                .unwrap(),
+            2
+        );
+        assert_eq!(
+            store::photo_names(&copy).unwrap(),
+            ["meal.jpg".into(), "unsent.jpg".into(), "carried.jpg".into()]
+                .into_iter()
+                .collect()
+        );
+        drop(copy);
+        let current = navi_storage::memory(MIGRATIONS).unwrap();
+        current
+            .execute("INSERT INTO capture_drafts VALUES('replaced',1,'{}')", [])
+            .unwrap();
+        restore_file_with_photos(
+            &current,
+            &path,
+            &[
+                ("meal.jpg".into(), "restored-meal.jpg".into()),
+                ("carried.jpg".into(), "restored-carried.jpg".into()),
+                ("unsent.jpg".into(), "unsent.jpg".into()),
+            ]
+            .into_iter()
+            .collect(),
+        )
+        .unwrap();
+        let chat = store::session(&current, "unified").unwrap().unwrap();
+        assert_eq!(chat.status, store::Status::Interrupted);
+        assert_eq!(chat.composer, "Continue this meal");
+        assert_eq!(chat.messages[0].images, ["restored-meal.jpg"]);
+        assert_eq!(
+            chat.messages[0].request_images,
+            ["restored-meal.jpg", "restored-carried.jpg"]
+        );
+        assert_eq!(chat.attachments, ["unsent.jpg"]);
+        let draft: crate::domain::capture::Draft = serde_json::from_str(
+            &current
+                .query_row("SELECT body FROM capture_drafts", [], |row| {
+                    row.get::<_, String>(0)
+                })
+                .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(draft.status, crate::domain::capture::Status::Editing);
+        assert_eq!(draft.sent_images(), ["restored-meal.jpg"]);
+        assert_eq!(draft.attachments, ["unsent.jpg"]);
+        store::validate_conversation_drafts(&current).unwrap();
+        assert_eq!(
+            current
+                .query_row("SELECT count(*) FROM weights", [], |row| row
+                    .get::<_, i64>(0))
+                .unwrap(),
+            0,
+            "restored drafts never write business records"
+        );
+    }
+
+    #[test]
+    fn missing_conversation_photos_never_reuse_unrelated_local_names() {
+        use super::super::assistant_store as store;
+        let source = navi_storage::memory(MIGRATIONS).unwrap();
+        seed_conversation_capture(&source);
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("missing-photos.sqlite");
+        snapshot_file(&source, &path).unwrap();
+        let current = navi_storage::memory(MIGRATIONS).unwrap();
+        restore_file(&current, &path).unwrap();
+        let chat = store::session(&current, "unified").unwrap().unwrap();
+        assert!(chat.messages[0].images[0].starts_with("unavailable-"));
+        assert!(chat.attachments[0].starts_with("unavailable-"));
+        assert_ne!(chat.messages[0].images, chat.attachments);
+        assert!(
+            chat.messages[0]
+                .request_images
+                .iter()
+                .all(|name| name.starts_with("unavailable-"))
+        );
+        assert_eq!(
+            chat.messages[0].request_images[0],
+            chat.messages[0].images[0]
+        );
+        assert_eq!(
+            store::photo_names(&current).unwrap().len(),
+            3,
+            "shared references keep one remapping per absent image"
+        );
+        store::validate_conversation_drafts(&current).unwrap();
+    }
+
+    #[test]
+    fn malformed_or_missing_linked_review_refuses_restore_before_replacing_data() {
+        use super::super::assistant_store as store;
+        let source = navi_storage::memory(MIGRATIONS).unwrap();
+        seed_conversation_capture(&source);
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("invalid-review.sqlite");
+        snapshot_file(&source, &path).unwrap();
+        let corrupt = Connection::open(&path).unwrap();
+        corrupt.execute("UPDATE capture_drafts SET body=json_set(body,'$.attachments',json('[\"../secret.jpg\"]'))", []).unwrap();
+        let current = navi_storage::memory(MIGRATIONS).unwrap();
+        store::create_session(&current, &assistant_session("keep-me")).unwrap();
+        assert_eq!(restore_file(&current, &path), Err(RestoreError::Unreadable));
+        assert_eq!(store::sessions(&current).unwrap()[0].id, "keep-me");
+        corrupt.execute("DELETE FROM capture_drafts", []).unwrap();
+        assert_eq!(restore_file(&current, &path), Err(RestoreError::Unreadable));
+        assert_eq!(store::sessions(&current).unwrap()[0].id, "keep-me");
     }
 }

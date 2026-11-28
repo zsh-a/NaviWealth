@@ -308,12 +308,13 @@ pub(super) async fn apply(bundle: Bundle) -> Result<(), Failure> {
             Failure::Storage
         })?;
     super::assistant::stop_for_restore();
-    db::replace_with(&bundle.database, photos.renamed()).map_err(|error| match error {
+    db::replace_with(&bundle.database, photos.restored()).map_err(|error| match error {
         db::RestoreError::Newer => Failure::Newer,
         db::RestoreError::Unreadable => Failure::NotABackup,
         db::RestoreError::Storage => Failure::Storage,
     })?;
     photos.commit();
+    super::capture::load().map_err(|_| Failure::Storage)?;
     super::assistant::load().map_err(|_| Failure::Storage)?;
     meals::load().map_err(|_| Failure::Storage)?;
     favorites::load().map_err(|_| Failure::Storage)?;

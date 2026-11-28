@@ -846,3 +846,271 @@ async fn incremental_summary_extends_the_bound_prefix_and_keeps_recent_turns() {
     crate::validate_context_summary(&next, &result.history).unwrap();
     assert_eq!(&result.history[..extended.len()], &extended);
 }
+
+fn image_prompt() -> UserMessage {
+    UserMessage::new(
+        UserContent::Blocks(vec![Content::Image(ImageContent {
+            kind: Default::default(),
+            data: STANDARD.encode(vec![0xAB; 128 * 1024]).into(),
+            mime_type: "image/png".into(),
+        })]),
+        0,
+    )
+}
+
+#[tokio::test]
+async fn successful_owner_proposals_suspend_and_resume_without_repeating_tools() {
+    for name in ["ask_user", "propose_record", "revise_record"] {
+        let provider = FauxProvider::new(
+            FauxScript::new()
+                .with_tool_call(name, json!({"query":"details"}))
+                .with_text("Must not request an extra response"),
+        );
+        let mut spec = tool();
+        spec.name = name.into();
+        let calls = Arc::new(AtomicUsize::new(0));
+        let copy = calls.clone();
+        let host: ToolHandler = Arc::new(move |_, _| {
+            copy.fetch_add(1, Ordering::Relaxed);
+            async { Ok(json!({"status":"awaiting_owner"})) }.boxed()
+        });
+        let (emit, observed) = events();
+        let result = execute_input(
+            provider.default_model().clone(),
+            provider.clone(),
+            "Help".into(),
+            Limits::default(),
+            None,
+            vec![],
+            image_prompt(),
+            vec![spec.clone()],
+            host.clone(),
+            emit,
+            CancellationToken::new(),
+            true,
+        )
+        .await
+        .unwrap();
+        assert_eq!(provider.state().call_count.load(Ordering::SeqCst), 1);
+        assert_eq!(provider.script().pending_count(), 1);
+        assert_eq!(result.history.len(), 3);
+        assert_eq!(result.history[2]["kind"], "tool_result");
+        assert_eq!(result.history[2]["isError"], false);
+        assert_eq!(calls.load(Ordering::Relaxed), 1);
+        for event in observed.lock().unwrap().iter() {
+            if let Event::Checkpoint(kept) = event {
+                let text = serde_json::to_string(kept).unwrap();
+                assert!(!text.contains("q6urq6ur"));
+                assert!(text.contains(history::OMITTED_IMAGE));
+            }
+        }
+        let next = FauxScript::new();
+        next.append_responses(vec![FauxStep::factory(|context| {
+            assert_eq!(context.messages.len(), 4);
+            assert!(
+                matches!(&context.messages[2], Message::ToolResult(result) if !result.is_error)
+            );
+            faux_assistant_message("Owner answered; continuing", StopReason::Stop)
+        })]);
+        let next = FauxProvider::new(next);
+        let resumed = execute_input(
+            next.default_model().clone(),
+            next,
+            "Help".into(),
+            Limits::default(),
+            None,
+            result.history,
+            UserMessage::new("My answer", 0),
+            vec![spec],
+            host,
+            events().0,
+            CancellationToken::new(),
+            true,
+        )
+        .await
+        .unwrap();
+        assert_eq!(calls.load(Ordering::Relaxed), 1);
+        assert_eq!(resumed.text, "Owner answered; continuing");
+    }
+}
+
+#[tokio::test]
+async fn rejected_proposal_does_not_suspend_the_model_loop() {
+    let provider = FauxProvider::new(
+        FauxScript::new()
+            .with_tool_call("propose_record", json!({"query":"invalid"}))
+            .with_text("The proposal needs correction"),
+    );
+    let mut spec = tool();
+    spec.name = "propose_record".into();
+    let result = execute_input(
+        provider.default_model().clone(),
+        provider.clone(),
+        "Help".into(),
+        Limits::default(),
+        None,
+        vec![],
+        UserMessage::new("Record", 0),
+        vec![spec],
+        Arc::new(|_, _| async { Err("assistant_tool".into()) }.boxed()),
+        events().0,
+        CancellationToken::new(),
+        true,
+    )
+    .await
+    .unwrap();
+    assert_eq!(provider.state().call_count.load(Ordering::SeqCst), 2);
+    assert_eq!(result.text, "The proposal needs correction");
+    assert_eq!(result.history[2]["isError"], true);
+}
+
+#[tokio::test]
+async fn cancelled_image_turn_preserves_text_only_checkpoint_and_tool_identity() {
+    let provider =
+        FauxProvider::new(FauxScript::new().with_tool_call("lookup", json!({"query":"wait"})));
+    let cancel = CancellationToken::new();
+    let trigger = cancel.clone();
+    let (emit, observed) = events();
+    let result = execute_input(
+        provider.default_model().clone(),
+        provider,
+        "Help".into(),
+        Limits::default(),
+        None,
+        vec![],
+        image_prompt(),
+        vec![tool()],
+        Arc::new(move |_, _| {
+            trigger.cancel();
+            futures::future::pending().boxed()
+        }),
+        emit,
+        cancel,
+        true,
+    )
+    .await;
+    assert_eq!(result.unwrap_err(), "assistant_cancelled");
+    let events = observed.lock().unwrap();
+    let kept = events
+        .iter()
+        .rev()
+        .find_map(|event| match event {
+            Event::Checkpoint(kept) => Some(kept),
+            _ => None,
+        })
+        .unwrap();
+    let text = serde_json::to_string(kept).unwrap();
+    assert!(text.contains(history::OMITTED_IMAGE));
+    assert!(!text.contains("q6urq6ur"));
+    let decoded = history::decode(kept.clone()).unwrap();
+    assert!(
+        decoded.iter().any(|message| matches!(message, AgentMessage::ToolResult(result) if result.is_error && result.tool_name == "lookup"))
+    );
+}
+
+#[tokio::test]
+async fn image_history_summary_bindings_survive_redaction_and_restart() {
+    let mut original = history::encode(&[
+        image_prompt().into(),
+        faux_assistant_message(
+            "Earlier meal image; no owner confirmation yet",
+            StopReason::Stop,
+        )
+        .into(),
+    ]);
+    original.extend(long_conversation());
+    let script = FauxScript::new();
+    script.append_responses(vec![
+        FauxStep::factory(|context| {
+            let text = serde_json::to_string(context).unwrap();
+            assert!(!text.contains("q6urq6ur"));
+            assert!(text.contains(history::OMITTED_IMAGE));
+            faux_assistant_message("Earlier image and facts; all drafts are unconfirmed.", StopReason::Stop)
+        }),
+        FauxStep::factory(|context| {
+            assert!(context.messages.iter().any(|message| matches!(message, Message::User(user) if matches!(&user.content, UserContent::Blocks(blocks) if blocks.iter().any(|block| matches!(block, Content::Image(_)))))));
+            faux_assistant_message("New image received", StopReason::Stop)
+        }),
+    ]);
+    let provider = FauxProvider::new(script);
+    let (emit, observed) = events();
+    let result = execute_input(
+        provider.default_model().clone(),
+        provider,
+        "Help".into(),
+        compact_limits(),
+        None,
+        original.clone(),
+        image_prompt(),
+        vec![],
+        handler(),
+        emit,
+        CancellationToken::new(),
+        true,
+    )
+    .await
+    .unwrap();
+    assert_eq!(&result.history[..original.len()], &original);
+    let summary = result.context_summary.unwrap();
+    crate::validate_context_summary(&summary, &result.history).unwrap();
+    for event in observed.lock().unwrap().iter() {
+        if let Event::SummaryUpdated { summary, history } = event {
+            crate::validate_context_summary(summary, history).unwrap();
+            assert!(!serde_json::to_string(history).unwrap().contains("q6urq6ur"));
+        }
+    }
+    let provider = FauxProvider::new(FauxScript::new().with_text("Continued"));
+    let result = execute_input(
+        provider.default_model().clone(),
+        provider.clone(),
+        "Help".into(),
+        compact_limits(),
+        Some(summary),
+        result.history,
+        UserMessage::new("Continue", 0),
+        vec![],
+        handler(),
+        events().0,
+        CancellationToken::new(),
+        true,
+    )
+    .await
+    .unwrap();
+    assert_eq!(provider.state().call_count.load(Ordering::SeqCst), 1);
+    assert_eq!(result.text, "Continued");
+}
+
+#[test]
+fn redacting_image_history_preserves_provider_tool_ids_and_signatures() {
+    let mut assistant = faux_assistant_message(
+        vec![rpi_ai::providers::faux::FauxBlock::tool_call(
+            "lookup",
+            json!({"query":"q"}),
+        )],
+        StopReason::ToolUse,
+    );
+    let Content::ToolCall(call) = &mut assistant.content[0] else {
+        unreachable!()
+    };
+    call.id = "call_provider-id|opaque-item-id".into();
+    call.thought_signature = Some("opaque-signed-context".into());
+    call.namespace = Some("owner_tools".into());
+    let original = call.clone();
+    let kept =
+        history::decode(history::encode(&[image_prompt().into(), assistant.into()])).unwrap();
+    let AgentMessage::Assistant(assistant) = &kept[1] else {
+        unreachable!()
+    };
+    assert_eq!(assistant.content[0], Content::ToolCall(original.clone()));
+    let AgentMessage::ToolResult(result) = &kept[2] else {
+        unreachable!()
+    };
+    assert_eq!(result.tool_call_id, original.id);
+    assert_eq!(result.tool_name, original.name);
+    assert!(result.is_error);
+    assert!(
+        serde_json::to_string(&history::encode(&kept))
+            .unwrap()
+            .contains(history::OMITTED_IMAGE)
+    );
+}

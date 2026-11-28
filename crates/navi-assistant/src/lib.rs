@@ -2,6 +2,7 @@
 //! credentials or implicit persistence: the application owns all of those.
 
 mod compaction;
+mod diagnostics;
 mod history;
 mod provider;
 pub mod recognition;
@@ -14,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 pub use compaction::{ContextSummary, validate_context_summary};
-pub use runner::run;
+pub use runner::{run, run_multimodal};
 pub use tokio_util::sync::CancellationToken;
 
 /// Validate persisted provider history before accepting an imported backup.
@@ -69,6 +70,15 @@ pub struct ToolSpec {
     pub name: String,
     pub description: String,
     pub parameters: Value,
+}
+
+/// A prepared, metadata-free image owned by the host. Image bytes are sent only
+/// for this owner-submitted turn; checkpoints retain an omission notice instead
+/// of base64. The host keeps file references and explicitly reattaches evidence.
+#[derive(Clone)]
+pub struct ImageInput {
+    pub mime_type: String,
+    pub data: Vec<u8>,
 }
 
 /// Tool failures should be safe, user-facing codes, never raw network errors.

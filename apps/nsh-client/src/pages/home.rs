@@ -1,6 +1,6 @@
 //! The home, at the bottom of the navigation stack: the four tabs over one
 //! canvas (each kept alive while hidden, so its scroll position stays), a
-//! floating glass tab bar beside the one capture button, and the sheets any
+//! floating glass tab bar beside the one conversation button, and the sheets any
 //! tab can open. Pages pushed over the home cover the bar.
 
 use nsh_base::nav_page;
@@ -100,6 +100,7 @@ impl Sheets {
 /// show on the home, so they wait until no page or home sheet covers it:
 /// nothing unsaved is closed and every notice is seen.
 fn open_shared(sheets: Sheets) {
+    let legacy = use_context::<crate::LegacyCaptureMode>().is_some();
     effect(move || {
         let Some(opened) = incoming::request() else {
             return;
@@ -112,8 +113,14 @@ fn open_shared(sheets: Sheets) {
             match opened {
                 Opened::Statement => nav::push(Route::StatementImport),
                 Opened::Capture(id) => {
-                    sheets.capture_draft.set(Some(id));
-                    sheets.capture.set(true);
+                    if legacy {
+                        sheets.capture_draft.set(Some(id));
+                        sheets.capture.set(true);
+                        return;
+                    }
+                    if let Err(problem) = crate::data::assistant::open_capture_session(&id) {
+                        show_toast(problem, None);
+                    }
                 }
                 Opened::StatementBusy => show_toast(s().incoming_statement_busy(), None),
                 Opened::Unsupported => show_toast(s().incoming_unsupported(), None),

@@ -80,7 +80,7 @@ async function start(
         : { "ble.status": { available: false, enabled: false } },
     },
   });
-  await app.waitFor("label:New entry");
+  await app.waitFor("label:Conversation");
   if (!openScale) return app;
   await app.press("label:Settings");
   await app.waitFor("Devices & connections");
@@ -155,7 +155,7 @@ async function home(app: App): Promise<void> {
   await app.press("id:scale-panel >> label:Close >> nth=0");
   await app.waitFor("id:scale-panel", { state: "gone" });
   await app.press("label:Back");
-  await app.waitFor("label:New entry");
+  await app.waitFor("label:Conversation");
 }
 
 async function chooseAlgorithm(app: App, name: string): Promise<void> {

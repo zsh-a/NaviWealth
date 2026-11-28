@@ -11,123 +11,60 @@ AI capture drafts and a general assistant using the owner's model account.
   see what today adds up to; each week, see what changed.
 - **Home:** four tabs (Today · Records · Assets · Review) in a floating 62 pt
   liquid-glass bar (`src/pages/dock.rs`, after FlClash's prism_ui
-  `NavigationDock`) beside one round 62 pt capture button of the same glass,
-  its plus in the accent (`IconBtn`, `Variant::Dock`). Its accessible name
-  is New entry / 新记录; it opens the shared text/image composer. The chosen
+  `NavigationDock`) beside one round 62 pt conversation button of the same glass,
+  its speech bubble in the accent (`IconBtn`, `Variant::Dock`). Its accessible name
+  is Conversation / 对话; it resumes the last selected session. The chosen
   tab rests on a soft accent platter with its filled glyph and label in the
   accent. A finger on the bar lifts the platter into a clear lens that grows,
   magnifies the glyph under it and follows the finger across the tabs;
   lifting after a drag onto another tab chooses that tab, while a tap is
   left to the tab's own press. Every tab stays a `Tab` of one `Tabs` list,
   so keyboard focus and screen readers work as for any tab list.
-  Assistant is a visible text action beside the Settings corner action on Today.
+  Settings remains the corner action on Today.
   Pages pushed over the home cover the bar. Hidden tabs stay alive (their
   scroll position stays) and are hidden from screen readers. Each tab scrolls
   in a viewport that ends above the dock and system inset.
-- **Capture:** one bounded conversation
-  ([Capture Conversation](../../docs/architecture/capture-conversation.md)). The
-  description or photo is the thread's first message on the right on a neutral surface. Results and questions use the full
-  content width. A turn carries the record summaries inline (the same readable
-  cards as before), one to three clarifying questions as quiet wells, and —
-  while an answer is still wanted — the question's tap-first options as
-  chips of known accounts and categories. A turn that revised records
-  collapses, once superseded, to an "Updated n records" line. While the
-  model works the thread shows progress and read-only cards as complete records arrive; a failure is a turn with Try again, Open settings and Keep
-  previous result. No domain selection before input and no prefilled form
-  as the main result. Missing values ask a concrete question; proposed new
-  accounts are marked. Multiple records show their count on confirmation.
-  New model decisions use `ask_user`: each question shows whether an answer is needed and full-width choices. A reason or option
-  description appears when it adds context to the choice.
-  The question and its choices are grouped together, with answer controls pinned below.
-  No choice is preselected. Tapping stages a choice with a check; tapping again
-  clears it. Pending questions show a labelled Continue / 继续 button
-  beneath the options. It enables when the required answers are valid. The composer
-  accepts extra text or photos. Selection persists immediately, while
-  the model is called only on submission. Historical decisions have no active
-  choices and the owner turn records the submitted answers. Pending tools and
-  failed continuations withhold confirmation until a final result arrives.
-  Manual meal/money/weight actions are secondary under one disclosure;
-  favorites remain directly available with Undo. Close is a labelled cross,
-  separate from Confirm and save; Discard draft is a header action with
-  Undo; closing a nonempty draft reports that the draft is kept.
-  The first entry opens a compact writing surface under the title. After sending,
-  the conversation uses the available height above the live keyboard. Earlier exchanges
-  fold under Earlier messages. A composer-shaped pill (photo glyph and the muted
-  label Add text or photos / 补充文字或图片) opens the reply surface on demand.
-  In both appearances, a ready draft places the pill and a 48 pt high,
-  content-width cobalt save button on one row. At widths below 360 pt or
-  font scales above 1.2 the controls stack. The light button uses a short contact shadow when stacked.
-  Both writing surfaces group a photo control, the input
-  (labelled What would you like to record? / 想记下什么？) and, for ordinary messages, a round send
-  button. Input starts at one line (48 pt), grows with its content up to
-  120 pt, and keeps the 48 pt photo and send controls aligned at its bottom.
-  An empty composer keeps its send button visible and disabled.
-  The footer shows the task's current action:
-  Recognize on the consent sheet, Review later while the model works,
-  Set up without a model, and Confirm and save once the records are ready.
-  The draft accepts up to four images across all turns. Unsent evidence appears
-  as contained thumbnails with visible Remove image actions; sent thumbnails
-  stay with their owner message. At the limit, attachment is disabled. Pending
-  questions or unsent evidence withhold confirmation.
-  Only a draft with no thread yet requests initial focus after the sheet
-  opens; a ready result stays readable.
-  In light appearance, review cards have a white surface, a 20 pt radius,
-  a 0.5 pt ink edge at 15% opacity and a short contact shadow when editable. A recent
-  correction briefly tints the edge cobalt. Ready cards can show field
-  evidence and support individual removal in a batch.
-  Suggested cash accounts carry a separate approval action. Local editing includes
-  money amount, meal name and weight: the
-  record's main figure is that control, marked with a muted pencil and named
-  Edit amount / Edit meal / Edit weight. Edits persist in the draft and the
-  final confirmation writes the batch.
-  Account and category rows in a ready result open a picker in the same
-  sheet, each with a trailing chevron; categories list the existing expense
-  or income categories in the record's currency. Transfer source and destination lists exclude the other account;
-  internal holding accounts are never offered. Selection first persists the
-  draft, then returns to the result, without calling the model or posting a
-  transaction. With no eligible account, the picker explains how to name a
-  proposed account through the composer. Back returns from the account
-  picker or recognition consent; the cross closes the capture task.
-  A successful confirmation reports the single record's kind and value, or
-  the batch count. Undo reverses the saved batch if its records still match. View opens the saved record directly. For multiple records it opens a dated, actionable list of just that batch. Back from any item returns to the list.
-  Content shared from another app opens this sheet with the shared images
-  staged as unsent evidence and the text in the composer; the owner sends it
-  like any first message (consent included). It waits while a pushed page or
-  home sheet covers the home, then opens, so nothing unsaved is closed. A
-  shared statement opens the statement review at once, never replacing one in
-  progress (a notice says so); anything else shows one notice.
-  The thread is kept with its draft and never outlives it: confirming
-  consumes it, discarding deletes it, and reopening a draft shows the whole
-  conversation. An older single-question draft migrates into the thread as
-  a plain question turn.
-- **Assistant:** a native pushed page, outside the four tabs, for ongoing
-  conversations. It inherits the canvas, typography, controls and safe-area
-  behavior. The header carries Back and a labelled New conversation action;
-  Conversations and Memory & search switch the body in place. The composer
-  stays below the scrolling thread and grows from 48 to 120 pt. Send is disabled
-  without a configured model or text; a running task exposes Stop. Navigation
-  away does not cancel a task. Switching or deleting conversations is disabled
-  during a run. Unsent conversation and memory input are retained while changing
-  the body's view; leaving the page guards unsent input.
-  Owner turns indent slightly; assistant replies use the content width. Quiet
-  speaker labels, selectable Markdown, explicit web links and tool activity
-  distinguish the thread without nested cards. Model-supplied images show their
-  alternative text and never fetch automatically. The thread follows streaming
-  output while the owner is near its end; scrolling upward keeps the reading
-  position. Earlier messages load in groups of 40. First use names the selected
-  model and the messages, recalled memories and requested records it may receive;
-  consent is separate from capture and scoped to that model account.
-  Proposed memories appear as reviewable text with an explicit save action.
-  Structured record proposals show the request and record count, with Review
-  and edit opening the existing capture cards. Fields can be edited locally,
-  accounts require review, and Confirm and save retains the normal atomic
-  batch and Undo flow. Opening review makes no second recognition request.
-  Older text-only proposals retain their Open record draft action. Memory & search lists saved facts with visible edit
-  and confirmed delete controls, a memory field and an explicit Save memory
-  action. The Brave Search key is masked and saved on leaving its field; the
-  copy distinguishes search from opening a link and explains where queries go.
-  Conversation deletion also asks for confirmation. An empty conversation
-  explains what the assistant can do and offers model setup when needed.
+- **Conversation:** one native full-screen page combines recording and assistance.
+  It inherits the canvas, typography, controls and safe-area behavior. Back,
+  a clearly labelled New conversation action and Conversations history are
+  visible. Reopening resumes the last selected session. Memory & search lives
+  inside history rather than competing with the composer.
+  Owner messages indent slightly, assistant Markdown uses the content width,
+  and sent images remain beside their message. Remote model-supplied images
+  never fetch automatically. The thread follows output near its end; scrolling
+  upward preserves reading position. Older messages load in groups of 40.
+  The bottom composer grows from 48 to 120 pt, accepts text or up to four images,
+  and stays above the keyboard. A quiet attachment button offers photos, manual
+  meal/money/weight entry and favorites. Manual actions work without a model.
+  Send accepts an image-only message; Stop replaces it during a bounded task.
+  Unsent content is saved locally as it changes. Back does not show a discard
+  dialog for a durable conversation draft. New conversation preserves the old
+  input, images and pending cards.
+  Clarifying questions show concise reasons, full-width options and Continue.
+  Options start unselected and persist when changed. The composer accepts a
+  free-text answer or additional evidence. Pending questions and record cards
+  do not disable unrelated conversation.
+  Record cards appear directly in the thread, with the existing editable
+  summaries, field evidence, amount/meal/weight editors and account/category
+  pickers. Missing fields and inferred funding accounts prevent saving until
+  reviewed. A single Confirm and save commits the whole batch. Modify this
+  record makes the target visible above the composer; canceling that target
+  leaves the card unchanged. Discard removes only this unconfirmed draft.
+  Saving replaces the editor with a quiet receipt, View and guarded Undo. The
+  receipt remains in history and conversation continues. Saved records are
+  never revised implicitly by later model output.
+  Consent names the selected model destination and the submitted conversation,
+  images, account context, recalled memories and requested local records it may
+  receive. Older consent does not cover the expanded image scope. Failures keep
+  input and previous cards, offer Retry, and show a safe cause and recovery hint;
+  diagnostics never contain provider bodies, images, prompts or keys.
+  Memory proposals require a separate Save memory action. Saved memory controls
+  expose edit and confirmed deletion. Conversation deletion also asks for
+  confirmation and preserves saved business records and approved memories.
+  Older capture drafts open in a conversation. The former bounded capture
+  sheet remains a compatibility component with its own headless harness; it is
+  not a second production entry. Its detailed recognition failure states still
+  identify stage, safe diagnostic code, HTTP status when available and version.
 - **Task sheets:** header and actions stay fixed; only the body scrolls.
   Manage, account creation and holding creation share one native sheet;
   changing panels does not replay its entrance. Nested pickers return to the
@@ -141,7 +78,7 @@ AI capture drafts and a general assistant using the owner's model account.
   or a backdrop press leaves the whole task, after the panel's discard
   guard. Saving closes the shared sheet before its panel resets, so the
   sheet leaves with the form rather than swapping the menu in.
-  Capture uses a content-sized entry sheet, then expands to 92% of the window
+  The legacy capture component uses a content-sized entry sheet, then expands to 92% of the window
   less the visible keyboard. Android Back dismisses the keyboard first. The management
   menu and compact account editor also fit their content. Other task
   editors retain `task_sheet`'s filled height, capped at 540 pt. The holding
@@ -253,7 +190,7 @@ AI capture drafts and a general assistant using the owner's model account.
   with a remaining balance also stays in its overview group, labelled Inactive.
   No accounts or holdings
   shows a short empty state with Add account as the main action and Add holding
-  as a quiet alternative. The global text/image capture button remains the
+  as a quiet alternative. The global conversation button remains the
   main record entry.
 - **Holdings:** flat overview rows show name, value and price status; quantity
   and average unit cost live in details. Closed positions remain accessible
@@ -595,7 +532,7 @@ the go-to-day sheet in Records.
 Button feedback is restrained: buttons and chips press to 98%, icon buttons
 to 96%. Primary buttons lose their sheen and settle to `shadow::CONTACT`
 while pressed. The shared primary button and primary icon button each emit
-one light impact on activation, as does the dock's capture button
+one light impact on activation, as does the dock's conversation button
 (`Variant::Dock`); the home capture action adds no second haptic. Reduced motion keeps scale at 1 without starting the press spring.
 Sheets retain `nsh_base`'s entrance, backdrop, back/Escape and swipe-down
 behavior; the material layer adds no custom transition.

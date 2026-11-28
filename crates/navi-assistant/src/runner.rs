@@ -4,6 +4,7 @@ use std::sync::{
 };
 
 use async_trait::async_trait;
+use base64::{Engine, engine::general_purpose::STANDARD};
 use rpi_agent::{
     AgentBuilder, AgentError, AgentEvent, AgentMessage, AgentTool, AgentToolResult,
     ToolExecutionMode, ToolResultPartial,
@@ -11,18 +12,22 @@ use rpi_agent::{
 use rpi_ai::{
     Model, Provider as PiProvider,
     event_stream::create_assistant_message_event_stream_with_cancellation,
-    types::{AssistantMessage, AssistantMessageEvent, Content, ErrorReason, StopReason, Tool},
+    types::{
+        AssistantMessage, AssistantMessageEvent, Content, ErrorReason, ImageContent, StopReason,
+        Tool, UserContent, UserMessage,
+    },
 };
 use serde_json::Value;
 
 use crate::{
-    CancellationToken, Config, ContextSummary, Event, EventHandler, Limits, RunResult, ToolHandler,
-    ToolSpec, compaction, history, provider,
+    CancellationToken, Config, ContextSummary, Event, EventHandler, ImageInput, Limits, RunResult,
+    ToolHandler, ToolSpec, compaction, diagnostics, history, provider,
 };
 
 struct HostTool {
     schema: Tool,
     handler: ToolHandler,
+    terminal: bool,
 }
 
 #[async_trait]
@@ -54,7 +59,9 @@ impl AgentTool for HostTool {
         if text.len() > 64_000 {
             return Err(AgentError::tool("assistant_tool_result_limit"));
         }
-        Ok(AgentToolResult::text(text))
+        let mut result = AgentToolResult::text(text);
+        result.terminate = self.terminal;
+        Ok(result)
     }
 }
 
@@ -99,6 +106,68 @@ pub async fn run(
     .await
 }
 
+/// Run a unified conversation turn with up to four prepared images. The host
+/// persists attachment references; every emitted checkpoint omits image bytes.
+/// Successful record proposals and clarification-only batches end this run and
+/// wait for the next explicit owner action, without a redundant model request.
+#[allow(clippy::too_many_arguments)]
+pub async fn run_multimodal(
+    config: Config,
+    history: Vec<Value>,
+    prompt: String,
+    images: Vec<ImageInput>,
+    tools: Vec<ToolSpec>,
+    handler: ToolHandler,
+    events: EventHandler,
+    cancel: CancellationToken,
+) -> Result<RunResult, String> {
+    if images.len() > 4
+        || images.iter().any(|image| {
+            image.data.is_empty()
+                || image.data.len() > 2 * 1024 * 1024
+                || !matches!(
+                    image.mime_type.as_str(),
+                    "image/jpeg" | "image/png" | "image/webp" | "image/gif"
+                )
+        })
+    {
+        return Err("assistant_image_limit".into());
+    }
+    let (mut model, provider) = provider::build(&config)?;
+    model.input = vec![rpi_ai::InputModality::Text, rpi_ai::InputModality::Image];
+    let prompt = if images.is_empty() {
+        UserMessage::new(prompt, 0)
+    } else {
+        let mut content = Vec::new();
+        if !prompt.trim().is_empty() {
+            content.push(Content::text(prompt));
+        }
+        content.extend(images.into_iter().map(|image| {
+            Content::Image(ImageContent {
+                kind: Default::default(),
+                data: STANDARD.encode(image.data).into(),
+                mime_type: image.mime_type,
+            })
+        }));
+        UserMessage::new(UserContent::Blocks(content), 0)
+    };
+    execute_input(
+        model,
+        provider,
+        config.system_prompt,
+        config.limits,
+        config.context_summary,
+        history,
+        prompt,
+        tools,
+        handler,
+        events,
+        cancel,
+        true,
+    )
+    .await
+}
+
 #[allow(clippy::too_many_arguments)]
 async fn execute_with_summary(
     model: Model,
@@ -113,10 +182,54 @@ async fn execute_with_summary(
     events: EventHandler,
     cancel: CancellationToken,
 ) -> Result<RunResult, String> {
+    execute_input(
+        model,
+        provider,
+        system_prompt,
+        limits,
+        context_summary,
+        values,
+        UserMessage::new(prompt, 0),
+        tools,
+        handler,
+        events,
+        cancel,
+        false,
+    )
+    .await
+}
+
+#[allow(clippy::too_many_arguments)]
+async fn execute_input(
+    model: Model,
+    provider: Arc<dyn PiProvider>,
+    system_prompt: String,
+    limits: Limits,
+    context_summary: Option<ContextSummary>,
+    values: Vec<Value>,
+    prompt: UserMessage,
+    tools: Vec<ToolSpec>,
+    handler: ToolHandler,
+    events: EventHandler,
+    cancel: CancellationToken,
+    terminal_tools: bool,
+) -> Result<RunResult, String> {
     if cancel.is_cancelled() {
         return Err("assistant_cancelled".into());
     }
-    if prompt.trim().is_empty() || prompt.len() > 32_000 || prompt.chars().count() > 8_000 {
+    let (text, has_images) = match &prompt.content {
+        UserContent::Text(text) => (text.clone(), false),
+        UserContent::Blocks(blocks) => (
+            Content::text_only(blocks, ""),
+            blocks
+                .iter()
+                .any(|block| matches!(block, Content::Image(_))),
+        ),
+    };
+    if (!has_images && text.trim().is_empty())
+        || text.len() > 32_000
+        || text.chars().count() > 8_000
+    {
         return Err("assistant_prompt_limit".into());
     }
     if tools.len() > 32
@@ -138,6 +251,11 @@ async fn execute_with_summary(
         .into_iter()
         .map(|spec| {
             Arc::new(HostTool {
+                terminal: terminal_tools
+                    && matches!(
+                        spec.name.as_str(),
+                        "propose_record" | "revise_record" | "ask_user"
+                    ),
                 schema: Tool {
                     name: spec.name,
                     description: spec.description,
@@ -154,7 +272,7 @@ async fn execute_with_summary(
         .collect();
     // A cancelled preparation still records the newly submitted owner turn.
     let mut initial = transcript.clone();
-    initial.push(rpi_ai::types::UserMessage::new(prompt.clone(), 0).into());
+    initial.push(prompt.clone().into());
     events(Event::Checkpoint(history::encode(&initial)));
     let preparation_cancel = cancel.child_token();
     let preparation = compaction::prepare(
@@ -207,7 +325,7 @@ async fn execute_with_summary(
             return Err(AgentError::Abort);
         }
         started.store(true, Ordering::Relaxed);
-        agent.prompt(prompt).await
+        agent.prompt_message(prompt.into()).await
     };
     tokio::pin!(prompt);
     let deadline = tokio::time::sleep_until(deadline_at);
@@ -264,7 +382,11 @@ async fn execute_with_summary(
         1 => return Err("assistant_step_limit".into()),
         2 => return Err("assistant_context_limit".into()),
         3 => return Err("assistant_output_limit".into()),
-        _ => {}
+        code => {
+            if let Some(code) = diagnostics::from_index(code) {
+                return Err(code.into());
+            }
+        }
     }
     result.map_err(|_| "assistant_provider")?;
     let state = agent.state();
@@ -278,9 +400,23 @@ async fn execute_with_summary(
         last.stop_reason,
         StopReason::Error | StopReason::Aborted | StopReason::Pending
     ) {
-        return Err("assistant_provider".into());
+        return Err(diagnostics::classify(last).into());
+    }
+    if last.stop_reason == StopReason::Length {
+        return Err("assistant_output_truncated".into());
+    }
+    if last.raw_stop_reason.as_deref() == Some("refusal") {
+        return Err("assistant_refusal".into());
     }
     let text = Content::text_only(&last.content, "\n");
+    if text.trim().is_empty()
+        && !last
+            .content
+            .iter()
+            .any(|block| matches!(block, Content::ToolCall(_)))
+    {
+        return Err("assistant_empty_response".into());
+    }
     Ok(RunResult {
         history,
         text,
@@ -333,7 +469,7 @@ fn bounded_stream(
         options.max_retries = Some(0);
         let (mut output, stream) =
             create_assistant_message_event_stream_with_cancellation(&options.signal);
-        let reason = if calls.fetch_add(1, Ordering::Relaxed) >= limits.max_turns {
+        let mut reason = if calls.fetch_add(1, Ordering::Relaxed) >= limits.max_turns {
             failure.store(1, Ordering::Relaxed);
             Some("assistant_step_limit")
         } else {
@@ -353,6 +489,14 @@ fn bounded_stream(
                 }
             }
         };
+        // Text-context trimming must not remove or inflate this turn's images.
+        // The provider envelope adds a small bounded overhead to this projection.
+        if reason.is_none()
+            && serde_json::to_vec(&context).map_or(true, |bytes| bytes.len() > 13_000_000)
+        {
+            failure.store(2, Ordering::Relaxed);
+            reason = Some("assistant_context_limit");
+        }
         let provider = provider.clone();
         let failure = failure.clone();
         tokio::spawn(async move {
@@ -360,9 +504,26 @@ fn bounded_stream(
                 output.push(error_event(&model, reason)).await;
                 return;
             }
-            let mut input = provider.stream_simple(&model, &context, &options).await;
+            let mut input = tokio::select! {
+                biased;
+                _ = options.signal.cancelled() => { output.push(error_event(&model, "assistant_cancelled")).await; return; }
+                stream = provider.stream_simple(&model, &context, &options) => stream,
+            };
             let mut text_bytes = 0;
-            while let Some(event) = input.next().await {
+            let mut terminal = false;
+            loop {
+                let event = tokio::select! {
+                    biased;
+                    _ = options.signal.cancelled() => { output.push(error_event(&model, "assistant_cancelled")).await; return; }
+                    event = input.next() => event,
+                };
+                let Some(event) = event else {
+                    break;
+                };
+                terminal |= matches!(
+                    event,
+                    AssistantMessageEvent::Done { .. } | AssistantMessageEvent::Error { .. }
+                );
                 if let AssistantMessageEvent::TextDelta { delta, .. } = &event {
                     text_bytes += delta.len();
                     if text_bytes > 64_000 {
@@ -375,7 +536,9 @@ fn bounded_stream(
                 }
                 let event = match event {
                     AssistantMessageEvent::Error { reason, mut error } => {
-                        error.error_message = Some("assistant_provider".into());
+                        let code = diagnostics::classify(&error);
+                        failure.store(diagnostics::index(code), Ordering::Relaxed);
+                        error.error_message = Some(code.into());
                         error.raw_stop_reason = None;
                         error.content.clear();
                         AssistantMessageEvent::Error { reason, error }
@@ -385,6 +548,15 @@ fn bounded_stream(
                 if !output.push(event).await {
                     break;
                 }
+            }
+            if !terminal {
+                failure.store(
+                    diagnostics::index("assistant_stream_incomplete"),
+                    Ordering::Relaxed,
+                );
+                output
+                    .push(error_event(&model, "assistant_stream_incomplete"))
+                    .await;
             }
         });
         stream

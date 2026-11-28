@@ -1,180 +1,177 @@
-# Capture Is A Bounded Conversation
+# Unified Conversation and Record Review
 
-Status: accepted.
+Status: accepted and implemented.
 
-Accepted 2026-11-15. Updated 2026-11-27. See the [roadmap](../roadmap/roadmap-nsh.md)
-and [Product Scope](../product/product-scope.md) for scope and outstanding device checks.
+Accepted 2026-11-15; unified-session decision accepted 2026-11-28. See the
+[roadmap](../roadmap/roadmap-nsh.md), [Product Scope](../product/product-scope.md)
+and [runtime architecture](agent-runtime-current.md) for scope, implementation
+boundaries and outstanding device checks.
 
 ## Context
 
-Capture turns one description or photo into record drafts through the
-owner's own model account. The original implementation used a single structured
-request. A draft carried at most one plain question string, and every
-correction re-sent the whole draft as a fresh one-shot request. The owner
-reviewed this in daily use (2026-11-15): the question has no visual
-identity, the answer box does not echo the question, and re-parsing the
-whole draft after each sentence feels unstable. The owner chose a
-chat-timeline capture experience.
+The original capture sheet turned descriptions and photos into editable record
+drafts through a bounded conversation. The separately authorized general
+assistant added ongoing conversation, memory, web research and multi-step work.
+Two entry points made an ordinary question, a photo and a follow-up correction
+feel like different tasks. The owner chose one persistent session entry:
+continue the most recent conversation when opening, with a visible New
+conversation action.
 
-Constraints that still hold: recognition runs on device against
-user-owned profiles through pinned pi-rust providers in `navi-assistant`.
-Unified capture receives native provider events and validates structured result
-tool arguments locally. Records require explicit confirmation; drafts live in SQLite and stay out of backups.
-The owner authorized a separate general assistant on 2026-11-27, recorded in
-[Personal Local Scope](personal-local-scope.md). Its persistent conversations
-and memories do not change this capture-specific lifecycle or confirmation boundary.
+The application remains local-first. Models run against owner-configured
+profiles through pinned pi-rust in `navi-assistant`; there is no backend relay
+or cloud fallback. Business truth stays in domain repositories. Every saved
+record batch requires explicit owner confirmation.
 
 ## Decision
 
-1. **The capture thread is the interface.** The owner's text or photo is
-   the first message of a thread inside the capture sheet. Recognition
-   results, clarifying questions and corrections are turns of that thread.
-   The separate "input recap" block and the dual-role correction box
-   disappear.
-2. **A bounded conversation, not AI chat.** The thread exists only inside
-   one capture draft. The owner controls submissions. A separate per-profile setting enables text-only
-   previews after a 700 ms typing pause. Edits, closing the composer, or sending
-   cancel a pending preview. Its output is ephemeral. A second setting allows
-   bounded recent records, favorites and held security identities on Send. The only tool is `ask_user`, which suspends
-   the current request for an explicit owner response. It discusses nothing beyond turning the
-   input into records. Confirming consumes the thread; discarding deletes
-   it. Threads stay out of backups, like drafts today.
-3. **The confirmation boundary is unchanged.** A thread never saves
-   anything. The confirm action stays a single atomic batch write of all
-   records, enabled only when every record is valid; missing money fields
-   stay missing and block confirmation; estimates stay marked; a named new
-   account is created only on confirm. A suggested funding account needs explicit
-   approval. The receipt offers a guarded atomic Undo that preserves later edits.
-4. **Decisions use one tool.** The model calls only `ask_user`, with one
-   to three questions. Each has a stable ID, question text, a reason when useful, required
-   flag and up to four choices with IDs, labels and descriptions. Nothing is
-   preselected. Choices are staged locally, can be changed, and are submitted
-   together through Continue; text and image-only evidence remain valid
-   responses. Required questions need an answer or supplemental evidence;
-   optional questions may be omitted. Omitting a question is not consent to an
-   invented fact. Missing money fields still prevent confirmation.
-5. **Protocol-correct continuation.** An assistant tool call (including its
-   original signed content blocks) persists in the draft. The owner response
-   references that exact call ID and replays as a tool result, followed by any
-   supplemental image message. One owner submission makes one model request;
-   the app never automatically resumes or loops over tools. Only one
-   `ask_user` call is accepted in a response. Unknown tools, malformed arguments
-   and reused call IDs fail without writing records. A normal final answer
-   contains the complete records array and a nullable destination. A request to view
-   data can return an empty array and a link to Review, Assets or Records. Later
-   submissions carry the locally edited set, including removals. Existing stored plain questions and option chips
-   remain readable for backward compatibility. Images replay with the owner
-   turn or tool answer that supplied them.
-6. **Streamed record cards.** Anthropic Messages, OpenAI Chat and OpenAI Responses
-   use their native streaming formats. Complete, individually parsed cards can
-   appear while the provider is still working. Editing and confirmation wait
-   for a successful final response and domain validation. Stream interruption
-   clears provisional cards and exposes retry. Field evidence accompanies the
-   final records and local edits take precedence.
-7. **Same home for the thread.** Capture keeps its sheet entry beside the
-   tab bar. The first entry field sits under the title. On later turns the
-   panel expands to the available screen above the keyboard. The latest exchange
-   stays visible, earlier messages fold, and the footer offers a reply on demand
-   alongside the current action. Capture does not
-   become a tab, page or destination.
-
-## Alternatives Considered
-
-- **Single question card with option chips (no thread).** Cheapest, and
-  its pieces (chips, question styling, typing indicator) are absorbed into
-  the thread, but it keeps the one-shot model: no continuity, and the
-  owner still answers into an unlabeled box.
-- **Thread only for clarification, composer before it.** Two interaction
-  models in one sheet; the input recap and mode switch stay.
-- **Full-screen chat page with streaming.** Elevates capture into a
-  destination outside the four-tab interaction model.
-
-## Consequences
-
-- Capture follows the bounded conversation above. The separately authorized
-  general assistant has its own persistent conversation page and runtime;
-  structured proposals from that assistant open editable capture cards after
-  confirmation; older text proposals open unsent drafts. Neither path confirms
-  business records automatically.
-- Each Send and each optional debounced typing preview is a separate request; each photo belongs to its owner turn and is replayed with that turn in subsequent requests.
-  Multi-turn prompt quality becomes part of the existing "real-model
-  quality" verification item.
-- Recognition uses a single pi-rust provider request, without the general
-  assistant loop. The thread preserves tool-call/result identity and supports
-  a single suspended `ask_user` call. The `emit_result` schema tool only returns
-  a draft; later replay acknowledges its result without executing a side effect.
-- Headless flows gain thread scenarios: chip answering, multi-turn
-  correction, reopen-after-restart, degraded bare-string questions.
+1. **One conversation entry.** The home action opens the conversation page.
+   Text, images, questions, record proposals and receipts share a timeline.
+   General questions do not require a record mode. The four main tabs remain;
+   conversation is an auxiliary page with Back, history and New conversation.
+2. **Session-owned composition.** Unsent text, attachments and the selected
+   record revision target persist on the session. Switching conversations,
+   closing the page and restarting preserve that state. Sent messages retain
+   image filenames and their explicit revision target so an owner-initiated
+   retry cannot accidentally turn a correction into a new record batch.
+3. **Inline reviews use authoritative drafts.** A record proposal creates a
+   `capture_drafts` row and a message referencing its ID in one transaction.
+   The timeline reads that row, including local edits and field evidence.
+   A model revision can replace only a draft whose snapshot still matches the
+   one supplied to that run. A late result cannot overwrite a newer edit.
+   Existing unlinked capture drafts are adopted into conversations without
+   sending a request. Legacy structured assistant proposals migrate to linked
+   reviews without approving their records.
+4. **Confirmation stays explicit and atomic.** The model cannot save records.
+   Confirm is available only when every card is valid and blocking questions
+   or unsent changes are resolved. Missing money fields remain missing;
+   inferred accounts require approval; estimates remain marked. Confirmation
+   consumes the draft, writes the business records and stores a durable saved
+   receipt in one transaction. Discard removes the pending draft and stores
+   a discarded receipt. Guarded Undo updates business records and the receipt
+   together, preserving later independent edits. Receipt failures roll back
+   the complete save or undo.
+5. **Receipts stay in the timeline.** `Session.record_actions` keeps the capture
+   ID, saved/discarded/undone status, reviewed record snapshot and timestamp.
+   The original message position remains stable. Receipts survive restart and
+   backup; the guarded Undo capability is process-local and is not recreated
+   from restored history. Deleting a conversation removes only its unshared
+   pending drafts. Confirmed records and approved memories remain.
+6. **Questions are explicit proposals.** A question contains stable IDs,
+   wording, an optional reason, a required flag and up to four named options;
+   at most three questions are grouped together. Nothing is preselected.
+   Staged choices persist with that exact pending proposal and can be changed
+   before Continue. Required questions need an answer or supplemental text or
+   images; optional questions may be omitted. The host rejects stale question
+   and option IDs. These local question identities are separate from native
+   provider tool-call IDs, which the Agent runtime owns.
+7. **Runs are bounded and cancellable.** Only explicit Send, Continue or Retry
+   starts model work. Running indicators and errors belong to the conversation.
+   Tools can read permitted local data, research public pages, propose memory
+   or propose records within the runtime budget. Startup and restore never
+   resume requests, replay tools or interpret saved messages as authorization.
+   The unified composer does not automatically send typing previews.
 
 ## Image evidence
 
-A draft accepts at most four images across the whole thread. The composer
-accepts images on the first turn and on later owner-initiated turns, including
-an image-only answer. Unsent images can be removed; sent images remain with
-their original message. Closing/reopening and interrupted-request retries
-preserve these references. Older single-photo drafts remain readable.
+The composer accepts up to four attachments, including image-only messages.
+Unsent images can be removed; sent images remain with their original message.
+Requests select relevant evidence from the current review, explicit attachments
+or a recent image-bearing exchange, with a total of at most four images. A long
+session does not resend every historical photo. Missing selected image bytes
+produce a visible reattachment error before sending.
 
-The device numbers distinct sent images from 1 to 4 by their first appearance.
-Each image-bearing message carries `image_numbers` in attachment order. A
-correction keeps those numbers when the thread is replayed. Each meal in a
-final reply requires `meal.source_image`, either a sent image number showing
-that meal or null. Only the cited photo is kept with the confirmed meal. A
-scale photo, receipt or unrelated image in the same capture can remain
-unlinked. References to unsent images fail local validation before confirmation.
-Older drafts with exactly one record (a meal) and one sent image retain that
-association. Ambiguous older batches keep their meals without an assigned photo.
+Images are normalized without metadata, bounded to a 4096 px edge, four
+megapixels and 2 MiB each. Lossless PNG is preferred within that byte budget;
+noisy images use bounded high-quality JPEG. MIME follows the actual encoding.
+Normalized photo filenames are the durable references on messages and drafts.
+A message distinguishes its explicitly attached `images` from the actual
+`request_images` sent for that turn. Retry uses the latter; timeline thumbnails
+and recent-image selection use the former. Carried evidence therefore does not
+turn every later text-only message into another image-bearing message. Both
+sets participate in photo retention, backup and restore remapping.
+Every native history checkpoint replaces image payload blocks with explicit
+image-omitted text; summaries hash the same redacted representation. Images are
+reattached separately for explicit requests, so base64 image bodies never grow
+session JSON or survive in provider replay history.
 
-The model distinguishes multiple views or documents for one record from
-independent records. It reconciles the same serving or transaction once;
-labels support the matching product and after-meal photos describe leftovers.
-Unclear relationships or materially missing consumption information prompt a
-short question with useful choices or a request for supporting evidence.
-Outstanding questions and unsent evidence prevent confirmation.
+The request numbers its selected images. Every proposed meal must name its
+`source_image` number or explicitly choose null. Local parsing checks that the
+number belongs to sent evidence. Only that photo is assigned to the saved meal;
+a scale photo, receipt or unrelated attachment does not become a meal photo.
+Legacy one-meal/one-image drafts retain their unambiguous association. Ambiguous
+older batches retain meals without inventing an association.
 
-Capture uses metadata-free images bounded to a 4096 px edge, four megapixels
-and 2 MiB each. Lossless PNG is preferred when within the byte budget; noisy
-images use bounded high-quality JPEG. The picker does not first shrink or
-lossily encode capture inputs. The durable evidence is the same normalized
-image used for requests; MIME follows its actual encoding. This differs from
-the smaller meal-photo preparation path. Recognition quality still needs
-comparison against real owner samples; headless tests establish flow and wire
-contracts, not estimation accuracy.
+The model distinguishes multiple views of one serving or transaction from
+independent records. Labels can support a product and after-meal images can
+show leftovers. Unclear relationships or materially missing consumption
+information should produce a short clarification. Headless tests establish
+request, persistence and flow contracts; recognition quality still requires
+comparison against actual owner samples.
 
-## Ask User durability and confirmation
+## Persistence and backup
 
-A pending tool call, staged answers and staged images survive close/reopen and
-restart. Choices carry no record side effects. A failed continuation retains
-the exact tool result for an owner-initiated retry; it does not create a second
-answer. The UI verifies the active call ID before applying a choice, and cannot
-submit historical questions. Consent still covers text, images and account
-names sent to the owner's configured model.
+Schema 25 adds backward-compatible session/message fields for composition,
+attachments, revision targets, question choices and record receipts. Sessions
+are bounded to 4 MiB each and 32 MiB in aggregate. Capture drafts remain the
+single source of truth for unconfirmed cards; a session stores references.
+Approved cross-task memories retain their own confirmation and deletion rules.
 
-While a tool is pending, while its answer awaits a successful final model
-reply, or while any new answer/text/image is unsent, confirmation is blocked.
-Keeping an earlier recognition result after a failed continuation cannot bypass
-that gate. Final confirmation remains one atomic batch write.
+Encrypted backups include assistant sessions, approved memories, and only
+capture drafts linked by conversations. Unlinked legacy recognition drafts
+remain device-local. Photo export and garbage collection include session
+messages, unsent attachments and linked drafts, in addition to meals and
+favorites. Restore validates session identities, draft references, record
+values and safe photo filenames before replacing destination tables atomically.
+Incoming photo collisions remap all references. Missing incoming photos get
+fresh unavailable references, preserving evidence positions without binding an
+unrelated existing file. Running sessions become interrupted and analyzing
+reviews become editable; no request or business operation is replayed.
 
-## Compatible provider output contracts
+Older session bodies deserialize new fields with defaults. Backups before the
+assistant existed preserve the device's current conversations and linked
+reviews. Newer full backups replace conversations and their linked drafts
+together. A missing draft without a terminal receipt, or a completed receipt
+that still has a pending draft, rejects restore.
 
-Every capture request includes the complete final-record JSON Schema and a
-plain-JSON-only instruction in its system prompt, in addition to the native
-structured-output option. Some Anthropic-compatible services accept that option
-without enforcing its schema: tool calls can succeed while the final response
-uses code fences or different record fields. The prompt must therefore carry
-the contract explicitly. Local schema and domain validation remain mandatory;
-formatting problems never authorize guessed accounting fields or record writes.
-Diagnostics keep only bounded error classifications, never provider response
-contents, thinking, owner input, image data or credentials.
+## Retained bounded recognition API
 
-## OpenAI Responses
+The former capture sheet remains a legacy component with explicit test harness
+coverage. Dedicated meal recognition and this component use the separate
+single-call API through the same pinned providers. It remains useful for
+bounded recognition contracts; it is not the normal unified conversation entry.
 
-The model profile explicitly selects Anthropic Messages, OpenAI Chat Completions
-or OpenAI Responses. Responses is a distinct protocol with a distinct consent
-fingerprint. It uses `store: false` and locally replayed native output items;
-server-side conversation IDs are not a persistence dependency. The draft keeps
-native reasoning, message and function-call items with each assistant turn,
-including the items needed to resume an `ask_user` call after restart. Tool
-answers reference the function call's `call_id`, never its output item's `id`.
-Images follow as input-image content. Malformed, failed or incomplete responses
-cannot become confirmed records. Legacy drafts without native output remain
-readable, and their text/image history can still be encoded.
+A legacy capture submission makes one request without automatic retries or a
+capability-fallback request. `emit_result` returns validated draft data and
+`ask_user` suspends for an explicit owner response. Existing saved content
+blocks, signed Anthropic thinking and Responses output identities retain their
+compatibility boundary. A continued legacy question references its exact
+provider call ID; later replay acknowledges completed result-tool calls.
+Responses stays stateless (`store: false`). Unusual composite gateway call IDs
+that the pinned adapter would rewrite are rejected rather than resumed under
+a different identity. Old plain questions and option chips remain readable.
+
+Legacy streaming can show provisional, individually parsed record cards.
+Editing and confirmation wait for a valid final response. A disconnected or
+truncated stream clears provisional results and requires an owner-initiated
+retry. Its optional, separately consented typing-preview setting applies only
+to this retained component. The unified Agent entry uses its own bounded loop,
+durable session and proposal tools.
+
+## Output validation and failure diagnostics
+
+Structured records always pass local schema and domain validation. A provider
+accepting constrained tools does not guarantee that its response obeys the
+schema. Legacy plain-JSON compatibility therefore includes the full contract in
+the prompt, and applies the same validation to fenced or otherwise compatible
+JSON. A partial stream, invalid image reference or missing accounting field
+cannot become a confirmed record.
+
+Capture and meal review retain detailed localized failure wording, recovery
+guidance and an allowlisted diagnostic code with the app version. Output-token
+exhaustion differs from an incomplete stream; JSON decoding, schema validation,
+protocol, clarification, record values and image references have separate
+classifications. HTTP errors include their validated status. Diagnostics never
+include raw provider bodies, thinking, owner input, image bytes or credentials.
+After restart a saved failed draft remains available, but any unavailable
+in-memory diagnostic detail is identified as such. Retry is always an explicit
+owner action and never confirms business records.

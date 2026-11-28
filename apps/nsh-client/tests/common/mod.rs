@@ -48,13 +48,51 @@ pub fn start_in_with_clock(
     network: Option<Arc<StubNetwork>>,
     clock: nsh_core::time::Clock,
 ) -> (Headless, Arc<MemoryStorage>) {
+    start_root(dir, entries, network, clock, false)
+}
+
+pub fn start_legacy(
+    entries: Vec<(String, String)>,
+    network: Option<Arc<StubNetwork>>,
+) -> (Headless, Arc<MemoryStorage>) {
+    start_legacy_in(None, entries, network)
+}
+
+pub fn start_legacy_in(
+    dir: Option<&Path>,
+    entries: Vec<(String, String)>,
+    network: Option<Arc<StubNetwork>>,
+) -> (Headless, Arc<MemoryStorage>) {
+    start_root(dir, entries, network, nsh_core::time::Clock::system(), true)
+}
+
+pub fn start_legacy_in_with_clock(
+    dir: Option<&Path>,
+    entries: Vec<(String, String)>,
+    network: Option<Arc<StubNetwork>>,
+    clock: nsh_core::time::Clock,
+) -> (Headless, Arc<MemoryStorage>) {
+    start_root(dir, entries, network, clock, true)
+}
+
+fn start_root(
+    dir: Option<&Path>,
+    entries: Vec<(String, String)>,
+    network: Option<Arc<StubNetwork>>,
+    clock: nsh_core::time::Clock,
+    legacy: bool,
+) -> (Headless, Arc<MemoryStorage>) {
     // Tests never depend on reaching the public quote and FX providers,
     // nor on the releases API the update check reads.
     naviwealth_app::disable_live_market_data();
     naviwealth_app::use_host_capture_transport();
     naviwealth_app::set_live_updates(false);
     let storage = MemoryStorage::new(entries);
-    let mut config = EngineConfig::new(Root::of::<App>());
+    let mut config = EngineConfig::new(if legacy {
+        Root::of::<naviwealth_app::LegacyCaptureHarness>()
+    } else {
+        Root::of::<App>()
+    });
     config.clock = clock;
     config.storage = Some(storage.clone());
     config.data_dir = dir.map(Path::to_path_buf);
@@ -62,7 +100,12 @@ pub fn start_in_with_clock(
         config.network = Some(network);
     }
     let mut app = Headless::start(config).expect("the app starts");
-    app.wait_for("label:New entry").expect("the home shows");
+    app.wait_for(if legacy {
+        "label:New entry"
+    } else {
+        "label:Conversation"
+    })
+    .expect("the home shows");
     (app, storage)
 }
 
@@ -369,9 +412,21 @@ pub fn money_record(amount: &str) -> Value {
 }
 
 pub fn open_manual(app: &mut Headless, kind: &str) -> Result<(), String> {
-    app.press("label:New entry")?;
-    app.press("Enter manually")?;
-    app.press(kind)?;
+    if app.screen().enabled("label:New entry").is_ok() {
+        app.press("label:New entry")?;
+        app.press("Enter manually")?;
+        app.press(kind)?;
+    } else {
+        if app.screen().enabled("label:Message").is_err() {
+            app.press("label:Conversation")?;
+        }
+        app.press("label:Attach or add manually")?;
+        app.press(match kind {
+            "Meal" | "Manual meal" => "Meal by hand",
+            "Weight" | "Log weight" => "Weight by hand",
+            _ => "Transaction by hand",
+        })?;
+    }
     Ok(())
 }
 
@@ -409,4 +464,19 @@ pub fn storage_dialogs(app: &mut Headless) -> Arc<std::sync::atomic::AtomicUsize
         nsh_testing::DialogAnswer::Press("Close".into())
     });
     count
+}
+
+/// Manual editors return to the conversation that launched them. Tests that
+/// inspect home records explicitly leave that conversation after saving.
+pub trait ConversationNavigation {
+    fn conversation_home(&mut self) -> Result<(), String>;
+}
+impl ConversationNavigation for Headless {
+    fn conversation_home(&mut self) -> Result<(), String> {
+        if self.screen().enabled("label:Message").is_ok() {
+            self.press("label:Back")?;
+            self.wait_for("label:Conversation")?;
+        }
+        Ok(())
+    }
 }

@@ -2,7 +2,7 @@
 
 Status: active product SSOT for the NSH client.
 
-Last reviewed: 2026-11-27.
+Last reviewed: 2026-11-28.
 
 ## Document Contract
 
@@ -25,17 +25,12 @@ whether the owner uses a feature every day or every week.
 1. It answers a question asked daily or weekly. Otherwise it is not built.
 2. Four tabs at most, no nested secondary navigation. Settings is a page
    reached from a corner action, not a tab.
-3. AI capture turns a short description and/or image into record drafts. The user
-   confirms before business records are saved. Capture is a bounded conversation
-   ([Capture Conversation](../architecture/capture-conversation.md)):
-   clarifications and corrections are turns inside one capture draft's
-   thread. The owner may separately enable previews of unsent text and the use of
-   local examples for submitted requests in a specific model profile. There is
-   also a general assistant, authorized by the owner on 2026-11-27, for ongoing
-   conversation, cross-task memories, web research and multi-step tasks. The
-   assistant has its own conversations; it does not turn capture drafts into
-   permanent chats. Memories and record proposals require explicit confirmation.
-   No named-agent fleet or autonomous background execution is included.
+3. One persistent conversation combines text/image recording, general assistance,
+   clarifying questions, research and explicitly approved memories. The owner
+   authorized this unified entry on 2026-11-28. Record cards stay editable inside
+   the conversation; only an explicit Confirm and save writes business data.
+   Saving leaves a receipt and does not end the conversation. Model tasks remain
+   bounded and cancellable. No named-agent fleet or autonomous background work.
 4. Anything derivable is derived, not entered: net worth, positions, monthly
    balance, averages.
 5. Adding a new kind of record requires removing one or a written reason.
@@ -54,62 +49,44 @@ whether the owner uses a feature every day or every week.
 
 ## Interaction Model
 
-Updated 2026-11-27.
+Updated 2026-11-28.
 
-- Today has a visible Assistant action opening a conversation page; the four
-  tabs and the capture button remain. Conversations can be continued, created
-  and deleted. The owner can stop an active run, inspect saved memories and
-  delete them. Interrupted conversations wait for the next explicit message;
-  restart never resumes tool execution automatically.
-- A floating tab bar beside one capture button. Capture opens one composer:
-  describe what happened or attach up to four images per draft, including
-  evidence added in later turns. One request can draft transactions, meals,
-  body weight, trades, actual balances, manual security prices and review notes.
-  Each reuses an existing record type and its normal validation.
-  Explicitly requested multiple records are reviewed together, with their
-  count on the confirmation action. A purchase description alone does not
-  also create a meal. A request for analysis, assets or history can open the
-  corresponding tab. Ambiguous entries prompt a question.
-- Capture is a bounded conversation
-  ([Capture Conversation](../architecture/capture-conversation.md)): the
-  description or photo is the thread's first message, results and
-  clarifying questions are the model's `ask_user` tool calls, and a correction is the next
-  message. Decisions show a reason and unselected options with descriptions.
-  The owner can change selections, add text or images, then submit answers
-  together; the matching tool result continues the draft. Questions that name
-  an account or category offer tap-first options. The thread lives inside one capture draft and ends with it.
-  Cards appear as the provider completes them. Only the finished response is editable.
-  Fields can show an explanation and whether they came from text, a photo, an
-  estimate, a favorite, or history. Suggested funding accounts need the owner’s
-  approval. The owner may remove individual cards before saving.
-  Missing money fields stay missing and prevent confirmation; a named new
-  account is shown as new and created only when confirmed. AI never selects a funding
-  account merely because a payment app appears in a screenshot.
-- Sharing to NaviWealth from another app (Android share sheet) is the same
-  capture without the extra steps: shared screenshots or photos (up to four)
-  and text open as an unsent capture draft. Opening it makes no model request.
-  With typing preview enabled, editing the text can preview it. Images wait for Send. A shared Alipay CSV,
-  WeChat XLSX or CMB text statement opens the statement review instead.
-  Anything else is declined with a notice. (Owner direction 2026-11-21: no
-  new record type, one more way into the existing composer.)
-- Recognition never blocks navigation. Input and results are local drafts,
-  shared between Today and Records. Leaving while recognition runs keeps it
-  running under the app root; a run interrupted by restart can be retried.
-  Confirmation writes the entire batch and removes its draft atomically. The
-  receipt offers View and guarded Undo for the whole batch. Local recent-entry
-  shortcuts work without a model. Optional typing previews use only text. A
-  separate profile option includes a bounded set of recent records and favorite
-  meals, plus held security identities, on Send.
-- Manual meal, money and weight entry are secondary actions under "Enter
-  manually"; favorites retain one-tap logging with Undo. Manual money uses
-  one compact editor: amount, category/account, a calendar date and optional
-  details. Selection views replace the editor body; header and actions stay
-  fixed above the keyboard. Only successful saves update remembered choices.
-- The model/server consent names the text, attached images and account names
-  being sent. It is remembered only for that model account and API protocol
-  when requested. Model settings explicitly select Anthropic Messages, OpenAI
-  Chat Completions or OpenAI Responses; Responses uses local history and
-  disables server-side response storage.
+- Four tabs remain: Today, Records, Assets and Review. A single conversation
+  bubble beside the dock opens a full-screen conversation. It resumes the last
+  selected session, with visible New conversation and Conversations controls.
+  Today has no second assistant entry.
+- One composer accepts text and up to four images per request. There is no
+  chat/record mode selector. An image-only message can prepare a record; missing
+  information can produce one to three questions with selectable options and
+  free-text answers. Choices, unsent text and attachments persist across Back,
+  switching sessions and restart. Nothing is sent merely by opening a session.
+- Record proposals appear directly as editable cards. Transactions, meals,
+  weight, trades, balance checks, prices and review notes reuse existing domain
+  validation. A purchase alone does not imply a meal. Missing money fields stay
+  missing; proposed funding accounts require explicit local review. The owner
+  can edit fields or select Modify this record and send a correction. Natural
+  corrections may target an unambiguous pending card; ambiguity requires a
+  question. Saved receipts cannot be silently changed by the model.
+- Pending cards do not block conversation or other tasks. Confirm and save
+  writes the entire card batch, removes its draft and saves the conversation
+  receipt in one transaction. View opens that batch; guarded Undo is available
+  during the current app lifetime. Discard removes only that unconfirmed draft.
+  Conversation and receipts remain after saving or discarding.
+- Android shared photos/text open an unsent conversation draft. Shared Alipay
+  CSV, WeChat XLSX and CMB text statements retain their separate import review.
+  Opening a share never makes a model request. Manual meal, money and weight
+  entry and favorites are secondary actions beneath the composer attachment
+  menu and remain usable without a model.
+- Tasks run under the app root and can be stopped. Leaving the page preserves
+  input and lets an active task finish. Restart marks interrupted work and never
+  replays tools; Retry explicitly repeats the latest submitted turn with its
+  attachments and revision target. Repeating a record proposal cannot silently
+  create a second business write.
+- Model-scoped consent names submitted text, images, local account context,
+  recalled memories and records read by tools. The unified scope requires renewed
+  consent from older assistant versions. Model settings select Anthropic
+  Messages, OpenAI Chat Completions or OpenAI Responses. Responses uses local
+  history and disables server-side response storage. Unsent typing is local.
 - Settings' appearance choice shows the app light or dark; matching the
   device (the default) keeps following it. The change applies as it is made.
 - Today shows today. Past days are reached in Records; logging for another
@@ -127,8 +104,8 @@ Updated 2026-11-27.
   dated trend and valuation basis. Opening a change amount carries its actual
   comparison dates into the breakdown. An unused account offers its opening
   balance action until a posting or balance check exists. Closed positions reappear after buying again.
-  A single icon-only plus beside the tab bar opens capture; its accessible
-  name is New entry / 新记录. Account and holding creation stay in Manage.
+  The single bubble beside the tab bar opens the conversation; its accessible
+  name is Conversation / 对话. Account and holding creation stay in Manage.
 - Review leads with one sentence of what changed against the period before
   (weight, then intake, then net worth for a ledger-only period). Its
   net-worth change splits into income, spending, investments, opening
@@ -147,9 +124,9 @@ bounded tool calls to complete a submitted task. This is a new NSH feature,
 not a port of the retired Flutter agents or Knowledge/Execution domains.
 
 - The existing model profile supplies the provider, URL, model and key.
-  Consent is separate from capture and scoped to that model destination. It
-  covers submitted conversation, recalled memories and records requested by
-  tools; none is sent merely by opening the assistant.
+  Consent is scoped to that model destination. It covers submitted conversation
+  and images, local account context, recalled memories and records requested by
+  tools; none is sent merely by opening the conversation.
 - Read-only record tools query date-bounded local data. Calculations and exact
   money remain in their owning domain crates. The model receives only tool
   results requested for the current task, not a full database dump.
@@ -162,19 +139,19 @@ not a port of the retired Flutter agents or Knowledge/Execution domains.
 - Memory proposals are visible and unapproved until accepted. Cross-task
   memories record their source conversation when available; deleting a chat
   does not silently delete separately approved memories.
-- A structured record proposal opens editable capture cards after the owner
-  chooses Review and edit. Missing money fields can be completed locally;
-  proposed financial accounts require explicit review. No second recognition
-  request is needed to edit and save. Normal capture review owns validation,
-  atomic batch writes and guarded Undo. Older text-only proposals still open
-  as unsent drafts. There is no
-  arbitrary SQL, shell access, or direct model write to the ledger or health data.
+- Structured record proposals become inline cards immediately, without a second
+  model call or a separate Review and edit handoff. Missing fields and proposed
+  accounts use the ordinary capture editor. The model can revise only linked
+  pending cards; stale concurrent edits are rejected. Older structured proposals
+  migrate into cards; text-only proposals populate the unsent composer.
+  There is no arbitrary SQL, shell access or direct model business write.
 - Optional web search uses the owner's Brave Search API key. Search queries
   leave the device for that service; fetched public pages are untrusted source
   material, not instructions. Fetching has URL/network, time and size limits;
   authenticated pages, JavaScript browsing and PDF parsing are not included.
-- Conversation history, unapproved proposals and saved memories stay in the
-  app's SQLite database and are included in encrypted backups. Credentials and
+- Conversation history, composer attachments, linked pending record drafts,
+  receipts and saved memories stay in SQLite and encrypted backups. Unlinked
+  legacy capture drafts remain outside backup scope. Credentials and
   consent settings are not backed up. Restored runs remain interrupted and
   proposals still need confirmation.
 - On an explicit new message, a long conversation may summarize earlier

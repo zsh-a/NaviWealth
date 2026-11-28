@@ -151,7 +151,7 @@ fn response(request: &LlmRequest, message: AssistantMessage) -> Result<LlmRespon
         return Err(LlmError::new("provider_refusal"));
     }
     match message.stop_reason {
-        StopReason::Length => return Err(LlmError::new("provider_stream_incomplete")),
+        StopReason::Length => return Err(LlmError::new("provider_output_truncated")),
         StopReason::Error | StopReason::Aborted => return Err(classify_error(&message)),
         StopReason::Stop | StopReason::ToolUse => {}
         _ => return Err(LlmError::new("recognition_invalid_response")),
@@ -276,6 +276,26 @@ fn classify_error(message: &AssistantMessage) -> LlmError {
 mod tests {
     use super::*;
     use rpi_ai::types::Api;
+
+    #[test]
+    fn output_token_limit_is_distinct_from_interrupted_stream() {
+        let request: LlmRequest = serde_json::from_value(json!({
+            "provider":"anthropic", "model":"model", "messages":[],
+        }))
+        .unwrap();
+        let message = AssistantMessage::terminal(
+            Api::AnthropicMessages,
+            "navi-owned",
+            "model",
+            StopReason::Length,
+            "",
+            0,
+        );
+        assert_eq!(
+            response(&request, message).unwrap_err().record.code,
+            "provider_output_truncated"
+        );
+    }
 
     #[test]
     fn local_schema_rejects_extra_fields_wrong_types_and_trailing_content() {

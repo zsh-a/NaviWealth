@@ -61,7 +61,7 @@ fn bottom(app: &Headless, test_id: &str) -> f32 {
 
 #[test]
 fn the_capture_sheet_meets_the_keyboard_in_its_dialog() -> Result<(), String> {
-    let (mut app, _) = start(account(true), None);
+    let (mut app, _) = start_legacy(account(true), None);
     app.set_viewport(Size::new(Points(WIDTH), Points(HEIGHT)))?;
     app.press("label:New entry")?;
     app.wait_for("label:What would you like to record?")?;
@@ -91,7 +91,7 @@ fn the_capture_sheet_meets_the_keyboard_in_its_dialog() -> Result<(), String> {
 
 #[test]
 fn the_sheet_also_meets_a_keyboard_only_its_dialog_reports() -> Result<(), String> {
-    let (mut app, _) = start(account(true), None);
+    let (mut app, _) = start_legacy(account(true), None);
     app.set_viewport(Size::new(Points(WIDTH), Points(HEIGHT)))?;
     app.press("label:New entry")?;
     app.wait_for("label:What would you like to record?")?;

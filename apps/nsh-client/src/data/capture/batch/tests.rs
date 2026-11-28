@@ -305,3 +305,119 @@ fn private_holdings_resolve_unique_names_ids_and_bound_exchange_codes_without_ca
     };
     assert!(resolve_security("00700", hk, &book, None, &[b, b2]).is_none());
 }
+
+#[test]
+fn conversation_receipt_failure_rolls_back_real_batch_save_and_undo() {
+    use crate::data::assistant_store::{self as conversations, Message, Role, Session};
+    let mut connection = Connection::open_in_memory().unwrap();
+    db::migrate(&mut connection).unwrap();
+    let day: Day = "2026-11-28".parse().unwrap();
+    let draft = Draft {
+        id: "conversation-batch".into(),
+        created_at_ms: 1,
+        input: "Weight and daily note".into(),
+        correction: String::new(),
+        photo: None,
+        attachments: Vec::new(),
+        answers: Vec::new(),
+        records: vec![
+            Record::Weight { day, kg: 64.2 },
+            Record::Note {
+                day,
+                text: "Walked after lunch".into(),
+            },
+        ],
+        evidence: Vec::new(),
+        question: String::new(),
+        transcript: Vec::new(),
+        status: Status::Ready,
+        model: "fixture".into(),
+    };
+    let session = Session {
+        id: "batch-chat".into(),
+        title: "Daily records".into(),
+        created_at_ms: 1,
+        updated_at_ms: 2,
+        messages: vec![Message {
+            id: "batch-message".into(),
+            role: Role::Assistant,
+            capture_id: Some(draft.id.clone()),
+            ..Default::default()
+        }],
+        editing_capture: Some(draft.id.clone()),
+        ..Default::default()
+    };
+    conversations::create_session(&connection, &session).unwrap();
+    connection
+        .execute(
+            "INSERT INTO capture_drafts VALUES(?1,?2,?3)",
+            params![
+                draft.id,
+                draft.created_at_ms,
+                serde_json::to_string(&draft).unwrap()
+            ],
+        )
+        .unwrap();
+    let count = |table: &str| {
+        connection
+            .query_row(&format!("SELECT count(*) FROM {table}"), [], |row| {
+                row.get::<_, i64>(0)
+            })
+            .unwrap()
+    };
+    connection.execute_batch("CREATE TRIGGER fail_receipt BEFORE UPDATE ON assistant_sessions BEGIN SELECT RAISE(ABORT,'full'); END;").unwrap();
+    assert!(commit_in(&connection, &draft, &HashMap::new(), day).is_err());
+    assert_eq!(count("capture_drafts"), 1);
+    assert_eq!(count("weights"), 0);
+    assert_eq!(count("review_notes"), 0);
+    assert_eq!(
+        conversations::session(&connection, &session.id)
+            .unwrap()
+            .unwrap(),
+        session
+    );
+    connection
+        .execute_batch("DROP TRIGGER fail_receipt")
+        .unwrap();
+    let receipt = commit_in(&connection, &draft, &HashMap::new(), day).unwrap();
+    assert_eq!(count("capture_drafts"), 0);
+    assert_eq!(count("weights"), 1);
+    assert_eq!(count("review_notes"), 1);
+    let saved = conversations::session(&connection, &session.id)
+        .unwrap()
+        .unwrap();
+    assert_eq!(
+        saved.record_actions[0].status,
+        conversations::RecordStatus::Saved
+    );
+    assert_eq!(saved.record_actions[0].records, draft.records);
+    assert!(saved.editing_capture.is_none());
+    conversations::validate_conversation_drafts(&connection).unwrap();
+
+    connection.execute_batch("CREATE TRIGGER fail_receipt BEFORE UPDATE ON assistant_sessions BEGIN SELECT RAISE(ABORT,'full'); END;").unwrap();
+    assert!(undo_in(&connection, &receipt).is_err());
+    assert_eq!(count("weights"), 1);
+    assert_eq!(count("review_notes"), 1);
+    assert_eq!(
+        conversations::session(&connection, &session.id)
+            .unwrap()
+            .unwrap(),
+        saved
+    );
+    connection
+        .execute_batch("DROP TRIGGER fail_receipt")
+        .unwrap();
+    undo_in(&connection, &receipt).unwrap();
+    assert_eq!(count("weights"), 0);
+    assert_eq!(count("review_notes"), 0);
+    assert_eq!(count("capture_drafts"), 0);
+    let undone = conversations::session(&connection, &session.id)
+        .unwrap()
+        .unwrap();
+    assert_eq!(
+        undone.record_actions[0].status,
+        conversations::RecordStatus::Undone
+    );
+    assert_eq!(undone.record_actions[0].records, draft.records);
+    conversations::validate_conversation_drafts(&connection).unwrap();
+}

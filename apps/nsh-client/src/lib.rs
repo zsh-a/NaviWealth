@@ -94,6 +94,23 @@ pub enum AppEvent {
 /// the navigation stack on the canvas.
 #[component]
 pub fn App(props: AppProps, cx: Scope<AppEvent>) -> impl IntoElement {
+    app_content(props, cx)
+}
+
+/// An explicit desktop harness for the retained single-call capture component.
+/// It is not registered with the native app and never changes App navigation.
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+#[doc(hidden)]
+#[component]
+pub fn LegacyCaptureHarness(props: AppProps, cx: Scope<AppEvent>) -> impl IntoElement {
+    provide_context(LegacyCaptureMode);
+    app_content(props, cx)
+}
+
+#[derive(Clone, Copy)]
+pub(crate) struct LegacyCaptureMode;
+
+fn app_content(props: AppProps, cx: Scope<AppEvent>) -> impl IntoElement {
     if cfg!(debug_assertions) && props.test_mode.get() {
         disable_live_market_data();
         use_host_capture_transport();

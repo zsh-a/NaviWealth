@@ -138,7 +138,7 @@ fn projected_size(context: &Context, summary: Option<&ContextSummary>) -> Result
         projected.messages.drain(..summary.covered_messages);
         projected.messages.insert(0, summary_message(summary));
     }
-    Ok(serde_json::to_vec(&projected).map_err(|_| INVALID)?.len())
+    history::context_size(&projected)
 }
 
 fn summary_context(
@@ -167,7 +167,7 @@ pub(crate) async fn prepare(
     system_prompt: &str,
     limits: &Limits,
     messages: &[AgentMessage],
-    prompt: &str,
+    prompt: &UserMessage,
     tools: &[Tool],
     mut summary: Option<ContextSummary>,
     events: &EventHandler,
@@ -182,9 +182,7 @@ pub(crate) async fn prepare(
         messages: default_convert_to_llm(messages.to_vec()),
         tools: tools.to_vec(),
     };
-    context
-        .messages
-        .push(Message::User(UserMessage::new(prompt, 0)));
+    context.messages.push(Message::User(prompt.clone()));
     let owner_starts: Vec<_> = messages
         .iter()
         .enumerate()
@@ -239,10 +237,7 @@ pub(crate) async fn prepare(
             return Err("assistant_cancelled".into());
         }
         let mut checkpoint = native.clone();
-        checkpoint.push(
-            serde_json::to_value(AgentMessage::from(UserMessage::new(prompt, 0)))
-                .map_err(|_| INVALID)?,
-        );
+        checkpoint.extend(history::encode(&[AgentMessage::from(prompt.clone())]));
         events(Event::SummaryUpdated {
             summary: next.clone(),
             history: checkpoint,

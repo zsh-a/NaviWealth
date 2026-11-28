@@ -52,7 +52,7 @@ fn verify(app: &mut Headless, value: &str, debt: bool) -> Result<(), String> {
 #[test]
 fn accounts_balances_rename_and_net_worth_survive_restart() -> Result<(), String> {
     let dir = tempfile::tempdir().unwrap();
-    let (mut app, storage) = start_in(
+    let (mut app, storage) = start_legacy_in(
         Some(dir.path()),
         account(true),
         Some(network(200, record_reply(vec![money_record("31.50")]))),
@@ -116,7 +116,7 @@ fn accounts_balances_rename_and_net_worth_survive_restart() -> Result<(), String
         "rename also updates durable recognition references"
     );
     drop(app);
-    let (mut app, _) = start_in(
+    let (mut app, _) = start_legacy_in(
         Some(dir.path()),
         storage.entries().into_iter().collect(),
         None,
@@ -403,7 +403,7 @@ fn saving_resets_the_task_and_a_swipe_leaves_the_whole_task() -> Result<(), Stri
     config.clock = Clock::manual(SystemTime::now());
     config.storage = Some(MemoryStorage::new(Vec::new()));
     let mut app = Headless::start(config).expect("the app starts");
-    app.wait_for("label:New entry")?;
+    app.wait_for("label:Conversation")?;
     app.press("label:Assets")?;
     app.press("label:Manage")?;
     app.run_for(motion)?;

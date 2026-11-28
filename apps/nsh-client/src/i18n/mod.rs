@@ -522,12 +522,12 @@ impl Strings {
         self.lang == Lang::Zh
     }
 
-    /// A weight in kg, to one decimal.
+    /// A confirmed batch receipt.
     pub fn capture_saved_count(&self, n: usize) -> String {
         if self.zh() {
             format!("已保存 {n} 条记录")
         } else {
-            format!("Saved {n} records")
+            format!("Saved {n} {}", if n == 1 { "record" } else { "records" })
         }
     }
 

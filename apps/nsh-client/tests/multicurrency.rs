@@ -97,6 +97,7 @@ fn cross_currency_transfer_records_both_explicit_amounts() -> Result<(), String>
     app.press("Swap accounts")?;
     app.press("Save transaction")?;
     app.wait_for_gone("Save transaction", GONE)?;
+    app.conversation_home()?;
     app.wait_for("label:/^Dollar bank · USD → Yuan bank, USD 100.00, Transfer/")?;
     let db = rusqlite::Connection::open(database_in(dir.path())).unwrap();
     let entries = repository::transactions(&db).unwrap();
