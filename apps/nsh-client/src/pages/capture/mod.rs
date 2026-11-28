@@ -8,12 +8,13 @@ mod attachments;
 mod decisions;
 mod details;
 mod evidence;
-mod favorites;
+pub(in crate::pages) mod favorites;
 pub(in crate::pages) mod flight;
 mod live_preview;
 pub(crate) mod receipt;
 mod recent;
 mod summary;
+pub(in crate::pages) use summary::record_brief;
 mod thread;
 
 use super::home::Sheets;

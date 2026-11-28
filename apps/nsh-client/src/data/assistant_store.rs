@@ -8,6 +8,7 @@ use std::collections::{HashMap, HashSet};
 use crate::domain::backup_bundle::is_photo_name;
 use crate::domain::capture::{AskAnswer, AskUser, Draft, MAX_ATTACHMENTS, MAX_INPUT, Record, Turn};
 
+use navi_assistant::{AgentMessage, Content};
 use rusqlite::{Connection, OptionalExtension, params};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -49,9 +50,155 @@ pub enum Role {
     Tool,
 }
 
+/// Small, display-only projections of runtime events. No tool payloads or signatures.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case", deny_unknown_fields)]
+pub enum RunStep {
+    Thinking(String),
+    Tool {
+        name: String,
+        error: Option<String>,
+        #[serde(skip)]
+        call_id: String,
+    },
+    MoreStepsOmitted,
+}
+
+const MAX_RUN_STEPS: usize = 32;
+const MAX_THINKING_BYTES: usize = 2048;
+
+fn push_step(steps: &mut Vec<RunStep>, step: RunStep) {
+    if steps.len() < MAX_RUN_STEPS {
+        steps.push(step);
+    } else {
+        steps[MAX_RUN_STEPS - 1] = RunStep::MoreStepsOmitted;
+    }
+}
+
+pub(super) fn append_visible_thinking(steps: &mut Vec<RunStep>, blocks: &[Content]) {
+    for block in blocks {
+        if let Content::Thinking(block) = block
+            && !block.redacted
+        {
+            let text = &block.thinking;
+            let preview = if text.len() <= MAX_THINKING_BYTES {
+                text.clone()
+            } else {
+                let end = text.floor_char_boundary(MAX_THINKING_BYTES - '…'.len_utf8());
+                format!("{}…", &text[..end])
+            };
+            push_step(steps, RunStep::Thinking(preview));
+        }
+    }
+}
+
+// rpi schema diagnostics contain the full supplied arguments. Only a known
+// cause crosses into the UI. The original tool result stays in native history.
+fn error_code(content: &[Content]) -> &'static str {
+    let Some(Content::Text(first)) = content.first() else {
+        return "tool_failed";
+    };
+    if first.text == navi_assistant::INTERRUPTED_TOOL_RESULT {
+        return "tool_interrupted";
+    }
+    if first.text.starts_with("schema error:") {
+        return "invalid_tool_arguments";
+    }
+    match first.text.strip_prefix("tool error: ") {
+        Some("capture_invalid_records") => "capture_invalid_records",
+        Some("draft_images_not_in_request") => "draft_images_not_in_request",
+        Some("draft_changed_review_again" | "draft_no_longer_pending" | "draft_not_in_request") => {
+            "draft_changed"
+        }
+        Some("too_many_proposals") => "too_many_proposals",
+        Some("search_not_configured") => "search_not_configured",
+        Some("invalid_tool_arguments" | "capture_invalid_questions") => "invalid_tool_arguments",
+        _ => "tool_failed",
+    }
+}
+
+fn native_steps(turn: &[Value]) -> Vec<RunStep> {
+    let mut steps = Vec::new();
+    // Start only at a known native user boundary. Imported display-only chats
+    // lack this link and must never borrow details from another turn.
+    if !turn.first().is_some_and(|entry| entry["kind"] == "user") {
+        return steps;
+    }
+    let messages: Vec<_> = turn
+        .iter()
+        .skip(1)
+        .take_while(|entry| entry["kind"] != "user")
+        .filter_map(|entry| AgentMessage::deserialize(entry).ok())
+        .collect();
+    // rpi emits an assistant message followed by that message's tool results.
+    // IDs are scoped to this batch; a later response can reuse a call ID.
+    for batch in messages.chunk_by(|_, next| matches!(next, AgentMessage::ToolResult(_))) {
+        let [AgentMessage::Assistant(message), results @ ..] = batch else {
+            continue;
+        };
+        for block in &message.content {
+            if let Content::ToolCall(call) = block {
+                let result = results.iter().find_map(|entry| match entry {
+                    AgentMessage::ToolResult(result)
+                        if result.tool_call_id == call.id && result.tool_name == call.name =>
+                    {
+                        Some(result)
+                    }
+                    _ => None,
+                });
+                let error = match result {
+                    None => Some("tool_no_result"),
+                    Some(result) if result.is_error => Some(error_code(&result.content)),
+                    Some(_) => None,
+                };
+                let name = if valid_id(&call.name) {
+                    call.name.clone()
+                } else {
+                    "unknown_tool".into()
+                };
+                let call_id = if call.id.len() <= 256 && !call.id.chars().any(char::is_control) {
+                    call.id.clone()
+                } else {
+                    String::new()
+                };
+                push_step(
+                    &mut steps,
+                    RunStep::Tool {
+                        name,
+                        call_id,
+                        error: error.map(str::to_owned),
+                    },
+                );
+            } else {
+                append_visible_thinking(&mut steps, std::slice::from_ref(block));
+            }
+            if matches!(steps.last(), Some(RunStep::MoreStepsOmitted)) {
+                return steps;
+            }
+        }
+    }
+    steps
+}
+
+fn valid_run_step(step: &RunStep) -> bool {
+    match step {
+        RunStep::Thinking(text) => text.len() <= MAX_THINKING_BYTES,
+        RunStep::Tool { name, error, .. } => {
+            valid_id(name) && error.as_deref().is_none_or(valid_id)
+        }
+        RunStep::MoreStepsOmitted => true,
+    }
+}
+
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Message {
+    /// In-memory NSH view of the native turn. Never written to SQLite or sent to the model.
+    #[serde(skip)]
+    pub run_steps: Vec<RunStep>,
+    /// Compatibility for development builds which saved display summaries on messages.
+    #[serde(default, rename = "run_steps", skip_serializing_if = "Vec::is_empty")]
+    pub archived_steps: Vec<RunStep>,
     pub id: String,
     pub role: Role,
     pub text: String,
@@ -96,6 +243,10 @@ pub struct Session {
     /// Provider-native history, including tool results. It is never interpreted
     /// as a pending instruction when loading or restoring a session.
     pub history: Vec<Value>,
+    /// Retry moves the superseded native suffix here under its display message ID.
+    /// Only `history` is ever submitted to the model.
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub prior_attempts: HashMap<String, Vec<Value>>,
     /// A model-generated context aid bound to an exact prefix of `history`.
     /// It is never an approved memory, instruction, or action authorization.
     #[serde(default)]
@@ -120,6 +271,59 @@ pub struct Session {
     /// Host-written receipts, separate from untrusted model/tool text.
     #[serde(default)]
     pub record_actions: Vec<RecordAction>,
+}
+
+impl Session {
+    fn load_run_views(&mut self) {
+        // Earlier releases recorded the retry marker but put the native
+        // boundary only on its owner message. The latest attempt owns that turn.
+        let mut owner_start = None;
+        for message in &mut self.messages {
+            if message.role == Role::User {
+                owner_start = message.history_start;
+            } else if message.role == Role::Tool
+                && message.history_start.is_none()
+                && matches!(
+                    message.text.as_str(),
+                    "Retrying the last message" | "正在重试上一条消息"
+                )
+            {
+                message.history_start = owner_start;
+            }
+        }
+        let mut end = self.history.len();
+        for message in self.messages.iter_mut().rev() {
+            let turn = message.history_start.and_then(|start| {
+                let current = self.history.get(start..end);
+                end = start;
+                current
+            });
+            let source = self
+                .prior_attempts
+                .get(&message.id)
+                .map(Vec::as_slice)
+                .or(turn);
+            message.run_steps = source.map(native_steps).unwrap_or_default();
+            if message.run_steps.is_empty() {
+                message.run_steps.clone_from(&message.archived_steps);
+            } else {
+                message.archived_steps.clear();
+            }
+        }
+    }
+
+    pub(super) fn checkpoint(&mut self, history: Vec<Value>, attempt: &str) -> usize {
+        self.history = history;
+        if let Some(message) = self.messages.iter_mut().rev().find(|m| m.id == attempt)
+            && let Some(turn) = message
+                .history_start
+                .and_then(|start| self.history.get(start..))
+        {
+            message.run_steps = native_steps(turn);
+            return message.run_steps.len();
+        }
+        0
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -192,7 +396,7 @@ pub struct Memory {
     pub updated_at_ms: i64,
 }
 
-fn valid_id(id: &str) -> bool {
+pub(super) fn valid_id(id: &str) -> bool {
     !id.is_empty()
         && id.len() <= 128
         && id
@@ -336,6 +540,8 @@ fn validate_session(session: &Session) -> Result<(), String> {
             !valid_id(&message.id)
                 || !ids.insert(&message.id)
                 || message.text.len() > MAX_TEXT_BYTES
+                || message.archived_steps.len() > MAX_RUN_STEPS
+                || !message.archived_steps.iter().all(valid_run_step)
                 || !valid_images(&message.images)
                 || !valid_images(&message.request_images)
                 || message.record_targets.len() > 8
@@ -355,6 +561,17 @@ fn validate_session(session: &Session) -> Result<(), String> {
         })
     {
         return Err("Invalid assistant session".into());
+    }
+    for (id, turn) in &session.prior_attempts {
+        if !session.messages.iter().any(|m| {
+            &m.id == id
+                && (m.role == Role::User || (m.role == Role::Tool && m.history_start.is_some()))
+        }) || !turn.first().is_some_and(|m| m["kind"] == "user")
+            || turn[1..].iter().any(|m| m["kind"] == "user")
+        {
+            return Err("Invalid archived assistant attempt".into());
+        }
+        navi_assistant::validate_history(turn)?;
     }
     navi_assistant::validate_history(&session.history)?;
     if let Some(summary) = &session.context_summary {
@@ -390,11 +607,13 @@ fn decode_session(id: String, updated_at_ms: i64, body: String) -> Result<Sessio
     if body.len() > MAX_SESSION_BYTES {
         return Err("Assistant session is too large".into());
     }
-    let session: Session = serde_json::from_str(&body).map_err(|_| "Invalid assistant session")?;
+    let mut session: Session =
+        serde_json::from_str(&body).map_err(|_| "Invalid assistant session")?;
     validate_session(&session)?;
     if session.id != id || session.updated_at_ms != updated_at_ms {
         return Err("Inconsistent assistant session".into());
     }
+    session.load_run_views();
     Ok(session)
 }
 
@@ -884,6 +1103,47 @@ mod tests {
             action_outcomes: Vec::new(),
             ..Session::default()
         }
+    }
+
+    #[test]
+    fn native_turn_views_keep_only_visible_thinking_and_bind_legacy_retries() {
+        let mut session = summarized_chat();
+        session.messages[0].history_start = Some(0);
+        session.messages.push(Message {
+            id: "retry".into(),
+            role: Role::Tool,
+            text: "正在重试上一条消息".into(),
+            ..Message::default()
+        });
+        session.history[1]["content"] = serde_json::json!([
+            {"type":"thinking","thinking":"餐食".repeat(800),"thinkingSignature":"opaque"},
+            {"type":"thinking","redacted":true,"thinking":"private","thinkingSignature":"encrypted"}
+        ]);
+        session.load_run_views();
+        assert!(session.messages[0].run_steps.is_empty());
+        let [RunStep::Thinking(preview)] = session.messages[1].run_steps.as_slice() else {
+            panic!("expected one visible block")
+        };
+        assert!(preview.len() <= MAX_THINKING_BYTES);
+        assert!(
+            "餐食"
+                .repeat(800)
+                .starts_with(preview.strip_suffix('…').unwrap())
+        );
+    }
+
+    #[test]
+    fn invalid_archived_attempts_are_rejected() {
+        let mut session = chat();
+        session
+            .prior_attempts
+            .insert("unknown".into(), session.history.clone());
+        assert!(validate_session(&session).is_err());
+        session.prior_attempts.clear();
+        session
+            .prior_attempts
+            .insert("message-1".into(), vec![session.history[0].clone(); 2]);
+        assert!(validate_session(&session).is_err());
     }
 
     #[test]

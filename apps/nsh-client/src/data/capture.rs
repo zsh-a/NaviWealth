@@ -136,6 +136,47 @@ pub fn remove(id: &str) -> Result<(), String> {
     Ok(())
 }
 
+/// Undo a local edit only while the entire persisted draft still matches it.
+pub fn restore_edit(expected: &Draft, previous: &Draft) -> Result<(), String> {
+    use crate::i18n::catalog::copy;
+    if expected.id != previous.id {
+        return Err("draft_identity_changed".into());
+    }
+    db::with(|c| -> Result<(), String> {
+        let tx = c.unchecked_transaction().map_err(|e| e.to_string())?;
+        let current = tx
+            .query_row(
+                "SELECT body FROM capture_drafts WHERE id=?1",
+                [&expected.id],
+                |r| r.get::<_, String>(0),
+            )
+            .ok()
+            .and_then(|body| serde_json::from_str::<Draft>(&body).ok())
+            .map(Draft::migrated);
+        if current.as_ref() != Some(expected) {
+            return Err(copy(
+                "The draft changed. Your newer changes were kept.",
+                "草稿已变更，已保留较新的修改。",
+            )
+            .into());
+        }
+        let body = serde_json::to_string(previous).map_err(|e| e.to_string())?;
+        tx.execute(
+            "UPDATE capture_drafts SET body=?2 WHERE id=?1",
+            params![previous.id, body],
+        )
+        .map_err(|e| e.to_string())?;
+        tx.commit().map_err(|e| e.to_string())
+    })
+    .ok_or("database unavailable")??;
+    state().update(|s| {
+        if let Some(draft) = s.0.iter_mut().find(|d| d.id == previous.id) {
+            *draft = previous.clone();
+        }
+    });
+    Ok(())
+}
+
 pub fn recognize(
     mut draft: Draft,
     account: ModelAccount,

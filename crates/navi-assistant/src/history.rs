@@ -50,13 +50,15 @@ pub(crate) fn decode(values: Vec<Value>) -> Result<Vec<AgentMessage>, String> {
     Ok(messages)
 }
 
+pub const INTERRUPTED_TOOL_RESULT: &str = "Interrupted. The outcome is unknown. Check existing drafts and data before proposing the action again; do not automatically repeat a write.";
+
 fn close_pending(messages: &mut Vec<AgentMessage>, pending: &mut Vec<ToolCall>) {
     for call in pending.drain(..) {
         messages.push(AgentMessage::from(ToolResultMessage {
             role: ToolResultRole,
             tool_call_id: call.id,
             tool_name: call.name,
-            content: vec![Content::text("Interrupted. The outcome is unknown. Check existing drafts and data before proposing the action again; do not automatically repeat a write.")],
+            content: vec![Content::text(INTERRUPTED_TOOL_RESULT)],
             details: None,
             usage: None,
             added_tool_names: Vec::new(),

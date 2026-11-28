@@ -3,6 +3,10 @@
 
 use std::time::Duration;
 
+#[path = "assistant_scroll.rs"]
+mod thread_scroll;
+use thread_scroll::ThreadScroll;
+
 use nsh_base::{alert_dialog, nav_page, text_view};
 use nsh_core::{element::Screen, picker::PickRequest, prelude::*};
 
@@ -10,7 +14,7 @@ use super::parts::{status_bar, top_bar};
 use crate::{
     data::{
         assistant,
-        assistant_store::{Message, Role},
+        assistant_store::{Message, Role, RunStep},
         clock, photos,
     },
     domain::recognition::Lang,
@@ -21,7 +25,7 @@ use crate::{
         feedback::confirm_discard,
         field::{field, text_input},
         space,
-        surface::{hairline, row_button},
+        surface::{disclosure, hairline, row_button},
     },
 };
 
@@ -108,8 +112,24 @@ pub(crate) fn page() -> Screen {
     let asking = signal(false);
     let input_height = signal(48.0f32);
     let shown = signal(40usize);
-    let list = element_ref();
-    let following = signal(true);
+    let thread = ThreadScroll::new();
+    provide_context(thread);
+    let list = thread.list;
+    let following = thread.following;
+    effect(move || {
+        if let Some(id) = assistant::capture_focus() {
+            let messages = visible_messages();
+            if let Some(index) = messages
+                .iter()
+                .rposition(|m| m.capture_id.as_deref() == Some(&id))
+            {
+                following.set(false);
+                shown.update(|n| *n = (*n).max(messages.len() - index));
+            } else {
+                assistant::clear_capture_focus(&id);
+            }
+        }
+    });
     let previous = stored(None::<(Option<String>, usize, usize)>);
     effect(move || {
         let session = assistant::current_view();
@@ -123,11 +143,18 @@ pub(crate) fn page() -> Screen {
         );
         let prior = previous.replace(Some(signature.clone()));
         let switched = prior.as_ref().map(|s| &s.0) != Some(&signature.0);
-        if switched {
+        if switched && assistant::capture_focus().is_none() {
             following.set(true);
         }
-        if prior.as_ref() != Some(&signature) && (switched || following.get_untracked()) {
-            set_timeout(Duration::from_millis(40), move || list.scroll_to_end(false));
+        if prior.as_ref() != Some(&signature)
+            && following.get_untracked()
+            && assistant::capture_focus().is_none()
+        {
+            set_timeout(Duration::from_millis(40), move || {
+                if following.get_untracked() && assistant::capture_focus().is_none() {
+                    list.scroll_to_end(false);
+                }
+            });
         }
     });
     let back = move || {
@@ -237,6 +264,7 @@ pub(crate) fn page() -> Screen {
                             scroll()
                                 .element_ref(&list)
                                 .on_scroll(move |event: &nsh_core::element::ScrollEvent| {
+                                    thread.offset.set(event.offset.y.0);
                                     following.set(
                                         event.content_size.height.0
                                             - event.size.height.0
@@ -306,6 +334,11 @@ pub(crate) fn page() -> Screen {
                                         .child(pending(error)),
                                 ),
                         )
+                        .child(when(move || !following.get(), move || {
+                            Btn::ghost().size(Size::Small)
+                                .label(|| copy("Back to latest", "回到最新").into())
+                                .on_press(move || thread.latest())
+                        }))
                         .child(composer(input, input_height, error, asking, move || keyboard_open.get()))
                         .into_element(),
                     Panel::History => history(panel, error).into_element(),
@@ -323,7 +356,10 @@ fn empty() -> impl IntoElement {
             "发张照片、记一笔，或问个问题。记录会先留在这里，等你核对后保存。"
         )).typo(Type::Body).text_color(color::MUTED))
         .child(when(|| !assistant::ready(), || {
-            Btn::tonal().label(|| copy("Set up model", "设置模型").into()).on_press(|| nav::push(Route::ModelSettings))
+            view().gap_2()
+                .child(text(copy("You can also use + to record by hand or reuse a favorite meal without a model.", "也可以点下方＋手动记录或使用收藏餐食，无需配置模型。"))
+                    .typo(Type::Subhead).text_color(color::MUTED))
+                .child(Btn::tonal().label(|| copy("Set up model", "设置模型").into()).on_press(|| nav::push(Route::ModelSettings)))
         }))
 }
 
@@ -343,7 +379,36 @@ fn message_row(message: ReadSignal<Message>) -> impl IntoElement {
             .is_some_and(|m| m.id == current.id);
         Some((id, latest))
     });
+    let thread = use_context::<ThreadScroll>().expect("conversation scroll context");
+    let row = element_ref();
+    effect(move || {
+        if let Some((id, true)) = capture_card.get()
+            && assistant::capture_focus().as_deref() == Some(&id)
+        {
+            thread.reveal(row, id);
+        }
+    });
     view()
+        .element_ref(&row)
+        .test_id(&format!(
+            "conversation-message-{}",
+            message.get_untracked().id
+        ))
+        .on_layout(move |_: &Bounds<Points>| {
+            if let Some((id, true)) = capture_card.get()
+                && assistant::capture_focus().as_deref() == Some(&id)
+            {
+                thread.reveal(row, id);
+            }
+        })
+        .style_when(
+            move || {
+                capture_card.get().is_some_and(|(id, latest)| {
+                    latest && thread.highlighted.get().as_deref() == Some(&id)
+                })
+            },
+            |style| style.bg(color::ACCENT_SOFT),
+        )
         .gap_2()
         .pl(move || {
             px(if message.with(|m| m.role == Role::User) {
@@ -403,6 +468,10 @@ fn message_row(message: ReadSignal<Message>) -> impl IntoElement {
                 .text_color(color::BODY)
                 .gap_2(),
         )
+        .child(when(
+            move || message.with(|m| !m.run_steps.is_empty()),
+            move || run_details(message),
+        ))
         .child(dynamic(move || {
             let Some((id, latest)) = capture_card.get() else {
                 return view().into_element();
@@ -418,6 +487,93 @@ fn message_row(message: ReadSignal<Message>) -> impl IntoElement {
         }))
 }
 
+fn run_details(message: ReadSignal<Message>) -> impl IntoElement {
+    let open = signal(false);
+    view()
+        .gap_2()
+        .child(disclosure(open, move || {
+            let failures = message.with(|m| {
+                m.run_steps
+                    .iter()
+                    .filter(|step| matches!(step, RunStep::Tool { error: Some(code), .. } if !matches!(code.as_str(), "tool_no_result" | "tool_interrupted")))
+                    .count()
+            });
+            if failures == 0 {
+                copy("Run details", "运行详情").into()
+            } else if s().lang == Lang::Zh {
+                format!("运行详情 · {failures} 次调用失败").into()
+            } else {
+                format!("Run details · {failures} failed").into()
+            }
+        }))
+        .child(when(
+            move || open.get(),
+            move || {
+                text(move || {
+                    message.with(|m| {
+                        m.run_steps
+                            .iter()
+                            .map(step_text)
+                            .collect::<Vec<_>>()
+                            .join("\n\n")
+                    })
+                })
+                .typo(Type::Subhead)
+                .text_color(color::BODY)
+            },
+        ))
+}
+
+fn step_text(step: &RunStep) -> String {
+    match step {
+        RunStep::Thinking(text) => format!("{}\n{}", copy("Model thinking", "模型思考"), text)
+            .trim_end()
+            .to_owned(),
+        RunStep::Tool {
+            name,
+            error,
+            call_id,
+        } => {
+            let outcome = match error.as_deref() {
+                None => copy("Completed", "已完成"),
+                Some("tool_no_result") => copy("No result received", "尚未收到结果"),
+                Some("tool_interrupted") => copy(
+                    "Interrupted before the result was received",
+                    "调用中断，结果未知",
+                ),
+                Some("invalid_tool_arguments") => {
+                    copy("Invalid tool arguments", "调用参数格式不正确")
+                }
+                Some("capture_invalid_records") => {
+                    copy("Draft failed record validation", "草稿内容未通过记录校验")
+                }
+                Some("draft_images_not_in_request") => copy(
+                    "Draft photos missing from this request",
+                    "本次请求缺少草稿引用的图片",
+                ),
+                Some("draft_changed") => copy(
+                    "Draft changed or is no longer pending",
+                    "草稿已变更或已结束审核",
+                ),
+                Some("too_many_proposals") => {
+                    copy("Pending draft limit reached", "待确认草稿已达上限")
+                }
+                Some("search_not_configured") => copy("Search key missing", "未配置搜索密钥"),
+                _ => copy("Tool call failed", "工具调用失败"),
+            };
+            if call_id.is_empty() {
+                format!("{name} · {outcome}")
+            } else {
+                format!(
+                    "{name} · {outcome}\n{} {call_id}",
+                    copy("Call ID", "调用 ID")
+                )
+            }
+        }
+        RunStep::MoreStepsOmitted => copy("Further steps omitted", "更多步骤已省略").into(),
+    }
+}
+
 fn composer(
     input: Signal<String>,
     height: Signal<f32>,
@@ -425,7 +581,19 @@ fn composer(
     asking: Signal<bool>,
     keyboard_open: impl Fn() -> bool + Copy + 'static,
 ) -> impl IntoElement {
+    // Streaming events update the session throughout a press. Keep the Stop
+    // button mounted until the run actually finishes.
+    let busy = computed(assistant::busy);
     let options = signal(false);
+    let favorites = signal(false);
+    let composer_focus = element_ref();
+    let previous_target = stored(None::<String>);
+    effect(move || {
+        let target = assistant::current_view().and_then(|s| s.editing_capture);
+        if previous_target.replace(target.clone()) != target && target.is_some() {
+            set_timeout(Duration::from_millis(40), move || composer_focus.focus());
+        }
+    });
     let picking = signal(false);
     let finance = signal(None::<String>);
     let weight = signal(None);
@@ -494,10 +662,35 @@ fn composer(
                     .items_center()
                     .gap_2()
                     .child(
-                        text(|| copy("Editing selected record", "正在修改选中的记录"))
-                            .typo(Type::Caption)
-                            .text_color(color::ACCENT_INK)
-                            .flex_1(),
+                        text(|| {
+                            let brief = assistant::current_view()
+                                .and_then(|session| session.editing_capture)
+                                .and_then(|id| crate::data::capture::get(&id))
+                                .map(|draft| super::capture::record_brief(&draft.records))
+                                .unwrap_or_default();
+                            format!(
+                                "{}\n{brief}",
+                                copy("Editing selected record", "正在修改选中的记录")
+                            )
+                        })
+                        .typo(Type::Caption)
+                        .text_color(color::ACCENT_INK)
+                        .min_w(px(0.0))
+                        .number_of_lines(3)
+                        .flex_1(),
+                    )
+                    .child(
+                        Btn::ghost()
+                            .size(Size::Small)
+                            .label(|| copy("Locate", "定位").into())
+                            .on_press(|| {
+                                dismiss_keyboard();
+                                if let Some(id) =
+                                    assistant::current_view().and_then(|s| s.editing_capture)
+                                {
+                                    assistant::focus_capture(&id);
+                                }
+                            }),
                     )
                     .child(
                         IconBtn::new(Icon::Close, || {
@@ -583,6 +776,16 @@ fn composer(
                                 weight.set(Some(clock::today()));
                             }),
                     )
+                    .child(
+                        Btn::ghost()
+                            .size(Size::Small)
+                            .icon(Icon::Bookmark)
+                            .label(|| copy("Favorite meals", "收藏餐食").into())
+                            .on_press(move || {
+                                options.set(false);
+                                favorites.set(true);
+                            }),
+                    )
             },
         ))
         .child(when(
@@ -609,6 +812,7 @@ fn composer(
                 )
                 .child(
                     text_input(input)
+                        .element_ref(&composer_focus)
                         .on_change(move |value: &str| {
                             options.set(false);
                             input.set(value.into());
@@ -625,7 +829,7 @@ fn composer(
                         .placeholder(|| copy("Record something or ask…", "记点什么，或问个问题…")),
                 )
                 .child(dynamic(move || {
-                    if assistant::busy() {
+                    if busy.get() {
                         Btn::tonal()
                             .label(|| copy("Stop", "停止").into())
                             .on_press(assistant::cancel)
@@ -645,6 +849,30 @@ fn composer(
                 })),
         )
         .child(super::finance::finance_editor(finance))
+        .child(crate::ui::sheet::bottom_sheet(
+            move || favorites.get(),
+            move || favorites.set(false),
+            view()
+                .gap_3()
+                .child(
+                    when(crate::data::favorites::any, move || {
+                        super::capture::favorites::favorites_row(move || favorites.set(false))
+                    })
+                    .otherwise(|| {
+                        text(copy(
+                            "Save a meal as a favorite from its details, then log it again here.",
+                            "在餐食详情中收藏，之后就能在这里快速记录。",
+                        ))
+                        .typo(Type::Body)
+                        .text_color(color::MUTED)
+                    }),
+                )
+                .child(
+                    Btn::ghost()
+                        .label(|| s().close.into())
+                        .on_press(move || favorites.set(false)),
+                ),
+        ))
         .child(crate::ui::sheet::task_host_with_keyboard(
             move || weight.get().is_some(),
             move || weight.set(None),

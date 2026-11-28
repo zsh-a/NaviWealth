@@ -8,6 +8,7 @@ use crate::{
     ui::{
         Btn, Size, Type, Typo, color,
         field::{field, text_input},
+        segmented::{Segment, segmented},
         space,
         surface::{hairline, row_button},
     },
@@ -28,6 +29,23 @@ enum Panel {
     Row(usize),
     Other(usize),
 }
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum ReviewFilter {
+    All,
+    Attention,
+    PossibleDuplicate,
+}
+
+impl ReviewFilter {
+    fn matches(self, status: Status) -> bool {
+        match self {
+            Self::All => true,
+            Self::Attention => matches!(status, Status::NeedsAccount | Status::NeedsAttention),
+            Self::PossibleDuplicate => status == Status::PossibleDuplicate,
+        }
+    }
+}
 fn fail(error: Signal<Option<String>>, result: Result<(), String>) {
     if result.is_err() {
         error.set(Some(tr::failed().into()));
@@ -40,6 +58,7 @@ pub fn statement_import_page() -> Screen {
     let busy = signal(false);
     let shown = signal(50usize);
     let shown_issues = signal(50usize);
+    let filter = signal(ReviewFilter::All);
     let pick = move || {
         if busy.get_untracked() {
             return;
@@ -65,7 +84,7 @@ pub fn statement_import_page() -> Screen {
         view().flex_1().bg(color::CANVAS)
         .child(top_bar(||tr::title().into(),move||{if panel.get_untracked().is_some(){panel.set(None)}else{nav::pop()}},None))
         .child(scroll().flex_1().keyboard_dismiss_mode(KeyboardDismissMode::OnDrag).child(
-            view().px(px(space::GUTTER)).pt_3().pb(move||px(bottom_clearance())).gap_4()
+            view().px(px(space::GUTTER)).pt_3().pb(move||px(bottom_clearance() + 56.0)).gap_4()
             .child(when(move||error.get().is_some(),move||text(move||error.get().unwrap_or_default()).typo(Type::Body).text_color(color::DANGER)))
             .child(dynamic(move||{
                 if let Some(p)=panel.get(){return untracked(||edit_panel(p,panel,error).into_element())}
@@ -82,14 +101,23 @@ pub fn statement_import_page() -> Screen {
                     body=body.child(row_button(move||panel.set(Some(Panel::Method(m.clone())))).child(text(label).typo(Type::Body).text_color(color::INK)));
                 }
                 body=body.child(text(tr::remember()).typo(Type::Caption).text_color(color::MUTED)).child(hairline(0.0));
-                let row_count=rows.len();
-                for (i,c) in rows.into_iter().enumerate().take(shown.get()){
+                let all_row_count=rows.len();
+                let attention=count(Status::NeedsAccount)+count(Status::NeedsAttention);
+                let possible=count(Status::PossibleDuplicate);
+                body=body.child(segmented(vec![
+                    Segment::new(ReviewFilter::All, move || format!("{} ({all_row_count})", tr::copy("All", "全部")).into()),
+                    Segment::new(ReviewFilter::Attention, move || format!("{} ({attention})", tr::copy("Needs attention", "待处理")).into()),
+                    Segment::new(ReviewFilter::PossibleDuplicate, move || format!("{} ({possible})", tr::copy("Possible duplicates", "疑似重复")).into()),
+                ], move || filter.get(), move |next| { filter.set(next); shown.set(50); }));
+                let row_count=rows.iter().filter(|c|filter.get().matches(c.status)).count();
+                if row_count==0 { body=body.child(text(tr::copy("No records in this view.", "当前筛选下没有记录。")).typo(Type::Body).text_color(color::MUTED)); }
+                for (i,c) in rows.into_iter().enumerate().filter(|(_,c)|filter.get().matches(c.status)).take(shown.get()){
                     let selected=draft.is_selected(i,&c);
                     let status=match c.status{Status::New=>tr::ready(),Status::Duplicate=>tr::duplicate(),Status::PossibleDuplicate=>tr::possible(),Status::NeedsAccount=>tr::method(),Status::NeedsAttention=>tr::attention()};
                     let title=format!("{} · {} {}",c.row.payee.clone().unwrap_or_else(||c.row.description.clone()),crate::ui::currency::grouped(c.row.amount),c.row.currency);
                     let detail=format!("{} · {} · {}",c.row.at.date(),status,super::finance::category_label(&c.category));
                     let selectable=matches!(c.status,Status::New|Status::PossibleDuplicate)&&c.transaction.is_some();
-                    let mut row=view().gap_1().py_2().child(text(title).typo(Type::Headline).text_color(color::INK)).child(text(detail).typo(Type::Subhead).text_color(color::MUTED));
+                    let mut row=view().test_id(&format!("import-row-{i}")).gap_1().py_2().child(text(title).typo(Type::Headline).text_color(color::INK)).child(text(detail).typo(Type::Subhead).text_color(color::MUTED));
                     let controls=view().flex_row().gap_2();
                     let controls=if selectable {controls.child(Btn::tonal().size(Size::Small).label(move||tr::copy(if selected{"Selected"}else{"Select"},if selected{"已选"}else{"选择"}).into()).on_press(move||fail(error,data::update(|d|{d.selected.insert(i,!selected);}))))}else{controls};
                     if c.status!=Status::Duplicate{
@@ -98,14 +126,14 @@ pub fn statement_import_page() -> Screen {
                     body=body.child(row).child(hairline(0.0));
                 }
                 if row_count>shown.get(){body=body.child(Btn::secondary().label(||tr::copy("Show 50 more rows","再显示 50 条").into()).on_press(move||shown.update(|n|*n+=50)));}
-                if !report.issues.is_empty(){
+                if filter.get()==ReviewFilter::All && !report.issues.is_empty(){
                     body=body.child(text(tr::skip()).typo(Type::Headline).text_color(color::INK)).child(text(tr::issues()).typo(Type::Subhead).text_color(color::MUTED));
                     for issue in report.issues.into_iter().take(shown_issues.get()){
                         let reason=match issue.code{statement::IssueCode::InvalidDate=>tr::copy("Invalid date","日期无效"),statement::IssueCode::IgnoredStatus=>tr::copy("Not completed / refunded purchase","未完成或已退款的原购买记录"),statement::IssueCode::UnsupportedDirection=>tr::attention(),statement::IssueCode::InvalidAmount=>tr::copy("Invalid amount","金额无效"),statement::IssueCode::ZeroAmount=>tr::copy("Zero amount","零金额"),statement::IssueCode::MalformedRow=>tr::copy("Malformed row","行格式无效")};
                         body=body.child(text(format!("{} {} · {}",tr::copy("Line","第"),issue.line,reason)).typo(Type::Subhead).text_color(color::MUTED));
                     }
                 }
-                if report.candidates.saturating_sub(row_count)>shown_issues.get(){body=body.child(Btn::secondary().label(||tr::copy("Show 50 more skipped lines","再显示 50 条跳过行").into()).on_press(move||shown_issues.update(|n|*n+=50)));}
+                if filter.get()==ReviewFilter::All && report.candidates.saturating_sub(all_row_count)>shown_issues.get(){body=body.child(Btn::secondary().label(||tr::copy("Show 50 more skipped lines","再显示 50 条跳过行").into()).on_press(move||shown_issues.update(|n|*n+=50)));}
                 body.child(Btn::ghost().label(||tr::copy("Discard this review","放弃本次核对").into()).on_press(move||{
                     // Visible second confirmation prevents losing a retained review.
                     let answer=nsh_base::alert_dialog().title(tr::copy("Discard import?","放弃导入？")).description(tr::copy("No transactions have been saved.","尚未保存任何交易。")).cancel("cancel",s().cancel).action("discard",tr::copy("Discard","放弃")).show();
@@ -114,11 +142,18 @@ pub fn statement_import_page() -> Screen {
             }))
         ))
         .child(when(move||data::has_draft()&&panel.get().is_none(),move||bottom_bar(
-            Btn::primary().size(Size::Large).label(move||{
+            view().gap_2()
+            .child(text(move || {
+                let selected=data::selected_count();
+                let pending=data::rows().iter().filter(|c|ReviewFilter::Attention.matches(c.status)).count();
+                format!("{} {selected} · {} {pending}",tr::copy("Selected", "已选"),tr::copy("Needs attention", "待处理"))
+            }).typo(Type::Caption).text_color(color::MUTED))
+            .child(when(move || filter.get()!=ReviewFilter::All, || text(tr::copy("Imports all selected records, including those outside this filter.", "将导入全部已选记录，包括当前筛选外的记录。")).typo(Type::Caption).text_color(color::MUTED)))
+            .child(Btn::primary().size(Size::Large).label(move||{
                 let count=data::selected_count();
                 format!("{} {count}",tr::copy("Import","导入")).into()
             }).disabled(move||data::selected_count()==0)
-            .on_press(move||match data::confirm(){Ok(Some(count))=>{crate::ui::toast::show_toast(format!("{} {count}",tr::copy("Imported","已导入")),None);nav::pop();},Ok(None)=>error.set(Some(tr::stale().into())),Err(_)=>error.set(Some(tr::failed().into()))})
+            .on_press(move||match data::confirm(){Ok(Some(count))=>{crate::ui::toast::show_toast(format!("{} {count}",tr::copy("Imported","已导入")),None);nav::pop();},Ok(None)=>error.set(Some(tr::stale().into())),Err(_)=>error.set(Some(tr::failed().into()))}))
         )))
     )
 }

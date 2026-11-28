@@ -69,13 +69,7 @@ async fn multi_step_tool_results_are_checkpointed_and_continue_after_restart() {
         assert_eq!(
             observed
                 .iter()
-                .filter(|e| matches!(
-                    e,
-                    Event::ToolFinished {
-                        is_error: false,
-                        ..
-                    }
-                ))
+                .filter(|e| matches!(e, Event::Agent(native) if matches!(native.as_ref(), AgentEvent::ToolExecutionEnd { is_error: false, .. })))
                 .count(),
             2
         );
@@ -209,7 +203,7 @@ async fn turn_budget_stops_loop_without_losing_completed_tool() {
             .lock()
             .unwrap()
             .iter()
-            .filter(|e| matches!(e, Event::ToolStarted { .. }))
+            .filter(|e| matches!(e, Event::Agent(native) if matches!(native.as_ref(), AgentEvent::ToolExecutionStart { .. })))
             .count(),
         1
     );
@@ -523,7 +517,7 @@ async fn generated_summary_is_reused_after_restart_without_losing_original_histo
         );
         assert!(events.iter().any(|event| matches!(event, Event::SummaryUpdated { summary: kept, history } if kept == &summary && history.len() == original.len()+1 && history.last().unwrap()["content"] == "Please continue")));
         assert!(!events.iter().any(
-            |event| matches!(event, Event::TextDelta(text) if text.contains("Earlier owner facts"))
+            |event| matches!(event, Event::Agent(native) if matches!(native.as_ref(), AgentEvent::MessageUpdate { assistant_message_event: AssistantMessageEvent::TextDelta {delta, ..}, .. } if delta.contains("Earlier owner facts")))
         ));
         assert!(
             !events

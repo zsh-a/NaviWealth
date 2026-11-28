@@ -42,15 +42,23 @@ pub(crate) fn inline_review(capture_id: String) -> impl IntoElement {
                 return view().into_element();
             };
             let saved = outcome.status == RecordStatus::Saved;
+            let discarded = outcome.status == RecordStatus::Discarded;
             let label = match outcome.status {
                 RecordStatus::Saved => s().capture_saved_count(outcome.records.len()),
-                RecordStatus::Discarded => copy("Draft discarded", "草稿已丢弃").into(),
+                RecordStatus::Discarded => format!("{} · {}", copy("Draft discarded", "草稿已丢弃"), outcome.records.len()),
                 RecordStatus::Undone => copy("Save undone", "已撤销保存").into(),
             };
             view()
                 .gap_2()
                 .py_2()
                 .child(text(label).typo(Type::Subhead).text_color(color::MUTED))
+                .child(text(summary::record_brief(&outcome.records)).typo(Type::Caption).text_color(color::MUTED))
+                .child(when(move || discarded && id.with(|id| assistant::can_restore_capture(id)), move || {
+                    Btn::ghost().size(Size::Small)
+                        .label(|| copy("Restore draft", "恢复草稿").into())
+                        .disabled(assistant::busy)
+                        .on_press(move || error.set(assistant::restore_capture(&id.get()).err()))
+                }))
                 .child(saved.then(|| {
                     view()
                         .flex_row()
@@ -160,7 +168,15 @@ fn editor(
                     .gap_2()
                     .child(
                         Btn::primary()
-                            .label(|| copy("Confirm and save", "确认保存").into())
+                            .label(move || {
+                                let count = draft.with(|d| d.records.len());
+                                if count > 1 {
+                                    format!("{} ({count})", copy("Confirm and save", "确认保存"))
+                                        .into()
+                                } else {
+                                    copy("Confirm and save", "确认保存").into()
+                                }
+                            })
                             .disabled(move || assistant::busy() || !capture::ready(&draft.get()))
                             .on_press(move || {
                                 error.set(assistant::confirm_capture(&draft.get_untracked()).err())
@@ -186,7 +202,18 @@ fn editor(
                             .child(
                                 Btn::ghost()
                                     .size(Size::Small)
-                                    .label(|| copy("Discard draft", "丢弃草稿").into())
+                                    .label(move || {
+                                        let count = draft.with(|d| d.records.len());
+                                        if count > 1 {
+                                            format!(
+                                                "{} ({count})",
+                                                copy("Discard draft", "丢弃草稿")
+                                            )
+                                            .into()
+                                        } else {
+                                            copy("Discard draft", "丢弃草稿").into()
+                                        }
+                                    })
                                     .disabled(assistant::busy)
                                     .on_press(move || {
                                         error.set(

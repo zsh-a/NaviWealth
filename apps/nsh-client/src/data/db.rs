@@ -125,6 +125,10 @@ const MIGRATIONS: &[&str] = &[
     // 25: unified conversations own unsent content, image references, capture
     // reviews and durable record receipts. Linked drafts now travel in backups.
     "SELECT 1;",
+    // 26: optional display summaries from earlier conversation builds.
+    "SELECT 1;",
+    // 27: retry can keep its superseded native turn outside model replay.
+    "SELECT 1;",
 ];
 
 #[derive(Clone, Default)]

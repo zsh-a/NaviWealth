@@ -3,15 +3,16 @@
 //! its generation before any late callback can change the current database.
 pub(super) mod conversation;
 pub use conversation::{
-    add_attachment, answer_questions, can_undo_capture, cancel_edit_capture, confirm_capture,
-    discard_capture, edit_capture, open_capture_session, remove_attachment, set_composer,
+    add_attachment, answer_questions, can_restore_capture, can_undo_capture, cancel_edit_capture,
+    capture_focus, clear_capture_focus, confirm_capture, discard_capture, edit_capture,
+    focus_capture, open_capture_session, remove_attachment, restore_capture, set_composer,
     set_question_answers, undo_capture, view_capture,
 };
 
 use std::{
     cell::RefCell,
     sync::{
-        Arc, OnceLock,
+        Arc, Mutex, OnceLock,
         atomic::{AtomicU64, Ordering},
     },
 };
@@ -20,7 +21,9 @@ use futures::{
     StreamExt,
     channel::{mpsc, oneshot},
 };
-use navi_assistant::{CancellationToken, Config, Event, Limits, RunResult};
+use navi_assistant::{
+    AgentEvent, AssistantMessageEvent, CancellationToken, Config, Content, Event, Limits, RunResult,
+};
 use nsh_core::{prelude::*, storage::Storage};
 use serde_json::{Value, json};
 
@@ -48,6 +51,8 @@ struct State {
     draft_snapshots: std::collections::HashMap<String, crate::domain::capture::Draft>,
     request_id: String,
     answering: Option<String>,
+    capture_focus: Option<String>,
+    discarded: std::collections::HashMap<String, conversation::DiscardUndo>,
 }
 thread_local! { static CANCEL: RefCell<Option<CancellationToken>> = const { RefCell::new(None) }; }
 fn state() -> Signal<State> {
@@ -153,7 +158,7 @@ pub fn error() -> Option<String> {
 }
 pub fn status_text() -> String {
     state().with(|s| {
-        if s.running.is_some() {
+        if s.running.is_some() && s.running == s.selected {
             return s.activity.clone();
         }
         match s
@@ -439,7 +444,10 @@ fn runtime() -> Result<&'static tokio::runtime::Runtime, String> {
         .as_ref()
         .map_err(Clone::clone)
 }
+type QueuedPreview = Arc<Mutex<Option<Box<AgentEvent>>>>;
+
 enum WorkerEvent {
+    Preview(QueuedPreview),
     Model(Event),
     Tool {
         name: String,
@@ -581,13 +589,27 @@ fn send_turn(text: String, retry: bool) -> Result<(), String> {
             })
         });
         if let Some(index) = start {
-            session.history.truncate(index);
+            // Move the replaced native turn out of model replay. Its original
+            // tool IDs and results remain available on the previous attempt.
+            let turn = session.history.split_off(index);
+            if !turn.is_empty() {
+                let prior_id = session
+                    .messages
+                    .iter()
+                    .rev()
+                    .find(|m| m.history_start == Some(index))
+                    .unwrap_or(owner)
+                    .id
+                    .clone();
+                session.prior_attempts.insert(prior_id, turn);
+            }
         }
         session.context_summary = None;
         session.messages.push(Message {
             id: id(),
             role: Role::Tool,
             text: copy("Retrying the last message", "正在重试上一条消息"),
+            history_start: Some(session.history.len()),
             created_at_ms: clock::now_ms(),
             ..Default::default()
         });
@@ -630,6 +652,14 @@ fn send_turn(text: String, retry: bool) -> Result<(), String> {
     session.updated_at_ms = clock::now_ms();
     local(|c| store::save_session(c, &session))?;
     let session_id = session.id.clone();
+    // Each retry has its own display message even though it reuses the owner's
+    // submission ID for idempotent record actions.
+    let activity_message = session
+        .messages
+        .last()
+        .ok_or("owner_message_missing")?
+        .id
+        .clone();
     let history = session.history.clone();
     let context_summary = session.context_summary.clone();
     publish(session);
@@ -646,14 +676,34 @@ fn send_turn(text: String, retry: bool) -> Result<(), String> {
         s.answering = None;
         s.generation = generation;
         s.error = None;
-        s.activity = copy("Thinking…", "正在思考…");
+        s.activity = copy("Waiting for the model…", "等待模型响应…");
     });
     let cancel = CancellationToken::new();
     CANCEL.with(|c| *c.borrow_mut() = Some(cancel.clone()));
     let (tx, rx) = mpsc::unbounded();
     let callback = tx.clone();
+    // rpi's MessageUpdate carries the complete partial message. Queue only the
+    // latest snapshot between lifecycle events, even if the UI thread is busy.
+    let queued = Mutex::new(None::<QueuedPreview>);
     let events = Arc::new(move |event| {
-        let _ = callback.unbounded_send(WorkerEvent::Model(event));
+        let mut queued = queued.lock().expect("preview queue");
+        match event {
+            Event::Agent(native) if matches!(*native, AgentEvent::MessageUpdate { .. }) => {
+                if let Some(slot) = queued.as_ref()
+                    && let Some(pending) = slot.lock().expect("preview slot").as_mut()
+                {
+                    *pending = native;
+                    return;
+                }
+                let slot = Arc::new(Mutex::new(Some(native)));
+                *queued = Some(slot.clone());
+                let _ = callback.unbounded_send(WorkerEvent::Preview(slot));
+            }
+            event => {
+                *queued = None;
+                let _ = callback.unbounded_send(WorkerEvent::Model(event));
+            }
+        }
     });
     let callback = tx.clone();
     let key = search_key();
@@ -728,17 +778,20 @@ fn send_turn(text: String, retry: bool) -> Result<(), String> {
         .await;
         let _ = tx.unbounded_send(WorkerEvent::Finished(result));
     });
-    tasks::spawn_app(drive(session_id, generation, cancel, rx));
+    tasks::spawn_app(drive(session_id, activity_message, generation, cancel, rx));
     Ok(())
 }
 
 async fn drive(
     session_id: String,
+    activity_message: String,
     generation: u64,
     cancel: CancellationToken,
     mut rx: mpsc::UnboundedReceiver<WorkerEvent>,
 ) {
     let _guard = CancelOnDrop(cancel.clone());
+    let mut settled_steps = 0;
+    let mut new_reply = true;
     while let Some(event) = rx.next().await {
         if !state().with_untracked(|s| {
             s.generation == generation && s.running.as_deref() == Some(&session_id)
@@ -751,12 +804,8 @@ async fn drive(
         if cancel.is_cancelled()
             && matches!(
                 &event,
-                WorkerEvent::Model(
-                    Event::TextDelta(_)
-                        | Event::ToolStarted { .. }
-                        | Event::ToolFinished { .. }
-                        | Event::ContextTrimmed { .. }
-                )
+                WorkerEvent::Preview(_)
+                    | WorkerEvent::Model(Event::Agent(_) | Event::ContextTrimmed { .. })
             )
         {
             continue;
@@ -795,7 +844,8 @@ async fn drive(
                         s.error = Some(copy("Could not save the conversation", "对话保存失败"))
                     });
                 } else {
-                    state().update(|s| s.activity = copy("Thinking…", "正在思考…"));
+                    state()
+                        .update(|s| s.activity = copy("Waiting for the model…", "等待模型响应…"));
                 }
             }
             WorkerEvent::Tool { name, args, reply } => {
@@ -806,47 +856,87 @@ async fn drive(
                 };
                 let _ = reply.send(result);
             }
-            WorkerEvent::Model(Event::TextDelta(text)) => mutate_session(&session_id, |s| {
-                if let Some(last) = s
-                    .messages
-                    .last_mut()
-                    .filter(|m| m.role == Role::Assistant && m.capture_id.is_none())
-                {
-                    last.text.push_str(&text);
-                } else {
-                    s.messages.push(Message {
-                        id: id(),
-                        role: Role::Assistant,
-                        text,
-                        created_at_ms: clock::now_ms(),
-                        ..Default::default()
-                    });
-                }
-            }),
-            WorkerEvent::Model(Event::ToolStarted { name }) => {
-                let label = assistant_tools::label(&name);
-                log::debug!("assistant: run {generation}, activity {label}");
-                state().update(|s| s.activity = label.clone());
-            }
-            WorkerEvent::Model(Event::ToolFinished { name, is_error }) => {
-                if is_error {
-                    mutate_session(&session_id, |s| {
-                        s.messages.push(Message {
+            WorkerEvent::Preview(slot) => {
+                let native = slot
+                    .lock()
+                    .expect("preview slot")
+                    .take()
+                    .expect("queued snapshot");
+                let AgentEvent::MessageUpdate {
+                    message,
+                    assistant_message_event,
+                    ..
+                } = *native
+                else {
+                    unreachable!()
+                };
+                state().update(|state| {
+                    let Some(session) = state.sessions.iter_mut().find(|s| s.id == session_id)
+                    else {
+                        return;
+                    };
+                    if let Some(attempt) = session
+                        .messages
+                        .iter_mut()
+                        .rev()
+                        .find(|m| m.id == activity_message)
+                    {
+                        attempt.run_steps.truncate(settled_steps);
+                        store::append_visible_thinking(&mut attempt.run_steps, &message.content);
+                    }
+                    state.activity = match assistant_message_event {
+                        AssistantMessageEvent::TextDelta { .. } => {
+                            copy("Receiving reply…", "正在接收回复…")
+                        }
+                        AssistantMessageEvent::ThinkingStart { .. }
+                        | AssistantMessageEvent::ThinkingDelta { .. } => {
+                            copy("Model is thinking…", "模型正在思考…")
+                        }
+                        _ => copy("Waiting for the model…", "等待模型响应…"),
+                    };
+                    let text = Content::text_only(&message.content, "\n");
+                    if text.is_empty() {
+                        return;
+                    }
+                    if !new_reply
+                        && let Some(last) = session
+                            .messages
+                            .last_mut()
+                            .filter(|m| m.role == Role::Assistant && m.capture_id.is_none())
+                    {
+                        last.text = text;
+                    } else {
+                        session.messages.push(Message {
                             id: id(),
-                            role: Role::Tool,
-                            text: format!(
-                                "{} · {}",
-                                assistant_tools::label(&name),
-                                copy("unavailable", "未完成")
-                            ),
+                            role: Role::Assistant,
+                            text,
                             created_at_ms: clock::now_ms(),
                             ..Default::default()
-                        })
+                        });
+                    }
+                    new_reply = false;
+                });
+            }
+            WorkerEvent::Model(Event::Agent(native)) => match *native {
+                AgentEvent::ToolExecutionStart { tool_name, .. } => {
+                    new_reply = true;
+                    let label = assistant_tools::label(&tool_name);
+                    state().update(|s| {
+                        s.activity = if store::valid_id(&tool_name) {
+                            format!("{label} · {tool_name}")
+                        } else {
+                            label
+                        }
                     });
                 }
-            }
+                AgentEvent::ToolExecutionEnd { .. } => {
+                    state()
+                        .update(|s| s.activity = copy("Waiting for the model…", "等待模型响应…"));
+                }
+                _ => {}
+            },
             WorkerEvent::Model(Event::ContextTrimmed { .. }) => {
-                state().update(|s| s.activity = copy("Thinking…", "正在思考…"));
+                state().update(|s| s.activity = copy("Waiting for the model…", "等待模型响应…"));
                 mutate_session(&session_id, |s| {
                     s.messages.push(Message {
                         id: id(),
@@ -860,7 +950,9 @@ async fn drive(
                 });
             }
             WorkerEvent::Model(Event::Checkpoint(history)) => {
-                mutate_session(&session_id, |s| s.history = history);
+                mutate_session(&session_id, |s| {
+                    settled_steps = s.checkpoint(history, &activity_message)
+                });
                 if save(&session_id).is_err() {
                     cancel.cancel();
                     state().update(|s| {

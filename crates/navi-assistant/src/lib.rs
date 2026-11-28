@@ -15,6 +15,9 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 pub use compaction::{ContextSummary, validate_context_summary};
+pub use history::INTERRUPTED_TOOL_RESULT;
+pub use rpi_agent::{AgentEvent, AgentMessage};
+pub use rpi_ai::types::{AssistantMessageEvent, Content};
 pub use runner::{run, run_multimodal};
 pub use tokio_util::sync::CancellationToken;
 
@@ -88,14 +91,9 @@ pub type EventHandler = Arc<dyn Fn(Event) + Send + Sync>;
 
 #[derive(Debug, Clone)]
 pub enum Event {
-    TextDelta(String),
-    ToolStarted {
-        name: String,
-    },
-    ToolFinished {
-        name: String,
-        is_error: bool,
-    },
+    /// Native pi-rust display events. Checkpoint and compaction notifications
+    /// below belong to the local session lifecycle.
+    Agent(Box<AgentEvent>),
     /// Full transcript, including provider-native tool IDs and signatures.
     /// The host must persist this before accepting a subsequent turn.
     Checkpoint(Vec<Value>),

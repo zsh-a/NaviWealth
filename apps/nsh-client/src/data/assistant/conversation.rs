@@ -13,6 +13,28 @@ thread_local! {
     static RECEIPTS: RefCell<HashMap<String, capture::CaptureUndo>> = RefCell::new(HashMap::new());
 }
 
+#[derive(Clone, PartialEq)]
+pub(super) struct DiscardUndo {
+    draft: Draft,
+    outcomes: Vec<(String, store::RecordAction)>,
+}
+
+pub fn capture_focus() -> Option<String> {
+    state().with(|s| s.capture_focus.clone())
+}
+
+pub fn focus_capture(id: &str) {
+    state().update(|s| s.capture_focus = Some(id.into()));
+}
+
+pub fn clear_capture_focus(id: &str) {
+    state().update(|s| {
+        if s.capture_focus.as_deref() == Some(id) {
+            s.capture_focus = None;
+        }
+    });
+}
+
 fn ensure_session() -> Result<Session, String> {
     if current().is_none() {
         new_session()?;
@@ -139,15 +161,90 @@ pub fn discard_capture(id: &str) -> Result<(), String> {
         return Err("conversation_draft_missing".into());
     }
     let draft = capture::get(id).ok_or("draft_missing")?;
-    local(|c| {
+    let outcomes = local(|c| {
         let tx = c.unchecked_transaction().map_err(|_| "assistant_storage")?;
         store::record_capture_outcome(&tx, id, &draft.records, store::RecordStatus::Discarded)?;
+        let outcomes = discarded_outcomes(&tx, id)?;
         tx.execute("DELETE FROM capture_drafts WHERE id=?1", [id])
             .map_err(|_| "assistant_storage")?;
-        tx.commit().map_err(|_| "assistant_storage".into())
+        tx.commit().map_err(|_| "assistant_storage")?;
+        Ok(outcomes)
     })?;
+    state().update(|s| {
+        s.discarded
+            .insert(id.into(), DiscardUndo { draft, outcomes });
+    });
     capture::load()?;
     refresh_sessions()
+}
+
+fn discarded_outcomes(
+    c: &rusqlite::Connection,
+    id: &str,
+) -> Result<Vec<(String, store::RecordAction)>, String> {
+    Ok(store::sessions(c)?
+        .into_iter()
+        .filter_map(|session| {
+            session
+                .record_actions
+                .into_iter()
+                .find(|a| a.capture_id == id)
+                .map(|action| (session.id, action))
+        })
+        .collect())
+}
+
+pub fn can_restore_capture(id: &str) -> bool {
+    state().with(|s| s.discarded.contains_key(id))
+}
+
+/// Restore the draft and retire its discard receipt together. Later actions,
+/// session deletion and a replacement draft invalidate this app-lifetime undo.
+pub fn restore_capture(id: &str) -> Result<(), String> {
+    if busy() {
+        return Err(copy("Wait for the task to finish", "请等待任务结束"));
+    }
+    let undo = state()
+        .with_untracked(|s| s.discarded.get(id).cloned())
+        .ok_or_else(|| copy("This draft can no longer be restored", "这份草稿已无法恢复"))?;
+    local(|c| {
+        let tx = c.unchecked_transaction().map_err(|_| "assistant_storage")?;
+        let exists: bool = tx
+            .query_row(
+                "SELECT EXISTS(SELECT 1 FROM capture_drafts WHERE id=?1)",
+                [id],
+                |r| r.get(0),
+            )
+            .map_err(|_| "assistant_storage")?;
+        if exists || undo.outcomes.is_empty() || discarded_outcomes(&tx, id)? != undo.outcomes {
+            return Err(copy(
+                "The draft changed. Your newer changes were kept.",
+                "草稿已变更，已保留较新的修改。",
+            ));
+        }
+        for (session_id, expected) in &undo.outcomes {
+            if expected.status != store::RecordStatus::Discarded {
+                return Err("invalid_discard_undo".into());
+            }
+            let mut session = store::session(&tx, session_id)?.ok_or("session_missing")?;
+            session.record_actions.retain(|a| a.capture_id != id);
+            store::save_session(&tx, &session)?;
+        }
+        let body = serde_json::to_string(&undo.draft).map_err(|_| "assistant_storage")?;
+        tx.execute(
+            "INSERT INTO capture_drafts(id,created_at_ms,body) VALUES(?1,?2,?3)",
+            rusqlite::params![id, undo.draft.created_at_ms, body],
+        )
+        .map_err(|_| "assistant_storage")?;
+        tx.commit().map_err(|_| "assistant_storage".into())
+    })?;
+    state().update(|s| {
+        s.discarded.remove(id);
+    });
+    capture::load()?;
+    refresh_sessions()?;
+    focus_capture(id);
+    Ok(())
 }
 
 pub fn can_undo_capture(id: &str) -> bool {
@@ -522,6 +619,7 @@ pub fn open_capture_session(capture_id: &str) -> Result<(), String> {
             s.sessions.insert(0, session);
         });
     }
+    focus_capture(capture_id);
     crate::nav::push(crate::nav::Route::Assistant);
     Ok(())
 }

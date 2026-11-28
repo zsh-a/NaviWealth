@@ -30,8 +30,19 @@ without pulling the harness's desktop-tool dependencies or its optional
 | Durable composer, image selection, question staging and inline record reviews | `apps/nsh-client/src/data/assistant/conversation.rs` |
 | Structured proposal validation | `apps/nsh-client/src/domain/assistant_proposal.rs` |
 | Optional Brave Search and bounded public-page fetch | `apps/nsh-client/src/data/assistant_web.rs` |
-| Sessions, messages, native replay history and approved memories | `apps/nsh-client/src/data/assistant_store.rs`, migrations 22–25 |
+| Sessions, messages, native replay history and approved memories | `apps/nsh-client/src/data/assistant_store.rs`, migrations 22–27 |
 | Conversation, history and memory UI | `apps/nsh-client/src/pages/assistant.rs` |
+
+The NSH conversation consumes native pi-rust `AgentEvent` message snapshots
+and tool lifecycle events. The UI coalesces adjacent streaming snapshots and
+shows provider-visible thinking. Run details render the native `AgentMessage`
+history, including each tool result's original call ID, name and outcome.
+The bounded view (32 steps and 2 KiB per thinking block) is derived in memory.
+Opaque signatures, raw tool arguments and provider error bodies are excluded
+from the view. Schema 26 display summaries remain readable. On explicit retry,
+schema 27 moves the replaced native turn under its original display message in
+the local session. Encrypted backups retain those attempts. Only the active
+native history is used for continuation and context summaries.
 
 The former assistant and plus-record actions open one conversation page. Opening
 continues the most recently selected session; an explicit New conversation action starts

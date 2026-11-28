@@ -17,11 +17,13 @@ use std::{
 enum Reply {
     Tool(&'static str, &'static str, Value),
     Text(&'static str),
+    ThinkingThenTool(&'static str, &'static str, &'static str, Value),
     Revise(Value),
     ReviseAndRead(Value),
     Batch(Vec<(&'static str, &'static str, Value)>),
     /// Keep the model request outstanding while the user presses Stop.
     Wait,
+    StreamAndWait,
 }
 
 struct Provider {
@@ -62,6 +64,21 @@ impl Provider {
                 seen.lock().unwrap().push(request.clone());
                 notify.notify_all();
                 let reply = replies.pop_front().expect("no unexpected model requests");
+                if matches!(reply, Reply::StreamAndWait) {
+                    // Keep the SSE response open. The text block flushes the provider's
+                    // preceding thinking block, before any terminal message or checkpoint.
+                    stream.write_all(b"HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nConnection: close\r\n\r\n").unwrap();
+                    for delta in [
+                        json!({"reasoning_content":"Checking the image."}),
+                        json!({"content":"Reviewing."}),
+                    ] {
+                        let event = json!({"id":"live","object":"chat.completion.chunk","model":"assistant-fixture",
+                            "choices":[{"index":0,"delta":delta,"finish_reason":null}]});
+                        write!(stream, "data: {event}\n\n").unwrap();
+                    }
+                    held.push(stream);
+                    continue;
+                }
                 if matches!(reply, Reply::Wait) {
                     // Keep accepting so an unexpected restart request is
                     // observable even while the previous reply is held open.
@@ -178,6 +195,14 @@ fn read_request(stream: &mut TcpStream) -> Value {
 }
 
 fn sse(reply: Reply) -> String {
+    let mut thinking = None;
+    let reply = match reply {
+        Reply::ThinkingThenTool(summary, id, name, args) => {
+            thinking = Some(summary);
+            Reply::Tool(id, name, args)
+        }
+        other => other,
+    };
     let (delta, finish) = match reply {
         Reply::Tool(id, name, args) => (
             json!({"role":"assistant","tool_calls":[{
@@ -190,7 +215,13 @@ fn sse(reply: Reply) -> String {
             json!({"role":"assistant","tool_calls":calls.into_iter().enumerate().map(|(index,(id,name,args))|json!({"index":index,"id":id,"type":"function","function":{"name":name,"arguments":args.to_string()}})).collect::<Vec<_>>()}),
             "tool_calls",
         ),
-        Reply::Wait | Reply::Revise(_) | Reply::ReviseAndRead(_) => unreachable!(),
+        Reply::Wait
+        | Reply::StreamAndWait
+        | Reply::Revise(_)
+        | Reply::ReviseAndRead(_)
+        | Reply::ThinkingThenTool(..) => {
+            unreachable!()
+        }
     };
     let chunk = |delta: Value, reason: Option<&str>| {
         json!({
@@ -198,8 +229,16 @@ fn sse(reply: Reply) -> String {
             "choices":[{"index":0,"delta":delta,"finish_reason":reason}]
         })
     };
+    let prefix = thinking
+        .map(|summary| {
+            format!(
+                "data: {}\n\n",
+                chunk(json!({"reasoning_content":summary}), None)
+            )
+        })
+        .unwrap_or_default();
     format!(
-        "data: {}\n\ndata: {}\n\ndata: [DONE]\n\n",
+        "{prefix}data: {}\n\ndata: {}\n\ndata: [DONE]\n\n",
         chunk(delta, None),
         chunk(json!({}), Some(finish))
     )
@@ -227,6 +266,74 @@ fn settle() {
 fn send(app: &mut Headless, text: &str) -> Result<(), String> {
     app.type_text("label:Message", text)?;
     app.press("label:Send message")
+}
+
+#[test]
+fn native_partial_message_displays_thinking_before_completion() -> Result<(), String> {
+    let provider = Provider::new(vec![Reply::StreamAndWait]);
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, _) = start_in(Some(dir.path()), provider.account(), None);
+    app.press("label:Conversation")?;
+    send(&mut app, "Check this image description")?;
+    app.wait_for("text:Run details")?;
+    app.press("text:Run details")?;
+    app.wait_for("Model thinking\nChecking the image.")?;
+    app.press("text:Stop")?;
+    app.wait_for_gone("text:Stop", GONE)?;
+    assert_eq!(provider.requests().len(), 1);
+    Ok(())
+}
+
+#[test]
+fn photo_run_details_show_reasoning_and_each_tool_outcome_after_restart() -> Result<(), String> {
+    let mut meal = meal_record();
+    meal.as_object_mut().unwrap().remove("evidence");
+    meal["meal"]["source_image"] = json!(1);
+    let provider = Provider::new(vec![
+        Reply::ThinkingThenTool(
+            "Checking the photo.",
+            "bad",
+            "propose_record",
+            json!({"private_marker":42}),
+        ),
+        Reply::Tool(
+            "good",
+            "propose_record",
+            json!({"text":"Lunch draft","records":[meal]}),
+        ),
+    ]);
+    let dir = tempfile::tempdir().unwrap();
+    let (mut app, storage) = start_in(Some(dir.path()), provider.account(), None);
+    picks_a_photo(&mut app);
+    app.press("label:Conversation")?;
+    app.press("label:Attach or add manually")?;
+    app.press("text:Add photos")?;
+    app.wait_for("label:Remove photo")?;
+    app.press("label:Send message")?;
+    app.wait_for("Review before saving")?;
+    app.wait_for_gone("text:Stop", GONE)?;
+    let session = records(dir.path(), "assistant_sessions").remove(0);
+    assert!(
+        session["messages"][0].get("run_steps").is_none(),
+        "the native turn is already durable"
+    );
+    let tool_ids: Vec<_> = session["history"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|entry| entry["kind"] == "tool_result")
+        .map(|entry| entry["toolCallId"].as_str().unwrap())
+        .collect();
+    assert_eq!(tool_ids, ["bad", "good"]);
+    let entries = storage.entries().into_iter().collect();
+    drop(app);
+    let (mut app, _) = start_in(Some(dir.path()), entries, None);
+    app.press("label:Conversation")?;
+    app.press("text:Run details · 1 failed")?;
+    app.wait_for("Model thinking\nChecking the photo.\n\npropose_record · Invalid tool arguments\nCall ID bad\n\npropose_record · Completed\nCall ID good")?;
+    assert_eq!(provider.requests().len(), 2);
+    assert!(stored_meals(dir.path()).is_empty());
+    Ok(())
 }
 
 #[test]
@@ -439,7 +546,7 @@ fn structured_records_survive_restart_then_edit_save_and_undo_without_recognitio
     app.press("Done")?;
     // The business write and conversation receipt must roll back together.
     db.execute_batch("CREATE TRIGGER reject_confirmation BEFORE UPDATE ON assistant_sessions BEGIN SELECT RAISE(ABORT,'disk failure'); END;").unwrap();
-    app.press("text:Confirm and save")?;
+    app.press("text:/^Confirm and save/")?;
     settle();
     assert!(stored_meals(dir.path()).is_empty());
     assert!(
@@ -450,7 +557,7 @@ fn structured_records_survive_restart_then_edit_save_and_undo_without_recognitio
     assert_eq!(records(dir.path(), "capture_drafts").len(), 1);
     db.execute_batch("DROP TRIGGER reject_confirmation")
         .unwrap();
-    app.press("text:Confirm and save")?;
+    app.press("text:/^Confirm and save/")?;
     app.wait_for("Saved 2 records")?;
     let saved = navi_finance::repository::transactions(&db).unwrap();
     assert_eq!(saved.len(), 1);
@@ -834,7 +941,7 @@ fn image_questions_restart_revision_and_receipt_share_one_conversation() -> Resu
     let updated = records(dir.path(), "capture_drafts");
     assert_eq!(updated.len(), 1);
     assert_eq!(updated[0]["id"], first_draft["id"]);
-    app.press("text:Confirm and save")?;
+    app.press("text:/^Confirm and save/")?;
     app.wait_for("Saved 1 record")?;
     assert_eq!(stored_meals(dir.path()).len(), 1);
     send(&mut app, "Thanks, can we continue?")?;
@@ -906,7 +1013,7 @@ fn image_only_interruption_retries_one_user_turn_and_creates_one_card() -> Resul
             .count(),
         1
     );
-    app.press("text:Confirm and save")?;
+    app.press("text:/^Confirm and save/")?;
     app.wait_for("Saved 1 record")?;
     assert_eq!(stored_meals(dir.path()).len(), 1);
     Ok(())
@@ -933,12 +1040,35 @@ fn retry_after_applied_revision_does_not_apply_a_relative_correction_twice() -> 
     app.wait_for_gone("text:Stop", GONE)?;
     let applied = records(dir.path(), "capture_drafts")[0].clone();
     assert_eq!(applied["records"][0]["Weight"]["kg"], 40.0);
+    let previous = records(dir.path(), "assistant_sessions").remove(0);
+    let owner = previous["messages"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .rev()
+        .find(|m| m["role"] == "user")
+        .unwrap();
+    let start = owner["history_start"].as_u64().unwrap() as usize;
+    let original = &previous["history"].as_array().unwrap()[start..];
     app.press("text:Retry")?;
     app.wait_for_gone("text:Stop", GONE)?;
     assert_eq!(
         records(dir.path(), "capture_drafts"),
         vec![applied],
         "same owner message must never halve the draft a second time"
+    );
+    let session = records(dir.path(), "assistant_sessions").remove(0);
+    assert_eq!(
+        session["prior_attempts"][owner["id"].as_str().unwrap()]
+            .as_array()
+            .unwrap(),
+        original
+    );
+    assert!(!session["history"].to_string().contains("call-read"));
+    assert!(
+        !provider.requests()[3]["messages"]
+            .to_string()
+            .contains("call-read")
     );
     assert_eq!(provider.requests().len(), 4);
     Ok(())

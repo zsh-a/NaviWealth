@@ -23,6 +23,25 @@ pub fn saved_message(draft: &Draft) -> String {
     s().capture_saved_detail(label, &value)
 }
 
+pub(in crate::pages) fn record_brief(records: &[Record]) -> String {
+    records
+        .iter()
+        .take(2)
+        .map(|record| {
+            let (_, kind, amount) = super::details::headline(record);
+            let name = match record {
+                Record::Money { draft, .. } if !draft.payee.is_empty() => draft.payee.clone(),
+                _ => kind.to_owned(),
+            };
+            format!(
+                "{name} · {amount} · {}",
+                s().short_date(super::details::day(record))
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
 /// The latest edit is briefly marked when its draft card comes back into view.
 #[derive(Clone, Copy)]
 struct Revisions(Signal<Vec<usize>>);
@@ -142,7 +161,7 @@ fn remove_row(
         .flex_row()
         .items_center()
         .gap_1()
-        .min_h(px(44.0))
+        .min_h(px(48.0))
         .px_2()
         .focus_visible(|s| s.outline(px(2.0)).outline_color(color::INK))
         .child(icon(Icon::Minus, 14.0, color::MUTED))
@@ -160,6 +179,7 @@ fn remove_row(
             {
                 return;
             }
+            let previous = next.clone();
             next.records.remove(index);
             if index < next.evidence.len() {
                 next.evidence.remove(index);
@@ -171,7 +191,29 @@ fn remove_row(
                 return;
             }
             error.set(None);
-            draft.set(next);
+            draft.set(next.clone());
+            crate::ui::toast::show_toast(
+                copy("Removed from draft", "已从草稿中移除"),
+                Some((
+                    s().undo.into(),
+                    std::rc::Rc::new(move || {
+                        if crate::data::capture::get(&next.id).as_ref() != Some(&next) {
+                            crate::ui::toast::show_toast(
+                                copy(
+                                    "The draft changed. Your newer changes were kept.",
+                                    "草稿已变更，已保留较新的修改。",
+                                ),
+                                None,
+                            );
+                            return;
+                        }
+                        let (expected, previous) = (next.clone(), previous.clone());
+                        crate::ui::feedback::undo_write(std::rc::Rc::new(move || {
+                            crate::data::capture::restore_edit(&expected, &previous)
+                        }));
+                    }),
+                )),
+            );
         })
         .into_element()
 }

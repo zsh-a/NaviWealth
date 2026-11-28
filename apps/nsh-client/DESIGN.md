@@ -33,9 +33,15 @@ AI capture drafts and a general assistant using the owner's model account.
   and sent images remain beside their message. Remote model-supplied images
   never fetch automatically. The thread follows output near its end; scrolling
   upward preserves reading position. Older messages load in groups of 40.
+  Back to latest is visible when reading away from the end. Opening a pending
+  record from Today or Records loads its message beyond that window when needed,
+  positions the card in view and briefly highlights it with the accent soft fill.
   The bottom composer grows from 48 to 120 pt, accepts text or up to four images,
   and stays above the keyboard. A quiet attachment button offers photos, manual
   meal/money/weight entry and favorites. Manual actions work without a model.
+  Favorite meals opens a compact sheet with the existing reusable meals and
+  edit controls; logging keeps the conversation's unsent input and offers Undo.
+  Without model setup, the empty state explicitly points to these manual options.
   Send accepts an image-only message; Stop replaces it during a bounded task.
   Unsent content is saved locally as it changes. Back does not show a discard
   dialog for a durable conversation draft. New conversation preserves the old
@@ -50,6 +56,12 @@ AI capture drafts and a general assistant using the owner's model account.
   reviewed. A single Confirm and save commits the whole batch. Modify this
   record makes the target visible above the composer; canceling that target
   leaves the card unchanged. Discard removes only this unconfirmed draft.
+  The target includes a dated record summary, a Locate action and input focus.
+  Batch confirmation and discard name their record count. Removing one row
+  offers Undo while the draft remains unchanged. A discarded batch offers
+  Restore draft in its receipt during this app lifetime; restoring keeps newer
+  composer input and refuses changed outcomes. Saved receipts retain a brief
+  content summary beside their existing status and actions.
   Saving replaces the editor with a quiet receipt, View and guarded Undo. The
   receipt remains in history and conversation continues. Saved records are
   never revised implicitly by later model output.
@@ -639,6 +651,10 @@ mapping, selected rows, possible duplicates, corrections and skipped-line reason
 stay on device through restart. Only confirmation posts selected entries, with
 mapping rules saved together. The fixed footer shows the selected count; long
 reviews reveal rows in batches of 50. A changed journal requires review again.
+All, Needs attention and Possible duplicates filters show their counts and keep
+row selection stable. The fixed footer also names the unresolved count and,
+when filtered, says that all selected rows will be imported, including hidden
+ones. Possible duplicates require an explicit selection.
 
 ## Platform decisions
 

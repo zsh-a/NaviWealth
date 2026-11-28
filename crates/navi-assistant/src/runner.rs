@@ -427,25 +427,20 @@ async fn execute_input(
 fn observe(event: AgentEvent, transcript: &mut Vec<AgentMessage>, events: &EventHandler) {
     match event {
         AgentEvent::MessageUpdate {
-            assistant_message_event: AssistantMessageEvent::TextDelta { delta, .. },
+            assistant_message_event:
+                AssistantMessageEvent::TextDelta { .. }
+                | AssistantMessageEvent::ThinkingStart { .. }
+                | AssistantMessageEvent::ThinkingDelta { .. }
+                | AssistantMessageEvent::ThinkingEnd { .. },
             ..
-        } => events(Event::TextDelta(delta)),
+        }
+        | AgentEvent::ToolExecutionStart { .. }
+        | AgentEvent::ToolExecutionEnd { .. } => events(Event::Agent(Box::new(event))),
         AgentEvent::MessageEnd { mut message, .. } => {
             history::sanitize(&mut message);
             transcript.push(message);
             events(Event::Checkpoint(history::encode(transcript)));
         }
-        AgentEvent::ToolExecutionStart { tool_name, .. } => {
-            events(Event::ToolStarted { name: tool_name })
-        }
-        AgentEvent::ToolExecutionEnd {
-            tool_name,
-            is_error,
-            ..
-        } => events(Event::ToolFinished {
-            name: tool_name,
-            is_error,
-        }),
         _ => {}
     }
 }

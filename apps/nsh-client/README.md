@@ -52,7 +52,9 @@ destination and model: sending can include messages, images, account context,
 recalled memories and local records requested by tools. Unsent input and image
 attachments are durable local state; older assistant consent requires renewal. Opening the page alone makes no
 model request. The owner can start a new chat, revisit or delete old chats,
-stop a run, and inspect or delete saved memories.
+stop a run, and inspect or delete saved memories. Expand Run details on a
+submitted message to see provider-visible thinking, tool names, native call IDs
+and outcomes. Each explicit retry has its own details in the conversation.
 
 `../../crates/navi-assistant` embeds pinned pi-rust `rpi-agent` and `rpi-ai`
 v0.29.0, with an eight-request/150-second run budget. Model input is bounded to
@@ -82,6 +84,18 @@ clarification choices without blocking other chat. Account approval remains
 local. Confirm and save writes the batch and receipt atomically; the conversation
 continues. No second recognition request is needed. Older structured proposals
 migrate into cards, and text proposals populate the unsent composer. A tool never receives unrestricted database or shell access.
+
+Opening a pending draft from Today or Records loads its message even beyond the
+last 40 turns and scrolls to that card. Back to latest returns to the end without
+interrupting a task. A correction target shows the record summary and a Locate
+action above the composer; saved receipts retain a short summary too. Batch
+save and discard actions name their record count. Discarded cards offer Restore
+draft during the current app lifetime; restoring the draft and removing the
+discard receipt is one transaction and rejects changed outcomes. Removing one
+record offers a transient Undo that rejects any newer draft edit. Neither
+recovery path writes business records or calls a model. The attachment menu
+also opens favorite meals, including without model setup, preserving unsent text.
+`tests/interaction_review.rs` covers these recovery, navigation and favorite flows.
 
 Web search optionally uses a Brave Search API key kept in app-private storage.
 Search queries are sent to Brave; public-page fetches are bounded to 1 MiB and
@@ -367,6 +381,11 @@ invalid source identities before replacing current rows. Health-only backups
 (schema 1–6) restore Health while preserving the current ledger. Restore remains
 explicitly confirmed. Balances and spending are derived, never stored as truth.
 Statement import is implemented; the optional monthly budget remains planned.
+Import review can filter All, Needs attention and Possible duplicates. Counts
+remain visible and filtering preserves original row identities and selections.
+The footer names selected and unresolved counts and explains that confirmation
+includes selected rows outside the active filter. Possible duplicates remain
+unselected until explicitly chosen.
 The initial holdings increment is described below.
 
 Desktop previews accept `NW_PREVIEW=account,meals,finance,light` (or `dark`) and
